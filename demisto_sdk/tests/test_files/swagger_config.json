@@ -1,0 +1,1264 @@
+{
+    "name": "Swagger Petstore",
+    "description": "This is a sample server Petstore server.  You can find out more about     Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For this sample, you can use the api key `special-key` to test the authorization     filters.",
+    "category": "Utilities",
+    "url": "petstore.swagger.io",
+    "auth": [
+        "apiKey"
+    ],
+    "context_path": "TestSwagger",
+    "commands": [
+        {
+            "name": "add-pet",
+            "path": "pet",
+            "method": "post",
+            "description": "Add a new pet to the store",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "category",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": null,
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "description": "",
+                            "required": false,
+                            "options": null
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "",
+                            "required": false,
+                            "options": null
+                        }
+                    }
+                },
+                {
+                    "name": "name",
+                    "description": "",
+                    "required": true,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "photoUrls",
+                    "description": "",
+                    "required": true,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "tags",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "status",
+                    "description": "pet status in the store",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": [
+                        "available",
+                        "pending",
+                        "sold"
+                    ],
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "create-user",
+            "path": "user",
+            "method": "post",
+            "description": "Create user",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "username",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "firstName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "lastName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "email",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "phone",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "userStatus",
+                    "description": "User Status",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "create-users-with-array-input",
+            "path": "user/createWithArray",
+            "method": "post",
+            "description": "Creates list of users with given input array",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "username",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "firstName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "lastName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "email",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "phone",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "userStatus",
+                    "description": "User Status",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "create-users-with-list-input",
+            "path": "user/createWithList",
+            "method": "post",
+            "description": "Creates list of users with given input array",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "username",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "firstName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "lastName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "email",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "phone",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "userStatus",
+                    "description": "User Status",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "delete-order",
+            "path": "store/order/{orderId}",
+            "method": "delete",
+            "description": "Delete purchase order by ID",
+            "arguments": [
+                {
+                    "name": "orderId",
+                    "description": "ID of the order that needs to be deleted",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "delete-pet",
+            "path": "pet/{petId}",
+            "method": "delete",
+            "description": "Deletes a pet",
+            "arguments": [
+                {
+                    "name": "api_key",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "header",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "petId",
+                    "description": "Pet id to delete",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "delete-user",
+            "path": "user/{username}",
+            "method": "delete",
+            "description": "Delete user",
+            "arguments": [
+                {
+                    "name": "username",
+                    "description": "The name that needs to be deleted",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "find-pets-by-status",
+            "path": "pet/findByStatus",
+            "method": "get",
+            "description": "Finds Pets by status",
+            "arguments": [
+                {
+                    "name": "status",
+                    "description": "Status values that need to be considered for filter",
+                    "required": true,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "tags.id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "tags.name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "status",
+                    "description": "pet status in the store",
+                    "type": "String"
+                }
+            ],
+            "context_path": "Pet",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "find-pets-by-tags",
+            "path": "pet/findByTags",
+            "method": "get",
+            "description": "Finds Pets by tags",
+            "arguments": [
+                {
+                    "name": "tags",
+                    "description": "Tags to filter by",
+                    "required": true,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "tags.id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "tags.name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "status",
+                    "description": "pet status in the store",
+                    "type": "String"
+                }
+            ],
+            "context_path": "Pet",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "get-inventory",
+            "path": "store/inventory",
+            "method": "get",
+            "description": "Returns pet inventories by status",
+            "arguments": [],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "get-order-by-id",
+            "path": "store/order/{orderId}",
+            "method": "get",
+            "description": "Find purchase order by ID",
+            "arguments": [
+                {
+                    "name": "orderId",
+                    "description": "ID of pet that needs to be fetched",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "petId",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "quantity",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "shipDate",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "status",
+                    "description": "Order Status",
+                    "type": "String"
+                },
+                {
+                    "name": "complete",
+                    "description": "",
+                    "type": "Boolean"
+                }
+            ],
+            "context_path": "Order",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "get-pet-by-id",
+            "path": "pet/{petId}",
+            "method": "get",
+            "description": "Find pet by ID",
+            "arguments": [
+                {
+                    "name": "petId",
+                    "description": "ID of pet to return",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "tags.id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "tags.name",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "status",
+                    "description": "pet status in the store",
+                    "type": "String"
+                }
+            ],
+            "context_path": "Pet",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "get-user-by-name",
+            "path": "user/{username}",
+            "method": "get",
+            "description": "Get user by user name",
+            "arguments": [
+                {
+                    "name": "username",
+                    "description": "The name that needs to be fetched. Use user1 for testing. ",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "username",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "firstName",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "lastName",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "email",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "phone",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "userStatus",
+                    "description": "User Status",
+                    "type": "Number"
+                }
+            ],
+            "context_path": "User",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "login-user",
+            "path": "user/login",
+            "method": "get",
+            "description": "Logs user into the system",
+            "arguments": [
+                {
+                    "name": "username",
+                    "description": "The user name for login",
+                    "required": true,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "password",
+                    "description": "The password for login in clear text",
+                    "required": true,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "logout-user",
+            "path": "user/logout",
+            "method": "get",
+            "description": "Logs out current logged in user session",
+            "arguments": [],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "place-order",
+            "path": "store/order",
+            "method": "post",
+            "description": "Place an order for a pet",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "petId",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "quantity",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "shipDate",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "status",
+                    "description": "Order Status",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "string",
+                    "options": [
+                        "placed",
+                        "approved",
+                        "delivered"
+                    ],
+                    "properties": {}
+                },
+                {
+                    "name": "complete",
+                    "description": "",
+                    "required": false,
+                    "default": false,
+                    "in": "body",
+                    "ref": "Order",
+                    "type": "boolean",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "petId",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "quantity",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "shipDate",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "status",
+                    "description": "Order Status",
+                    "type": "String"
+                },
+                {
+                    "name": "complete",
+                    "description": "",
+                    "type": "Boolean"
+                }
+            ],
+            "context_path": "Order",
+            "root_object": "",
+            "headers": [],
+            "unique_key": "id"
+        },
+        {
+            "name": "update-pet",
+            "path": "pet",
+            "method": "put",
+            "description": "Update an existing pet",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "category",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": null,
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "description": "",
+                            "required": false,
+                            "options": null
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "",
+                            "required": false,
+                            "options": null
+                        }
+                    }
+                },
+                {
+                    "name": "name",
+                    "description": "",
+                    "required": true,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "photoUrls",
+                    "description": "",
+                    "required": true,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "tags",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "array",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "status",
+                    "description": "pet status in the store",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "Pet",
+                    "type": "string",
+                    "options": [
+                        "available",
+                        "pending",
+                        "sold"
+                    ],
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "update-pet-with-form",
+            "path": "pet/{petId}",
+            "method": "post",
+            "description": "Updates a pet in the store with form data",
+            "arguments": [
+                {
+                    "name": "petId",
+                    "description": "ID of pet that needs to be updated",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "name",
+                    "description": "Updated name of the pet",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "status",
+                    "description": "Updated status of the pet",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            ],
+            "unique_key": ""
+        },
+        {
+            "name": "update-user",
+            "path": "user/{username}",
+            "method": "put",
+            "description": "Updated user",
+            "arguments": [
+                {
+                    "name": "username",
+                    "description": "name that need to be updated",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "id",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "username",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "firstName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "lastName",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "email",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "phone",
+                    "description": "",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "userStatus",
+                    "description": "User Status",
+                    "required": false,
+                    "default": "",
+                    "in": "body",
+                    "ref": "User",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [],
+            "context_path": "",
+            "root_object": "",
+            "headers": [],
+            "unique_key": ""
+        },
+        {
+            "name": "upload-file",
+            "path": "pet/{petId}/uploadImage",
+            "method": "post",
+            "description": "uploads an image",
+            "arguments": [
+                {
+                    "name": "petId",
+                    "description": "ID of pet to update",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "additionalMetadata",
+                    "description": "Additional data to pass to server",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "file",
+                    "description": "file to upload",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "file",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "code",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "type",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "message",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "context_path": "ApiResponse",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "multipart/form-data"
+                }
+            ],
+            "unique_key": ""
+        }
+    ],
+    "code_type": "python",
+    "code_subtype": "python3",
+    "docker_image": "demisto/python3:3.8.3.9324"
+}

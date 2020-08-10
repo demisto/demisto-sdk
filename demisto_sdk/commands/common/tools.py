@@ -601,7 +601,7 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
     packs = set()
     for path in file_paths:
-        # in renamed files are in tuples - the second element is the new file name
+        # renamed files are in a tuples - the second element is the new file name
         if isinstance(path, tuple):
             path = path[1]
 
@@ -1270,3 +1270,17 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
         return None
     else:
         return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
+
+
+def camel_to_snake(camel: str) -> str:
+    """
+    Converts camel case (CamelCase) strings to snake case (snake_case) strings.
+    Args:
+        camel (str): The camel case string.
+
+    Returns:
+        str: The snake case string.
+    """
+    camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
+    snake = camel_to_snake_pattern.sub('_', camel).lower()
+    return snake

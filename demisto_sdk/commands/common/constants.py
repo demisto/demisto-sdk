@@ -48,6 +48,7 @@ BETA_INTEGRATION = 'betaintegration'
 class FileType(Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
+    TEST_SCRIPT = 'testscript'
     PLAYBOOK = 'playbook'
     TEST_PLAYBOOK = 'testplaybook'
     BETA_INTEGRATION = 'betaintegration'
@@ -72,7 +73,6 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
-    TEST_SCRIPT = 'script'
 
 
 ENTITY_TYPE_TO_DIR = {
@@ -854,6 +854,7 @@ IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONT
 
 FEED_REQUIRED_PARAMS = [
     {
+        'defaultvalue': 'true',
         'display': 'Fetch indicators',
         'name': 'feed',
         'type': 8,

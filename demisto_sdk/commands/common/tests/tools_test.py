@@ -135,6 +135,11 @@ class TestGenericFunctions:
     def test_get_code_lang(self, data, entity, output):
         assert get_code_lang(data, entity) == output
 
+    def test_camel_to_snake(self):
+        snake = tools.camel_to_snake('CamelCase')
+
+        assert snake == 'camel_case'
+
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):

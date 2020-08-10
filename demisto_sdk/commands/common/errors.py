@@ -137,6 +137,7 @@ ERROR_CODE = {
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
     "readme_error": "RM100",
+    "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
@@ -860,6 +861,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def image_path_error(path, alternative_path):
+        return f'Detected following image url:\n{path}\n' \
+               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    @error_code_decorator
     def wrong_version_reputations(object_id, version):
         return "Reputation object with id {} must have version {}".format(object_id, version)
 
@@ -919,7 +926,7 @@ class Errors:
     @error_code_decorator
     def invalid_package_structure(invalid_files):
         return 'You should update the following files to the package format, for further details please visit ' \
-               'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
 
     @staticmethod

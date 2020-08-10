@@ -279,13 +279,13 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
 
             input_argument = []
             for i in range(number_of_items_in_list):
-                pack_to_take_entity_from = random.sample(range(1, number_of_packs), 1)[0]
+                pack_to_take_entity_from = random.choice(range(1, number_of_packs))
                 input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
                                                                                 LIST_ARGUMENTS_TO_METHODS[arg]))
                 dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         else:
-            pack_to_take_entity_from = random.sample(range(1, number_of_packs), 1)[0]
+            pack_to_take_entity_from = random.choice(range(1, number_of_packs))
             input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg)
             dependencies.add(f'pack_{pack_to_take_entity_from}')
 
@@ -310,8 +310,7 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     all_dependencies = set()
 
     for i in range(number_of_methods_to_choose):
-        chosen_method_index = random.choice(range(len(current_methods_pool)))
-        chosen_method = current_methods_pool[chosen_method_index]
+        chosen_method = random.choice(current_methods_pool)
         current_methods_pool.remove(chosen_method)
 
         method = getattr(chosen_method[1], chosen_method[0])
@@ -340,14 +339,13 @@ def test_dependencies(mocker, repo, test_number):
         Then
         - Update packs dependencies in pack metadata
     """
-    print(f'Starting test number {test_number} for find_dependencies flow')
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack('CommonTypes')
 
-    pack_to_verify = random.sample(range(number_of_packs), 1)[0]
+    pack_to_verify = random.choice(range(number_of_packs))
 
-    number_of_methods_to_choose = random.sample(range(1, len(METHODS_POOL)), 1)[0]
+    number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
     with ChangeCWD(repo.path):

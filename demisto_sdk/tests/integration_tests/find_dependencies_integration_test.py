@@ -46,6 +46,8 @@ def test_integration_find_dependencies__sanity(mocker, repo):
 
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'cpu_count', return_value=1)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(repo.packs[0].path),

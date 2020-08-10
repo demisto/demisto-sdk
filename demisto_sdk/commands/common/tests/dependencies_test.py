@@ -1,5 +1,6 @@
 import inspect
 import random
+import shutil
 from typing import List
 
 import pytest
@@ -341,7 +342,7 @@ def test_dependencies(mocker, repo, test_number):
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
-    del repo
+    shutil.rmtree(repo.path, ignore_errors=True)
 
 
 @pytest.mark.parametrize('entity_class', CLASSES)
@@ -378,4 +379,4 @@ def test_specific_entity(mocker, repo, entity_class):
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
-    del repo
+    shutil.rmtree(repo.path, ignore_errors=True)

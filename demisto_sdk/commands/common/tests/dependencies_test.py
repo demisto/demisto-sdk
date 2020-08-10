@@ -24,7 +24,7 @@ class IntegrationDependencies:
     @staticmethod
     def make_integration_depend_on_classifier(integration: Integration, classifier: JSONBased):
         classifier_id = classifier.read_json_as_dict().get('id')
-        integration.yml.update({'defaultClassifier': classifier_id})
+        integration.yml.update({'defaultclassifier': classifier_id})
 
     @staticmethod
     def make_integration_depend_on_mapper_in(integration: Integration, mapper: JSONBased):
@@ -112,18 +112,18 @@ class IndicatorTypeDependencies:
         indicator_type.update({'enhancementScriptNames': [script_id]})
 
     # Optional dependency
-    # @staticmethod
-    # def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
-    #     indicator_type.update({'reputationCommand': 'ip'})
-    #     integration.yml.update(
-    #         {
-    #             'script': {
-    #                 'commands': [{
-    #                     'name': 'ip'
-    #                 }]
-    #             }
-    #         }
-    #     )
+    @staticmethod
+    def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
+        indicator_type.update({'reputationCommand': 'ip'})
+        integration.yml.update(
+            {
+                'script': {
+                    'commands': [{
+                        'name': 'ip'
+                    }]
+                }
+            }
+        )
 
 
 class LayoutDependencies:
@@ -258,6 +258,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                      get_entity_by_pack_number_and_entity_type(repo, current_pack, inputs_arguments[0])}
 
     inputs_arguments = inputs_arguments[1:]
+    # Ignores the `CommonTypes` pack in the flow, so only numeric packs will be chosen
     number_of_packs = len(repo.packs) - 1
 
     for arg in inputs_arguments:
@@ -285,7 +286,7 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     all_dependencies = set()
 
     for i in range(number_of_methods_to_choose):
-        chosen_method_index = random.sample(range(1, len(current_methods_pool)), 1)[0]
+        chosen_method_index = random.sample(range(len(current_methods_pool)), 1)[0]
         chosen_method = current_methods_pool[chosen_method_index]
         current_methods_pool.remove(chosen_method)
 
@@ -359,7 +360,7 @@ def test_specific_entity(mocker, repo, entity_class):
         [(method_name, entity_class) for method_name in list(entity_class.__dict__.keys())
          if '_' != method_name[0]]
 
-    dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool) - 1)
+    dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
     with ChangeCWD(repo.path):
         import demisto_sdk.commands.common.update_id_set as uis

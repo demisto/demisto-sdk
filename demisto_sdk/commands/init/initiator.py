@@ -42,7 +42,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                get_child_files,
                                                get_common_server_path,
                                                get_content_path, print_error,
-                                               print_v)
+                                               print_v, print_warning)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
@@ -96,12 +96,16 @@ class Initiator:
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    HELLO_WORLD_SCRIPT_FILES = ['HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py']
-    HELLO_WORLD_INTEGRATION_FILES = ['HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
+    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
+    HELLO_WORLD_INTEGRATION_FILES = {'HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
                                      'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
-                                     'test_data/domain_reputation.json', 'test_data/get_alert.json',
-                                     'test_data/ip_reputation.json', 'test_data/scan_results.json',
-                                     'test_data/search_alerts.json', 'test_data/update_alert_status.json']
+                                     os.path.join('test_data', 'domain_reputation.json'),
+                                     os.path.join('test_data', 'get_alert.json'),
+                                     os.path.join('test_data', 'ip_reputation.json'),
+                                     os.path.join('test_data', 'scan_results.json'),
+                                     os.path.join('test_data', 'search_alerts.json'),
+                                     os.path.join('test_data', 'update_alert_status.json'),
+                                     os.path.join('test_data', 'domain_reputation.json')}
     TEST_DATA_DIR = 'test_data'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
@@ -656,7 +660,7 @@ class Initiator:
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:
-                print(f"Could not fetch remote template - {file}. Using local templates instead.")
+                print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")
                 return False
 
         return True

@@ -2,6 +2,7 @@ import os
 import re
 from collections import OrderedDict, deque
 from datetime import datetime
+from os import listdir
 from pathlib import Path
 from typing import Callable
 
@@ -28,6 +29,8 @@ PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
 PACK_GITHUB_USERS = ''
+INTEGRATION_NAME = 'IntegrationName'
+SCRIPT_NAME = 'ScriptName'
 
 name_reformatting_test_examples = [
     ('PACKYAYOK', 'PACKYAYOK'),
@@ -357,3 +360,69 @@ def test_get_remote_templates__invalid(mocker, initiator):
 
     os.remove(os.path.join(PACK_NAME, 'Test.py'))
     os.rmdir(PACK_NAME)
+
+
+def test_integration_init(initiator, tmpdir):
+    """
+    Tests `integration_init` function.
+
+    Given
+        - Inputs to init integration in a given output.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contain all files.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+    res = initiator.integration_init()
+    integration_dir_files = {file for file in listdir(integration_path)}
+    expected_files = {
+        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png", "test_data"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    assert expected_files == integration_dir_files
+
+
+def test_script_init(initiator, tmpdir):
+    """
+    Tests `script_init` function.
+
+    Given
+        - Inputs to init script in a given output.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure script directory with the desired script name is created successfully.
+        - Ensure script directory contain all files.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.dir_name = SCRIPT_NAME
+    initiator.output = temp_pack_dir
+    script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
+    res = initiator.script_init()
+
+    script_dir_files = {file for file in listdir(script_path)}
+
+    assert res
+    assert os.path.isdir(script_path)
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py"} == script_dir_files

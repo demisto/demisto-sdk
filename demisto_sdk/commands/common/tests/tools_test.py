@@ -152,6 +152,15 @@ class TestGetRemoteFile:
                                                return_content=True)
         assert hello_world_py
 
+    def test_get_remote_file_content(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        hello_world_text = hello_world_py.decode()
+        assert isinstance(hello_world_py, bytes)
+        assert hello_world_py
+        assert 'main()' in hello_world_text
+        assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
+
     def test_get_remote_file_origin(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
         assert hello_world_yml

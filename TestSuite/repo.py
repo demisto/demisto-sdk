@@ -1,6 +1,7 @@
 """
 
 """
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
@@ -65,6 +66,9 @@ class Repo:
             'Widgets': [],
             'Mappers': [],
         })
+
+    def __del__(self):
+        shutil.rmtree(self.path, ignore_errors=True)
 
     def setup_one_pack(self, name):
         """Sets up a new pack in the repo, and includes one per each content entity.

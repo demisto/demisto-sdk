@@ -371,9 +371,9 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_integration(display_name, description, list_commands):
         ans = ''
-        if not display_name.startswith('Deprecated'):
+        if not display_name.startswith('Deprecated.'):
             ans += 'The display_name (display) of your integration should start with "Deprecated.".\n'
-        if not description.startswith('Deprecated'):
+        if not description.startswith('Deprecated.'):
             ans += 'The description of your integration should start with "Deprecated.".\n'
         if list_commands:
             ans += f'The commands {list_commands} have to be a field "deprecated: true".'

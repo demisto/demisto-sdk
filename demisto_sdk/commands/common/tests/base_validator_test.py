@@ -151,7 +151,7 @@ def test_check_deprecated_playbook(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.ignored_errors['playbook-somePlaybook.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.ignored_errors[playbook.yml_path] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
 
 
 def test_check_support_status_xsoar_file(repo, mocker):

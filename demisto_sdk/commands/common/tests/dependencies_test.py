@@ -252,6 +252,18 @@ LIST_ARGUMENTS_TO_METHODS = {
 
 
 def create_inputs_for_method(repo, current_pack, inputs_arguments):
+    """Creates an `argument: object` dict of inputs for a method according to inputs_arguments.
+
+    Args:
+        repo (Repo): Content repo object.
+        current_pack (int): ID of the pack that its objects will depend on other packs.
+        inputs_arguments (list): List of entity types that  are needed as arguments to the method.
+
+    Returns:
+        Tuple(Dict, set):
+            inputs_values (Dict): An `argument: object` dict of inputs for a method.
+            dependencies (Set): All the packs' names that `current_pack` should depend on.
+    """
     dependencies = set()
 
     inputs_values = {inputs_arguments[0]:
@@ -283,10 +295,22 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
 
 
 def run_random_methods(repo, current_pack, current_methods_pool, number_of_methods_to_choose):
+    """ Runs random set of methods with size number_of_methods_to_choose
+        out of the current_methods_pool.
+
+    Args:
+        repo (Repo): Content repo object.
+        current_pack (int): ID of the pack that its objects will depend on other packs.
+        current_methods_pool (list): The pool of methods to choose from.
+        number_of_methods_to_choose (int): Amount of methods to choose.
+
+    Returns:
+        Set. All the packs' names that `current_pack` should depend on.
+    """
     all_dependencies = set()
 
     for i in range(number_of_methods_to_choose):
-        chosen_method_index = random.sample(range(len(current_methods_pool)), 1)[0]
+        chosen_method_index = random.choice(range(len(current_methods_pool)))
         chosen_method = current_methods_pool[chosen_method_index]
         current_methods_pool.remove(chosen_method)
 
@@ -327,6 +351,10 @@ def test_dependencies(mocker, repo, test_number):
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
     with ChangeCWD(repo.path):
+        # Circle froze on 3.7 dut to high usage of processing power.
+        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+        # and not the maximum amount.
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         PackDependencies.find_dependencies(f'pack_{pack_to_verify}', silent_mode=True)
@@ -363,6 +391,10 @@ def test_specific_entity(mocker, repo, entity_class):
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
     with ChangeCWD(repo.path):
+        # Circle froze on 3.7 dut to high usage of processing power.
+        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+        # and not the maximum amount.
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         PackDependencies.find_dependencies('pack_0', silent_mode=True)

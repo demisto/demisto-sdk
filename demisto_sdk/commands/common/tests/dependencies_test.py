@@ -300,9 +300,6 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
         all_dependencies = all_dependencies.union(dependencies)
         method(**args)
 
-        # print(dependencies)
-        # print(method.__name__)
-
     return all_dependencies
 
 

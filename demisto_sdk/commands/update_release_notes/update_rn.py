@@ -65,7 +65,8 @@ class UpdateRN:
                     'description': get_file_description(packfile, file_type),
                     'is_new_file': True if packfile in self.added_files else False
                 }
-
+            print('==========')
+            print(changed_files)
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
@@ -265,7 +266,7 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
+        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1].get('type') if x[1] is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')

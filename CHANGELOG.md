@@ -2,7 +2,7 @@
 * Fixed a regression where **upload** command failed on test playbooks.
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
-* Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+* Fixed an issue where **find-dependencies** ignored *toversion* field in content items.
 * Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, *report*, and *widget* in the **Format** command.
 * Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
 * Fixed an issue where **Format** did not work for test playbooks.
@@ -15,6 +15,7 @@
 * Fixed an issue were release notes validations returned wrong results for *CommonScripts* pack.
 * Added validation for image links in README files in **validate** command.
 * Added a validation for default value of fetch param in feeds in **validate** command.
+* Fixed an issue where the **Init** command failed on scripts.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

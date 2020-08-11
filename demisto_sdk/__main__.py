@@ -4,10 +4,10 @@ import os
 import re
 import sys
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
+from pkg_resources import get_distribution
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -524,6 +524,8 @@ def download(**kwargs):
 @click.option(
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
+@click.option(
+    "--json-to-outputs", help="Whether to run json_to_outputs command on the Raw Response of the query", is_flag=True)
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()

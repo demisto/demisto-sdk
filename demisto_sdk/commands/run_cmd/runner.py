@@ -1,10 +1,15 @@
 import ast
+import json
 import re
+import tempfile
 
 import demisto_client
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error, print_v,
                                                print_warning)
+from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
+    json_to_outputs
 
 
 class DemistoRunTimeError(RuntimeError):
@@ -24,17 +29,19 @@ class Runner:
     ERROR_ENTRY_TYPE = 4
     DEBUG_FILE_ENTRY_TYPE = 16
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
+    RAW_RESPONSE_HEADER = re.compile(r'^Raw Response section')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
     def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
-                 verbose: bool = False):
+                 verbose: bool = False, json_to_outputs=False):
         self.query = query if query.startswith('!') else f'!{query}'
         self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
         self.client = demisto_client.configure(verify_ssl=not insecure)
+        self.json2outputs = json_to_outputs
 
-        if self.debug:
+        if self.debug or self.json2outputs:
             self.query += ' debug-mode="true"'
 
     def run(self):
@@ -48,11 +55,28 @@ class Runner:
             log_ids = None
             print_error(str(err))
 
-        if self.debug:
+        if self.debug and not self.json2outputs:
             if not log_ids:
                 print_warning('Entry with debug log not found')
             else:
                 self._export_debug_log(log_ids)
+
+        if self.json2outputs:
+            if not log_ids:
+                print_warning('Entry with debug log not found')
+            else:
+                raw_output_json = self._return_raw_outputs_from_log(log_ids)
+                with tempfile.NamedTemporaryFile(mode='w+') as f:
+                    if isinstance(raw_output_json, dict):
+                        f.write(json.dumps(raw_output_json))
+                    if isinstance(raw_output_json, list):
+                        f.write(json.dumps(raw_output_json[0]))
+                    f.seek(0)
+                    file_path = f.name
+                    command = self.query.split(' ')[0]
+                    print("What would you like the base path for the outputs that the script generates to be?")
+                    prefix = input()
+                    json_to_outputs(command, file_path, prefix)
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance.
@@ -135,6 +159,39 @@ class Runner:
                         for line in log_info:
                             output_file.write(line.encode('utf-8'))
             print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
+
+    def _return_raw_outputs_from_log(self, log_ids: list) -> dict:
+        """
+            retrieves the raw_outputs section from the debug_log
+        Args:
+            log_ids (list): artifact ids of the log files
+
+        Returns:
+            the raw_outputs of the executed query
+        """
+        if not self.debug_path:
+            for log_id in log_ids:
+                result = self.client.download_file(log_id)
+                with open(result, 'r+') as log_info:
+                    for line in log_info:
+                        if self.RAW_RESPONSE_HEADER.match(line):
+                            return json.loads(log_info.readline())
+        else:
+            temp_dict = dict()
+            with open(self.debug_path, 'w+b') as output_file:
+                for log_id in log_ids:
+                    result = self.client.download_file(log_id)
+                    with open(result, 'r+') as log_info:
+                        for line in log_info:
+                            if self.RAW_RESPONSE_HEADER.match(line):
+                                temp_line = log_info.readline()
+                                temp_dict = json.loads(temp_line)
+                                output_file.write(temp_line.encode('utf-8'))
+                            else:
+                                output_file.write(line.encode('utf-8'))
+            print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
+            return temp_dict
+        return dict()
 
     def execute_command(self, command: str):
         playground_id = self._get_playground_id()

@@ -59,12 +59,13 @@ class UpdateRN:
             self.find_added_pack_files()
             for packfile in self.pack_files:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if file_type:
-                    changed_files[file_name] = {
-                        'type': file_type,
-                        'description': get_file_description(packfile, file_type),
-                        'is_new_file': True if packfile in self.added_files else False
-                    }
+
+                changed_files[file_name] = {
+                    'type': file_type,
+                    'description': get_file_description(packfile, file_type),
+                    'is_new_file': True if packfile in self.added_files else False
+                }
+
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
@@ -264,7 +265,8 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1].get('type') if x[1] is not None else ''):
+        for content_name, data in sorted(changed_items.items(),
+                                         key=lambda x: x[1].get('type') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')

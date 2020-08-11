@@ -59,14 +59,12 @@ class UpdateRN:
             self.find_added_pack_files()
             for packfile in self.pack_files:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-
-                changed_files[file_name] = {
-                    'type': file_type,
-                    'description': get_file_description(packfile, file_type),
-                    'is_new_file': True if packfile in self.added_files else False
-                }
-            print('==========')
-            print(changed_files)
+                if file_type:
+                    changed_files[file_name] = {
+                        'type': file_type,
+                        'description': get_file_description(packfile, file_type),
+                        'is_new_file': True if packfile in self.added_files else False
+                    }
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():

@@ -170,7 +170,7 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
         for c in '|':
             st = st.replace(c, '\\' + c)
     else:
-        st = "".join(["\\" + str(c) if c in r"\`*_{}[]()#+-!" else str(c) for c in st])
+        st = "".join(["\\" + str(c) if c in r"\`*{}[]()#+!" else str(c) for c in st])
 
     return st
 

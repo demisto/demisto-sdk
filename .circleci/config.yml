@@ -41,15 +41,7 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
-        - store_artifacts:
-            path: coverage_html_report
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - coverage_html_report
-              - .coverage
-              - .tox
+              tox -e py37 -v
   tox3-8:
       docker:
         - image: python:3.8
@@ -59,7 +51,15 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py38 -v
+              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+        - store_artifacts:
+            path: coverage_html_report
+              - persist_to_workspace:
+                  root: ~/project
+                  paths:
+                    - coverage_html_report
+                    - .coverage
+                    - .tox
   precommit-checks:
       docker:
         - image: python:3.8

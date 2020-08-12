@@ -34,7 +34,7 @@ jobs:
               echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
   tox3-7:
       docker:
-        - image: python:3.8
+        - image: python:3.7
       steps:
         - checkout
         - run:

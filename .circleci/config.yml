@@ -222,7 +222,7 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-8
+            - tox3-7
             - precommit-checks
             - coveralls-upload
             - validate-files

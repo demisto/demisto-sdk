@@ -608,12 +608,11 @@ class TestMergeNewFile:
         parameters = [
             {
                 'custom_content_object': env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md',
-                              'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md']
             },
             {
                 'custom_content_object': env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md']
             }
         ]
         for param in parameters:

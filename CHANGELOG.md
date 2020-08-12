@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in  fetch incidents related parameters.
+* Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
 
 # 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.

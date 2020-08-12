@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where **update-release-notes** command were not checked files type correctly.
+* Fixed an issue where **update-release-notes** command failed on invalid file types.
 
 # 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.

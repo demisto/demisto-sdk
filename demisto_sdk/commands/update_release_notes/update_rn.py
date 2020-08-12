@@ -266,7 +266,7 @@ class UpdateRN:
         dashboards_header = False
         connections_header = False
         for content_name, data in sorted(changed_items.items(),
-                                         key=lambda x: x[1].get('type') if x[1].get('type') is not None else ''):
+                                         key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')

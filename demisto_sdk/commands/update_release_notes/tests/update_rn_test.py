@@ -51,6 +51,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
             "Hello World Connection": {"type": "Connections", "description": "", "is_new_file": False},
             "Hello World Report": {"type": "Reports", "description": "", "is_new_file": False},
+            "N/A": {"type": None, "description": "", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes

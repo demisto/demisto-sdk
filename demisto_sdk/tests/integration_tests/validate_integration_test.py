@@ -57,7 +57,7 @@ class TestIncidentFieldValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack.create_incident_field("incident-field", INCIDENT_FIELD)
-        incident_field_path = pack.incident_field[0].path
+        incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
@@ -81,7 +81,7 @@ class TestIncidentFieldValidation:
         incident_field_copy = INCIDENT_FIELD.copy()
         incident_field_copy['system'] = True
         pack.create_incident_field("incident-field", incident_field_copy)
-        incident_field_path = pack.incident_field[0].path
+        incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
@@ -792,7 +792,7 @@ class TestIndicatorFieldValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack.create_indicator_field("indicator-field", INDICATOR_FIELD)
-        indicator_field_path = pack.indicator_field[0].path
+        indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)
@@ -816,7 +816,7 @@ class TestIndicatorFieldValidation:
         indicator_field_copy = INDICATOR_FIELD.copy()
         indicator_field_copy['content'] = False
         pack.create_indicator_field("indicator-field", indicator_field_copy)
-        indicator_field_path = pack.indicator_field[0].path
+        indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)

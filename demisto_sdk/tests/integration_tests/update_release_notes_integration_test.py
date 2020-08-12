@@ -53,7 +53,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     if os.path.exists(rn_path):
         os.remove(rn_path)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", 'FeedAzureValid'])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
@@ -96,7 +96,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     if os.path.exists(rn_path):
         os.remove(rn_path)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", 'FeedAzureValid'])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
@@ -137,7 +137,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     if os.path.exists(rn_path):
         os.remove(rn_path)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", 'FeedAzureValid'])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
@@ -185,7 +185,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
                                                                                        set(), set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", 'FeedAzureValid'])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.exists(rn_path)

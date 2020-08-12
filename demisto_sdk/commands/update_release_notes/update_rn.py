@@ -15,16 +15,17 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               get_pack_name, get_yaml,
+                                               pack_name_to_path, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False):
 
-        self.pack = pack_path.split('/')[-1]
+        self.pack = get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)

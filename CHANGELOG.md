@@ -1,4 +1,5 @@
 # Changelog
+* **update-release-notes** command now accept path of the pack instead of pack name.
 
 # 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.

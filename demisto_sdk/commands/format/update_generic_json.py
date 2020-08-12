@@ -61,9 +61,9 @@ class BaseUpdateJSON(BaseUpdate):
             a = yaml.safe_load(file_obj)
         schema_fields = a.get('mapping').keys()
         for field in schema_fields:
-            value = self.data.get(field)
-            if not value and value is not False and value != 0:
-                self.data.pop(field, None)
+            # We want to keep 'false' and 0 values.
+            if field in self.data and self.data[field] in (None, '', [], {}):
+                self.data.pop(field)
 
     def update_id(self, field='name'):
         """Updates the id to be the same as the provided field ."""

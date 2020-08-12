@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.
 
 # 1.1.8

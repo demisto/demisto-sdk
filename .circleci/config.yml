@@ -54,12 +54,12 @@ jobs:
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - store_artifacts:
             path: coverage_html_report
-              - persist_to_workspace:
-                  root: ~/project
-                  paths:
-                    - coverage_html_report
-                    - .coverage
-                    - .tox
+        - persist_to_workspace:
+            root: ~/project
+            paths:
+              - coverage_html_report
+              - .coverage
+              - .tox
   precommit-checks:
       docker:
         - image: python:3.8

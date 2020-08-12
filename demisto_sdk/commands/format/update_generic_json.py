@@ -60,9 +60,10 @@ class BaseUpdateJSON(BaseUpdate):
         with open(self.schema_path, 'r') as file_obj:
             a = yaml.safe_load(file_obj)
         schema_fields = a.get('mapping').keys()
-        fields_to_remove = [field for field in schema_fields if (self.data.get(field) is None and field in self.data)]
-        for field in fields_to_remove:
-            self.data.pop(field, None)
+        for field in schema_fields:
+            value = self.data.get(field)
+            if not value and value is not False and value != 0:
+                self.data.pop(field, None)
 
     def update_id(self, field='name'):
         """Updates the id to be the same as the provided field ."""

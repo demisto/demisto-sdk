@@ -15,7 +15,7 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-7
+        - tox3-8
 
     reqs_content_checkout: &reqs_content_checkout
       requires:

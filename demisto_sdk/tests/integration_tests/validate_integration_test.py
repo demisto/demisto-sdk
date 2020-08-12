@@ -1505,8 +1505,9 @@ class TestValidationUsingGit:
                                               yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"))
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
-        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
                                                                                            set(), set(), set()))
 
@@ -1519,7 +1520,6 @@ class TestValidationUsingGit:
         assert 'Running validation on modified files' in result.stdout
         assert 'Running validation on newly added files' in result.stdout
         assert 'Running validation on changed pack unique files' in result.stdout
-        assert 'Packs/FeedAzure/pack_metadata.json: [PA100]' in result.stdout
         assert 'Validating Packs/FeedAzure unique pack files' in result.stdout
         assert 'Running pack dependencies validation on' not in result.stdout
         assert result.exit_code == 1
@@ -1542,10 +1542,11 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
                                                                                            set(), set(), set()))
-        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',

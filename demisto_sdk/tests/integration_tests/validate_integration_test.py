@@ -1135,13 +1135,13 @@ class TestPlaybookValidateDeprecated:
     def test_invalid_playbook_deprecated(self, mocker):
         """
         Given
-        - an invalid Playbook - root task is disconnected from next task.
+        - an invalid Playbook - there is no Deprecated. in the description.
 
         When
         - Running validate on it.
 
         Then
-        - Ensure validate fails on PB103 - unconnected tasks error.
+        - Ensure validate fails on PB104 - deprecated tasks error.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
@@ -1298,13 +1298,13 @@ class TestScriptDeprecatedValidation:
     def test_valid_deprecated_script(self, mocker, repo):
         """
         Given
-        - a valid Script.
+        - a valid deprecated Script.
 
         When
         - Running validate on it.
 
         Then
-        - Ensure validate passes and identifies the file as a script.
+        - Ensure validate passes and identifies the file as a deprecated script.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
@@ -1323,13 +1323,13 @@ class TestScriptDeprecatedValidation:
     def test_invalid_deprecated_script(self, mocker, repo):
         """
         Given
-        - an invalid Script - v2 in name instead  of V2.
+        - an invalid deprecated Script without Deprecated. in the description.
 
         When
         - Running validate on it.
 
         Then
-        - Ensure validate fails on SC100 wrong v2 format in name.
+        - Ensure validate fails on SC101 wrong deprecated script.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')

@@ -1,6 +1,9 @@
 # Changelog
 * Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
 
+# 1.1.9
+* Fixed an issue where **update-release-notes** command failed on invalid file types.
+
 # 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.
 * Added new *githubUser* field in pack metadata init command.

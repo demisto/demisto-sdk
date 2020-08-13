@@ -46,6 +46,12 @@ def test_integration_find_dependencies__sanity(mocker, repo):
 
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
+        # Circle froze on 3.7 dut to high usage of processing power.
+        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+        # and not the maximum amount.
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'cpu_count', return_value=1)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                       '-p', os.path.basename(repo.packs[0].path),

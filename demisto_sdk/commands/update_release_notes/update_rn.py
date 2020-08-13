@@ -265,11 +265,14 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
+        for content_name, data in sorted(changed_items.items(),
+                                         key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
-            if not _type:
+
+            # Skipping the invalid files
+            if not _type or content_name == 'N/A':
                 continue
 
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
@@ -278,9 +281,7 @@ class UpdateRN:
                 rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'##### {content_name}\n- %%UPDATE_RN%%\n'
 
-            if content_name == 'N/A':
-                continue
-            elif _type == 'Integration':
+            if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True

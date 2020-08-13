@@ -94,11 +94,11 @@ class BaseValidator:
             self.checked_files.add(file_name)
 
     def check_deprecated(self, file_path):
+        file_name = os.path.basename(file_path)
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
-                     yml_dict['hidden'] is True):
+                    (file_name.startswith('playbook') and 'hidden' in yml_dict and yml_dict['hidden'] is True):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod

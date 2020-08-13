@@ -42,7 +42,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_added_required_args(),
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
-            self.is_changed_subtype(),
+            self.is_changed_subtype()
         ]
 
         # Add sane-doc-report exception
@@ -62,6 +62,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
+            self.is_valid_deprecated_script()
         ])
         # check only on added files
         if not self.old_file:
@@ -206,3 +207,14 @@ class ScriptValidator(ContentEntityValidator):
                     return False
 
         return True
+
+    def is_valid_deprecated_script(self) -> bool:
+        ans = True
+        deprecated = self.current_file.get('deprecated', False)
+        comment = self.current_file.get('comment', '')
+        if deprecated:
+            if not comment.startswith('Deprecated.'):
+                error_message, error_code = Errors.invalid_deprecated_script()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    ans = False
+        return ans

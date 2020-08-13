@@ -28,6 +28,10 @@ VALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAz
 VALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks', 'Cortex_XDR_Incident_Handling.yml')
 INVALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
                                   'Cortex_XDR_Incident_Handling_invalid.yml')
+VALID_DEPRECATED_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                           'Valid_Deprecated_Playbook.yml')
+INVALID_DEPRECATED_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                             'Invalid_Deprecated_Playbook.yml')
 VALID_SCRIPT_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Scripts', 'EntryWidgetNumberHostsXDR',
                          'EntryWidgetNumberHostsXDR.yml')
 
@@ -104,13 +108,13 @@ class TestDeprecatedValidation:
         - Ensure validation passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'Deprecated.'
         valid_integration_yml['description'] = 'Deprecated.'
-        valid_integration_yml['script']['commands']['deprecated'] = True
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -143,8 +147,8 @@ class TestDeprecatedValidation:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
-        assert 'IN119' in result.stdout
-        assert 'This is a feed and has wrong fromversion.' in result.stdout
+        assert 'IN125' in result.stdout
+        assert '"Deprecated."' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1109,6 +1113,45 @@ class TestPlaybookValidation:
         assert result.exit_code == 1
 
 
+class TestPlaybookValidateDeprecated:
+    def test_valid_playbook_deprecated(self, mocker, repo):
+        """
+        Given
+        - a valid Playbook Deprecated.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        assert f'Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_playbook_deprecated(self, mocker):
+        """
+        Given
+        - an invalid Playbook - root task is disconnected from next task.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on PB103 - unconnected tasks error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
+        assert 'PB104' in result.stdout
+        assert 'The playbook description have to start with "Deprecated."' in result.stdout
+        assert result.exit_code == 1
+
+
 class TestReportValidation:
     def test_valid_report(self, mocker, repo):
         """
@@ -1248,6 +1291,58 @@ class TestScriptValidation:
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestScriptDeprecatedValidation:
+    def test_valid_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - a valid Script.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['deprecated'] = True
+        valid_script_yml['comment'] = 'Deprecated.'
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - an invalid Script - v2 in name instead  of V2.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on SC100 wrong v2 format in name.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['deprecated'] = True
+        script = pack.create_script(yml=invalid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'SC101' in result.stdout
+        assert 'The script comment have to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
 

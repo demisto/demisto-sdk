@@ -86,14 +86,14 @@ class Initiator:
         self.full_output_path = ''
 
         self.name = name
-        if name is not None and len(name) != 0:
-            if self.contribution:
-                self.name = self.format_pack_dir_name(name)
-            else:
-                while ' ' in name:
-                    name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name is not None and len(name) != 0 and not self.contribution:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
-        self.dir_name = name
+        if self.contribution:
+            self.dir_name = self.format_pack_dir_name(name)
+        else:
+            self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
@@ -194,11 +194,16 @@ class Initiator:
                     metadata = json.loads(metadata_file.read())
                     # a name passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
+                    pack_display_name = self.name or self.format_pack_dir_name(
+                        metadata.get('name', 'ContributionPack')
+                    )
+                    pack_name = self.dir_name or self.format_pack_dir_name(
+                        metadata.get('name', 'ContributionPack')
+                    )
                     # a description passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
                     metadata_dict['description'] = self.description or metadata.get('description')
-                    metadata_dict['name'] = pack_name
+                    metadata_dict['name'] = pack_display_name
                     metadata_dict['author'] = self.author or metadata.get('author', '')
                     metadata_dict['support'] = 'community'
                     metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')

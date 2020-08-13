@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
@@ -1163,7 +1165,8 @@ class TestScriptValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1187,7 +1190,8 @@ class TestScriptValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
@@ -1482,4 +1486,70 @@ class TestValidationUsingGit:
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert result.exit_code == 1
+
+    def test_validation_using_git_without_pack_dependencies(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate using git on it with --skip-pack-dependencies flag.
+
+        Then
+        - Ensure validate fails.
+        - Ensure pack dependencies check doesnt happen.
+        """
+        pack = repo.create_pack('FeedAzure')
+        integration = pack.create_integration(name='FeedAzure',
+                                              yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"))
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
+                                                                                           set(), set(), set()))
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes', '--skip-pack-dependencies'],
+                                   catch_exceptions=False)
+        assert 'Running validation on branch' in result.stdout
+        assert 'Running validation on modified files' in result.stdout
+        assert 'Running validation on newly added files' in result.stdout
+        assert 'Running validation on changed pack unique files' in result.stdout
+        assert 'Validating Packs/FeedAzure unique pack files' in result.stdout
+        assert 'Running pack dependencies validation on' not in result.stdout
+        assert result.exit_code == 1
+
+    def test_validation_using_git_with_pack_dependencies(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate using git on it with --skip-pack-dependencies flag.
+
+        Then
+        - Ensure validate fails.
+        - Ensure pack dependencies check happens.
+        """
+        pack = repo.create_pack('FeedAzure')
+        integration = pack.create_integration(name='FeedAzure',
+                                              yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"))
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
+                                                                                           set(), set(), set()))
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes'], catch_exceptions=False)
+        assert 'Running pack dependencies validation on' in result.stdout
         assert result.exit_code == 1

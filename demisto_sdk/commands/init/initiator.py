@@ -194,9 +194,12 @@ class Initiator:
                     metadata = json.loads(metadata_file.read())
                     # a name passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_display_name = self.name or self.format_pack_dir_name(
-                        metadata.get('name', 'ContributionPack')
-                    )
+                    pack_display_name = self.name or metadata.get('name', 'ContributionPack')
+                    # Strip 'Pack' suffix from pack display name if present
+                    pack_display_name = pack_display_name.strip()
+                    if pack_display_name.casefold().endswith('pack') > len(pack_display_name) > 4:
+                        stripped_pack_display_name = pack_display_name[:-4].strip()
+                        pack_display_name = stripped_pack_display_name or pack_display_name
                     pack_name = self.dir_name or self.format_pack_dir_name(
                         metadata.get('name', 'ContributionPack')
                     )

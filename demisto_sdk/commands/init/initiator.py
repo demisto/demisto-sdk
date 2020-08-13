@@ -59,11 +59,12 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
            contribution (str|Nonetype): The path to a contribution zip file
            description (str): Description to attach to a converted contribution pack
+           author (str): Author to ascribe to a pack converted from a contribution zip
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
-                 contribution: Union[str] = None, description: str = ''):
+                 contribution: Union[str] = None, description: str = '', author: str = ''):
         self.output = output if output else ''
         self.id = id
 
@@ -75,6 +76,7 @@ class Initiator:
         self.configuration = Configuration()
         self.contribution = contribution
         self.description = description
+        self.author = author
         self.contrib_conversion_errs: List[str] = []
 
         # if no flag given automatically create a pack.
@@ -197,10 +199,9 @@ class Initiator:
                     # from contribution metadata
                     metadata_dict['description'] = self.description or metadata.get('description')
                     metadata_dict['name'] = pack_name
-                    metadata_dict['author'] = metadata.get('author', '')
-                    metadata_dict['support'] = metadata.get('support', '')
+                    metadata_dict['author'] = self.author or metadata.get('author', '')
+                    metadata_dict['support'] = 'community'
                     metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
-                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
                     metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
                     metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
                     metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []

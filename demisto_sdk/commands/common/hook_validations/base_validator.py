@@ -6,13 +6,13 @@ import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
                                                    PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME, FileType)
+                                                   PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE)
-from demisto_sdk.commands.common.tools import get_pack_name, get_yaml, find_type
+from demisto_sdk.commands.common.tools import get_pack_name, get_yaml
 
 
 class BaseValidator:

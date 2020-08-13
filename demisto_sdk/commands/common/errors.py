@@ -684,7 +684,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return f'The playbook description have to start with "Deprecated."'
+        return 'The playbook description have to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator
@@ -1091,5 +1091,3 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
-
-

@@ -101,10 +101,6 @@ def test_extract_to_package_format_pwsh(tmpdir):
     with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md'), 'r') as f:
         file_data = f.read()
         assert 'Username and password are both associated with the user in the target machine' in file_data
-    # check changelog
-    with open(out.join('PowerShellRemotingOverSSH').join('CHANGELOG.md'), 'r') as f:
-        file_data = f.read()
-        assert '## [Unreleased]' in file_data
     # check readme
     with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()

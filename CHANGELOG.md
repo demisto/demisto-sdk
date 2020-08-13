@@ -1,4 +1,8 @@
 # Changelog
+* Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
+
+# 1.1.9
+* Fixed an issue where **update-release-notes** command failed on invalid file types.
 
 # 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.

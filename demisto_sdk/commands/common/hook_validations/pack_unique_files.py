@@ -291,7 +291,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     # pack dependencies validation
     def validate_pack_dependencies(self, id_set_path=None):
-        click.secho(f'\n================= Running pack dependencies validation on {self.pack}=================',
+        click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                     fg="bright_cyan")
         core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 

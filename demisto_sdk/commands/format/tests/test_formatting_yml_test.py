@@ -325,7 +325,7 @@ def test_set_fetch_params_in_config(source, target, path, answer):
         params = yaml_content['configuration']
         for counter, param in enumerate(params):
             if 'defaultvalue' in param and param['name'] != 'feed':
-                params[counter].pop('defaultvalue')
+                param.pop('defaultvalue')
         for param in FETCH_REQUIRED_PARAMS:
             assert param in yaml_content['configuration']
     os.remove(target)

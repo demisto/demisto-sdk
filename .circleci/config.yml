@@ -3,6 +3,8 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
+orbs:
+  node: circleci/node@4.0.0
 references:
     tag_filter: &tag_filter
       filters:
@@ -113,6 +115,7 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
+        - node/install
         - attach_workspace:
             at: ~/project
         - run:

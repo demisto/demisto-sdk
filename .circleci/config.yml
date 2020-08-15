@@ -110,7 +110,7 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: python:3.8
+        - image: python:3.8-node
       steps:
         - checkout
         - attach_workspace:

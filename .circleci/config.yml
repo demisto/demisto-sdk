@@ -110,7 +110,7 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: circleci/python:3.8-node
+        - image: python:3.8
       steps:
         - checkout
         - attach_workspace:

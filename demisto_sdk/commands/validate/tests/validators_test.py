@@ -519,7 +519,6 @@ class TestValidators:
         pack = repo.create_pack('pack')
         pack.create_test_script()
         with ChangeCWD(pack.repo_path):
-            os.mkdir('Packs/pack/TestPlaybooks/')
             os.system('mv Packs/pack/Scripts/sample_script/sample_script.yml Packs/pack/TestPlaybooks/')
             x = ValidateManager()
             try:

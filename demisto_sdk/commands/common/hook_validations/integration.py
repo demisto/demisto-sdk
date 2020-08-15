@@ -665,6 +665,9 @@ class IntegrationValidator(ContentEntityValidator):
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
+            for param in params:
+                if 'defaultvalue' in param:
+                    param.pop('defaultvalue')
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
@@ -683,7 +686,7 @@ class IntegrationValidator(ContentEntityValidator):
         params_exist = True
         params = [_key for _key in self.current_file.get('configuration', [])]
         for counter, param in enumerate(params):
-            if 'defaultvalue' in param:
+            if 'defaultvalue' in param and param['name'] != 'feed':
                 params[counter].pop('defaultvalue')
             if 'hidden' in param:
                 params[counter].pop('hidden')

@@ -66,7 +66,7 @@ class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False):
+                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False):
 
         # General configuration
         self.skip_docker_checks = False
@@ -81,6 +81,7 @@ class ValidateManager:
         self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
+        self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
 
         # Class constants
@@ -92,7 +93,11 @@ class ValidateManager:
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
-        self.skipped_file_types = (FileType.CHANGELOG, FileType.DESCRIPTION, FileType.TEST_PLAYBOOK)
+        self.skipped_file_types = (FileType.CHANGELOG,
+                                   FileType.DESCRIPTION,
+                                   FileType.TEST_PLAYBOOK,
+                                   FileType.TEST_SCRIPT,
+                                   )
 
         if is_external_repo:
             if not self.no_configuration_prints:
@@ -559,7 +564,7 @@ class ValidateManager:
                                                                ignored_errors=pack_error_ignore_list,
                                                                print_as_warnings=self.print_ignored_errors,
                                                                should_version_raise=should_version_raise,
-                                                               validate_dependencies=self.use_git,
+                                                               validate_dependencies=not self.skip_dependencies,
                                                                id_set_path=id_set_path)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:

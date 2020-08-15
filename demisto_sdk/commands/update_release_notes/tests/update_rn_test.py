@@ -51,6 +51,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
             "Hello World Connection": {"type": "Connections", "description": "", "is_new_file": False},
             "Hello World Report": {"type": "Reports", "description": "", "is_new_file": False},
+            "N/A2": {"type": None, "description": "", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -356,24 +357,29 @@ class TestRNUpdateUnit:
 - %%UPDATE_RN%%
 """
 
-    diff_package = [('Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
-                    ('Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
-                    ('IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
-                    ('IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
-                    ('Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
-                    ('Script/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
-                    ('ReleaseNotes/1_0_1.md', ('N/A', None)),
-                    ('Integrations/VulnDB/VulnDB.yml', ('VulnDB', 'Integration')),
-                    ('Connections/VulnDB/VulnDB.yml', ('VulnDB', 'Connections')),
-                    ('Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
-                    ('Widgets/VulnDB/VulnDB.yml', ('VulnDB', 'Widgets')),
-                    ('Reports/VulnDB/VulnDB.yml', ('VulnDB', 'Reports')),
-                    ('IndicatorTypes/VulnDB/VulnDB.yml', ('VulnDB', 'Indicator Types')),
-                    ('TestPlaybooks/VulnDB/VulnDB.yml', ('VulnDB', None)),
+    diff_package = [('VulnDB', 'Packs/VulnDB/Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
+                    ('VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
+                    ('VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
+                    ('VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
+                    ('VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
+                    ('CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB',
+                                                                                                   'Playbook')),
+                    ('VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
+                    ('CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
+                    ('VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', ('N/A', None)),
+                    ('VulnDB', 'Packs/VulnDB/Integrations/VulnDB/VulnDB.yml', ('VulnDB', 'Integration')),
+                    ('VulnDB', 'Packs/VulnDB/Connections/VulnDB/VulnDB.yml', ('VulnDB', 'Connections')),
+                    ('VulnDB', 'Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
+                    ('CommonScripts', 'Packs/CommonScripts/Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
+                    ('VulnDB', 'Packs/VulnDB/Widgets/VulnDB/VulnDB.yml', ('VulnDB', 'Widgets')),
+                    ('VulnDB', 'Packs/VulnDB/Reports/VulnDB/VulnDB.yml', ('VulnDB', 'Reports')),
+                    ('VulnDB', 'Packs/VulnDB/IndicatorTypes/VulnDB/VulnDB.yml', ('VulnDB', 'Indicator Types')),
+                    ('VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
+                    ('CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
                     ]
 
-    @pytest.mark.parametrize('path, expected_result', diff_package)
-    def test_ident_changed_file_type(self, path, expected_result, mocker):
+    @pytest.mark.parametrize('pack_name, path, expected_result', diff_package)
+    def test_ident_changed_file_type(self, pack_name, path, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -383,7 +389,7 @@ class TestRNUpdateUnit:
                 - return tuple where first value is the pack name, and second is the item type
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
+        update_rn = UpdateRN(pack=pack_name, update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')

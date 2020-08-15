@@ -122,7 +122,7 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              npm install @mdx-js/mdx fs-extra commander
+              npm install @mdx-js/mdx fs-extra commander -g
               . .tox/py38/bin/activate
 
               cd content

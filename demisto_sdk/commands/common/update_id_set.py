@@ -126,16 +126,6 @@ def build_tasks_graph(playbook_data):
     return graph
 
 
-def get_integration_commands(file_path):
-    cmd_list = []
-    data_dictionary = get_yaml(file_path)
-    commands = data_dictionary.get('script', {}).get('commands', [])
-    for command in commands:
-        cmd_list.append(command.get('name'))
-
-    return cmd_list
-
-
 def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
     implementing_ids = set()
     implementing_ids_skippable = set()
@@ -373,7 +363,7 @@ def get_playbook_data(file_path: str) -> dict:
 
     id_ = data_dictionary.get('id', '-')
     name = data_dictionary.get('name', '-')
-    deprecated = data_dictionary.get('deprecated', False)
+    deprecated = data_dictionary.get('hidden', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')

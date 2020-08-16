@@ -117,10 +117,6 @@ jobs:
         - checkout
         - node/install:
             install-npm: false
-        - run:
-            name: Install packages
-            command: |
-              npm install @mdx-js/mdx fs-extra commander
         - attach_workspace:
             at: ~/project
         - run:
@@ -130,6 +126,7 @@ jobs:
               . .tox/py38/bin/activate
 
               cd content
+              npm install @mdx-js/mdx fs-extra commander
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
                 demisto-sdk validate -i Packs/dnstwist
                 exit 0

@@ -4,9 +4,12 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE)
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.tools import get_yaml
+from os.path import join
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK['deprecated'])
 
@@ -146,7 +149,10 @@ def test_check_deprecated_playbook(repo):
     """
     pack = repo.create_pack('pack')
     playbook = pack.create_integration('playbook-somePlaybook')
-    playbook.yml.write_dict({'hidden': True})
+    test_file_path = join(git_path(), 'demisto_sdk', 'tests', 'test_files')
+    valid_deprecated_playbook_file_path = join(test_file_path, 'Packs', 'CortexXDR', 'Playbooks',
+                                               'Valid_Deprecated_Playbook.yml')
+    playbook.yml.write_dict(get_yaml(valid_deprecated_playbook_file_path))
     files_path = playbook.yml.path
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})

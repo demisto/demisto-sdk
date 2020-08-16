@@ -173,7 +173,7 @@ tasks:
     task:
       id: 54f287fd-2090-4c41-877a-5c65d3a8e14c
       version: -1
-      name: Are there files to analyze?
+      name: Are there files to analyze
       description: ""
       type: condition
       iscommand: false
@@ -313,7 +313,7 @@ tasks:
     task:
       id: 2674bdee-3758-44f5-8570-738344346001
       version: -1
-      name: Would you like to perform auto- remediation?
+      name: Would you like to perform auto- remediation
       description: ""
       type: condition
       iscommand: false
@@ -453,7 +453,7 @@ tasks:
     task:
       id: 0750ec9c-2e33-441a-8e8d-2e6631ae068c
       version: -1
-      name: Is AutoFocus Integration enabled?
+      name: Is AutoFocus Integration enabled
       description: ""
       type: condition
       iscommand: false

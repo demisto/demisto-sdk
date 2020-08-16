@@ -81,7 +81,6 @@ class ReadMeValidator(BaseValidator):
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
             for pack in packs:
                 stdout, stderr, exit_code = run_command_os(f'npm ls {pack}', cwd=self.content_path)
-                print(self.content_path)
                 if exit_code:
                     missing_module.append(pack)
         if missing_module:

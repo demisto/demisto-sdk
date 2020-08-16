@@ -2,12 +2,14 @@ import os
 import re
 from collections import OrderedDict, deque
 from datetime import datetime
+from os import listdir
 from pathlib import Path
 from typing import Callable
 
 import pytest
 import yaml
 import yamlordereddictloader
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
                                                    PACK_INITIAL_VERSION,
                                                    PACK_SUPPORT_OPTIONS,
@@ -26,7 +28,9 @@ PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
-
+PACK_GITHUB_USERS = ''
+INTEGRATION_NAME = 'IntegrationName'
+SCRIPT_NAME = 'ScriptName'
 
 name_reformatting_test_examples = [
     ('PACKYAYOK', 'PACKYAYOK'),
@@ -117,7 +121,7 @@ def test_create_metadata(monkeypatch, initiator):
         generate_multiple_inputs(
             deque([
                 PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, PACK_TAGS
+                PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
             ])
         )
     )
@@ -134,7 +138,8 @@ def test_create_metadata(monkeypatch, initiator):
         'tags': ['Tag1', 'Tag2'],
         'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
         'url': PACK_URL,
-        'useCases': []
+        'useCases': [],
+        'githubUser': []
     }
 
 
@@ -152,7 +157,7 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
     mocker.patch.object(os, 'mkdir', return_value=None)
     assert initiator.create_new_directory()
 
-    mocker.patch.object(os, 'mkdir', side_effect=FileExistsError())
+    mocker.patch.object(os, 'mkdir', side_effect=FileExistsError)
     # override dir successfully
     monkeypatch.setattr('builtins.input', lambda _: 'Y')
     with pytest.raises(FileExistsError):
@@ -294,7 +299,8 @@ def test_format_pack_dir_name(initiator, input_name, expected_output_name):
     '''
     output_name = initiator.format_pack_dir_name(input_name)
     assert output_name == expected_output_name
-    assert not re.search(r'\s', output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
+    assert not re.search(r'\s',
+                         output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
     err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
     assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
     if len(output_name) > 1:
@@ -303,3 +309,120 @@ def test_format_pack_dir_name(initiator, input_name, expected_output_name):
             assert first_char.isupper(), 'The output\'s first character should be capitalized'
     assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
     assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
+
+
+def test_get_remote_templates__valid(mocker, initiator):
+    """
+    Tests get_remote_template function.
+    Configures mocker instance and patches the tools's get_remote_file to return a file content.
+
+    Given
+        - A list of files to download from remote repo
+    When
+        - Initiating an object - Script or Integration
+    Then
+        - Ensure file with Test.py name was created in PackName folder
+        - Ensure the file's content is the same as the one we got from get_remote_file return value
+    """
+    mocker.patch.object(tools, 'get_remote_file', return_value=b'Test im in file')
+    initiator.full_output_path = PACK_NAME
+    os.makedirs(PACK_NAME, exist_ok=True)
+    res = initiator.get_remote_templates(['Test.py'])
+    file_path = os.path.join(PACK_NAME, 'Test.py')
+    with open(file_path, 'r') as f:
+        file_content = f.read()
+
+    assert res
+    assert "Test im in file" in file_content
+
+    os.remove(os.path.join(PACK_NAME, 'Test.py'))
+    os.rmdir(PACK_NAME)
+
+
+def test_get_remote_templates__invalid(mocker, initiator):
+    """
+    Tests get_remote_template function.
+    Configures mocker instance and patches the tools's get_remote_file to return an empty file content.
+
+    Given
+        - An unreachable file to download from remote repo
+    When
+        - Initiating an object - Script or Integration
+    Then
+        - Ensure get_remote_templates returns False and doesn't raise an exception
+    """
+    mocker.patch.object(tools, 'get_remote_file', return_value={})
+    initiator.full_output_path = PACK_NAME
+    os.makedirs(PACK_NAME, exist_ok=True)
+    res = initiator.get_remote_templates(['Test.py'])
+
+    assert not res
+
+    os.remove(os.path.join(PACK_NAME, 'Test.py'))
+    os.rmdir(PACK_NAME)
+
+
+def test_integration_init(initiator, tmpdir):
+    """
+    Tests `integration_init` function.
+
+    Given
+        - Inputs to init integration in a given output.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contain all files.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+    res = initiator.integration_init()
+    integration_dir_files = {file for file in listdir(integration_path)}
+    expected_files = {
+        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png", "test_data"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    assert expected_files == integration_dir_files
+
+
+def test_script_init(initiator, tmpdir):
+    """
+    Tests `script_init` function.
+
+    Given
+        - Inputs to init script in a given output.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure script directory with the desired script name is created successfully.
+        - Ensure script directory contain all files.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.dir_name = SCRIPT_NAME
+    initiator.output = temp_pack_dir
+    script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
+    res = initiator.script_init()
+
+    script_dir_files = {file for file in listdir(script_path)}
+
+    assert res
+    assert os.path.isdir(script_path)
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py"} == script_dir_files

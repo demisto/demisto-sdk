@@ -8,13 +8,13 @@ import sys
 import textwrap
 from typing import Any, Dict, List, Set
 
-import demisto_sdk.commands.common.tools as tools
 # Third party packages
 import docker
 import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
@@ -209,8 +209,11 @@ class LintManager:
               f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                     content_repo.remote().refs.master)
+        if content_repo.active_branch != content_repo.heads.master:
+            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                         content_repo.remote().refs.master)
+        else:
+            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
         changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
                                content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_master)

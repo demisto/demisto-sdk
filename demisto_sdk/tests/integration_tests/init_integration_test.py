@@ -30,11 +30,12 @@ def test_integration_init_integration_positive(tmp_path):
     pack_url = "https://www.github.com/supermario"
     pack_email = "mario@super.com"
     pack_tags = "SuperTag1,SuperTag2"
+    pack_reviewers = "GithubUser1, GithubUser2"
     create_integration = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
     inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
-              pack_author, pack_url, pack_email, pack_tags, create_integration, integration_name,
+              pack_author, pack_url, pack_email, pack_tags, pack_reviewers, create_integration, integration_name,
               use_dir_name_as_id]
 
     d = tmp_path / 'TestPacks'
@@ -69,7 +70,9 @@ def test_integration_init_integration_positive(tmp_path):
             "tags": pack_tags.split(","),
             "useCases": [],
             "keywords": [],
-        }.items() <= metadata_json.items()  # testing for subset (<=) to avoid testing created and modified timestamps
+            "githubUser": ["GithubUser1", "GithubUser2"]
+            # testing for subset (<=) to avoid testing created and modified timestamps
+        }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {

@@ -14,7 +14,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
-import demisto_sdk.commands.common.tools as tools
 import git
 import requests
 import urllib3
@@ -39,7 +38,7 @@ urllib3.disable_warnings()
 colorama.init()
 
 ryaml = YAML()
-ryaml.preserve_quotes = True  # type: ignore
+ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
 
 
@@ -52,6 +51,9 @@ class LOG_COLORS:
 
 
 LOG_VERBOSE = False
+
+LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
+                           'indicatorsDetails'}
 
 
 def set_log_verbose(verbose: bool):
@@ -142,7 +144,16 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master'):
+def get_remote_file(full_file_path, tag='master', return_content=False):
+    """
+    Args:
+        full_file_path (string):The full path of the file.
+        tag (string): The branch name. default is 'master'
+        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+    Returns:
+        The file content in the required format.
+
+    """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.lstrip('origin/')
 
@@ -156,7 +167,8 @@ def get_remote_file(full_file_path, tag='master'):
                       'please make sure that you did not break backward compatibility. '
                       'Reason: {}'.format(github_path, exc))
         return {}
-
+    if return_content:
+        return res.content
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
     elif full_file_path.endswith('yml'):
@@ -293,8 +305,10 @@ def get_last_remote_release_version():
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):
-                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\nThis may happen if you are not connected to the internet.'
+                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n' \
+                          f'This may happen if you are not connected to the internet.'
             print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+
     return ''
 
 
@@ -577,7 +591,17 @@ def is_file_path_in_pack(file_path):
 
 
 def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    """
+    extract pack name (folder name) from file path
+
+    Arguments:
+        file_path (str): path of a file inside the pack
+
+    Returns:
+        pack name (str)
+    """
+    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
     return match.group(1) if match else None
 
 
@@ -587,7 +611,7 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
     packs = set()
     for path in file_paths:
-        # in renamed files are in tuples - the second element is the new file name
+        # renamed files are in a tuples - the second element is the new file name
         if isinstance(path, tuple):
             path = path[1]
 
@@ -734,7 +758,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
     """
     returns the content file type
 
@@ -748,14 +772,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
         if 'README' in path:
             return FileType.README
 
-        elif RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:
             return FileType.RELEASE_NOTES
 
-        elif 'description' in path:
+        if 'description' in path:
             return FileType.DESCRIPTION
 
-        else:
-            return FileType.CHANGELOG
+        return FileType.CHANGELOG
 
     if path.endswith('.png'):
         return FileType.IMAGE
@@ -768,63 +791,64 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict:
+            if 'beta' in _dict and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        elif 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+        if 'script' in _dict:
+            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
-            else:
-                return FileType.SCRIPT
+            return FileType.SCRIPT
 
-        elif 'tasks' in _dict:
+        if 'tasks' in _dict:
             if TEST_PLAYBOOKS_DIR in path:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
 
-    elif file_type == 'json':
+    if file_type == 'json':
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
-        elif 'orientation' in _dict:
+        if 'orientation' in _dict:
             return FileType.REPORT
 
-        elif 'preProcessingScript' in _dict:
+        if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        elif 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        if 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
             return FileType.REPUTATION
 
-        elif 'brandName' in _dict and 'transformer' in _dict:
+        if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        elif 'transformer' in _dict and 'keyTypeMap' in _dict:
+        if 'transformer' in _dict and 'keyTypeMap' in _dict:
             return FileType.CLASSIFIER
 
-        elif 'canvasContextConnections' in _dict:
+        if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        elif 'mapping' in _dict:
+        if 'mapping' in _dict:
             return FileType.MAPPER
 
-        elif 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
-            else:
-                return FileType.DASHBOARD
+            return FileType.DASHBOARD
+
+        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+            return FileType.LAYOUTS_CONTAINER
 
         # When using it for all files validation- sometimes 'id' can be integer
-        elif 'id' in _dict:
-            if isinstance(_dict.get('id'), str):
+        if 'id' in _dict:
+            if isinstance(_dict['id'], str):
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD
-                elif _id.startswith('indicator'):
+                if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
@@ -875,7 +899,7 @@ def get_content_path() -> str:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
-        is_external_repo = tools.is_external_repository()
+        is_external_repo = is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
@@ -885,7 +909,8 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> Tuple[str, str, int]:
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> \
+        Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
         command(str): Command to be executed.
@@ -969,7 +994,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
                         search_parent_directories=True)
     remote_url = git_repo.remote().urls.__next__()
     is_fork_repo = 'content' in remote_url
-    is_external_repo = tools.is_external_repository()
+    is_external_repo = is_external_repository()
 
     if not is_fork_repo and not is_external_repo:
         return False, ''
@@ -1041,7 +1066,6 @@ def is_test_config_match(test_config: dict, test_playbook_id: str = '', integrat
     If file type is not an integration- will return True if the test_playbook id matches playbookID.
     Args:
         test_config: A test configuration from conf.json file under 'tests' key.
-        file_type: The file type. can be 'integration', 'playbook'.
         test_playbook_id: A test playbook ID.
         integration_id: An integration ID.
     If both test_playbook_id and integration_id are given will look for a match of both, else will look for match
@@ -1256,3 +1280,17 @@ def get_content_release_identifier(branch_name: str) -> Optional[str]:
         return None
     else:
         return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
+
+
+def camel_to_snake(camel: str) -> str:
+    """
+    Converts camel case (CamelCase) strings to snake case (snake_case) strings.
+    Args:
+        camel (str): The camel case string.
+
+    Returns:
+        str: The snake case string.
+    """
+    camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
+    snake = camel_to_snake_pattern.sub('_', camel).lower()
+    return snake

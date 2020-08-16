@@ -26,6 +26,7 @@ class BaseUpdateYML(BaseUpdate):
         'IntegrationYMLFormat': 'commonfields',
         'ScriptYMLFormat': 'commonfields',
         'PlaybookYMLFormat': '',
+        'TestPlaybookYMLFormat': '',
     }
     CONF_PATH = "./Tests/conf.json"
 
@@ -53,13 +54,16 @@ class BaseUpdateYML(BaseUpdate):
         return self.data.get(path, self.data)
 
     def update_id_to_equal_name(self):
-        """Updates the id of the YML to be the same as it's name."""
-        print('Updating YML ID to be the same as YML name')
-        self.id_and_version_location['id'] = self.data['name']
+        """Updates the id of the YML to be the same as it's name
+            Only relevant for new files.
+        """
+        if not self.old_file:
+            print('Updating YML ID to be the same as YML name')
+            self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print(F'Saving output YML file to {self.output_file} \n')
+        print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -72,7 +76,6 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
@@ -81,16 +84,11 @@ class BaseUpdateYML(BaseUpdate):
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
 
-        print_color(F'=======Finished updates for file: {self.output_file}=======\n', LOG_COLORS.WHITE)
-
     def update_tests(self) -> None:
         """
         If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
         'No tests' under 'tests' key or not and format the file according to the answer
         """
-        # No need to add test playbooks for test playbooks
-        if 'TestPlaybooks' in self.source_file:
-            return
         if not self.data.get('tests', ''):
             should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
                                                     f'Do you want to configure it with "No tests"?')

@@ -41,11 +41,11 @@ mapping:
   description:
     type: str
     required: true
-  defaultMapperIn:
+  defaultmapperin:
     type: str
-  defaultMapperOut:
+  defaultmapperout:
     type: str
-  defaultClassifier:
+  defaultclassifier:
     type: str
   detaileddescription:
     type: str
@@ -90,6 +90,10 @@ mapping:
         enum: ['python2', 'python3']
       feed:
         type: bool
+      isFetchSamples:
+        type: bool
+      sourcemoduleid:
+        type: str
   system:
     type: bool
   hidden:

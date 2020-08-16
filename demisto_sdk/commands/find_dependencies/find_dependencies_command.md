@@ -7,6 +7,7 @@ This command is used for calculating pack dependencies and updating the pack met
 **Arguments**:
 * **-p, --pack_folder_name** Pack folder name to calculate dependencies.
 * **-i, --id_set_path** ID set json full path, mainly for skipping creation of id set.
+* **--no-update** Use to find the pack dependencies without updating the pack metadata.
 
 **Examples**:
 `demisto-sdk find-dependencies -p ImpossibleTraveler`

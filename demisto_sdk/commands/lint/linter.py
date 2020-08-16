@@ -528,7 +528,7 @@ class Linter:
             requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
-        env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True)
+        env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
         template = env.get_template('dockerfile.jinja2')
         try:
             dockerfile = template.render(image=docker_base_image[0],

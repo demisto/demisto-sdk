@@ -2,6 +2,7 @@
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
 * Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
 * Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
+* Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.
@@ -24,7 +25,6 @@
 * Added validation for image links in README files in **validate** command.
 * Added a validation for default value of fetch param in feeds in **validate** command.
 * Fixed an issue where the **Init** command failed on scripts.
-
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

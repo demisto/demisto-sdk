@@ -20,7 +20,7 @@ TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integrat
 def test_format_md():
     """
         Given
-            - A string representing a mrakdown returned from server with <br> tag
+            - A string representing a markdown returned from server with <br> tag
 
         When
             - generating docs
@@ -52,10 +52,11 @@ def test_format_md():
     assert format_md('test<br></br>\nthis<br>again').count('<br/>') == 2
     assert format_md('test<hr></hr>\nthis<hr>again').count('<hr/>') == 2
     # test removing style
-    assert 'style=' not in format_md('<div style="background:#eeeeee; border:1px solid #cccccc; padding:5px 10px">"this is a test"</div>')
+    assert 'style=' not in format_md(
+        '<div style="background:#eeeeee; border:1px solid #cccccc; padding:5px 10px">"this is a test"</div>')
 
 
-def test_stringEscapeMD():
+def test_string_escape_md():
     from demisto_sdk.commands.generate_docs.common import string_escape_md
     res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
     assert '<' not in res
@@ -114,6 +115,15 @@ def test_generate_list_with_text_section():
 
 
 def test_generate_table_section_empty():
+    """Unit test
+    Given
+    - generate_table_section command
+    - script empty metadata
+    When
+    - running the command on the inputs
+    Then
+    - Validate That the script metadata was created correctly.
+    """
     from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([], 'Script Data', 'No data found.', 'This is the metadata of the script.')
@@ -125,6 +135,15 @@ def test_generate_table_section_empty():
 
 
 def test_generate_table_section():
+    """Unit test
+    Given
+    - generate_table_section command
+    - script metadata as a list of dicts
+    When
+    - running the command on the inputs including a docker image
+    Then
+    - Validate That the script metadata was created correctly.
+    """
     from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
@@ -133,6 +152,67 @@ def test_generate_table_section():
     expected_section = [
         '## Script Data', '---', 'This is the metadata of the script.',
         '| **Type** | **Docker Image** |', '| --- | --- |', '| python2 | demisto/python2 |', '']
+
+    assert section == expected_section
+
+
+def test_generate_table_section_with_newlines():
+    """Unit test
+    Given
+    - generate_table_section command
+    - inputs as a list of dicts
+    When
+    - running the command on an input including \n (PcapFilter)
+    Then
+    - Validate That the \n is escaped correctly in a markdown format.
+    """
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
+
+    section = generate_table_section([{
+        'Name': 'RsaDecryptKeyEntryID',
+        'Description': 'This input specifies the file entry id for the RSA decrypt key if the user provided the key'
+                       ' in the incident.', 'Default Value': 'File.EntryID', 'Required': 'Optional'},
+        {'Name': 'PcapFileEntryID',
+         'Description': 'This input specifies the file entry id for the PCAP file if the user provided the file in the'
+                        ' incident. One PCAP file can run per incident.',
+         'Default Value': 'File.EntryID', 'Required': 'Optional'},
+        {'Name': 'WpaPassword',
+         'Description': 'This input value is used to provide a WPA \\(Wi\\-Fi Protected Access\\) password to decrypt'
+                        ' encrypted 802.11 Wi\\-FI traffic.', 'Default Value': '', 'Required': 'Optional'},
+        {'Name': 'PcapFilter',
+         'Description': 'This input specifies a search filter to be used on the PCAP file. Filters can be used to'
+                        ' search only for a specific IP, protocols and other examples. The syntax is the same as in'
+                        ' Wireshark which can be found here:'
+                        ' https://www.wireshark.org/docs/man\\-pages/wireshark\\-filter.html\nFor this playbook, using'
+                        ' a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor'
+                        ' thus reducing the extraction of non relevant files.',
+         'Default Value': '', 'Required': 'Optional'},
+        {'Name': 'ExtractedFilesLimit',
+         'Description': 'This input limits the number of files to be extracted from the PCAP file.'
+                        ' Default value is 5.', 'Default Value': '5', 'Required': 'Optional'}
+    ], 'Playbook Inputs', 'There are no inputs for this playbook.')
+
+    expected_section = [
+        '## Playbook Inputs',
+        '---',
+        '',
+        '| **Name** | **Description** | **Default Value** | **Required** |',
+        '| --- | --- | --- | --- |',
+        '| RsaDecryptKeyEntryID | This input specifies the file entry id for the RSA decrypt key if the user provided'
+        ' the key in the incident. | File.EntryID | Optional |',
+        '| PcapFileEntryID | This input specifies the file entry id for the PCAP file if the user provided the file in'
+        ' the incident. One PCAP file can run per incident. | File.EntryID | Optional |',
+        '| WpaPassword | This input value is used to provide a WPA \\\\\\(Wi\\\\\\-Fi Protected Access\\\\\\) password'
+        ' to decrypt encrypted 802.11 Wi\\\\\\-FI traffic. |  | Optional |',
+        '| PcapFilter | This input specifies a search filter to be used on the PCAP file. Filters can be used to'
+        ' search only for a specific IP, protocols and other examples. The syntax is the same as in Wireshark which'
+        ' can be found here: https://www.wireshark.org/docs/man\\\\\\-pages/wireshark\\\\\\-filter.html<br/>For this'
+        ' playbook, using a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor'
+        ' thus reducing the extraction of non relevant files. |  | Optional |',
+        '| ExtractedFilesLimit | This input limits the number of files to be extracted from the PCAP file. '
+        'Default value is 5. | 5 | Optional |',
+        ''
+    ]
 
     assert section == expected_section
 
@@ -147,7 +227,7 @@ def test_get_inputs():
     inputs, errors = get_inputs(playbook)
 
     expected_query = '(type:ip or type:file or type:Domain or type:URL) -tags:pending_review ' \
-        'and (tags:approved_black or tags:approved_white or tags:approved_watchlist)'
+                     'and (tags:approved_black or tags:approved_white or tags:approved_watchlist)'
     expected_inputs = [
         {
             'Name': 'InputA', 'Description': '', 'Default Value': 'File.Name', 'Required': 'Optional'
@@ -262,7 +342,6 @@ def test_get_used_in():
 
 
 def test_generate_commands_section():
-
     yml_data = {
         'script': {
             'commands': [
@@ -290,7 +369,6 @@ def test_generate_commands_section():
 
 
 def test_generate_commands_section_human_readable():
-
     yml_data = {
         'script': {
             'commands': [
@@ -320,7 +398,6 @@ def test_generate_commands_section_human_readable():
 
 
 def test_generate_commands_with_permissions_section():
-
     yml_data = {
         'script': {
             'commands': [
@@ -386,4 +463,5 @@ class TestGenerateIntegrationDoc:
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        assert open(fake_readme).read() == open(
+            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()

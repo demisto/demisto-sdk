@@ -1,5 +1,6 @@
 # Changelog
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
+* Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

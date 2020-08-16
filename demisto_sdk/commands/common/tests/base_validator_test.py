@@ -1,3 +1,5 @@
+from os.path import join
+
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
                                                    PACK_METADATA_SUPPORT)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -7,9 +9,9 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from TestSuite.test_tools import ChangeCWD
-from os.path import join
 from demisto_sdk.commands.common.tools import get_yaml
+
+from TestSuite.test_tools import ChangeCWD
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK['deprecated'])
 

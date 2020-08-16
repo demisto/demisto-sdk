@@ -9,7 +9,7 @@ from demisto_sdk.commands.run_cmd.runner import Runner
 
 EXPECTED_OUTPUT = [{'ID': 10082, 'Name': 'Projects', 'ShortName': 'Projects', 'SystemName': 'Projects'},
                    {'ID': 10077, 'Name': 'Universe', 'ShortName': 'Universe', 'SystemName': 'Universe'}]
-FILE_PATH = f'{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.log'
+FILE_PATH = f'{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt'
 
 
 @pytest.fixture

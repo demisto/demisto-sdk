@@ -120,7 +120,7 @@ jobs:
         - run:
             name: Install packages
             command: |
-              npm install @mdx-js/mdx fs-extra commander -g
+              npm install @mdx-js/mdx fs-extra commander
         - attach_workspace:
             at: ~/project
         - run:

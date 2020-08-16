@@ -1,13 +1,15 @@
 import filecmp
 import tempfile
-import pytest
 
+import pytest
 from demisto_client.demisto_api import DefaultApi
 
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 EXPECTED_OUTPUT = [{'ID': 10082, 'Name': 'Projects', 'ShortName': 'Projects', 'SystemName': 'Projects'},
                    {'ID': 10077, 'Name': 'Universe', 'ShortName': 'Universe', 'SystemName': 'Universe'}]
+FILE_PATH = f'{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.log'
 
 
 @pytest.fixture
@@ -23,7 +25,7 @@ def test_return_raw_outputs_from_log(mocker, set_environment_variables):
 
     """
     mocker.patch.object(DefaultApi, 'download_file',
-                        return_value='demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.log')
+                        return_value=FILE_PATH)
     runner = Runner('Query', json_to_outputs=True)
     temp = runner._return_raw_outputs_from_log(['123'])
     assert temp == EXPECTED_OUTPUT
@@ -36,10 +38,10 @@ def test_return_raw_outputs_from_log_also_write_log(mocker, set_environment_vari
 
     """
     mocker.patch.object(DefaultApi, 'download_file',
-                        return_value='demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.log')
+                        return_value=FILE_PATH)
     temp_file = tempfile.NamedTemporaryFile()
     runner = Runner('Query', debug_path=temp_file.name, json_to_outputs=True)
     temp = runner._return_raw_outputs_from_log(['123'])
     assert temp == EXPECTED_OUTPUT
-    assert filecmp.cmp('demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.log', temp_file.name)
+    assert filecmp.cmp(FILE_PATH, temp_file.name)
     temp_file.close()

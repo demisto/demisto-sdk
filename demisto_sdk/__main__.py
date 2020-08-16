@@ -525,9 +525,9 @@ def download(**kwargs):
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
 @click.option(
-    "--json-to-outputs", help="Whether to run json_to_outputs command on the Raw Response of the query", is_flag=True)
+    "--json-to-outputs", help="Whether to run json_to_outputs command on the raw response of the query", is_flag=True)
 @click.option(
-    "-p", "--prefix", help="Used with `json-to-outputs` flag. Output prefix like Jira.Ticket, VirusTotal.IP, "
+    "-p", "--prefix", help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
                            "the base path for the outputs that the script generates")
 def run(**kwargs):
     runner = Runner(**kwargs)
@@ -545,7 +545,7 @@ def run(**kwargs):
 )
 @click.option(
     '--url', '-u',
-    help='URL to a Demisto instance. You can also speciFy the URL as an environment variable named: DEMISTO_BASE_URL'
+    help='URL to a Demisto instance. You can also specify the URL as an environment variable named: DEMISTO_BASE_URL'
 )
 @click.option(
     '--playbook_id', '-p',

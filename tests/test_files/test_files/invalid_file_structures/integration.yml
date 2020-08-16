@@ -1,4 +1,0 @@
-name: Invalid Integration
-description: 'reason: "commonfields" is supposed to be a dict object.'
-commonfields: hello
-category: world

@@ -1,4 +1,0 @@
-name: Invalid Script
-description: 'reason: "commonfields" is supposed to be a dict object.'
-commonfields: hello
-script: world

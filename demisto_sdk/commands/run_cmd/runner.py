@@ -4,7 +4,6 @@ import re
 import tempfile
 
 import demisto_client
-
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error, print_v,
                                                print_warning)
@@ -33,13 +32,14 @@ class Runner:
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
     def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
-                 verbose: bool = False, json_to_outputs=False):
+                 verbose: bool = False, json_to_outputs: bool = False, prefix: str = ''):
         self.query = query if query.startswith('!') else f'!{query}'
         self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.json2outputs = json_to_outputs
+        self.prefix = prefix
 
         if self.debug or self.json2outputs:
             self.query += ' debug-mode="true"'
@@ -55,28 +55,29 @@ class Runner:
             log_ids = None
             print_error(str(err))
 
-        if self.debug and not self.json2outputs:
+        if self.debug:
             if not log_ids:
                 print_warning('Entry with debug log not found')
             else:
                 self._export_debug_log(log_ids)
 
         if self.json2outputs:
-            if not log_ids:
-                print_warning('Entry with debug log not found')
+            if not self.prefix:
+                print_error("A prefix for the outputs is needed for this command. Please provide one")
             else:
                 raw_output_json = self._return_raw_outputs_from_log(log_ids)
-                with tempfile.NamedTemporaryFile(mode='w+') as f:
-                    if isinstance(raw_output_json, dict):
-                        f.write(json.dumps(raw_output_json))
-                    if isinstance(raw_output_json, list):
-                        f.write(json.dumps(raw_output_json[0]))
-                    f.seek(0)
-                    file_path = f.name
-                    command = self.query.split(' ')[0]
-                    print("What would you like the base path for the outputs that the script generates to be?")
-                    prefix = input()
-                    json_to_outputs(command, file_path, prefix)
+                if raw_output_json:
+                    with tempfile.NamedTemporaryFile(mode='w+') as f:
+                        if isinstance(raw_output_json, dict):
+                            f.write(json.dumps(raw_output_json))
+                        if isinstance(raw_output_json, list):
+                            f.write(json.dumps(raw_output_json[0]))
+                        f.seek(0)
+                        file_path = f.name
+                        command = self.query.split(' ')[0]
+                        json_to_outputs(command, file_path, self.prefix)
+                else:
+                    print_error("Could not extract raw output as JSON from command")
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance.
@@ -175,7 +176,11 @@ class Runner:
                 with open(result, 'r+') as log_info:
                     for line in log_info:
                         if self.RAW_RESPONSE_HEADER.match(line):
-                            return json.loads(log_info.readline())
+                            try:
+                                return json.loads(log_info.readline())
+                            except Exception:
+                                pass
+            return dict()
         else:
             temp_dict = dict()
             with open(self.debug_path, 'w+b') as output_file:
@@ -184,14 +189,15 @@ class Runner:
                     with open(result, 'r+') as log_info:
                         for line in log_info:
                             if self.RAW_RESPONSE_HEADER.match(line):
-                                temp_line = log_info.readline()
-                                temp_dict = json.loads(temp_line)
-                                output_file.write(temp_line.encode('utf-8'))
-                            else:
                                 output_file.write(line.encode('utf-8'))
+                                line = log_info.readline()
+                                try:
+                                    temp_dict = json.loads(line)
+                                except Exception:
+                                    pass
+                            output_file.write(line.encode('utf-8'))
             print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
             return temp_dict
-        return dict()
 
     def execute_command(self, command: str):
         playground_id = self._get_playground_id()

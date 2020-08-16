@@ -183,7 +183,7 @@ def test_generate_table_section_with_newlines():
          'Description': 'This input specifies a search filter to be used on the PCAP file. Filters can be used to'
                         ' search only for a specific IP, protocols and other examples. The syntax is the same as in'
                         ' Wireshark which can be found here:'
-                        ' https://www.wireshark.org/docs/man\\-pages/wireshark\\-filter.html\nFor this playbook, using'
+                        ' https://www.wireshark.org/docs/man-pages/wireshark-filter.html \nFor this playbook, using'
                         ' a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor'
                         ' thus reducing the extraction of non relevant files.',
          'Default Value': '', 'Required': 'Optional'},
@@ -202,11 +202,11 @@ def test_generate_table_section_with_newlines():
         ' the key in the incident. | File.EntryID | Optional |',
         '| PcapFileEntryID | This input specifies the file entry id for the PCAP file if the user provided the file in'
         ' the incident. One PCAP file can run per incident. | File.EntryID | Optional |',
-        '| WpaPassword | This input value is used to provide a WPA \\\\\\(Wi\\\\\\-Fi Protected Access\\\\\\) password'
-        ' to decrypt encrypted 802.11 Wi\\\\\\-FI traffic. |  | Optional |',
+        '| WpaPassword | This input value is used to provide a WPA \\(Wi\\-Fi Protected Access\\) password'
+        ' to decrypt encrypted 802.11 Wi\\-FI traffic. |  | Optional |',
         '| PcapFilter | This input specifies a search filter to be used on the PCAP file. Filters can be used to'
         ' search only for a specific IP, protocols and other examples. The syntax is the same as in Wireshark which'
-        ' can be found here: https://www.wireshark.org/docs/man\\\\\\-pages/wireshark\\\\\\-filter.html<br/>For this'
+        ' can be found here: https://www.wireshark.org/docs/man-pages/wireshark-filter.html <br/>For this'
         ' playbook, using a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor'
         ' thus reducing the extraction of non relevant files. |  | Optional |',
         '| ExtractedFilesLimit | This input limits the number of files to be extracted from the PCAP file. '

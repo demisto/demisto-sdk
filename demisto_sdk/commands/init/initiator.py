@@ -86,7 +86,7 @@ class Initiator:
         self.full_output_path = ''
 
         self.name = name
-        if name is not None and len(name) != 0 and not self.contribution:
+        if name and not self.contribution:
             while ' ' in name:
                 name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 

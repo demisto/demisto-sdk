@@ -3,7 +3,6 @@ import json
 import os
 
 import click
-
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
                                                    PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,

@@ -153,6 +153,10 @@ SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbo
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"
 
+SOURCE_FORMAT_TEST_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_test_playbook.yml"
+DESTINATION_FORMAT_TEST_PLAYBOOK = "TestPlaybook/test-playbook.yml"
+TEST_PLAYBOOK_PATH = "TestPlaybook"
+
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 

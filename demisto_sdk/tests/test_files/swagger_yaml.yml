@@ -203,22 +203,6 @@ script:
       required: true
     description: Finds Pets by status
     name: testswagger-find-pets-by-status
-    outputs:
-    - contextPath: TestSwagger.Pet.id
-      description: ''
-      type: Number
-    - contextPath: TestSwagger.Pet.name
-      description: ''
-      type: String
-    - contextPath: TestSwagger.Pet.tags.id
-      description: ''
-      type: Number
-    - contextPath: TestSwagger.Pet.tags.name
-      description: ''
-      type: String
-    - contextPath: TestSwagger.Pet.status
-      description: pet status in the store
-      type: String
   - arguments:
     - description: Tags to filter by
       isArray: true

@@ -729,16 +729,16 @@ class IntegrationValidator(ContentEntityValidator):
         return ans
 
     def is_valid_deprecated_integration(self) -> bool:
-        ans = True
-        deprecated = self.current_file.get('deprecated', False)
+        is_valid = True
+        is_deprecated = self.current_file.get('deprecated', False)
         display_name = self.current_file.get('display', '')
         description = self.current_file.get('description', '')
-        if deprecated:
+        if is_deprecated:
             if not display_name.startswith('Deprecated.') or not description.startswith('Deprecated.'):
                 error_message, error_code = Errors.invalid_deprecated_integration(display_name, description)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
-        return ans
+                    is_valid = False
+        return is_valid
 
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.

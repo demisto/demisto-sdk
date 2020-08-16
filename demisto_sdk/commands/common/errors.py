@@ -372,12 +372,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration(display_name, description):
-        ans = ''
+        error_answer = ''
         if not display_name.startswith('Deprecated.'):
-            ans += 'The display_name (display) of your integration should start with "Deprecated.".\n'
+            error_answer += 'The display_name (display) of your integration should start with "Deprecated.".\n'
         if not description.startswith('Deprecated.'):
-            ans += 'The description of your integration should start with "Deprecated.".\n'
-        return ans
+            error_answer += 'The description of your integration should start with "Deprecated.".\n'
+        return error_answer
 
     @staticmethod
     @error_code_decorator
@@ -388,7 +388,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return 'The script comment have to start with "Deprecated."'
+        return 'The script comment has to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator
@@ -684,7 +684,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description have to start with "Deprecated."'
+        return 'The playbook description has to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator

@@ -95,7 +95,7 @@ class TestIncidentFieldValidation:
         assert "The system key must be set to False" in result.stdout
 
 
-class TestDeprecatedValidation:
+class TestDeprecatedIntegration:
     def test_valid_deprecated_integration(self, mocker, repo):
         """
         Given
@@ -1114,7 +1114,7 @@ class TestPlaybookValidation:
 
 
 class TestPlaybookValidateDeprecated:
-    def test_valid_playbook_deprecated(self, mocker, repo):
+    def test_valid_deprecated_playbook(self, mocker, repo):
         """
         Given
         - a valid Playbook Deprecated.
@@ -1132,7 +1132,7 @@ class TestPlaybookValidateDeprecated:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_playbook_deprecated(self, mocker):
+    def test_invalid_deprecated_playbook(self, mocker):
         """
         Given
         - an invalid Playbook - there is no Deprecated. in the description.
@@ -1148,7 +1148,7 @@ class TestPlaybookValidateDeprecated:
         result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
-        assert 'The playbook description have to start with "Deprecated."' in result.stdout
+        assert 'The playbook description has to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1307,7 +1307,6 @@ class TestScriptDeprecatedValidation:
         - Ensure validate passes and identifies the file as a deprecated script.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
-        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml['deprecated'] = True
@@ -1342,7 +1341,7 @@ class TestScriptDeprecatedValidation:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC101' in result.stdout
-        assert 'The script comment have to start with "Deprecated."' in result.stdout
+        assert 'The script comment has to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
 

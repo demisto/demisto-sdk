@@ -209,12 +209,12 @@ class ScriptValidator(ContentEntityValidator):
         return True
 
     def is_valid_deprecated_script(self) -> bool:
-        ans = True
+        is_valid = True
         deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
         if deprecated:
             if not comment.startswith('Deprecated.'):
                 error_message, error_code = Errors.invalid_deprecated_script()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
-        return ans
+                    is_valid = False
+        return is_valid

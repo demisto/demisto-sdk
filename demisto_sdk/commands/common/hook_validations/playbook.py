@@ -244,12 +244,12 @@ class PlaybookValidator(ContentEntityValidator):
         return tasks_bucket.issubset(next_tasks_bucket)
 
     def is_valid_deprecated_playbook(self) -> bool:
-        ans = True
+        is_valid = True
         hidden = self.current_file.get('hidden', False)
         description = self.current_file.get('description', '')
         if hidden:
             if not description.startswith('Deprecated.'):
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
-        return ans
+                    is_valid = False
+        return is_valid

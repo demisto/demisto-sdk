@@ -2,6 +2,7 @@
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
 * Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
 * Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
+* Fixed an issue in the **openapi-codegen** command where missing reference fields in the swagger JSON caused errors.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

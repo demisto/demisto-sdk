@@ -126,7 +126,7 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     for item in data:
         tmp_item = '|'
         for key in item:
-            tmp_item += f" {item.get(key, '')} |"
+            tmp_item += f" {string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True)} |"
         section.append(tmp_item)
 
     section.append('')

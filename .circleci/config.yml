@@ -115,14 +115,18 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
-        - node/install
+        - node/install:
+            install-npm: false
+        - run:
+            name: Install packages
+            command: |
+              npm install @mdx-js/mdx fs-extra commander -g
         - attach_workspace:
             at: ~/project
         - run:
             name: Test validate files and yaml
             when: always
             command: |
-              npm install @mdx-js/mdx fs-extra commander -g
               . .tox/py38/bin/activate
 
               cd content

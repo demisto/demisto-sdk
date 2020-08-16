@@ -1,0 +1,297 @@
+{
+	"id": "eff434df-7c1c-4945-8cb7-8272be0b4a5d",
+	"version": 1,
+	"modified": "2020-04-23T17:09:20.533948+03:00",
+	"sortValues": null,
+	"packID": "",
+	"itemVersion": "",
+	"fromServerVersion": "",
+	"toServerVersion": "",
+	"vcShouldIgnore": false,
+	"commitMessage": "",
+	"shouldCommit": false,
+	"fromDate": "0001-01-01T00:00:00Z",
+	"toDate": "0001-01-01T00:00:00Z",
+	"period": {
+		"by": "",
+		"byTo": "",
+		"byFrom": "days",
+		"toValue": null,
+		"fromValue": 7,
+		"field": ""
+	},
+	"fromDateLicense": "0001-01-01T00:00:00Z",
+	"name": "upload_test",
+	"prevName": "upload_test",
+	"layout": [
+		{
+			"id": "00fb41d0-856c-11ea-8801-5b425098c262",
+			"forceRange": false,
+			"x": 0,
+			"y": 0,
+			"i": "00fb41d0-856c-11ea-8801-5b425098c262",
+			"w": 4,
+			"h": 3,
+			"widget": {
+				"id": "active-incidents-by-type",
+				"version": 2,
+				"modified": "2020-04-21T15:59:10.422184+03:00",
+				"sortValues": null,
+				"packID": "",
+				"itemVersion": "",
+				"fromServerVersion": "",
+				"toServerVersion": "",
+				"propagationLabels": [
+					"all"
+				],
+				"vcShouldIgnore": false,
+				"commitMessage": "",
+				"shouldCommit": false,
+				"name": "Active Incidents - Line chart",
+				"prevName": "Active Incidents - Line chart",
+				"dataType": "incidents",
+				"widgetType": "line",
+				"query": "-category:job and -status:archived and -status:closed",
+				"sort": null,
+				"isPredefined": true,
+				"dateRange": {
+					"fromDate": "0001-01-01T00:00:00Z",
+					"toDate": "0001-01-01T00:00:00Z",
+					"period": {
+						"by": "",
+						"byTo": "",
+						"byFrom": "days",
+						"toValue": null,
+						"fromValue": 7,
+						"field": ""
+					},
+					"fromDateLicense": "0001-01-01T00:00:00Z"
+				},
+				"params": {
+					"groupBy": [
+						"occurred(d)",
+						"type"
+					]
+				},
+				"size": 0,
+				"category": ""
+			}
+		},
+		{
+			"id": "01858070-856c-11ea-8801-5b425098c262",
+			"forceRange": false,
+			"x": 2,
+			"y": 3,
+			"i": "01858070-856c-11ea-8801-5b425098c262",
+			"w": 2,
+			"h": 2,
+			"widget": {
+				"id": "active-incidents-by-severity",
+				"version": 2,
+				"modified": "2020-04-21T15:59:11.759802+03:00",
+				"sortValues": null,
+				"packID": "",
+				"itemVersion": "",
+				"fromServerVersion": "",
+				"toServerVersion": "",
+				"propagationLabels": [
+					"all"
+				],
+				"vcShouldIgnore": false,
+				"commitMessage": "",
+				"shouldCommit": false,
+				"name": "Active Incidents - Pie chart",
+				"prevName": "Active Incidents - Pie chart",
+				"dataType": "incidents",
+				"widgetType": "pie",
+				"query": "-category:job and -status:archived and -status:closed",
+				"sort": null,
+				"isPredefined": true,
+				"dateRange": {
+					"fromDate": "0001-01-01T00:00:00Z",
+					"toDate": "0001-01-01T00:00:00Z",
+					"period": {
+						"by": "",
+						"byTo": "",
+						"byFrom": "days",
+						"toValue": null,
+						"fromValue": 7,
+						"field": ""
+					},
+					"fromDateLicense": "0001-01-01T00:00:00Z"
+				},
+				"params": {
+					"groupBy": [
+						"severity"
+					]
+				},
+				"size": 0,
+				"category": ""
+			}
+		},
+		{
+			"id": "01fc5e20-856c-11ea-8801-5b425098c262",
+			"forceRange": false,
+			"x": 4,
+			"y": 0,
+			"i": "01fc5e20-856c-11ea-8801-5b425098c262",
+			"w": 2,
+			"h": 2,
+			"widget": {
+				"id": "incidents-assigned-by-user",
+				"version": 3,
+				"modified": "2020-04-21T15:59:12.095817+03:00",
+				"sortValues": null,
+				"packID": "",
+				"itemVersion": "",
+				"fromServerVersion": "",
+				"toServerVersion": "",
+				"propagationLabels": [
+					"all"
+				],
+				"vcShouldIgnore": false,
+				"commitMessage": "",
+				"shouldCommit": false,
+				"name": "Active Incidents Assigned by User",
+				"prevName": "Active Incidents Assigned by User",
+				"dataType": "incidents",
+				"widgetType": "bar",
+				"query": "-category:job and -status:archived and -status:closed",
+				"sort": null,
+				"isPredefined": true,
+				"dateRange": {
+					"fromDate": "0001-01-01T00:00:00Z",
+					"toDate": "0001-01-01T00:00:00Z",
+					"period": {
+						"by": "",
+						"byTo": "",
+						"byFrom": "days",
+						"toValue": null,
+						"fromValue": 7,
+						"field": ""
+					},
+					"fromDateLicense": "0001-01-01T00:00:00Z"
+				},
+				"params": {
+					"groupBy": [
+						"owner"
+					]
+				},
+				"size": 0,
+				"category": ""
+			}
+		},
+		{
+			"id": "02cd1ba0-856c-11ea-8801-5b425098c262",
+			"forceRange": false,
+			"x": 6,
+			"y": 0,
+			"i": "02cd1ba0-856c-11ea-8801-5b425098c262",
+			"w": 2,
+			"h": 2,
+			"widget": {
+				"id": "average-incident-duration-by-role",
+				"version": 2,
+				"modified": "2020-04-21T15:59:10.944076+03:00",
+				"sortValues": null,
+				"packID": "",
+				"itemVersion": "",
+				"fromServerVersion": "",
+				"toServerVersion": "",
+				"propagationLabels": [
+					"all"
+				],
+				"vcShouldIgnore": false,
+				"commitMessage": "",
+				"shouldCommit": false,
+				"name": "Average Incident Duration by Role (Avg)",
+				"prevName": "Average Incident Duration by Role (Avg)",
+				"dataType": "incidents",
+				"widgetType": "column",
+				"query": "status:closed",
+				"sort": null,
+				"isPredefined": true,
+				"dateRange": {
+					"fromDate": "0001-01-01T00:00:00Z",
+					"toDate": "0001-01-01T00:00:00Z",
+					"period": {
+						"by": "",
+						"byTo": "",
+						"byFrom": "days",
+						"toValue": null,
+						"fromValue": 7,
+						"field": ""
+					},
+					"fromDateLicense": "0001-01-01T00:00:00Z"
+				},
+				"params": {
+					"groupBy": [
+						"roles"
+					],
+					"keys": [
+						"avg|openDuration / (3600*24)"
+					]
+				},
+				"size": 5,
+				"category": ""
+			}
+		},
+		{
+			"id": "03084fe0-856c-11ea-8801-5b425098c262",
+			"forceRange": false,
+			"x": 8,
+			"y": 0,
+			"i": "03084fe0-856c-11ea-8801-5b425098c262",
+			"w": 2,
+			"h": 2,
+			"widget": {
+				"id": "closed-incidents-by-role",
+				"version": 2,
+				"modified": "2020-04-21T15:59:11.853809+03:00",
+				"sortValues": null,
+				"packID": "",
+				"itemVersion": "",
+				"fromServerVersion": "",
+				"toServerVersion": "",
+				"propagationLabels": [
+					"all"
+				],
+				"vcShouldIgnore": false,
+				"commitMessage": "",
+				"shouldCommit": false,
+				"name": "Closed Incidents by Role",
+				"prevName": "Closed Incidents by Role",
+				"dataType": "incidents",
+				"widgetType": "bar",
+				"query": "status:closed",
+				"sort": null,
+				"isPredefined": true,
+				"dateRange": {
+					"fromDate": "0001-01-01T00:00:00Z",
+					"toDate": "0001-01-01T00:00:00Z",
+					"period": {
+						"by": "",
+						"byTo": "",
+						"byFrom": "days",
+						"toValue": null,
+						"fromValue": 7,
+						"field": ""
+					},
+					"fromDateLicense": "0001-01-01T00:00:00Z"
+				},
+				"params": {
+					"groupBy": [
+						"roles"
+					]
+				},
+				"size": 10,
+				"category": ""
+			}
+		}
+	],
+	"system": false,
+	"isCommon": false,
+	"shared": false,
+	"owner": "admin",
+	"locked": false
+}

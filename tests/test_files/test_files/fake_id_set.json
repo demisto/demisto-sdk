@@ -1,0 +1,35 @@
+{
+  "scripts": [
+    {
+      "Fake script": {
+        "name": "Fake script",
+        "file_path": "Fake_script.yml",
+        "implementing_scripts": [
+          "Test script"
+        ]
+      }
+    }
+  ],
+  "playbooks": [
+    {
+      "Fake_playbook": {
+        "name": "Fake playbook",
+        "file_path": "Fake_playbook.yml",
+        "implementing_scripts": [
+          "Test script"
+        ]
+      }
+    }
+  ],
+  "TestPlaybooks": [
+    {
+      "Fake_test_playbook": {
+        "name": "Fake test playbook",
+        "file_path": "Fake_test_playbook.yml",
+        "implementing_scripts": [
+          "Test script"
+        ]
+      }
+    }
+  ]
+}

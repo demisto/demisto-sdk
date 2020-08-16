@@ -1,0 +1,46 @@
+category: Messaging
+commonfields:
+  id: Google
+  version: -1
+configuration:
+- display: Credentials
+  hidden: false
+  name: credentials
+  defaultvalue: ""
+  type: 9
+  required: true
+- display: Awake Security server address
+  name: server
+  defaultvalue: https://example.awake.cloud
+  type: 0
+  required: true
+- display: 'test'
+  name: threat_behaviors
+  defaultvalue: ""
+  type: 0
+  required: false
+- display: Period between incident fetch interval (in minutes)
+  name: fetch_interval
+  defaultvalue: "1"
+  type: 0
+  required: true
+- defaultvalue: 'true'
+  display: Long Running Instance
+  name: longRunning
+  required: false
+  type: 8
+  hidden: true
+description: Google Cloud Pub
+display: Google Cloud
+name: Google
+script:
+  dockerimage: demisto/googleapi-python3:1.0.0.7470
+  feed: false
+  isfetch: false
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python
+fromversion: 5.0.0

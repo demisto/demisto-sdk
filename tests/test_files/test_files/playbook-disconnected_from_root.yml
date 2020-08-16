@@ -1,0 +1,202 @@
+elasticcommonfields: {}
+id: disconnected_from_root
+version: -1
+name: disconnected_from_root
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 312b6357-c197-4a13-8a42-ee06e1400bbb
+    type: start
+    task:
+      elasticcommonfields: {}
+      id: 312b6357-c197-4a13-8a42-ee06e1400bbb
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 65
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "1":
+    id: "1"
+    taskid: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+    type: condition
+    task:
+      elasticcommonfields: {}
+      id: 1a811f5b-7f43-4d4a-8ccd-9a5ad76a6af6
+      version: -1
+      name: Condition Task
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+      - "5"
+      "no":
+      - "4"
+      "yes":
+      - "3"
+    separatecontext: false
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: "1"
+            iscontext: true
+          right:
+            value:
+              simple: "1"
+    - label: "no"
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: "1"
+            iscontext: true
+          right:
+            value:
+              simple: "0"
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 225
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "3":
+    id: "3"
+    taskid: 7215f544-7d13-4a96-84a1-75387ef05fd4
+    type: title
+    task:
+      elasticcommonfields: {}
+      id: 7215f544-7d13-4a96-84a1-75387ef05fd4
+      version: -1
+      name: Done Yes
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 415
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "4":
+    id: "4"
+    taskid: f8f88970-ef38-4c94-88be-c0c7fd8bc238
+    type: title
+    task:
+      elasticcommonfields: {}
+      id: f8f88970-ef38-4c94-88be-c0c7fd8bc238
+      version: -1
+      name: Done No
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 415
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "5":
+    id: "5"
+    taskid: 147ad254-0d1f-4230-8ff0-461b071a9120
+    type: regular
+    task:
+      elasticcommonfields: {}
+      id: 147ad254-0d1f-4230-8ff0-461b071a9120
+      version: -1
+      name: Done Else
+      type: regular
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "6":
+    id: "6"
+    taskid: fa32aa6e-8bb5-4589-81ff-5b1a66dedc08
+    type: regular
+    task:
+      elasticcommonfields: {}
+      id: fa32aa6e-8bb5-4589-81ff-5b1a66dedc08
+      version: -1
+      name: Disconnected
+      type: regular
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+view: |-
+  {
+    "linkLabelsPosition": {
+      "1_4_no": 0.46
+    },
+    "paper": {
+      "dimensions": {
+        "height": 445,
+        "width": 1240,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []

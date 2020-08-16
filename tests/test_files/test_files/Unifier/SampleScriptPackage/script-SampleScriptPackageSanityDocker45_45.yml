@@ -1,0 +1,29 @@
+args:
+- default: false
+  description: 'Say hello to:'
+  isArray: false
+  name: name
+  required: false
+  secret: false
+comment: Hello World Script
+toversion: 4.5.9
+commonfields:
+  id: TestScriptPackage
+  version: -1
+enabled: false
+name: TestScriptPackage
+outputs:
+- contextPath: HelloWorld.hello
+  description: The result of hello
+  type: String
+script: "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\nif __name__\
+  \ in ('builtins', '__builtin__', '__main__'):\n    main()\n"
+system: false
+tags:
+- hello
+- world
+type: python
+subtype: python3
+timeout: '0'
+dockerimage: demisto/python:1.2.3.4
+display: TestScriptPackage

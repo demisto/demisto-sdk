@@ -1,0 +1,528 @@
+commonfields:
+  version: -1
+configuration:
+- defaultvalue: https://api.integrationTestsecurity.com
+  display: Server URL (e.g.  https://api.integrationTestsecurity.com)
+  name: url
+  required: false
+  type: 0
+- display: integrationTest API key
+  name: key
+  required: true
+  type: 4
+- defaultvalue: 'false'
+  display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+- defaultvalue: 'false'
+  display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+description: Use the integrationTest v2 integration to search and update vulnerabilities, schedule
+  a run connector, and manage tags and attributes.
+display: integrationTest v2
+name: integrationTestv2
+script:
+  commands:
+  - arguments:
+    - auto: PREDEFINED
+      default: false
+      description: Whether to return vulnerabilities that integrationTest deems a top priority
+        to fix. Can be "true" or "false".
+      isArray: true
+      name: top-priority
+      predefined:
+      - 'true'
+      - 'false'
+      required: false
+      secret: false
+    - default: false
+      description: The minimum vulnerability score for which to return vulnerabilities.
+      isArray: false
+      name: min-score
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: The status of the vulnerability. Can be "open", "closed", "risk_accepted",
+        or "false_positive".
+      isArray: true
+      name: status
+      predefined:
+      - open
+      - closed
+      - risk_accepted
+      - false_positive
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '500'
+      description: The maximum number of vulnerabilities to return. The default value
+        is 500.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: true
+      defaultValue: 'True'
+      description: Whether to flush to context. Can be "True" or "False". The default
+        value is "True".
+      isArray: false
+      name: to_context
+      predefined:
+      - 'True'
+      - 'False'
+      required: false
+      secret: false
+    - default: false
+      description: The vulnerability ID for which to search.
+      isArray: true
+      name: id
+      required: false
+      secret: false
+    deprecated: false
+    description: Searches for vulnerabilities in integrationTest.
+    execution: false
+    name: integrationTest-search-vulnerabilities
+    outputs:
+    - contextPath: integrationTest.Vulnerabilities.AssetID
+      description: The asset ID related to the vulnerability.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.Connectors.DefinitionName
+      description: The connector definition name related to the vulnerability.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.Connectors.ID
+      description: The connector ID related to the vulnerability.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.Connectors.Name
+      description: The connector name related to the vulnerability.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.Connectors.Vendor
+      description: The connector vendor related to the vulnerability.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.CveID
+      description: The CVE ID related to the vulnerability.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.FixID
+      description: The fix ID related to the vulnerability.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.Patch
+      description: Whether there is a patch related to the vulnerability.
+      type: Boolean
+    - contextPath: integrationTest.Vulnerabilities.ScannerVulnerabilities.ExternalID
+      description: The vulnerability scanner external ID.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.ScannerVulnerabilities.Open
+      description: Whether the vulnerability scanner is open.
+      type: Boolean
+    - contextPath: integrationTest.Vulnerabilities.ScannerVulnerabilities.Port
+      description: The vulnerability scanner port.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.Score
+      description: The vulnerability score.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.ServiceTicket.DueDate
+      description: The service ticket due date.
+      type: Date
+    - contextPath: integrationTest.Vulnerabilities.ServiceTicket.ExternalIdentifier
+      description: The service ticket external identifier.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.ServiceTicket.Status
+      description: The service ticket status.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.ServiceTicket.TicketType
+      description: The service ticket type.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.Severity
+      description: The vulnerability severity.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.Status
+      description: The vulnerability status.
+      type: String
+    - contextPath: integrationTest.Vulnerabilities.Threat
+      description: The vulnerability threat.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.TopPriority
+      description: The vulnerability priority.
+      type: Number
+    - contextPath: integrationTest.Vulnerabilities.ID
+      description: The vulnerability ID.
+      type: Number
+  - arguments:
+    - default: false
+      description: The connector ID to run.
+      isArray: false
+      name: id
+      required: true
+      secret: false
+    deprecated: false
+    description: Executes a run of the specified connector. If file based, it will
+      use the most recently uploaded data file.
+    execution: true
+    name: integrationTest-run-connector
+  - arguments:
+    - default: false
+      description: The vulnerability ID for which to search.
+      isArray: true
+      name: id
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Whether to return vulnerabilities that integrationTest deems a top priority
+        to fix. Can be "true" or "false".
+      isArray: true
+      name: top-priority
+      predefined:
+      - 'true'
+      - 'false'
+      required: false
+      secret: false
+    - default: false
+      description: The minimum vulnerability score for which to return vulnerabilities.
+      isArray: false
+      name: min-score
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: The status of the vulnerability. Can be "open", "closed", "risk_accepted",
+        or "false_positive".
+      isArray: true
+      name: status
+      predefined:
+      - open
+      - closed
+      - risk_accepted
+      - false_positive
+      required: false
+      secret: false
+    - default: false
+      description: vulnerabilities for search.
+      isArray: false
+      name: vulnerabilities
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '500'
+      description: The maximum number of vulnerabilities to return. The default value
+        is 500.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: 'True'
+      description: Whether to flush to context. Can be "True" or "False". The default
+        value is "True".
+      isArray: false
+      name: to_context
+      predefined:
+      - 'True'
+      - 'False'
+      required: false
+      secret: false
+    deprecated: false
+    description: Filters fixes by a given set of vulnerability and asset parameters
+      and returns the filtered fixes.
+    execution: false
+    name: integrationTest-search-fixes
+    outputs:
+    - contextPath: integrationTest.Fixes.ID
+      description: The fix ID.
+      type: Number
+    - contextPath: integrationTest.Fixes.Title
+      description: The fix title.
+      type: String
+    - contextPath: integrationTest.Fixes.Assets.ID
+      description: The asset ID related to the current fix.
+      type: Number
+    - contextPath: integrationTest.Fixes.Assets.Locator
+      description: The asset locator related to the current fix.
+      type: String
+    - contextPath: integrationTest.Fixes.Assets.PrimaryLocator
+      description: The asset primary locator related to the current fix.
+      type: String
+    - contextPath: integrationTest.Fixes.Assets.DisplayLocator
+      description: The asset display locator related to the current fix.
+      type: String
+    - contextPath: integrationTest.Fixes.Vulnerabilities.ID
+      description: The vulnerability ID related to the current fix.
+      type: Number
+    - contextPath: integrationTest.Fixes.Vulnerabilities.ServiceTicketStatus
+      description: The vulnerability service ticket status related to the current
+        fix.
+      type: String
+    - contextPath: integrationTest.Fixes.Vulnerabilities.ScannerIDs
+      description: The vulnerability scanner IDs related to the current fix.
+      type: Number
+    - contextPath: integrationTest.Fixes.CveID
+      description: The CVE-ID list related to the current fix.
+      type: String
+    - contextPath: integrationTest.Fixes.LastUpdatedAt
+      description: The timestamp when the current fix was last updated.
+      type: String
+    - contextPath: integrationTest.Fixes.Category
+      description: The category of fix.
+      type: String
+    - contextPath: integrationTest.Fixes.VulnerabilityCount
+      description: The vulnerability count of the fix.
+      type: Number
+    - contextPath: integrationTest.Fixes.MaxScore
+      description: The maximum score of the fix.
+      type: Number
+  - arguments:
+    - default: false
+      description: The ID of the asset to update.
+      isArray: false
+      name: id
+      required: true
+      secret: false
+    - default: false
+      description: Notes about the asset.
+      isArray: false
+      name: notes
+      required: true
+      secret: false
+    deprecated: false
+    description: Updates the attributes of a single asset.
+    execution: false
+    name: integrationTest-update-asset
+  - arguments:
+    - default: false
+      description: The ID of the vulnerability to update.
+      isArray: false
+      name: id
+      required: true
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: The status of the vulnerability. Can be "open", "closed", "risk_accepted",
+        or "false_positive".
+      isArray: false
+      name: status
+      predefined:
+      - open
+      - closed
+      - risk_accepted
+      - false_positive
+      required: false
+      secret: false
+    - default: false
+      description: Notes about the vulnerability.
+      isArray: false
+      name: notes
+      required: false
+      secret: false
+    deprecated: false
+    description: Updates the attributes of a single vulnerability.
+    execution: false
+    name: integrationTest-update-vulnerability
+  - deprecated: false
+    description: Returns all connectors.
+    execution: false
+    name: integrationTest-get-connectors
+    outputs:
+    - contextPath: integrationTest.ConnectorsList.ID
+      description: The connector ID.
+      type: Number
+    - contextPath: integrationTest.ConnectorsList.Name
+      description: The connector name.
+      type: String
+    - contextPath: integrationTest.ConnectorsList.Running
+      description: The running connector.
+      type: Boolean
+    - contextPath: integrationTest.ConnectorsList.Host
+      description: The connector host.
+      type: String
+  - arguments:
+    - default: false
+      description: The asset ID to search for.
+      isArray: true
+      name: id
+      required: false
+      secret: false
+    - default: false
+      description: The hostname of the asset to search for.
+      isArray: true
+      name: hostname
+      required: false
+      secret: false
+    - default: false
+      description: The minimum vulnerability score for which to return vulnerabilities.
+      isArray: false
+      name: min-score
+      required: false
+      secret: false
+    - default: false
+      description: The tags by which to search.
+      isArray: true
+      name: tags
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '500'
+      description: The maximum number of vulnerabilities to return. The default value
+        is 500.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: 'True'
+      description: Whether to print output to context. Can be "True" or "False". The
+        default value is "True".
+      isArray: false
+      name: to_context
+      predefined:
+      - 'True'
+      - 'False'
+      required: false
+      secret: false
+    deprecated: false
+    description: Searches for assets.
+    execution: false
+    name: integrationTest-search-assets
+    outputs:
+    - contextPath: integrationTest.Assets.ID
+      description: The asset ID.
+      type: Number
+    - contextPath: integrationTest.Assets.Hostname
+      description: The hostname of the asset.
+      type: String
+    - contextPath: integrationTest.Assets.IpAddress
+      description: The asset IP address.
+      type: String
+    - contextPath: integrationTest.Assets.Score
+      description: The asset risk score.
+      type: Number
+    - contextPath: integrationTest.Assets.VulnerabilitiesCount
+      description: The number of vulnerabilities associated with the asset.
+      type: Number
+    - contextPath: integrationTest.Assets.OperatingSystem
+      description: The asset operating system.
+      type: String
+    - contextPath: integrationTest.Assets.Tags
+      description: A list of the asset's tags.
+      type: String
+    - contextPath: integrationTest.Assets.Fqdn
+      description: The asset FQDN.
+      type: String
+    - contextPath: integrationTest.Assets.Status
+      description: The asset status.
+      type: String
+    - contextPath: integrationTest.Assets.Owner
+      description: The asset owner.
+      type: String
+    - contextPath: integrationTest.Assets.Priority
+      description: The asset priority.
+      type: Number
+    - contextPath: integrationTest.Assets.Notes
+      description: Notes of current asset.
+      type: String
+    - contextPath: integrationTest.Assets.OperatingSystem
+      description: Operating system of asset
+      type: String
+  - arguments:
+    - default: false
+      description: The asset ID for which to get vulnerabilities.
+      isArray: true
+      name: id
+      required: true
+      secret: false
+    - default: false
+      defaultValue: '500'
+      description: The maximum number of vulnerabilities to return. The default value
+        is 500.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: 'True'
+      description: Whether to print output to context. Can be "True" or "False". The
+        default value is "True".
+      isArray: false
+      name: to_context
+      predefined:
+      - 'True'
+      - 'False'
+      required: false
+      secret: false
+    deprecated: false
+    description: Gets vulnerabilities of the specified asset.
+    execution: false
+    name: integrationTest-get-asset-vulnerabilities
+    outputs:
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.AssetID
+      description: The ID of the asset that this vulnerability is associated with.
+      type: Number
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.CveID
+      description: 'The CVE ID of the vulnerability associated with the asset. '
+      type: String
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.ID
+      description: 'The ID of the vulnerability associated withe the asset '
+      type: Number
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.Patch
+      description: 'Whether there is a patch for the vulnerability associated with
+        the asset. '
+      type: Boolean
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.Status
+      description: 'The status of the vulnerability associated with the asset. '
+      type: String
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.TopPriority
+      description: 'Whether the vulnerability associated with the asset is a top priority. '
+      type: Boolean
+    - contextPath: integrationTest.VulnerabilitiesOfAsset.Score
+      description: 'The score of the vulnerability associated with the asset. '
+      type: Number
+  - arguments:
+    - default: false
+      description: A comma-separated list of tags to add to the asset.
+      isArray: true
+      name: tag
+      required: true
+      secret: false
+    - default: false
+      description: 'The asset ID to which to add the tag. '
+      isArray: false
+      name: id
+      required: true
+      secret: false
+    deprecated: false
+    description: Adds a tag to the specified asset.
+    execution: false
+    name: integrationTest-add-tag
+  - arguments:
+    - default: false
+      description: The asset ID from which to delete the tag.
+      isArray: false
+      name: id
+      predefined:
+      - ''
+      required: true
+      secret: false
+    - default: false
+      description: The tag to delete.
+      isArray: false
+      name: tag
+      required: true
+      secret: false
+    deprecated: false
+    description: Deletes tags from the specified asset.
+    execution: false
+    name: integrationTest-delete-tag
+  dockerimage: demisto/python3:3.7.5.4002
+  isfetch: false
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python

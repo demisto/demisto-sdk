@@ -1,0 +1,27 @@
+args:
+- default: false
+  description: 'Say hello to:'
+  isArray: false
+  name: name
+  required: false
+  secret: false
+comment: Hello World Script  # this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6
+commonfields:
+  id: TestScriptPackage
+  version: -1
+enabled: false
+name: TestScriptPackage
+outputs:
+- contextPath: HelloWorld.hello
+  description: The result of hello
+  type: String
+script: '-'
+system: false
+tags:
+- hello
+- world
+timeout: '0'
+type: python
+subtype: python3
+dockerimage: demisto/python3:3.7.4.2245
+display: TestScriptPackage

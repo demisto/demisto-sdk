@@ -1,0 +1,76 @@
+commonfields:
+  id: Awake Security
+  version: -1
+name: Awa
+display: Awa
+category: Network Security
+description: Net
+detaileddescription: ""
+configuration:
+- display: Credentials
+  hidden: true
+  name: credentials
+  defaultvalue: ""
+  type: 9
+  required: true
+- display: Awake Security server address
+  hidden: true
+  name: server
+  defaultvalue: https://example.awake.cloud
+  type: 0
+  required: true
+- display: Trust any certificate (unsecure)
+  name: unsecure
+  defaultvalue: ""
+  type: 8
+  required: false
+- display: Fetch incidents
+  name: isFetch
+  defaultvalue: ""
+  type: 8
+  required: false
+- display: Incident type
+  hidden: false
+  name: incidentType
+  defaultvalue: ""
+  type: 13
+  required: false
+- display: Use system proxy settings
+  name: proxy
+  defaultvalue: ""
+  type: 8
+  required: true
+- display: 'test'
+  name: threat_behaviors
+  defaultvalue: ""
+  type: 0
+  required: false
+- display: Period between incident fetch interval (in minutes)
+  name: fetch_interval
+  defaultvalue: "1"
+  type: 0
+  required: true
+script:
+  script: ''
+  type: python
+  commands:
+  - name: awake-query-devices
+    description: ''
+    arguments:
+    - name: queryExpression
+      description: A query expression in Awake Query Language
+    - name: startTime
+      required: true
+      description: Query start time ("2000-01-01T00:00:00Z")
+    - name: endTime
+      required: true
+      description: Query end time ("2000-01-01T00:00:00Z")
+    outputs:
+    - contextPath: AwakeSecurity.Devices.deviceId
+      description: Awake Security unique identifier for the specified device
+      type: string
+    - contextPath: AwakeSecurity.Devices.deviceName
+      description: Device name
+      type: string
+  isfetch: true
+  runonce: false

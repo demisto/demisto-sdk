@@ -7,10 +7,10 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 DEBUG_FILE_PATH = f'{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt'
-YAML_OUTPUT = '''arguments: []
+YAML_OUTPUT = """arguments: []
 name: kl-get-records
 outputs:
-- contextPath: Keylight.ID   
+- contextPath: Keylight.ID
   description: ''
   type: Number
 - contextPath: Keylight.Name
@@ -21,7 +21,7 @@ outputs:
   type: String
 - contextPath: Keylight.SystemName
   description: ''
-  type: String'''
+  type: String"""
 
 
 @pytest.fixture

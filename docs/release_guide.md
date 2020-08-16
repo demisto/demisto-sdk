@@ -23,5 +23,6 @@ To do so, you can do the following:\
 12) Update the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file again, this time with the release tag.
 13) Run the regular build again or force merge your PR to the Content repository.
 14) Announce regarding the SDK release in the content-team slack channel.
+15) Update **CHANGELOG.md** file - create header with the release version instead of `# Changelog` in the format `# X.X.X` e.g. `# 1.0.0`.
 
 Your release was completed successfully!

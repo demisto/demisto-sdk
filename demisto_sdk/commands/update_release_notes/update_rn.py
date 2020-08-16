@@ -6,6 +6,7 @@ import errno
 import json
 import os
 import sys
+from typing import Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
@@ -20,7 +21,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: None, pack_files: set, added_files: set,
+    def __init__(self, pack: str, update_type: Union[str, None], pack_files: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False):
 
         self.pack = pack
@@ -145,16 +146,19 @@ class UpdateRN:
     def identify_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
-        if 'ReleaseNotes' in file_path:
+        if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
             return file_name, _file_type
+
         if self.pack in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
-            if 'Playbooks' in file_path and ('TestPlaybooks' not in file_path):
+            file_path = file_path.replace(self.pack_path, '')
+
+            if 'Playbooks' in file_path:
                 _file_type = 'Playbook'
-            elif 'Integration' in file_path:
+            elif 'Integrations' in file_path:
                 _file_type = 'Integration'
-            elif 'Script' in file_path:
+            elif 'Scripts' in file_path:
                 _file_type = 'Script'
             # incident fields and indicator fields are using the same scheme.
             elif 'IncidentFields' in file_path:
@@ -261,11 +265,14 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
+        for content_name, data in sorted(changed_items.items(),
+                                         key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
-            if not _type:
+
+            # Skipping the invalid files
+            if not _type or content_name == 'N/A':
                 continue
 
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
@@ -274,9 +281,7 @@ class UpdateRN:
                 rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'##### {content_name}\n- %%UPDATE_RN%%\n'
 
-            if content_name == 'N/A':
-                continue
-            elif _type == 'Integration':
+            if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True

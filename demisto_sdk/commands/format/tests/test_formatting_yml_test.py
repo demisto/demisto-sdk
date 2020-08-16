@@ -322,6 +322,10 @@ def test_set_fetch_params_in_config(source, target, path, answer):
     with open(target, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
+        params = yaml_content['configuration']
+        for param in params:
+            if 'defaultvalue' in param and param['name'] != 'feed':
+                param.pop('defaultvalue')
         for param in FETCH_REQUIRED_PARAMS:
             assert param in yaml_content['configuration']
     os.remove(target)
@@ -357,7 +361,7 @@ def test_set_feed_params_in_config(source, target, path, answer):
         yaml_content = yaml.load(content)
         params = yaml_content['configuration']
         for counter, param in enumerate(params):
-            if 'defaultvalue' in param:
+            if 'defaultvalue' in param and param['name'] != 'feed':
                 params[counter].pop('defaultvalue')
         for param in FEED_REQUIRED_PARAMS:
             assert param in params
@@ -381,6 +385,26 @@ def test_set_feed_params_in_config_with_default_value():
     base_yml.set_feed_params_in_config()
     configuration_params = base_yml.data.get('configuration', [])
     assert 'defaultvalue' in configuration_params[0]
+
+
+def test_set_fetch_params_in_config_with_default_value():
+    """
+    Given
+    - Integration yml with isfetch field labeled as true and all necessary params exist including defaultvalue fields.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure the defaultvalue fields remain after the execution.
+    - Ensure that the config param with the defaultvalue key is not getting duplicated without the defaultvalue key.
+    """
+    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
+    base_yml.set_fetch_params_in_config()
+    configuration_params = base_yml.data.get('configuration', [])
+    assert 'defaultvalue' in configuration_params[5]
+    assert {'display': 'Incident type', 'name': 'incidentType', 'required': False, 'type': 13} not in configuration_params
+    assert {'display': 'Incident type', 'name': 'incidentType', 'required': False, 'type': 13, 'defaultvalue': ''} in configuration_params
 
 
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])

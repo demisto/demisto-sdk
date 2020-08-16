@@ -285,6 +285,7 @@ class Unifier:
     def get_script_or_integration_package_data(self):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
+
         if not yml_path:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')

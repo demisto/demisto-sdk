@@ -84,7 +84,12 @@ class IntegrationYMLFormat(BaseUpdateYML):
         correct fields.
         """
         if self.data.get('script', {}).get('isfetch') is True:
-            params = [_key for _key in self.data.get('configuration', [])]
+            # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
+            # popped from the original configuration params.
+            params = [dict(config) for config in self.data.get('configuration', [])]
+            for param in params:
+                if 'defaultvalue' in param:
+                    param.pop('defaultvalue')
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     self.data['configuration'].append(param)

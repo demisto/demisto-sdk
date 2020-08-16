@@ -1,4 +1,5 @@
 # Site packages
+import json
 import os
 import re
 import sys
@@ -34,6 +35,8 @@ from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
     json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
+from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
+    OpenAPIIntegration
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -265,6 +268,9 @@ def unify(**kwargs):
 @click.option(
     '--silence-init-prints', is_flag=True,
     help='Whether to skip the initialization prints.')
+@click.option(
+    '--skip-pack-dependencies', is_flag=True,
+    help='Skip validation of pack dependencies.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -287,7 +293,8 @@ def validate(config, **kwargs):
                                     is_external_repo=is_external_repo,
                                     print_ignored_files=kwargs['print_ignored_files'],
                                     no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'])
+                                    silence_init_prints=kwargs['silence_init_prints'],
+                                    skip_dependencies=kwargs['skip_pack_dependencies'])
         return validator.run_validation()
 
 
@@ -888,6 +895,123 @@ def find_dependencies_command(**kwargs):
                                            )
     except ValueError as exp:
         print_error(str(exp))
+
+
+# ====================== openapi-codegen ====================== #
+@main.command(name="openapi-codegen",
+              short_help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.''',
+              help='''Generates a Cortex XSOAR integration given an OpenAPI specification file.
+               In the first run of the command, an integration configuration file is created, which can be modified.
+               Then, the command is run a second time with the integration configuration to
+               generate the actual integration files.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input_file', help='The swagger file to load in JSON format', required=True)
+@click.option(
+    '-cf', '--config_file', help='The integration configuration file. It is created in the first run of the command',
+    required=False)
+@click.option(
+    '-n', '--base_name', help='The base filename to use for the generated files', required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
+    required=False)
+@click.option(
+    '-pr', '--command_prefix', help='Add a prefix to each command in the code', required=False)
+@click.option(
+    '-c', '--context_path', help='Context output path', required=False)
+@click.option(
+    '-u', '--unique_keys', help='Comma separated unique keys to use in context paths (case sensitive)', required=False)
+@click.option(
+    '-r', '--root_objects', help='Comma separated JSON root objects to use in command outputs (case sensitive)',
+    required=False)
+@click.option(
+    '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
+@click.option(
+    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
+@click.option(
+    '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration'
+                                              ' (Skip the second run).')
+def openapi_codegen_command(**kwargs):
+    if not kwargs.get('output_dir'):
+        output_dir = os.getcwd()
+    else:
+        output_dir = kwargs['output_dir']
+
+    # Check the directory exists and if not, try to create it
+    if not os.path.exists(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except Exception as err:
+            tools.print_error(f'Error creating directory {output_dir} - {err}')
+            sys.exit(1)
+    if not os.path.isdir(output_dir):
+        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
+        sys.exit(1)
+
+    input_file = kwargs['input_file']
+    base_name = kwargs.get('base_name')
+    if base_name is None:
+        base_name = 'GeneratedIntegration'
+
+    command_prefix = kwargs.get('command_prefix')
+    if command_prefix is None:
+        command_prefix = '-'.join(base_name.split(' ')).lower()
+
+    context_path = kwargs.get('context_path')
+    if context_path is None:
+        context_path = base_name.replace(' ', '')
+
+    unique_keys = kwargs.get('unique_keys', '')
+    if unique_keys is None:
+        unique_keys = ''
+
+    root_objects = kwargs.get('root_objects', '')
+    if root_objects is None:
+        root_objects = ''
+
+    verbose = kwargs.get('verbose', False)
+    fix_code = kwargs.get('fix_code', False)
+
+    configuration = None
+    if kwargs.get('config_file'):
+        try:
+            with open(kwargs['config_file'], 'r') as config_file:
+                configuration = json.load(config_file)
+        except Exception as e:
+            print_error(f'Failed to load configuration file: {e}')
+
+    click.echo('Processing swagger file...')
+    integration = OpenAPIIntegration(input_file, base_name, command_prefix, context_path,
+                                     unique_keys=unique_keys, root_objects=root_objects,
+                                     verbose=verbose, fix_code=fix_code, configuration=configuration)
+
+    integration.load_file()
+    if not kwargs.get('config_file'):
+        integration.save_config(integration.configuration, output_dir)
+        tools.print_success(f'Created configuration file in {output_dir}')
+        if not kwargs.get('use_default', False):
+            config_path = os.path.join(output_dir, f'{base_name}.json')
+            command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
+                             f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
+            if unique_keys:
+                command_to_run = command_to_run + f' -u "{unique_keys}"'
+            if root_objects:
+                command_to_run = command_to_run + f' -r "{root_objects}"'
+            if verbose:
+                command_to_run = command_to_run + ' -v'
+            if fix_code:
+                command_to_run = command_to_run + ' -f'
+
+            click.echo(f'Run the command again with the created configuration file(after a review): {command_to_run}')
+            sys.exit(0)
+
+    if integration.save_package(output_dir):
+        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
+    else:
+        tools.print_error(f'There was an error creating the package in {output_dir}')
+        sys.exit(1)
 
 
 @main.resultcallback()

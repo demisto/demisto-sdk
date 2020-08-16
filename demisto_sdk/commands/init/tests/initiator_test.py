@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from collections import OrderedDict, deque
@@ -272,6 +273,74 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_files = [integration_yml, integration_py, integration_description, integration_image]
     for integration_file in integration_files:
         assert integration_file.exists()
+
+
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.init.initiator.get_content_path')
+def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
+    '''Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
+
+    Args:
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
+            used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+
+    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
+
+    Given
+    - A contribution zip file
+    When
+    - The initiator class instance is instantiated with the 'name' argument of 'Test Pack'
+    - The initiator class instance is instantiated with the 'description' argument of 'test pack description here'
+    - The initiator class instance is instantiated with the 'author' argument of 'Octocat Smith'
+    Then
+    - Ensure pack with directory name of 'TestPack' is created
+    - Ensure that the pack's 'pack_metadata.json' file's 'name' field is 'Test Pack'
+    - Ensure that the pack's 'pack_metadata.json' file's 'description' field is 'test pack description here'
+    - Ensure that the pack's 'pack_metadata.json' file's 'author' field is 'Octocat Smith'
+    - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
+    '''
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    # contrib_zip.create_zip(contribution_zip_dir)
+    contrib_zip.create_zip(contribution_zip_dir)
+
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+
+    name = 'Test Pack'
+    contribution_path = contrib_zip.created_zip_filepath
+    description = 'test pack description here'
+    author = 'Octocat Smith'
+    initiator_inst = Initiator('', name=name, contribution=contribution_path, description=description, author=author)
+    initiator_inst.init()
+
+    converted_pack_path = repo_dir / 'Packs' / 'TestPack'
+    assert converted_pack_path.exists()
+
+    pack_metadata_path = converted_pack_path / 'pack_metadata.json'
+    assert pack_metadata_path.exists()
+    with open(pack_metadata_path, 'r') as pack_metadata:
+        metadata = json.load(pack_metadata)
+        assert metadata.get('name', '') == name
+        assert metadata.get('description', '') == description
+        assert metadata.get('author', '') == author
+        assert not metadata.get('email')
 
 
 @pytest.mark.parametrize('input_name,expected_output_name', name_reformatting_test_examples)

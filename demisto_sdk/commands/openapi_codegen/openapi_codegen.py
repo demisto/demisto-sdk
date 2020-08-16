@@ -38,6 +38,7 @@ ARGUMENT_TYPES = {
     'str': 'str',
 }
 JSON_TYPE_HEADER = 'application/json'
+ALL_TYPE_HEADER = '*/*'
 DEFAULT_HOST = 'https://www.example.com/api'
 BEARER_AUTH_TYPE = 'apiKey'
 BASIC_AUTH_TYPE = 'basic'
@@ -145,10 +146,12 @@ class OpenAPIIntegration:
                 'root_object': function.get('root_object', '')
             }
             headers = []
-            if function['consumes'] and JSON_TYPE_HEADER not in function['consumes']:
+            if function['consumes'] and JSON_TYPE_HEADER not in function['consumes']\
+                    and ALL_TYPE_HEADER not in function['consumes']:
                 headers.append({'Content-Type': function['consumes'][0]})
 
-            if function['produces'] and JSON_TYPE_HEADER not in function['produces']:
+            if function['produces'] and JSON_TYPE_HEADER not in function['produces']\
+                    and ALL_TYPE_HEADER not in function['produces']:
                 headers.append({'Accept': function['produces'][0]})
 
             command['headers'] = headers
@@ -599,7 +602,7 @@ class OpenAPIIntegration:
                         refs = self.extract_values(extracted_object, '$ref')
                         if refs:
                             ref = refs[0].split('/')[-1]
-                            prop_arr = extract(self.extract_values(self.reference[ref], 'properties'), prop_arr,
+                            prop_arr = extract(self.extract_values(self.reference.get(ref, {}), 'properties'), prop_arr,
                                                current_context)
                         elif extracted_object.get('items'):
                             for k, v in extracted_object.get('items', {}).items():
@@ -713,7 +716,8 @@ class OpenAPIIntegration:
                     for ref_arg in ref_args:
                         for k, v in ref_arg.items():
                             new_ref_arg = {'name': k, 'in': arg.get('in'),
-                                           'required': True if k in self.reference[ref].get('required', []) else False}
+                                           'required': True if k in self.reference.get(ref, {}).get('required', [])
+                                           else False}
                             if '$ref' in ref_arg[k]:
                                 new_ref_arg['properties'] = {}
                                 c_ref = ref_arg[k]['$ref'].split('/')[-1]

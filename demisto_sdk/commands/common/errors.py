@@ -601,9 +601,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it. If the change you made was minor, " \
-               "please use \"Maintenance and stability enhancements.\" for general changes, or use " \
-               "\"Documentation and metadata improvements.\" for changes to documentation."
+        return "Your release notes file is empty, please complete it\n" \
+                    "Having empty release notes looks bad in the product UI.\n" \
+                    "If the change you made was minor, " \
+                    "please use \"Maintenance and stability enhancements.\" for general changes, or use " \
+                    "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod
     @error_code_decorator

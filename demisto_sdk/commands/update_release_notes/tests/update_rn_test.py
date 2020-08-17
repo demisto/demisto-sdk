@@ -51,6 +51,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
             "Hello World Connection": {"type": "Connections", "description": "", "is_new_file": False},
             "Hello World Report": {"type": "Reports", "description": "", "is_new_file": False},
+            "N/A2": {"type": None, "description": "", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -362,7 +363,7 @@ class TestRNUpdateUnit:
                     ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
                     ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
                     ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB',
-                                                                                                   'Playbook')),
+                                                                                                         'Playbook')),
                     ('Packs/VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
                     ('Packs/CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
                     ('Packs/VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', ('N/A', None)),

@@ -508,37 +508,11 @@
                     "properties": {}
                 }
             ],
-            "outputs": [
-                {
-                    "name": "id",
-                    "description": "",
-                    "type": "Number"
-                },
-                {
-                    "name": "name",
-                    "description": "",
-                    "type": "String"
-                },
-                {
-                    "name": "tags.id",
-                    "description": "",
-                    "type": "Number"
-                },
-                {
-                    "name": "tags.name",
-                    "description": "",
-                    "type": "String"
-                },
-                {
-                    "name": "status",
-                    "description": "pet status in the store",
-                    "type": "String"
-                }
-            ],
-            "context_path": "Pet",
+            "outputs": [],
+            "context_path": "None",
             "root_object": "",
             "headers": [],
-            "unique_key": "id"
+            "unique_key": ""
         },
         {
             "name": "find-pets-by-tags",

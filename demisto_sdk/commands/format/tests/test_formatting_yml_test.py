@@ -8,17 +8,19 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
+from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
+                                                         TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    DESTINATION_FORMAT_SCRIPT_COPY, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION,
-    EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID,
-    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
-    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
-    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY)
+    DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
+    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
+    EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID, FEED_INTEGRATION_VALID, GIT_ROOT,
+    INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from mock import patch
 from ruamel.yaml import YAML
 
@@ -322,6 +324,10 @@ def test_set_fetch_params_in_config(source, target, path, answer):
     with open(target, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
+        params = yaml_content['configuration']
+        for param in params:
+            if 'defaultvalue' in param and param['name'] != 'feed':
+                param.pop('defaultvalue')
         for param in FETCH_REQUIRED_PARAMS:
             assert param in yaml_content['configuration']
     os.remove(target)
@@ -383,6 +389,26 @@ def test_set_feed_params_in_config_with_default_value():
     assert 'defaultvalue' in configuration_params[0]
 
 
+def test_set_fetch_params_in_config_with_default_value():
+    """
+    Given
+    - Integration yml with isfetch field labeled as true and all necessary params exist including defaultvalue fields.
+
+    When
+    - Running the format command.
+
+    Then
+    - Ensure the defaultvalue fields remain after the execution.
+    - Ensure that the config param with the defaultvalue key is not getting duplicated without the defaultvalue key.
+    """
+    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
+    base_yml.set_fetch_params_in_config()
+    configuration_params = base_yml.data.get('configuration', [])
+    assert 'defaultvalue' in configuration_params[5]
+    assert {'display': 'Incident type', 'name': 'incidentType', 'required': False, 'type': 13} not in configuration_params
+    assert {'display': 'Incident type', 'name': 'incidentType', 'required': False, 'type': 13, 'defaultvalue': ''} in configuration_params
+
+
 @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
 def test_playbook_task_name(source_path):
     schema_path = os.path.normpath(
@@ -394,3 +420,23 @@ def test_playbook_task_name(source_path):
 
     assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
     assert base_yml.data['tasks']['29']['task']['playbookName'] == 'File Enrichment - Virus Total Private API'
+
+
+@patch('builtins.input', lambda *args: 'no')
+def test_run_format_on_tpb():
+    """
+    Given
+        - A Test Playbook file.
+    When
+        - Run format on TPB file
+    Then
+        - Ensure run_format return value is 0
+        - Ensure `fromversion` field set to 5.0.0
+    """
+    os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
+    formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
+    res = formatter.run_format()
+    assert res == 0
+    assert formatter.data.get('fromversion') == '5.0.0'
+    os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
+    os.rmdir(TEST_PLAYBOOK_PATH)

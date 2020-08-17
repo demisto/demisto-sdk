@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import itertools
+import re
 
 from demisto_sdk.commands.common.constants import VALIDATED_PACK_ITEM_TYPES
 from demisto_sdk.commands.common.errors import Errors
@@ -52,7 +53,7 @@ class ReleaseNotesValidator(BaseValidator):
         return is_valid
 
     def has_release_notes_been_filled_out(self):
-        release_notes_comments = self.latest_release_notes
+        release_notes_comments = self.strip_exclusion_tag(self.latest_release_notes)
         if len(release_notes_comments) == 0:
             error_message, error_code = Errors.release_notes_file_empty()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -62,6 +63,16 @@ class ReleaseNotesValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    @staticmethod
+    def strip_exclusion_tag(release_notes_comments):
+        """
+        Strips the exclusion tag (<!-- -->) from the release notes since release notes should never
+        be empty as this is poor user experience.
+        Return:
+            str. Cleaned notes with tags and contained notes removed.
+        """
+        return re.sub(r'<\!--.*?-->', '', release_notes_comments, flags=re.DOTALL)
 
     def is_file_valid(self):
         """Checks if given file is valid.

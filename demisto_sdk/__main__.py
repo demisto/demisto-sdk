@@ -269,6 +269,9 @@ def unify(**kwargs):
 @click.option(
     '--silence-init-prints', is_flag=True,
     help='Whether to skip the initialization prints.')
+@click.option(
+    '--skip-pack-dependencies', is_flag=True,
+    help='Skip validation of pack dependencies.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -291,7 +294,8 @@ def validate(config, **kwargs):
                                     is_external_repo=is_external_repo,
                                     print_ignored_files=kwargs['print_ignored_files'],
                                     no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'])
+                                    silence_init_prints=kwargs['silence_init_prints'],
+                                    skip_dependencies=kwargs['skip_pack_dependencies'])
         return validator.run_validation()
 
 

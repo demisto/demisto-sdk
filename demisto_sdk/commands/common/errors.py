@@ -373,13 +373,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration(display_name, description):
-        error_answer = ''
+        error_message = ''
         if not display_name.startswith('Deprecated.'):
-            error_answer += 'The display_name (display) of all deprecated integrations should start with ' \
+            error_message += 'The display_name (display) of all deprecated integrations should start with ' \
                             '"Deprecated.".\n'
         if not description.startswith('Deprecated.'):
-            error_answer += 'The description of your integration should start with "Deprecated.".\n'
-        return error_answer
+            error_message += 'The description of your integration should start with "Deprecated.".\n'
+        return error_message
 
     @staticmethod
     @error_code_decorator

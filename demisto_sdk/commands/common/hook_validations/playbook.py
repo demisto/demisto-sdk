@@ -245,9 +245,9 @@ class PlaybookValidator(ContentEntityValidator):
 
     def is_valid_deprecated_playbook(self) -> bool:
         is_valid = True
-        hidden = self.current_file.get('hidden', False)
+        is_hidden = self.current_file.get('hidden', False)
         description = self.current_file.get('description', '')
-        if hidden:
+        if is_hidden:
             if not description.startswith('Deprecated.'):
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

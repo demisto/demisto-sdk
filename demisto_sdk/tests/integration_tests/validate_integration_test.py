@@ -1345,7 +1345,7 @@ class TestScriptDeprecatedValidation:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC101' in result.stdout
-        assert 'The script comment has to start with "Deprecated."' in result.stdout
+        assert "Deprecated." in result.stdout
         assert result.exit_code == 1
 
 

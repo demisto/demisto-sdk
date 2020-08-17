@@ -23,6 +23,7 @@ class ImageValidator(BaseValidator):
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
+        self.file_path = ''
 
         if checked_type(file_path, INTEGRATION_REGXES) or re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
             self.file_path = file_path
@@ -34,10 +35,7 @@ class ImageValidator(BaseValidator):
                     error_message, error_code = Errors.no_image_given()
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
-
-                    self.file_path = ''
             else:
-                self.file_path = ''
                 self._is_valid = False
 
     def is_valid(self):

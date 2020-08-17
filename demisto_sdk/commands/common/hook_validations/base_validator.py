@@ -81,7 +81,10 @@ class BaseValidator:
         if should_print:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
-                click.secho(suggested_fix + "\n", fg="bright_red")
+                if error_code == 'ST109':
+                    click.secho("Please add to the root of the yml a description.\n", fg="bright_red")
+                else:
+                    click.secho(suggested_fix + "\n", fg="bright_red")
 
             else:
                 click.secho(formatted_error, fg="bright_red")

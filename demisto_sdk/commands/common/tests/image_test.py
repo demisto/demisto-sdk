@@ -75,3 +75,23 @@ def test_image_in_both_yml_and_directory(monkeypatch):
     monkeypatch.setattr('demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES', [integration_path])
     validator = IntegrationValidator(structure)
     assert validator.is_valid_image() is False
+
+
+def test_image_when_invalid_type(monkeypatch):
+    """
+    Given
+        - An integration that has an invalid image
+
+    When
+        - Validating this integration
+
+    Then
+        - Ensure integration is considered non-valid.
+    """
+    integration_path = os.path.normpath(
+        os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'not_default_image_integration-Zoom.yml')
+    )
+    structure = mock_structure(file_path=integration_path)
+    monkeypatch.setattr('demisto_sdk.commands.common.hook_validations.image.INTEGRATION_REGXES', [])
+    validator = IntegrationValidator(structure)
+    assert validator.is_valid_image() is False

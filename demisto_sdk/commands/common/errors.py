@@ -601,9 +601,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
-               "an item from the release notes, please refer to the documentation found here: " \
-               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+        return "Your release notes file is empty, please complete it. If the change you made was minor, " \
+               "please use \"Maintenance and stability enhancements.\" for general changes, or use " \
+               "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod
     @error_code_decorator

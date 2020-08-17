@@ -40,8 +40,8 @@ class ReleaseNotesValidator(BaseValidator):
                 if not any(permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
                 elif self.pack_name in file:
-                    update_rn_util = UpdateRN(pack=self.pack_name, pack_files=set(), update_type=None,
-                                              added_files=set())
+                    update_rn_util = UpdateRN(pack_path=self.file_path, pack_files=set(), update_type=None,
+                                              added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
                     if file_name and file_type:
                         if (file_type not in self.latest_release_notes) or (file_name not in self.latest_release_notes):

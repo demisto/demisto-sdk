@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 
 def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator = ReleaseNotesValidator("")
-    release_notes_validator.file_path = file_path
+    release_notes_validator.file_path = os.path.join(FILES_PATH, 'CortexXDR')
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files

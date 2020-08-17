@@ -750,7 +750,7 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is True
 
-    def test_validate_no_missing_release_notes__missing_rn(self, repo):
+    def test_validate_no_missing_release_notes__missing_rn(self, repo, mocker):
         """
             Given:
                 - 2 packs with modified files and release notes for only one
@@ -759,6 +759,7 @@ class TestValidators:
             Then:
                 - return a False as there are release notes missing
         """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack('PackName1')
         incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         pack2 = repo.create_pack('PackName2')

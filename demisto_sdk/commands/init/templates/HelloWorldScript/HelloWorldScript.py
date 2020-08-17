@@ -23,8 +23,8 @@ import traceback
 from typing import Any, Dict, Tuple
 
 import demistomock as demisto
-from CommonServerPython import *
-from CommonServerUserPython import *
+from CommonServerPython import *  # noqa: E402 lgtm [py/polluting-import]
+from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 
 
 def say_hello(name: str) -> str:

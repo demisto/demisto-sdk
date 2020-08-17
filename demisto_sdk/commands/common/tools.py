@@ -6,14 +6,12 @@ import os
 import re
 import shlex
 import sys
-import zipfile
 from distutils.version import LooseVersion
 from functools import partial
 from wcmatch.pathlib import Path
 from shutil import copyfile, make_archive, rmtree
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-import time
 
 import click
 import colorama
@@ -105,56 +103,6 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
             return [project_dir]
         files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
-
-
-def safe_copyfile(src: Union[str, Path], dst: Union[str, Path], execution_start: float = time.time()) -> Path:
-    """Copy file to destination, If destination exists add suffix (i) to file stem.
-
-    Args:
-        src: src file path.
-        dst: dst file to create.
-        execution_start: Boundary of forcing rewrite the file, Saving only from rewriting the file in the same session.
-
-    Returns:
-        Path: file path of modified dst id needed.
-
-    Notes:
-        1. Could vunurable in race condition scenario - very rare.
-    """
-    dst = Path(dst)
-    if dst.exists() and dst.stat().st_mtime >= execution_start:
-        raise Exception(f"File allready exists src: {src}, dst: {dst}")
-
-    return copyfile(src=src, dst=dst)
-
-
-def zip_and_delete_origin(folder: Path):
-    """Archive folder and delete origin folder afterwards"""
-    make_archive(folder, 'zip', folder)
-    rmtree(folder)
-
-
-def zip_tool(directory: Path, dest: Path):
-    """Archive folder and delete origin folder afterwards"""
-    zip_file = dest.with_suffix('.zip')
-    with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        zipf.comment = b'{ "system": true }'
-        for root, _, files in os.walk(directory):
-            for file_name in files:
-                zipf.write(os.path.join(root, file_name), file_name)
-
-    return zip_file
-
-
-def src_root() -> Path:
-    git_dir = git.Repo(Path.cwd(),
-                       search_parent_directories=True).working_tree_dir
-
-    return Path(git_dir) / 'demisto_sdk'
-
-
-def path_test_files() -> Path:
-    return src_root() / 'tests' / 'test_files'
 
 
 def print_error(error_str):
@@ -634,7 +582,17 @@ def is_file_path_in_pack(file_path):
 
 
 def get_pack_name(file_path):
-    match = re.search(r'^(?:./)?{}/([^/]+)/'.format(PACKS_DIR), file_path)
+    """
+    extract pack name (folder name) from file path
+
+    Arguments:
+        file_path (str): path of a file inside the pack
+
+    Returns:
+        pack name (str)
+    """
+    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
     return match.group(1) if match else None
 
 
@@ -791,7 +749,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # noqa: C901
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
     """
     returns the content file type
 
@@ -824,13 +782,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None):  # n
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict:
+            if 'beta' in _dict and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT

@@ -601,9 +601,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
-               "an item from the release notes, please refer to the documentation found here: " \
-               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+        return "Your release notes file is empty, please complete it\nHaving empty release notes " \
+               "looks bad in the product UI.\nIf the change you made was minor, please use " \
+               "\"Maintenance and stability enhancements.\" for general changes, or use " \
+               "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod
     @error_code_decorator
@@ -893,7 +894,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have, please refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list " \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod

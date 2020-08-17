@@ -1,4 +1,5 @@
 # Changelog
+* Fixed issue where correct error message would not propagate for invalid images.
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
 * Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
 * Fixed an issue in the **Validate** command in which unified YAML files were not ignored.

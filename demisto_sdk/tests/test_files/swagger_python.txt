@@ -335,8 +335,8 @@ def find_pets_by_status_command(client, args):
 
     response = client.find_pets_by_status_request(status)
     command_results = CommandResults(
-        outputs_prefix='TestSwagger.Pet',
-        outputs_key_field='id',
+        outputs_prefix='TestSwagger.None',
+        outputs_key_field='',
         outputs=response,
         raw_response=response
     )

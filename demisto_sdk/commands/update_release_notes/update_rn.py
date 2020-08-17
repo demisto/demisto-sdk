@@ -15,16 +15,16 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               get_pack_name, get_yaml,
+                                               pack_name_to_path, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: Union[str, None], pack_files: set, added_files: set,
-                 specific_version: str = None, pre_release: bool = False):
-
-        self.pack = pack
+    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
+                 specific_version: str = None, pre_release: bool = False, pack: str = None):
+        self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
@@ -265,11 +265,14 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
-        for content_name, data in sorted(changed_items.items(), key=lambda x: x[1]['type'] if x[1] is not None else ''):
+        for content_name, data in sorted(changed_items.items(),
+                                         key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
-            if not _type:
+
+            # Skipping the invalid files
+            if not _type or content_name == 'N/A':
                 continue
 
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
@@ -278,9 +281,7 @@ class UpdateRN:
                 rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'##### {content_name}\n- %%UPDATE_RN%%\n'
 
-            if content_name == 'N/A':
-                continue
-            elif _type == 'Integration':
+            if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
                     integration_header = True

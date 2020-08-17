@@ -1,8 +1,21 @@
 # Changelog
+* **Validate** now fails when all release notes have been excluded.
+* Fixed issue where correct error message would not propagate for invalid images.
+* Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
+* Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
+* Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
+* Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
+* Fixed an issue in the **openapi-codegen** command where missing reference fields in the swagger JSON caused errors.
+* **update-release-notes** command now accept path of the pack instead of pack name.
+
+# 1.1.9
+* Fixed an issue where **update-release-notes** command failed on invalid file types.
+
+# 1.1.8
 * Fixed a regression where **upload** command failed on test playbooks.
 * Added new *githubUser* field in pack metadata init command.
 * Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
-* Fixed an issue were **find-dependencies** ignored *toversion* field in content items.
+* Fixed an issue where **find-dependencies** ignored *toversion* field in content items.
 * Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, *report*, and *widget* in the **Format** command.
 * Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
 * Fixed an issue where **Format** did not work for test playbooks.
@@ -15,6 +28,7 @@
 * Fixed an issue were release notes validations returned wrong results for *CommonScripts* pack.
 * Added validation for image links in README files in **validate** command.
 * Added a validation for default value of fetch param in feeds in **validate** command.
+* Fixed an issue where the **Init** command failed on scripts.
 
 # 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.

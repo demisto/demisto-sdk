@@ -16,8 +16,11 @@ class YAML(File):
     def write_dict(self, yml: dict):
         super().write(yaml.dump(yml))
 
+    def read_dict(self):
+        return yaml.safe_load(self.read())
+
     def update(self, update_obj: dict):
-        yml_contents = yaml.load(self.read())
+        yml_contents = self.read_dict()
         yml_contents.update(update_obj)
         self.write_dict(yml_contents)
 

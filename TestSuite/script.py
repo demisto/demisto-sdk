@@ -15,23 +15,26 @@ class Script(Integration):
 
     def create_default_script(self):
         default_script_dir = 'assets/default_script'
-        code = open(suite_join_path(default_script_dir, 'sample_script.py'))
-        yml = open(suite_join_path(default_script_dir, 'sample_script.yml'))
-        image = open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb')
-        changelog = open(suite_join_path(default_script_dir, 'CHANGELOG.md'))
-        description = open(suite_join_path(default_script_dir, 'sample_script_description.md'))
+
+        with open(suite_join_path(default_script_dir, 'sample_script.py')) as code_file:
+            code = str(code_file.read())
+        with open(suite_join_path(default_script_dir, 'sample_script.yml')) as yml_file:
+            yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        with open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb') as image_file:
+            image = image_file.read()
+        with open(suite_join_path(default_script_dir, 'CHANGELOG.md')) as changelog_file:
+            changelog = str(changelog_file.read())
+        with open(suite_join_path(default_script_dir, 'sample_script_description.md')) as description_file:
+            description = str(description_file.read())
+
         self.build(
-            code=str(code.read()),
-            yml=yaml.load(yml, Loader=yaml.FullLoader),
-            image=image.read(),
-            changelog=str(changelog.read()),
-            description=str(description.read())
+            code=code,
+            yml=yml,
+            image=image,
+            changelog=changelog,
+            description=description
         )
-        yml.close()
-        image.close()
-        changelog.close()
-        description.close()
-        code.close()
+
         if self.create_unified:
             unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
             unifier.merge_script_package_to_yml()

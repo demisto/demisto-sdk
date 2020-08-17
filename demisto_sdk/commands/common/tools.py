@@ -144,7 +144,16 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master'):
+def get_remote_file(full_file_path, tag='master', return_content=False):
+    """
+    Args:
+        full_file_path (string):The full path of the file.
+        tag (string): The branch name. default is 'master'
+        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+    Returns:
+        The file content in the required format.
+
+    """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.lstrip('origin/')
 
@@ -158,7 +167,8 @@ def get_remote_file(full_file_path, tag='master'):
                       'please make sure that you did not break backward compatibility. '
                       'Reason: {}'.format(github_path, exc))
         return {}
-
+    if return_content:
+        return res.content
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
     elif full_file_path.endswith('yml'):
@@ -591,7 +601,7 @@ def get_pack_name(file_path):
         pack name (str)
     """
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 
@@ -899,7 +909,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) ->\
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> \
         Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:

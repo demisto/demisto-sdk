@@ -114,8 +114,11 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
               input (str): the path to the file we are updating at the moment.
               output (str): the desired file name to save the updated version of the YML to.
       """
-    schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, 'playbook.yml'))
+
+    def __init__(self, *args, **kwargs):
+        kwargs['path'] = os.path.normpath(
+            os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, 'playbook.yml'))
+        super().__init__(*args, **kwargs)
 
     def run_format(self) -> int:
         try:

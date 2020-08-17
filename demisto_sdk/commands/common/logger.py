@@ -1,8 +1,10 @@
 import logging
 import os
+from typing import Optional
 
 
-def logging_setup(verbose: int, quiet: bool, log_path: str = "") -> logging.Logger:
+def logging_setup(verbose: int, quiet: Optional[bool] = False,
+                  log_path: Optional[str] = None) -> logging.Logger:
     """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
@@ -29,9 +31,8 @@ def logging_setup(verbose: int, quiet: bool, log_path: str = "") -> logging.Logg
 
     # Setting debug log file if in circleci
     if log_path:
-        fmt_file = logging.Formatter('%(levelname)s - %(asctime)s - %(message)s')
-        file_handler = logging.FileHandler(filename=os.path.join(log_path))
-        file_handler.setFormatter(fmt_file)
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+        file_handler.setFormatter(fmt)
         file_handler.setLevel(level=logging.DEBUG)
         logger.addHandler(file_handler)
 

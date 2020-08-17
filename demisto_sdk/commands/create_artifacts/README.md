@@ -3,10 +3,11 @@
 Create content artifacts.
 
 **Use-Cases**:\
-Genereating the following artifacts:
-   1. content_new - Contain all content objects of type json,yaml (from_version < 6.0.0). -> Release
-   2. content_packs - Contain all packs from Packs - Ignoring internal files (to_version >= 6.0.0). -> MarketPlace
-   3. content_test - Contain all test scripts/playbooks (from_version < 6.0.0). -> CircleCI instances tests
+Generating the following artifacts:
+   1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0) -> Release, Used for bi-weekly content Releases
+   2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0) -> MarketPlace, Used for building MarketPlace packs.
+   3. content_test - Contains all test scripts/playbooks (from_version < 6.0.0) -> CircleCI instances tests, Used for CircleCI tests.
+   4. content_all - Contains all from content_new and content_test -> CircleCI instances installation, Used for CircleCI tests.
 
 **Arguments**:
 * **-a ARTIFACTS_PATH, --artifacts_path ARTIFACTS_PATH**

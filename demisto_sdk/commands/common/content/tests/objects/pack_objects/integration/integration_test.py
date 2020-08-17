@@ -1,17 +1,19 @@
 from pathlib import Path
 
-from demisto_sdk.commands.common.content.content.objects.pack_objects import Integration
-from demisto_sdk.commands.common.content.content.objects_factory import ContentObjectFacotry
+from demisto_sdk.commands.common.content.objects.pack_objects import \
+    Integration
+from demisto_sdk.commands.common.content.objects_factory import \
+    ContentObjectFactory
 
 
 class TestNotUnifiedIntegration:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFacotry.from_path(datadir["sample.yml"])
+        obj = ContentObjectFactory.from_path(datadir["sample.yml"])
         assert isinstance(obj, Integration)
 
     def test_prefix(self, datadir):
         obj = Integration(datadir["sample.yml"])
-        assert obj.normalized_file_name() == "integration-sample.yml"
+        assert obj.normalize_file_name() == "integration-sample.yml"
 
     def test_files_detection(self, datadir):
         obj = Integration(datadir["sample.yml"])
@@ -28,12 +30,12 @@ class TestNotUnifiedIntegration:
 
 class TestUnifiedIntegration:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFacotry.from_path(datadir["integration-sample.yml"])
+        obj = ContentObjectFactory.from_path(datadir["integration-sample.yml"])
         assert isinstance(obj, Integration)
 
     def test_prefix(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])
-        assert obj.normalized_file_name() == "integration-sample.yml"
+        assert obj.normalize_file_name() == "integration-sample.yml"
 
     def test_files_detection(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])

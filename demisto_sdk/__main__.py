@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_pack_name,
                                                pack_name_to_path, print_error,
                                                print_warning)
-from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsConfiguration, \
-    create_content_artifacts
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+    ArtifactsManager, create_content_artifacts)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -316,9 +316,8 @@ def validate(config, **kwargs):
 @click.option('--cpus', help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
                              'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
 def create_arifacts(**kwargs) -> int:
-    artifacts_conf = ArtifactsConfiguration(**kwargs)
-    x = create_content_artifacts(artifacts_conf)
-    return x
+    artifacts_conf = ArtifactsManager(**kwargs)
+    return create_content_artifacts(artifacts_conf)
 
 
 # ====================== secrets ====================== #
@@ -389,7 +388,7 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
-def lint(input: str, git: str, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
+def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n

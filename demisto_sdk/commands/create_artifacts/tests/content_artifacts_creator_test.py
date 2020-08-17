@@ -1,15 +1,12 @@
-from wcmatch.pathlib import Path, NEGATE
-from filecmp import cmp, dircmp
-from shutil import rmtree, copyfile, copytree
 from contextlib import contextmanager
+from filecmp import cmp, dircmp
+from shutil import copyfile, copytree, rmtree
 
 import pytest
-
-from demisto_sdk.commands.common.tools import path_test_files, src_root
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.tools import src_root
 
-
-TEST_DATA = path_test_files()
+TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
@@ -19,44 +16,51 @@ EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_t
 
 
 def same_folders(dcmp):
-    if dcmp.diff_files or dcmp.left_only or dcmp.right_only:
-        print(dcmp.diff_files, dcmp.left_only, dcmp.right_only)
-        return False
+    if dcmp.left_only or dcmp.right_only:
+        assert False, f"\n{dcmp.right} only:\n{dcmp.right_only}\n{dcmp.left} only:\n{dcmp.left_only}"
     for sub_dcmp in dcmp.subdirs.values():
-        if not same_folders(sub_dcmp):
-            return False
-    return True
+        same_folders(sub_dcmp)
 
 
 @contextmanager
-def destroy_by_suffix(root_path: Path, suffix: str):
-    file = next(root_path.glob(patterns=[rf"*/*/*/*.{suffix}", "!doc-*"], flags=NEGATE))
+def destroy_by_suffix(suffix: str):
+    if suffix == 'json':
+        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "Classifiers" / "classifier-sample_new.json"
+    else:
+        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample3_new.yml"
     old_data = file.read_text()
     file.write_text("{123dfdsf,}\nfdsfdsf")
-    yield
-    file.write_text(old_data)
+
+    try:
+        yield
+    finally:
+        file.write_text(old_data)
 
 
 @contextmanager
 def duplicate_file():
-    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_new.yml"
-    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_new.yml"
-    copyfile(file, new_file)
-    yield
-    new_file.unlink()
+    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample3_new.yml"
+    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample3_new.yml"
+    try:
+        copyfile(file, new_file)
+        yield
+    finally:
+        new_file.unlink()
 
 
 @contextmanager
 def temp_dir():
     temp = UNIT_TEST_DATA / 'temp'
-    temp.mkdir(parents=True, exist_ok=True)
-    yield temp
-    rmtree(temp)
+    try:
+        temp.mkdir(parents=True, exist_ok=True)
+        yield temp
+    finally:
+        rmtree(temp)
 
 
 @pytest.fixture()
 def mock_git(mocker):
-    from demisto_sdk.commands.common.content.content import Content
+    from demisto_sdk.commands.common.content import Content
     # Mock git working directory
     mocker.patch.object(Content, 'git')
     Content.git().working_tree_dir = TEST_CONTENT_REPO
@@ -65,11 +69,13 @@ def mock_git(mocker):
 
 @pytest.fixture()
 def private_repo():
-    copytree(TEST_CONTENT_REPO, TEST_PRIVATE_CONTENT_REPO)
-    test_playbook_dir = TEST_PRIVATE_CONTENT_REPO / TEST_PLAYBOOKS_DIR
-    rmtree(test_playbook_dir)
-    yield TEST_PRIVATE_CONTENT_REPO
-    rmtree(TEST_PRIVATE_CONTENT_REPO)
+    try:
+        copytree(TEST_CONTENT_REPO, TEST_PRIVATE_CONTENT_REPO)
+        test_playbook_dir = TEST_PRIVATE_CONTENT_REPO / TEST_PLAYBOOKS_DIR
+        rmtree(test_playbook_dir)
+        yield TEST_PRIVATE_CONTENT_REPO
+    finally:
+        rmtree(TEST_PRIVATE_CONTENT_REPO)
 
 
 def test_modify_common_server_constants(datadir):
@@ -77,76 +83,77 @@ def test_modify_common_server_constants(datadir):
     path_before = COMMON_SERVER / 'CommonServerPython.py'
     path_excepted = COMMON_SERVER / 'CommonServerPython_modified.py'
     old_data = path_before.read_text()
-    modify_common_server_constants(path_before, 'test', '6.0.0')
+    modify_common_server_constants(path_before, '6.0.0', 'test')
     assert cmp(path_before, path_excepted)
     path_before.write_text(old_data)
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
                                                                                  create_content_artifacts)
     with temp_dir() as temp:
-        config = ArtifactsConfiguration(artifacts_path=temp,
-                                        content_version='6.0.0',
-                                        zip=False,
-                                        suffix='',
-                                        cpus=1,
-                                        content_packs=False)
-        exit_code = create_content_artifacts(artifact_conf=config)
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  content_packs=False)
+        exit_code = create_content_artifacts(artifact_manager=config)
 
         assert exit_code == 0
-        assert same_folders(dircmp(temp, EXPECTED_ARTIFACT_CONTENT))
+        same_folders(dircmp(temp, EXPECTED_ARTIFACT_CONTENT))
 
 
 def test_create_private_content_artifacts(private_repo):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
                                                                                  create_content_artifacts)
-    from demisto_sdk.commands.common.content.content import Content
+    from demisto_sdk.commands.common.content import Content
 
     with temp_dir() as temp:
-        config = ArtifactsConfiguration(artifacts_path=temp,
-                                        content_version='6.0.0',
-                                        zip=False,
-                                        suffix='',
-                                        cpus=1,
-                                        content_packs=False)
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  content_packs=False)
         config.content = Content(private_repo)
-        exit_code = create_content_artifacts(artifact_conf=config)
-        assert not dircmp(temp, private_repo).diff_files
+        exit_code = create_content_artifacts(artifact_manager=config)
+
+        same_folders(dircmp(temp, EXPECTED_ARTIFACT_PRIVATE_CONTENT))
 
     assert exit_code == 0
 
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failue(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
                                                                                  create_content_artifacts)
     with temp_dir() as temp:
-        config = ArtifactsConfiguration(artifacts_path=temp,
-                                        content_version='6.0.0',
-                                        zip=False,
-                                        suffix='',
-                                        cpus=1,
-                                        content_packs=False)
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  content_packs=False)
 
-        with destroy_by_suffix(TEST_CONTENT_REPO, suffix):
-            exit_code = create_content_artifacts(artifact_conf=config)
+        with destroy_by_suffix(suffix):
+            exit_code = create_content_artifacts(artifact_manager=config)
 
     assert exit_code == 1
 
 
 def test_duplicate_file_failue(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsConfiguration,
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
                                                                                  create_content_artifacts)
     with temp_dir() as temp:
-        config = ArtifactsConfiguration(artifacts_path=temp,
-                                        content_version='6.0.0',
-                                        zip=False,
-                                        suffix='',
-                                        cpus=1,
-                                        content_packs=False)
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  content_packs=False)
 
         with duplicate_file():
-            exit_code = create_content_artifacts(artifact_conf=config)
+            exit_code = create_content_artifacts(artifact_manager=config)
 
     assert exit_code == 1

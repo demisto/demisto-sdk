@@ -8,8 +8,7 @@ import shlex
 import sys
 from distutils.version import LooseVersion
 from functools import partial
-from wcmatch.pathlib import Path
-from shutil import copyfile, make_archive, rmtree
+from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
@@ -105,6 +104,18 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     return files
 
 
+def src_root() -> Path:
+    """ Demisto-sdk absolute path from src root.
+
+    Returns:
+        Path: src root path.
+    """
+    git_dir = git.Repo(Path.cwd(),
+                       search_parent_directories=True).working_tree_dir
+
+    return Path(git_dir) / 'demisto_sdk'
+
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 
@@ -145,7 +156,16 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master'):
+def get_remote_file(full_file_path, tag='master', return_content=False):
+    """
+    Args:
+        full_file_path (string):The full path of the file.
+        tag (string): The branch name. default is 'master'
+        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+    Returns:
+        The file content in the required format.
+
+    """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.lstrip('origin/')
 
@@ -159,7 +179,8 @@ def get_remote_file(full_file_path, tag='master'):
                       'please make sure that you did not break backward compatibility. '
                       'Reason: {}'.format(github_path, exc))
         return {}
-
+    if return_content:
+        return res.content
     if full_file_path.endswith('json'):
         details = json.loads(res.content)
     elif full_file_path.endswith('yml'):
@@ -592,7 +613,7 @@ def get_pack_name(file_path):
         pack name (str)
     """
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]', file_path)
+    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 
@@ -900,7 +921,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) ->\
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> \
         Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:

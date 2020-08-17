@@ -1,93 +1,51 @@
 # -*- coding: utf-8 -*-
-"""Content create artifacts
-Definitions:
-    1. flattern - only files, without directories structure.
-    2. content_pack_internal - .pack_ignore, .secrets-ignore.
-    3. content_pack_objects - every content objects wich is not content_internal (Integrations/Playbooks etc).
-
-Pre-processing:
-    1. Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
-        a. CONTENT_RELEASE_VERSION to given content version flag.
-        b. CONTENT_BRANCH_NAME to active branch
-
-The following artifacts created by this module:
-    1.  content_test (flattern) -
-        Exclude rules:
-            a. *README*.md
-            b. *CHANGELOG*.md
-        Include rules:
-            a. content/Packs/<Pack_name>/TestPlaybooks
-            b. content/TestPlaybooks
-            c. If from_version/fromVersion value is stricly lower than NEWEST_SUPPORTED_VERSION.
-            b. content/TestPlaybooks/NotSupported directory allready filter and should not include.
-
-    2.  content_packs - folder which include in all packs by their original structure.
-        Exclude rules:
-            a. content/Packs/<Pack_name>/<content_object>/*README*.md
-            b. content/Packs/<Pack_name>/<content_object>/*CHANGELOG*.md
-            c. content_internal
-        Include rules:
-            a. pack_object - If to_version/toVersion value is bigger from NEWEST_SUPPORTED_VERSION.
-        Additionals:
-            a. Add Documentation to -> Base/Documentation/doc-*.json from content/Documentation/doc-*.json
-
-    3.  content_new (flattern):
-        Exclude rules:
-            a. *README*.md
-            b. *CHANGELOG*.md
-        Include rules:
-            a. content/Packs/<Pack_name>/<Conten_object>/*.(yaml|json|yml)
-            b. content/Packs/D2/tools/*.zip (The module script them before copy)
-            c. If from_version/fromVersion value is stricly lower than NEWEST_SUPPORTED_VERSION.
-
-Attributes:
-    FIRST_MARKETPLACE_VERSION (Version): Newest version which demisto content team supports.
-    IGNORED_PACKS (List[str]): Pack names which should be excluded during content artifacts creation - On packs collect.
-    IGNORED_TEST_PLAYBOOKS_DIR: Directory name which should be excluded durign content artifact creation - On content/TestPlaybooks collect.
-
-Notes:
-    1. Each file should be open only once for evaluation.
-    2. The command shouldn't change existing files data excluding unify, changing files data will significally increase
-     the run time of the command.
-    3. The command shouldn't influence content repo current state - Every file shoudl be the same after module execution.
-"""
-
-# STD
 import os
 import re
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, Future, as_completed
-from shutil import rmtree
-from typing import Union, List, Dict, Optional
+from concurrent.futures import as_completed
 from contextlib import contextmanager
-# 3-rd party
-from wcmatch.pathlib import Path, EXTMATCH, SPLIT, BRACE, NODIR, NEGATE
+from shutil import make_archive, rmtree
+from typing import List, Optional, Union
+
+from demisto_sdk.commands.common.constants import (BASE_PACK,
+                                                   DOCUMENTATION_DIR,
+                                                   INTEGRATIONS_DIR, PACKS_DIR,
+                                                   RELEASE_NOTES_DIR,
+                                                   SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   TOOLS_DIR)
+from demisto_sdk.commands.common.content import Content, ContentError, Pack
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    JSONContentObject, Script, TextObject, YAMLContentObject,
+    YAMLContentUnfiedObject)
+from demisto_sdk.commands.common.logger import logging_setup
 from packaging.version import parse
-# Local
-from demisto_sdk.commands.common.content.content import Content, Pack
-from demisto_sdk.commands.common.content.content.objects.pack_objects import Script
-from demisto_sdk.commands.common.content.content.objects.abstract_objects import (
-    YAMLContentObject, YAMLUnfiedObject, JSONContentObject, TextObject)
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, DOCUMENTATION_DIR, BASE_PACK,
-                                                   DASHBOARDS_DIR, INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, TOOLS_DIR,
-                                                   PACKS_DIR)
-from demisto_sdk.commands.common.logger import logging_setup, Colors
-from demisto_sdk.commands.common.tools import safe_copyfile, zip_and_delete_origin
-from .artifacts_report import ObjectReport, ArtifactsReport
+from pebble import ProcessFuture, ProcessPool
+from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
+
+from .artifacts_report import ArtifactsReport, ObjectReport
+
+####################
+# Global variables #
+####################
+
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
-
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
-ContentObject = Union[YAMLUnfiedObject, YAMLContentObject, JSONContentObject, TextObject]
-logger = logging_setup(3, False)
+ContentObject = Union[YAMLContentUnfiedObject, YAMLContentObject, JSONContentObject, TextObject]
+logger = logging_setup(3)
+EX_SUCCESS = 0
+EX_FAIL = 1
 
 
-class ArtifactsConfiguration:
+##############
+# Main logic #
+##############
+
+
+class ArtifactsManager:
     def __init__(self, artifacts_path: str, content_version: str, suffix: str, zip: bool, content_packs: bool,
                  cpus: int):
         """ Content artifacts configuration
@@ -111,379 +69,342 @@ class ArtifactsConfiguration:
         self.cpus = cpus
         self.execution_start = time.time()
         self.content = Content.from_cwd()
+        self.exit_code = EX_SUCCESS
 
 
-def mute():
-    sys.stdout = open(os.devnull, 'w')
+def create_content_artifacts(artifact_manager: ArtifactsManager) -> int:
+    with ArtifactsDirsHandler(artifact_manager), ProcessPoolHandler(artifact_manager) as pool:
+        futures: List[ProcessFuture] = []
+        # content/Packs
+        futures.extend(dump_packs(artifact_manager, pool))
+        # content/TestPlaybooks
+        futures.append(pool.schedule(dump_tests_conditionally, args=(artifact_manager,)))
+        # content/content-descriptor.json
+        futures.append(pool.schedule(dump_content_descriptor, args=(artifact_manager,)))
+        # content/Documentation
+        futures.append(pool.schedule(dump_content_documentations, args=(artifact_manager,)))
+        # Wait for all futures to be finished
+        wait_futures_complete(futures, artifact_manager)
+        # Add suffix
+        suffix_handler(artifact_manager)
+
+    logger.info(f"\nExecution time: {time.time() - artifact_manager.execution_start} seconds")
+
+    return artifact_manager.exit_code
 
 
-def create_content_artifacts(artifact_conf: ArtifactsConfiguration) -> int:
-    exit_code = 0
-    start = time.time()
-    # Create content artifacts direcotry
-    create_artifacts_dirs(artifact_conf)
+@contextmanager
+def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
 
-    with ProcessPoolExecutor(artifact_conf.cpus, initializer=mute) as pool:
-        futures = {}
-        # Iterate over all packs in content/Packs
-        for pack_name, pack in artifact_conf.content.packs.items():
-            if pack_name not in IGNORED_PACKS:
-                futures[pool.submit(dump_pack, artifact_conf, pack)] = f'Pack {pack.path}'
-        # Iterate over all test-playbooks in content/TestPlaybooks
-        futures[pool.submit(dump_tests_conditionally, artifact_conf)] = f'TestPlaybooks'
-        # Dump content descriptor from content/content-descriptor.json
-        futures[pool.submit(dump_content_descriptor, artifact_conf)] = 'descriptor.json'
-        # Dump content documentation from content/Documentation
-        futures[pool.submit(dump_content_documentations, artifact_conf)] = 'Documentation'
-        # Wait for all future to be finished - catch exception if occurred - before zip
-        exit_code |= wait_futures_complete(futures, artifact_conf)
-        # Add suffix if suffix exists
-        if artifact_conf.suffix:
-            suffix_handler(artifact_conf)
-        # Zip if not specified otherwise
-        if artifact_conf.zip_artifacts:
-            for artifact in [artifact_conf.content_test_path,
-                             artifact_conf.content_new_path,
-                             artifact_conf.content_packs_path,
-                             artifact_conf.content_all_path]:
-                futures[pool.submit(zip_and_delete_origin, artifact)] = f'Zip {artifact}'
-            # Wait for all future to be finished - catch exception if occurred
-            exit_code |= wait_futures_complete(futures, artifact_conf)
+    Args:
+        artifact_manager: Artifacts manager object.
 
-    print(f"{time.time() - start}")
-
-    return exit_code
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
+        try:
+            yield pool
+        except KeyboardInterrupt as e:
+            logger.info("\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt...")
+            pool.stop()
+            pool.join()
+            raise e
+        except Exception as e:
+            logger.error("Gracefully release all resources due to Error...")
+            pool.stop()
+            pool.join()
+            raise e
+        else:
+            pool.close()
+            pool.join()
 
 
-def wait_futures_complete(futures: Dict[Future, str], artifact_conf: ArtifactsConfiguration) -> int:
+def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: ArtifactsManager):
     """Wait for all futures to complete, Raise exception if occured.
 
     Args:
+        artifact_manager: Artifacts manager object.
         futures: futures to wait for.
-        artifact_conf:
+
+    Raises:
+        Exception: Raise caught exception for further cleanups.
     """
-    exit_code = 0
     for future in as_completed(futures):
         try:
             result = future.result()
             if isinstance(result, ArtifactsReport):
-                logger.info(result.to_str(artifact_conf.content.path))
-        except (BaseException, Exception):
-            logger.exception(futures[future])
-            exit_code = 1
-
-    return exit_code
-
-
-def create_artifacts_dirs(artifact_conf: ArtifactsConfiguration) -> None:
-    """ Create content artifacts directories:
-            1. content_test
-            2. content_packs
-            3. content_new
-
-    Args:
-        artifact_conf: Command line configurationץ
-    """
-    if artifact_conf.only_content_packs:
-        artifact_conf.content_packs_path.unlink(missing_ok=True)
-        artifact_conf.content_packs_path.mkdir(exist_ok=True, parents=True)
-    else:
-        for artifact in [artifact_conf.content_test_path,
-                         artifact_conf.content_new_path,
-                         artifact_conf.content_packs_path,
-                         artifact_conf.content_all_path]:
-            if artifact.exists():
-                rmtree(artifact)
-            artifact.mkdir(exist_ok=True, parents=True)
+                logger.info(result.to_str(artifact_manager.content.path))
+        except (ContentError, DuplicateFiles) as e:
+            logger.error(e.msg)
+            raise e
+        except Exception as e:
+            logger.error(e)
+            raise e
 
 
-def dump_content_documentations(artifact_conf: ArtifactsConfiguration):
-    """ Dumping content/content descriptor.json in to:
-            1. content_test
-            2. content_new
-
-    Args:
-        artifact_conf: Command line configuration.
-
-    Notes:
-        1. content_descriptor.json created during build run time.
-    """
-    term_report = ArtifactsReport("Documentations:")
-    for documentation in artifact_conf.content.documentations:
-        object_report = ObjectReport(documentation, content_packs=True)
-        created_files = documentation.dump(artifact_conf.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
-        if not artifact_conf.only_content_packs:
-            object_report.set_content_new()
-            for dest in [artifact_conf.content_new_path,
-                         artifact_conf.content_all_path]:
-                created_files = dump_link_files(artifact_conf, documentation, dest, created_files)
-        term_report.append(object_report)
-
-    return term_report
-
-
-def dump_content_descriptor(artifact_conf: ArtifactsConfiguration):
-    """ Dumping content/content descriptor.json in to:
-            1. content_test
-            2. content_new
-
-    Args:
-        artifact_conf: Command line configuration.
-
-    Notes:
-        1. content_descriptor.json created during build run time.
-    """
-    term_report = ArtifactsReport("Content descriptor:")
-    if not artifact_conf.only_content_packs and artifact_conf.content.content_descriptor:
-        descriptor = artifact_conf.content.content_descriptor
-        object_report = ObjectReport(descriptor, content_test=True, content_new=True)
-        created_files = []
-        for dest in [artifact_conf.content_test_path,
-                     artifact_conf.content_new_path,
-                     artifact_conf.content_all_path]:
-            created_files = dump_link_files(artifact_conf, descriptor, dest, created_files)
-        term_report.append(object_report)
-
-    return term_report
-
-
-def dump_pack(artifact_conf: ArtifactsConfiguration, pack: Pack) -> None:
-    """ Iterate on all required pack object and dump them conditionally, The following Pack object are excluded:
-            1. Change_log files (Deprecated).
-            2. Integration/Script/Playbook readme (Used for website documentation deployment).
-            3. .pack-ignore (Interanl only).
-            4. .secrets-ignore (Interanl only).
-
-    Args:
-        artifact_conf: Command line configuration.
-        pack: Pack object.
-    """
-    term_report = ArtifactsReport(f"Pack {pack.name}:")
-    for integration in pack.integrations:
-        term_report += dump_pack_conditionally(artifact_conf, integration)
-    for script in pack.scripts:
-        term_report += dump_pack_conditionally(artifact_conf, script)
-    for playbook in pack.playbooks:
-        term_report += dump_pack_conditionally(artifact_conf, playbook)
-    for test_playbook in pack.test_playbooks:
-        term_report += dump_pack_conditionally(artifact_conf, test_playbook)
-    for report in pack.reports:
-        term_report += dump_pack_conditionally(artifact_conf, report)
-    for layout in pack.layouts:
-        term_report += dump_pack_conditionally(artifact_conf, layout)
-    for dashboard in pack.dashboards:
-        term_report += dump_pack_conditionally(artifact_conf, dashboard)
-    for incident_field in pack.incident_fields:
-        term_report += dump_pack_conditionally(artifact_conf, incident_field)
-    for incident_type in pack.incident_types:
-        term_report += dump_pack_conditionally(artifact_conf, incident_type)
-    for indicator_field in pack.indicator_fields:
-        term_report += dump_pack_conditionally(artifact_conf, indicator_field)
-    for indicator_type in pack.indicator_types:
-        term_report += dump_pack_conditionally(artifact_conf, indicator_type)
-    for connection in pack.connections:
-        term_report += dump_pack_conditionally(artifact_conf, connection)
-    for classifier in pack.classifiers:
-        term_report += dump_pack_conditionally(artifact_conf, classifier)
-    for widget in pack.widgets:
-        term_report += dump_pack_conditionally(artifact_conf, widget)
-    for release_note in pack.release_notes:
-        term_report += ObjectReport(release_note, content_packs=True)
-        release_note.dump(artifact_conf.content_packs_path / pack.name / RELEASE_NOTES_DIR)
-    for tool in pack.tools:
-        object_report = ObjectReport(tool, content_packs=True)
-        created_files = tool.dump(artifact_conf.content_packs_path / pack.name / TOOLS_DIR)
-        if not artifact_conf.only_content_packs:
-            object_report.set_content_new()
-            dump_link_files(artifact_conf, tool, artifact_conf.content_new_path, created_files)
-            dump_link_files(artifact_conf, tool, artifact_conf.content_all_path, created_files)
-        term_report += object_report
-    if pack.pack_metadata:
-        term_report += ObjectReport(pack.pack_metadata, content_packs=True)
-        pack.pack_metadata.dump(artifact_conf.content_packs_path / pack.name)
-    if pack.readme:
-        term_report += ObjectReport(pack.readme, content_packs=True)
-        pack.readme.dump(artifact_conf.content_packs_path / pack.name)
-
-    return term_report
-
-
-def dump_pack_conditionally(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> ObjectReport:
-    """ Dump pack object by the following logic
-
-    Args:
-        artifact_conf: Command line configuration.
-        content_object: content_object (e.g. Integration/Script/Layout etc)
-    """
-    object_report = ObjectReport(content_object)
-    pack_created_files: List[Path] = []
-
-    with content_files_handler(artifact_conf, content_object) as rm_files:
-        # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
-        if is_in_content_packs(content_object):
-            object_report.set_content_packs()
-            pack_created_files.extend(dump_link_files(artifact_conf, content_object,
-                                                      artifact_conf.content_packs_path /
-                                                      calc_relative_packs_dir(artifact_conf, content_object)))
-            rm_files.extend(
-                [created_file for created_file in pack_created_files if created_file.name.endswith('_45.yml')])
-            real_packs = list(set(pack_created_files).difference(set(rm_files)))
-
-        # Content test fileter
-        if is_in_content_test(artifact_conf, content_object):
-            object_report.set_content_test()
-            test_created_files = dump_link_files(artifact_conf, content_object, artifact_conf.content_test_path,
-                                                 pack_created_files)
-            dump_link_files(artifact_conf, content_object, artifact_conf.content_all_path, test_created_files)
-
-        # Content new filter
-        if is_in_content_new(artifact_conf, content_object):
-            object_report.set_content_new()
-            new_created_files = dump_link_files(artifact_conf, content_object, artifact_conf.content_new_path, pack_created_files)
-            dump_link_files(artifact_conf, content_object, artifact_conf.content_all_path, new_created_files)
-
-    return object_report
-
-
-def dump_tests_conditionally(artifact_conf: ArtifactsConfiguration) -> ObjectReport:
-    """ Dump test scripts/playbooks conditionally by the following logic:
-            1. If from_version/fromVersion value is stricly lower than SUPPORTED_BOUND_VERSION.
-
-    Args:
-        artifact_conf: Command line configuration
-    """
-    term_report = ArtifactsReport("TestPlaybooks:")
-    for test in artifact_conf.content.test_playbooks:
-        object_report = ObjectReport(test)
-        if is_in_content_test(artifact_conf, test):
-            object_report.set_content_test()
-            test_created_files = dump_link_files(artifact_conf, test, artifact_conf.content_test_path)
-            dump_link_files(artifact_conf, test, artifact_conf.content_all_path, test_created_files)
-        term_report += object_report
-
-    return term_report
-
-
-def dump_link_files(artifact_conf: ArtifactsConfiguration, content_object: ContentObject,
-                    target_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
-    new_created_files = []
-    if created_files:
-        for file in created_files:
-            new_file = target_dir / file.name
-            if new_file.exists() and new_file.stat().st_mtime >= artifact_conf.execution_start:
-                raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
-            else:
-                os.link(file, new_file)
-                new_created_files.append(new_file)
-    else:
-        target = target_dir / content_object.normalized_file_name()
-        if target.exists() and target.stat().st_mtime >= artifact_conf.execution_start:
-            raise BaseException(f"Duplicate file in content repo: {content_object.path.name}")
-        else:
-            new_created_files.extend(content_object.dump(dest_dir=target_dir))
-
-    return new_created_files
-
-
-def calc_relative_packs_dir(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> Path:
-    relative_pack_path = content_object.path.relative_to(artifact_conf.content.path / PACKS_DIR)
-    if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
-            (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
-        relative_pack_path = relative_pack_path.parent.parent
-    else:
-        relative_pack_path = relative_pack_path.parent
-
-    return relative_pack_path
+#####################################################
+# Files include rules functions (Version, Type etc) #
+#####################################################
 
 
 def is_in_content_packs(content_object: ContentObject) -> bool:
+    """ Rules content_packs:
+            1. to_version >= First marketplace version.
+
+        Args:
+            content_object: Content object as specified in global variable - ContentObject.
+
+        Returns:
+            bool: True if object should be included in content_packs artifacts else False.
+    """
     return content_object.to_version >= FIRST_MARKETPLACE_VERSION
 
 
-def is_in_content_test(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
-    return (not artifact_conf.only_content_packs and
+def is_in_content_test(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+    """Rules content_test:
+            1. Object located in TestPlaybook directory - Pack/Content.
+            2. from_version < First marketplace version.
+            3. Path of object is not including global variable - IGNORED_TEST_PLAYBOOKS_DIR
+            4. If flag of only packs is off.
+
+        Args:
+            artifact_manager: Artifacts manager object.
+            content_object: Content object as specified in global variable - ContentObject.
+
+        Returns:
+            bool: True if object should be included in content_test artifacts else False.
+    """
+    return (not artifact_manager.only_content_packs and
             TEST_PLAYBOOKS_DIR in content_object.path.parts and
             content_object.from_version < FIRST_MARKETPLACE_VERSION and
             IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts)
 
 
-def is_in_content_new(artifact_conf: ArtifactsConfiguration, content_object: ContentObject) -> bool:
-    return (not artifact_conf.only_content_packs and
+def is_in_content_new(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+    """ Rules content_new:
+            1. Object not located in TestPlaybook directory - Pack/Content.
+            2. from_version < First marketplace version.
+            3. Path of object is not including global variable - IGNORED_TEST_PLAYBOOKS_DIR
+            4. If flag of only packs is off.
+
+        Args:
+            artifact_manager: Artifacts manager object.
+            content_object: Content object as specified in global variable - ContentObject.
+
+        Returns:
+            bool: True if object should be included in content_new artifacts else False.
+    """
+    return (not artifact_manager.only_content_packs and
             TEST_PLAYBOOKS_DIR not in content_object.path.parts and
             content_object.from_version < FIRST_MARKETPLACE_VERSION)
 
 
-@contextmanager
-def content_files_handler(artifact_conf: ArtifactsConfiguration, content_object: ContentObject):
-    """ Pre-processing pack, perform the following:
-            1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
-                a. CONTENT_RELEASE_VERSION to given content version flag.
-                b. CONTENT_BRANCH_NAME to active branch
+def is_in_content_all(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+    """ Rules content_all:
+            1. If in content_new or content_test.
 
-        Post-processing pack, perform the following:
-            1. Change content/Packs/Base/Scripts/CommonServerPython.py to original state.
-            2. Unifier creates *_45.yml files in content_pack by default which is not support due to_version lower than
-                NEWEST_SUPPORTED_VERSION, Therefor after copy it to content_new, delete it.
+        Args:
+            artifact_manager: Artifacts manager object.
+            content_object: Content object as specified in global variable - ContentObject.
+
+        Returns:
+            bool: True if object should be included in content_all artifacts else False.
+    """
+    return is_in_content_new(artifact_manager, content_object) or is_in_content_test(artifact_manager, content_object)
+
+
+############################
+# Documentations functions #
+############################
+
+
+def dump_content_documentations(artifact_manager: ArtifactsManager) -> ArtifactsReport:
+    """ Dumping content/content descriptor.json in to:
+            1. content_new
+            2. content_all
 
     Args:
-        artifact_conf: Command line configuration.
-        content_object: content_object (e.g. Integration/Script/Layout etc)
+        artifact_manager: Artifacts manager object.
+
+    Returns:
+        ArtifactsReport: ArtifactsReport object.
     """
-    rm_files = []
+    term_report = ArtifactsReport("Documentations:")
+    for documentation in artifact_manager.content.documentations:
+        object_report = ObjectReport(documentation, content_packs=True)
+        created_files = documentation.dump(artifact_manager.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
+        if not artifact_manager.only_content_packs:
+            object_report.set_content_new()
+            object_report.set_content_all()
+            for dest in [artifact_manager.content_new_path,
+                         artifact_manager.content_all_path]:
+                created_files = dump_link_files(artifact_manager, documentation, dest, created_files)
+        term_report.append(object_report)
 
-    if (BASE_PACK in content_object.path.parts and isinstance(content_object, Script)
-            and content_object.code_path and content_object.code_path.name == 'CommonServerPython.py'):
-        # modify_common_server_parameters(content_object.code_path)
-        modify_common_server_constants(content_object.code_path,
-                                       content_version=artifact_conf.content_version,
-                                       branch_name=artifact_conf.content.git().active_branch)
-    yield rm_files
-
-    if (BASE_PACK in content_object.path.parts and isinstance(content_object, Script)
-            and content_object.code_path and content_object.code_path.name == 'CommonServerPython.py'):
-        # modify_common_server_parameters(content_object.code_path)
-        modify_common_server_constants(content_object.code_path,
-                                       content_version='0.0.0',
-                                       branch_name='master')
-
-    # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
-    for file_path in rm_files:
-        file_path.unlink()
+    return term_report
 
 
-def suffix_handler(artifact_conf: ArtifactsConfiguration):
-    """ Add suffix to file names exclude:
-            1. pack_metadata.json
-            2. README.
-            3. content_descriptor.json
-            3. ReleaseNotes/**
+########################
+# Descriptor functions #
+########################
 
-        Include:
-            1. *.json
-            2. *.(yaml|yml)
+
+def dump_content_descriptor(artifact_manager: ArtifactsManager) -> ArtifactsReport:
+    """ Dumping content/content_descriptor.json in to:
+            1. content_test
+            2. content_new
+            3. content_all
 
     Args:
-        artifact_conf: Command line configuration.
+        artifact_manager: Artifacts manager object.
+
+    Returns:
+        ArtifactsReport: ArtifactsReport object.
+
+    Notes:
+        1. content_descriptor.json created during build run time.
     """
-    files_content_packs = artifact_conf.content_packs_path.rglob("!README.md|!pack_metadata.json|*.{json,yml,yaml}",
-                                                                 flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-    file_content_test = artifact_conf.content_test_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
-                                                              flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-    file_content_new = artifact_conf.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
-                                                            flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-    for files in [file_content_new, files_content_packs, file_content_test]:
-        for file in files:
-            file_name_split = file.name.split('.')
-            file_real_stem = ".".join(file_name_split[:-1])
-            suffix = file_name_split[-1]
-            file.rename(file.with_name(f'{file_real_stem}-{artifact_conf.suffix}.{suffix}'))
+    term_report = ArtifactsReport("Content descriptor:")
+    if not artifact_manager.only_content_packs and artifact_manager.content.content_descriptor:
+        descriptor = artifact_manager.content.content_descriptor
+        object_report = ObjectReport(descriptor, content_test=True, content_new=True, content_all=True)
+        created_files: List[Path] = []
+        for dest in [artifact_manager.content_test_path,
+                     artifact_manager.content_new_path,
+                     artifact_manager.content_all_path]:
+            created_files = dump_link_files(artifact_manager, descriptor, dest, created_files)
+        term_report.append(object_report)
+
+    return term_report
 
 
-def modify_common_server_constants(code_path: Path, branch_name: str, content_version):
+##################################
+# Content Testplaybook functions #
+##################################
+
+
+def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsReport:
+    """ Dump test scripts/playbooks conditionally in to:
+            1. content_test
+
+    Args:
+        artifact_manager: Artifacts manager object.
+
+    Returns:
+        ArtifactsReport: ArtifactsReport object.
     """
-    Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
-        a. CONTENT_RELEASE_VERSION to given content version flag.
-        b. CONTENT_BRANCH_NAME to active branch
+    term_report = ArtifactsReport("TestPlaybooks:")
+    for test in artifact_manager.content.test_playbooks:
+        object_report = ObjectReport(test)
+        if is_in_content_test(artifact_manager, test):
+            object_report.set_content_test()
+            test_created_files = dump_link_files(artifact_manager, test, artifact_manager.content_test_path)
+            dump_link_files(artifact_manager, test, artifact_manager.content_all_path, test_created_files)
+        term_report += object_report
+
+    return term_report
+
+
+###########################
+# Content packs functions #
+###########################
+
+def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[ProcessFuture]:
+    """ Create futures which dumps conditionally content/Packs.
+
+    Args:
+        artifact_manager: Artifacts manager object.
+        pool: Process pool to schedule new processes.
+
+    Returns:
+        List[ProcessFuture]: List of pebble futures to wait for.
+    """
+    futures = []
+    for pack_name, pack in artifact_manager.content.packs.items():
+        if pack_name not in IGNORED_PACKS:
+            futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
+
+    return futures
+
+
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
+    """ Dumping content/Packs/<pack_id>/ in to:
+            1. content_test
+            2. content_new
+            3. content_all
+            4. content_packs
+
+    Args:
+        artifact_manager: Artifacts manager object.
+        pack: Pack object.
+
+    Notes:
+        1. Include all file object, excluding:
+            a. Change_log files (Deprecated).
+            b. Integration/Script/Playbook readme (Used for website documentation deployment).
+            c. .pack-ignore (Interanl only).
+            d. .secrets-ignore (Interanl only).
+
+    Returns:
+        ArtifactsReport: ArtifactsReport object.
+    """
+    term_report = ArtifactsReport(f"Pack {pack.name}:")
+    for integration in pack.integrations:
+        term_report += dump_pack_conditionally(artifact_manager, integration)
+    for script in pack.scripts:
+        term_report += dump_pack_conditionally(artifact_manager, script)
+    for playbook in pack.playbooks:
+        term_report += dump_pack_conditionally(artifact_manager, playbook)
+    for test_playbook in pack.test_playbooks:
+        term_report += dump_pack_conditionally(artifact_manager, test_playbook)
+    for report in pack.reports:
+        term_report += dump_pack_conditionally(artifact_manager, report)
+    for layout in pack.layouts:
+        term_report += dump_pack_conditionally(artifact_manager, layout)
+    for dashboard in pack.dashboards:
+        term_report += dump_pack_conditionally(artifact_manager, dashboard)
+    for incident_field in pack.incident_fields:
+        term_report += dump_pack_conditionally(artifact_manager, incident_field)
+    for incident_type in pack.incident_types:
+        term_report += dump_pack_conditionally(artifact_manager, incident_type)
+    for indicator_field in pack.indicator_fields:
+        term_report += dump_pack_conditionally(artifact_manager, indicator_field)
+    for indicator_type in pack.indicator_types:
+        term_report += dump_pack_conditionally(artifact_manager, indicator_type)
+    for connection in pack.connections:
+        term_report += dump_pack_conditionally(artifact_manager, connection)
+    for classifier in pack.classifiers:
+        term_report += dump_pack_conditionally(artifact_manager, classifier)
+    for widget in pack.widgets:
+        term_report += dump_pack_conditionally(artifact_manager, widget)
+    for release_note in pack.release_notes:
+        term_report += ObjectReport(release_note, content_packs=True)
+        release_note.dump(artifact_manager.content_packs_path / pack.name / RELEASE_NOTES_DIR)
+    for tool in pack.tools:
+        object_report = ObjectReport(tool, content_packs=True)
+        created_files = tool.dump(artifact_manager.content_packs_path / pack.name / TOOLS_DIR)
+        if not artifact_manager.only_content_packs:
+            object_report.set_content_new()
+            dump_link_files(artifact_manager, tool, artifact_manager.content_new_path, created_files)
+            object_report.set_content_all()
+            dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
+        term_report += object_report
+    if pack.pack_metadata:
+        term_report += ObjectReport(pack.pack_metadata, content_packs=True)
+        pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.name)
+    if pack.readme:
+        term_report += ObjectReport(pack.readme, content_packs=True)
+        pack.readme.dump(artifact_manager.content_packs_path / pack.name)
+
+    return term_report
+
+
+def modify_common_server_constants(code_path: Path, content_version: str, branch_name: Optional[str] = None):
+    """ Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
+            a. CONTENT_RELEASE_VERSION to given content version flag.
+            b. CONTENT_BRANCH_NAME to active branch
 
     Args:
         code_path: Packs/Base/Scripts/CommonServerPython.py full code path.
@@ -497,3 +418,279 @@ def modify_common_server_constants(code_path: Path, branch_name: str, content_ve
                               f"CONTENT_BRANCH_NAME = '{branch_name}'",
                               file_content_new)
     code_path.write_text(file_content_new)
+
+
+@contextmanager
+def content_files_handler(artifact_manager: ArtifactsManager, content_object: ContentObject):
+    """ Pre-processing pack, perform the following:
+            1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
+                a. CONTENT_RELEASE_VERSION to given content version flag.
+                b. CONTENT_BRANCH_NAME to active branch
+
+        Post-processing pack, perform the following:
+            1. Change content/Packs/Base/Scripts/CommonServerPython.py to original state.
+            2. Unifier creates *_45.yml files in content_pack by default which is not support due to_version lower than
+                NEWEST_SUPPORTED_VERSION, Therefor after copy it to content_new, delete it.
+
+    Args:
+        artifact_manager: Command line configuration.
+        content_object: content_object (e.g. Integration/Script/Layout etc)
+
+    Yields:
+        List[Path]: List of file to be removed after execution.
+    """
+    rm_files: List[Path] = []
+
+    try:
+        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
+                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
+            # modify_common_server_parameters(content_object.code_path)
+            repo = artifact_manager.content.git()
+            modify_common_server_constants(content_object.code_path,
+                                           content_version=artifact_manager.content_version,
+                                           branch_name=None if not repo else repo.active_branch)
+        yield rm_files
+    finally:
+        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
+                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
+            # modify_common_server_parameters(content_object.code_path)
+            modify_common_server_constants(content_object.code_path,
+                                           content_version='0.0.0',
+                                           branch_name='master')
+
+        # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
+        for file_path in rm_files:
+            file_path.unlink()
+
+
+def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
+    """ Dump pack object by the following logic
+
+    Args:
+        artifact_manager: Artifacts manager object.
+        content_object: content_object (e.g. Integration/Script/Layout etc)
+
+    Returns:
+        ObjectReport: ObjectReport object.
+    """
+    object_report = ObjectReport(content_object)
+    pack_created_files: List[Path] = []
+    test_new_created_files: List[Path] = []
+
+    with content_files_handler(artifact_manager, content_object) as rm_files:
+        # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
+        if is_in_content_packs(content_object):
+            object_report.set_content_packs()
+            pack_created_files.extend(dump_link_files(artifact_manager, content_object,
+                                                      artifact_manager.content_packs_path /
+                                                      calc_relative_packs_dir(artifact_manager, content_object)))
+            rm_files.extend(
+                [created_file for created_file in pack_created_files if created_file.name.endswith('_45.yml')])
+            list(set(pack_created_files).difference(set(rm_files)))
+
+        # Content test fileter
+        if is_in_content_test(artifact_manager, content_object):
+            object_report.set_content_test()
+            test_new_created_files = dump_link_files(artifact_manager, content_object,
+                                                     artifact_manager.content_test_path, pack_created_files)
+
+        # Content new filter
+        if is_in_content_new(artifact_manager, content_object):
+            object_report.set_content_new()
+            test_new_created_files = dump_link_files(artifact_manager, content_object,
+                                                     artifact_manager.content_new_path, pack_created_files)
+        # Content all filter
+        if is_in_content_all(artifact_manager, content_object):
+            object_report.set_content_all()
+            dump_link_files(artifact_manager, content_object, artifact_manager.content_all_path, test_new_created_files)
+
+    return object_report
+
+
+########################
+# Suffix add functions #
+########################
+
+
+def suffix_handler(artifact_manager: ArtifactsManager):
+    """ Add suffix to file names exclude:
+            1. pack_metadata.json
+            2. README.
+            3. content_descriptor.json
+            3. ReleaseNotes/**
+
+        Include:
+            1. *.json
+            2. *.(yaml|yml)
+
+    Args:
+        artifact_manager: Artifacts manager object.
+    """
+    if artifact_manager.suffix:
+        files_content_packs = artifact_manager.content_packs_path.rglob(
+            "!README.md|!pack_metadata.json|*.{json,yml,yaml}",
+            flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        file_content_test = artifact_manager.content_test_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
+                                                                     flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        file_content_new = artifact_manager.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
+                                                                   flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        file_content_all = artifact_manager.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
+                                                                   flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        for files in [file_content_new, files_content_packs, file_content_test, file_content_all]:
+            for file in files:
+                file_name_split = file.name.split('.')
+                file_real_stem = ".".join(file_name_split[:-1])
+                suffix = file_name_split[-1]
+                file.rename(file.with_name(f'{file_real_stem}-{artifact_manager.suffix}.{suffix}'))
+
+
+###########
+# Helpers #
+###########
+
+
+class DuplicateFiles(Exception):
+    def __init__(self, exiting_file: Path, src: Path):
+        """ Exception raised when 2 files with the same name existing in same directory when creating artifacts
+
+            Args:
+                exiting_file: File allready exists in artifacts.
+                src: File source which copy or link to same directory.
+        """
+        self.exiting_file = exiting_file
+        self.src = src
+        self.msg = f"\nFound duplicate files\n1. {src}\n2. {exiting_file}"
+
+
+def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentObject,
+                    dest_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
+    """ Dump content object to requested destination dir.
+    Due to perfomence issue if known files allredy created and dump is done for the same object, This function
+    will link files instead of creating the files from scratch (Reduce unify, split etc.)
+
+    Args:
+        artifact_manager: Artifacts manager object.
+        content_object: Content object.
+        dest_dir: Destination dir.
+        created_files: Pre-created file (Not mandatory).
+
+    Returns:
+        List[Path]: List of new created files.
+
+    Raises:
+        DuplicateFiles: Exception occured if duplicate files exists in the same dir (Protect from override).
+    """
+    new_created_files = []
+    # Handle case where files allready created
+    if created_files:
+        for file in created_files:
+            new_file = dest_dir / file.name
+            if new_file.exists() and new_file.stat().st_mtime >= artifact_manager.execution_start:
+                raise DuplicateFiles(new_file, content_object.path)
+            else:
+                os.link(file, new_file)
+                new_created_files.append(new_file)
+    # Handle case where object first time dump.
+    else:
+        target = dest_dir / content_object.normalize_file_name()
+        if target.exists() and target.stat().st_mtime >= artifact_manager.execution_start:
+            raise DuplicateFiles(target, content_object.path)
+        else:
+            new_created_files.extend(content_object.dump(dest_dir=dest_dir))
+
+    return new_created_files
+
+
+def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
+    relative_pack_path = content_object.path.relative_to(artifact_manager.content.path / PACKS_DIR)
+    if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
+            (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
+        relative_pack_path = relative_pack_path.parent.parent
+    else:
+        relative_pack_path = relative_pack_path.parent
+
+    return relative_pack_path
+
+
+def child_mute():
+    """Mute child process inorder to keep log clean"""
+    sys.stdout = open(os.devnull, 'w')
+
+
+###################################
+# Artifacts Directories functions #
+###################################
+
+
+@contextmanager
+def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
+    """ Artifacts Directories handler.
+    Logic by time line:
+        1. Delete artifacts directories if exists.
+        2. Create directories.
+        3. If any error occured -> Delete artifacts directories -> Exit.
+        4. If finish succesfully:
+            a. If zip:
+                1. Zip artifacts zip.
+                2. Delete artifacts directories.
+        5. log report.
+
+    Args:
+        artifact_manager: Artifacts manager object.
+    """
+    try:
+        delete_dirs(artifact_manager)
+        create_dirs(artifact_manager)
+        yield
+    except (Exception, KeyboardInterrupt):
+        delete_dirs(artifact_manager)
+        artifact_manager.exit_code = EX_FAIL
+    else:
+        if artifact_manager.zip_artifacts:
+            zip_dirs(artifact_manager)
+            delete_dirs(artifact_manager)
+        report_artifacts_paths(artifact_manager)
+
+
+def delete_dirs(artifact_manager: ArtifactsManager) -> None:
+    """Delete artifacts directories"""
+    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
+                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+        if artifact_dir.exists():
+            rmtree(artifact_dir)
+
+
+def create_dirs(artifact_manager: ArtifactsManager) -> None:
+    """Create artifacts directories"""
+    if artifact_manager.only_content_packs:
+        artifact_manager.content_packs_path.mkdir(parents=True)
+    else:
+        for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
+                             artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+            artifact_dir.mkdir(parents=True)
+
+
+def zip_dirs(artifact_manager: ArtifactsManager) -> None:
+    """Zip artifacts directories"""
+    if artifact_manager.only_content_packs:
+        make_archive(artifact_manager.content_packs_path, 'zip', artifact_manager.content_packs_path)
+    else:
+        with ProcessPoolHandler(artifact_manager) as pool:
+            for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
+                                 artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+                pool.schedule(make_archive, args=(artifact_dir, 'zip', artifact_dir))
+
+
+def report_artifacts_paths(artifact_manager: ArtifactsManager) -> None:
+    """Report artifacts results destination"""
+    logger.info("\nArtifacts created:")
+    if artifact_manager.zip_artifacts:
+        template = "\n\t - {}.zip"
+    else:
+        template = "\n\t - {}"
+
+    if artifact_manager.only_content_packs:
+        logger.info(template.format(artifact_manager.content_packs_path))
+    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
+                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+        logger.info(template.format(artifact_dir))

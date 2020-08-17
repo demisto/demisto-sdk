@@ -1,23 +1,23 @@
 from filecmp import dircmp
 
-from click.testing import CliRunner
-from wcmatch.pathlib import Path
 import pytest
-
+from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import temp_dir, destroy_by_suffix, duplicate_file
-from demisto_sdk.commands.common.tools import path_test_files, src_root
+from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (
+    destroy_by_suffix, duplicate_file, temp_dir)
+from wcmatch.pathlib import Path
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 
-TEST_DATA = path_test_files()
+TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data' / 'create_content_artifacts_test')
 
 
 @pytest.fixture()
 def mock_git(mocker):
-    from demisto_sdk.commands.common.content.content import Content
+    from demisto_sdk.commands.common.content import Content
     # Mock git working directory
     mocker.patch.object(Content, 'git')
     Content.git().working_tree_dir = TEST_CONTENT_REPO
@@ -41,8 +41,9 @@ def test_integration_create_content_artifacts_zip(mock_git):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp])
         assert Path(temp / 'content_new.zip').exists()
-        assert Path(temp / 'content_new.zip').exists()
-        assert Path(temp / 'content_new.zip').exists()
+        assert Path(temp / 'content_all.zip').exists()
+        assert Path(temp / 'content_packs.zip').exists()
+        assert Path(temp / 'content_test.zip').exists()
 
     assert result.exit_code == 0
 
@@ -50,7 +51,7 @@ def test_integration_create_content_artifacts_zip(mock_git):
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(mock_git, suffix: str):
 
-    with destroy_by_suffix(TEST_CONTENT_REPO, suffix), temp_dir() as temp:
+    with destroy_by_suffix(suffix), temp_dir() as temp:
         runner = CliRunner()
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '--no-zip'])
 

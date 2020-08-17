@@ -1,9 +1,8 @@
 # type: ignore
 import dateutil.parser
+from CommonServerPython import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
-
-from CommonServerPython import *
 
 INCIDENT_TEXT_FIELD = 'incident_text_for_tfidf'
 

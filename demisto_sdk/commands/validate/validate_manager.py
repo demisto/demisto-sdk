@@ -7,10 +7,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
-    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
+    CONTENT_ENTITIES_DIRS,
+    KNOWN_FILE_STATUSES, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
@@ -66,7 +66,7 @@ class ValidateManager:
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  silence_init_prints=False, no_docker_checks=False, skip_dependencies=False):
-
+        self.counter = 0
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -149,7 +149,7 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-
+        print("Counter is " + str(self.counter))
         return self.print_final_report(is_valid)
 
     def run_validation_on_specific_files(self):
@@ -279,7 +279,6 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
-
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -291,6 +290,7 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
+            self.counter += 1
             click.echo(f"\nValidating {file_path} as {file_type.value}")
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
@@ -707,7 +707,7 @@ class ValidateManager:
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors).handle_error(
-                    error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
                     is_valid.add(True)
 
                 else:
@@ -885,7 +885,6 @@ class ValidateManager:
                 else:
                     # file_data[1] = old name, file_data[2] = new name
                     modified_files_list.add((file_data[1], file_data[2]))
-
 
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
                 click.secho('{} file status is an unknown one, please check. File status was: {}'

@@ -5,10 +5,8 @@ from typing import List, Tuple
 
 import pytest
 import yaml
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator, checked_type_by_reg
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
@@ -25,6 +23,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
+
+from demisto_sdk.commands.common.constants import PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX
 
 
 class TestStructureValidator:
@@ -242,3 +242,15 @@ class TestStructureValidator:
 
         structure = StructureValidator(file_path=no_extension)
         assert not structure.is_valid_file_extension()
+
+
+class TestGetMatchingRegex:
+    INPUTS = [
+        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
+         PLAYBOOK_YML_REGEX),
+        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
+    ]
+
+    @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
+    def test_get_matching_regex(self, string_to_match, regexes, answer):
+        assert checked_type_by_reg(string_to_match, regexes, True) == answer

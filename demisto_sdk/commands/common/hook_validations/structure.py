@@ -10,17 +10,13 @@ from typing import Optional, Tuple
 
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, FileType)
+from demisto_sdk.commands.common.constants import (ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
+                                                   JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX,
+                                                   FileType, CHECKED_TYPES_REGEXES)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import (checked_type_by_reg,
-                                               get_content_file_type_dump,
-                                               get_remote_file)
-from demisto_sdk.commands.format.format_constants import \
-    OLD_FILE_DEFAULT_1_FROMVERSION
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.tools import (get_content_file_type_dump, get_remote_file)
+from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
 
 
@@ -379,3 +375,27 @@ class StructureValidator(BaseValidator):
                 return False
 
         return True
+
+
+def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
+    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list.
+
+    Args:
+        file_path: (str) on which the check is done.
+        compared_regexes: (list) of str which represent the regexes that will be check on file_path.
+        return_regex: (bool) Whether the function will return the regex that was matched or not.
+
+    Returns:
+            String/Bool
+            Depends on if return_regex was set to True or False.
+            Returns Bool when the return_regex is False and the return value is whether any regex was matched or not.
+            Returns String when the return_regex is True and the return value is the regex that was found as a match.
+
+    """
+    compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
+    for regex in compared_regexes:
+        if re.search(regex, file_path, re.IGNORECASE):
+            if return_regex:
+                return regex
+            return True
+    return False

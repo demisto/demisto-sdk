@@ -19,11 +19,11 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN,
     CONTENT_GITHUB_UPSTREAM, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JSON_ALL_INDICATOR_TYPES_REGEXES,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR,
     LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
     PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
@@ -516,30 +516,6 @@ def get_latest_release_notes_text(rn_path):
     return rn if rn else None
 
 
-def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
-    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list.
-
-    Args:
-        file_path: (str) on which the check is done.
-        compared_regexes: (list) of str which represent the regexes that will be check on file_path.
-        return_regex: (bool) Whether the function will return the regex that was matched or not.
-
-    Returns:
-            String/Bool
-            Depends on if return_regex was set to True or False.
-            Returns Bool when the return_regex is False and the return value is whether any regex was matched or not.
-            Returns String when the return_regex is True and the return value is the regex that was found as a match.
-
-    """
-    compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
-    for regex in compared_regexes:
-        if re.search(regex, file_path, re.IGNORECASE):
-            if return_regex:
-                return regex
-            return True
-    return False
-
-
 def format_version(version):
     """format server version to form X.X.X
 
@@ -758,7 +734,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None,
+              ignore_sub_categories: bool = False):  # noqa: C901
     """
     returns the content file type
 
@@ -821,7 +798,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        if 'regex' in _dict or checked_type_by_reg(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        if 'regex' in _dict or 'reputations' in _dict:
             return FileType.REPUTATION
 
         if 'brandName' in _dict and 'transformer' in _dict:

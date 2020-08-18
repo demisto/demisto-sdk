@@ -10,6 +10,7 @@ repos:
     -   id: check-docstring-first
         exclude: demisto_sdk/tests/test_files/*
     -   id: check-json
+        exclude: demisto_sdk/tests/test_files/*
     -   id: check-yaml
         exclude: demisto_sdk/tests/test_files/*|\.circleci/config\.yml
     -   id: debug-statements

@@ -27,7 +27,7 @@ class ImageValidator(BaseValidator):
 
         if file_path.endswith('.png'):
             self.file_path = file_path
-        # For Integration/BetaIntegration
+        # For integrations that are not in a package format, the image is within the yml
         else:
             data_dictionary = get_yaml(file_path)
             if not data_dictionary:

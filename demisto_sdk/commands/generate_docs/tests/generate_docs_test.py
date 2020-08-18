@@ -70,7 +70,7 @@ def test_string_escape_md():
     assert "'" in res
     res = string_escape_md('- This _sentence_ has _wrapped_with_underscore_ and _another_ words.')
     assert '\\_wrapped_with_underscore\\_' in res
-    assert '\\_wrapped_with_underscore\\_' in res
+    assert '\\_sentence\\_' in res
     assert '\\_another\\_' in res
     assert res.startswith('\\-')
 

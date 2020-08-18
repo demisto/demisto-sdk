@@ -97,13 +97,20 @@ class UpdateRN:
     def is_bump_required(self):
         try:
             diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-            print(diff)
             if '+    "currentVersion"' in diff:
+                return False
+            if self.only_readme_changed():
                 return False
         except RuntimeError:
             print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
                           f"Please verify the pack exists and the pack name is correct.")
         return True
+
+    def only_readme_changed(self):
+        changed_files = self.added_files.union(self.pack_files)
+        if len(changed_files) == 1 and 'README' in changed_files.pop():
+            return True
+        return False
 
     def find_added_pack_files(self):
         for a_file in self.added_files:

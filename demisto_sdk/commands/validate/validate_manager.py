@@ -66,7 +66,6 @@ class ValidateManager:
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  silence_init_prints=False, no_docker_checks=False, skip_dependencies=False):
-        self.counter = 0
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -149,7 +148,6 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-        print("Counter is " + str(self.counter))
         return self.print_final_report(is_valid)
 
     def run_validation_on_specific_files(self):
@@ -290,7 +288,6 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
-            self.counter += 1
             click.echo(f"\nValidating {file_path} as {file_type.value}")
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
@@ -901,6 +898,8 @@ class ValidateManager:
                     self.ignored_files.add(file_path)
                     if print_ignored_files:
                         click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                else:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
             modified_files_list,

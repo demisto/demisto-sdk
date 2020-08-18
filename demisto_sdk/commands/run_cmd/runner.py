@@ -64,6 +64,7 @@ class Runner:
         if self.json2outputs:
             if not self.prefix:
                 print_error("A prefix for the outputs is needed for this command. Please provide one")
+                return 1
             else:
                 raw_output_json = self._return_raw_outputs_from_log(log_ids)
                 if raw_output_json:
@@ -78,6 +79,7 @@ class Runner:
                         json_to_outputs(command, file_path, self.prefix)
                 else:
                     print_error("Could not extract raw output as JSON from command")
+                    return 1
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance.

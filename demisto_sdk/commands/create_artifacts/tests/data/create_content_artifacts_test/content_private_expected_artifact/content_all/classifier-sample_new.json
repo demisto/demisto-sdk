@@ -1,3 +1,5 @@
 {
-  "toVersion": "4.0.0"
+  "toVersion": "4.0.0",
+  "transformer": "test",
+  "keyTypeMap": "test"
 }

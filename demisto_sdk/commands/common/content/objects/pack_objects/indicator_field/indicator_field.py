@@ -34,6 +34,6 @@ class IndicatorField(JSONContentObject):
                                                                   f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-')
             # Handle case where "*hello-world.yml"
             else:
-                normalize_file_name = f'{INCIDENT_FIELD}-{INCIDENT_FIELD}-{normalize_file_name}'
+                normalize_file_name = f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}'
 
         return normalize_file_name

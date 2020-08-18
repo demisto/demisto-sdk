@@ -60,7 +60,8 @@ VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None):
+def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None,
+                   verbose: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -68,6 +69,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
+        verbose (bool): Whether to print verbose logs or not
     Returns:
         int 0 in case of success 1 otherwise
     """

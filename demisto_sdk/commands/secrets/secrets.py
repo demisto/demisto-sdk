@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, REQUIRED_YML_FILE_TYPES, re, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type_by_reg,
+    PACKS_WHITELIST_FILE_NAME, re, FileType)
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pack_name,
                                                is_file_path_in_pack,
                                                print_color, print_error,

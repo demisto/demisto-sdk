@@ -97,7 +97,8 @@ class UpdateRN:
     def is_bump_required(self):
         try:
             diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-            if "currentVersion" in diff:
+            print(diff)
+            if '+    "currentVersion"' in diff:
                 return False
         except RuntimeError:
             print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "

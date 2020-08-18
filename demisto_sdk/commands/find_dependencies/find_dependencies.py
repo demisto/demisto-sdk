@@ -828,6 +828,7 @@ class PackDependencies:
         pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
         pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
         pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
+        pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
 
         if not sum(pack_items.values(), []):
             raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")

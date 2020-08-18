@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
-from demisto_sdk.commands.common.tools import checked_type
+from demisto_sdk.commands.common.hook_validations.structure import checked_type_by_reg
 
 test_packs_regex_params = [
     (['Packs/XDR/Integrations/XDR/XDR.yml', 'Packs/XDR/Scripts/Random/Random.yml'],
@@ -92,7 +92,7 @@ test_packs_regex_params = [
 @pytest.mark.parametrize('acceptable,non_acceptable,regex', test_packs_regex_params)
 def test_packs_regex(acceptable, non_acceptable, regex):
     for test_path in acceptable:
-        assert checked_type(test_path, compared_regexes=regex)
+        assert checked_type_by_reg(test_path, compared_regexes=regex)
 
     for test_path in non_acceptable:
-        assert not checked_type(test_path, compared_regexes=regex)
+        assert not checked_type_by_reg(test_path, compared_regexes=regex)

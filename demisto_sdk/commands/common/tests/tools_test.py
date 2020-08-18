@@ -21,14 +21,14 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_file, get_files_in_dir,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
-                                               get_matching_regex,
                                                get_release_notes_file_path,
                                                get_ryaml,
                                                has_remote_configured,
                                                is_origin_content_repo,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare)
+                                               server_version_compare,
+                                               checked_type_by_reg)
 from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
@@ -229,7 +229,7 @@ class TestGetMatchingRegex:
 
     @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
     def test_get_matching_regex(self, string_to_match, regexes, answer):
-        assert get_matching_regex(string_to_match, regexes) == answer
+        assert checked_type_by_reg(string_to_match, regexes, True) == answer
 
 
 class TestServerVersionCompare:

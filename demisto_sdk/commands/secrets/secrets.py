@@ -11,12 +11,12 @@ from bs4 import BeautifulSoup
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, REQUIRED_YML_FILE_TYPES, re)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type,
+    PACKS_WHITELIST_FILE_NAME, REQUIRED_YML_FILE_TYPES, re, FileType)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, checked_type_by_reg,
                                                get_pack_name,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command, find_type)
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']
@@ -263,7 +263,7 @@ class SecretsValidator(object):
         # if script or readme file, search for yml in order to retrieve temp white list
         yml_file_contents = ''
         # Validate if it is integration documentation file or supported file extension
-        if checked_type(file_path, REQUIRED_YML_FILE_TYPES):
+        if find_type(file_path) in [FileType.INTEGRATION, FileType.SCRIPT]:
             yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
         return yml_file_contents
 

@@ -516,7 +516,21 @@ def get_latest_release_notes_text(rn_path):
     return rn if rn else None
 
 
-def checked_type(file_path, compared_regexes=None, return_regex=False):
+def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
+    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list.
+
+    Args:
+        file_path: (str) on which the check is done.
+        compared_regexes: (list) of str which represent the regexes that will be check on file_path.
+        return_regex: (bool) Whether the function will return the regex that was matched or not.
+
+    Returns:
+            String/Bool
+            Depends on if return_regex was set to True or False.
+            Returns Bool when the return_regex is False and the return value is whether any regex was matched or not.
+            Returns String when the return_regex is True and the return value is the regex that was found as a match.
+
+    """
     compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
     for regex in compared_regexes:
         if re.search(regex, file_path, re.IGNORECASE):
@@ -626,20 +640,6 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
-
-
-def get_matching_regex(string_to_match, regexes):
-    # type: (str, Union[list, str]) -> Optional[str]
-    """Gets a string and find id the regexes list matches the string. if do, return regex else None.
-
-    Args:
-        string_to_match: String to find matching regex
-        regexes: regexes to check.
-
-    Returns:
-        matching regex if exists, else None
-    """
-    return checked_type(string_to_match, regexes, return_regex=True)
 
 
 def get_all_docker_images(script_obj) -> List[str]:
@@ -783,6 +783,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.png'):
         return FileType.IMAGE
 
+    if path.endswith('.ps1'):
+        return FileType.POWERSHELL_FILE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
 
@@ -818,7 +821,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        if 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        if 'regex' in _dict or checked_type_by_reg(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
             return FileType.REPUTATION
 
         if 'brandName' in _dict and 'transformer' in _dict:

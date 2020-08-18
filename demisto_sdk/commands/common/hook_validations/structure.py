@@ -16,9 +16,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (checked_type,
+from demisto_sdk.commands.common.tools import (checked_type_by_reg,
                                                get_content_file_type_dump,
-                                               get_matching_regex,
                                                get_remote_file)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
@@ -96,7 +95,7 @@ class StructureValidator(BaseValidator):
         """
 
         for scheme_name, regex_list in SCHEMA_TO_REGEX.items():
-            if get_matching_regex(self.file_path, regex_list):
+            if checked_type_by_reg(self.file_path, regex_list):
                 return scheme_name
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
@@ -116,7 +115,7 @@ class StructureValidator(BaseValidator):
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
-        if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
+        if checked_type_by_reg(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

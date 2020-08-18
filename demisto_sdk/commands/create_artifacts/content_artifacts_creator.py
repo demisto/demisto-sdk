@@ -107,16 +107,16 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             logger.info("\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt...")
             pool.stop()
             pool.join()
-            raise e
-        except Exception as e:
+            raise
+        except Exception:
             logger.error("Gracefully release all resources due to Error...")
             pool.stop()
             pool.join()
-            raise e
+            raise
         else:
             pool.close()
             pool.join()
@@ -139,10 +139,10 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
                 logger.info(result.to_str(artifact_manager.content.path))
         except (ContentError, DuplicateFiles, ContentFactoryError) as e:
             logger.error(e.msg)
-            raise e
+            raise
         except Exception as e:
             logger.error(e)
-            raise e
+            raise
 
 
 #####################################################

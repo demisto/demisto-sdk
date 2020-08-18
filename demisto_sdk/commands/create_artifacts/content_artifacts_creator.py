@@ -445,19 +445,16 @@ def content_files_handler(artifact_manager: ArtifactsManager, content_object: Co
     try:
         if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
                 content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
-            # modify_common_server_parameters(content_object.code_path)
+            # Modify CommonServerPython.py global variables
             repo = artifact_manager.content.git()
-            modify_common_server_constants(content_object.code_path,
-                                           content_version=artifact_manager.content_version,
-                                           branch_name=None if not repo else repo.active_branch)
+            modify_common_server_constants(content_object.code_path, artifact_manager.content_version,
+                                           'master' if not repo else repo.active_branch)
         yield rm_files
     finally:
         if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
                 content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
-            # modify_common_server_parameters(content_object.code_path)
-            modify_common_server_constants(content_object.code_path,
-                                           content_version='0.0.0',
-                                           branch_name='master')
+            # Modify CommonServerPython.py global variables
+            modify_common_server_constants(content_object.code_path, '0.0.0', 'master')
 
         # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
         for file_path in rm_files:
@@ -653,7 +650,7 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
         report_artifacts_paths(artifact_manager)
 
 
-def delete_dirs(artifact_manager: ArtifactsManager) -> None:
+def delete_dirs(artifact_manager: ArtifactsManager):
     """Delete artifacts directories"""
     for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
                          artifact_manager.content_packs_path, artifact_manager.content_all_path]:
@@ -661,7 +658,7 @@ def delete_dirs(artifact_manager: ArtifactsManager) -> None:
             rmtree(artifact_dir)
 
 
-def create_dirs(artifact_manager: ArtifactsManager) -> None:
+def create_dirs(artifact_manager: ArtifactsManager):
     """Create artifacts directories"""
     if artifact_manager.only_content_packs:
         artifact_manager.content_packs_path.mkdir(parents=True)
@@ -671,7 +668,7 @@ def create_dirs(artifact_manager: ArtifactsManager) -> None:
             artifact_dir.mkdir(parents=True)
 
 
-def zip_dirs(artifact_manager: ArtifactsManager) -> None:
+def zip_dirs(artifact_manager: ArtifactsManager):
     """Zip artifacts directories"""
     if artifact_manager.only_content_packs:
         make_archive(artifact_manager.content_packs_path, 'zip', artifact_manager.content_packs_path)
@@ -682,7 +679,7 @@ def zip_dirs(artifact_manager: ArtifactsManager) -> None:
                 pool.schedule(make_archive, args=(artifact_dir, 'zip', artifact_dir))
 
 
-def report_artifacts_paths(artifact_manager: ArtifactsManager) -> None:
+def report_artifacts_paths(artifact_manager: ArtifactsManager):
     """Report artifacts results destination"""
     logger.info("\nArtifacts created:")
     if artifact_manager.zip_artifacts:

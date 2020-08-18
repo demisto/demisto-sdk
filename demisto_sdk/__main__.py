@@ -302,19 +302,21 @@ def validate(config, **kwargs):
 # ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
-    short_help='Genereating the following artifacts:'
-               '1. content_new - Contain all content objects of type json,yaml (from_version < 6.0.0).'
-               '2. content_packs - Contain all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
-               '3. content_test - Contain all test scripts/playbooks (from_version < 6.0.0).')
+    short_help='Generating the following artifacts:'
+               '1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)'
+               '2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
+               '3. content_test - Contains all test scripts/playbooks (from_version < 6.0.0)'
+               '4. content_all - Contains all from content_new and content_test.')
 @click.help_option('-h', '--help')
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True))
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
 @click.option('--content-packs', help='Create only content_packs artifacts.', default=False)
-@click.option('-v', '--content_version', help='The content version in CommonServerPython.')
+@click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
-@click.option('--cpus', help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
-                             'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
+@click.option('--cpus',
+              help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
+                   'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
 def create_arifacts(**kwargs) -> int:
     artifacts_conf = ArtifactsManager(**kwargs)
     return create_content_artifacts(artifacts_conf)
@@ -803,7 +805,8 @@ def update_pack_releasenotes(**kwargs):
 
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
+                                                                                                     'origin/master')
 
     packs_existing_rn = set()
     for pf in added:

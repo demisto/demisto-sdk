@@ -27,7 +27,7 @@ def destroy_by_suffix(suffix: str):
     if suffix == 'json':
         file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "Classifiers" / "classifier-sample_new.json"
     else:
-        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample3_new.yml"
+        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_test1.yml"
     old_data = file.read_text()
     file.write_text("{123dfdsf,}\nfdsfdsf")
 
@@ -39,8 +39,8 @@ def destroy_by_suffix(suffix: str):
 
 @contextmanager
 def duplicate_file():
-    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample3_new.yml"
-    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample3_new.yml"
+    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_test1.yml"
+    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_test1.yml"
     try:
         copyfile(file, new_file)
         yield

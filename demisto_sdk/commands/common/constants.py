@@ -47,6 +47,7 @@ WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
 DOCUMENTATION = 'doc'
+MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 
 

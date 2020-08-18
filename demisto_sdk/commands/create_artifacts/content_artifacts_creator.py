@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR)
-from demisto_sdk.commands.common.content import Content, ContentError, Pack
+from demisto_sdk.commands.common.content import (Content, ContentError,
+                                                 ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnfiedObject)
@@ -136,7 +137,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
             result = future.result()
             if isinstance(result, ArtifactsReport):
                 logger.info(result.to_str(artifact_manager.content.path))
-        except (ContentError, DuplicateFiles) as e:
+        except (ContentError, DuplicateFiles, ContentFactoryError) as e:
             logger.error(e.msg)
             raise e
         except Exception as e:

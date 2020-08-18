@@ -30,7 +30,7 @@ class ContentInitializeError(ContentError):
 
     @property
     def msg(self) -> str:
-        msg = f'Content object init error:\n\t- Object: {self.obj_type}\n\t-{self.obj_path}'
+        msg = f'Content object init error:\n\t- Object: {self.obj_type}\n\t- {self.obj_path}'
         if self.additional_info:
             msg += f'\n\t - Info: {self.additional_info}'
 
@@ -44,7 +44,7 @@ class ContentDumpError(ContentError):
 
     @property
     def msg(self) -> str:
-        msg = f'Content object dump error:\n\t- Object: {self.obj_type}\n\t-{self.obj_path}'
+        msg = f'Content object dump error:\n\t- Object: {self.obj_type}\n\t- {self.obj_path}'
         if self.additional_info:
             msg += f'\n\t - Info: {self.additional_info}'
 
@@ -73,7 +73,21 @@ class ContentSerializeError(ContentError):
 
     @property
     def msg(self) -> str:
-        msg = f'Content object serialize error:\n\t- Object: {self.obj_type}\n\t-{self.obj_path}\n\t'
+        msg = f'Content object serialize error:\n\t- Object: {self.obj_type}\n\t- {self.obj_path}\n\t'
+        if self.additional_info:
+            msg += f'\n\t - Info: {self.additional_info}'
+
+        return msg
+
+
+class ContentFactoryError(ContentError):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
+        """Exception raised when key error occure during accesing key in content object"""
+        super(ContentFactoryError, self).__init__(obj, obj_path, additional_info)
+
+    @property
+    def msg(self) -> str:
+        msg = f'Content Factory error:\n\t- Object: {self.obj_type}\n\t- {self.obj_path}\n\t'
         if self.additional_info:
             msg += f'\n\t - Info: {self.additional_info}'
 

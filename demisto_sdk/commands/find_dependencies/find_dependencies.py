@@ -819,15 +819,15 @@ class PackDependencies:
         """
         pack_items = dict()
 
-        pack_items['scripts'] = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
-        pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
-        pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
-        pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
-        pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorTypes'])
-        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
-        pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
-        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
-        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
+        pack_items['scripts'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('scripts', []))
+        pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('playbooks', []))
+        pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('Layouts', []))
+        pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('IncidentFields', []))
+        pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('IndicatorTypes', []))
+        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('integrations', []))
+        pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('IncidentTypes', []))
+        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('Classifiers', []))
+        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set.get('Mappers', []))
 
         if not sum(pack_items.values(), []):
             raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")

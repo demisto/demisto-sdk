@@ -30,9 +30,11 @@ class BaseUpdate:
             data (dict): Dictionary of loaded file.
             file_type (str): Whether the file is yml or json.
             from_version_key (str): The fromVersion key in file, different between yml and json files.
+            verbose (bool): Whehter to print a verbose log
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False, verbose: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
@@ -40,6 +42,7 @@ class BaseUpdate:
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate
+        self.verbose = verbose
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -70,7 +73,8 @@ class BaseUpdate:
 
     def set_version_to_default(self, location=None):
         """Replaces the version of the YML to default."""
-        print(f'Setting JSON version to default: {DEFAULT_VERSION}')
+        if self.verbose:
+            print(f'Setting JSON version to default: {DEFAULT_VERSION}')
         if location:
             location['version'] = DEFAULT_VERSION
         else:
@@ -79,7 +83,8 @@ class BaseUpdate:
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove = self.arguments_to_remove()
-        print('Removing Unnecessary fields from file')
+        if self.verbose:
+            print('Removing Unnecessary fields from file')
         for key in arguments_to_remove:
             self.data.pop(key, None)
 
@@ -90,7 +95,8 @@ class BaseUpdate:
         """
         # If there is no existing file in content repo
         if not self.old_file:
-            print('Setting fromVersion field')
+            if self.verbose:
+                print('Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
 
@@ -153,7 +159,8 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        print('Removing _dev and _copy suffixes from name and display tags')
+        if self.verbose:
+            print('Removing _dev and _copy suffixes from name and display tags')
         if self.data['name']:
             self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.data.get('display'):
@@ -167,21 +174,26 @@ class BaseUpdate:
             int 2 in case of skip
         """
         if self.no_validate:
-            print_color(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.',
-                        LOG_COLORS.YELLOW)
+            if self.verbose:
+                print_color(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.',
+                            LOG_COLORS.YELLOW)
             return SKIP_RETURN_CODE
         else:
-            print_color('Starting validating files structure', LOG_COLORS.GREEN)
+            if self.verbose:
+                print_color('Starting validating files structure', LOG_COLORS.GREEN)
             if self.relative_content_path:
                 structure_validator = StructureValidator(self.relative_content_path)
                 validator = validator_type(structure_validator)
                 if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
-                    print_color('The files are valid', LOG_COLORS.GREEN)
+                    if self.verbose:
+                        print_color('The files are valid', LOG_COLORS.GREEN)
                     return SUCCESS_RETURN_CODE
                 else:
-                    print_color('The files are invalid', LOG_COLORS.RED)
+                    if self.verbose:
+                        print_color('The files are invalid', LOG_COLORS.RED)
                     return ERROR_RETURN_CODE
             else:
-                print_color(f'The file {self.output_file} are not part of content repo, Validator Skipped',
-                            LOG_COLORS.YELLOW)
+                if self.verbose:
+                    print_color(f'The file {self.output_file} are not part of content repo, Validator Skipped',
+                                LOG_COLORS.YELLOW)
                 return SKIP_RETURN_CODE

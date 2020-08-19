@@ -31,8 +31,9 @@ class BaseUpdateYML(BaseUpdate):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -63,7 +64,8 @@ class BaseUpdateYML(BaseUpdate):
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
+        if self.source_file != self.output_file:
+            print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 

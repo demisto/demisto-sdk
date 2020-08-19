@@ -16,8 +16,8 @@ class WidgetJSONFormat(BaseUpdateJSON):
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input, output, path, from_version, no_validate, verbose)
 
     def run_format(self) -> int:
         try:

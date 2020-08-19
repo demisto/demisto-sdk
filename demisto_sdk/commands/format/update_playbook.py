@@ -15,12 +15,13 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input, output, path, from_version, no_validate, verbose)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
-        print('Adding empty descriptions to relevant tasks')
+        if self.verbose:
+            print('Adding empty descriptions to relevant tasks')
         for task_id, task in self.data.get('tasks', {}).items():
             if not task['task'].get('description') and task['type'] in ['title', 'start', 'playbook']:
                 task['task'].update({'description': ''})
@@ -71,7 +72,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def delete_sourceplaybookid(self):
         """Delete the not needed sourceplaybookid fields"""
-        print('Removing sourceplaybookid field from playbook')
+        if self.verbose:
+            print('Removing sourceplaybookid field from playbook')
         if 'sourceplaybookid' in self.data:
             self.data.pop('sourceplaybookid', None)
 
@@ -85,7 +87,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
-        print('Updating name of tasks who calls other playbooks to their name')
+        if self.verbose:
+            print('Updating name of tasks who calls other playbooks to their name')
 
         for task_id, task in self.data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':

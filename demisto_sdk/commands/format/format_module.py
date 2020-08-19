@@ -92,7 +92,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,
-                                                                 no_validate=no_validate)
+                                                                 no_validate=no_validate, verbose=verbose)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:

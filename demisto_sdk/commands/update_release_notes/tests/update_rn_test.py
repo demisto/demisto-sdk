@@ -132,7 +132,7 @@ class TestRNUpdate(unittest.TestCase):
 
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(), added_files=set(),
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files=set(), added_files=set(),
                              pack_metadata_only=True)
         changed_items = {}
         release_notes = update_rn.build_rn_template(changed_items)
@@ -152,20 +152,20 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         # case 1:
-        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld/README.md'},
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld/README.md'},
                              added_files=set())
         assert update_rn.only_readme_changed()
 
-        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files=set(),
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files=set(),
                              added_files={'HelloWorld/README.md'})
         assert update_rn.only_readme_changed()
 
         # case 2:
-        update_rn = UpdateRN(pack="HelloWorld", update_type='minor', pack_files={'HelloWorld/README.md'},
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld/README.md'},
                              added_files={'HelloWorld/HelloWorld.py'})
         assert not update_rn.only_readme_changed()
 
-        update_rn = UpdateRN(pack="HelloWorld", update_type='minor',
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor',
                              pack_files={'HelloWorld/HelloWorld.yml', 'HelloWorld/README.md'}, added_files=set())
         assert not update_rn.only_readme_changed()
 

@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 class UpdateRN:
     def __init__(self, pack: str, update_type: Union[str, None], pack_files: set, added_files: set,
-                 specific_version: str = None, pre_release: bool = False):
+                 specific_version: str = None, pre_release: bool = False, pack_metadata_only: bool = False):
 
         self.pack = pack
         self.update_type = update_type
@@ -34,6 +34,7 @@ class UpdateRN:
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
+        self.pack_metadata_only = pack_metadata_only
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -273,6 +274,10 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
+        if self.pack_metadata_only:
+            rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
+            return rn_string
+
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')

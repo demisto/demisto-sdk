@@ -656,7 +656,6 @@ class TestValidators:
         mocker.patch.object(os.path, 'isfile', return_value=True)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
         diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
-                      "M	Packs/EWS/Classifiers/classifier-EWS_v2.json\n" \
                       "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
                       "M	Packs/F5/pack_metadata.json\n" \
@@ -680,13 +679,11 @@ class TestValidators:
             filter_changed_files(files_string=diff_string, print_ignored_files=True)
 
         # checking that modified files are recognized correctly
-        assert 'Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json' in modified_files
-        assert 'Packs/EWS/Classifiers/classifier-EWS_v2.json' in modified_files
-        assert ('Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml',
-                'Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml') in modified_files
+        assert {VALID_INCIDENT_FIELD_PATH} in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in modified_files
 
         # check that the modified code file is not there but the yml file is
-        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.yml' in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in modified_files
         assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py' not in modified_files
 
         # check that the modified metadata file is in the changed_meta_files but the added one is not
@@ -695,7 +692,7 @@ class TestValidators:
 
         # check that the added files are recognized correctly
         assert 'Packs/MyNewPack/Integrations/MyNewIntegration/README.md' in added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml' in added_files
+        assert VALID_INTEGRATION_TEST_PATH in added_files
 
         # check that the added code files and meta file are not in the added_files
         assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py' not in added_files
@@ -718,7 +715,7 @@ class TestValidators:
         assert 'Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml' in old_format_files
 
         # check recognized deleted file
-        assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+        assert VALID_SCRIPT_PATH in deleted_files
 
     def test_setup_git_params(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')

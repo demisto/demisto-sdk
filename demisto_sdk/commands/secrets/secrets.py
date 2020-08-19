@@ -11,12 +11,12 @@ from bs4 import BeautifulSoup
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, re, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+    PACKS_WHITELIST_FILE_NAME, FileType, re)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
                                                print_color, print_error,
-                                               print_warning, run_command, find_type)
+                                               print_warning, run_command)
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']

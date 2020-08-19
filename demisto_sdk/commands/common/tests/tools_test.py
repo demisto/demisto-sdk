@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   FileType)
+                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
+                                                   SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,

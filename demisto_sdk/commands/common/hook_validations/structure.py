@@ -10,13 +10,17 @@ from typing import Optional, Tuple
 
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-                                                   JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX,
-                                                   FileType, CHECKED_TYPES_REGEXES)
+from demisto_sdk.commands.common.constants import (
+    ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
+    FILE_TYPES_PATHS_TO_VALIDATE, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
+    SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_file_type_dump, get_remote_file)
-from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
+                                               get_remote_file)
+from demisto_sdk.commands.format.format_constants import \
+    OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
 
 

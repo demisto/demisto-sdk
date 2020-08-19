@@ -5,7 +5,6 @@ from typing import List, Tuple
 
 import pytest
 import yaml
-
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,

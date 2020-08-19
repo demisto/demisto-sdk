@@ -385,10 +385,10 @@ def test_format_on_relative_path_playbook(mocker, repo):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{pack.repo_path}/Packs/PackName/playbooks/playbook.yml'))
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
-    with ChangeCWD(f'{pack.repo_path}/Packs/PackName/playbooks/'):
+    with ChangeCWD(f'{pack.path}'):
         runner = CliRunner(mix_stderr=False)
-        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml'], catch_exceptions=False)
-        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
+        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbooks/playbook.yml'], catch_exceptions=False)
+        result_validate = runner.invoke(main, ['validate', '-i', 'playbooks/playbook.yml', '--no-docker-checks'],
                                         catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout

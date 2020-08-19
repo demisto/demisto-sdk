@@ -383,14 +383,21 @@ def test_format_on_relative_path_playbook(mocker, repo):
     playbook = pack.create_playbook('playbook')
     playbook.create_default_playbook()
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
-                        return_value=(True, f'{pack.repo_path}/Packs/PackName/playbooks/playbook.yml'))
+                        return_value=(True, f'{pack.path}/playbooks/playbook.yml'))
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
-    with ChangeCWD(f'{pack.repo_path}/Packs/PackName'):
+    with ChangeCWD(pack.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbooks/playbook.yml'], catch_exceptions=False)
         result_validate = runner.invoke(main, ['validate', '-i', 'playbooks/playbook.yml', '--no-docker-checks'],
                                         catch_exceptions=False)
-
+    print('\n')
+    print(pack.repo_path)
+    print('\n')
+    print(pack.path)
+    print('\n')
+    print(result_format.stdout)
+    print('\n')
+    print(result_validate.stdout)
     assert '======= Updating file:' in result_format.stdout
     assert 'Saving output YML file to' in result_format.stdout
 

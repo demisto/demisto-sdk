@@ -17,10 +17,11 @@ from demisto_sdk.commands.common.tools import get_pack_name, get_yaml
 
 class BaseValidator:
 
-    def __init__(self, ignored_errors=None, print_as_warnings=False):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()
+        self.suppress_print = suppress_print
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -76,7 +77,7 @@ class BaseValidator:
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
-        if should_print:
+        if should_print and not self.suppress_print:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':

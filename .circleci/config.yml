@@ -5,7 +5,41 @@
 version: 2.1
 orbs:
   node: circleci/node@4.0.0
+  win: circleci/windows@2.2.0
+
 references:
+    tox_3_8: &tox_3_8
+      - checkout
+      - run:
+          name: Tox build
+          command: |
+            pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org tox
+            tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+      - store_artifacts:
+          path: coverage_html_report
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - coverage_html_report
+            - .coverage
+            - .tox
+
+    tox_3_7: &tox_3_7
+      - checkout
+      - run:
+          name: Tox build
+          command: |
+            pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org tox
+            tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
+      - store_artifacts:
+          path: coverage_html_report
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - coverage_html_report
+            - .coverage
+            - .tox
+
     tag_filter: &tag_filter
       filters:
         tags:
@@ -17,7 +51,7 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-8
+        - tox3-8-ubuntu
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -34,34 +68,23 @@ jobs:
             command: |
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
               echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
-  tox3-7:
+
+  tox3-7-ubuntu:
       docker:
         - image: python:3.7
-      steps:
-        - checkout
-        - run:
-            name: Tox build
-            command: |
-              pip install tox
-              tox -e py37 -v
-  tox3-8:
+      steps: *tox_3_7
+
+  tox3-8-ubuntu:
       docker:
         - image: python:3.8
-      steps:
-        - checkout
-        - run:
-            name: Tox build
-            command: |
-              pip install tox
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
-        - store_artifacts:
-            path: coverage_html_report
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - coverage_html_report
-              - .coverage
-              - .tox
+      steps: *tox_3_8
+
+  tox3-7-windows:
+      executor:
+        name: win/default
+        shell: bash.exe
+      steps: *tox_3_7
+
   precommit-checks:
       docker:
         - image: python:3.8
@@ -200,12 +223,15 @@ workflows:
     jobs:
       - print-env-vars:
           <<: *tag_filter
-      - tox3-7:
+      -  tox3-7-ubuntu:
           <<: *tag_filter
           <<: *reqs_print_var
-      - tox3-8:
+      -  tox3-8-ubuntu:
           <<: *tag_filter
           <<: *reqs_print_var
+      -  tox3-7-windows:
+           <<: *tag_filter
+           <<: *reqs_print_var
       - checkout-content:
           <<: *tag_filter
           <<: *reqs_tox
@@ -227,7 +253,7 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7
+            - tox3-7-ubuntu
             - precommit-checks
             - coveralls-upload
             - validate-files

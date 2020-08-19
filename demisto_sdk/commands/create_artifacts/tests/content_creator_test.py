@@ -5,6 +5,8 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.create_artifacts.content_creator import *
 from TestSuite.test_tools import ChangeCWD
 
+# Test
+
 
 class TestContentCreator:
     def setup(self):

@@ -128,7 +128,8 @@
             ]
           }
         ]
-      }
+      },
+      "parameters": []
     },
     "/pet/findByStatus": {
       "get": {

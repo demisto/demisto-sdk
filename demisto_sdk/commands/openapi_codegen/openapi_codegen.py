@@ -100,6 +100,8 @@ class OpenAPIIntegration:
         for path, function in self.json['paths'].items():
             try:
                 for method, data in function.items():
+                    if not data:
+                        continue
                     if isinstance(data, list):
                         data = data[0]
                     self.print_with_verbose(f'Adding command for the path: {path}')

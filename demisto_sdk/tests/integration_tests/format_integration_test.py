@@ -383,9 +383,9 @@ def test_format_on_relative_path_playbook(mocker, repo):
     playbook = pack.create_playbook('playbook')
     playbook.create_default_playbook()
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
-                        return_value=(True, f'{pack.path}/playbooks/playbook.yml'))
+                        return_value=(True, f'{pack.repo_path}/Packs/PackName/playbooks/playbook.yml'))
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
-    with ChangeCWD(f'{pack.path}'):
+    with ChangeCWD(f'{pack.repo_path}/Packs/PackName'):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbooks/playbook.yml'], catch_exceptions=False)
         result_validate = runner.invoke(main, ['validate', '-i', 'playbooks/playbook.yml', '--no-docker-checks'],

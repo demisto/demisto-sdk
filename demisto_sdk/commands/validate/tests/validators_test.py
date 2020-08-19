@@ -711,9 +711,6 @@ class TestValidators:
                validate_manager.ignored_files
         assert 'Packs/MyNewPack/.pack-ignore' in validate_manager.ignored_files
 
-        # check recognized old-format file
-        assert 'Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml' in old_format_files
-
         # check recognized deleted file
         assert VALID_SCRIPT_PATH in deleted_files
 

@@ -29,10 +29,12 @@ class Runner:
     DEBUG_FILE_ENTRY_TYPE = 16
     SECTIONS_HEADER_REGEX = re.compile(r'^(Context Outputs|Human Readable section|Raw Response section)')
     RAW_RESPONSE_HEADER = re.compile(r'^Raw Response section')
+    CONTEXT_HEADER = re.compile(r'Context Outputs:')
+    HUMAN_READABLE_HEADER = re.compile(r'Human Readable section')
     FULL_LOG_REGEX = re.compile(r'.*Full Integration Log')
 
     def __init__(self, query: str, insecure: bool = False, debug: str = None, debug_path: str = None,
-                 verbose: bool = False, json_to_outputs: bool = False, prefix: str = ''):
+                 verbose: bool = False, json_to_outputs: bool = False, prefix: str = '', raw_response: bool = False):
         self.query = query if query.startswith('!') else f'!{query}'
         self.log_verbose = verbose
         self.debug = debug
@@ -40,6 +42,7 @@ class Runner:
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.json2outputs = json_to_outputs
         self.prefix = prefix
+        self.raw_response = raw_response
 
         if self.debug or self.json2outputs:
             self.query += ' debug-mode="true"'
@@ -66,7 +69,7 @@ class Runner:
                 print_error("A prefix for the outputs is needed for this command. Please provide one")
                 return 1
             else:
-                raw_output_json = self._return_raw_outputs_from_log(log_ids)
+                raw_output_json = self._return_context_dict_from_log(log_ids)
                 if raw_output_json:
                     with tempfile.NamedTemporaryFile(mode='w+') as f:
                         if isinstance(raw_output_json, dict):
@@ -163,14 +166,15 @@ class Runner:
                             output_file.write(line.encode('utf-8'))
             print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
 
-    def _return_raw_outputs_from_log(self, log_ids: list) -> dict:
+    def _return_context_dict_from_log(self, log_ids: list) -> dict:
         """
-            retrieves the raw_outputs section from the debug_log
+            retrieves the context section from the debug_log. If context is empty ({}) or doesn't exist, returns
+            the raw output section.
         Args:
             log_ids (list): artifact ids of the log files
 
         Returns:
-            the raw_outputs of the executed query
+            the context of the executed query
         """
         if not self.debug_path:
             for log_id in log_ids:
@@ -182,6 +186,19 @@ class Runner:
                                 return json.loads(log_info.readline())
                             except Exception:
                                 pass
+                        if self.CONTEXT_HEADER.match(line) and not self.raw_response:
+                            context = ''
+                            line = log_info.readline()
+                            while not self.HUMAN_READABLE_HEADER.match(line):
+                                context = context + line
+                                line = log_info.readline()
+                            context = re.sub(r"\(val\..+\)", "", context)  # noqa: W605
+                            try:
+                                temp_dict = json.loads(context)
+                                if temp_dict:
+                                    return temp_dict
+                            except Exception:
+                                pass
             return dict()
         else:
             temp_dict = dict()
@@ -190,11 +207,24 @@ class Runner:
                     result = self.client.download_file(log_id)
                     with open(result, 'r+') as log_info:
                         for line in log_info:
-                            if self.RAW_RESPONSE_HEADER.match(line):
+                            if self.RAW_RESPONSE_HEADER.match(line) and not temp_dict:
                                 output_file.write(line.encode('utf-8'))
                                 line = log_info.readline()
                                 try:
                                     temp_dict = json.loads(line)
+                                except Exception:
+                                    pass
+                            if self.CONTEXT_HEADER.match(line) and not self.raw_response:
+                                context = ''
+                                output_file.write(line.encode('utf-8'))
+                                line = log_info.readline()
+                                while not self.HUMAN_READABLE_HEADER.match(line):
+                                    output_file.write(line.encode('utf-8'))
+                                    context = context + line
+                                    line = log_info.readline()
+                                context = re.sub(r'\(val\..+\)', '', context)
+                                try:
+                                    temp_dict = json.loads(context)
                                 except Exception:
                                     pass
                             output_file.write(line.encode('utf-8'))

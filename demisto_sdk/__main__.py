@@ -525,10 +525,15 @@ def download(**kwargs):
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
 @click.option(
-    "--json-to-outputs", help="Whether to run json_to_outputs command on the raw response of the query", is_flag=True)
+    "--json-to-outputs", help="Whether to run json_to_outputs command on the context output of the query. If the "
+                              "context output does not exists or the `-r` flag is used, will use the raw"
+                              " response of the query", is_flag=True)
 @click.option(
     "-p", "--prefix", help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
                            "the base path for the outputs that the script generates")
+@click.option(
+    "-r", "--raw-response", help="Used with `json-to-outputs` flag. Use the raw response of the query for"
+    " `json-to-outputs`", is_flag=True)
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()

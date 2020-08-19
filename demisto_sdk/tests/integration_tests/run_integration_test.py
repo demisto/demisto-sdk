@@ -98,6 +98,5 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
     command = '!kl-get-records'
     run_result = CliRunner(mix_stderr=False, ).invoke(main, ['run', '-q', command, '--json-to-outputs'])
     assert 1 == run_result.exit_code
-    assert not run_result.exception
     assert 'A prefix for the outputs is needed for this command. Please provide one' in run_result.stdout
     assert not run_result.stderr

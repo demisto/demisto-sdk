@@ -652,28 +652,28 @@ class TestValidators:
                 - Ensure deleted file is recognized correctly.
                 - Ensure ignored files are set correctly.
         """
+
         mocker.patch.object(os.path, 'isfile', return_value=True)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
-        diff_string = "M	Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json\n" \
+        diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
                       "M	Packs/EWS/Classifiers/classifier-EWS_v2.json\n" \
                       "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
-                      "M	Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml\n" \
+                      f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
                       "M	Packs/F5/pack_metadata.json\n" \
-                      "R100	Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml	" \
-                      "Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml\n" \
+                      f"R100	{VALID_INTEGRATION_TEST_PATH} {VALID_INTEGRATION_TEST_PATH}\n" \
                       "A	Packs/MyNewPack/.pack-ignore\n" \
                       "A	Packs/MyNewPack/.secrets-ignore\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
-                      "A	Packs/MyNewPack/README.md\n" \
-                      "A	Packs/MyNewPack/pack_metadata.json\n" \
-                      "D	Packs/DeprecatedContent/Scripts/script-ExtractURL.yml"
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
+                      f"A	{VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
+                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
+                      f"A	Packs/MyNewPack/README.md\n" \
+                      f"A	Packs/MyNewPack/pack_metadata.json\n" \
+                      f"D	{VALID_SCRIPT_PATH}"
 
         validate_manager = ValidateManager()
         modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \

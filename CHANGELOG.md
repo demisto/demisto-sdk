@@ -9,6 +9,7 @@
 * Fixed an issue in the **openapi-codegen** command where empty objects in the swagger JSON paths caused errors.
 * **update-release-notes** command now accept path of the pack instead of pack name.
 * Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
+* Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

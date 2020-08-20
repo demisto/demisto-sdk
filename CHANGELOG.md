@@ -1,5 +1,5 @@
 # Changelog
-
+* Added dependencies check for *widgets* in **find-dependencies** command.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

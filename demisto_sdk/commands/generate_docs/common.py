@@ -174,7 +174,7 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
 
         # The following code adds an escape character for '-' and '_' following cases:
         # 1. The string begins with a dash. e.g: - This input specifies the entry id
-        # 1. The string has a word which wrapped with an underscore in it . e.g: This input _specifies_ the entry id
+        # 2. The string has a word which wrapped with an underscore in it. e.g: This input _specifies_ the entry id
         # in the underscore case we use a for loop because of a problem with concatenate backslash with a subgroup.
         st = re.sub(r'(\A-)', '\\-', st)
 

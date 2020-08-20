@@ -1,5 +1,6 @@
 # Changelog
-* **format** now works with a relative path.
+* Added a proper error message in the **Validate** command upon a missing description in the root of the yml.
+* **Format** now works with a relative path.
 * **Validate** now fails when all release notes have been excluded.
 * Fixed issue where correct error message would not propagate for invalid images.
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.

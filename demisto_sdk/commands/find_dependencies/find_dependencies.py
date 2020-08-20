@@ -806,6 +806,47 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_widget_dependencies(pack_widgets, id_set, verbose_file, exclude_ignored_dependencies=True):
+        """
+        Collects in mappers dependencies.
+
+        Args:
+            pack_widgets (list): collection of pack widget data.
+            id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+        verbose_file.write('\n### Widgets')
+
+        for widget in pack_widgets:
+            widget_data = next(iter(widget.values()))
+            widget_dependencies = set()
+
+            related_scrips = widget_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scrips, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                widget_dependencies.update(pack_dependencies_data)
+
+            if widget_dependencies:
+                # do not trim spaces from end of string, there are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(widget_data.get("file_path", ""))} depends on: '
+                    f'{widget_dependencies}  '
+                )
+            dependencies_packs.update(widget_dependencies)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id, id_set):
         """
         Collects script and playbook content items inside specific pack.
@@ -906,11 +947,17 @@ class PackDependencies:
             verbose_file,
             exclude_ignored_dependencies
         )
+        widget_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['widgets'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies |
             incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies
         )
 
         return pack_dependencies

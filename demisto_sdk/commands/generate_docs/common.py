@@ -170,7 +170,20 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
         for c in '|':
             st = st.replace(c, '\\' + c)
     else:
-        st = "".join(["\\" + str(c) if c in r"\`*_{}[]()#+-!" else str(c) for c in st])
+        st = "".join(f'\\{str(c)}' if c in r"\`*{}[]()#+!" else str(c) for c in st)
+
+        # The following code adds an escape character for '-' and '_' following cases:
+        # 1. The string begins with a dash. e.g: - This input specifies the entry id
+        # 2. The string has a word which wrapped with an underscore in it. e.g: This input _specifies_ the entry id
+        # in the underscore case we use a for loop because of a problem with concatenate backslash with a subgroup.
+        st = re.sub(r'(\A-)', '\\-', st)
+
+        added_char_count = 1
+        for match in re.finditer(r'([\s.,()])(_\S*)(_[\s.,()])', st):
+            # In case there is more than one match, the next word index get changed because of the added escape chars.
+            st = st[:match.regs[0][0] + added_char_count] + '\\' + st[match.regs[0][0] + added_char_count:]
+            st = st[:match.regs[3][0] + added_char_count] + '\\' + st[match.regs[3][0] + added_char_count:]
+            added_char_count += 2
 
     return st
 

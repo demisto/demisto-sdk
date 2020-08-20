@@ -46,6 +46,229 @@ class IntegrationDependencies:
         integration.yml.update({'feed': True})
 
 
+# Playbook class helper function
+def get_new_task_number(playbook: Playbook):
+    playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
+
+    if playbook_tasks:
+        return max([int(task_num) for task_num in playbook_tasks]) + 1
+    return 0
+
+
+def update_tasks_in_playbook(playbook: Playbook, task_num: int, task: dict):
+    tasks = playbook.yml.read_dict().get('tasks')
+
+    if task_num > 0:
+        try:
+            tasks.get(str(task_num - 1)).get('nexttasks').get('#none#').append(str(task_num))
+        except AttributeError:
+            tasks.get(str(task_num - 1)).update({
+                'nexttasks': {
+                    '#none#': [str(task_num)]
+                }
+            })
+
+    tasks.update(task)
+
+    playbook.yml.update({'tasks': tasks})
+
+
+class PlaybookDependencies:
+    @staticmethod
+    def make_playbook_depend_on_script_skippable(playbook: Playbook, script: Script):
+        script_name = script.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'cfcc9ea0-eb0e-4efa-80ad-606909350e2a',
+                'type': 'regular',
+                'task': {
+                    'id': 'cfcc9ea0-eb0e-4efa-80ad-606909350e2a',
+                    'version': -1,
+                    'name': script_name,
+                    'description': 'Description',
+                    'scriptName': script_name,
+                    'type': 'regular',
+                    'iscommand': False,
+                    'brand': '',
+                    'nexttasks': {
+                        '#none#': ['3']
+                    },
+                    'scriptarguments': {
+                        'entryID': {
+                            'complex': {
+                                'root': 'InfoFile',
+                                'accessor': 'EntryID'
+                            }
+                        },
+                        'fileName': {},
+                        'lastZipFileInWarroom': {},
+                        'password': {}
+                    }
+                },
+                'separatecontext': False,
+                'view': '''| -
+                {
+                    "position": {
+                        "x": 450,
+                        "y": 350
+                    }
+                }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+                'skipunavailable': True
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_script_not_skippable(playbook: Playbook, script: Script):
+        script_name = script.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'cfcc9ea0-eb0e-4efa-80ad-606909350e2a',
+                'type': 'regular',
+                'task': {
+                    'id': 'cfcc9ea0-eb0e-4efa-80ad-606909350e2a',
+                    'version': -1,
+                    'name': script_name,
+                    'description': 'Description',
+                    'scriptName': script_name,
+                    'type': 'regular',
+                    'iscommand': False,
+                    'brand': '',
+                    'nexttasks': {
+                        '#none#': ['3']
+                    },
+                    'scriptarguments': {
+                        'entryID': {
+                            'complex': {
+                                'root': 'InfoFile',
+                                'accessor': 'EntryID'
+                            }
+                        },
+                        'fileName': {},
+                        'lastZipFileInWarroom': {},
+                        'password': {}
+                    }
+                },
+                'separatecontext': False,
+                'view': '''| -
+                {
+                    "position": {
+                        "x": 450,
+                        "y": 350
+                    }
+                }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_playbook_skippable(playbook: Playbook, playbook_1: Playbook):
+        other_playbook_name = playbook_1.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'playbook',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': other_playbook_name,
+                    'playbookName': other_playbook_name,
+                    'type': 'playbook',
+                    'iscommand': False,
+                    'brand': '',
+                    'description': '',
+                    'nexttasks': {
+                        '#none#': ['3']
+                    },
+                    'separatecontext': True,
+                    'loop': {
+                        'iscommand': False,
+                        'exitCondition': '',
+                        'wait': 1,
+                        'max': 0
+                    },
+                    'view': '''| -
+                        {
+                            "position": {
+                                "x": -800,
+                                "y": 980
+                            }
+                        }''',
+                    'note': False,
+                    'timertriggers': [],
+                    'ignoreworker': False,
+                    'skipunavailable': True,
+                    'quietmode': 0
+                }
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_playbook_not_skippable(playbook: Playbook, playbook_1: Playbook):
+        other_playbook_name = playbook_1.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'playbook',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': other_playbook_name,
+                    'playbookName': other_playbook_name,
+                    'type': 'playbook',
+                    'iscommand': False,
+                    'brand': '',
+                    'description': '',
+                    'nexttasks': {
+                        '#none#': ['3']
+                    },
+                    'separatecontext': True,
+                    'loop': {
+                        'iscommand': False,
+                        'exitCondition': '',
+                        'wait': 1,
+                        'max': 0
+                    },
+                    'view': '''| -
+                                {
+                                    "position": {
+                                        "x": -800,
+                                        "y": 980
+                                    }
+                                }''',
+                    'note': False,
+                    'timertriggers': [],
+                    'ignoreworker': False,
+                    'quietmode': 0
+                }
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+
 class ClassifierDependencies:
     @staticmethod
     def make_classifier_depend_on_incident_type_default(classifier: JSONBased, incident_type: JSONBased):
@@ -206,7 +429,8 @@ class IncidentFieldDependencies:
         incident_field.update({'fieldCalcScript': script_id})
 
 
-CLASSES = [IntegrationDependencies, ClassifierDependencies, MapperDependencies, IncidentTypeDependencies,
+CLASSES = [IntegrationDependencies, PlaybookDependencies, ClassifierDependencies, MapperDependencies,
+           IncidentTypeDependencies,
            IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies]
 METHODS_POOL: list = \
     [(method_name, entity_class) for entity_class in CLASSES for method_name in list(entity_class.__dict__.keys())
@@ -274,19 +498,20 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     number_of_packs = len(repo.packs) - 1
 
     for arg in inputs_arguments:
-        if arg in LIST_ARGUMENTS_TO_METHODS.keys():
+        arg_type = arg.split('_')[0]
+        if arg_type in LIST_ARGUMENTS_TO_METHODS.keys():
             number_of_items_in_list = random.randint(1, 5)
 
             input_argument = []
             for i in range(number_of_items_in_list):
                 pack_to_take_entity_from = random.choice(range(1, number_of_packs))
                 input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
-                                                                                LIST_ARGUMENTS_TO_METHODS[arg]))
+                                                                                LIST_ARGUMENTS_TO_METHODS[arg_type]))
                 dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         else:
             pack_to_take_entity_from = random.choice(range(1, number_of_packs))
-            input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg)
+            input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg_type)
             dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         inputs_values[arg] = input_argument
@@ -366,7 +591,7 @@ def test_dependencies(mocker, repo, test_number):
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
 
-@pytest.mark.parametrize('entity_class', CLASSES)
+@pytest.mark.parametrize('entity_class', [PlaybookDependencies])
 def test_specific_entity(mocker, repo, entity_class):
     """ This test will run for each entity in the repo, when each time it will randomly generate dependencies
         in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.

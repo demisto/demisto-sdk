@@ -4,7 +4,8 @@ from typing import Set, Union
 import yaml
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_dict_from_file,
                                                get_remote_file,
                                                is_file_from_content_repo,
                                                print_color)
@@ -172,8 +173,11 @@ class BaseUpdate:
             return SKIP_RETURN_CODE
         else:
             print_color('Starting validating files structure', LOG_COLORS.GREEN)
+            # validates only on files in content repo
             if self.relative_content_path:
-                structure_validator = StructureValidator(self.relative_content_path)
+                # validates on the output file generated from the format
+                structure_validator = StructureValidator(self.output_file,
+                                                         predefined_scheme=find_type(self.output_file))
                 validator = validator_type(structure_validator)
                 if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
                     print_color('The files are valid', LOG_COLORS.GREEN)

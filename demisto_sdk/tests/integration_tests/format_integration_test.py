@@ -279,7 +279,7 @@ def test_format_on_valid_py(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=True)
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
@@ -304,7 +304,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
@@ -330,7 +330,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
@@ -357,9 +357,37 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+
+
+def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
+    """
+    (This is the same test as the previous one only not using the '-v' argument)
+    Given
+    - Invalid python file - long dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes and that the verbose is off
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
+                 "'test4':'testing4','test5':'testing5','test6':'testing6'}"
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '======= Updating file:' in result.stdout
+    assert 'Running autopep8 on file' not in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()

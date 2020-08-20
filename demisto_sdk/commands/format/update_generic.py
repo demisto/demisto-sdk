@@ -182,8 +182,8 @@ class BaseUpdate:
             if self.verbose:
                 print_color('Starting validating files structure', LOG_COLORS.GREEN)
             if self.relative_content_path:
-                structure_validator = StructureValidator(self.relative_content_path)
-                validator = validator_type(structure_validator)
+                structure_validator = StructureValidator(self.relative_content_path, suppress_print=not self.verbose)
+                validator = validator_type(structure_validator, suppress_print=not self.verbose)
                 if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
                     if self.verbose:
                         print_color('The files are valid', LOG_COLORS.GREEN)

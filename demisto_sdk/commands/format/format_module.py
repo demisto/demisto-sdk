@@ -46,6 +46,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
+    'testscript': ScriptYMLFormat,
 }
 UNFORMATTED_FILES = ['canvas-context-connections',
                      'readme',
@@ -54,7 +55,8 @@ UNFORMATTED_FILES = ['canvas-context-connections',
                      'changelog',
                      'image',
                      'javascriptfile',
-                     'powershellfile']
+                     'powershellfile',
+                     'betaintegration']
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
@@ -105,13 +107,12 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
-    if error_list:
-        for string, print_func in log_list:
-            print_func('\n'.join(string))
-        return 1
-
+    print('')  # Just adding a new line before summary
     for string, print_func in log_list:
         print_func('\n'.join(string))
+
+    if error_list:
+        return 1
     return 0
 
 

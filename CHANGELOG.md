@@ -1,4 +1,7 @@
 # Changelog
+* Updated the **init** command. Relevant only when passing the *--contribution* argument.
+   * Added the *--author* option.
+   * The *support* field of the pack's metadata is set to *community*.
 * Added a proper error message in the **Validate** command upon a missing description in the root of the yml.
 * **Format** now works with a relative path.
 * **Validate** now fails when all release notes have been excluded.

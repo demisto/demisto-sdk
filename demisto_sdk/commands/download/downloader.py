@@ -604,7 +604,7 @@ class Downloader:
         file_ending: str = custom_content_object['file_ending']
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
-        file_output_name: str = os.path.basename(file_path)
+        file_output_name: str = os.path.basename(f'{file_name}.{file_ending}')
         file_output_path: str = os.path.join(dir_output_path, file_output_name)
         try:
             shutil.move(src=file_path, dst=file_output_path)

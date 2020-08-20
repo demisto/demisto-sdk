@@ -381,7 +381,8 @@ class StructureValidator(BaseValidator):
 
 
 def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
-    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list.
+    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list which contains all
+     supported file regexes.
 
     Args:
         file_path: (str) on which the check is done.

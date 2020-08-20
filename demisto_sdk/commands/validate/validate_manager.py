@@ -329,8 +329,7 @@ class ValidateManager:
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
 
-        # For old integration in which the image is inside the yml file.
-        elif file_type in (FileType.IMAGE, FileType.INTEGRATION, FileType.BETA_INTEGRATION):
+        elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.
@@ -897,7 +896,8 @@ class ValidateManager:
                     if print_ignored_files:
                         click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 else:
-                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                    if print_ignored_files:
+                        click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
             modified_files_list,

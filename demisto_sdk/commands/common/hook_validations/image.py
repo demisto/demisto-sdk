@@ -24,7 +24,6 @@ class ImageValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
         self._is_valid = True
         self.file_path = ''
-
         if file_path.endswith('.png'):
             self.file_path = file_path
         # For integrations that are not in a package format, the image is within the yml

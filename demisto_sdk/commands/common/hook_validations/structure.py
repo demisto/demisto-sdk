@@ -12,8 +12,7 @@ import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
-    FILE_TYPES_PATHS_TO_VALIDATE, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES,
-    SCHEMA_TO_REGEX, FileType)
+    FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -115,7 +114,7 @@ class StructureValidator(BaseValidator):
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
-        if checked_type_by_reg(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
+        if self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION:
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

@@ -8,8 +8,7 @@ trigger_build_url=https://circleci.com/api/v1/project/demisto/demisto-sdk/tree/$
 post_data=$(cat <<EOF
 {
   "build_parameters": {
-    "FAKE_MASTER": "true",
-    "CIRCLE_JOB": "toxify"
+    "FAKE_MASTER": "true"
   }
 }
 EOF)

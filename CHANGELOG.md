@@ -1,4 +1,5 @@
 # Changelog
+* **format** now works with a relative path.
 * **Validate** now fails when all release notes have been excluded.
 * Fixed issue where correct error message would not propagate for invalid images.
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.

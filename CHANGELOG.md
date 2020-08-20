@@ -6,6 +6,7 @@
 * Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
 * Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
 * Fixed an issue in the **openapi-codegen** command where missing reference fields in the swagger JSON caused errors.
+* Fixed an issue in the **openapi-codegen** command where empty objects in the swagger JSON paths caused errors.
 * **update-release-notes** command now accept path of the pack instead of pack name.
 
 # 1.1.9

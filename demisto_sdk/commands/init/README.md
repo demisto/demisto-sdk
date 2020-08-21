@@ -1,9 +1,9 @@
 ## init
-Create a pack, integration or script template _or_ create a pack from a contribution zip file.
+Create a pack, integration or script template _or_ create a pack from a contribution ZIP file.
 
 **Use-Cases**
 * This command is used to ease the initial creation of a pack, integration or a script.
-* Create a pack from a contribution zip file downloaded the Cortex XSOAR marketplace.
+* Create a pack from a contribution ZIP file downloaded the Cortex XSOAR marketplace.
 
 **Arguments**:
 * **-n, --name** The name given to the files and directories of new pack/integration/script being created

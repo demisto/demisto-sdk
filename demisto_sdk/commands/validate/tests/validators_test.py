@@ -662,7 +662,7 @@ class TestValidators:
         diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
                       f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"M	{VALID_METADATA_PATH}\n" \
+                     # f"M	{VALID_METADATA_PATH}\n" \
                       f"R100	{VALID_INTEGRATION_TEST_PATH} {VALID_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_PACK_IGNORE_PATH}\n" \
                       f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
@@ -674,7 +674,7 @@ class TestValidators:
                       f"A	{VALID_PIPEFILE_PATH}\n" \
                       f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
                       f"A	{VALID_README_PATH}\n" \
-                      f"A	{VALID_METADATA_PATH}\n" \
+                      #f"A	{VALID_METADATA_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}"
 
         validate_manager = ValidateManager()

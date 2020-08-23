@@ -23,8 +23,9 @@ class ReleaseNotesValidator(BaseValidator):
     """
 
     def __init__(self, file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
-                 print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+                 print_as_warnings=False, suppress_print=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.file_path = file_path
         self.modified_files = modified_files
         self.added_files = added_files

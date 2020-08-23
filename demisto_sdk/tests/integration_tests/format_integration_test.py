@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import PosixPath
 from typing import List
 
@@ -392,7 +393,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     assert 'Running autopep8 on file' not in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
- 
+
 
 def test_format_on_relative_path_playbook(mocker, repo):
     """
@@ -413,13 +414,13 @@ def test_format_on_relative_path_playbook(mocker, repo):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
+    success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
-        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml'], catch_exceptions=False)
+        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
         result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
                                         catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout
-    assert 'Saving output YML file to' in result_format.stdout
-
+    assert success_reg.search(result_format.stdout)
     assert 'The files are valid' in result_validate.stdout

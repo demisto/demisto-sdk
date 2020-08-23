@@ -69,6 +69,7 @@ def test_get_docker_image_latest_tag(image, mocker):
         docker_image_validator.ignored_errors = []
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.suppress_print = False
         tag = docker_image_validator.get_docker_image_latest_tag(docker_image_name='demisto/' + image, yml_docker_image='')
     # current latest tag is 2.7.16.2728 or 3.7.2.2728 disable-secrets-detection
     assert int(tag.split('.')[3]) >= 2728
@@ -90,6 +91,7 @@ def test_none_demisto_docker(docker, docker_tag, expected_output):
         docker_image_validator.checked_files = set()
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.suppress_print = False
         assert docker_image_validator.get_docker_image_latest_tag(docker_image_name=docker,
                                                                   yml_docker_image='{}:{}'.format(docker, docker_tag)) == expected_output
 
@@ -101,6 +103,7 @@ def test_get_docker_image_from_yml():
         docker_validator = DockerImageValidator(None, None, None)
         docker_validator.yml_file = get_yaml(TEST_INTEGRATION_FILE)
         docker_validator.is_integration = True
+        docker_validator.suppress_print = False
         docker_image = docker_validator.get_docker_image_from_yml()
         assert docker_image == "demisto/pyjwt:1.0"
         # Test script case
@@ -149,6 +152,7 @@ def test_parse_docker_image():
         docker_image_validator.checked_files = set()
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.suppress_print = False
         assert 'demisto/python', '1.3-alpine' == docker_image_validator.parse_docker_image(docker_image='demisto/python:1.3-alpine')
         assert 'demisto/slack', '1.2.3.4' == docker_image_validator.parse_docker_image(docker_image='demisto/slack:1.2.3.4')
         assert 'demisto/python', '' == docker_image_validator.parse_docker_image(docker_image='demisto/python/1.2.3.4')
@@ -177,6 +181,7 @@ def test_is_docker_image_latest_tag_with_default_image():
         docker_image_validator.checked_files = set()
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.suppress_print = False
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_modified_file = False
@@ -209,6 +214,8 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.file_path = "PATH"
         docker_image_validator.code_type = 'python'
+        docker_image_validator.suppress_print = False
+
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -239,6 +246,7 @@ def test_is_docker_image_latest_tag_with_latest_tag():
         docker_image_validator.docker_image_latest_tag = '1.0.3'
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.code_type = 'python'
+        docker_image_validator.suppress_print = False
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
@@ -271,6 +279,7 @@ def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated():
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.code_type = 'python'
         docker_image_validator.checked_files = set()
+        docker_image_validator.suppress_print = False
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
@@ -301,6 +310,7 @@ def test_is_docker_image_latest_tag_without_tag():
         docker_image_validator.docker_image_latest_tag = ''
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.code_type = 'python'
+        docker_image_validator.suppress_print = False
 
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'

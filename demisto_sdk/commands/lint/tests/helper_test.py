@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 
@@ -32,9 +34,13 @@ def test_build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool
                                  no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool,
                                  expected_value: int):
     from demisto_sdk.commands.lint.helpers import build_skipped_exit_code
-
-    assert expected_value == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,
-                                                     no_pwsh_analyze, no_pwsh_test, docker_engine)
+    env_var = os.environ.get('CI')
+    if not env_var:
+        assert expected_value == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,
+                                                         no_pwsh_analyze, no_pwsh_test, docker_engine)
+    else:
+        assert 0 == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,
+                                            no_pwsh_analyze, no_pwsh_test, docker_engine)
 
 
 @pytest.mark.parametrize(argnames="image, output, expected", argvalues=[('alpine', b'3.7\n', 3.7),

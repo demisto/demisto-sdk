@@ -345,8 +345,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         1. Include all file object, excluding:
             a. Change_log files (Deprecated).
             b. Integration/Script/Playbook readme (Used for website documentation deployment).
-            c. .pack-ignore (Interanl only).
-            d. .secrets-ignore (Interanl only).
+            c. .pack-ignore (Internal only).
+            d. .secrets-ignore (Internal only).
 
     Returns:
         ArtifactsReport: ArtifactsReport object.

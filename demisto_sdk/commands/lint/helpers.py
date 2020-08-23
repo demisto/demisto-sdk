@@ -82,6 +82,8 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     docker_engine(bool): docker engine exists.
     """
     skipped_code = 0b0
+    # When the CI env var is not set - on local env - check if any linters should be skipped
+    # Otherwise - When the CI env var is set - Run all linters without skipping
     if not os.environ.get('CI'):
         if no_flake8:
             skipped_code |= EXIT_CODES["flake8"]

@@ -35,9 +35,11 @@ def test_build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool
                                  expected_value: int):
     from demisto_sdk.commands.lint.helpers import build_skipped_exit_code
     env_var = os.environ.get('CI')
+    # On you local env
     if not env_var:
         assert expected_value == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,
                                                          no_pwsh_analyze, no_pwsh_test, docker_engine)
+    # On circle runs
     else:
         assert 0 == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_test,
                                             no_pwsh_analyze, no_pwsh_test, docker_engine)

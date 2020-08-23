@@ -34,6 +34,7 @@ mapping:
         type: str
       typeId:
         type: str
+        required: True
       modified:
         type: str
       name:

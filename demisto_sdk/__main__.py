@@ -449,7 +449,7 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
-def format_yml(input=None, output=None, from_version=None, no_validate=None, verbose: bool=False):
+def format_yml(input=None, output=None, from_version=None, no_validate=None, verbose=False):
     return format_manager(input, output, from_version, no_validate, verbose)
 
 

@@ -216,7 +216,6 @@ def test_is_docker_image_latest_tag_with_tag_labeled_latest():
         docker_image_validator.code_type = 'python'
         docker_image_validator.suppress_print = False
 
-
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = 'latest'

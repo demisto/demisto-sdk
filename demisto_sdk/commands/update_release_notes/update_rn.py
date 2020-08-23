@@ -15,16 +15,17 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_latest_release_notes_text,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               get_pack_name, get_yaml,
+                                               pack_name_to_path, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
-    def __init__(self, pack: str, update_type: Union[str, None], pack_files: set, added_files: set,
-                 specific_version: str = None, pre_release: bool = False):
-
-        self.pack = pack
+    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
+                 specific_version: str = None, pre_release: bool = False, pack: str = None,
+                 pack_metadata_only: bool = False):
+        self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
@@ -34,6 +35,7 @@ class UpdateRN:
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
+        self.pack_metadata_only = pack_metadata_only
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -97,12 +99,20 @@ class UpdateRN:
     def is_bump_required(self):
         try:
             diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-            if "currentVersion" in diff:
+            if '+    "currentVersion"' in diff:
+                return False
+            if self.only_readme_changed():
                 return False
         except RuntimeError:
             print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
                           f"Please verify the pack exists and the pack name is correct.")
         return True
+
+    def only_readme_changed(self):
+        changed_files = self.added_files.union(self.pack_files)
+        if len(changed_files) == 1 and 'README' in changed_files.pop():
+            return True
+        return False
 
     def find_added_pack_files(self):
         for a_file in self.added_files:
@@ -265,6 +275,10 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
+        if self.pack_metadata_only:
+            rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
+            return rn_string
+
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')

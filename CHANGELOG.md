@@ -1,4 +1,12 @@
 # Changelog
+* Updated the missing release notes error message (RN106) in the **Validate** command.
+
+# 1.1.10
+* Updated the **init** command. Relevant only when passing the *--contribution* argument.
+   * Added the *--author* option.
+   * The *support* field of the pack's metadata is set to *community*.
+* Added a proper error message in the **Validate** command upon a missing description in the root of the yml.
+* **Format** now works with a relative path.
 * **Validate** now fails when all release notes have been excluded.
 * Fixed issue where correct error message would not propagate for invalid images.
 * Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
@@ -6,6 +14,10 @@
 * Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
 * Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
 * Fixed an issue in the **openapi-codegen** command where missing reference fields in the swagger JSON caused errors.
+* Fixed an issue in the **openapi-codegen** command where empty objects in the swagger JSON paths caused errors.
+* **update-release-notes** command now accept path of the pack instead of pack name.
+* Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
+* Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

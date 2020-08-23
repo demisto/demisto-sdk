@@ -287,7 +287,7 @@ def dump_content_descriptor(artifact_manager: ArtifactsManager) -> ArtifactsRepo
 
 
 def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsReport:
-    """ Dump test scripts/playbooks conditionally in to:
+    """ Dump test scripts/playbooks conditionally into:
             1. content_test
 
     Args:

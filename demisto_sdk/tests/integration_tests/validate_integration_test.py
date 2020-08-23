@@ -115,7 +115,7 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = 'Deprecated.'
+        valid_integration_yml['display'] = '(Deprecated)'
         valid_integration_yml['description'] = 'Deprecated.'
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):

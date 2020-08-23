@@ -16,7 +16,7 @@ class YAMLContentUnfiedObject(YAMLContentObject):
         """YAML content object.
 
         Built from:
-            1. As YAMLContentObject.
+            1. YAMLContentObject.
             2. Code file - python/powershell/javascript.
             3. Unit-tests file.
 

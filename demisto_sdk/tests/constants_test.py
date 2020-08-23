@@ -14,7 +14,8 @@ TEST_PLAYBOOK = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-TestPlaybooks
 
 VALID_PYTHON_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration_test.py"
 VALID_PYTHON_INTEGRATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.py"
-VALID_METADATA_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/pack_metadata.json'
+VALID_METADATA1_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/1.pack_metadata.json'
+VALID_METADATA2_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/2.pack_metadata.json'
 VALID_DESCRIPTION_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_description.md'
 VALID_README_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_README.md'
 VALID_IMAGE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_image.png'
@@ -178,7 +179,7 @@ VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
-CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+CONF_JSON_MOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/conf.json'
 
 SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-valid.yml"
 SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"

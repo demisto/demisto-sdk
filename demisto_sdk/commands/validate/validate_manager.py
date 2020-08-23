@@ -543,7 +543,7 @@ class ValidateManager:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists
-        * pack_metadata.json: Validates that the file exists and that it has a valid structure
+        * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:
             id_set_path (str): Path of the id_set. Optional.
@@ -884,6 +884,7 @@ class ValidateManager:
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
 
+            # handle meta data file changes
             elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
                 if file_status.lower() == 'a':
                     self.new_packs.add(get_pack_name(file_path))
@@ -891,13 +892,15 @@ class ValidateManager:
                     changed_meta_files.add(file_path)
 
             else:
-                if file_path not in self.ignored_files:
-                    self.ignored_files.add(file_path)
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
-                else:
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                # pipefile and pipelock files should not enter to ignore_files
+                if all(substring not in file_path for substring in ['Pipfile.lock', 'Pipfile']):
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                    else:
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
             modified_files_list,

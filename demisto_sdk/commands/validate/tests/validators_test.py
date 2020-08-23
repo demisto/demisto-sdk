@@ -59,7 +59,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET, VALID_PYTHON_INTEGRATION_PATH, VALID_METADATA_PATH,
+    WIDGET_TARGET, VALID_PYTHON_INTEGRATION_PATH, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_DESCRIPTION_PATH, VALID_README_PATH, VALID_IMAGE_PATH, VALID_PIPEFILE_PATH,
     VALID_PIPEFILE_LOCK_PATH, VALID_PACK_IGNORE_PATH, VALID_SECRETS_IGNORE_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH
 )
@@ -662,7 +662,9 @@ class TestValidators:
         diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
                       f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"R100	{VALID_INTEGRATION_TEST_PATH} {VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"M	{VALID_METADATA1_PATH}\n" \
+                      f"R100	{VALID_INTEGRATION_TEST_PATH}	" \
+                      f"{VALID_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_PACK_IGNORE_PATH}\n" \
                       f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
                       f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \
@@ -673,6 +675,7 @@ class TestValidators:
                       f"A	{VALID_PIPEFILE_PATH}\n" \
                       f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
                       f"A	{VALID_README_PATH}\n" \
+                      f"A	{VALID_METADATA2_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}"
 
         validate_manager = ValidateManager()
@@ -680,37 +683,34 @@ class TestValidators:
             filter_changed_files(files_string=diff_string, print_ignored_files=True)
 
         # checking that modified files are recognized correctly
-        assert {VALID_INCIDENT_FIELD_PATH} in modified_files
-        assert VALID_INTEGRATION_TEST_PATH in modified_files
+        assert VALID_INCIDENT_FIELD_PATH in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
 
         # check that the modified code file is not there but the yml file is
-        assert VALID_INTEGRATION_TEST_PATH in modified_files
-        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py' not in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_PYTHON_INTEGRATION_PATH not in modified_files
 
         # check that the modified metadata file is in the changed_meta_files but the added one is not
-        assert 'Packs/F5/pack_metadata.json' in changed_meta_files
-        assert 'Packs/MyNewPack/pack_metadata.json' not in changed_meta_files
+        assert VALID_METADATA1_PATH in changed_meta_files
+        assert VALID_METADATA2_PATH not in changed_meta_files
 
         # check that the added files are recognized correctly
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/README.md' in added_files
-        assert VALID_INTEGRATION_TEST_PATH in added_files
+        assert VALID_README_PATH in added_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
 
         # check that the added code files and meta file are not in the added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py' not in added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' not in added_files
-        assert 'Packs/MyNewPack/pack_metadata.json' not in added_files
+        assert VALID_PYTHON_INTEGRATION_PATH not in added_files
+        assert VALID_PYTHON_INTEGRATION_TEST_PATH not in added_files
+        assert VALID_METADATA1_PATH not in added_files
 
         # check that non-image, pipfile, description or schema are in the ignored files and the rest are
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile' not in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock' not in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md' not \
-               in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png' not \
-               in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/.secrets-ignore' in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' in \
-               validate_manager.ignored_files
-        assert 'Packs/MyNewPack/.pack-ignore' in validate_manager.ignored_files
+        assert VALID_PIPEFILE_PATH not in validate_manager.ignored_files
+        assert VALID_PIPEFILE_LOCK_PATH not in validate_manager.ignored_files
+        assert VALID_DESCRIPTION_PATH not in validate_manager.ignored_files
+        assert VALID_IMAGE_PATH not in validate_manager.ignored_files
+        assert VALID_SECRETS_IGNORE_PATH in validate_manager.ignored_files
+        assert VALID_PYTHON_INTEGRATION_TEST_PATH in validate_manager.ignored_files
+        assert VALID_PACK_IGNORE_PATH in validate_manager.ignored_files
 
         # check recognized deleted file
         assert VALID_SCRIPT_PATH in deleted_files

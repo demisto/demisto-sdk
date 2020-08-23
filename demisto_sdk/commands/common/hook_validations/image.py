@@ -3,8 +3,7 @@ import glob
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
-    INTEGRATION_REGXES, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    YML_INTEGRATION_REGEXES)
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

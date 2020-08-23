@@ -331,7 +331,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
 
 
 def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
-    """ Dumping content/Packs/<pack_id>/ in to:
+    """ Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
             3. content_all

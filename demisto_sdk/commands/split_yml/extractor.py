@@ -207,7 +207,7 @@ class Extractor:
         self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
-                code_file.write("import demistomock as demisto\n")
+                code_file.write("import demistomock as demisto  # noqa: F401\n")
             if common_server:
                 if lang_type == TYPE_PYTHON:
                     code_file.write("from CommonServerPython import *  # noqa: F401\n")

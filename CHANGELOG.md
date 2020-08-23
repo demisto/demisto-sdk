@@ -1,5 +1,5 @@
 # Changelog
-
+* Updated the missing release notes error message (RN106) in the **Validate** command.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

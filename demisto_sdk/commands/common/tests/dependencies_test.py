@@ -231,13 +231,13 @@ class PlaybookDependencies:
             str(task_num): {
                 'id': str(task_num),
                 'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
-                'type': 'playbook',
+                'type': 'regular',
                 'task': {
                     'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
                     'version': -1,
                     'name': other_playbook_name,
                     'playbookName': other_playbook_name,
-                    'type': 'playbook',
+                    'type': 'regular',
                     'iscommand': False,
                     'brand': '',
                     'description': '',
@@ -277,12 +277,12 @@ class PlaybookDependencies:
             str(task_num): {
                 'id': str(task_num),
                 'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
-                'type': 'playbook',
+                'type': 'regular',
                 'task': {
                     'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
                     'version': -1,
                     'name': integration_name,
-                    'script': f'{integration_name}|||command',
+                    'script': f'{integration_name}|||command_{integration_name}',
                     'type': 'regular',
                     'iscommand': True,
                     'brand': integration_name,
@@ -335,12 +335,12 @@ class PlaybookDependencies:
             str(task_num): {
                 'id': str(task_num),
                 'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
-                'type': 'playbook',
+                'type': 'regular',
                 'task': {
                     'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
                     'version': -1,
                     'name': integration_name,
-                    'script': f'{integration_name}|||command',
+                    'script': f'{integration_name}|||command_{integration_name}',
                     'type': 'regular',
                     'iscommand': True,
                     'brand': integration_name,
@@ -427,6 +427,130 @@ class PlaybookDependencies:
         }
 
         update_tasks_in_playbook(playbook, task_num, new_task)
+
+    @staticmethod
+    def make_playbook_depend_on_incident_field_builtin_command(playbook: Playbook, incident_field: JSONBased):
+        incident_field_name = incident_field.read_json_as_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'regular',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': 'Set incident field',
+                    'script': 'Builtin|||setIncident',
+                    'type': 'regular',
+                    'iscommand': True,
+                    'brand': 'Builtin',
+                    'description': ''
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    incident_field_name: 'value'
+                },
+                'separatecontext': False,
+                'view': '''| -
+                            {
+                                "position": {
+                                    "x": -800,
+                                    "y": 980
+                                }
+                            }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_incident_field_input_simple(playbook: Playbook, incident_field: JSONBased):
+        incident_field_name = incident_field.read_json_as_dict().get('name')
+
+        new_input = {
+            'key': 'input',
+            'value': {
+                'simple': '${incident.' + incident_field_name + '}'
+            },
+            'required': False,
+            'description': 'description',
+            'playbookInputQuery': None
+        }
+
+        playbook_content = playbook.yml.read_dict()
+        playbook_content.get('inputs').append(new_input)
+        playbook.yml.write_dict(playbook_content)
+
+    @staticmethod
+    def make_playbook_depend_on_incident_field_input_complex(playbook: Playbook, incident_field: JSONBased):
+        incident_field_name = incident_field.read_json_as_dict().get('name')
+        print(incident_field_name)
+
+        new_input = {
+            'key': 'input',
+            'value': {
+                'complex': {
+                    'root': 'incident',
+                    'accessor': incident_field_name
+                }
+            },
+            'required': False,
+            'description': 'description',
+            'playbookInputQuery': None
+        }
+
+        playbook_content = playbook.yml.read_dict()
+        playbook_content.get('inputs').append(new_input)
+        playbook.yml.write_dict(playbook_content)
+
+    @staticmethod
+    def make_playbook_depend_on_indicator_field_builtin_command(playbook: Playbook, indicator_field: JSONBased):
+        indicator_field_name = indicator_field.read_json_as_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'regular',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': 'Set incident field',
+                    'script': 'Builtin|||setIndicator',
+                    'type': 'regular',
+                    'iscommand': True,
+                    'brand': 'Builtin',
+                    'description': ''
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    indicator_field_name: 'value'
+                },
+                'separatecontext': False,
+                'view': '''| -
+                                {
+                                    "position": {
+                                        "x": -800,
+                                        "y": 980
+                                    }
+                                }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
 
 
 class ClassifierDependencies:
@@ -705,6 +829,8 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
 
         if chosen_method[0] == 'make_integration_feed':
             all_dependencies.add('CommonTypes')
+
+        print(f'method is {chosen_method[0]} dep is {dependencies}')
 
         all_dependencies = all_dependencies.union(dependencies)
         method(**args)

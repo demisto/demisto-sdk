@@ -90,6 +90,9 @@ class Repo:
         integration.yml.update({'commonfields': {'id': f'{name}_integration'}})
         integration.yml.update({'name': f'{name}_integration'})
         integration.yml.update({'display': f'{name}_integration'})
+        integration_content = integration.yml.read_dict()
+        integration_content['script']['commands'][0]['name'] = f'command_{name}'
+        integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f'{name}_classifier')
         classifier.write_json({'id': f'{name} - classifier'})
@@ -114,7 +117,7 @@ class Repo:
 
         incident_field = pack.create_incident_field(f'{name}_incident-field')
         incident_field.write_json({'id': f'incident_{name} - incident_field'})
-        incident_field.update({'name': f'{name} - incident_field'})
+        incident_field.update({'name': f'incident_{name} - incident_field'})
 
         indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
         indicator_type.write_json({'id': f'{name} - indicator_type'})
@@ -123,7 +126,7 @@ class Repo:
 
         indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
         indicator_field.write_json({'id': f'indicator_{name} - indicator_field'})
-        indicator_field.update({'name': f'{name} - indicator_field'})
+        indicator_field.update({'name': f'indicator_{name} - indicator_field'})
 
         dashboard = pack.create_dashboard(f'{name}_dashboard')
         dashboard.write_json({'id': f'{name} - dashboard'})

@@ -82,22 +82,23 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     docker_engine(bool): docker engine exists.
     """
     skipped_code = 0b0
-    if no_flake8:
-        skipped_code |= EXIT_CODES["flake8"]
-    if no_bandit:
-        skipped_code |= EXIT_CODES["bandit"]
-    if no_mypy or not docker_engine:
-        skipped_code |= EXIT_CODES["mypy"]
-    if no_vulture or not docker_engine:
-        skipped_code |= EXIT_CODES["vulture"]
-    if no_pylint or not docker_engine:
-        skipped_code |= EXIT_CODES["pylint"]
-    if no_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pytest"]
-    if no_pwsh_analyze or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_analyze"]
-    if no_pwsh_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_test"]
+    if not os.environ.get('CI'):
+        if no_flake8:
+            skipped_code |= EXIT_CODES["flake8"]
+        if no_bandit:
+            skipped_code |= EXIT_CODES["bandit"]
+        if no_mypy or not docker_engine:
+            skipped_code |= EXIT_CODES["mypy"]
+        if no_vulture or not docker_engine:
+            skipped_code |= EXIT_CODES["vulture"]
+        if no_pylint or not docker_engine:
+            skipped_code |= EXIT_CODES["pylint"]
+        if no_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pytest"]
+        if no_pwsh_analyze or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_analyze"]
+        if no_pwsh_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_test"]
 
     return skipped_code
 

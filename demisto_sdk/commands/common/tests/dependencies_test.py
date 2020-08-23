@@ -553,6 +553,46 @@ class PlaybookDependencies:
         update_tasks_in_playbook(playbook, task_num, task)
 
 
+class ScriptDependencies:
+    @staticmethod
+    def make_script_depend_on_integration(script: Script, integration: Integration):
+        integration_name = integration.yml.read_dict().get('name')
+        script_content = script.yml.read_dict()
+
+        if script_content.get('dependson'):
+            script_content['dependson']['must'].append(f'{integration_name}|||command_{integration_name}')
+            script.yml.write_dict(script_content)
+        else:
+            script.yml.update(
+                {
+                    'dependson': {
+                        'must': [
+                            f'{integration_name}|||command_{integration_name}'
+                        ]
+                    }
+                }
+            )
+
+    @staticmethod
+    def make_script_depend_on_script(script: Script, script__1: Script):
+        other_script_name = script__1.yml.read_dict().get('name')
+        script_content = script.yml.read_dict()
+
+        if script_content.get('dependson'):
+            script_content['dependson']['must'].append(other_script_name)
+            script.yml.write_dict(script_content)
+        else:
+            script.yml.update(
+                {
+                    'dependson': {
+                        'must': [
+                            other_script_name
+                        ]
+                    }
+                }
+            )
+
+
 class ClassifierDependencies:
     @staticmethod
     def make_classifier_depend_on_incident_type_default(classifier: JSONBased, incident_type: JSONBased):
@@ -689,6 +729,62 @@ class LayoutDependencies:
         layout.update({'layout': layout_data})
 
 
+class LayoutcontainerDependencies:
+    @staticmethod
+    def make_layoutcontainer_depend_on_incident_indicator_type(layoutcontainer: JSONBased, incident_type: JSONBased):
+        incident_type_id = incident_type.read_json_as_dict().get('id')
+        layoutcontainer.update({'name': incident_type_id})
+
+    @staticmethod
+    def make_layout_depend_on_incident_indicator_field(layout: JSONBased, indicators_fields: List[JSONBased],
+                                                       incidents_fields: List[JSONBased]):
+        indicators_fields_ids = [indicator_field.read_json_as_dict().get('id') for indicator_field in indicators_fields]
+        incidents_fields_ids = [incident_field.read_json_as_dict().get('id') for incident_field in incidents_fields]
+
+        layout_data = layout.read_json_as_dict().get('layout', {})
+        updates_to_layout = {
+            'tabs': {
+                'sections': [
+                    {
+                        'displayType': 'ROW',
+                        'h': 2,
+                        'i': 'uuid',
+                        'isVisible': True,
+                        'items': [
+                            {
+                                'endCol': 2,
+                                'fieldId': indicator_field_id,
+                                'height': 24,
+                                'id': 'id',
+                                'index': 0,
+                                'startCol': 0
+                            } for indicator_field_id in indicators_fields_ids
+                        ]
+                    },
+                    {
+                        'displayType': 'ROW',
+                        'h': 2,
+                        'i': 'uuid',
+                        'isVisible': True,
+                        'items': [
+                            {
+                                'endCol': 2,
+                                'fieldId': incident_field_id,
+                                'height': 24,
+                                'id': 'id',
+                                'index': 0,
+                                'startCol': 0
+                            } for incident_field_id in incidents_fields_ids
+                        ]
+                    }
+                ]
+            }
+        }
+
+        layout_data.update(updates_to_layout)
+        layout.update({'detailsV2': layout_data})
+
+
 class IncidentFieldDependencies:
     # Ignored by yaakovi
     # @staticmethod
@@ -713,9 +809,9 @@ class IncidentFieldDependencies:
         incident_field.update({'fieldCalcScript': script_id})
 
 
-CLASSES = [IntegrationDependencies, PlaybookDependencies, ClassifierDependencies, MapperDependencies,
-           IncidentTypeDependencies,
-           IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies]
+CLASSES = [IntegrationDependencies, PlaybookDependencies, ScriptDependencies, ClassifierDependencies,
+           MapperDependencies, IncidentTypeDependencies,
+           IndicatorTypeDependencies, LayoutDependencies, LayoutcontainerDependencies, IncidentFieldDependencies]
 METHODS_POOL: list = \
     [(method_name, entity_class) for entity_class in CLASSES for method_name in list(entity_class.__dict__.keys())
      if '_' != method_name[0]]
@@ -739,6 +835,9 @@ def get_entity_by_pack_number_and_entity_type(repo, pack_number, entity_type):
 
     if entity_type == 'layout':
         return repo.packs[pack_number].layouts[0]
+
+    if entity_type == 'layoutcontainer':
+        return repo.packs[pack_number].layoutcontainers[0]
 
     if entity_type == 'incident_type':
         return repo.packs[pack_number].incident_types[0]
@@ -877,7 +976,7 @@ def test_dependencies(mocker, repo, test_number):
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
 
-@pytest.mark.parametrize('entity_class', [PlaybookDependencies])
+@pytest.mark.parametrize('entity_class', CLASSES)
 def test_specific_entity(mocker, repo, entity_class):
     """ This test will run for each entity in the repo, when each time it will randomly generate dependencies
         in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.

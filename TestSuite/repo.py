@@ -91,7 +91,7 @@ class Repo:
         integration.yml.update({'name': f'{name}_integration'})
         integration.yml.update({'display': f'{name}_integration'})
         integration_content = integration.yml.read_dict()
-        integration_content['script']['commands'][0]['name'] = f'command_{name}'
+        integration_content['script']['commands'][0]['name'] = f'command_{name}_integration'
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f'{name}_classifier')
@@ -104,6 +104,11 @@ class Repo:
         layout.write_json({'id': f'{name} - layout'})
         layout.update({'name': f'{name} - layout'})
         layout.update({'kind': ''})
+
+        layoutcontainer = pack.create_layoutcontainer(f'{name}_layoutcontainer')
+        layoutcontainer.write_json({'id': f'{name} - layoutcontainer'})
+        layoutcontainer.update({'group': f'{name} - layoutcontainer'})
+        layoutcontainer.update({'detailsV2': {}})
 
         mapper = pack.create_mapper(f'{name}_mapper')
         mapper.write_json({'id': f'{name} - mapper'})

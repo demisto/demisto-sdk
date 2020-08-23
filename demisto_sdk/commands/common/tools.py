@@ -797,7 +797,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        # 'reputations' key is located in reputations.json file.
+        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
+        # located in reputations.json file.
         if 'regex' in _dict or 'reputations' in _dict:
             return FileType.REPUTATION
 

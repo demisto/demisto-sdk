@@ -59,7 +59,10 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    WIDGET_TARGET, VALID_PYTHON_INTEGRATION_PATH, VALID_METADATA_PATH,
+    VALID_DESCRIPTION_PATH, VALID_README_PATH, VALID_IMAGE_PATH, VALID_PIPEFILE_PATH,
+    VALID_PIPEFILE_LOCK_PATH, VALID_PACK_IGNORE_PATH, VALID_SECRETS_IGNORE_PATH
+)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from mock import patch
@@ -653,25 +656,25 @@ class TestValidators:
                 - Ensure ignored files are set correctly.
         """
 
+
         mocker.patch.object(os.path, 'isfile', return_value=True)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
         diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
-                      "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
+                      f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      "M	Packs/F5/pack_metadata.json\n" \
+                      f"M	{VALID_METADATA_PATH}\n" \
                       f"R100	{VALID_INTEGRATION_TEST_PATH} {VALID_INTEGRATION_TEST_PATH}\n" \
-                      "A	Packs/MyNewPack/.pack-ignore\n" \
-                      "A	Packs/MyNewPack/.secrets-ignore\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
+                      f"A	{VALID_PACK_IGNORE_PATH}\n" \
+                      f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
+                      f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"A	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
-                      f"A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
-                      f"A	Packs/MyNewPack/README.md\n" \
-                      f"A	Packs/MyNewPack/pack_metadata.json\n" \
+                      f"A	{VALID_DESCRIPTION_PATH}\n" \
+                      f"A	{VALID_IMAGE_PATH}\n" \
+                      f"A	{VALID_PYTHON_INTEGRATION_TEST_PATH}\n" \
+                      f"A	{VALID_PIPEFILE_PATH}\n" \
+                      f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
+                      f"A	{VALID_README_PATH}\n" \
+                      f"A	{VALID_METADATA_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}"
 
         validate_manager = ValidateManager()

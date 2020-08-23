@@ -929,8 +929,6 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
         if chosen_method[0] == 'make_integration_feed':
             all_dependencies.add('CommonTypes')
 
-        print(f'method is {chosen_method[0]} dep is {dependencies}')
-
         all_dependencies = all_dependencies.union(dependencies)
         method(**args)
 

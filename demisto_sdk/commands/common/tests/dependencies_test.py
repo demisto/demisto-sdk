@@ -93,20 +93,20 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': False,
                     'brand': '',
-                    'nexttasks': {
-                        '#none#': ['3']
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    'entryID': {
+                        'complex': {
+                            'root': 'InfoFile',
+                            'accessor': 'EntryID'
+                        }
                     },
-                    'scriptarguments': {
-                        'entryID': {
-                            'complex': {
-                                'root': 'InfoFile',
-                                'accessor': 'EntryID'
-                            }
-                        },
-                        'fileName': {},
-                        'lastZipFileInWarroom': {},
-                        'password': {}
-                    }
+                    'fileName': {},
+                    'lastZipFileInWarroom': {},
+                    'password': {}
                 },
                 'separatecontext': False,
                 'view': '''| -
@@ -144,20 +144,20 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': False,
                     'brand': '',
-                    'nexttasks': {
-                        '#none#': ['3']
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    'entryID': {
+                        'complex': {
+                            'root': 'InfoFile',
+                            'accessor': 'EntryID'
+                        }
                     },
-                    'scriptarguments': {
-                        'entryID': {
-                            'complex': {
-                                'root': 'InfoFile',
-                                'accessor': 'EntryID'
-                            }
-                        },
-                        'fileName': {},
-                        'lastZipFileInWarroom': {},
-                        'password': {}
-                    }
+                    'fileName': {},
+                    'lastZipFileInWarroom': {},
+                    'password': {}
                 },
                 'separatecontext': False,
                 'view': '''| -
@@ -176,8 +176,8 @@ class PlaybookDependencies:
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_playbook_skippable(playbook: Playbook, playbook_1: Playbook):
-        other_playbook_name = playbook_1.yml.read_dict().get('name')
+    def make_playbook_depend_on_playbook_skippable(playbook: Playbook, playbook__1: Playbook):
+        other_playbook_name = playbook__1.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
         task = {
@@ -194,37 +194,37 @@ class PlaybookDependencies:
                     'iscommand': False,
                     'brand': '',
                     'description': '',
-                    'nexttasks': {
-                        '#none#': ['3']
-                    },
-                    'separatecontext': True,
-                    'loop': {
-                        'iscommand': False,
-                        'exitCondition': '',
-                        'wait': 1,
-                        'max': 0
-                    },
-                    'view': '''| -
-                        {
-                            "position": {
-                                "x": -800,
-                                "y": 980
-                            }
-                        }''',
-                    'note': False,
-                    'timertriggers': [],
-                    'ignoreworker': False,
-                    'skipunavailable': True,
-                    'quietmode': 0
-                }
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'separatecontext': True,
+                'loop': {
+                    'iscommand': False,
+                    'exitCondition': '',
+                    'wait': 1,
+                    'max': 0
+                },
+                'view': '''| -
+                            {
+                                "position": {
+                                    "x": -800,
+                                    "y": 980
+                                }
+                            }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+                'skipunavailable': True,
+                'quietmode': 0
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_playbook_not_skippable(playbook: Playbook, playbook_1: Playbook):
-        other_playbook_name = playbook_1.yml.read_dict().get('name')
+    def make_playbook_depend_on_playbook_not_skippable(playbook: Playbook, playbook__1: Playbook):
+        other_playbook_name = playbook__1.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
         task = {
@@ -241,32 +241,192 @@ class PlaybookDependencies:
                     'iscommand': False,
                     'brand': '',
                     'description': '',
-                    'nexttasks': {
-                        '#none#': ['3']
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'separatecontext': True,
+                'loop': {
+                    'iscommand': False,
+                    'exitCondition': '',
+                    'wait': 1,
+                    'max': 0
+                },
+                'view': '''| -
+                            {
+                                "position": {
+                                    "x": -800,
+                                    "y": 980
+                                }
+                            }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+                'quietmode': 0
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_integration_skippable(playbook: Playbook, integration: Integration):
+        integration_name = integration.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'playbook',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': integration_name,
+                    'script': f'{integration_name}|||command',
+                    'type': 'regular',
+                    'iscommand': True,
+                    'brand': integration_name,
+                    'description': ''
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    'env_bitness': {},
+                    'env_type': {},
+                    'env_version': {},
+                    'file': {},
+                    'obj_type': {
+                        'simple': 'download'
                     },
-                    'separatecontext': True,
-                    'loop': {
-                        'iscommand': False,
-                        'exitCondition': '',
-                        'wait': 1,
-                        'max': 0
+                    'obj_url': {
+                        'complex': {
+                            'root': 'inputs.URL',
+                            'accessor': 'Data'
+                        }
                     },
-                    'view': '''| -
+                    'opt_kernel_heavyevasion': {},
+                    'opt_network_connect': {},
+                    'opt_privacy_type': {},
+                },
+                'separatecontext': True,
+                'view': '''| -
+                            {
+                                "position": {
+                                    "x": -800,
+                                    "y": 980
+                                }
+                            }''',
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
+                'skipunavailable': True
+            }
+        }
+
+        update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_integration_not_skippable(playbook: Playbook, integration: Integration):
+        integration_name = integration.yml.read_dict().get('name')
+        task_num = get_new_task_number(playbook)
+
+        task = {
+            str(task_num): {
+                'id': str(task_num),
+                'taskid': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                'type': 'playbook',
+                'task': {
+                    'id': 'fa3391b8-020e-4f53-8576-7445bf741452',
+                    'version': -1,
+                    'name': integration_name,
+                    'script': f'{integration_name}|||command',
+                    'type': 'regular',
+                    'iscommand': True,
+                    'brand': integration_name,
+                    'description': ''
+                },
+                'nexttasks': {
+                    '#none#': ['3']
+                },
+                'scriptarguments': {
+                    'env_bitness': {},
+                    'env_type': {},
+                    'env_version': {},
+                    'file': {},
+                    'obj_type': {
+                        'simple': 'download'
+                    },
+                    'obj_url': {
+                        'complex': {
+                            'root': 'inputs.URL',
+                            'accessor': 'Data'
+                        }
+                    },
+                    'opt_kernel_heavyevasion': {},
+                    'opt_network_connect': {},
+                    'opt_privacy_type': {},
+                },
+                'separatecontext': True,
+                'view': '''| -
                                 {
                                     "position": {
                                         "x": -800,
                                         "y": 980
                                     }
                                 }''',
-                    'note': False,
-                    'timertriggers': [],
-                    'ignoreworker': False,
-                    'quietmode': 0
-                }
+                'note': False,
+                'timertriggers': [],
+                'ignoreworker': False,
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
+
+    @staticmethod
+    def make_playbook_depend_on_incident_field(playbook: Playbook, incident_field: JSONBased):
+        incident_field_name = incident_field.read_json_as_dict().get('name')
+
+        mapping = {
+            'fieldMapping': [
+                {
+                    'incidentfield': incident_field_name,
+                    'output': {
+                        'complex': {
+                            'root': 'root',
+                            'filters': {
+                                'operator': 'lessThan',
+                                'left': {
+                                    'value': {
+                                        'simple': 'context.path',
+                                        'iscontext': True
+                                    }
+                                },
+                                'right': {
+                                    'value': {
+                                        'simple': "49151",
+                                    },
+                                    'accessor': 'DestPort'
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
+        task_num = get_new_task_number(playbook)
+        task_num_to_associate = random.choice(range(task_num - 1))
+
+        task = playbook.yml.read_dict().get('tasks').get(str(task_num_to_associate))
+        task.update(mapping)
+
+        task.update({'id': str(task_num)})
+        new_task = {
+            str(task_num): task
+        }
+
+        update_tasks_in_playbook(playbook, task_num, new_task)
 
 
 class ClassifierDependencies:
@@ -498,7 +658,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     number_of_packs = len(repo.packs) - 1
 
     for arg in inputs_arguments:
-        arg_type = arg.split('_')[0]
+        arg_type = arg.split('__')[0]
         if arg_type in LIST_ARGUMENTS_TO_METHODS.keys():
             number_of_items_in_list = random.randint(1, 5)
 

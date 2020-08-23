@@ -663,8 +663,7 @@ class TestValidators:
                       f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
                       f"M	{VALID_METADATA1_PATH}\n" \
-                      f"R100	{VALID_INTEGRATION_TEST_PATH}	" \
-                      f"{VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"R100	{VALID_INTEGRATION_TEST_PATH}	{VALID_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_PACK_IGNORE_PATH}\n" \
                       f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
                       f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \

@@ -437,7 +437,7 @@ class PackDependencies:
                 playbook_dependencies.update(pack_dependencies_data)
 
             if playbook_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
                     f'{playbook_dependencies}  '
@@ -489,7 +489,7 @@ class PackDependencies:
                 layout_dependencies.update(pack_dependencies_data)
 
             if layout_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
                     f'{layout_dependencies}  '
@@ -540,7 +540,7 @@ class PackDependencies:
                 incident_field_dependencies.update(pack_dependencies_data)
 
             if incident_field_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
                     f'{incident_field_dependencies}  '
@@ -591,7 +591,7 @@ class PackDependencies:
                 indicator_type_dependencies.update(pack_dependencies_data)
 
             if indicator_type_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
                     f'{indicator_type_dependencies}  '
@@ -654,7 +654,7 @@ class PackDependencies:
                 dependencies_packs.update(pack_dependencies_data)
 
             if integration_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
                     f'{integration_dependencies}  '
@@ -705,7 +705,7 @@ class PackDependencies:
                 incident_type_dependencies.update(pack_dependencies_data)
 
             if incident_type_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
                     f'{incident_type_dependencies}  '
@@ -746,7 +746,7 @@ class PackDependencies:
                 classifier_dependencies.update(pack_dependencies_data)
 
             if classifier_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
                     f'{classifier_dependencies}  '
@@ -796,7 +796,7 @@ class PackDependencies:
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
                     f'{mapper_dependencies}  '
@@ -837,7 +837,7 @@ class PackDependencies:
                 widget_dependencies.update(pack_dependencies_data)
 
             if widget_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(widget_data.get("file_path", ""))} depends on: '
                     f'{widget_dependencies}  '

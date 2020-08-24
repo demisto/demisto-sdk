@@ -775,7 +775,7 @@ def get_widget_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    scripts = set()
+    scripts = ''
 
     # if the widget is script based - add it to the dependencies of the widget
     if json_data.get('dataType') == 'scripts':

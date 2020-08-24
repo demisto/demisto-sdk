@@ -16,6 +16,7 @@ ARTIFACTS_EXPEXTED_RESULTS = TEST_DATA / 'artifacts'
 @pytest.fixture()
 def mock_git(mocker):
     from demisto_sdk.commands.common.content import Content
+
     # Mock git working directory
     mocker.patch.object(Content, 'git')
     Content.git().working_tree_dir = TEST_CONTENT_REPO

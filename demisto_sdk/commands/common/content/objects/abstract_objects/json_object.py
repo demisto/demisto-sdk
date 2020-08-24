@@ -31,7 +31,7 @@ class JSONObject(DictionaryBasedObject):
         path = Path(path)
         if path.is_dir():
             try:
-                path = next(path.glob([f"*.json"]))
+                path = next(path.glob(["*.json"]))
             except StopIteration:
                 raise exc.ContentInitializeError(JSONObject, path)
         elif not (path.is_file() and path.suffix in [".json"]):

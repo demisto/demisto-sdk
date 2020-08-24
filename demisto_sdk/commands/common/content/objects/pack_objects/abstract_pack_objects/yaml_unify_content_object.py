@@ -42,7 +42,7 @@ class YAMLContentUnfiedObject(YAMLContentObject):
         Returns:
             Unit-test path or None if unit-test not found.
         """
-        patterns = ["test_*.py", f"*_test.py"]
+        patterns = ["test_*.py", "*_test.py"]
         return next(self._path.parent.glob(patterns=patterns), None)
 
     @property

@@ -90,6 +90,7 @@ def temp_dir():
 def mock_git(mocker):
     """Mock git Repo object"""
     from demisto_sdk.commands.common.content import Content
+
     # Mock git working directory
     mocker.patch.object(Content, 'git')
     Content.git().working_tree_dir = TEST_CONTENT_REPO
@@ -134,7 +135,8 @@ def test_modify_common_server_constants():
     Notes:
         - After test clean up changes.
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import modify_common_server_constants
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        modify_common_server_constants
     path_before = COMMON_SERVER / 'CommonServerPython.py'
     path_excepted = COMMON_SERVER / 'CommonServerPython_modified.py'
     old_data = path_before.read_text()
@@ -146,8 +148,8 @@ def test_modify_common_server_constants():
 
 
 def test_dump_pack(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
-                                                                                 dump_pack, Pack, create_dirs)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, Pack, create_dirs, dump_pack)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -164,8 +166,8 @@ def test_dump_pack(mock_git):
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
-                                                                                 create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, create_content_artifacts)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -180,9 +182,9 @@ def test_create_content_artifacts(mock_git):
 
 
 def test_create_private_content_artifacts(private_repo):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
-                                                                                 create_content_artifacts)
     from demisto_sdk.commands.common.content import Content
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, create_content_artifacts)
 
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
@@ -200,8 +202,8 @@ def test_create_private_content_artifacts(private_repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failue(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
-                                                                                 create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, create_content_artifacts)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -217,8 +219,8 @@ def test_malformed_file_failue(suffix: str, mock_git):
 
 
 def test_duplicate_file_failue(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
-                                                                                 create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, create_content_artifacts)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',

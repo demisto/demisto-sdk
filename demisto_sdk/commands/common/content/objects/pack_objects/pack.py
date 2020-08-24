@@ -51,7 +51,7 @@ class Pack:
         Returns:
             object: Any valid content object found in the given directory.
         """
-        objects_path = (self._path / dir_name).glob(patterns=[f"*/"])
+        objects_path = (self._path / dir_name).glob(patterns=["*/"])
         for object_path in objects_path:
             yield ContentObjectFactory.from_path(object_path)
 

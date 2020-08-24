@@ -36,7 +36,7 @@ class YAMLObject(DictionaryBasedObject):
         path = Path(path)
         if path.is_dir():
             try:
-                path = next(path.glob(patterns=fr'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))
+                path = next(path.glob(patterns=r'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))
             except StopIteration:
                 raise exc.ContentInitializeError(path, path, "Can't find yaml or yml file in path (excluding unified).")
         elif not (path.is_file() and path.suffix in [".yaml", ".yml"]):

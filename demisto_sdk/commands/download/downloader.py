@@ -595,16 +595,21 @@ class Downloader:
     def merge_new_file(self, custom_content_object: dict) -> None:
         """
         Merges new files of type playbook/json (not existing in the output pack)
+        If the name starts with "playbook-" remove it
         :param custom_content_object: The custom content object to merge into the pack
         :return: None
         """
         file_entity: str = custom_content_object['entity']
         file_path: str = custom_content_object['path']
         file_name: str = custom_content_object['name']
+        if file_name.startswith("playbook-"):
+            file_name = file_name[(len("playbook-")):]
         file_ending: str = custom_content_object['file_ending']
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
         file_output_name: str = os.path.basename(file_path)
+        if file_output_name.startswith("playbook-"):
+            file_output_name = file_output_name[(len("playbook-")):]
         file_output_path: str = os.path.join(dir_output_path, file_output_name)
         try:
             shutil.move(src=file_path, dst=file_output_path)

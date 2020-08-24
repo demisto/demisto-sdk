@@ -666,19 +666,23 @@ class TestValidators:
                       f"M	{VALID_METADATA1_PATH}\n" \
                       f"M	{VALID_CLASSIFIER_PATH}\n" \
                       f"M	{VALID_DESCRIPTION_PATH}\n" \
+                      f"M	{VALID_LAYOUT_PATH}\n" \
                       f"R100	{VALID_INTEGRATION_TEST_PATH}	{VALID_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_PACK_IGNORE_PATH}\n" \
+                      f"A	{VALID_INDICATOR_FIELD_PATH}\n" \
                       f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
                       f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"A	{VALID_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_DESCRIPTION_PATH}\n" \
                       f"A	{VALID_IMAGE_PATH}\n" \
+                      f"A	{VALID_WIDGET_PATH}\n" \
                       f"A	{VALID_PYTHON_INTEGRATION_TEST_PATH}\n" \
                       f"A	{VALID_PIPEFILE_PATH}\n" \
                       f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
                       f"A	{VALID_README_PATH}\n" \
                       f"A	{VALID_METADATA2_PATH}\n" \
-                      f"D	{VALID_SCRIPT_PATH}"
+                      f"D	{VALID_SCRIPT_PATH}\n" \
+                      f"D	{VALID_DASHBOARD_PATH}"
 
         validate_manager = ValidateManager()
         modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \
@@ -689,6 +693,7 @@ class TestValidators:
         assert VALID_CLASSIFIER_PATH in modified_files
         assert VALID_DESCRIPTION_PATH in modified_files
         assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_LAYOUT_PATH in modified_files
 
         # checking that there are no unwanted files in modified files
         assert VALID_PIPEFILE_LOCK_PATH not in modified_files
@@ -705,6 +710,8 @@ class TestValidators:
         # check that the added files are recognized correctly
         assert VALID_README_PATH in added_files
         assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_WIDGET_PATH in added_files
+        assert VALID_INDICATOR_FIELD_PATH in added_files
 
         # check that the added code files and meta file are not in the added_files
         assert VALID_PYTHON_INTEGRATION_PATH not in added_files
@@ -722,6 +729,7 @@ class TestValidators:
 
         # check recognized deleted file
         assert VALID_SCRIPT_PATH in deleted_files
+        assert VALID_DASHBOARD_PATH in deleted_files
 
     def test_setup_git_params(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')

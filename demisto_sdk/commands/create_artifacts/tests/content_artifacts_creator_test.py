@@ -10,7 +10,7 @@ TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
-COMMON_SERVER = UNIT_TEST_DATA / 'modify_common_server_constants_test'
+COMMON_SERVER = UNIT_TEST_DATA / 'common_server'
 ARTIFACTS_EXPEXTED_RESULTS = TEST_DATA / 'artifacts'
 
 

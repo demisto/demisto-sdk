@@ -112,7 +112,8 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.stop()
             pool.join()
             raise
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             logger.error("Gracefully release all resources due to Error...")
             pool.stop()
             pool.join()
@@ -141,7 +142,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
             logger.error(e.msg)
             raise
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             raise
 
 
@@ -350,37 +351,37 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
-    report = ArtifactsReport(f"Pack {pack.id}:")
+    pack_report = ArtifactsReport(f"Pack {pack.id}:")
     for integration in pack.integrations:
-        report += dump_pack_conditionally(artifact_manager, integration)
+        pack_report += dump_pack_conditionally(artifact_manager, integration)
     for script in pack.scripts:
-        report += dump_pack_conditionally(artifact_manager, script)
+        pack_report += dump_pack_conditionally(artifact_manager, script)
     for playbook in pack.playbooks:
-        report += dump_pack_conditionally(artifact_manager, playbook)
+        pack_report += dump_pack_conditionally(artifact_manager, playbook)
     for test_playbook in pack.test_playbooks:
-        report += dump_pack_conditionally(artifact_manager, test_playbook)
+        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
     for report in pack.reports:
-        report += dump_pack_conditionally(artifact_manager, report)
+        pack_report += dump_pack_conditionally(artifact_manager, report)
     for layout in pack.layouts:
-        report += dump_pack_conditionally(artifact_manager, layout)
+        pack_report += dump_pack_conditionally(artifact_manager, layout)
     for dashboard in pack.dashboards:
-        report += dump_pack_conditionally(artifact_manager, dashboard)
+        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
     for incident_field in pack.incident_fields:
-        report += dump_pack_conditionally(artifact_manager, incident_field)
+        pack_report += dump_pack_conditionally(artifact_manager, incident_field)
     for incident_type in pack.incident_types:
-        report += dump_pack_conditionally(artifact_manager, incident_type)
+        pack_report += dump_pack_conditionally(artifact_manager, incident_type)
     for indicator_field in pack.indicator_fields:
-        report += dump_pack_conditionally(artifact_manager, indicator_field)
+        pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
-        report += dump_pack_conditionally(artifact_manager, indicator_type)
+        pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for connection in pack.connections:
-        report += dump_pack_conditionally(artifact_manager, connection)
+        pack_report += dump_pack_conditionally(artifact_manager, connection)
     for classifier in pack.classifiers:
-        report += dump_pack_conditionally(artifact_manager, classifier)
+        pack_report += dump_pack_conditionally(artifact_manager, classifier)
     for widget in pack.widgets:
-        report += dump_pack_conditionally(artifact_manager, widget)
+        pack_report += dump_pack_conditionally(artifact_manager, widget)
     for release_note in pack.release_notes:
-        report += ObjectReport(release_note, content_packs=True)
+        pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
@@ -390,74 +391,15 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             dump_link_files(artifact_manager, tool, artifact_manager.content_new_path, created_files)
             object_report.set_content_all()
             dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
-        report += object_report
+        pack_report += object_report
     if pack.pack_metadata:
-        report += ObjectReport(pack.pack_metadata, content_packs=True)
+        pack_report += ObjectReport(pack.pack_metadata, content_packs=True)
         pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
     if pack.readme:
-        report += ObjectReport(pack.readme, content_packs=True)
+        pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)
 
-    return report
-
-
-def modify_common_server_constants(code_path: Path, content_version: str, branch_name: Optional[str] = None):
-    """ Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
-            a. CONTENT_RELEASE_VERSION to given content version flag.
-            b. CONTENT_BRANCH_NAME to active branch
-
-    Args:
-        code_path: Packs/Base/Scripts/CommonServerPython.py full code path.
-        branch_name: branch name to update in CONTENT_BRANCH_NAME
-        content_version: content version to update in CONTENT_RELEASE_VERSION
-    """
-    file_content_new = re.sub(r"CONTENT_RELEASE_VERSION = '\d.\d.\d'",
-                              f"CONTENT_RELEASE_VERSION = '{content_version}'",
-                              code_path.read_text())
-    file_content_new = re.sub(r"CONTENT_BRANCH_NAME = '\w+'",
-                              f"CONTENT_BRANCH_NAME = '{branch_name}'",
-                              file_content_new)
-    code_path.write_text(file_content_new)
-
-
-@contextmanager
-def content_files_handler(artifact_manager: ArtifactsManager, content_object: ContentObject):
-    """ Pre-processing pack, perform the following:
-            1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
-                a. CONTENT_RELEASE_VERSION to given content version flag.
-                b. CONTENT_BRANCH_NAME to active branch
-
-        Post-processing pack, perform the following:
-            1. Change content/Packs/Base/Scripts/CommonServerPython.py to original state.
-            2. Unifier creates *_45.yml files in content_pack by default which is not support due to_version lower than
-                NEWEST_SUPPORTED_VERSION, Therefor after copy it to content_new, delete it.
-
-    Args:
-        artifact_manager: Command line configuration.
-        content_object: content_object (e.g. Integration/Script/Layout etc)
-
-    Yields:
-        List[Path]: List of file to be removed after execution.
-    """
-    files_to_remove: List[Path] = []
-
-    try:
-        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
-                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
-            # Modify CommonServerPython.py global variables
-            repo = artifact_manager.content.git()
-            modify_common_server_constants(content_object.code_path, artifact_manager.content_version,
-                                           'master' if not repo else repo.active_branch)
-        yield files_to_remove
-    finally:
-        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
-                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
-            # Modify CommonServerPython.py global variables
-            modify_common_server_constants(content_object.code_path, '0.0.0', 'master')
-
-        # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
-        for file_path in files_to_remove:
-            file_path.unlink()
+    return pack_report
 
 
 def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
@@ -503,6 +445,65 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
             dump_link_files(artifact_manager, content_object, artifact_manager.content_all_path, test_new_created_files)
 
     return object_report
+
+
+@contextmanager
+def content_files_handler(artifact_manager: ArtifactsManager, content_object: ContentObject):
+    """ Pre-processing pack, perform the following:
+            1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
+                a. CONTENT_RELEASE_VERSION to given content version flag.
+                b. CONTENT_BRANCH_NAME to active branch
+
+        Post-processing pack, perform the following:
+            1. Change content/Packs/Base/Scripts/CommonServerPython.py to original state.
+            2. Unifier creates *_45.yml files in content_pack by default which is not support due to_version lower than
+                NEWEST_SUPPORTED_VERSION, Therefor after copy it to content_new, delete it.
+
+    Args:
+        artifact_manager: Command line configuration.
+        content_object: content_object (e.g. Integration/Script/Layout etc)
+
+    Yields:
+        List[Path]: List of file to be removed after execution.
+    """
+    files_to_remove: List[Path] = []
+
+    try:
+        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
+                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
+            # Modify CommonServerPython.py global variables
+            repo = artifact_manager.content.git()
+            modify_common_server_constants(content_object.code_path, artifact_manager.content_version,
+                                           'master' if not repo else repo.active_branch)
+        yield files_to_remove
+    finally:
+        if (BASE_PACK in content_object.path.parts) and isinstance(content_object, Script) and \
+                content_object.code_path and content_object.code_path.name == 'CommonServerPython.py':
+            # Modify CommonServerPython.py global variables
+            modify_common_server_constants(content_object.code_path, '0.0.0', 'master')
+
+        # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
+        for file_path in files_to_remove:
+            file_path.unlink()
+
+
+def modify_common_server_constants(code_path: Path, content_version: str, branch_name: Optional[str] = None):
+    """ Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
+            a. CONTENT_RELEASE_VERSION to given content version flag.
+            b. CONTENT_BRANCH_NAME to active branch
+
+    Args:
+        code_path: Packs/Base/Scripts/CommonServerPython.py full code path.
+        branch_name: branch name to update in CONTENT_BRANCH_NAME
+        content_version: content version to update in CONTENT_RELEASE_VERSION
+    """
+    file_content_new = re.sub(r"CONTENT_RELEASE_VERSION = '\d.\d.\d'",
+                              f"CONTENT_RELEASE_VERSION = '{content_version}'",
+                              code_path.read_text())
+    file_content_new = re.sub(r"CONTENT_BRANCH_NAME = '\w+'",
+                              f"CONTENT_BRANCH_NAME = '{branch_name}'",
+                              file_content_new)
+    code_path.write_text(file_content_new)
 
 
 ########################

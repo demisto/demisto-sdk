@@ -263,7 +263,7 @@ class SecretsValidator(object):
         # if script or readme file, search for yml in order to retrieve temp white list
         yml_file_contents = ''
         # Validate if it is integration documentation file or supported file extension
-        if find_type(file_path) in [FileType.PYTHON_FILE, FileType.README]:
+        if find_type(file_path) in [FileType.PYTHON_FILE, FileType.README, FileType.POWERSHELL_FILE]:
             yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
         return yml_file_contents
 

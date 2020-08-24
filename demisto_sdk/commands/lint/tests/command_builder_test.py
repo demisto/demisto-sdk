@@ -50,9 +50,8 @@ def test_build_mypy_command(files, py_num):
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_vulture_command(files, mocker):
     """Build bandit command"""
+    from demisto_sdk.commands.lint.commands_builder import build_vulture_command
     from demisto_sdk.commands.lint import commands_builder
-    from demisto_sdk.commands.lint.commands_builder import \
-        build_vulture_command
     mocker.patch.object(commands_builder, 'os')
     commands_builder.os.environ.get.return_value = 20
     output = build_vulture_command(files, Path('~/dev/content/'), 2.7)
@@ -91,8 +90,7 @@ def test_build_pytest_command_2():
 
 def test_build_pwsh_analyze():
     """Build Pytest command with json"""
-    from demisto_sdk.commands.lint.commands_builder import \
-        build_pwsh_analyze_command
+    from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command
     file = MagicMock()
     command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Path {file.name}"
     assert command == build_pwsh_analyze_command(file)
@@ -100,7 +98,6 @@ def test_build_pwsh_analyze():
 
 def test_build_pwsh_test():
     """Build Pytest command with json"""
-    from demisto_sdk.commands.lint.commands_builder import \
-        build_pwsh_test_command
+    from demisto_sdk.commands.lint.commands_builder import build_pwsh_test_command
     command = 'pwsh -Command Invoke-Pester -Configuration \'@{Run=@{Exit=$true}; Output=@{Verbosity="Detailed"}}\''
     assert command == build_pwsh_test_command()

@@ -25,7 +25,6 @@ def lint_files() -> List[Path]:
 @pytest.fixture
 def demisto_content() -> Callable:
     import shutil
-
     # Init git repo
     content_path = Path(__file__).parent / 'content'
 
@@ -123,8 +122,7 @@ def create_integration(mocker) -> Callable:
 @pytest.fixture
 def docker_mock(mocker):
     def _docker_mock(BuildException: Optional[Exception] = None, image_id: str = "image-id"):
-        import docker
-
         from demisto_sdk.commands.lint import linter
+        import docker
         mocker.patch.object(docker, 'from_env')
         mocker.patch.object(linter, '')

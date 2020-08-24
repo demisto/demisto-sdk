@@ -651,16 +651,22 @@ def generate_test_playbook(**kwargs):
     type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
     required=False,
     help="The path to the zip file downloaded via the Marketplace contribution UI. "
-         "This will format the contents of the zip file to a pack format ready for contribution "
-         "in the content repository on your local machine. The command should be executed from the "
-         "content repository's base directory. When this option is passed, the only other options "
-         "that are considered are \"name\" and \"description\" - all others are ignored.")
+    "This will format the contents of the zip file to a pack format ready for contribution "
+    "in the content repository on your local machine. The command should be executed from the "
+    "content repository's base directory. When this option is passed, the only other options "
+    "that are considered are \"name\", \"description\" and \"author\" - all others are ignored.")
 @click.option(
     '-d', '--description',
     type=click.STRING,
     default='',
     help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
-         "option is passed.")
+    "option is passed.")
+@click.option(
+    '--author',
+    type=click.STRING,
+    default='',
+    help="The author to attach to the converted contribution pack. Used when the \"contribution\" "
+    "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -805,8 +811,7 @@ def update_pack_releasenotes(**kwargs):
 
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
-                                                                                                     'origin/master')
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
 
     packs_existing_rn = set()
     for pf in added:
@@ -827,9 +832,16 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1):
-        print_warning('No changes were detected. If changes were made, please commit the changes '
-                      'and rerun the command')
+        if len(changed_meta_files) < 1:
+            print_warning('No changes were detected. If changes were made, please commit the changes '
+                          'and rerun the command')
+        else:
+            update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=set(),
+                                      pre_release=pre_release, added_files=set(),
+                                      specific_version=specific_version, pack_metadata_only=True)
+            update_pack_rn.execute_update()
         sys.exit(0)
+
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)
         packs_list = ''.join(f"{p}, " for p in packs)

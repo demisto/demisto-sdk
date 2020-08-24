@@ -808,7 +808,7 @@ class PackDependencies:
     @staticmethod
     def _collect_widget_dependencies(pack_widgets, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
-        Collects in mappers dependencies.
+        Collects widget dependencies.
 
         Args:
             pack_widgets (list): collection of pack widget data.

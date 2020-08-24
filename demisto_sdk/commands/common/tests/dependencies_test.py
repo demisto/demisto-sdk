@@ -58,6 +58,7 @@ def get_new_task_number(playbook: Playbook):
 def update_tasks_in_playbook(playbook: Playbook, task_num: int, task: dict):
     tasks = playbook.yml.read_dict().get('tasks')
 
+    # Connects the new task added to the last task in the playbook, so the whole playbook will be connected
     if task_num > 0:
         try:
             tasks.get(str(task_num - 1)).get('nexttasks').get('#none#').append(str(task_num))

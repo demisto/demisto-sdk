@@ -19,6 +19,7 @@ def test_create_id_set_flow(repo):
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set
 
+        # Since Layouts folder contains both layouts and layoutcontainers then this folder has 2 * amount objects
         if id_set_entity != 'Layouts':
             assert len(entity_content_in_id_set) == number_of_packs_to_create
         else:

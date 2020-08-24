@@ -1,5 +1,7 @@
 # Changelog
-
+* Fixed an issue where **lint** did not run on circle when docker did not return ping.
+* Updated the missing release notes error message (RN106) in the **Validate** command.
+* Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

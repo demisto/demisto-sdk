@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **find-dependencies** did not collect indicator fields as dependencies for playbooks.
 * Fixed an issue where **lint** did not run on circle when docker did not return ping.
 * Updated the missing release notes error message (RN106) in the **Validate** command.
 

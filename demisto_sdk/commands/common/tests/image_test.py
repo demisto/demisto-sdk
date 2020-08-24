@@ -88,3 +88,23 @@ def test_image_when_invalid_type(monkeypatch):
     structure = mock_structure(file_path=integration_path)
     validator = IntegrationValidator(structure)
     assert validator.is_valid_image() is False
+
+
+def test_no_image_integration(monkeypatch):
+    """
+    Given
+        - A new integration yml that does not have an image in its pack
+
+    When
+        - Validating this integration
+
+    Then
+        - Ensure integration is considered non-valid.
+    """
+    integration_path = os.path.normpath(
+        os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'DummyPack', 'Integrations',
+                     'integration-DummyIntegration.yml')
+    )
+    structure = mock_structure(file_path=integration_path)
+    validator = IntegrationValidator(structure)
+    assert validator.is_valid_image() is False

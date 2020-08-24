@@ -1,5 +1,5 @@
 # Changelog
-* **validate** and **secrets** commands are now using a new find type function without regex.
+* Updated the **validate** and the **secrets** commands to be less dependent on regex.
 * Fixed an issue where **lint** did not run on circle when docker did not return ping.
 * Updated the missing release notes error message (RN106) in the **Validate** command.
 

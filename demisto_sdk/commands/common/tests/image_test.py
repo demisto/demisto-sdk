@@ -1,7 +1,5 @@
 import os
 
-from demisto_sdk.commands.common.constants import (INTEGRATION_REGXES,
-                                                   YML_INTEGRATION_REGEXES)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations import image
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -12,25 +10,21 @@ from demisto_sdk.commands.common.tests.integration_test import mock_structure
 def test_is_not_default_image():
     int_path = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                              'integration-Zoom.yml'))
-    INTEGRATION_REGXES.append(int_path)
     image_validator = image.ImageValidator(int_path)
     assert image_validator.is_not_default_image() is False
 
     image_path = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                                'default_image.png'))
-    YML_INTEGRATION_REGEXES.append(image_path)
     image_validator = image.ImageValidator(image_path)
     assert image_validator.is_not_default_image() is False
 
     image_path = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/init/templates',
                                                'HelloWorld', 'HelloWorld_image.png'))
-    YML_INTEGRATION_REGEXES.append(image_path)
     image_validator = image.ImageValidator(image_path)
     assert image_validator.is_not_default_image() is False
 
     int_path = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                              'fake_integration.yml'))
-    INTEGRATION_REGXES.append(int_path)
     image_validator = image.ImageValidator(int_path)
     assert image_validator.is_not_default_image() is False
 

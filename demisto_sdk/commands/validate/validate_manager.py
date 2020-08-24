@@ -893,7 +893,7 @@ class ValidateManager:
 
             else:
                 # pipefile and pipelock files should not enter to ignore_files
-                if all(substring not in file_path for substring in ['Pipfile.lock', 'Pipfile']):
+                if 'Pipfile' not in file_path:
                     if file_path not in self.ignored_files:
                         self.ignored_files.add(file_path)
                         if print_ignored_files:

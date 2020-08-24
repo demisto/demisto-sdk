@@ -15,10 +15,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, Classifier, Connection, Dashboard, DocFile, IncidentField,
-    IncidentType, IndicatorField, IndicatorType, Integration, Layout,
-    PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget)
+    AgentTool, Classifier, ClassifierMapper, Connection, Dashboard, DocFile,
+    IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
+    Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
+    ReleaseNote, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     ContentObjectFactory
 from wcmatch.pathlib import Path
@@ -56,7 +56,7 @@ class Pack:
             yield ContentObjectFactory.from_path(object_path)
 
     @property
-    def name(self) -> str:
+    def id(self) -> str:
         return self._path.parts[-1]
 
     @property
@@ -104,7 +104,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def classifiers(self) -> Iterator[Classifier]:
+    def classifiers(self) -> Iterator[Union[Classifier, OldClassifier, ClassifierMapper]]:
         return self._content_files_list_generator_factory(dir_name=CLASSIFIERS_DIR,
                                                           suffix="json")
 

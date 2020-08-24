@@ -1,5 +1,4 @@
 import copy
-from abc import abstractmethod
 from typing import List, Optional, Union
 
 import demisto_sdk.commands.common.content.errors as exc
@@ -47,13 +46,17 @@ class YAMLContentUnfiedObject(YAMLContentObject):
         return next(self._path.parent.glob(patterns=patterns), None)
 
     @property
-    @abstractmethod
     def script(self) -> dict:
         """Script item in object dict:
             1. Script - Loacted under main keys.
             2. Integration - Located under second level key (script -> script).
         """
-        pass
+        if self._content_type == FileType.INTEGRATION:
+            script = self.get('script', {})
+        else:
+            script = self.to_dict()
+
+        return script
 
     @property
     def docker_image(self) -> str:
@@ -186,7 +189,7 @@ class YAMLContentUnfiedObject(YAMLContentObject):
 
             # Handling case where copy of object should be without modifications.
             else:
-                # Copy all folder structure
+                # Dump as YAMLContentObject
                 created_files.extend(super().dump(dest_dir=dest_dir,
                                                   readme=readme, change_log=change_log))
 

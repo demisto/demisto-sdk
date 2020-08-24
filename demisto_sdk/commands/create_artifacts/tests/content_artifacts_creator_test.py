@@ -11,19 +11,31 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
 COMMON_SERVER = UNIT_TEST_DATA / 'modify_common_server_constants_test'
-EXPECTED_ARTIFACT_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_test' / 'content_expected_artifact'
-EXPECTED_ARTIFACT_PRIVATE_CONTENT = UNIT_TEST_DATA / 'create_content_artifacts_test' / 'content_private_expected_artifact'
+ARTIFACTS_EXPEXTED_RESULTS = TEST_DATA / 'artifacts'
 
 
-def same_folders(dcmp):
+def same_folders(src1, src2):
+    """Assert if folder contains diffrent files"""
+    dcmp = dircmp(src1, src2)
     if dcmp.left_only or dcmp.right_only:
-        assert False, f"\n{dcmp.right} only:\n{dcmp.right_only}\n{dcmp.left} only:\n{dcmp.left_only}"
+        return False
     for sub_dcmp in dcmp.subdirs.values():
-        same_folders(sub_dcmp)
+        same_folders(sub_dcmp.left, sub_dcmp.right)
+
+    return True
 
 
 @contextmanager
-def destroy_by_suffix(suffix: str):
+def destroy_by_ext(suffix: str):
+    """Modify file content to invalid by file extention - json/yaml.
+
+     Open:
+        - Choose file by file extention.
+        - Modify file content to not valid.
+
+    Close:
+        - Modify content to the original state.
+    """
     if suffix == 'json':
         file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "Classifiers" / "classifier-sample_new.json"
     else:
@@ -39,6 +51,14 @@ def destroy_by_suffix(suffix: str):
 
 @contextmanager
 def duplicate_file():
+    """Create duplicate file name in content repository.
+
+     Open:
+        - Create copy of file in content.
+
+    Close:
+        - Delete copied file.
+    """
     file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_test1.yml"
     new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_test1.yml"
     try:
@@ -50,6 +70,14 @@ def duplicate_file():
 
 @contextmanager
 def temp_dir():
+    """Create Temp direcotry for test.
+
+     Open:
+        - Create temp directory.
+
+    Close:
+        - Delete temp directory.
+    """
     temp = UNIT_TEST_DATA / 'temp'
     try:
         temp.mkdir(parents=True, exist_ok=True)
@@ -60,6 +88,7 @@ def temp_dir():
 
 @pytest.fixture()
 def mock_git(mocker):
+    """Mock git Repo object"""
     from demisto_sdk.commands.common.content import Content
     # Mock git working directory
     mocker.patch.object(Content, 'git')
@@ -69,6 +98,15 @@ def mock_git(mocker):
 
 @pytest.fixture()
 def private_repo():
+    """Create Temp private repo structure from original content structure.
+
+     Open:
+        - Create a copy of regular content.
+        - Delete - content/TestPlaybooks dir.
+
+    Close:
+        - Delete private content folder.
+    """
     try:
         copytree(TEST_CONTENT_REPO, TEST_PRIVATE_CONTENT_REPO)
         test_playbook_dir = TEST_PRIVATE_CONTENT_REPO / TEST_PLAYBOOKS_DIR
@@ -78,13 +116,32 @@ def private_repo():
         rmtree(TEST_PRIVATE_CONTENT_REPO)
 
 
-def test_modify_common_server_constants(datadir):
+def test_modify_common_server_constants():
+    """ Modify global variables in CommonServerPython.py
+
+    When: CommonServerPython.py contains:
+            - Global variable - CONTENT_RELEASE_VERSION = '0.0.0'
+            - Global variable - CONTENT_BRANCH_NAME = ''
+
+    Given: Parameters:
+            - Content version x.x.x
+            - Active branch - xxxx
+
+    Then: CommonServerPython.py changes:
+            - Global variable - CONTENT_RELEASE_VERSION = 'x.x.x'
+            - Global variable - CONTENT_BRANCH_NAME = 'xxxx'
+
+    Notes:
+        - After test clean up changes.
+    """
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import modify_common_server_constants
     path_before = COMMON_SERVER / 'CommonServerPython.py'
     path_excepted = COMMON_SERVER / 'CommonServerPython_modified.py'
     old_data = path_before.read_text()
     modify_common_server_constants(path_before, '6.0.0', 'test')
+
     assert cmp(path_before, path_excepted)
+
     path_before.write_text(old_data)
 
 
@@ -101,7 +158,7 @@ def test_create_content_artifacts(mock_git):
         exit_code = create_content_artifacts(artifact_manager=config)
 
         assert exit_code == 0
-        same_folders(dircmp(temp, EXPECTED_ARTIFACT_CONTENT))
+        assert same_folders(temp, ARTIFACTS_EXPEXTED_RESULTS / 'content')
 
 
 def test_create_private_content_artifacts(private_repo):
@@ -119,9 +176,8 @@ def test_create_private_content_artifacts(private_repo):
         config.content = Content(private_repo)
         exit_code = create_content_artifacts(artifact_manager=config)
 
-        same_folders(dircmp(temp, EXPECTED_ARTIFACT_PRIVATE_CONTENT))
-
-    assert exit_code == 0
+        assert same_folders(temp, ARTIFACTS_EXPEXTED_RESULTS / 'private')
+        assert exit_code == 0
 
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
@@ -136,7 +192,7 @@ def test_malformed_file_failue(suffix: str, mock_git):
                                   cpus=1,
                                   content_packs=False)
 
-        with destroy_by_suffix(suffix):
+        with destroy_by_ext(suffix):
             exit_code = create_content_artifacts(artifact_manager=config)
 
     assert exit_code == 1

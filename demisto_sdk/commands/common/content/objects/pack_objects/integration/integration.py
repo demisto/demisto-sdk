@@ -11,10 +11,6 @@ class Integration(YAMLContentUnfiedObject):
         super().__init__(path, FileType.INTEGRATION, INTEGRATION)
 
     @property
-    def script(self) -> dict:
-        return self.get('script', {})
-
-    @property
     def png_path(self) -> Optional[Path]:
         patterns = [f"{self.path.stem}_image.png"]
         return next(self._path.parent.glob(patterns=patterns), None)

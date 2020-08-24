@@ -9,7 +9,3 @@ from wcmatch.pathlib import Path
 class Script(YAMLContentUnfiedObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.SCRIPT, SCRIPT)
-
-    @property
-    def script(self) -> dict:
-        return self.to_dict()

@@ -20,13 +20,13 @@ class OldIndicatorType(JSONContentObject):
         """Add prefix to file name if not exists.
 
         Examples:
-            1. "hello-world.yml" -> "reputations-hello-world.yml"
+            1. "hello-world.yml" -> "reputation-hello-world.yml"
             2. "reputations.json" -> "reputations.json"
 
         Returns:
             str: Normalize file name.
         """
-        normalize_file_name = self._path.name
+        normalize_file_name = self._path.id
         # Handle case "hello-world.yml"
         if not normalize_file_name.startswith(f'{OLD_INDICATOR_TYPE}'):
             normalize_file_name = f'{OLD_INDICATOR_TYPE}-{normalize_file_name}'

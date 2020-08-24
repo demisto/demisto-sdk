@@ -3,7 +3,7 @@ from filecmp import cmp, dircmp
 from shutil import copyfile, copytree, rmtree
 
 import pytest
-from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -59,8 +59,8 @@ def duplicate_file():
     Close:
         - Delete copied file.
     """
-    file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_test1.yml"
-    new_file = TEST_CONTENT_REPO / "Packs" / "Sample02" / "TestPlaybooks" / "playbook-sample_test1.yml"
+    file = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / TEST_PLAYBOOKS_DIR / "playbook-sample_test1.yml"
+    new_file = TEST_CONTENT_REPO / PACKS_DIR / "Sample02" / TEST_PLAYBOOKS_DIR / "playbook-sample_test1.yml"
     try:
         copyfile(file, new_file)
         yield
@@ -143,6 +143,24 @@ def test_modify_common_server_constants():
     assert cmp(path_before, path_excepted)
 
     path_before.write_text(old_data)
+
+
+def test_dump_pack(mock_git):
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager,
+                                                                                 dump_pack, Pack, create_dirs)
+    with temp_dir() as temp:
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  content_packs=False)
+
+        create_dirs(artifact_manager=config)
+        dump_pack(artifact_manager=config, pack=Pack(TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'))
+
+        assert same_folders(src1=temp / 'content_packs' / 'Sample01',
+                            src2=ARTIFACTS_EXPEXTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
 
 
 def test_create_content_artifacts(mock_git):

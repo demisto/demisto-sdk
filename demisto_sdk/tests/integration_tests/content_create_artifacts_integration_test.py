@@ -40,7 +40,7 @@ def test_integration_create_content_artifacts_zip(mock_git):
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp])
 
         assert Path(temp / 'content_new.zip').exists()
-        assert Path(temp / 'content_all.zip').exists()
+        assert Path(temp / 'all_content.zip').exists()
         assert Path(temp / 'content_packs.zip').exists()
         assert Path(temp / 'content_test.zip').exists()
         assert result.exit_code == 0

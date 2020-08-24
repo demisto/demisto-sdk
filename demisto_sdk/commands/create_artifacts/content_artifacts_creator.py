@@ -66,7 +66,7 @@ class ArtifactsManager:
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
-        self.content_all_path = self.artifacts_path / 'content_all'
+        self.content_all_path = self.artifacts_path / 'all_content'
         self.cpus = cpus
         self.execution_start = time.time()
         self.content = Content.from_cwd()

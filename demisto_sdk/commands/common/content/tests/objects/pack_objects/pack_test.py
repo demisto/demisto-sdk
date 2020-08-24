@@ -33,7 +33,7 @@ PACK = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'
                              ('release_notes', (ReleaseNote,), 1),
                              ('tools', (AgentTool,), 1),
                              ('doc_files', (DocFile,), 1),
-                             ('test_playbooks', (Script, Playbook), 3),
+                             ('test_playbooks', (Script, Playbook), 2),
                          ])
 def test_generators_detection(attribute: str, content_type: Tuple[type], items: int):
     pack = Pack(PACK)

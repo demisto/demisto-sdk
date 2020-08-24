@@ -38,8 +38,9 @@ class UpdateRN:
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         except TypeError:
-            print_warning(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
-                          f"the pack name is correct.")
+            print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
+                        f"the pack name is correct.")
+            sys.exit(1)
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:

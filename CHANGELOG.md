@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where **lint** did not run on circle when docker did not return ping.
+* Updated the missing release notes error message (RN106) in the **Validate** command.
 * Added dependencies check for *widgets* in **find-dependencies** command.
 
 # 1.1.10

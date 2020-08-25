@@ -1,4 +1,4 @@
-from demisto_sdk.commands.common.content.objects.content_objects import \
+from demisto_sdk.commands.common.content.objects.root_objects import \
     ContentDescriptor
 from demisto_sdk.commands.common.tools import src_root
 

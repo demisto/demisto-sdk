@@ -1,9 +1,9 @@
 import pytest
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.objects.content_objects import (
-    ContentDescriptor, Documentation)
 from demisto_sdk.commands.common.content.objects.pack_objects import (Playbook,
                                                                       Script)
+from demisto_sdk.commands.common.content.objects.root_objects import (
+    ContentDescriptor, Documentation)
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'

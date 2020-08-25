@@ -7,11 +7,9 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, CONTENT_ENTITIES_DIRS, IGNORED_TYPES_REGEXES,
-    KNOWN_FILE_STATUSES, OLD_YML_FORMAT_FILE, PACKS_DIR,
+    CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, SCHEMA_REGEX,
-    FileType)
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -50,8 +48,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.commands.common.tools import (checked_type,
-                                               filter_packagify_changes,
+from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                find_type,
                                                get_content_release_identifier,
                                                get_pack_name,
@@ -67,7 +64,6 @@ class ValidateManager:
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
                  silence_init_prints=False, no_docker_checks=False, skip_dependencies=False):
-
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -150,7 +146,6 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-
         return self.print_final_report(is_valid)
 
     def run_validation_on_specific_files(self):
@@ -280,7 +275,6 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
-
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -549,7 +543,7 @@ class ValidateManager:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists
-        * pack_metadata.json: Validates that the file exists and that it has a valid structure
+        * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:
             id_set_path (str): Path of the id_set. Optional.
@@ -843,8 +837,8 @@ class ValidateManager:
                 file_status = 'r'
                 file_path = file_data[2]
 
-            # if the file is a code file - change path to the associated yml path.
-            if checked_type(file_path, CODE_FILES_REGEX) and file_status.lower() != 'd' \
+            # if the file is a code file - change path to the associated yml path to trigger release notes validation.
+            if find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and file_status.lower() != 'd' \
                     and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
@@ -855,7 +849,7 @@ class ValidateManager:
                 continue
 
             # identify deleted files
-            if file_status.lower() == 'd' and checked_type(file_path) and not file_path.startswith('.'):
+            if file_status.lower() == 'd' and find_type(file_path) and not file_path.startswith('.'):
                 deleted_files.add(file_path)
 
             # ignore directories
@@ -863,47 +857,50 @@ class ValidateManager:
                 continue
 
             # changes in old scripts and integrations - unified python scripts/integrations
-            elif file_status.lower() in ['m', 'a', 'r'] and checked_type(file_path, OLD_YML_FORMAT_FILE) and \
+            elif file_status.lower() in ['m', 'a', 'r'] and find_type(file_path) in [FileType.INTEGRATION,
+                                                                                     FileType.SCRIPT] and \
                     self._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
 
             # identify modified files
-            elif file_status.lower() == 'm' and checked_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
 
             # identify added files
-            elif file_status.lower() == 'a' and checked_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'a' and find_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
 
             # identify renamed files
-            elif file_status.lower().startswith('r') and checked_type(file_path):
+            elif file_status.lower().startswith('r') and find_type(file_path):
                 # if a code file changed, take the associated yml file.
-                if checked_type(file_data[2], CODE_FILES_REGEX):
+                if find_type(file_data[2]) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
                     modified_files_list.add(file_path)
 
                 else:
                     # file_data[1] = old name, file_data[2] = new name
                     modified_files_list.add((file_data[1], file_data[2]))
 
-            # detect changes in schema
-            elif checked_type(file_path, [SCHEMA_REGEX]):
-                modified_files_list.add(file_path)
-                self.changes_in_schema = True
-
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
 
+            # handle meta data file changes
             elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
                 if file_status.lower() == 'a':
                     self.new_packs.add(get_pack_name(file_path))
                 elif file_status.lower() == 'm':
                     changed_meta_files.add(file_path)
 
-            elif print_ignored_files and not checked_type(file_path, IGNORED_TYPES_REGEXES):
-                if file_path not in self.ignored_files:
-                    self.ignored_files.add(file_path)
-                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+            else:
+                # pipefile and pipelock files should not enter to ignore_files
+                if 'Pipfile' not in file_path:
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                    else:
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
 
         modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
             modified_files_list,

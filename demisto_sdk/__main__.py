@@ -580,7 +580,8 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
 @click.option(
     "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
 @click.option(
-    "-i", "--input", help="Valid JSON file path. If not specified then script will wait for user input in the terminal",
+    "-co", "--command_output", help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
+    "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
     "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "

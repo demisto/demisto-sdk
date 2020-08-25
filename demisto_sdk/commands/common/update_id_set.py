@@ -779,7 +779,7 @@ def get_widget_data(path):
 
     # if the widget is script based - add it to the dependencies of the widget
     if json_data.get('dataType') == 'scripts':
-        scripts.add(json_data.get('query'))
+        scripts = json_data.get('query')
 
     if name:
         data['name'] = name
@@ -791,7 +791,7 @@ def get_widget_data(path):
     if pack:
         data['pack'] = pack
     if scripts:
-        data['scripts'] = list(scripts)
+        data['scripts'] = [scripts]
 
     return {id_: data}
 

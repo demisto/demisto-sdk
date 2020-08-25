@@ -46,6 +46,13 @@ class IntegrationDependencies:
         integration.yml.update({'feed': True})
 
 
+class WidgetDependencies:
+    @staticmethod
+    def make_widget_depend_on_script(widget: JSONBased, script: Script):
+        script_id = script.yml.read_dict().get('commonfields').get('id')
+        widget.update({'dataType': 'scripts', 'query': script_id})
+
+
 class ClassifierDependencies:
     @staticmethod
     def make_classifier_depend_on_incident_type_default(classifier: JSONBased, incident_type: JSONBased):
@@ -207,7 +214,7 @@ class IncidentFieldDependencies:
 
 
 CLASSES = [IntegrationDependencies, ClassifierDependencies, MapperDependencies, IncidentTypeDependencies,
-           IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies]
+           IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies, WidgetDependencies]
 METHODS_POOL: list = \
     [(method_name, entity_class) for entity_class in CLASSES for method_name in list(entity_class.__dict__.keys())
      if '_' != method_name[0]]
@@ -243,6 +250,9 @@ def get_entity_by_pack_number_and_entity_type(repo, pack_number, entity_type):
 
     if entity_type == 'indicator_field':
         return repo.packs[pack_number].indicator_fields[0]
+
+    if entity_type == 'widget':
+        return repo.packs[pack_number].widgets[0]
 
 
 LIST_ARGUMENTS_TO_METHODS = {

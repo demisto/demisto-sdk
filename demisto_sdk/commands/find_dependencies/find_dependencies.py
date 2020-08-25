@@ -300,11 +300,10 @@ class PackDependencies:
 
             # depends on list can have both scripts and integration commands
             depends_on = script.get('depends_on', [])
-            command_to_integration = list(script.get('command_to_integration').keys()) if \
-                script.get('command_to_integration') else []
+            command_to_integration = list(script.get('command_to_integration', {}).keys())
             script_executions = script.get('script_executions', [])
 
-            dependencies_commands = depends_on + command_to_integration + script_executions
+            dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first

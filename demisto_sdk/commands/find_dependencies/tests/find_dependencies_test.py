@@ -357,16 +357,27 @@ class TestDependsOnScriptAndIntegration:
     def test_collect_scripts_command_to_integrations_and_script_executions(self, id_set):
         """
         Given
-            - A script entry in the id_set containing command_to_integrations and script_executions.
+            - A script entry in the id_set containing command_to_integrations with a reputation command
+             and script_executions.
 
         When
             - Building dependency graph for pack.
 
         Then
             - Extracting the packs that the script depends on.
-            - Should recognize both packs.
+            - Should recognize the mandatory pack and the non mandatory packs.
         """
-        expected_result = {('Active_Directory_Query', True), ('Cherwell', True)}
+        expected_result = {
+            ('Active_Directory_Query', True), ('Recorded_Future', False), ('illuminate', False), ('ThreatQ', False),
+            ('Anomali_ThreatStream', False), ('URLHaus', False), ('Symantec_Deepsight', False),
+            ('XForceExchange', False), ('Active_Directory_Query', True), ('XFE', False), ('MISP', False),
+            ('AlienVault_OTX', False), ('ThreatMiner', False), ('isight', False), ('CrowdStrikeIntel', False),
+            ('ReversingLabs_A1000', False), ('PolySwarm', False), ('TruSTAR', False),
+            ('ReversingLabs_Titanium_Cloud', False), ('ThreatExchange', False), ('EclecticIQ', False),
+            ('AutoFocus', False), ('McAfee-TIE', False), ('Maltiverse', False), ('Palo_Alto_Networks_WildFire', False),
+            ('Polygon', False), ('Cofense-Intelligence', False), ('Lastline', False), ('ThreatConnect', False),
+            ('VirusTotal', False), ('Flashpoint', False)
+        }
 
         test_input = [
             {
@@ -377,7 +388,7 @@ class TestDependsOnScriptAndIntegration:
                     "depends_on": [
                     ],
                     "command_to_integration": {
-                        "cherwell-get-business-object": "Cherwell"
+                        "file": "many integrations"
                     },
                     "script_executions": [
                         "ADGetUser",

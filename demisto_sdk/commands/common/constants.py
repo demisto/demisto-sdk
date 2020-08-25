@@ -49,6 +49,7 @@ BETA_INTEGRATION = 'betaintegration'
 DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
+OLD_REPUTATION = 'reputations.json'
 
 
 class FileType(Enum):

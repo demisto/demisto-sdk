@@ -19,16 +19,15 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CHECKED_TYPES_REGEXES,
-    CLASSIFIERS_DIR, CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN,
-    CONTENT_GITHUB_UPSTREAM, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JSON_ALL_INDICATOR_TYPES_REGEXES,
-    LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX,
-    PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
-    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
-    SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER,
-    WIDGETS_DIR, FileType)
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CLASSIFIERS_DIR,
+    CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS,
+    ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -528,16 +527,6 @@ def get_latest_release_notes_text(rn_path):
     return rn if rn else None
 
 
-def checked_type(file_path, compared_regexes=None, return_regex=False):
-    compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
-    for regex in compared_regexes:
-        if re.search(regex, file_path, re.IGNORECASE):
-            if return_regex:
-                return regex
-            return True
-    return False
-
-
 def format_version(version):
     """format server version to form X.X.X
 
@@ -638,20 +627,6 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
-
-
-def get_matching_regex(string_to_match, regexes):
-    # type: (str, Union[list, str]) -> Optional[str]
-    """Gets a string and find id the regexes list matches the string. if do, return regex else None.
-
-    Args:
-        string_to_match: String to find matching regex
-        regexes: regexes to check.
-
-    Returns:
-        matching regex if exists, else None
-    """
-    return checked_type(string_to_match, regexes, return_regex=True)
 
 
 def get_all_docker_images(script_obj) -> List[str]:
@@ -770,7 +745,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):  # noqa: C901
+# flake8: noqa: C901
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
     """
     returns the content file type
 
@@ -794,6 +770,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if path.endswith('.png'):
         return FileType.IMAGE
+
+    if path.endswith('.ps1'):
+        return FileType.POWERSHELL_FILE
 
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
@@ -830,7 +809,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'preProcessingScript' in _dict:
             return FileType.INCIDENT_TYPE
 
-        if 'regex' in _dict or checked_type(path, JSON_ALL_INDICATOR_TYPES_REGEXES):
+        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
+        # located in reputations.json file.
+        if 'regex' in _dict or 'reputations' in _dict:
             return FileType.REPUTATION
 
         if 'brandName' in _dict and 'transformer' in _dict:

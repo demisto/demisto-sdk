@@ -190,13 +190,13 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
+def json_to_outputs(command, command_output, prefix, output=None, verbose=False, interactive=False):
     """
     This script parses JSON to Demisto Outputs YAML format
 
     Args:
         command: the name of the command that this output is belong like xdr-get-incidents
-        commands_output: full path to valid JSON file - the JSON file should contain API response from the service.
+        command_output: full path to valid JSON file - the JSON file should contain API response from the service.
         prefix: The prefix of the context, this prefix will appear for each output field - VirusTotal.IP,
             CortexXDR.Incident
         output: Full path to output file where to save the YAML
@@ -207,7 +207,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
     Returns:
     """
     try:
-        if input:
+        if command_output:
             with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:

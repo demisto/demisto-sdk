@@ -808,7 +808,7 @@ class PackDependencies:
     @staticmethod
     def _collect_widget_dependencies(pack_widgets, id_set, verbose_file, exclude_ignored_dependencies=True):
         """
-        Collects in mappers dependencies.
+        Collects widget dependencies.
 
         Args:
             pack_widgets (list): collection of pack widget data.
@@ -827,9 +827,9 @@ class PackDependencies:
             widget_data = next(iter(widget.values()))
             widget_dependencies = set()
 
-            related_scrips = widget_data.get('scripts', [])
+            related_scripts = widget_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
-                related_scrips, id_set['scripts'], exclude_ignored_dependencies)
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \

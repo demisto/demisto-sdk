@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 
 # Getting Started
 
-1. `Content` object:
+1. Accessing `Content` object:
 
 ```python
 from demisto_sdk.commands.common.content import Content
@@ -36,7 +36,7 @@ content: Content = Content.from_cwd()
 > If this method executed not in Content Repository, Current Working Directoy will be configured as Content root directory.
 > If not valid Content folder structure no exception will be raised -> Child object will not be found (Packs, Documentations etc.)
 
-2. Content root objects:
+2. Accessing Content `Root` objects:
 
 ```python
 from demisto_sdk.commands.common.content import Content, Documentation
@@ -47,7 +47,7 @@ for documentation in content.documentations:
     isinstance(documentation, Documentation)  # True
 ```
 
-3. Accessing Pack objects:
+3. Accessing `Pack` objects:
 
     a. Iterating over all packs -
 
@@ -103,7 +103,7 @@ for documentation in content.documentations:
        secrets_ignore: SecretIgnore = pack_obj.secrets_ignore
    ```
 
-   d. Interuct with pack internal objects -
+   d. Interruct with pack internal objects -
 
    ```python
    from demisto_sdk.commands.common.content import Content, Pack, Integration, IncidentType

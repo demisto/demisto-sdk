@@ -39,7 +39,7 @@ class ReleaseNotesValidator(BaseValidator):
             for file in modified_added_files:
                 if not any(permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
-                elif self.pack_name+'/' in file:
+                elif self.pack_name + '/' in file:
                     update_rn_util = UpdateRN(pack_path=self.file_path, pack_files=set(), update_type=None,
                                               added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)

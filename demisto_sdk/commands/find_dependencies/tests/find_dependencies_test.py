@@ -108,6 +108,17 @@ class TestDependsOnScriptAndIntegration:
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)})
                               ])
     def test_collect_scripts_depends_on_script(self, dependency_script, expected_result, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on a script.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize the pack.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -134,6 +145,17 @@ class TestDependsOnScriptAndIntegration:
                               ("alienvault-get-indicators", {("FeedAlienVault", True)})
                               ])
     def test_collect_scripts_depends_on_integration(self, dependency_integration_command, expected_result, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on integration commands.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize the pack.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -155,6 +177,17 @@ class TestDependsOnScriptAndIntegration:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_scripts(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on 2 scripts.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('HelloWorld', True), ('PrismaCloudCompute', True)}
 
         test_input = [
@@ -214,6 +247,17 @@ class TestDependsOnScriptAndIntegration:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_integrations(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on 2 integrations.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
 
         test_input = [
@@ -237,7 +281,131 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_scripts_command_to_integration(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing command_to_integration.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the pack that the script depends on.
+            - Should recognize the pack.
+        """
+        expected_result = {('Active_Directory_Query', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "ADGetUser",
+                    "file_path": "Packs/Active_Directory_Query/Scripts/script-ADGetUser.yml",
+                    "depends_on": [
+                    ],
+                    "command_to_integration": {
+                        "ad-search": "activedir"
+                    },
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_scripts_script_executions(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing a script_executions, e.g: demisto.executeCommand(<command>).
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the pack that the script depends on.
+            - Should recognize the pack.
+        """
+        expected_result = {('Active_Directory_Query', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "ADIsUserMember",
+                    "file_path": "Packs/DeprecatedContent/Scripts/script-ADIsUserMember.yml",
+                    "deprecated": False,
+                    "depends_on": [
+                    ],
+                    "script_executions": [
+                        "ADGetUser",
+                    ],
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_scripts_command_to_integrations_and_script_executions(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing command_to_integrations and script_executions.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize both packs.
+        """
+        expected_result = {('Active_Directory_Query', True), ('Cherwell', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "double_dependency",
+                    "file_path": "Packs/DeprecatedContent/Scripts/script-ADIsUserMember.yml",
+                    "deprecated": False,
+                    "depends_on": [
+                    ],
+                    "command_to_integration": {
+                        "cherwell-get-business-object": "Cherwell"
+                    },
+                    "script_executions": [
+                        "ADGetUser",
+                    ],
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
     def test_collect_scripts_depends_on_with_two_inputs(self, id_set):
+        """
+        Given
+            - 2 scripts entries in the id_set depending on different integrations.
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
 
         test_input = [

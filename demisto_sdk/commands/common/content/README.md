@@ -11,13 +11,13 @@ It provides abstractions of Demisto-Content objects for easy access of repositor
 
 # Import
 
-Import DemistoContentPython Libary add to your code:
+Import DemistoContentPython Libary:
 
 ```python
 import demisto_sdk.commands.common.content as content_py
 ```
 
-Import DemistoContentPython Libary Objects to your code:
+Import DemistoContentPython Libary Objects:
 ```python
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)

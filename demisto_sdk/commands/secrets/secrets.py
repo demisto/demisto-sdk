@@ -189,7 +189,7 @@ class SecretsValidator(object):
                 temp_white_list = self.create_temp_white_list(yml_file_contents if yml_file_contents else file_contents)
                 secrets_white_list = secrets_white_list.union(temp_white_list)
             # Search by lines after strings with high entropy / IoCs regex as possibly suspicious
-            for line in file_contents.split('\n'):
+            for line_num, line in enumerate(file_contents.split('\n')):
                 # if detected disable-secrets comments, skip the line/s
                 skip_secrets = self.is_secrets_disabled(line, skip_secrets)
                 if skip_secrets['skip_once'] or skip_secrets['skip_multi']:
@@ -199,7 +199,7 @@ class SecretsValidator(object):
                 regex_secrets, false_positives = self.regex_for_secrets(line)
                 for regex_secret in regex_secrets:
                     if not any(ioc.lower() in regex_secret.lower() for ioc in ioc_white_list):
-                        secrets_found_with_regex.append(regex_secret)
+                        secrets_found_with_regex.append(regex_secret + f":{line_num + 1}")
                 # added false positives into white list array before testing the strings in line
 
                 secrets_white_list = secrets_white_list.union(false_positives)
@@ -211,7 +211,7 @@ class SecretsValidator(object):
                         continue
                     line = self.remove_false_positives(line)
                     # calculate entropy for each string in the file
-                    for string_ in line.split():
+                    for line_number, string_ in enumerate(line.split()):
                         # compare the lower case of the string against both generic whitelist & temp white list
                         if not any(
                                 white_list_string.lower() in string_.lower()
@@ -219,13 +219,13 @@ class SecretsValidator(object):
 
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
-                                high_entropy_strings.append(string_)
+                                high_entropy_strings.append(string_ + f":{line_number}")
 
             if high_entropy_strings or secrets_found_with_regex:
                 # uniquify identical matches between lists
                 file_secrets = list(set(high_entropy_strings + secrets_found_with_regex))
                 secrets_found[file_path] = file_secrets
-
+        print("new version")
         return secrets_found
 
     @staticmethod

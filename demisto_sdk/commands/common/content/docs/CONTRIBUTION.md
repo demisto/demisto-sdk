@@ -2,13 +2,13 @@
 
 ## Getting started
 
-1. [Clone demisto-sdk repository](#1-content-objects)
-2. [Install demisto-sdk as editable versions](#2-adding-new-content-root-object)
-3. [Pre-commit hooks setup](#3-adding-new-content-pack-object-integrationscriptincidenttype-etc)
-4. [DemistoContentPython Libary](#4-enhance-existing-intenal-pack-object-integrationscriptincidenttype-etc)
+1. [Content objects overview.](#1-content-objects)
+2. [Adding new Content Root object (Documentations/ id_set.json etc)](#2-adding-new-content-root-object-documentations-id_setjson-etc)
+3. [Adding new Content Pack object (Integration/Script/IncidentType etc).](#3-adding-new-content-pack-object-integrationscriptincidenttype-etc)
+4. [Enhance existing Intenal Pack object (Integration/Script/IncidentType etc)](#4-enhance-existing-intenal-pack-object-integrationscriptincidenttype-etc)
 
 
-## 1. Content Objects
+## 1. Content objects overview
 Every Content object (excluding Pack, Content) based on:
  - `TextObject` - Object based on any Text file (for example Readme).
  - `JSONObject` - Object based on any JSON file (for example Readme).
@@ -20,7 +20,7 @@ Every Content object (excluding Pack, Content) based on:
  > **->** - This sign mean inheritace
 
 
-## 2. Adding new Content Root object
+## 2. Adding new Content Root object (Documentations/ id_set.json etc)
 Content root objects located in : `demisto_sdk/commands/common/content/objects/root_objects`
 
 New object should be in the following structure: `demisto_sdk/commands/common/content/objects/root_objects/<new-obj>`

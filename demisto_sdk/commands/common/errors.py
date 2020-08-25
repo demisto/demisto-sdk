@@ -17,7 +17,7 @@ PRESET_ERROR_TO_IGNORE = {
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA', 'IN125', 'PB104', 'SC101'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN125', 'IN126', 'PB104', 'SC101'],
 }
 
 ERROR_CODE = {
@@ -51,7 +51,8 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
-    "invalid_deprecated_integration": "IN125",
+    "invalid_deprecated_integration_display_name": "IN125",
+    "invalid_deprecated_integration_description": "IN126",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -372,14 +373,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_deprecated_integration(display_name, description):
-        error_message = ''
-        if not display_name.startswith('Deprecated.'):
-            error_message += 'The display_name (display) of all deprecated integrations should end with ' \
-                             '(Deprecated)".\n'
-        if not description.startswith('Deprecated.'):
-            error_message += 'The description of your integration should start with "Deprecated.".\n'
-        return error_message
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should start with "Deprecated.".'
 
     @staticmethod
     @error_code_decorator

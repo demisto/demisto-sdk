@@ -85,7 +85,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.is_valid_deprecated_integration()
+            self.is_valid_deprecated_integration_display_name(),
+            self.is_valid_deprecated_integration_description()
         ]
 
         if not skip_test_conf:
@@ -731,14 +732,24 @@ class IntegrationValidator(ContentEntityValidator):
 
         return ans
 
-    def is_valid_deprecated_integration(self) -> bool:
+    def is_valid_deprecated_integration_display_name(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         display_name = self.current_file.get('display', '')
+        if is_deprecated:
+            if not display_name.endswith('(Deprecated)'):
+                error_message, error_code = Errors.invalid_deprecated_integration_display_name()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+        return is_valid
+
+    def is_valid_deprecated_integration_description(self) -> bool:
+        is_valid = True
+        is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
         if is_deprecated:
-            if not display_name.endswith('(Deprecated)') or not description.startswith('Deprecated.'):
-                error_message, error_code = Errors.invalid_deprecated_integration(display_name, description)
+            if not description.startswith('Deprecated.'):
+                error_message, error_code = Errors.invalid_deprecated_integration_description()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid

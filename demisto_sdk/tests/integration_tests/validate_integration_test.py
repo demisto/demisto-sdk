@@ -150,6 +150,7 @@ class TestDeprecatedIntegration:
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN125' in result.stdout
+        assert 'IN126' in result.stdout
         assert '"Deprecated."' in result.stdout
         assert result.exit_code == 1
 

@@ -3,9 +3,9 @@
 ## Getting started
 
 1. [Content objects overview.](#1-content-objects)
-2. [Adding new Content Root object (Documentations/ id_set.json etc)](#2-adding-new-content-root-object-documentations-id_setjson-etc)
+2. [Adding new Content Root object (Documentations/ id_set.json etc).](#2-adding-new-content-root-object-documentations-id_setjson-etc)
 3. [Adding new Content Pack object (Integration/Script/IncidentType etc).](#3-adding-new-content-pack-object-integrationscriptincidenttype-etc)
-4. [Enhance existing Intenal Pack object (Integration/Script/IncidentType etc)](#4-enhance-existing-intenal-pack-object-integrationscriptincidenttype-etc)
+4. [Enhance existing Intenal Pack object (Integration/Script/IncidentType etc).](#4-enhance-existing-intenal-pack-object-integrationscriptincidenttype-etc)
 
 
 ## 1. Content objects overview
@@ -17,7 +17,7 @@ Every Content object (excluding Pack, Content) based on:
  - `YAMLObject` -> `YAMLContentObject` - Object based on any valid YAML file (for example Playbook).
  - `YAMLContentObject` -> `YAMLContentUnfiedObject` - Object based on any valid YAML file which is also unify-able (for example Integration).
 
- > **->** - This sign means inheritace
+ > "**->**" This sign means inheritace
 
 
 ## 2. Adding new Content Root object (Documentations/ id_set.json etc)
@@ -25,7 +25,7 @@ Content root objects located in : `demisto_sdk/commands/common/content/objects/r
 
 New object should be in the following structure: `demisto_sdk/commands/common/content/objects/root_objects/<new-obj>`
 
-Which contain single file `<object-name>.py` (snake-case) with the foloowing content:
+Which contain single file `<new-object>.py` (snake-case) with the foloowing content:
 ```python
 from typing import Union
 
@@ -43,7 +43,7 @@ Content pack objects located in : `demisto_sdk/commands/common/content/objects/p
 
 New object should be in the following path: `demisto_sdk/commands/common/content/objects/pack_objects/<new-obj>`
 
-Which contain single file `<object-name>.py` (snake-case) with the foloowing content:
+Which contain single file `<new-object>.py` (snake-case) with the foloowing content:
 ```python
 from typing import Union
 

@@ -887,6 +887,40 @@ class TestDependsOnMappers:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
+class TestDependsOnWidgets:
+    def test_collect_widgets_dependencies(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on.
+        """
+        expected_result = {('CommonScripts', True)}
+
+        test_input = [
+            {
+                "Dummy_widget": {
+                    "name": "Dummy Widget",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": [
+                        "AssignAnalystToIncident"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_widget_dependencies(
+            pack_widgets=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
 SEARCH_PACKS_INPUT = [
     (['type'], 'IncidentFields', set()),
     (['emailaddress'], 'IncidentFields', {'Compliance'}),

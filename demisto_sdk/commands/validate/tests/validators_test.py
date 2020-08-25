@@ -51,14 +51,19 @@ from demisto_sdk.tests.constants_test import (
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
     SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
+    VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
     VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
     VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
+    VALID_PIPEFILE_PATH, VALID_PLAYBOOK_CONDITION,
+    VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
+    VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
+    VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
@@ -652,73 +657,79 @@ class TestValidators:
                 - Ensure deleted file is recognized correctly.
                 - Ensure ignored files are set correctly.
         """
+
         mocker.patch.object(os.path, 'isfile', return_value=True)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
-        diff_string = "M	Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json\n" \
-                      "M	Packs/EWS/Classifiers/classifier-EWS_v2.json\n" \
-                      "M	Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py\n" \
-                      "M	Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml\n" \
-                      "M	Packs/F5/pack_metadata.json\n" \
-                      "R100	Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml	" \
-                      "Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml\n" \
-                      "A	Packs/MyNewPack/.pack-ignore\n" \
-                      "A	Packs/MyNewPack/.secrets-ignore\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock\n" \
-                      "A	Packs/MyNewPack/Integrations/MyNewIntegration/README.md\n" \
-                      "A	Packs/MyNewPack/README.md\n" \
-                      "A	Packs/MyNewPack/pack_metadata.json\n" \
-                      "D	Packs/DeprecatedContent/Scripts/script-ExtractURL.yml"
+        diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
+                      f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
+                      f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"M	{VALID_METADATA1_PATH}\n" \
+                      f"M	{VALID_CLASSIFIER_PATH}\n" \
+                      f"M	{VALID_DESCRIPTION_PATH}\n" \
+                      f"M	{VALID_LAYOUT_PATH}\n" \
+                      f"R100	{VALID_INTEGRATION_TEST_PATH}	{VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"A	{VALID_PACK_IGNORE_PATH}\n" \
+                      f"A	{VALID_INDICATOR_FIELD_PATH}\n" \
+                      f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
+                      f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \
+                      f"A	{VALID_INTEGRATION_TEST_PATH}\n" \
+                      f"A	{VALID_DESCRIPTION_PATH}\n" \
+                      f"A	{VALID_IMAGE_PATH}\n" \
+                      f"A	{VALID_WIDGET_PATH}\n" \
+                      f"A	{VALID_PYTHON_INTEGRATION_TEST_PATH}\n" \
+                      f"A	{VALID_PIPEFILE_PATH}\n" \
+                      f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
+                      f"A	{VALID_README_PATH}\n" \
+                      f"A	{VALID_METADATA2_PATH}\n" \
+                      f"D	{VALID_SCRIPT_PATH}\n" \
+                      f"D	{VALID_DASHBOARD_PATH}"
 
         validate_manager = ValidateManager()
         modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \
             filter_changed_files(files_string=diff_string, print_ignored_files=True)
 
         # checking that modified files are recognized correctly
-        assert 'Packs/CommonTypes/IncidentFields/incidentfield-Detection_URL.json' in modified_files
-        assert 'Packs/EWS/Classifiers/classifier-EWS_v2.json' in modified_files
-        assert ('Packs/EclecticIQ/Integrations/EclecticIQ/EclecticIQ.yml',
-                'Packs/EclecticIQ/Integrations/EclecticIQ_new/EclecticIQ_new.yml') in modified_files
+        assert VALID_INCIDENT_FIELD_PATH in modified_files
+        assert VALID_CLASSIFIER_PATH in modified_files
+        assert VALID_DESCRIPTION_PATH in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_LAYOUT_PATH in modified_files
+
+        # checking that there are no unwanted files in modified files
+        assert VALID_PIPEFILE_LOCK_PATH not in modified_files
+        assert VALID_SCRIPT_PATH not in modified_files
 
         # check that the modified code file is not there but the yml file is
-        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.yml' in modified_files
-        assert 'Packs/Elasticsearch/Integrations/Elasticsearch_v2/Elasticsearch_v2.py' not in modified_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_PYTHON_INTEGRATION_PATH not in modified_files
 
         # check that the modified metadata file is in the changed_meta_files but the added one is not
-        assert 'Packs/F5/pack_metadata.json' in changed_meta_files
-        assert 'Packs/MyNewPack/pack_metadata.json' not in changed_meta_files
+        assert VALID_METADATA1_PATH in changed_meta_files
+        assert VALID_METADATA2_PATH not in changed_meta_files
 
         # check that the added files are recognized correctly
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/README.md' in added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.yml' in added_files
+        assert VALID_README_PATH in added_files
+        assert VALID_INTEGRATION_TEST_PATH in old_format_files
+        assert VALID_WIDGET_PATH in added_files
+        assert VALID_INDICATOR_FIELD_PATH in added_files
 
         # check that the added code files and meta file are not in the added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration.py' not in added_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' not in added_files
-        assert 'Packs/MyNewPack/pack_metadata.json' not in added_files
+        assert VALID_PYTHON_INTEGRATION_PATH not in added_files
+        assert VALID_PYTHON_INTEGRATION_TEST_PATH not in added_files
+        assert VALID_METADATA1_PATH not in added_files
 
         # check that non-image, pipfile, description or schema are in the ignored files and the rest are
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile' not in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/Pipfile.lock' not in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_description.md' not \
-               in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_image.png' not \
-               in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/.secrets-ignore' in validate_manager.ignored_files
-        assert 'Packs/MyNewPack/Integrations/MyNewIntegration/MyNewIntegration_test.py' in \
-               validate_manager.ignored_files
-        assert 'Packs/MyNewPack/.pack-ignore' in validate_manager.ignored_files
-
-        # check recognized old-format file
-        assert 'Packs/Elasticsearch/Integrations/integration-Elasticsearch.yml' in old_format_files
+        assert VALID_PIPEFILE_PATH not in validate_manager.ignored_files
+        assert VALID_PIPEFILE_LOCK_PATH not in validate_manager.ignored_files
+        assert VALID_DESCRIPTION_PATH not in validate_manager.ignored_files
+        assert VALID_IMAGE_PATH not in validate_manager.ignored_files
+        assert VALID_SECRETS_IGNORE_PATH in validate_manager.ignored_files
+        assert VALID_PYTHON_INTEGRATION_TEST_PATH in validate_manager.ignored_files
+        assert VALID_PACK_IGNORE_PATH in validate_manager.ignored_files
 
         # check recognized deleted file
-        assert 'Packs/DeprecatedContent/Scripts/script-ExtractURL.yml' in deleted_files
+        assert VALID_SCRIPT_PATH in deleted_files
+        assert VALID_DASHBOARD_PATH in deleted_files
 
     def test_setup_git_params(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')

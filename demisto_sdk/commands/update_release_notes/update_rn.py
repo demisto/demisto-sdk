@@ -29,13 +29,18 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.pack_files = pack_files
         self.added_files = added_files
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.pack_metadata_only = pack_metadata_only
+        try:
+            self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
+        except TypeError:
+            print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
+                        f"the pack path is correct.")
+            sys.exit(1)
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:

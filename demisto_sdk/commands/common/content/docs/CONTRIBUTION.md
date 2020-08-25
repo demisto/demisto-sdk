@@ -17,7 +17,7 @@ Every Content object (excluding Pack, Content) based on:
  - `YAMLObject` -> `YAMLContentObject` - Object based on any valid YAML file (for example Playbook).
  - `YAMLContentObject` -> `YAMLContentUnfiedObject` - Object based on any valid YAML file which is also unify-able (for example Integration).
 
- > **->** - This sign mean inheritace
+ > **->** - This sign means inheritace
 
 
 ## 2. Adding new Content Root object (Documentations/ id_set.json etc)

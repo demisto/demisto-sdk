@@ -84,23 +84,24 @@ class SecretsValidator(object):
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
         if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_paths:
             secret_to_location_mapping = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
-            secrets_found_string = 'Secrets were found in the following files:'
-            for file_name in secret_to_location_mapping:
-                secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
-                secrets_found_string += '\nThe following expressions were marked as secrets: \n'
-                for line in sorted(secret_to_location_mapping[file_name]):
-                    secrets_found_string += f'\nline {line}: {secret_to_location_mapping[file_name][line]}\n'
+            if secret_to_location_mapping:
+                secrets_found_string = 'Secrets were found in the following files:'
+                for file_name in secret_to_location_mapping:
+                    secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
+                    secrets_found_string += '\nThe following expressions were marked as secrets: \n'
+                    for line in sorted(secret_to_location_mapping[file_name]):
+                        secrets_found_string += f'\nLine {line}: {secret_to_location_mapping[file_name][line]}\n'
 
-            if not is_circle:
-                secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+                if not is_circle:
+                    secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
 
-            else:
-                secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
-                                        ' remove the files asap and report it.\n'
+                else:
+                    secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
+                                            ' remove the files asap and report it.\n'
 
-            secrets_found_string += 'For more information about whitelisting visit: ' \
-                                    'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
-            print_error(secrets_found_string)
+                secrets_found_string += 'For more information about whitelisting visit: ' \
+                                        'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
+                print_error(secrets_found_string)
         return secret_to_location_mapping
 
     def reformat_secrets_output(self, secrets_list):

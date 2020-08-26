@@ -376,3 +376,17 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
+
+
+@contextmanager
+def handle_lint_plugin(path: Path, pack_type: str):
+    try:
+        if pack_type == TYPE_PYTHON:
+            plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
+            for file in plugin_path.iterdir():
+                os.link(file, path / file.name)
+        yield
+    finally:
+        if pack_type == TYPE_PYTHON:
+            for file in plugin_path.iterdir():
+                (path / file.name).unlink()

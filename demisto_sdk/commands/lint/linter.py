@@ -13,7 +13,9 @@ import docker.errors
 import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -26,6 +28,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                add_typing_module,
                                                get_file_from_container,
                                                get_python_version_from_image,
+                                               handle_lint_plugin,
                                                stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
@@ -62,6 +65,7 @@ class Linter:
             "env_vars": {},
             "test": False,
             "lint_files": [],
+            "support_level": None,
             "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine
@@ -189,6 +193,11 @@ class Linter:
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             if self._facts["docker_engine"]:
+
+                pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else\
+                    self._pack_abs_dir.parent.parent
+                pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
+                self._facts['support_level'] = pack_meta_content.get('support')
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])
@@ -576,34 +585,36 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
 
-        for trial in range(2):
-            dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
-            try:
-                # Copy certificate for PWSH packs only
-                if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
-                        self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                    certificate_file = Path(__file__).parent / 'resources' / 'certificates' / 'panw-cert.crt'
-                    cert = repr(certificate_file.read_text())[2:-3]
-                else:
-                    cert = ""
+        with handle_lint_plugin(self._pack_abs_dir, self._pkg_lint_status['pack_type']):
+            for trial in range(2):
+                dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+                try:
+                    # Copy certificate for PWSH packs only
+                    if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
+                            self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                        certificate_file = Path(__file__).parent / 'resources' / 'certificates' / 'panw-cert.crt'
+                        cert = repr(certificate_file.read_text())[2:-3]
+                    else:
+                        cert = ""
 
-                # Copy pack dir to image
-                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                dockerfile = template.render(image=test_image_name,
-                                             copy_pack=True,
-                                             cert=cert)
-                dockerfile_path.write_text(str(dockerfile))
+                    # Copy pack dir to image
+                    logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                    dockerfile = template.render(image=test_image_name,
+                                                 copy_pack=True,
+                                                 cert=cert)
+                    dockerfile_path.write_text(str(dockerfile))
 
-                docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
-                                                                      dockerfile=dockerfile_path.stem,
-                                                                      forcerm=True)
-                test_image_name = docker_image_final[0].short_id
-                break
-            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
-                    exceptions.TemplateError) as e:
-                logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
-                if trial == 2:
-                    errors = str(e)
+                    docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
+                                                                          dockerfile=dockerfile_path.stem,
+                                                                          forcerm=True)
+                    test_image_name = docker_image_final[0].short_id
+                    break
+                except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
+                        exceptions.TemplateError) as e:
+                    logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
+                    if trial == 2:
+                        errors = str(e)
+
         if dockerfile_path.exists():
             dockerfile_path.unlink()
 
@@ -641,7 +652,8 @@ class Linter:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=[
-                                                                   build_pylint_command(self._facts["lint_files"])],
+                                                                   build_pylint_command(self._facts["lint_files"],
+                                                                                        self._facts["support_level"])],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

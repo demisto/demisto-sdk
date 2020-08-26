@@ -478,11 +478,10 @@ class Linter:
                                                                                keep_container=keep_container)
                         # If lint check perfrom and failed on reason related to enviorment will run twice,
                         # But it failing in second time it will count as test failure.
-                        if exit_code == RERUN and trial == 1:
-                            self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
-                            status[f"{check}_errors"] = output
-                            break
-                        elif exit_code == FAIL or exit_code == SUCCESS:
+                        if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
+                            if exit_code in [RERUN, FAIL]:
+                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                status[f"{check}_errors"] = output
                             break
             else:
                 status["image_errors"] = str(errors)
@@ -584,25 +583,15 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
-
         with handle_lint_plugin(self._pack_abs_dir, self._pkg_lint_status['pack_type']):
             for trial in range(2):
                 dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
                 try:
-                    # Copy certificate for PWSH packs only
-                    if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
-                            self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                        certificate_file = Path(__file__).parent / 'resources' / 'certificates' / 'panw-cert.crt'
-                        cert = repr(certificate_file.read_text())[2:-3]
-                    else:
-                        cert = ""
-
-                    # Copy pack dir to image
                     logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                     dockerfile = template.render(image=test_image_name,
-                                                 copy_pack=True,
-                                                 cert=cert)
-                    dockerfile_path.write_text(str(dockerfile))
+                                                 copy_pack=True)
+                    with open(file=dockerfile_path, mode="+x") as file:
+                        file.write(str(dockerfile))
 
                     docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                           dockerfile=dockerfile_path.stem,
@@ -614,7 +603,6 @@ class Linter:
                     logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
                     if trial == 2:
                         errors = str(e)
-
         if dockerfile_path.exists():
             dockerfile_path.unlink()
 
@@ -652,8 +640,7 @@ class Linter:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=[
-                                                                   build_pylint_command(self._facts["lint_files"],
-                                                                                        self._facts["support_level"])],
+                                                                   build_pylint_command(self._facts["lint_files"])],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

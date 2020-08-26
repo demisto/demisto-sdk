@@ -145,7 +145,15 @@ class Runner:
         Args:
             log_ids (list): artifact ids of the log files
         """
-        if not self.debug_path:
+        if self.debug_path:
+            with open(self.debug_path, 'w+b') as output_file:
+                for log_id in log_ids:
+                    result = self.client.download_file(log_id)
+                    with open(result, 'r+') as log_info:
+                        for line in log_info:
+                            output_file.write(line.encode('utf-8'))
+            print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
+        else:
             print_color('## Detailed Log', LOG_COLORS.YELLOW)
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
@@ -157,14 +165,6 @@ class Runner:
                             print_color('Full Integration Log:', LOG_COLORS.YELLOW)
                         else:
                             print(line)
-        else:
-            with open(self.debug_path, 'w+b') as output_file:
-                for log_id in log_ids:
-                    result = self.client.download_file(log_id)
-                    with open(result, 'r+') as log_info:
-                        for line in log_info:
-                            output_file.write(line.encode('utf-8'))
-            print_color(f'Debug Log successfully exported to {self.debug_path}', LOG_COLORS.GREEN)
 
     def _return_context_dict_from_log(self, log_ids: list) -> dict:
         """

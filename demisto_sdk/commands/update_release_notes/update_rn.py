@@ -164,7 +164,7 @@ class UpdateRN:
         if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
             return file_name, _file_type
 
-        if self.pack in file_path and ('README' not in file_path):
+        if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
             file_path = file_path.replace(self.pack_path, '')

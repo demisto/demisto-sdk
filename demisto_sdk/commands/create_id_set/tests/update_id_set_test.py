@@ -14,9 +14,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_general_data, get_incident_fields_by_playbook_input,
     get_incident_type_data, get_indicator_type_data, get_layout_data,
     get_layoutscontainer_data, get_mapper_data, get_playbook_data,
-    get_script_data, get_values_for_keys_recursively, has_duplicate,
-    process_general_items, process_incident_fields, process_integration,
-    process_script, re_create_id_set)
+    get_script_data, get_values_for_keys_recursively, get_widget_data,
+    has_duplicate, process_general_items, process_incident_fields,
+    process_integration, process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -838,6 +838,53 @@ class TestMappers:
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
         assert 'incident_fields' not in result.keys()
+
+
+class TestWidget:
+    @staticmethod
+    def test_process_widget__with_script():
+        """
+        Given
+            - A widget file called widget-with-scripts.json
+
+        When
+            - parsing widget files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'widget-with-scripts.json')
+
+        res = get_widget_data(test_file)
+        result = res.get('dummy_widget')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' in result.keys()
+        assert 'dummy_script' in result['scripts']
+
+    @staticmethod
+    def test_process_widget__no_script():
+        """
+        Given
+            - A widget file called widget-no-scripts.json
+
+        When
+            - parsing widget files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'widget-no-scripts.json')
+
+        res = get_widget_data(test_file)
+        result = res.get('dummy_widget')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' not in result.keys()
 
 
 class TestGenericFunctions:

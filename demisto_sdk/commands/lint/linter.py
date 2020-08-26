@@ -468,11 +468,11 @@ class Linter:
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                                keep_container=keep_container)
 
-                        if (exit_code != RERUN or trial == 2) and exit_code:
+                        if exit_code == RERUN and trial == 1:
                             self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
                             status[f"{check}_errors"] = output
                             break
-                        elif exit_code != RERUN:
+                        elif exit_code == FAIL or exit_code == SUCCESS:
                             break
             else:
                 status["image_errors"] = str(errors)

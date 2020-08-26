@@ -470,8 +470,9 @@ class Linter:
                         # If lint check perfrom and failed on reason related to enviorment will run twice,
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
-                            self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
-                            status[f"{check}_errors"] = output
+                            if exit_code in [RERUN, FAIL]:
+                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                status[f"{check}_errors"] = output
                             break
             else:
                 status["image_errors"] = str(errors)

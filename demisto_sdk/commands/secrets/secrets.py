@@ -3,6 +3,7 @@ import json
 import math
 import os
 import string
+from collections import defaultdict
 
 import PyPDF2
 from bs4 import BeautifulSoup
@@ -75,32 +76,32 @@ class SecretsValidator(object):
         self.ignore_entropy = ignore_entropy
 
     def get_secrets(self, branch_name, is_circle):
-        secrets_found = {}
+        secret_to_location_mapping = {}
         if self.input_paths:
             secrets_file_paths = self.input_paths
         else:
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
         if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_paths:
-            secrets_found = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
-            if secrets_found:
-                secrets_found_string = 'Secrets were found in the following files:'
-                for file_name in secrets_found:
-                    secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
-                    secrets_found_string += '\nThe following expressions were marked as secrets: \n'
-                    secrets_found_string += self.reformat_secrets_output(secrets_found[file_name])
+            secret_to_location_mapping = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
+            secrets_found_string = 'Secrets were found in the following files:'
+            for file_name in secret_to_location_mapping:
+                secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
+                secrets_found_string += '\nThe following expressions were marked as secrets: \n'
+                for line in sorted(secret_to_location_mapping[file_name]):
+                    secrets_found_string += f'\nline {line}: {secret_to_location_mapping[file_name][line]}\n'
 
-                if not is_circle:
-                    secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+            if not is_circle:
+                secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
 
-                else:
-                    secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
-                                            ' remove the files asap and report it.\n'
+            else:
+                secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
+                                        ' remove the files asap and report it.\n'
 
-                secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
-                print_error(secrets_found_string)
-        return secrets_found
+            secrets_found_string += 'For more information about whitelisting visit: ' \
+                                    'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
+            print_error(secrets_found_string)
+        return secret_to_location_mapping
 
     def reformat_secrets_output(self, secrets_list):
         """
@@ -159,7 +160,7 @@ class SecretsValidator(object):
 
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
         """
-        secrets_found = {}
+        secret_to_location_mapping = defaultdict(lambda: defaultdict(list))
         for file_path in secrets_file_paths:
             # Get if file path in pack and pack name
             is_pack = is_file_path_in_pack(file_path)
@@ -173,8 +174,6 @@ class SecretsValidator(object):
                 continue
             # Init vars for current loop
             file_name = os.path.basename(file_path)
-            high_entropy_strings = []
-            secrets_found_with_regex = []
             _, file_extension = os.path.splitext(file_path)
             skip_secrets = {'skip_once': False, 'skip_multi': False}
             # get file contents
@@ -199,7 +198,7 @@ class SecretsValidator(object):
                 regex_secrets, false_positives = self.regex_for_secrets(line)
                 for regex_secret in regex_secrets:
                     if not any(ioc.lower() in regex_secret.lower() for ioc in ioc_white_list):
-                        secrets_found_with_regex.append(regex_secret + f":{line_num + 1}")
+                        secret_to_location_mapping[file_path][line_num + 1].append(regex_secret)
                 # added false positives into white list array before testing the strings in line
 
                 secrets_white_list = secrets_white_list.union(false_positives)
@@ -211,7 +210,7 @@ class SecretsValidator(object):
                         continue
                     line = self.remove_false_positives(line)
                     # calculate entropy for each string in the file
-                    for line_number, string_ in enumerate(line.split()):
+                    for string_ in line.split():
                         # compare the lower case of the string against both generic whitelist & temp white list
                         if not any(
                                 white_list_string.lower() in string_.lower()
@@ -219,14 +218,9 @@ class SecretsValidator(object):
 
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
-                                high_entropy_strings.append(string_ + f":{line_number}")
+                                secret_to_location_mapping[file_path][line_num + 1].append(string_)
 
-            if high_entropy_strings or secrets_found_with_regex:
-                # uniquify identical matches between lists
-                file_secrets = list(set(high_entropy_strings + secrets_found_with_regex))
-                secrets_found[file_path] = file_secrets
-        print("new version")
-        return secrets_found
+        return secret_to_location_mapping
 
     @staticmethod
     def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: set) -> str:

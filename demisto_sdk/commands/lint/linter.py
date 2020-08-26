@@ -591,7 +591,7 @@ class Linter:
                 dockerfile = template.render(image=test_image_name,
                                              copy_pack=True,
                                              cert=cert)
-                dockerfile_path.write_text(dockerfile)
+                dockerfile_path.write_text(str(dockerfile))
 
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,

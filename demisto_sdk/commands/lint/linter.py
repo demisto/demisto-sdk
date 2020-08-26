@@ -579,8 +579,7 @@ class Linter:
         for trial in range(2):
             dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
             try:
-                # COPY pack dir and certificate
-                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                # Copy certificate for PWSH packs only
                 if self._facts["env_vars"]["DEMISTO_LINT_UPDATE_CERTS"] == "yes" and \
                         self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                     certificate_file = Path(__file__).parent / 'resources' / 'certificates' / 'panw-cert.crt'
@@ -588,6 +587,8 @@ class Linter:
                 else:
                     cert = ""
 
+                # Copy pack dir to image
+                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                 dockerfile = template.render(image=test_image_name,
                                              copy_pack=True,
                                              cert=cert)

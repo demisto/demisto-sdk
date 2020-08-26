@@ -467,7 +467,8 @@ class Linter:
                             elif not no_pwsh_test and check == "pwsh_test":
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                                keep_container=keep_container)
-
+                        # If lint check perfrom and failed on reason related to enviorment will run twice,
+                        # But it failing in second time it will count as test failure.
                         if exit_code == RERUN and trial == 1:
                             self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
                             status[f"{check}_errors"] = output

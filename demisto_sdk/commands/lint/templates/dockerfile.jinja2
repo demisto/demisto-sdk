@@ -7,7 +7,7 @@ WORKDIR /devwork
 {# Build for python based image #}
 {% if not copy_pack %}
 {% if pack_type == 'python' %}
-{# Change group owner and permissions - Due to contaier security issues #}
+{# Change group owner and permissions - Due to container security issues #}
 RUN chown -R :4000 /devwork/
 RUN chmod -R 775 /devwork
 {# Install requirments and missing deps #}
@@ -28,6 +28,10 @@ RUN pwsh -Command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force -
 {% endif %}
 {% else %}
 {# Creating test main directory #}
+{% if cert  %}
+RUN printf "{{ cert }}" > /usr/local/share/ca-certificates/panw-cert.crt
+{% endif %}
+RUN update-ca-certificates
 COPY . .
 RUN chown -R :4000 /devwork
 RUN chmod -R 775 /devwork

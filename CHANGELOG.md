@@ -8,6 +8,7 @@
 * Fixed an issue where **update-release-notes** would add duplicate release notes when two packs with the same substring existed in the modified files.
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
+* Added a `json-to-outputs` flag to the **run** command.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

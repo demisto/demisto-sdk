@@ -11,7 +11,7 @@ It provides abstractions of Demisto-Content objects for easy access of repositor
 
 # Import
 
-Import DemistoContentPython Libary:
+Import DemistoContentPython Library:
 
 ```python
 import demisto_sdk.commands.common.content as content_py

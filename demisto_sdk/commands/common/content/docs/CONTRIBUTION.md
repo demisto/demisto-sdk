@@ -3,9 +3,9 @@
 ## Getting started
 
 1. [Content objects overview.](#1-content-objects-overview)
-2. [Adding a new Content Root object (Documentation / id_set.json, etc.).](#2-adding-new-content-root-object-documentations-id_setjson-etc)
-3. [Adding a new Content Pack object (Integration/Script/IncidentType etc).](#3-adding-new-content-pack-object-integrationscriptincidenttype-etc)
-4. [Enhance existing Internal Pack object (Integration/Script/IncidentType etc).](#4-enhance-existing-internal-pack-object-integrationscriptincidenttype-etc)
+2. [Adding a new Content Root object (Documentation / id_set.json, etc.).](#2-adding-a-new-content-root-object-documentations-id_setjson-etc)
+3. [Adding a new Content Pack object (Integration/Script/IncidentType etc).](#3-adding-a-new-content-pack-object-integration-script-incidenttype-etc)
+4. [Enhance existing Internal Pack object (Integration/Script/IncidentType etc).](#4-enhance-an-existing-internal-pack-object-integration-script-incidenttype-etc)
 
 
 ## 1. Content objects overview

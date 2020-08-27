@@ -597,7 +597,6 @@ class Downloader:
     def merge_new_file(self, custom_content_object: dict) -> None:
         """
         Merges new files of type playbook/json (not existing in the output pack)
-        If the name starts with "playbook-" remove it
         :param custom_content_object: The custom content object to merge into the pack
         :return: None
         """

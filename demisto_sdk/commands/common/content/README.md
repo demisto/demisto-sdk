@@ -7,7 +7,7 @@ The DemistoContentPython Libary is located in `<demisto-sdk repository>/demisto_
 
 ContentPython is a python library used to interact with Demisto Content repository, high-level abstraction.
 
-It provides abstractions of Demisto-Content objects for easy access of repository data, and additionally allows you to access the Pickled file objects (Yaml, Json) more directly using either a pure python implementation.
+It provides abstractions of Demisto-Content objects for easy access of repository data and additionally allows you to access the Pickled file objects (Yaml, Json) more directly using a pure python implementation.
 
 # Import
 

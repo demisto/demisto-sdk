@@ -308,6 +308,8 @@ class Downloader:
         """
         Custom content scripts are prefixed with automation instead of script.
         """
+        if file_name.startswith('playbook-'):
+            return file_name[len('playbook-'):]
         if file_name.startswith('automation-'):
             return file_name.replace('automation-', 'script-')
         return file_name
@@ -602,14 +604,10 @@ class Downloader:
         file_entity: str = custom_content_object['entity']
         file_path: str = custom_content_object['path']
         file_name: str = custom_content_object['name']
-        if file_name.startswith("playbook-"):
-            file_name = file_name[(len("playbook-")):]
         file_ending: str = custom_content_object['file_ending']
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
         file_output_name: str = os.path.basename(file_path)
-        if file_output_name.startswith("playbook-"):
-            file_output_name = file_output_name[(len("playbook-")):]
         file_output_path: str = os.path.join(dir_output_path, file_output_name)
         try:
             shutil.move(src=file_path, dst=file_output_path)

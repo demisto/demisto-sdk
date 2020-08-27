@@ -17,15 +17,15 @@ Every Content object (excluding Pack, Content) based on:
  - `YAMLObject` -> `YAMLContentObject` - Object based on any valid YAML file (for example Playbook).
  - `YAMLContentObject` -> `YAMLContentUnfiedObject` - Object based on any valid YAML file which is also unify-able (for example Integration).
 
- > "**->**" This sign means inheritace
+ > "**->**" This sign means inheritance
 
 
-## 2. Adding new Content Root object (Documentations/ id_set.json etc)
-Content root objects located in : `demisto_sdk/commands/common/content/objects/root_objects`
+## 2. Adding a new Content Root object (Documentations/ id_set.json etc)
+Content root objects are located in : `demisto_sdk/commands/common/content/objects/root_objects`
 
-New object should be in the following structure: `demisto_sdk/commands/common/content/objects/root_objects/<new-obj>`
+New objects should be in the following structure: `demisto_sdk/commands/common/content/objects/root_objects/<new-obj>`
 
-Which contain single file `<new-object>.py` (snake-case) with the foloowing content:
+The structure should contain a single file `<new-object>.py` (snake-case) with the following content:
 ```python
 from typing import Union
 
@@ -38,12 +38,12 @@ class NewObject(JSONObject):
         super().__init__(path)
 ```
 
-## 3. Adding new Content Pack object (Integration/Script/IncidentType etc)
-Content pack objects located in : `demisto_sdk/commands/common/content/objects/pack_objects`
+## 3. Adding a new Content Pack object (Integration, Script, IncidentType, etc.)
+Content pack objects are located in : `demisto_sdk/commands/common/content/objects/pack_objects`
 
-New object should be in the following path: `demisto_sdk/commands/common/content/objects/pack_objects/<new-obj>`
+New objects should be in the following path: `demisto_sdk/commands/common/content/objects/pack_objects/<new-obj>`
 
-Which contain single file `<new-object>.py` (snake-case) with the foloowing content:
+The folder should contain a single file `<new-object>.py` (snake-case) with the following content:
 ```python
 from typing import Union
 
@@ -57,7 +57,7 @@ class NewObject(YAMLContentObject):
         super().__init__(path, 'file-prefix')
 ```
 
-## 4. Enhance existing Intenal Pack object (Integration/Script/IncidentType etc)
+## 4. Enhance an existing Internal Pack object (Integration, Script, IncidentType, etc.)
 All packs object can be found in `demisto_sdk/commands/common/content/objects/pack_objects/<object>`
 
 

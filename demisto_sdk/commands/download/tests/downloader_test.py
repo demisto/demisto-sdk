@@ -61,8 +61,8 @@ class Environment:
         tests_path = self.tmp_path / 'tests'
         tests_env_path = tests_path / 'tests_env'
         tests_data_path = tests_path / 'tests_data'
-        shutil.copytree(src='/Users/ohaim/dev/demisto/demisto-sdk/demisto_sdk/commands/download/tests/tests_env', dst=str(tests_env_path))
-        shutil.copytree(src='/Users/ohaim/dev/demisto/demisto-sdk/demisto_sdk/commands/download/tests/tests_data', dst=str(tests_data_path))
+        shutil.copytree(src='demisto_sdk/commands/download/tests/tests_env', dst=str(tests_env_path))
+        shutil.copytree(src='demisto_sdk/commands/download/tests/tests_data', dst=str(tests_data_path))
 
         self.CONTENT_BASE_PATH = f'{tests_path}/tests_env/content'
         self.CUSTOM_CONTENT_BASE_PATH = f'{tests_path}/tests_data/custom_content'
@@ -644,8 +644,7 @@ class TestMergeNewFile:
             output_dir_path = f'{temp_dir}/{entity}'
             os.mkdir(output_dir_path)
             old_file_path = param['custom_content_object']['path']
-            base_name = os.path.basename(old_file_path)
-            new_file_path = f'{output_dir_path}/{base_name}'
+            new_file_path = f'{output_dir_path}/{os.path.basename(old_file_path)}'
             downloader = Downloader(output=temp_dir, input='')
             downloader.merge_new_file(param['custom_content_object'])
             assert os.path.isfile(new_file_path)

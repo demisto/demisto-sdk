@@ -10,7 +10,7 @@ from wcmatch.pathlib import EXTMATCH, Path
 from .yaml_content_object import YAMLContentObject
 
 
-class YAMLContentUnfiedObject(YAMLContentObject):
+class YAMLContentUnifiedObject(YAMLContentObject):
     def __init__(self, path: Union[Path, str], content_type: FileType, file_name_prefix: str):
         """YAML content object.
 

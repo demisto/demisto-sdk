@@ -17,7 +17,7 @@ Import DemistoContentPython Libary:
 import demisto_sdk.commands.common.content as content_py
 ```
 
-Import DemistoContentPython Libary Objects:
+Import DemistoContentPython Library Objects:
 ```python
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)

@@ -11,6 +11,20 @@ INVALID_INTEGRATION_NO_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/non-val
 INVALID_INTEGRATION_NON_CONFIGURED_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/' \
                                            f'non-valid-integration-test-not-configured.yml'
 TEST_PLAYBOOK = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-TestPlaybooks.yml'
+
+VALID_PYTHON_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration_test.py"
+VALID_PYTHON_INTEGRATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.py"
+VALID_METADATA1_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/1.pack_metadata.json'
+VALID_METADATA2_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/2.pack_metadata.json'
+VALID_DESCRIPTION_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_description.md'
+VALID_README_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_README.md'
+VALID_IMAGE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_image.png'
+VALID_PIPEFILE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/Pipfile'
+VALID_PIPEFILE_LOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/Pipfile.lock'
+VALID_PACK_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.pack-ignore'
+VALID_SECRETS_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.secrets-ignore'
+VALID_CLASSIFIER_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/classifier.json'
+
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'
 VALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-id-test.yml"
@@ -153,6 +167,10 @@ SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbo
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"
 
+SOURCE_FORMAT_TEST_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_test_playbook.yml"
+DESTINATION_FORMAT_TEST_PLAYBOOK = "TestPlaybook/test-playbook.yml"
+TEST_PLAYBOOK_PATH = "TestPlaybook"
+
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 
@@ -162,7 +180,7 @@ VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
-CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+CONF_JSON_MOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/conf.json'
 
 SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-valid.yml"
 SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"

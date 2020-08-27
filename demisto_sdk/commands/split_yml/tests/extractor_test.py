@@ -51,7 +51,7 @@ def test_extract_code(tmpdir):
     extractor.extract_code(extractor.output)
     with open(extractor.output, 'rb') as temp_code:
         file_data = temp_code.read().decode('utf-8')
-        assert 'import demistomock as demisto\n' in file_data
+        assert 'import demistomock as demisto  #' in file_data
         assert 'from CommonServerPython import *  #' in file_data
         assert file_data[-1] == '\n'
     os.remove(extractor.output)
@@ -61,7 +61,7 @@ def test_extract_code(tmpdir):
     extractor.extract_code(extractor.output)
     with open(extractor.output, 'rb') as temp_code:
         file_data = temp_code.read().decode('utf-8')
-        assert 'import demistomock as demisto\n' not in file_data
+        assert 'import demistomock as demisto  #' not in file_data
         assert 'from CommonServerPython import *  #' not in file_data
         assert file_data[-1] == '\n'
 
@@ -101,10 +101,6 @@ def test_extract_to_package_format_pwsh(tmpdir):
     with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md'), 'r') as f:
         file_data = f.read()
         assert 'Username and password are both associated with the user in the target machine' in file_data
-    # check changelog
-    with open(out.join('PowerShellRemotingOverSSH').join('CHANGELOG.md'), 'r') as f:
-        file_data = f.read()
-        assert '## [Unreleased]' in file_data
     # check readme
     with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()

@@ -59,11 +59,12 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
            contribution (str|Nonetype): The path to a contribution zip file
            description (str): Description to attach to a converted contribution pack
+           author (str): Author to ascribe to a pack converted from a contribution zip
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
-                 contribution: Union[str] = None, description: str = ''):
+                 contribution: Union[str] = None, description: str = '', author: str = ''):
         self.output = output if output else ''
         self.id = id
 
@@ -75,6 +76,7 @@ class Initiator:
         self.configuration = Configuration()
         self.contribution = contribution
         self.description = description
+        self.author = author
         self.contrib_conversion_errs: List[str] = []
 
         # if no flag given automatically create a pack.
@@ -84,14 +86,14 @@ class Initiator:
         self.full_output_path = ''
 
         self.name = name
-        if name is not None and len(name) != 0:
-            if self.contribution:
-                self.name = self.format_pack_dir_name(name)
-            else:
-                while ' ' in name:
-                    name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name and not self.contribution:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
-        self.dir_name = name
+        if self.contribution:
+            self.dir_name = self.format_pack_dir_name(name)
+        else:
+            self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
@@ -192,15 +194,22 @@ class Initiator:
                     metadata = json.loads(metadata_file.read())
                     # a name passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
+                    pack_display_name = self.name or metadata.get('name', 'ContributionPack')
+                    # Strip 'Pack' suffix from pack display name if present
+                    pack_display_name = pack_display_name.strip()
+                    if pack_display_name.casefold().endswith('pack') > len(pack_display_name) > 4:
+                        stripped_pack_display_name = pack_display_name[:-4].strip()
+                        pack_display_name = stripped_pack_display_name or pack_display_name
+                    pack_name = self.dir_name or self.format_pack_dir_name(
+                        metadata.get('name', 'ContributionPack')
+                    )
                     # a description passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
                     metadata_dict['description'] = self.description or metadata.get('description')
-                    metadata_dict['name'] = pack_name
-                    metadata_dict['author'] = metadata.get('author', '')
-                    metadata_dict['support'] = metadata.get('support', '')
+                    metadata_dict['name'] = pack_display_name
+                    metadata_dict['author'] = self.author or metadata.get('author', '')
+                    metadata_dict['support'] = 'community'
                     metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
-                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
                     metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
                     metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
                     metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []

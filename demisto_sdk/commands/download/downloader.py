@@ -494,7 +494,7 @@ class Downloader:
         temp_dir = mkdtemp()
 
         extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
-                              no_logging=not self.log_verbose, no_changelog=True, no_pipenv=True, no_readme=True,
+                              no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
                               no_auto_create_dir=True)
         extractor.extract_to_package_format()
 

@@ -128,7 +128,8 @@
             ]
           }
         ]
-      }
+      },
+      "parameters": []
     },
     "/pet/findByStatus": {
       "get": {
@@ -167,7 +168,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/Pet"
+                "$ref": "#/definitions/None"
               }
             }
           },

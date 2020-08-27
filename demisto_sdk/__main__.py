@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
+                                               get_pack_name,
+                                               pack_name_to_path, print_error,
                                                print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
@@ -268,6 +269,9 @@ def unify(**kwargs):
 @click.option(
     '--silence-init-prints', is_flag=True,
     help='Whether to skip the initialization prints.')
+@click.option(
+    '--skip-pack-dependencies', is_flag=True,
+    help='Skip validation of pack dependencies.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -290,7 +294,8 @@ def validate(config, **kwargs):
                                     is_external_repo=is_external_repo,
                                     print_ignored_files=kwargs['print_ignored_files'],
                                     no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'])
+                                    silence_init_prints=kwargs['silence_init_prints'],
+                                    skip_dependencies=kwargs['skip_pack_dependencies'])
         return validator.run_validation()
 
 
@@ -671,12 +676,18 @@ def generate_test_playbook(**kwargs):
     "This will format the contents of the zip file to a pack format ready for contribution "
     "in the content repository on your local machine. The command should be executed from the "
     "content repository's base directory. When this option is passed, the only other options "
-    "that are considered are \"name\" and \"description\" - all others are ignored.")
+    "that are considered are \"name\", \"description\" and \"author\" - all others are ignored.")
 @click.option(
     '-d', '--description',
     type=click.STRING,
     default='',
     help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
+    "option is passed.")
+@click.option(
+    '--author',
+    type=click.STRING,
+    default='',
+    help="The author to attach to the converted contribution pack. Used when the \"contribution\" "
     "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
@@ -797,7 +808,7 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack", help="Name of the pack."
+    "-i", "--input", help="The path of the content pack."
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
@@ -813,7 +824,7 @@ def id_set_command(**kwargs):
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 def update_pack_releasenotes(**kwargs):
-    _pack = kwargs.get('pack')
+    _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
@@ -843,15 +854,22 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1):
-        print_warning('No changes were detected. If changes were made, please commit the changes '
-                      'and rerun the command')
+        if len(changed_meta_files) < 1:
+            print_warning('No changes were detected. If changes were made, please commit the changes '
+                          'and rerun the command')
+        else:
+            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=set(),
+                                      pre_release=pre_release, added_files=set(),
+                                      specific_version=specific_version, pack_metadata_only=True)
+            update_pack_rn.execute_update()
         sys.exit(0)
+
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack=pack, update_type=update_type, pack_files=modified,
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
                                       pre_release=pre_release, added_files=added,
                                       specific_version=specific_version)
             update_pack_rn.execute_update()
@@ -860,12 +878,17 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     else:
         if _pack:
-            if _pack in packs_existing_rn and update_type is not None:
+
+            packs_existing_rn_abs_path = set()
+            for item in packs_existing_rn:
+                packs_existing_rn_abs_path.add(os.path.abspath(pack_name_to_path(item)))
+
+            if _pack in packs_existing_rn_abs_path and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=modified,
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()

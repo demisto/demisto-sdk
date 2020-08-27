@@ -601,9 +601,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
-               "an item from the release notes, please refer to the documentation found here: " \
-               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+        return "Your release notes file is empty, please complete it\nHaving empty release notes " \
+               "looks bad in the product UI.\nIf the change you made was minor, please use " \
+               "\"Maintenance and stability enhancements.\" for general changes, or use " \
+               "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod
     @error_code_decorator
@@ -615,7 +616,7 @@ class Errors:
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
         return f"Release notes were not found. Please run `demisto-sdk " \
-               f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate release notes according to the new standard. You can refer to the documentation " \
                f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -637,7 +638,8 @@ class Errors:
     @error_code_decorator
     def modified_existing_release_notes(pack_name):
         return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
-               f"if needed by running:\n`demisto-sdk update-release-notes -p {pack_name} -u (major|minor|revision)`\n" \
+               f"if needed by running:\n`demisto-sdk update-release-notes -i Packs/{pack_name} -u " \
+               f"(major|minor|revision)`\n" \
                f"You can refer to the documentation found here: " \
                f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -845,7 +847,7 @@ class Errors:
                f"make sure you are merged from master and " \
                f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
-               f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
 
     @staticmethod
@@ -893,7 +895,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have, please refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list " \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod

@@ -9,11 +9,11 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 2. [Install demisto-sdk as editable versions](#2-Install-demisto-sdk-as-editable-version)
 3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
 4. [DemistoContentPython Libary](#4-DemistoContentPython-Libary)
-4. [Develop new command](#5-Develop-new-command)
-5. [Running unit-tests using tox](#6-running-unit-tests-using-tox)
-6. [Push changes to GitHub (Exernal PRs)](#7-push-changes-to-github-relevant-only-for-exernal-prs)
-7. [Review Process](#8-review-process)
-8. [Contributor License Agreement (Exernal PRs)](#9-contributor-license-agreement-relevant-only-for-exernal-prs)
+5. [Develop new command](#5-Develop-new-command)
+6. [Running unit-tests using tox](#6-running-unit-tests-using-tox)
+7. [Push changes to GitHub (Exernal PRs)](#7-push-changes-to-github-relevant-only-for-exernal-prs)
+8. [Review Process](#8-review-process)
+9. [Contributor License Agreement (Exernal PRs)](#9-contributor-license-agreement-relevant-only-for-exernal-prs)
 
 ---
 

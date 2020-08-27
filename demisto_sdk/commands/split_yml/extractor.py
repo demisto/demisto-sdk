@@ -30,14 +30,13 @@ class Extractor:
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
         no_pipenv (boo): whether to create pipenv
-        no_changelog (bool): whether to extract changelog
         file_type (str): yml file type (integration/script)
         configuration (Configuration): Configuration object
     """
 
     def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
-                 base_name: str = '', no_readme: bool = False, no_pipenv: bool = False, no_changelog: bool = False,
+                 base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False):
         self.input = input
         self.output = output
@@ -47,7 +46,6 @@ class Extractor:
         self.base_name = base_name
         self.readme = not no_readme
         self.pipenv = not no_pipenv
-        self.changelog = not no_changelog
         self.logging = not no_logging
         if configuration is None:
             self.config = Configuration()
@@ -121,15 +119,7 @@ class Extractor:
                 # open an empty file
                 with open(readme, 'w'):
                     pass
-        # check if there is a changelog
-        if self.changelog:
-            yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'
-            changelog = output_path + '/CHANGELOG.md'
-            if os.path.exists(yml_changelog):
-                shutil.copy(yml_changelog, changelog)
-            else:
-                with open(changelog, 'wt', encoding='utf-8') as changelog_file:
-                    changelog_file.write("## [Unreleased]\n-\n")
+
         # Python code formatting and dev env setup
         if code_type == TYPE_PYTHON:
             self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
@@ -217,10 +207,10 @@ class Extractor:
         self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
-                code_file.write("import demistomock as demisto\n")
+                code_file.write("import demistomock as demisto  # noqa: F401\n")
             if common_server:
                 if lang_type == TYPE_PYTHON:
-                    code_file.write("from CommonServerPython import *\n")
+                    code_file.write("from CommonServerPython import *  # noqa: F401\n")
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
             code_file.write(script)

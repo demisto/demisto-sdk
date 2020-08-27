@@ -15,6 +15,7 @@ mapping:
     type: str
   toVersion:
     type: str
+    required: True
   system:
     type: bool
   layout:
@@ -33,6 +34,7 @@ mapping:
         type: str
       typeId:
         type: str
+        required: True
       modified:
         type: str
       name:

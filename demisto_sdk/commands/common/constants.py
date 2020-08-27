@@ -43,11 +43,13 @@ INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
+OLD_REPUTATION = 'reputations.json'
 
 
 class FileType(Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
+    TEST_SCRIPT = 'testscript'
     PLAYBOOK = 'playbook'
     TEST_PLAYBOOK = 'testplaybook'
     BETA_INTEGRATION = 'betaintegration'
@@ -55,6 +57,7 @@ class FileType(Enum):
     INDICATOR_FIELD = 'indicatorfield'
     REPUTATION = 'reputation'
     LAYOUT = 'layout'
+    LAYOUTS_CONTAINER = 'layoutscontainer'
     DASHBOARD = 'dashboard'
     INCIDENT_TYPE = 'incidenttype'
     MAPPER = 'mapper'
@@ -71,7 +74,6 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
-    TEST_SCRIPT = 'script'
 
 
 ENTITY_TYPE_TO_DIR = {
@@ -327,7 +329,9 @@ PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_REA
 
 
 PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
-PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/([^/]+)\.json'
+PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json'
+
+PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json'
 
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
@@ -548,6 +552,10 @@ JSON_ALL_LAYOUT_REGEXES = [
     PACKS_LAYOUT_JSON_REGEX,
 ]
 
+JSON_ALL_LAYOUTS_CONTAINER_REGEXES = [
+    PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+]
+
 JSON_ALL_INCIDENT_FIELD_REGEXES = [
     PACKS_INCIDENT_FIELD_JSON_REGEX,
 ]
@@ -608,6 +616,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_INDICATOR_FIELD_JSON_REGEX,
     PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_LAYOUT_JSON_REGEX,
+    PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
     PACKS_WIDGET_JSON_REGEX,
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
@@ -761,9 +770,6 @@ INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoin
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
                           'Deception', 'Email Gateway']
-
-EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
-
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
@@ -774,6 +780,7 @@ SCHEMA_TO_REGEX = {
     'classifier_5_9_9': JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     'classifier': JSON_ALL_CLASSIFIER_REGEXES,
     'mapper': JSON_ALL_MAPPER_REGEXES,
+    'layoutscontainer': JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
@@ -790,6 +797,9 @@ SCHEMA_TO_REGEX = {
     'report': [PACKS_REPORT_JSON_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX]
 }
+
+EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
+
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
@@ -845,6 +855,7 @@ IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONT
 
 FEED_REQUIRED_PARAMS = [
     {
+        'defaultvalue': 'true',
         'display': 'Fetch indicators',
         'name': 'feed',
         'type': 8,
@@ -895,6 +906,13 @@ FEED_REQUIRED_PARAMS = [
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
                           ' This means that if an indicator from this feed is on the exclusion list,'
                           ' the indicator might still be added to the system.'
+    },
+    {
+        'additionalinfo': 'Supports CSV values.',
+        'display': 'Tags',
+        'name': 'feedTags',
+        'required': False,
+        'type': 0
     }
 ]
 

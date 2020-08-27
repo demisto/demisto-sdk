@@ -1,0 +1,39 @@
+Executed: kl-get-component
+Instance Lockpath_KeyLight_v2_instance_1
+Arguments {}
+Start time 2020-08-11T10:18:14.693794+03:00
+
+
+2020-08-11T10:18:14.722852+03:00 debug: (Lockpath_KeyLight_v2_instance_1_Lockpath KeyLight v2_kl-get-component) ****Here we have some censored log data about what's happening******
+
+Entry
+Executed on 2020-08-11T10:18:15.896553+03:00
+
+Context Outputs:
+{
+  "Keylight.Component(val.ID \u0026\u0026 val.ID==obj.ID))": [
+    {
+      "ID": 10082,
+      "Name": "Projects",
+      "ShortName": "Projects",
+      "SystemName": "Projects"
+    },
+    {
+      "ID": 10077,
+      "Name": "Universe",
+      "ShortName": "Universe",
+      "SystemName": "Universe"
+    }
+  ]
+}
+
+Human Readable section:
+"### Keylight Components\n|ID|Name|ShortName|SystemName|\n|---|---|---|---|\n| 10082 | Projects | Projects | Projects |\n| 10077 | Universe | Universe | Universe |\n"
+
+Raw Response section:
+[{"ID":10082,"Name":"Projects","ShortName":"Projects","SystemName":"Projects"},{"ID":10077,"Name":"Universe","ShortName":"Universe","SystemName":"Universe"}]
+
+
+2020-08-11T10:18:15.897757+03:00 info: (Lockpath_KeyLight_v2_instance_1_Lockpath KeyLight v2_kl-get-component) **** Some more censored data ****
+
+End time 2020-08-11T10:18:16.250514+03:00

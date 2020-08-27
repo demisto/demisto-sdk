@@ -82,22 +82,25 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     docker_engine(bool): docker engine exists.
     """
     skipped_code = 0b0
-    if no_flake8:
-        skipped_code |= EXIT_CODES["flake8"]
-    if no_bandit:
-        skipped_code |= EXIT_CODES["bandit"]
-    if no_mypy or not docker_engine:
-        skipped_code |= EXIT_CODES["mypy"]
-    if no_vulture or not docker_engine:
-        skipped_code |= EXIT_CODES["vulture"]
-    if no_pylint or not docker_engine:
-        skipped_code |= EXIT_CODES["pylint"]
-    if no_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pytest"]
-    if no_pwsh_analyze or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_analyze"]
-    if no_pwsh_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_test"]
+    # When the CI env var is not set - on local env - check if any linters should be skipped
+    # Otherwise - When the CI env var is set - Run all linters without skipping
+    if not os.environ.get('CI'):
+        if no_flake8:
+            skipped_code |= EXIT_CODES["flake8"]
+        if no_bandit:
+            skipped_code |= EXIT_CODES["bandit"]
+        if no_mypy or not docker_engine:
+            skipped_code |= EXIT_CODES["mypy"]
+        if no_vulture or not docker_engine:
+            skipped_code |= EXIT_CODES["vulture"]
+        if no_pylint or not docker_engine:
+            skipped_code |= EXIT_CODES["pylint"]
+        if no_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pytest"]
+        if no_pwsh_analyze or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_analyze"]
+        if no_pwsh_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_test"]
 
     return skipped_code
 
@@ -252,7 +255,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         yield
     except Exception as e:
         logger.error(str(e))
-        pass
     finally:
         # If we want to change handling of files after finishing - do it here
         pass

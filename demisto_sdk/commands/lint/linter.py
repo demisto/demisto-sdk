@@ -467,12 +467,12 @@ class Linter:
                             elif not no_pwsh_test and check == "pwsh_test":
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                                keep_container=keep_container)
-
-                        if (exit_code != RERUN or trial == 2) and exit_code:
-                            self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
-                            status[f"{check}_errors"] = output
-                            break
-                        elif exit_code != RERUN:
+                        # If lint check perfrom and failed on reason related to enviorment will run twice,
+                        # But it failing in second time it will count as test failure.
+                        if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
+                            if exit_code in [RERUN, FAIL]:
+                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                status[f"{check}_errors"] = output
                             break
             else:
                 status["image_errors"] = str(errors)
@@ -528,7 +528,7 @@ class Linter:
             requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
-        env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True)
+        env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
         template = env.get_template('dockerfile.jinja2')
         try:
             dockerfile = template.render(image=docker_base_image[0],

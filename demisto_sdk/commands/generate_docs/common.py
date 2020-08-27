@@ -126,7 +126,7 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     for item in data:
         tmp_item = '|'
         for key in item:
-            tmp_item += f" {item.get(key, '')} |"
+            tmp_item += f" {string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True)} |"
         section.append(tmp_item)
 
     section.append('')
@@ -170,7 +170,20 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
         for c in '|':
             st = st.replace(c, '\\' + c)
     else:
-        st = "".join(["\\" + str(c) if c in r"\`*_{}[]()#+-!" else str(c) for c in st])
+        st = "".join(f'\\{str(c)}' if c in r"\`*{}[]()#+!" else str(c) for c in st)
+
+        # The following code adds an escape character for '-' and '_' following cases:
+        # 1. The string begins with a dash. e.g: - This input specifies the entry id
+        # 2. The string has a word which wrapped with an underscore in it. e.g: This input _specifies_ the entry id
+        # in the underscore case we use a for loop because of a problem with concatenate backslash with a subgroup.
+        st = re.sub(r'(\A-)', '\\-', st)
+
+        added_char_count = 1
+        for match in re.finditer(r'([\s.,()])(_\S*)(_[\s.,()])', st):
+            # In case there is more than one match, the next word index get changed because of the added escape chars.
+            st = st[:match.regs[0][0] + added_char_count] + '\\' + st[match.regs[0][0] + added_char_count:]
+            st = st[:match.regs[3][0] + added_char_count] + '\\' + st[match.regs[3][0] + added_char_count:]
+            added_char_count += 2
 
     return st
 
@@ -196,11 +209,9 @@ def execute_command(command_example, insecure: bool):
             if entry.contents:
                 content: str = entry.contents
                 if isinstance(content, STRING_TYPES):
-                    md_example += content
+                    md_example = format_md(content)
                 else:
-                    md_example += json.dumps(content)
-
-            md_example = format_md(md_example)
+                    md_example = f'```\n{json.dumps(content, sort_keys=True, indent=4)}\n```'
 
     except RuntimeError:
         errors.append('The provided example for cmd {} has failed...'.format(cmd))
@@ -261,6 +272,7 @@ def build_example_dict(command_examples: list, insecure: bool):
 def format_md(md: str) -> str:
     """
     Formats a given md string by replacing <br> and <hr> tags with <br/> or <hr/>
+    Will also remove style tags such as: style="background:#eeeeee; border:1px solid #cccccc; padding:5px" which cause mdx to fail
     :param
         md (str): String representing mark down.
     :return:
@@ -269,6 +281,7 @@ def format_md(md: str) -> str:
     replace_tuples = [
         (r'<br>(</br>)?', '<br/>'),
         (r'<hr>(</hr>)?', '<hr/>'),
+        (r'style="[a-zA-Z0-9:;#\.\s\(\)\-\,]*?"', ''),
     ]
     if md:
         for old, new in replace_tuples:

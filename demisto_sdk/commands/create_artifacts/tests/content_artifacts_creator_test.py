@@ -218,7 +218,7 @@ def test_malformed_file_failue(suffix: str, mock_git):
     assert exit_code == 1
 
 
-def test_duplicate_file_failue(mock_git):
+def test_duplicate_file_failure(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager, create_content_artifacts)
     with temp_dir() as temp:

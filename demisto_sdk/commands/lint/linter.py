@@ -640,7 +640,8 @@ class Linter:
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=[
-                                                                   build_pylint_command(self._facts["lint_files"])],
+                                                                   build_pylint_command(self._facts["lint_files"],
+                                                                                        self._facts["support_level"])],
                                                                user=f"{os.getuid()}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])

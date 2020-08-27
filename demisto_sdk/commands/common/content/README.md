@@ -3,7 +3,7 @@
 [Contribution guide](docs/CONTRIBUTION.md)
 
 # Overview
-DemistoContentPython Libary located in `<demisto-sdk repository>/demisto_sdk/commands/common/content`
+The DemistoContentPython Libary is located in `<demisto-sdk repository>/demisto_sdk/commands/common/content`
 
 ContentPython is a python library used to interact with Demisto Content repository, high-level abstraction.
 

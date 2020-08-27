@@ -58,7 +58,7 @@ class NewObject(YAMLContentObject):
 ```
 
 ## 4. Enhance an existing Internal Pack object (Integration, Script, IncidentType, etc.)
-All packs object can be found in `demisto_sdk/commands/common/content/objects/pack_objects/<object>`
+All pack objects can be found in `demisto_sdk/commands/common/content/objects/pack_objects/<object>`
 
 
 Existing code:

@@ -1045,7 +1045,7 @@ def test_case_1(mocker, repo):
     pack_common_types = repo.create_pack('CommonTypes')
 
     playbook_foo = pack_foo.create_playbook('playbook_foo')
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': f'=integration_foo'})
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo'})
     script_bar = pack_bar.create_script('script_bar', yml={'script': '', 'type': 'python', 'name': 'script_bar'})
     incident_field_email = pack_common_types.create_incident_field(name='incident_Email',
                                                                    content={'id': 'incident_Email',

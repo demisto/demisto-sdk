@@ -1053,9 +1053,9 @@ def test_case_1(mocker, repo):
     repo.setup_one_pack('CommonTypes')
 
     # setup the incidentfield "Email" in CommonTypes
-    incident_field = repo.packs[2].create_incident_field(f'Email_incident-field')
-    incident_field.write_json({'id': f'incident_Email'})
-    incident_field.update({'name': f'incident_Email'})
+    incident_field = repo.packs[2].create_incident_field('Email_incident-field')
+    incident_field.write_json({'id': 'incident_Email'})
+    incident_field.update({'name': 'incident_Email'})
 
     # make playbook_foo depend on integration_foo
     PlaybookDependencies.make_playbook_depend_on_integration_not_skippable(

@@ -43,6 +43,7 @@ INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
+OLD_REPUTATION = 'reputations.json'
 
 
 class FileType(Enum):

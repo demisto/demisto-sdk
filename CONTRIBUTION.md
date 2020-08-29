@@ -10,9 +10,9 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
 4. [Develop new command](#4-Develop-new-command)
 5. [Running unit-tests using tox](#5-running-unit-tests-using-tox)
-6. [Push changes to GitHub (Exernal PRs)](#6-push-changes-to-github-relevant-only-for-exernal-prs)
+6. [Push changes to GitHub (External PRs)](#6-push-changes-to-github-relevant-only-for-exernal-prs)
 7. [Review Process](#7-review-process)
-8. [Contributor License Agreement (Exernal PRs)](#8-contributor-license-agreement-relevant-only-for-exernal-prs)
+8. [Contributor License Agreement (External PRs)](#8-contributor-license-agreement-relevant-only-for-exernal-prs)
 
 ---
 
@@ -26,7 +26,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 ---
 
 ### 2. Install demisto sdk as editable version
-1. If you are using virtualenv for this proccess you can skip this step, uninstall current installed version of
+1. If you are using virtualenv for this process you can skip this step, uninstall current installed version of
    `demisto-sdk`:
 
    ```shell
@@ -77,7 +77,7 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
             <repo>/demisto_sdk/commands/<your_new_command>/tests
             ```
 
-        2. data files tests - Usally its shared data files for all commands which located in:
+        2. data files tests - Usually its shared data files for all commands which located in:
 
             ```shell
             <repo>/demisto_sdk/tests/test_files
@@ -108,9 +108,9 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 ---
 
 ### 5. Running unit-tests using tox
-[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it inorder to check unit-tests on python versions 3.7 and 3.8.
+[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it in order to check unit-tests on python versions 3.7 and 3.8.
 
-> If you have one interperter in your local environment it will skip the missing interperter and not failed - the 2 versions test will be performed in the CircleCI build.
+> If you have one interpreter in your local environment it will skip the missing interpreter and not failed - the 2 versions test will be performed in the CircleCI build.
 
 1. To run all our unit tests we use: `tox` on all envs, optional args:
    * For additional verbosity use: `tox -vv`
@@ -120,7 +120,7 @@ We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build
 
 ---
 
-### 6. Push changes to GitHub (Relevant only for Exernal PRs)
+### 6. Push changes to GitHub (Relevant only for External PRs)
 
 The Demisto SDK is MIT Licensed and accepts contributions via GitHub pull requests.
 If you are a first time GitHub contributor, please look at these links explaining on how to create a Pull Request to a GitHub repo:
@@ -142,7 +142,7 @@ You will see a few [GitHub Status Checks](https://help.github.com/en/github/coll
 
 ---
 
-### 8. Contributor License Agreement (Relevant only for Exernal PRs)
+### 8. Contributor License Agreement (Relevant only for External PRs)
 Before merging any PRs, we need all contributors to sign a contributor license agreement. By signing a contributor license agreement, we ensure that the community is free to use your contributions.
 
 When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](docs/cla.pdf).

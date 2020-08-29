@@ -46,6 +46,13 @@ class IntegrationDependencies:
         integration.yml.update({'feed': True})
 
 
+class WidgetDependencies:
+    @staticmethod
+    def make_widget_depend_on_script(widget: JSONBased, script: Script):
+        script_id = script.yml.read_dict().get('commonfields').get('id')
+        widget.update({'dataType': 'scripts', 'query': script_id})
+
+
 # Playbook class helper function
 def get_new_task_number(playbook: Playbook):
     playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
@@ -810,6 +817,8 @@ class IncidentFieldDependencies:
         incident_field.update({'fieldCalcScript': script_id})
 
 
+CLASSES = [IntegrationDependencies, ClassifierDependencies, MapperDependencies, IncidentTypeDependencies,
+           IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies, WidgetDependencies]
 CLASSES = [IntegrationDependencies, PlaybookDependencies, ScriptDependencies, ClassifierDependencies,
            MapperDependencies, IncidentTypeDependencies,
            IndicatorTypeDependencies, LayoutDependencies, LayoutcontainerDependencies, IncidentFieldDependencies]
@@ -851,6 +860,9 @@ def get_entity_by_pack_number_and_entity_type(repo, pack_number, entity_type):
 
     if entity_type == 'indicator_field':
         return repo.packs[pack_number].indicator_fields[0]
+
+    if entity_type == 'widget':
+        return repo.packs[pack_number].widgets[0]
 
 
 LIST_ARGUMENTS_TO_METHODS = {

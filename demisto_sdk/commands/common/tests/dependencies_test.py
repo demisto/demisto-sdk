@@ -55,15 +55,22 @@ class WidgetDependencies:
 
 # Playbook class helper function
 def get_new_task_number(playbook: Playbook):
-    playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
+    try:
+        playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
 
-    if playbook_tasks:
-        return max([int(task_num) for task_num in playbook_tasks]) + 1
-    return 0
+        if playbook_tasks:
+            return max([int(task_num) for task_num in playbook_tasks]) + 1
+
+        playbook.yml.update({'starttaskid': '0'})
+        return 0
+
+    except AttributeError:
+        playbook.yml.update({'starttaskid': '0'})
+        return 0
 
 
 def update_tasks_in_playbook(playbook: Playbook, task_num: int, task: dict):
-    tasks = playbook.yml.read_dict().get('tasks')
+    tasks = playbook.yml.read_dict().get('tasks', {})
 
     # Connects the new task added to the last task in the playbook, so the whole playbook will be connected
     if task_num > 0:
@@ -101,9 +108,6 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': False,
                     'brand': '',
-                },
-                'nexttasks': {
-                    '#none#': ['3']
                 },
                 'scriptarguments': {
                     'entryID': {
@@ -153,9 +157,6 @@ class PlaybookDependencies:
                     'iscommand': False,
                     'brand': '',
                 },
-                'nexttasks': {
-                    '#none#': ['3']
-                },
                 'scriptarguments': {
                     'entryID': {
                         'complex': {
@@ -203,9 +204,6 @@ class PlaybookDependencies:
                     'brand': '',
                     'description': '',
                 },
-                'nexttasks': {
-                    '#none#': ['3']
-                },
                 'separatecontext': True,
                 'loop': {
                     'iscommand': False,
@@ -250,9 +248,6 @@ class PlaybookDependencies:
                     'brand': '',
                     'description': '',
                 },
-                'nexttasks': {
-                    '#none#': ['3']
-                },
                 'separatecontext': True,
                 'loop': {
                     'iscommand': False,
@@ -295,9 +290,6 @@ class PlaybookDependencies:
                     'iscommand': True,
                     'brand': integration_name,
                     'description': ''
-                },
-                'nexttasks': {
-                    '#none#': ['3']
                 },
                 'scriptarguments': {
                     'env_bitness': {},
@@ -353,9 +345,6 @@ class PlaybookDependencies:
                     'iscommand': True,
                     'brand': integration_name,
                     'description': ''
-                },
-                'nexttasks': {
-                    '#none#': ['3']
                 },
                 'scriptarguments': {
                     'env_bitness': {},
@@ -456,9 +445,6 @@ class PlaybookDependencies:
                     'brand': 'Builtin',
                     'description': ''
                 },
-                'nexttasks': {
-                    '#none#': ['3']
-                },
                 'scriptarguments': {
                     incident_field_name: 'value'
                 },
@@ -493,13 +479,17 @@ class PlaybookDependencies:
         }
 
         playbook_content = playbook.yml.read_dict()
-        playbook_content.get('inputs').append(new_input)
+
+        if 'inputs' in playbook_content:
+            playbook_content.get('inputs').append(new_input)
+        else:
+            playbook_content.update({'inputs': [new_input]})
+
         playbook.yml.write_dict(playbook_content)
 
     @staticmethod
     def make_playbook_depend_on_incident_field_input_complex(playbook: Playbook, incident_field: JSONBased):
         incident_field_name = incident_field.read_json_as_dict().get('name')
-        print(incident_field_name)
 
         new_input = {
             'key': 'input',
@@ -515,7 +505,12 @@ class PlaybookDependencies:
         }
 
         playbook_content = playbook.yml.read_dict()
-        playbook_content.get('inputs').append(new_input)
+
+        if 'inputs' in playbook_content:
+            playbook_content.get('inputs').append(new_input)
+        else:
+            playbook_content.update({'inputs': [new_input]})
+
         playbook.yml.write_dict(playbook_content)
 
     @staticmethod
@@ -537,9 +532,6 @@ class PlaybookDependencies:
                     'iscommand': True,
                     'brand': 'Builtin',
                     'description': ''
-                },
-                'nexttasks': {
-                    '#none#': ['3']
                 },
                 'scriptarguments': {
                     indicator_field_name: 'value'
@@ -1048,37 +1040,39 @@ def test_case_1(mocker, repo):
 
     """
     # setup the packs
-    repo.setup_one_pack('foo')
-    repo.setup_one_pack('bar')
-    repo.setup_one_pack('CommonTypes')
+    pack_foo = repo.create_pack('foo')
+    pack_bar = repo.create_pack('bar')
+    pack_common_types = repo.create_pack('CommonTypes')
 
-    # setup the incidentfield "Email" in CommonTypes
-    incident_field = repo.packs[2].create_incident_field('Email_incident-field')
-    incident_field.write_json({'id': 'incident_Email'})
-    incident_field.update({'name': 'incident_Email'})
+    playbook_foo = pack_foo.create_playbook('playbook_foo')
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': f'=integration_foo'})
+    script_bar = pack_bar.create_script('script_bar', yml={'script': '', 'type': 'python', 'name': 'script_bar'})
+    incident_field_email = pack_common_types.create_incident_field(name='incident_Email',
+                                                                   content={'id': 'incident_Email',
+                                                                            'name': 'incident_Email'})
 
     # make playbook_foo depend on integration_foo
     PlaybookDependencies.make_playbook_depend_on_integration_not_skippable(
-        repo.packs[0].playbooks[0],
-        repo.packs[0].integrations[0]
+        playbook_foo,
+        integration_foo
     )
 
     # make playbook_foo depend on script_bar
     PlaybookDependencies.make_playbook_depend_on_script_skippable(
-        repo.packs[0].playbooks[0],
-        repo.packs[1].scripts[0]
+        playbook_foo,
+        script_bar
     )
 
-    # make playbook_foo depend on incidnet field Email
+    # make playbook_foo depend on incident field Email
     PlaybookDependencies.make_playbook_depend_on_incident_field_input_complex(
-        repo.packs[0].playbooks[0],
-        repo.packs[2].incident_fields[1]
+        playbook_foo,
+        incident_field_email
     )
 
     run_find_dependencies(mocker, repo.path, 'foo')
 
     expected_dependencies = ['bar', 'CommonTypes']
-    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+    dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
 
     assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))
 
@@ -1105,19 +1099,27 @@ def test_case_2(mocker, repo):
 
     """
     # setup the packs
-    repo.setup_one_pack('foo')
-    repo.setup_one_pack('bar')
-    repo.setup_one_pack('CommonTypes')
+    pack_foo = repo.create_pack('foo')
+    pack_bar = repo.create_pack('bar')
+    pack_common_types = repo.create_pack('CommonTypes')
+
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': ''})
+    mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
+                                                                          'name': 'mapper_in_bar',
+                                                                          'mapping': {}})
+    # Pack can not be empty
+    pack_common_types.create_integration('integration_common_types',
+                                         yml={'name': 'integration_common_types', 'category': ''})
 
     # make integration_foo feed
     IntegrationDependencies.make_integration_feed(
-        repo.packs[0].integrations[0]
+        integration_foo
     )
 
     # make integration_foo depend on mapper_in_bar
     IntegrationDependencies.make_integration_depend_on_mapper_in(
-        repo.packs[0].integrations[0],
-        repo.packs[1].mappers[0]
+        integration_foo,
+        mapper_in_bar
     )
 
     run_find_dependencies(mocker, repo.path, 'foo')

@@ -949,7 +949,7 @@ def run_find_dependencies(mocker, repo_path, pack_name):
 
 @pytest.mark.parametrize('test_number', range(5))
 def test_dependencies(mocker, repo, test_number):
-    """ This test will run 10 times, when each time it will randomly generate dependencies in the repo and verify that
+    """ This test will run 5 times, when each time it will randomly generate dependencies in the repo and verify that
         the expected dependencies has been updated in the pack metadata correctly.
 
         Given

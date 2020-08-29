@@ -817,10 +817,8 @@ class IncidentFieldDependencies:
         incident_field.update({'fieldCalcScript': script_id})
 
 
-CLASSES = [IntegrationDependencies, ClassifierDependencies, MapperDependencies, IncidentTypeDependencies,
-           IndicatorTypeDependencies, LayoutDependencies, IncidentFieldDependencies, WidgetDependencies]
 CLASSES = [IntegrationDependencies, PlaybookDependencies, ScriptDependencies, ClassifierDependencies,
-           MapperDependencies, IncidentTypeDependencies,
+           MapperDependencies, IncidentTypeDependencies, WidgetDependencies,
            IndicatorTypeDependencies, LayoutDependencies, LayoutcontainerDependencies, IncidentFieldDependencies]
 METHODS_POOL: list = \
     [(method_name, entity_class) for entity_class in CLASSES for method_name in list(entity_class.__dict__.keys())

@@ -1,8 +1,8 @@
 # Changelog
 * Fixed an issue where ** lints** did not pull docker images for powershell.
 * Fixed an issue where **find-dependencies** did not find all the script dependencies.
-* Updated the **validate** and the **secrets** commands to be less dependent on regex.
 * Fixed an issue where **find-dependencies** did not collect indicator fields as dependencies for playbooks.
+* Updated the **validate** and the **secrets** commands to be less dependent on regex.
 * Fixed an issue where **lint** did not run on circle when docker did not return ping.
 * Updated the missing release notes error message (RN106) in the **Validate** command.
 * Fixed an issue where **Validate** would return missing release notes when two packs with the same substring existed in the modified files.

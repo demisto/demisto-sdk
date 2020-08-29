@@ -936,6 +936,17 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     return all_dependencies
 
 
+def run_find_dependencies(mocker, repo_path, pack_name):
+    with ChangeCWD(repo_path):
+        # Circle froze on 3.7 dut to high usage of processing power.
+        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+        # and not the maximum amount.
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'cpu_count', return_value=1)
+        PackDependencies.find_dependencies(pack_name, silent_mode=True)
+
+
 @pytest.mark.parametrize('test_number', range(10))
 def test_dependencies(mocker, repo, test_number):
     """ This test will run 10 times, when each time it will randomly generate dependencies in the repo and verify that
@@ -957,14 +968,7 @@ def test_dependencies(mocker, repo, test_number):
     number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
-    with ChangeCWD(repo.path):
-        # Circle froze on 3.7 dut to high usage of processing power.
-        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
-        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
-        # and not the maximum amount.
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
-        PackDependencies.find_dependencies(f'pack_{pack_to_verify}', silent_mode=True)
+    run_find_dependencies(mocker, repo.path, f'pack_{pack_to_verify}')
 
     dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
         'dependencies').keys()
@@ -997,14 +1001,7 @@ def test_specific_entity(mocker, repo, entity_class):
 
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
-    with ChangeCWD(repo.path):
-        # Circle froze on 3.7 dut to high usage of processing power.
-        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
-        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
-        # and not the maximum amount.
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
-        PackDependencies.find_dependencies('pack_0', silent_mode=True)
+    run_find_dependencies(mocker, repo.path, 'pack_0')
 
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
@@ -1012,3 +1009,110 @@ def test_specific_entity(mocker, repo, entity_class):
         dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+
+def test_case_1(mocker, repo):
+    """
+    Given
+        - Content repo with the following items:
+            -"foo" pack containing:
+              - playbook_foo
+              - integration_foo
+            - "bar" pack containing:
+              - script_bar
+            - "CommonTypes" pack containing:
+              - incident field Email
+
+            - playbook_foo using:
+              - integration_foo is not skippable
+              - script_bar is skippable
+              - incident field Email as an input
+
+    When
+        - running find_dependencies
+
+    Then
+        - foo pack's pack_metadata should include the following dependencies:
+          - bar
+          - CommonTypes
+
+    """
+    # setup the packs
+    repo.setup_one_pack('foo')
+    repo.setup_one_pack('bar')
+    repo.setup_one_pack('CommonTypes')
+
+    # setup the incidentfield "Email" in CommonTypes
+    incident_field = repo.packs[2].create_incident_field(f'Email_incident-field')
+    incident_field.write_json({'id': f'incident_Email'})
+    incident_field.update({'name': f'incident_Email'})
+
+    # make playbook_foo depend on integration_foo
+    PlaybookDependencies.make_playbook_depend_on_integration_not_skippable(
+        repo.packs[0].playbooks[0],
+        repo.packs[0].integrations[0]
+    )
+
+    # make playbook_foo depend on script_bar
+    PlaybookDependencies.make_playbook_depend_on_script_skippable(
+        repo.packs[0].playbooks[0],
+        repo.packs[1].scripts[0]
+    )
+
+    # make playbook_foo depend on incidnet field Email
+    PlaybookDependencies.make_playbook_depend_on_incident_field_input_complex(
+        repo.packs[0].playbooks[0],
+        repo.packs[2].incident_fields[1]
+    )
+
+    run_find_dependencies(mocker, repo.path, 'foo')
+
+    expected_dependencies = ['bar', 'CommonTypes']
+    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+
+    assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))
+
+
+def test_case_2(mocker, repo):
+    """
+    Given
+        - Content repo with the following items:
+            -"foo" pack containing:
+              - integration_foo which is a feed integration
+            - "bar" pack containing:
+              - mapper_in_bar
+
+            - integration_foo using:
+              - mapper_in_bar
+
+    When
+        - running find_dependencies
+
+    Then
+        - foo pack's pack_metadata should include the following dependencies:
+          - bar
+          - CommonTypes
+
+    """
+    # setup the packs
+    repo.setup_one_pack('foo')
+    repo.setup_one_pack('bar')
+    repo.setup_one_pack('CommonTypes')
+
+    # make integration_foo feed
+    IntegrationDependencies.make_integration_feed(
+        repo.packs[0].integrations[0]
+    )
+
+    # make integration_foo depend on mapper_in_bar
+    IntegrationDependencies.make_integration_depend_on_mapper_in(
+        repo.packs[0].integrations[0],
+        repo.packs[1].mappers[0]
+    )
+
+    run_find_dependencies(mocker, repo.path, 'foo')
+
+    expected_dependencies = ['bar', 'CommonTypes']
+    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+
+    assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))

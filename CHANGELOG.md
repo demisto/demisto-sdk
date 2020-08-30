@@ -1,6 +1,8 @@
 # Changelog
-* Fixed an issue where ** lints** did not pull docker images for powershell.
+* Fixed an issue where **init** offered a non relevant pack support type.
+* Fixed an issue where **lint** did not pull docker images for powershell.
 * Fixed an issue where **find-dependencies** did not find all the script dependencies.
+* Fixed an issue where **find-dependencies** did not collect indicator fields as dependencies for playbooks.
 * Updated the **validate** and the **secrets** commands to be less dependent on regex.
 * Fixed an issue where **lint** did not run on circle when docker did not return ping.
 * Updated the missing release notes error message (RN106) in the **Validate** command.
@@ -8,6 +10,7 @@
 * Fixed an issue where **update-release-notes** would add duplicate release notes when two packs with the same substring existed in the modified files.
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
+* Added a `json-to-outputs` flag to the **run** command.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

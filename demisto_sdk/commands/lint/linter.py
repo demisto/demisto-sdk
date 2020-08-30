@@ -193,13 +193,7 @@ class Linter:
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
             if self._facts["docker_engine"]:
-
-                pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else\
-                    self._pack_abs_dir.parent.parent
-                pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
-                self._facts['support_level'] = pack_meta_content.get('support')
-                if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
-                    self._facts['support_level'] = 'certified partner'
+                self._update_support_level()
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])
@@ -839,6 +833,14 @@ class Linter:
             exit_code = RERUN
 
         return exit_code, output
+
+    def _update_support_level(self):
+        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
+            self._pack_abs_dir.parent.parent
+        pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
+        self._facts['support_level'] = pack_meta_content.get('support')
+        if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
+            self._facts['support_level'] = 'certified partner'
 
     def _docker_run_pwsh_test(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Powershell tests in created test image

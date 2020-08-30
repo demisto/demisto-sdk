@@ -1,7 +1,6 @@
-import click
 from typing import Tuple
 
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+import click
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,

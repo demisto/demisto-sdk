@@ -1,12 +1,11 @@
 import os
 import re
-import click
 from typing import Tuple
 
+import click
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,

@@ -41,6 +41,7 @@ class Pack:
         self.indicator_fields: List[JSONBased] = list()
         self.indicator_types: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.layoutcontainers: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
         self.widgets: List[JSONBased] = list()
         self.playbooks: List[Playbook] = list()
@@ -274,6 +275,16 @@ class Pack:
         layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layouts.append(layout)
         return layout
+
+    def create_layoutcontainer(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'layoutcontainer'
+        layoutcontainer = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
+        self.layoutcontainers.append(layoutcontainer)
+        return layoutcontainer
 
     def create_report(
             self,

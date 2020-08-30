@@ -124,7 +124,7 @@ class UpdateRN:
             elif LooseVersion(master_current_version) < LooseVersion(new_version):
                 return False
         except RuntimeError:
-            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
+            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
                           f"Please verify the pack exists and the pack name is correct.")
         return True
 

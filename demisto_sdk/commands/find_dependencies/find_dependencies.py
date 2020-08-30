@@ -436,7 +436,7 @@ class PackDependencies:
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
-            if packs_found_from_incident_fields:
+            if packs_found_from_indicator_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 

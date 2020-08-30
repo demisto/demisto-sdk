@@ -60,13 +60,13 @@ class BaseUpdateYML(BaseUpdate):
         """
         if not self.old_file:
             if self.verbose:
-                print('Updating YML ID to be the same as YML name')
+                click.echo('Updating YML ID to be the same as YML name')
             self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
         if self.source_file != self.output_file and self.verbose:
-            print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
+            click.secho(f'Saving output YML file to {self.output_file} \n', fg='white')
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 

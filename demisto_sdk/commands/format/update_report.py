@@ -1,3 +1,4 @@
+import click
 from typing import Tuple
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
@@ -18,11 +19,12 @@ class ReportJSONFormat(BaseUpdateJSON):
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
                  no_validate: bool = False, verbose: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose)
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.update_json()
             self.set_description()
             self.set_recipients()
@@ -46,8 +48,8 @@ class ReportJSONFormat(BaseUpdateJSON):
         ['pdf', 'csv', 'docx']
         """
         if not self.data.get('type'):
-            print_color('No type is specified for this report, would you like me to update for you? [Y/n]',
-                        LOG_COLORS.RED)
+            click.secho('No type is specified for this report, would you like me to update for you? [Y/n]',
+                        fg='red')
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ['n', 'N', 'No', 'no']:
@@ -68,15 +70,15 @@ class ReportJSONFormat(BaseUpdateJSON):
         ['landscape', 'portrait', '']
         """
         if not self.data.get('orientation'):
-            print_color('No orientation is specified for this report, would you like me to update for you? [Y/n]',
-                        LOG_COLORS.RED)
+            click.secho('No orientation is specified for this report, would you like me to update for you? [Y/n]',
+                        fg='red')
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ['n', 'N', 'No', 'no']:
                 print_error('Moving forward without updating orientation field')
                 return
 
-            print_color('Please specify the desired orientation: landscape | portrait ', LOG_COLORS.YELLOW)
+            click.secho('Please specify the desired orientation: landscape | portrait ', fg='yellow')
             user_desired_orientation = input()
             if user_desired_orientation.lower() in ('landscape', 'portrait'):
                 self.data['orientation'] = user_desired_orientation.lower()

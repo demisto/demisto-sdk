@@ -2,6 +2,7 @@ import os
 from typing import Set, Union
 
 import yaml
+import click
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -75,7 +76,7 @@ class BaseUpdate:
     def set_version_to_default(self, location=None):
         """Replaces the version of the YML to default."""
         if self.verbose:
-            print(f'Setting JSON version to default: {DEFAULT_VERSION}')
+            click.echo(f'Setting JSON version to default: {DEFAULT_VERSION}')
         if location:
             location['version'] = DEFAULT_VERSION
         else:
@@ -97,7 +98,7 @@ class BaseUpdate:
         # If there is no existing file in content repo
         if not self.old_file:
             if self.verbose:
-                print('Setting fromVersion field')
+                click.echo('Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
 
@@ -161,7 +162,7 @@ class BaseUpdate:
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
         if self.verbose:
-            print('Removing _dev and _copy suffixes from name and display tags')
+            click.echo('Removing _dev and _copy suffixes from name and display tags')
         if self.data['name']:
             self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.data.get('display'):
@@ -176,8 +177,7 @@ class BaseUpdate:
         """
         if self.no_validate:
             if self.verbose:
-                print_color(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.',
-                            LOG_COLORS.YELLOW)
+                click.secho(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.', fg='yellow')
             return SKIP_RETURN_CODE
         else:
             if self.verbose:
@@ -190,14 +190,14 @@ class BaseUpdate:
                 validator = validator_type(structure_validator, suppress_print=not self.verbose)
                 if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
                     if self.verbose:
-                        print_color('The files are valid', LOG_COLORS.GREEN)
+                        click.secho('The files are valid', fg='green')
                     return SUCCESS_RETURN_CODE
                 else:
                     if self.verbose:
-                        print_color('The files are invalid', LOG_COLORS.RED)
+                        click.secho('The files are invalid', fg='red')
                     return ERROR_RETURN_CODE
             else:
                 if self.verbose:
-                    print_color(f'The file {self.output_file} are not part of content repo, Validator Skipped',
-                                LOG_COLORS.YELLOW)
+                    click.secho(f'The file {self.output_file} are not part of content repo, Validator Skipped',
+                                fg='yellow')
                 return SKIP_RETURN_CODE

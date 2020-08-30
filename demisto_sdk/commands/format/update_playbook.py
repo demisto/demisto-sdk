@@ -1,5 +1,6 @@
 import os
 import re
+import click
 from typing import Tuple
 
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -16,12 +17,13 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 class BasePlaybookYMLFormat(BaseUpdateYML):
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
                  no_validate: bool = False, verbose: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose)
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
         if self.verbose:
-            print('Adding empty descriptions to relevant tasks')
+            click.echo('Adding empty descriptions to relevant tasks')
         for task_id, task in self.data.get('tasks', {}).items():
             if not task['task'].get('description') and task['type'] in ['title', 'start', 'playbook']:
                 task['task'].update({'description': ''})
@@ -30,8 +32,8 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
 
         if not self.data.get('fromversion', ''):
-            print_color('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
-                        LOG_COLORS.RED)
+            click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
+                        fg='red')
             user_answer = input()
             if user_answer in ['n', 'N', 'no', 'No']:
                 print_error('Moving forward without updating fromversion tag')
@@ -39,7 +41,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
             is_input_version_valid = False
             while not is_input_version_valid:
-                print_color('Please specify the desired version X.X.X', LOG_COLORS.YELLOW)
+                click.secho('Please specify the desired version X.X.X', fg='yellow')
                 user_desired_version = input()
                 if re.match(r'\d+\.\d+\.\d+', user_desired_version):
                     self.data['fromversion'] = user_desired_version
@@ -73,7 +75,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def delete_sourceplaybookid(self):
         """Delete the not needed sourceplaybookid fields"""
         if self.verbose:
-            print('Removing sourceplaybookid field from playbook')
+            click.echo('Removing sourceplaybookid field from playbook')
         if 'sourceplaybookid' in self.data:
             self.data.pop('sourceplaybookid', None)
 
@@ -88,7 +90,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
         if self.verbose:
-            print('Updating name of tasks who calls other playbooks to their name')
+            click.echo('Updating name of tasks who calls other playbooks to their name')
 
         for task_id, task in self.data.get('tasks', {}).items():
             if task.get('type', '') == 'playbook':
@@ -98,7 +100,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
             self.update_conf_json('playbook')
@@ -125,7 +127,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception:

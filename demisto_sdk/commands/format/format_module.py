@@ -56,7 +56,8 @@ UNFORMATTED_FILES = ['canvas-context-connections',
                      'image',
                      'javascriptfile',
                      'powershellfile',
-                     'betaintegration']
+                     'betaintegration',
+                     ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3

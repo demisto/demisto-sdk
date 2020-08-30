@@ -1,3 +1,4 @@
+import click
 from typing import List, Tuple
 
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
@@ -28,14 +29,15 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
                  no_validate: bool = False, verbose: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose)
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
         if self.verbose:
-            print('Updating proxy and insecure/unsecure integration arguments description to default')
+            click.echo('Updating proxy and insecure/unsecure integration arguments description to default')
 
         for integration_argument in self.data.get('configuration', {}):
             argument_name = integration_argument.get('name', '')
@@ -46,7 +48,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         if self.verbose:
-            print('Updating reputation commands\' basic arguments to be True for default, isArray and required')
+            click.echo('Updating reputation commands\' basic arguments to be True for default, isArray and required')
 
         integration_commands = self.data.get('script', {}).get('commands', [])
 
@@ -113,7 +115,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_yml()
             self.update_tests()
             self.update_conf_json('integration')

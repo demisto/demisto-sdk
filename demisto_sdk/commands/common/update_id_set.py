@@ -766,6 +766,36 @@ def get_mapper_data(path):
     return {id_: data}
 
 
+def get_widget_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    scripts = ''
+
+    # if the widget is script based - add it to the dependencies of the widget
+    if json_data.get('dataType') == 'scripts':
+        scripts = json_data.get('query')
+
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if scripts:
+        data['scripts'] = [scripts]
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -1186,7 +1216,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.WIDGET,),
-                                        data_extraction_func=get_general_data,
+                                        data_extraction_func=get_widget_data,
                                         ),
                                 get_general_paths(WIDGETS_DIR)):
                 widgets_list.extend(arr)

@@ -9,6 +9,7 @@
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
 * Added a `json-to-outputs` flag to the **run** command.
+* Added a verbose (`-v`) flag to **format** command.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

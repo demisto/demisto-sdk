@@ -114,7 +114,7 @@ class UpdateRN:
                 master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
             else:
                 master_current_version = '99.99.99'
-                print_warning(f"Unable to locate the metadata on the master branch.")
+                print_warning(f"Unable to locate the metadata on the master branch. ")
             if LooseVersion(master_current_version) == LooseVersion(new_version):
                 return True
             elif LooseVersion(master_current_version) > LooseVersion(new_version):

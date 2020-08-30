@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from typing import Union
+from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
@@ -103,10 +104,24 @@ class UpdateRN:
 
     def is_bump_required(self):
         try:
-            diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-            if '+    "currentVersion"' in diff:
-                return False
             if self.only_readme_changed():
+                return False
+            new_metadata = self.get_pack_metadata()
+            new_version = new_metadata.get('currentVersion', '99.99.99')
+            master_metadata = run_command(f"git show origin/master:{self.metadata_path}")
+            if len(master_metadata) > 0:
+                master_metadata_json = json.loads(master_metadata)
+                master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
+            else:
+                master_current_version = '99.99.99'
+                print_warning(f"Unable to locate the metadata on the master branch.")
+            if LooseVersion(master_current_version) == LooseVersion(new_version):
+                return True
+            elif LooseVersion(master_current_version) > LooseVersion(new_version):
+                print_error(f"The master branch is currently ahead of your pack's version. "
+                            f"Please pull from master and re-run the command.")
+                sys.exit(0)
+            elif LooseVersion(master_current_version) < LooseVersion(new_version):
                 return False
         except RuntimeError:
             print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "

@@ -1,9 +1,3 @@
-# Pylint documentation for writing a checker: http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html
-# This is an example of a Pylint AST checker and should not be registered to use
-# In an AST (abstract syntax tree) checker, the code will be represented as nodes of a tree
-# We will use the astroid library: https://astroid.readthedocs.io/en/latest/api/general.html to visit and leave nodes
-# Libraries needed for an AST checker
-from astroid import nodes
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 from pylint.lint import PyLinter
@@ -11,12 +5,8 @@ from pylint.lint import PyLinter
 
 class XsoarChecker(BaseChecker):
     __implements__ = IAstroidChecker
-
-    # Checker name
     name = "xsoar-checker"
-    # Set priority to -1
     priority = -1
-    # Message dictionary
     msgs = {
         # message-id, consists of a letter and numbers
         # Letter will be one of following letters (C=Convention, W=Warning, E=Error, F=Fatal, R=Refactoring)
@@ -35,7 +25,7 @@ class XsoarChecker(BaseChecker):
         super().__init__(linter)
         self.list_of_function_names: set = set()
 
-    def visit_functiondef(self, node: nodes):
+    def visit_functiondef(self, node):
         self.list_of_function_names.add(node.name)
 
     def leave_module(self, node):

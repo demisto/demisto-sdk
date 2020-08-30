@@ -28,7 +28,7 @@ class CustomBaseChecker(BaseChecker):
     }
 
     def __init__(self, linter: PyLinter = None):
-        super().__init__(linter)
+        super(CustomBaseChecker, self).__init__(linter)
 
     def visit_call(self, node: nodes) -> None:
         self._sys_exit_checker(node)

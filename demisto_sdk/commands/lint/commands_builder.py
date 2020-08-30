@@ -144,12 +144,12 @@ def build_pylint_command(files: List[Path], support_level: str = "") -> str:
     Returns:
        str: pylint command
     """
-    # TODO
     support_levels = {
-        'base': 'CustomBaseChecker',
-        'xsoar': 'XsoarChecker',
-        'certified': 'XsoarChecker',
-        'partner': 'XsoarChecker'
+        'base': 'base_checker',
+        'certified partner': 'certified_partner_checker',
+        'community': 'community_checker',
+        'partner': 'partner_checker',
+        'xsoar': 'xsoar_checker'
     }
     command = "python -m pylint"
     # Excluded files
@@ -157,7 +157,8 @@ def build_pylint_command(files: List[Path], support_level: str = "") -> str:
     # Prints only errors
     command += " -E"
     # Load plugins
-    command += f" --load-plugins {support_levels.get('base')},{support_levels.get(support_level)}" if support_levels.get(support_level) else ""
+    command += f" --load-plugins {support_levels.get('base')},{support_levels.get(support_level)}" if support_levels.get(
+        support_level) else ""
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger

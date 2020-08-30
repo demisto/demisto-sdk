@@ -198,6 +198,8 @@ class Linter:
                     self._pack_abs_dir.parent.parent
                 pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
                 self._facts['support_level'] = pack_meta_content.get('support')
+                if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
+                    self._facts['support_level'] = 'certified partner'
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])

@@ -1013,7 +1013,7 @@ def test_specific_entity(mocker, repo, entity_class):
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
 
 
-def test_case_1(mocker, repo):
+def test_dependencies_case_1(mocker, repo):
     """
     Given
         - Content repo with the following items:
@@ -1077,7 +1077,7 @@ def test_case_1(mocker, repo):
     assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))
 
 
-def test_case_2(mocker, repo):
+def test_dependencies_case_2(mocker, repo):
     """
     Given
         - Content repo with the following items:

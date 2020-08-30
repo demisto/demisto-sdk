@@ -24,6 +24,22 @@ class CustomBaseChecker(BaseChecker):
             "print-exists",
             # message-help shown to user when calling pylint --help-msg
             "Please remove all prints from the code.",
+        ),
+        "E9003": (
+            # displayed-message shown to user
+            "demisto.log is found, Please remove, you can choose to replace it with demisto.debug or logger",
+            # message-symbol used as alias for message-id
+            "demisto-log-exists",
+            # message-help shown to user when calling pylint --help-msg
+            "Please remove all demisto.log from the code.",
+        ),
+        "E9004": (
+            # displayed-message shown to user
+            "time.sleep is found, Please remove any sleep functionality from the code",
+            # message-symbol used as alias for message-id
+            "sleep-exists",
+            # message-help shown to user when calling pylint --help-msg
+            "Please remove all sleep functionality from the code.",
         )
     }
 
@@ -33,6 +49,8 @@ class CustomBaseChecker(BaseChecker):
     def visit_call(self, node: nodes) -> None:
         self._sys_exit_checker(node)
         self._print_checker(node)
+        self._demisto_log_checker(node)
+        self._sleep_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -47,6 +65,20 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.func.attrname == 'exit' and node.func.expr.name == 'sys':
                 self.add_message("sys-exit-exists", node=node)
+        except Exception:
+            pass
+
+    def _demisto_log_checker(self, node):
+        try:
+            if node.func.attrname == 'log' and node.func.expr.name == 'demisto':
+                self.add_message("demisto-log-exists", node=node)
+        except Exception:
+            pass
+
+    def _sleep_checker(self, node):
+        try:
+            if node.func.attrname == 'sleep' and node.func.expr.name == 'time':
+                self.add_message("sleep-exists", node=node)
         except Exception:
             pass
 

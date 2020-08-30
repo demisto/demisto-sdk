@@ -1,6 +1,5 @@
 import click
 from typing import Tuple
-import ipdb
 
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
@@ -26,7 +25,6 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            # ipdb.set_trace(context=9)
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_json()
             self.default_description()

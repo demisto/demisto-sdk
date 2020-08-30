@@ -20,7 +20,7 @@ class BaseValidator:
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
-        self.checked_files = set()
+        self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
 
     @staticmethod

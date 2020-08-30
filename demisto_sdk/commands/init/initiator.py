@@ -434,12 +434,13 @@ class Initiator:
             return pack_metadata
 
         pack_metadata['author'] = input("\nAuthor of the pack: ")
-        # get support details from the user
-        support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
-        while support_url and "http" not in support_url:
-            support_url = input("\nIncorrect input. Please enter full valid url: ")
-        pack_metadata['url'] = support_url
-        pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
+
+        if pack_metadata.get('support') != 'community':  # get support details from the user for non community packs
+            support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
+            while support_url and "http" not in support_url:
+                support_url = input("\nIncorrect input. Please enter full valid url: ")
+            pack_metadata['url'] = support_url
+            pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
 
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]

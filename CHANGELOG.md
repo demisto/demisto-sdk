@@ -9,6 +9,7 @@
 * Updated the missing release notes error message (RN106) in the **Validate** command.
 * Fixed an issue where **Validate** would return missing release notes when two packs with the same substring existed in the modified files.
 * Fixed an issue where **update-release-notes** would add duplicate release notes when two packs with the same substring existed in the modified files.
+* Fixed an issue where **update-release-notes** would fail to bump new versions if the feature branch was out of sync with the master branch.
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
 * Added a `json-to-outputs` flag to the **run** command.

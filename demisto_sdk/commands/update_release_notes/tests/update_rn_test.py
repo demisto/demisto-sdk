@@ -562,8 +562,9 @@ class TestRNUpdateUnit:
         ("1.0.5", "1.0.4", False),
         ("1.0.5", "1.0.5", True)
     ]
+
     @pytest.mark.parametrize('pack_current_version, git_current_version, expected_result', diff_package)
-    def test_is_bump_required(self,pack_current_version, git_current_version, expected_result, mocker):
+    def test_is_bump_required(self, pack_current_version, git_current_version, expected_result, mocker):
         """
         Given:
             - Case 1: Version in origin/master is higher than the current version for the pack

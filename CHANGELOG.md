@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **init** a community pack did not present the valid support valid.
 * Fixed an issue where **init** offered a non relevant pack support type.
 * Fixed an issue where **lint** did not pull docker images for powershell.
 * Fixed an issue where **find-dependencies** did not find all the script dependencies.

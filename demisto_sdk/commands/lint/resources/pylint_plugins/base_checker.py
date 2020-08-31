@@ -62,7 +62,7 @@ class CustomBaseChecker(BaseChecker):
 
     def _sys_exit_checker(self, node):
         try:
-            if node.func.attrname == 'exit' and node.func.expr.name == 'sys' and node.args[0].value != 0:
+            if node.func.attrname == 'exit' and node.func.expr.name == 'sys' and node.args and node.args[0].value != 0:
                 self.add_message("sys-exit-exists", node=node)
         except Exception:
             pass

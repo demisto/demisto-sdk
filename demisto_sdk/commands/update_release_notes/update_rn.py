@@ -6,6 +6,7 @@ import errno
 import json
 import os
 import sys
+from distutils.version import LooseVersion
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (
@@ -29,13 +30,18 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.pack_files = pack_files
         self.added_files = added_files
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.pack_metadata_only = pack_metadata_only
+        try:
+            self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
+        except TypeError:
+            print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
+                        f"the pack path is correct.")
+            sys.exit(1)
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -97,15 +103,35 @@ class UpdateRN:
         return True
 
     def is_bump_required(self):
+        """
+        This function checks to see if the currentVersion in the pack metadata has been changed or
+        not. Additionally, it will verify that there is no conflict with the currentVersion in the
+        Master branch.
+        """
         try:
-            diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
-            if '+    "currentVersion"' in diff:
-                return False
             if self.only_readme_changed():
                 return False
+            new_metadata = self.get_pack_metadata()
+            new_version = new_metadata.get('currentVersion', '99.99.99')
+            master_metadata = run_command(f"git show origin/master:{self.metadata_path}")
+            if len(master_metadata) > 0:
+                master_metadata_json = json.loads(master_metadata)
+                master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
+            else:
+                master_current_version = '99.99.99'
+                print_warning("Unable to locate the metadata on the master branch.")
+            if LooseVersion(master_current_version) == LooseVersion(new_version):
+                return True
+            elif LooseVersion(master_current_version) > LooseVersion(new_version):
+                print_error("The master branch is currently ahead of your pack's version. "
+                            "Please pull from master and re-run the command.")
+                sys.exit(0)
+            elif LooseVersion(master_current_version) < LooseVersion(new_version):
+                return False
         except RuntimeError:
-            print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff. "
-                          f"Please verify the pack exists and the pack name is correct.")
+            print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
+                        f"Please verify the pack exists and the pack name is correct.")
+            sys.exit(0)
         return True
 
     def only_readme_changed(self):
@@ -159,7 +185,7 @@ class UpdateRN:
         if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
             return file_name, _file_type
 
-        if self.pack in file_path and ('README' not in file_path):
+        if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
             file_path = file_path.replace(self.pack_path, '')

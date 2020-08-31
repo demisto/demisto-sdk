@@ -43,6 +43,7 @@ INDICATOR_TYPE = 'reputation'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
+OLD_REPUTATION = 'reputations.json'
 
 
 class FileType(Enum):
@@ -842,10 +843,12 @@ IOC_OUTPUTS_DICT = {
 }
 
 PACK_INITIAL_VERSION = '1.0.0'
-PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community', 'nonsupported']
+PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
+MARKETPLACE_LIVE_DISCUSSIONS = \
+    'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"

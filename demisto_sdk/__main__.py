@@ -529,6 +529,16 @@ def download(**kwargs):
 @click.option(
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
+@click.option(
+    "--json-to-outputs", help="Whether to run json_to_outputs command on the context output of the query. If the "
+                              "context output does not exists or the `-r` flag is used, will use the raw"
+                              " response of the query", is_flag=True)
+@click.option(
+    "-p", "--prefix", help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
+                           "the base path for the outputs that the script generates")
+@click.option(
+    "-r", "--raw-response", help="Used with `json-to-outputs` flag. Use the raw response of the query for"
+    " `json-to-outputs`", is_flag=True)
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()
@@ -630,7 +640,7 @@ def generate_test_playbook(**kwargs):
 
 
 # ====================== init ====================== #
-@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+@main.command(name="init", short_help="Initialize a new Pack, Integration or Script."
                                       " If the script/integration flags are not present"
                                       " then we will create a pack with the given name."
                                       " Otherwise when using the flags we will generate"
@@ -848,7 +858,7 @@ def update_pack_releasenotes(**kwargs):
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
         else:
-            update_pack_rn = UpdateRN(pack=_pack, update_type=update_type, pack_files=set(),
+            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=set(),
                                       pre_release=pre_release, added_files=set(),
                                       specific_version=specific_version, pack_metadata_only=True)
             update_pack_rn.execute_update()

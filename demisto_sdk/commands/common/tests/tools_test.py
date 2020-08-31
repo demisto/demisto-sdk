@@ -6,11 +6,8 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PLAYBOOK_YML_REGEX,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOK_YML_REGEX,
-                                                   FileType)
+                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
+                                                   SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
@@ -21,7 +18,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_file, get_files_in_dir,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
-                                               get_matching_regex,
                                                get_release_notes_file_path,
                                                get_ryaml,
                                                has_remote_configured,
@@ -101,11 +97,11 @@ class TestGenericFunctions:
 
     def test_find_type_ignore_sub_categories(self):
         output = find_type(VALID_BETA_INTEGRATION_PATH)
-        assert output == FileType.BETA_INTEGRATION,\
+        assert output == FileType.BETA_INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.BETA_INTEGRATION}'
 
         output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
-        assert output == FileType.INTEGRATION,\
+        assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
     test_path_md = [
@@ -218,18 +214,6 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
-
-
-class TestGetMatchingRegex:
-    INPUTS = [
-        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
-         PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
-    ]
-
-    @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
-    def test_get_matching_regex(self, string_to_match, regexes, answer):
-        assert get_matching_regex(string_to_match, regexes) == answer
 
 
 class TestServerVersionCompare:

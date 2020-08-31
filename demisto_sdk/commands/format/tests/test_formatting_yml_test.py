@@ -6,6 +6,8 @@ import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
@@ -440,3 +442,35 @@ def test_run_format_on_tpb():
     assert formatter.data.get('fromversion') == '5.0.0'
     os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
     os.rmdir(TEST_PLAYBOOK_PATH)
+
+
+def test_update_docker_format(tmpdir, mocker):
+    """Test that script and integration formatter update docker image tag
+    """
+    test_tag = '1.0.0-test-tag'
+    mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value=test_tag)
+    schema_dir = f'{GIT_ROOT}/demisto_sdk/commands/common/schemas'
+    test_files_dir = f'{GIT_ROOT}/demisto_sdk/tests/test_files/update-docker'
+    dest = str(tmpdir.join('docker-res.yml'))
+
+    # test example script file with version before 5.0.0
+    src_file = f'{test_files_dir}/SlackAsk.yml'
+    with open(src_file) as f:
+        data = yaml.safe_load(f)
+    org_docker = data['dockerimage']
+    assert data['fromversion'] < '5.0.0'
+    assert not data.get('dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
+    format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True, update_docker=True)
+    assert format_obj.run_format() == 0
+    with open(dest) as f:
+        data = yaml.safe_load(f)
+    assert data['dockerimage'].endswith(f':{test_tag}')
+    assert data['dockerimage45'] == org_docker
+
+    # test integration file
+    src_file = f'{test_files_dir}/Slack.yml'
+    format_obj = IntegrationYMLFormat(src_file, output=dest, path=f'{schema_dir}/integration.yml', no_validate=True, update_docker=True)
+    assert format_obj.run_format() == 0
+    with open(dest) as f:
+        data = yaml.safe_load(f)
+    assert data['script']['dockerimage'].endswith(f':{test_tag}')

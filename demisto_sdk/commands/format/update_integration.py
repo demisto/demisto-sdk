@@ -11,6 +11,7 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
+from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -27,8 +28,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
     }
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
+                 no_validate: bool = False, update_docker: bool = False):
         super().__init__(input, output, path, from_version, no_validate)
+        self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 
@@ -109,6 +111,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 if param not in params:
                     self.data['configuration'].append(param)
 
+    def update_docker_image(self):
+        if self.update_docker:
+            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.data.get(self.from_version_key))
+
     def run_format(self) -> int:
         try:
             print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
@@ -119,6 +125,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.set_reputation_commands_basic_argument_as_needed()
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()
+            self.update_docker_image()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception:

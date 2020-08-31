@@ -11,11 +11,9 @@ import pytest
 import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES,
-                                                   PACK_INITIAL_VERSION,
-                                                   PACK_SUPPORT_OPTIONS,
-                                                   XSOAR_AUTHOR, XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.constants import (
+    INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
+    PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
 from mock import patch
 from TestSuite.contribution import Contribution
@@ -245,7 +243,7 @@ def test_create_metadata_community(monkeypatch, initiator):
         'support': PACK_SUPPORT_OPTIONS[3],
         'tags': ['Tag1', 'Tag2'],
         'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'url': XSOAR_SUPPORT_URL,
+        'url': MARKETPLACE_LIVE_DISCUSSIONS,
         'useCases': [],
         'githubUser': []
     }

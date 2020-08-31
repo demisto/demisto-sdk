@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+import click
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,
@@ -17,12 +17,13 @@ class MapperJSONFormat(BaseUpdateJSON):
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.set_fromVersion(VERSION_6_0_0)
             self.update_json()
             self.set_description()

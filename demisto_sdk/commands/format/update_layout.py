@@ -2,6 +2,7 @@ import re
 from abc import ABC
 from typing import Tuple
 
+import click
 import yaml
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
@@ -25,8 +26,9 @@ LAYOUT_KIND = 'layout'
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -45,11 +47,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
-            print(F'Removing unnecessary field: {key} from file')
+            if self.verbose:
+                click.echo(F'Removing unnecessary field: {key} from file')
             self.data.pop(key, None)
 
         for kind in layout_kind_args_to_remove:
-            print(F'Removing unnecessary fields from {kind} field')
+            if self.verbose:
+                click.echo(F'Removing unnecessary fields from {kind} field')
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
 
@@ -64,7 +68,7 @@ class LayoutJSONFormat(LayoutBaseFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.set_layout_key()
             # version is both in layout key and in base dict
             self.set_version_to_default(self.data['layout'])
@@ -118,7 +122,7 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.set_fromVersion(from_version=VERSION_6_0_0)
             self.set_group_field()
             super().run_format()
@@ -128,8 +132,8 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
 
     def set_group_field(self):
         if self.data['group'] != 'incident' and self.data['group'] != 'indicator':
-            print_color('No group is specified for this layout, would you like me to update for you? [Y/n]',
-                        LOG_COLORS.RED)
+            click.secho('No group is specified for this layout, would you like me to update for you? [Y/n]',
+                        fg='red')
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ['n', 'N', 'No', 'no']:

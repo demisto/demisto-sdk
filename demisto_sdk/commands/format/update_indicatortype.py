@@ -1,8 +1,8 @@
 from typing import Tuple
 
+import click
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -17,12 +17,14 @@ class IndicatorTypeJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the JSON to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_json()
             self.set_default_values_as_needed()
             self.update_id(field='details')

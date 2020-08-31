@@ -1,6 +1,9 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
+# You can find documentation about adding new checker here:
+# http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
+
 
 class CustomBaseChecker(BaseChecker):
     __implements__ = IAstroidChecker

@@ -90,7 +90,7 @@ INTEGRATION_PROXY_SSL_PACK = [
 def test_proxy_ssl_descriptions(source_path, argument_name, argument_description, file_type, appearances):
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
-    base_yml = IntegrationYMLFormat(source_path, path=schema_path)
+    base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
     base_yml.update_proxy_insecure_param_to_default()
 
     argument_count = 0
@@ -122,7 +122,7 @@ INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
 def test_bang_commands_default_arguments(source_path, file_type, bang_command, verifications):
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
-    base_yml = IntegrationYMLFormat(source_path, path=schema_path)
+    base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
     base_yml.set_reputation_commands_basic_argument_as_needed()
 
     for command in base_yml.data['script']['commands']:
@@ -138,7 +138,7 @@ def test_bang_commands_default_arguments(source_path, file_type, bang_command, v
 def test_playbook_task_description_name(source_path):
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
-    base_yml = PlaybookYMLFormat(source_path, path=schema_path)
+    base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
     base_yml.add_description()
     base_yml.update_playbook_task_name()
     base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
@@ -189,9 +189,9 @@ def test_pwsh_format(tmpdir, yml_file, yml_type):
     dest = str(tmpdir.join('pwsh_format_res.yml'))
     src_file = f'{GIT_ROOT}/demisto_sdk/tests/test_files/{yml_file}'
     if yml_type == 'script':
-        format_obj = ScriptYMLFormat(src_file, output=dest, path=schema_path)
+        format_obj = ScriptYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
     else:
-        format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path)
+        format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
     assert format_obj.run_format() == 0
     with open(dest) as f:
         data = yaml.safe_load(f)
@@ -243,7 +243,7 @@ FORMAT_FILES = [
 def test_format_file(source, target, path, answer):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
-    res = format_manager(input=target, output=target)
+    res = format_manager(input=target, output=target, verbose=True)
     os.remove(target)
     os.rmdir(path)
 
@@ -253,7 +253,7 @@ def test_format_file(source, target, path, answer):
 def test_add_playbooks_description():
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
-    base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path)
+    base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True)
     base_yml.data = {
         "tasks": {
             "1": {
@@ -320,7 +320,7 @@ def test_set_fetch_params_in_config(source, target, path, answer):
     """
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
-    res = format_manager(input=target)
+    res = format_manager(input=target, verbose=True)
     with open(target, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
@@ -357,7 +357,7 @@ def test_set_feed_params_in_config(source, target, path, answer):
     """
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
-    res = format_manager(input=target)
+    res = format_manager(input=target, verbose=True)
     with open(target, 'r') as f:
         content = f.read()
         yaml_content = yaml.load(content)
@@ -383,7 +383,7 @@ def test_set_feed_params_in_config_with_default_value():
     Then
     - Ensures the defaultvalue fields remain after the execution.
     """
-    base_yml = IntegrationYMLFormat(FEED_INTEGRATION_VALID, path="schema_path")
+    base_yml = IntegrationYMLFormat(FEED_INTEGRATION_VALID, path="schema_path", verbose=True)
     base_yml.set_feed_params_in_config()
     configuration_params = base_yml.data.get('configuration', [])
     assert 'defaultvalue' in configuration_params[0]
@@ -401,7 +401,7 @@ def test_set_fetch_params_in_config_with_default_value():
     - Ensure the defaultvalue fields remain after the execution.
     - Ensure that the config param with the defaultvalue key is not getting duplicated without the defaultvalue key.
     """
-    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
+    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True)
     base_yml.set_fetch_params_in_config()
     configuration_params = base_yml.data.get('configuration', [])
     assert 'defaultvalue' in configuration_params[5]

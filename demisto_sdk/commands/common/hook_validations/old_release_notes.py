@@ -25,8 +25,9 @@ class OldReleaseNotesValidator(BaseValidator):
     MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.file_path = file_path
         self.release_notes_path = old_get_release_notes_file_path(self.file_path)
         self.latest_release_notes = old_get_latest_release_notes_text(self.release_notes_path)

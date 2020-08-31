@@ -103,6 +103,11 @@ class UpdateRN:
         return True
 
     def is_bump_required(self):
+        """
+        This function checks to see if the currentVersion in the pack metadata has been changed or
+        not. Additionally, it will verify that there is no conflict with the currentVersion in the
+        Master branch.
+        """
         try:
             if self.only_readme_changed():
                 return False
@@ -126,6 +131,7 @@ class UpdateRN:
         except RuntimeError:
             print_warning(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
                           f"Please verify the pack exists and the pack name is correct.")
+            sys.exit(0)
         return True
 
     def only_readme_changed(self):

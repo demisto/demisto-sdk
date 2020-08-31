@@ -560,7 +560,8 @@ class TestRNUpdateUnit:
     diff_package = [
         ("1.0.1", "1.0.2", True),
         ("1.0.5", "1.0.4", False),
-        ("1.0.5", "1.0.5", True)
+        ("1.0.5", "1.0.5", True),
+        ("1.0.0", '99.99.99', True)
     ]
 
     @pytest.mark.parametrize('pack_current_version, git_current_version, expected_result', diff_package)
@@ -571,15 +572,19 @@ class TestRNUpdateUnit:
             - Case 2: Version of origin/master is lower than current version (indicating bump has
                       happened already.
             - Case 3: Version is the same indicating a bump is necessary.
+            - Case 4: Version was not found so default of 99.99.99 is used.
         When:
             - Case 1: Bumping release notes with update-release-notes command.
             - Case 2: Bumping release notes with update-release-notes command.
             - Case 3: Bumping release notes with update-release-notes command.
+            - Case 4: Bumping release notes with update-release-notes command.
         Then:
             - Case 1: Return True and throw error saying "The master branch is currently ahead of
                       your pack's version. Please pull from master and re-run the command."
             - Case 2: Return False since bump has already happened.
             - Case 3: Return True since a bump is necessary.
+            - Case 4: Return True and throw error saying "The master branch is currently ahead of
+                      your pack's version. Please pull from master and re-run the command."
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         from subprocess import Popen

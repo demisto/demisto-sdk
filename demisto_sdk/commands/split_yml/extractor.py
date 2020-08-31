@@ -177,7 +177,7 @@ class Extractor:
                                   "* Install additional py packages for unit testing (if needed): cd {};" \
                                   " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
                 next_steps += "* Create unit tests\n" \
-                              "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(arg_path)
+                              "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
                 next_steps += "* When ready rm from git the source yml and add the new package:\n" \
                               "    git rm {}\n".format(self.input)
                 next_steps += "    git add {}\n".format(arg_path)

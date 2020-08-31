@@ -1,8 +1,8 @@
-import click
 import re
 from abc import ABC
 from typing import Tuple
 
+import click
 import yaml
 from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,

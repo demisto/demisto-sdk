@@ -380,6 +380,13 @@ def stream_docker_container_output(streamer: Generator) -> None:
 
 @contextmanager
 def handle_lint_plugin(path: Path, pack_type: str):
+    """
+    Function which links the given path with the content of pylint plugins folder in resources.
+    The main purpose is to link each pack with the pylint plugins.
+    Args:
+        path: Pack path.
+        pack_type: the type of the given pack.
+    """
     try:
         if pack_type == TYPE_PYTHON:
             plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'

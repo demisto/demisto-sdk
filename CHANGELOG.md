@@ -13,6 +13,8 @@
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
 * Added a `json-to-outputs` flag to the **run** command.
+* Fixed an issue where **download** added the prefix "playbook-" to the name of playbooks.
+
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.

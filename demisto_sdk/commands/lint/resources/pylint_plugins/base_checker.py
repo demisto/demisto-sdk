@@ -1,7 +1,5 @@
-from astroid import nodes
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-from pylint.lint import PyLinter
 
 
 class CustomBaseChecker(BaseChecker):
@@ -43,10 +41,10 @@ class CustomBaseChecker(BaseChecker):
         )
     }
 
-    def __init__(self, linter: PyLinter = None):
-        super(CustomBaseChecker, self).__init__(linter)
+    def __init__(self, linter=None):
+        super().__init__(linter)
 
-    def visit_call(self, node: nodes) -> None:
+    def visit_call(self, node):
         self._sys_exit_checker(node)
         self._print_checker(node)
         self._demisto_log_checker(node)
@@ -83,5 +81,5 @@ class CustomBaseChecker(BaseChecker):
             pass
 
 
-def register(linter) -> None:
+def register(linter):
     linter.register_checker(CustomBaseChecker(linter))

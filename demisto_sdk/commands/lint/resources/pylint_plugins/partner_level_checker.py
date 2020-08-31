@@ -1,6 +1,5 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-from pylint.lint import PyLinter
 
 
 class PartnerChecker(BaseChecker):
@@ -8,11 +7,11 @@ class PartnerChecker(BaseChecker):
     name = "partner-checker"
     priority = -1
 
-    def __init__(self, linter: PyLinter = None):
-        super(PartnerChecker, self).__init__(linter)
+    def __init__(self, linter=None):
+        super().__init__(linter)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
 
-def register(linter) -> None:
+def register(linter):
     linter.register_checker(PartnerChecker(linter))

@@ -1,6 +1,5 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-from pylint.lint import PyLinter
 
 
 class XsoarChecker(BaseChecker):
@@ -8,12 +7,12 @@ class XsoarChecker(BaseChecker):
     name = "xsoar-checker"
     priority = -1
 
-    def __init__(self, linter: PyLinter = None):
+    def __init__(self, linter=None):
         super().__init__(linter)
         self.list_of_function_names: set = set()
 
     # -------------------------------------------- Validations--------------------------------------------------
 
 
-def register(linter) -> None:
+def register(linter):
     linter.register_checker(XsoarChecker(linter))

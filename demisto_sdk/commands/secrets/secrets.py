@@ -87,10 +87,12 @@ class SecretsValidator(object):
             if secret_to_location_mapping:
                 secrets_found_string = 'Secrets were found in the following files:'
                 for file_name in secret_to_location_mapping:
-                    secrets_found_string += ('\n\nIn File: ' + file_name + '\n')
-                    secrets_found_string += '\nThe following expressions were marked as secrets: \n'
                     for line in sorted(secret_to_location_mapping[file_name]):
-                        secrets_found_string += f'\nLine {line}: {secret_to_location_mapping[file_name][line]}\n'
+                        secrets_found_string += ('\nIn File: ' + f'{file_name}:{line}' + '\n')
+                        if len(secret_to_location_mapping[file_name][line]) == 1:
+                            secrets_found_string += f'Secret found: {secret_to_location_mapping[file_name][line][0]}\n'
+                        else:
+                            secrets_found_string += f'Secrets found: {secret_to_location_mapping[file_name][line]}\n'
 
                 if not is_circle:
                     secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'

@@ -15,27 +15,14 @@ import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
-                                                   CONNECTIONS_DIR,
-                                                   DASHBOARDS_DIR,
-                                                   DOC_FILES_DIR,
-                                                   ENTITY_TYPE_TO_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PACK_INITIAL_VERSION,
-                                                   PACK_SUPPORT_OPTIONS,
-                                                   PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPT, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, XSOAR_AUTHOR,
-                                                   XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.constants import (
+    AUTOMATION, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DOC_FILES_DIR, ENTITY_TYPE_TO_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION,
+    INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
+    PLAYBOOKS_DIR, REPORTS_DIR, SCRIPT, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -209,7 +196,7 @@ class Initiator:
                     metadata_dict['name'] = pack_display_name
                     metadata_dict['author'] = self.author or metadata.get('author', '')
                     metadata_dict['support'] = 'community'
-                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
+                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', MARKETPLACE_LIVE_DISCUSSIONS)
                     metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
                     metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
                     metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
@@ -441,6 +428,8 @@ class Initiator:
                 support_url = input("\nIncorrect input. Please enter full valid url: ")
             pack_metadata['url'] = support_url
             pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
+        else:  # community pack url should refer to the marketplace live discussions
+            pack_metadata['url'] = MARKETPLACE_LIVE_DISCUSSIONS
 
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]

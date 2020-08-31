@@ -46,6 +46,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
+    'testscript': ScriptYMLFormat,
 }
 UNFORMATTED_FILES = ['canvas-context-connections',
                      'readme',
@@ -54,13 +55,16 @@ UNFORMATTED_FILES = ['canvas-context-connections',
                      'changelog',
                      'image',
                      'javascriptfile',
-                     'powershellfile']
+                     'powershellfile',
+                     'betaintegration',
+                     ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None):
+def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None,
+                   verbose: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -68,6 +72,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
+        verbose (bool): Whether to print verbose logs or not
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -90,7 +95,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,
-                                                                 no_validate=no_validate)
+                                                                 no_validate=no_validate, verbose=verbose)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:
@@ -103,13 +108,12 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
-    if error_list:
-        for string, print_func in log_list:
-            print_func('\n'.join(string))
-        return 1
-
+    print('')  # Just adding a new line before summary
     for string, print_func in log_list:
         print_func('\n'.join(string))
+
+    if error_list:
+        return 1
     return 0
 
 

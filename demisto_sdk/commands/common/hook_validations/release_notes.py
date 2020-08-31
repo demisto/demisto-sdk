@@ -23,8 +23,9 @@ class ReleaseNotesValidator(BaseValidator):
     """
 
     def __init__(self, file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
-                 print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+                 print_as_warnings=False, suppress_print=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.file_path = file_path
         self.modified_files = modified_files
         self.added_files = added_files
@@ -39,7 +40,7 @@ class ReleaseNotesValidator(BaseValidator):
             for file in modified_added_files:
                 if not any(permitted_type in file for permitted_type in VALIDATED_PACK_ITEM_TYPES):
                     continue
-                elif self.pack_name in file:
+                elif self.pack_name + '/' in file:
                     update_rn_util = UpdateRN(pack_path=self.file_path, pack_files=set(), update_type=None,
                                               added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)

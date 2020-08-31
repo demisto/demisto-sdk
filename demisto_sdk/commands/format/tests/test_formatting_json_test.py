@@ -59,7 +59,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
+        res = format_manager(input=target, output=target, verbose=True)
         os.remove(target)
         os.rmdir(path)
 
@@ -68,7 +68,7 @@ class TestFormattingJson:
     @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(input=invalid_output, output=invalid_output)
+            res_invalid = format_manager(input=invalid_output, output=invalid_output, verbose=True)
             assert res_invalid
         except Exception as e:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \

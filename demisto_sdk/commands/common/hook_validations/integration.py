@@ -625,7 +625,8 @@ class IntegrationValidator(ContentEntityValidator):
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
                                                       ignored_errors=self.ignored_errors,
-                                                      print_as_warnings=self.print_as_warnings)
+                                                      print_as_warnings=self.print_as_warnings,
+                                                      suppress_print=self.suppress_print)
         if docker_image_validator.is_docker_image_valid():
             return True
 
@@ -705,7 +706,7 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             display_name = self.current_file.get('display')
             correct_name = " v2"
-            if not display_name.endswith(correct_name):
+            if not display_name.endswith(correct_name):  # type: ignore
                 error_message, error_code = Errors.invalid_v2_integration_name()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

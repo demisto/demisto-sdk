@@ -2,9 +2,8 @@ import json
 from typing import Dict, List
 
 import click
-from demisto_sdk.commands.common.tools import (LOG_COLORS, _get_file_id,
-                                               get_not_registered_tests,
-                                               print_color)
+from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_not_registered_tests)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -31,8 +30,9 @@ class BaseUpdateYML(BaseUpdate):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -58,12 +58,14 @@ class BaseUpdateYML(BaseUpdate):
             Only relevant for new files.
         """
         if not self.old_file:
-            print('Updating YML ID to be the same as YML name')
+            if self.verbose:
+                click.echo('Updating YML ID to be the same as YML name')
             self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
+        if self.source_file != self.output_file and self.verbose:
+            click.secho(f'Saving output YML file to {self.output_file} \n', fg='white')
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 

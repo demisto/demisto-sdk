@@ -83,13 +83,13 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - sys.exit exists in the code
+            - sys.exit exists in the code.
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
         _, node_b, _ = astroid.extract_node("""
             def test_function(): #@
-                sys.exit(0) #@
+                sys.exit(1) #@
                 return True #@
         """)
         assert node_b is not None
@@ -112,13 +112,31 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         """
         node_a, node_b = astroid.extract_node("""
             def test_function():
-                ''' this is sys.exit(0) in doc string test''' #@
-                # this is sys.exit(0) in comment #@
+                ''' this is sys.exit(1) in doc string test''' #@
+                # this is sys.exit(1) in comment #@
                 return True
         """)
         assert node_a is None and node_b is None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+
+    def test_sys_exit_non_zero_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - sys.exit exists in the code but with 0 as input.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        _, node_b, _ = astroid.extract_node("""
+            def test_function(): #@
+                sys.exit(0) #@
+                return True #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
             self.checker.visit_call(node_b)
 
     def test_no_sys_exit(self):

@@ -130,7 +130,7 @@ class UpdateRN:
                 return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
-                          f"Please verify the pack exists and the pack name is correct.")
+                        f"Please verify the pack exists and the pack name is correct.")
             sys.exit(0)
         return True
 

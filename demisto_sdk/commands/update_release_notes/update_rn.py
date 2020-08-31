@@ -18,13 +18,14 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_pack_name, get_yaml,
                                                pack_name_to_path, print_color,
                                                print_error, print_warning,
-                                               run_command)
+                                               run_command, get_parent_directory_name)
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False):
+                 pack_metadata_only: bool = False, ignore_bump_check: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -35,6 +36,7 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.pack_metadata_only = pack_metadata_only
+        self.override_bump_check = ignore_bump_check
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         except TypeError:
@@ -102,6 +104,8 @@ class UpdateRN:
         return True
 
     def is_bump_required(self):
+        if self.override_bump_check:
+            return True
         try:
             diff = run_command(f"git diff master:{self.metadata_path} {self.metadata_path}")
             if '+    "currentVersion"' in diff:
@@ -436,3 +440,82 @@ def get_file_description(path, file_type):
         return json_file.get('description', '')
 
     return '%%UPDATE_RN%%'
+
+
+def run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type):
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    validate_manager.setup_git_params()
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
+                                                                                                     'origin/master')
+    packs_existing_rn = set()
+    for pf in added:
+        if 'ReleaseNotes' in pf:
+            pack_with_existing_rn = get_pack_name(pf)
+            packs_existing_rn.add(pack_with_existing_rn)
+    if len(packs_existing_rn):
+        existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
+        print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
+
+    # create release notes:
+    if len(_packs) > 1:
+        # case: multiple packs
+        pack_list = ''.join(f"{p}, " for p in _packs)
+        if not is_all:
+            if _pack:
+                pass
+            else:
+                print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
+                            f"To update release notes in a specific pack, please use the -p parameter "
+                            f"along with the pack name.")
+                sys.exit(0)
+    if (len(modified) < 1) and (len(added) < 1):
+        # case: changed_meta_files
+        if len(changed_meta_files) < 1:
+            print_warning('No changes were detected. If changes were made, please commit the changes '
+                          'and rerun the command')
+        else:
+            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=set(),
+                                      pre_release=pre_release, added_files=set(),
+                                      specific_version=specific_version, pack_metadata_only=True)
+            update_pack_rn.execute_update()
+        sys.exit(0)
+
+    # default case:
+    if is_all and not _pack:
+        packs = list(_packs - packs_existing_rn)
+        packs_list = ''.join(f"{p}, " for p in packs)
+        print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
+        for pack in packs:
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
+                                      pre_release=pre_release, added_files=added,
+                                      specific_version=specific_version)
+            update_pack_rn.execute_update()
+    elif is_all and _pack:
+        print_error("Please remove the --all flag when specifying only one pack.")
+        sys.exit(0)
+    else:
+        if _pack:
+            packs_existing_rn_abs_path = set()
+            for item in packs_existing_rn:
+                packs_existing_rn_abs_path.add(os.path.abspath(pack_name_to_path(item)))
+
+            if _pack in packs_existing_rn_abs_path and update_type is not None:
+                print_error(f"New release notes file already found for {_pack}. "
+                            f"Please update manually or run `demisto-sdk update-release-notes "
+                            f"-p {_pack}` without specifying the update_type.")
+            else:
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
+                                          pre_release=pre_release, added_files=added,
+                                          specific_version=specific_version)
+                update_pack_rn.execute_update()
+
+    # if _pack == 'ApiModules':
+    #     # case: ApiModules
+    #     print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+    #     if not os.path.isfile('./Tests/id_set.json'):
+    #         print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is"
+    #                     "available. Please run `demisto-sdk create-id-set` to generate it.")
+    #     else:
+    #         with open('./Tests/id_set.json', 'r') as conf_file:
+    #             id_set = json.load(conf_file)
+    #             get_parent_directory_name()

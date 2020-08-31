@@ -134,7 +134,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     return command
 
 
-def build_pylint_command(files: List[Path], support_level: str = "") -> str:
+def build_pylint_command(files: List[Path], support_level: str = "base") -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:

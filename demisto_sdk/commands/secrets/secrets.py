@@ -4,6 +4,7 @@ import math
 import os
 import string
 from collections import defaultdict
+from typing import DefaultDict
 
 import PyPDF2
 from bs4 import BeautifulSoup
@@ -163,7 +164,7 @@ class SecretsValidator(object):
 
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
         """
-        secret_to_location_mapping = defaultdict(lambda: defaultdict(list))
+        secret_to_location_mapping: DefaultDict[str, defaultdict] = defaultdict(lambda: defaultdict(list))
         for file_path in secrets_file_paths:
             # Get if file path in pack and pack name
             is_pack = is_file_path_in_pack(file_path)

@@ -44,8 +44,10 @@ class StructureValidator(BaseValidator):
     }
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
-                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
+                 suppress_print: bool = False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.is_valid = True
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
@@ -120,7 +122,9 @@ class StructureValidator(BaseValidator):
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.WARNING)
-            scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value
+            if self.suppress_print:
+                logging.disable(logging.CRITICAL)
+            scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value  # type: ignore
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
             core = Core(source_file=self.file_path,
@@ -336,7 +340,7 @@ class StructureValidator(BaseValidator):
                     else:
                         key_list.append(single_path)
                 else:
-                    curr = curr.get(single_path)
+                    curr = curr.get(single_path)  # type: ignore
                     key_list.append(single_path)
 
             curr_string_transformer = get_content_file_type_dump(self.file_path)
@@ -344,17 +348,17 @@ class StructureValidator(BaseValidator):
             # if the error is from arguments of file
             if curr.get('name'):
                 return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('name')),
+                                                          curr_string_transformer(curr.get('name')),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
 
             # if the error is from outputs of file
             elif curr.get('contextPath'):
                 return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('contextPath')),
+                                                          curr_string_transformer(curr.get('contextPath')),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
             # if the error is from neither arguments , outputs nor root
             else:
-                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),
+                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
         else:
             err_msg = str(err).lower()

@@ -449,6 +449,8 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
 @click.option(
     "-ud", "--update-docker", help="Set if you want to update the docker image of the integration/script", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
 def format_yml(**kwargs):
     return format_manager(**kwargs)
 
@@ -642,7 +644,7 @@ def generate_test_playbook(**kwargs):
 
 
 # ====================== init ====================== #
-@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+@main.command(name="init", short_help="Initialize a new Pack, Integration or Script."
                                       " If the script/integration flags are not present"
                                       " then we will create a pack with the given name."
                                       " Otherwise when using the flags we will generate"

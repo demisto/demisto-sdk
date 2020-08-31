@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 
+import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
@@ -21,8 +22,8 @@ class ScriptYMLFormat(BaseUpdateYML):
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False,
-                 update_docker: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+                 update_docker: bool = False, verbose: bool = False):
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
         self.update_docker = update_docker
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -62,7 +63,7 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_yml()
             self.update_tests()
             self.update_docker_image()

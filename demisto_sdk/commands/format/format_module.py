@@ -127,6 +127,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
+    if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
+        # non code formatters don't support update_docker param. remove it
+        del kwargs['update_docker']
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                          from_version=from_version,
                                                          **kwargs)

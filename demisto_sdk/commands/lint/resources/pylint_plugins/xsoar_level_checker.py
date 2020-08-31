@@ -8,8 +8,8 @@ class XsoarChecker(BaseChecker):
     priority = -1
 
     def __init__(self, linter=None):
-        super().__init__(linter)
-        self.list_of_function_names: set = set()
+        super(XsoarChecker, self).__init__(linter)
+        self.list_of_function_names = set()
 
     # -------------------------------------------- Validations--------------------------------------------------
 

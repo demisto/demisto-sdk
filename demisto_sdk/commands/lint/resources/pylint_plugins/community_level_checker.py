@@ -8,7 +8,7 @@ class CommunityChecker(BaseChecker):
     priority = -1
 
     def __init__(self, linter=None):
-        super().__init__(linter)
+        super(CommunityChecker, self).__init__(linter)
 
     # -------------------------------------------- Validations--------------------------------------------------
 

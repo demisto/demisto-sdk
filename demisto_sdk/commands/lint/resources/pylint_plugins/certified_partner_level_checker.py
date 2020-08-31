@@ -8,7 +8,7 @@ class CertifiedPartnerChecker(BaseChecker):
     priority = -1
 
     def __init__(self, linter=None):
-        super().__init__(linter)
+        super(CertifiedPartnerChecker, self).__init__(linter)
 
     # -------------------------------------------- Validations--------------------------------------------------
 

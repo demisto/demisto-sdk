@@ -447,8 +447,10 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
-def format_yml(input=None, output=None, from_version=None, no_validate=None):
-    return format_manager(input, output, from_version, no_validate)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+def format_yml(input=None, output=None, from_version=None, no_validate=None, verbose=False):
+    return format_manager(input, output, from_version, no_validate, verbose)
 
 
 # ====================== upload ====================== #
@@ -641,7 +643,7 @@ def generate_test_playbook(**kwargs):
 
 
 # ====================== init ====================== #
-@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+@main.command(name="init", short_help="Initialize a new Pack, Integration or Script."
                                       " If the script/integration flags are not present"
                                       " then we will create a pack with the given name."
                                       " Otherwise when using the flags we will generate"

@@ -1,8 +1,8 @@
 from typing import Tuple
 
+import click
 from demisto_sdk.commands.common.constants import TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -17,14 +17,16 @@ class ScriptYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False):
-        super().__init__(input, output, path, from_version, no_validate)
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_yml()
             self.update_tests()
             self.save_yml_to_destination_file()

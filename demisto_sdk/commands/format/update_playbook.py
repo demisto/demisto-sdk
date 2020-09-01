@@ -23,7 +23,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         """Add empty description to playbook and tasks."""
         if self.verbose:
             click.echo('Adding descriptions for the playbook and to relevant tasks')
-        if not self.data.get('description', ''):
+        if 'description' not in set(self.data.keys()):
             click.secho('No description is specified for this playbook, would you like to add a description? [Y/n]',
                         fg='red')
             user_answer = input()

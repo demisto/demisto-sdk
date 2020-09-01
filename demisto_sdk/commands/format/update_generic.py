@@ -88,17 +88,17 @@ class BaseUpdate:
             schema = yaml.safe_load(file_obj)
         if self.verbose:
             print('Removing Unnecessary fields from file')
-        self.data = self.recursive_remove_unnecessary_keys(schema, self.data, {})
+        self.recursive_remove_unnecessary_keys(schema.get('mapping'), self.data)
 
-    def recursive_remove_unnecessary_keys(self, schema, data, new_data):
+    def recursive_remove_unnecessary_keys(self, schema, data):
         """Recursively removes all the unnecessary fields in the file"""
-        if not schema.get('mapping'):
-            return data
-        for key in data.keys():
-            if key in schema.get('mapping').keys():
-                new_data[key] = self.recursive_remove_unnecessary_keys(schema.get('mapping').get(key), data.get(key),
-                                                                       {})
-        return new_data
+        data_keys = set(data.keys())
+        for key in data_keys:
+            if key not in schema.keys():
+                data.pop(key, None)
+            else:
+                if schema.get(key).get('mapping'):
+                    self.recursive_remove_unnecessary_keys(schema.get(key).get('mapping'), data.get(key))
 
     def set_fromVersion(self, from_version=None):
         """Sets fromversion key in file:

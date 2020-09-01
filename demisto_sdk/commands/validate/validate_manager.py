@@ -683,7 +683,7 @@ class ValidateManager:
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
-        changed_files = modified_files.copy().union(old_format_files)
+        changed_files = modified_files.union(old_format_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,

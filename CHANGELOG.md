@@ -1,4 +1,5 @@
 # Changelog
+* Added line number to secrets' path in **secrets** command report.
 * Fixed an issue where **init** a community pack did not present the valid support URL.
 * Fixed an issue where **init** offered a non relevant pack support type.
 * Fixed an issue where **lint** did not pull docker images for powershell.

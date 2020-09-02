@@ -1,5 +1,5 @@
 # Changelog
-
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

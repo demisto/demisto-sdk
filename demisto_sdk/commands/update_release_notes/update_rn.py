@@ -30,7 +30,8 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        self.pack_files = pack_files
+        # renamed files will appear in the modified list as a tuple: (old path, new path)
+        self.pack_files = {file_[1] if isinstance(file_, tuple) else file_ for file_ in pack_files}
         self.added_files = added_files
         self.pre_release = pre_release
         self.specific_version = specific_version

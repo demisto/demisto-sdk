@@ -250,6 +250,32 @@ def test_format_file(source, target, path, answer):
     assert res is answer
 
 
+@pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
+def test_remove_unnecessary_keys_from_playbook(source_path):
+    """
+    Given:
+        - Playbook file to format, with excessive keys in it
+    When:
+        - Running the remove_unnecessary_keys function
+    Then:
+        - Validate that the excessive keys were removed successfully
+    """
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+    base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+
+    # Assert the unnecessary keys are indeed in the playbook file
+    assert 'excessiveKey' in base_yml.data.keys()
+    assert 'itemVersion' in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
+
+    base_yml.remove_unnecessary_keys()
+
+    # Assert the unnecessary keys were successfully removed
+    assert 'excessiveKey' not in base_yml.data.keys()
+    assert 'itemVersion' not in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
+
+
+
 @patch('builtins.input', lambda *args: 'n')
 def test_add_tasks_description_and_empty_playbook_description():
     """
@@ -327,7 +353,6 @@ def test_add_playbook_description(user_input):
         - Validate that empty descriptions were added only to the desired tasks.
     """
     user_responses = [Mock(), Mock()]
-
     user_responses[0] = 'y'
     user_responses[1] = 'User-entered description'
     user_input.side_effect = user_responses

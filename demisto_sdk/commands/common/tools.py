@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType, CONNECTIONS_DIR)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -769,32 +769,32 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.PYTHON_FILE
 
     if file_type == 'yml':
-        if 'category' in _dict:
+        if INTEGRATIONS_DIR in path:
             if 'beta' in _dict and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        if 'script' in _dict:
+        if SCRIPTS_DIR in path:
             if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
-        if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
-                return FileType.TEST_PLAYBOOK
+        if TEST_PLAYBOOKS_DIR in path:
+            return FileType.TEST_PLAYBOOK
 
+        if PLAYBOOKS_DIR in path:
             return FileType.PLAYBOOK
 
     if file_type == 'json':
-        if 'widgetType' in _dict:
+        if WIDGETS_DIR in path:
             return FileType.WIDGET
 
-        if 'orientation' in _dict:
+        if REPORTS_DIR in path:
             return FileType.REPORT
 
-        if 'preProcessingScript' in _dict:
+        if INCIDENT_TYPES_DIR in path:
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -802,26 +802,27 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'regex' in _dict or 'reputations' in _dict:
             return FileType.REPUTATION
 
-        if 'brandName' in _dict and 'transformer' in _dict:
-            return FileType.OLD_CLASSIFIER
+        if CLASSIFIERS_DIR in path:
+            if 'brandName' in _dict and 'transformer' in _dict:
+                return FileType.OLD_CLASSIFIER
 
-        if 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return FileType.CLASSIFIER
+            if 'keyTypeMap' in _dict and 'transformer' in _dict:
+                return FileType.CLASSIFIER
 
-        if 'canvasContextConnections' in _dict:
+        if CONNECTIONS_DIR in path:
             return FileType.CONNECTION
 
         if 'mapping' in _dict:
             return FileType.MAPPER
 
-        if 'layout' in _dict or 'kind' in _dict:
-            if 'kind' in _dict or 'typeId' in _dict:
-                return FileType.LAYOUT
-
+        if DASHBOARDS_DIR in path:
             return FileType.DASHBOARD
 
-        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
-            return FileType.LAYOUTS_CONTAINER
+        if LAYOUTS_DIR in path:
+            if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+                return FileType.LAYOUTS_CONTAINER
+
+            return FileType.LAYOUT
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:

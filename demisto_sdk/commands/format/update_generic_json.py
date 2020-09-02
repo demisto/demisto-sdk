@@ -1,7 +1,7 @@
 from distutils.version import LooseVersion
 
 import click
-import ujson
+import json
 import yaml
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (
@@ -34,7 +34,7 @@ class BaseUpdateJSON(BaseUpdate):
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(self.data, file, indent=4)
+            json.dump(self.data, file, indent=4)
 
     def update_json(self):
         """Manager function for the generic JSON updates."""

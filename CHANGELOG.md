@@ -1,5 +1,5 @@
 # Changelog
-
+* Fixed an issue where **validate** failed on deleted files.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

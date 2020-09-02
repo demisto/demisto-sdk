@@ -4,6 +4,8 @@ import sys
 
 import pytest
 import yaml
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -21,8 +23,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
-from mock import patch, Mock
-from ruamel.yaml import YAML
+from mock import Mock, patch
 
 ryaml = YAML()
 ryaml.preserve_quotes = True
@@ -273,7 +274,6 @@ def test_remove_unnecessary_keys_from_playbook(source_path):
     # Assert the unnecessary keys were successfully removed
     assert 'excessiveKey' not in base_yml.data.keys()
     assert 'itemVersion' not in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
-
 
 
 @patch('builtins.input', lambda *args: 'n')

@@ -4,8 +4,6 @@ import sys
 
 import pytest
 import yaml
-from ruamel.yaml import YAML
-
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -24,6 +22,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from mock import Mock, patch
+from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.preserve_quotes = True

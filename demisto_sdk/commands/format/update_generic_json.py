@@ -3,7 +3,6 @@ from distutils.version import LooseVersion
 
 import click
 import yaml
-
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)

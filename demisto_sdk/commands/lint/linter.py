@@ -85,8 +85,8 @@ class Linter:
         }
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                         no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict, keep_container: bool,
-                         test_xml: str) -> dict:
+                         no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
+                         keep_container: bool, test_xml: str) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -125,7 +125,8 @@ class Linter:
                 self._run_lint_in_host(no_flake8=no_flake8,
                                        no_bandit=no_bandit,
                                        no_mypy=no_mypy,
-                                       no_vulture=no_vulture)
+                                       no_vulture=no_vulture,
+                                       no_xsoar_linter=no_xsoar_linter)
 
             # Run lint and test check on pack docker image
             if self._facts["docker_engine"]:
@@ -258,7 +259,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
-    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool):
+    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool):
         """ Run lint check on host
 
         Args:
@@ -269,12 +270,14 @@ class Linter:
         """
         if self._facts["lint_files"]:
             exit_code: int = 0
-            for lint_check in ["flake8", "bandit", "mypy", "vulture"]:
+            for lint_check in ["flake8", "bandit", "mypy", "vulture", "xsoar_linter"]:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_files"])
+                elif lint_check == "xsoar_linter" and not no_xsoar_linter:
+                    exit_code, output = self._run_xsoar_linter(lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
                 elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
@@ -326,7 +329,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_xsoar_linter(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:

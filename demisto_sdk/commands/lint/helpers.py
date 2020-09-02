@@ -45,7 +45,7 @@ RERUN = 0b10
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint", "xsoar_linter"]
 
 # Line break
 RL = '\n'

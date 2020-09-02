@@ -222,12 +222,13 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                         no_vulture: bool, no_xsoar_linter: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
+            no_xsoar_linter:
             parallel(int): Whether to run command on multiple threads
             no_flake8(bool): Whether to skip flake8
             no_bandit(bool): Whether to skip bandit
@@ -284,6 +285,7 @@ class LintManager:
                                                no_bandit=no_bandit,
                                                no_mypy=no_mypy,
                                                no_vulture=no_vulture,
+                                               no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint,
                                                no_test=no_test,
                                                no_pwsh_analyze=no_pwsh_analyze,

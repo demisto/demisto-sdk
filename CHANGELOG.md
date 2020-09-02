@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
 * Fixed an issue where **validate** failed on deleted files.
 
 # 1.1.11

@@ -598,3 +598,26 @@ class TestRNUpdateUnit:
         mocker.patch('sys.exit', return_value=None)
         bump_result = update_rn.is_bump_required()
         assert bump_result is expected_result
+
+    def test_renamed_files(self):
+        """
+        Given:
+            A file was renamed
+        When:
+            Bumping release notes with update-release-notes command.
+        Then:
+            file list should contain the new file path and ignore the old path.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        modified_files = {
+            'file1',
+            ('file2', 'file2_new'),
+            'file3'
+        }
+        update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', pack_files=modified_files,
+                             added_files=set())
+
+        assert 'file1' in update_rn.pack_files
+        assert 'file2_new' in update_rn.pack_files
+        assert ('file2', 'file2_new') not in update_rn.pack_files
+        assert 'file3' in update_rn.pack_files

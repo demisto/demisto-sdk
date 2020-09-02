@@ -853,7 +853,7 @@ class ValidateManager:
                 continue
 
             # identify deleted files
-            if file_status.lower() == 'd' and find_type(file_path) and not file_path.startswith('.'):
+            if file_status.lower() == 'd' and not file_path.startswith('.'):
                 deleted_files.add(file_path)
 
             # ignore directories

@@ -839,6 +839,7 @@ def update_pack_releasenotes(**kwargs):
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+    modified = [file_[1] if isinstance(file_, tuple) else file_ for file_ in modified]
 
     packs_existing_rn = set()
     for pf in added:

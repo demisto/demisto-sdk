@@ -5,13 +5,14 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 2) In demisto-sdk, create a new release branch, named after the release version in the format `X.X.X`, e.g. `1.0.0`
 3) Make sure that sdk-nightly and sdk-master builds are both green. If there were no new commits to the sdk after
  the nightly tests finished you can skip step 4.
-4) If there were new commits to the sdk after the nightly tests finished you will need to trigger sdk nightly build again in order to test sdk master on content branch
+4) If there were new commits to the sdk after the nightly tests finished you will need to trigger sdk nightly build again in order to test sdk master on content branch \
    Do so by running `./Utils/trigger_nightly_sdk_build.sh <branch_name> <circle_token>` in content repo and check for green build.
 5) If there was any change in the content creation steps (**create content artifacts** or **unify** commands) - we need to check that the new content is valid.
 To do so, you can do the following:\
   a. Compare the content_new.zip from nightly-sdk build and nightly-content build and see if there is any major difference between them.\
   b. If needed, trigger the nightly Content build from the Content repository by running:\
   `./Utils/trigger_content_nightly_build.sh <branch_name> <circle_token>` and make sure to wait until the build is finished.\
+  circle_token is a private key, if you don't have one - you can generate your own in your circle user settings under `Personal API Tokens`. \
 6) Update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 
 ### Release process:

@@ -287,7 +287,7 @@ class IncidentFieldValidator(ContentEntityValidator):
     def is_matching_cliname_regex(self):
         # type: () -> bool
         cliname = self.current_file.get("cliName")
-        if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):
+        if re.fullmatch(INCIDENT_FIELD_CLINAME_VALIDATION_REGEX, cliname):  # type: ignore
             return True
         error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
             INCIDENT_FIELD_CLINAME_VALIDATION_REGEX)

@@ -447,8 +447,12 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-fv", "--from-version", help="Specify fromversion of the pack")
 @click.option(
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
-def format_yml(input=None, output=None, from_version=None, no_validate=None):
-    return format_manager(input, output, from_version, no_validate)
+@click.option(
+    "-ud", "--update-docker", help="Set if you want to update the docker image of the integration/script", is_flag=True)
+@click.option(
+    "-v", "--verbose", help="Verbose output", is_flag=True)
+def format_yml(**kwargs):
+    return format_manager(**kwargs)
 
 
 # ====================== upload ====================== #
@@ -529,6 +533,16 @@ def download(**kwargs):
 @click.option(
     "--debug-path", help="The path to save the debug file at, if not specified the debug file will be printed to the "
                          "terminal")
+@click.option(
+    "--json-to-outputs", help="Whether to run json_to_outputs command on the context output of the query. If the "
+                              "context output does not exists or the `-r` flag is used, will use the raw"
+                              " response of the query", is_flag=True)
+@click.option(
+    "-p", "--prefix", help="Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, "
+                           "the base path for the outputs that the script generates")
+@click.option(
+    "-r", "--raw-response", help="Used with `json-to-outputs` flag. Use the raw response of the query for"
+    " `json-to-outputs`", is_flag=True)
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()
@@ -580,7 +594,8 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
 @click.option(
     "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
 @click.option(
-    "-i", "--input", help="Valid JSON file path. If not specified then script will wait for user input in the terminal",
+    "-i", "--input", help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
+                          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
     "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
@@ -630,7 +645,7 @@ def generate_test_playbook(**kwargs):
 
 
 # ====================== init ====================== #
-@main.command(name="init", short_help="Initiate a new Pack, Integration or Script."
+@main.command(name="init", short_help="Initialize a new Pack, Integration or Script."
                                       " If the script/integration flags are not present"
                                       " then we will create a pack with the given name."
                                       " Otherwise when using the flags we will generate"

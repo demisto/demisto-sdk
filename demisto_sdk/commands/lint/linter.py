@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.tools import (get_all_docker_images,
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_pytest_command, build_vulture_command)
+    build_pytest_command, build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, add_tmp_lint_files,
                                                add_typing_module,
@@ -192,8 +192,8 @@ class Linter:
         lint_files = set()
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+            self._update_support_level()
             if self._facts["docker_engine"]:
-                self._update_support_level()
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: float = get_python_version_from_image(image=image[0])
@@ -312,6 +312,36 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
                                                    cwd=self._content_repo)
+        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finished errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
+    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Runs flake8 in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Xsoar Linter"
+        logger.info(f"{log_prompt} - Start")
+        with handle_lint_plugin(self._pack_abs_dir, self._pkg_lint_status['pack_type']):
+            stdout, stderr, exit_code = run_command_os(command=build_xsoar_linter_command(lint_files, self._facts['support_level']),
+                                                       cwd=self._content_repo)
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
@@ -579,26 +609,25 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
-        with handle_lint_plugin(self._pack_abs_dir, self._pkg_lint_status['pack_type']):
-            for trial in range(2):
-                dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
-                try:
-                    logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                    dockerfile = template.render(image=test_image_name,
-                                                 copy_pack=True)
-                    with open(file=dockerfile_path, mode="+x") as file:
-                        file.write(str(dockerfile))
+        for trial in range(2):
+            dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+            try:
+                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                dockerfile = template.render(image=test_image_name,
+                                             copy_pack=True)
+                with open(file=dockerfile_path, mode="+x") as file:
+                    file.write(str(dockerfile))
 
-                    docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
-                                                                          dockerfile=dockerfile_path.stem,
-                                                                          forcerm=True)
-                    test_image_name = docker_image_final[0].short_id
-                    break
-                except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
-                        exceptions.TemplateError) as e:
-                    logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
-                    if trial == 2:
-                        errors = str(e)
+                docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
+                                                                      dockerfile=dockerfile_path.stem,
+                                                                      forcerm=True)
+                test_image_name = docker_image_final[0].short_id
+                break
+            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
+                    exceptions.TemplateError) as e:
+                logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
+                if trial == 2:
+                    errors = str(e)
         if dockerfile_path.exists():
             dockerfile_path.unlink()
 

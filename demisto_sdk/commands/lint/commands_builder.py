@@ -72,7 +72,7 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(support_level: str = "base") -> str:
+def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
@@ -94,11 +94,15 @@ def build_xsoar_linter_command(support_level: str = "base") -> str:
     command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
-    # Disable all errors and Enable only Demisto Plugins errors.
-    command += " --disable=all --enable=sys-exit-exists,print-exists"
+    # Disable all errors
+    command += " --disable=all"
+    # Enable only Demisto Plugins errors.
+    command += "--enable=sys-exit-exists,print-exists"
     # Load plugins
     command += f" --load-plugins {support_levels.get(support_level)}" if support_levels.get(support_level) else ""
-    # Disable specific errors
+    # Generating path pattrens - file1 file2 file3,..
+    files_list = [file.name for file in files]
+    command += " " + " ".join(files_list)
     return command
 
 

@@ -10,7 +10,7 @@ class CustomBaseChecker(BaseChecker):
     name = "base-checker"
     priority = -1
     msgs = {
-        "E9001": (
+        "W9001": (
             # displayed-message shown to user
             "Sys.exit use is found, Please use return instead.",
             # message-symbol used as alias for message-id
@@ -18,7 +18,7 @@ class CustomBaseChecker(BaseChecker):
             # message-help shown to user when calling pylint --help-msg
             "Ensure to not use sys.exit in the code.",
         ),
-        "E9002": (
+        "W9002": (
             # displayed-message shown to user
             "Print is found, Please remove all prints from the code.",
             # message-symbol used as alias for message-id
@@ -26,7 +26,7 @@ class CustomBaseChecker(BaseChecker):
             # message-help shown to user when calling pylint --help-msg
             "Please remove all prints from the code.",
         ),
-        "E9003": (
+        "W9003": (
             # displayed-message shown to user
             "demisto.log is found, Please remove, you can choose to replace it with demisto.debug or logger",
             # message-symbol used as alias for message-id
@@ -34,7 +34,7 @@ class CustomBaseChecker(BaseChecker):
             # message-help shown to user when calling pylint --help-msg
             "Please remove all demisto.log from the code.",
         ),
-        "E9004": (
+        "W9004": (
             # displayed-message shown to user
             "time.sleep is found, Please remove any sleep functionality from the code",
             # message-symbol used as alias for message-id

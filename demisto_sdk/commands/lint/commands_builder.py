@@ -72,6 +72,36 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
+def build_xsoar_linter_command(support_level: str = "base") -> str:
+    """ Build command to execute with pylint module
+        https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
+    Args:
+        files(List[Path]): files to execute lint
+        support_level: Support level for the file
+
+    Returns:
+       str: pylint command
+    """
+    support_levels = {
+        'base': 'base_checker',
+        'community': 'base_checker,community_level_checker',
+        'partner': 'base_checker,community_level_checker,partner_level_checker',
+        'certified partner': 'base_checker,community_level_checker,partner_level_checker,'
+                             'certified_partner_level_checker',
+        'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
+                 'xsoar_level_checker '
+    }
+    command = "python -m pylint"
+    # Excluded files
+    command += f" --ignore={','.join(excluded_files)}"
+    # Disable all errors and Enable only Demisto Plugins errors.
+    command += " --disable=all --enable=sys-exit-exists,print-exists"
+    # Load plugins
+    command += f" --load-plugins {support_levels.get(support_level)}" if support_levels.get(support_level) else ""
+    # Disable specific errors
+    return command
+
+
 def build_mypy_command(files: List[Path], version: float) -> str:
     """ Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
@@ -134,7 +164,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     return command
 
 
-def build_pylint_command(files: List[Path], support_level: str = "base") -> str:
+def build_pylint_command(files: List[Path]) -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
@@ -144,22 +174,11 @@ def build_pylint_command(files: List[Path], support_level: str = "base") -> str:
     Returns:
        str: pylint command
     """
-    support_levels = {
-        'base': 'base_checker',
-        'community': 'base_checker,community_level_checker',
-        'partner': 'base_checker,community_level_checker,partner_level_checker',
-        'certified partner': 'base_checker,community_level_checker,partner_level_checker,'
-                             'certified_partner_level_checker',
-        'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
-                 'xsoar_level_checker '
-    }
     command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Prints only errors
     command += " -E"
-    # Load plugins
-    command += f" --load-plugins {support_levels.get(support_level)}" if support_levels.get(support_level) else ""
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
@@ -168,7 +187,6 @@ def build_pylint_command(files: List[Path], support_level: str = "base") -> str:
     # Generating path pattrens - file1 file2 file3,..
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
-
     return command
 
 

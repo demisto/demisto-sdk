@@ -393,7 +393,7 @@ class UpdateRN:
                 if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += '- % % UPDATE_RN % %\n'
+                    rn_desc += '- %%UPDATE_RN%%\n'
         return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):

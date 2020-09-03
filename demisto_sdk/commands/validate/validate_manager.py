@@ -842,8 +842,9 @@ class ValidateManager:
                 file_path = file_data[2]
 
             # if the file is a code file - change path to the associated yml path to trigger release notes validation.
-            if find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and file_status.lower() != 'd' \
-                    and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
+            if file_status.lower() != 'd' and \
+                find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                    not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
 
@@ -853,7 +854,7 @@ class ValidateManager:
                 continue
 
             # identify deleted files
-            if file_status.lower() == 'd' and find_type(file_path) and not file_path.startswith('.'):
+            if file_status.lower() == 'd' and not file_path.startswith('.'):
                 deleted_files.add(file_path)
 
             # ignore directories

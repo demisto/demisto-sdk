@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
 * Fixed an issue where **validate** validated all images instead of packs only.
 
 # 1.1.11

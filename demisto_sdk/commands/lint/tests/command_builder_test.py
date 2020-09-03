@@ -37,6 +37,17 @@ def test_build_xsoar_linter_command(files):
 
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_no_base_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, "unsupported")
+    files = [str(file) for file in files]
+    expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               f"conftest.py,venv -E --disable=all --enable= {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_bandit_command(files):
     """Build bandit command"""
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command

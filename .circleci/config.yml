@@ -5,6 +5,8 @@
 version: 2.1
 orbs:
   node: circleci/node@4.0.0
+  win: circleci/windows@2.2.0
+
 references:
     tag_filter: &tag_filter
       filters:
@@ -42,8 +44,12 @@ jobs:
         - run:
             name: Tox build
             command: |
+              mkdir test_results
               pip install tox
-              tox -e py37 -v
+              tox --parallel-live -e py37 -v -- --junitxml=test_results/junit-tox3-7.xml
+        - store_test_results:
+            path: test_results
+
   tox3-8:
       docker:
         - image: python:3.8
@@ -53,7 +59,9 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+              tox --parallel-live -e py38 -v -- --cov=demisto_sdk --cov-report=html --junitxml=test_results/junit-tox3-8.xml
+        - store_test_results:
+            path: test_results
         - store_artifacts:
             path: coverage_html_report
         - persist_to_workspace:
@@ -62,6 +70,27 @@ jobs:
               - coverage_html_report
               - .coverage
               - .tox
+
+  tox3-7-windows:
+    executor:
+      name: win/default
+      shell: powershell.exe
+    steps:
+      - checkout
+      - run:
+          name: Conda update
+          command: conda update --all
+      - run:
+          name: Install tox
+          command: pip install tox
+      - run:
+          name: Tox integration tests
+          command: |
+            mkdir test_results
+            tox --parallel-live -e py37 -- demisto_sdk/tests/integration_tests --junitxml=test_results/junit-tox3-7-windows.xml
+      - store_test_results:
+          path: test_results
+
   precommit-checks:
       docker:
         - image: python:3.8
@@ -76,6 +105,7 @@ jobs:
               pre-commit --version
               pre-commit run -a
               deactivate
+
   coveralls-upload:
       docker:
         - image: python:3.8
@@ -203,6 +233,9 @@ workflows:
       - tox3-7:
           <<: *tag_filter
           <<: *reqs_print_var
+      - tox3-7-windows:
+          <<: *tag_filter
+          <<: *reqs_print_var
       - tox3-8:
           <<: *tag_filter
           <<: *reqs_print_var
@@ -228,6 +261,7 @@ workflows:
           <<: *tag_filter
           requires:
             - tox3-7
+            - tox3-7-windows
             - precommit-checks
             - coveralls-upload
             - validate-files

@@ -390,7 +390,7 @@ class UpdateRN:
                 rn_desc = f'##### {content_name}\n'
                 if self.update_type == 'maintenance':
                     rn_desc += '- Maintenance and stability enhancements.\n'
-                if self.update_type == 'documentation':
+                elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     rn_desc += '- %%UPDATE_RN%%\n'

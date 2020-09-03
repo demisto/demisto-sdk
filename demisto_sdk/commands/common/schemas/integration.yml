@@ -98,8 +98,6 @@ mapping:
         type: bool
       isFetchSamples:
         type: bool
-  sourcemoduleid:
-    type: str
   system:
     type: bool
   hidden:

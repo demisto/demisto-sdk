@@ -1,4 +1,9 @@
 # Changelog
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
+
+# 1.1.11
+* Added line number to secrets' path in **secrets** command report.
 * Fixed an issue where **init** a community pack did not present the valid support URL.
 * Fixed an issue where **init** offered a non relevant pack support type.
 * Fixed an issue where **lint** did not pull docker images for powershell.
@@ -12,6 +17,7 @@
 * Fixed an issue where **update-release-notes** would fail to bump new versions if the feature branch was out of sync with the master branch.
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
+* Added a `update-docker` flag to **format** command.
 * Added a `json-to-outputs` flag to the **run** command.
 * Added a verbose (`-v`) flag to **format** command.
 * Fixed an issue where **download** added the prefix "playbook-" to the name of playbooks.
@@ -33,6 +39,7 @@
 * **update-release-notes** command now accept path of the pack instead of pack name.
 * Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
 * Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
+* Fixed an issue where **validate** did not check for missing release notes in old format files.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

@@ -450,9 +450,11 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
 @click.option(
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
 @click.option(
+    "-ud", "--update-docker", help="Set if you want to update the docker image of the integration/script", is_flag=True)
+@click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
-def format_yml(input=None, output=None, from_version=None, no_validate=None, verbose=False):
-    return format_manager(input, output, from_version, no_validate, verbose)
+def format_yml(**kwargs):
+    return format_manager(**kwargs)
 
 
 # ====================== upload ====================== #
@@ -594,7 +596,8 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
 @click.option(
     "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
 @click.option(
-    "-i", "--input", help="Valid JSON file path. If not specified then script will wait for user input in the terminal",
+    "-i", "--input", help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
+                          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
     "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "

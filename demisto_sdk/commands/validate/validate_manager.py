@@ -387,14 +387,15 @@ class ValidateManager:
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
                                                                         changed_meta_files))
 
-        if not self.skip_pack_rn_validation:
-            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files, added_files))
-
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
                         fg="bright_cyan")
             validation_results.add(self.validate_no_old_format(old_format_files))
+
+        if not self.skip_pack_rn_validation:
+            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files,
+                                                                          old_format_files, added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -668,11 +669,12 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def validate_no_missing_release_notes(self, modified_files, added_files):
+    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files):
         """Validate that there are no missing RN for changed files
 
         Args:
             modified_files (set): a set of modified files.
+            old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
 
         Returns:
@@ -681,7 +683,8 @@ class ValidateManager:
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
-        packs_that_should_have_new_rn = get_pack_names_from_files(modified_files,
+        changed_files = modified_files.union(old_format_files)
+        packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,
                                                                                    FileType.TEST_PLAYBOOK,
@@ -838,8 +841,9 @@ class ValidateManager:
                 file_path = file_data[2]
 
             # if the file is a code file - change path to the associated yml path to trigger release notes validation.
-            if find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and file_status.lower() != 'd' \
-                    and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
+            if file_status.lower() != 'd' and \
+                find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                    not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
 
@@ -849,7 +853,7 @@ class ValidateManager:
                 continue
 
             # identify deleted files
-            if file_status.lower() == 'd' and find_type(file_path) and not file_path.startswith('.'):
+            if file_status.lower() == 'd' and not file_path.startswith('.'):
                 deleted_files.add(file_path)
 
             # ignore directories

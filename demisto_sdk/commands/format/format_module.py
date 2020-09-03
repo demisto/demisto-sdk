@@ -63,8 +63,8 @@ VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None,
-                   verbose: bool = False):
+def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = False,
+                   verbose: bool = False, update_docker: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -73,6 +73,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
         verbose (bool): Whether to print verbose logs or not
+        update_docker (flag): Whether to update the docker image.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -95,7 +96,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,
-                                                                 no_validate=no_validate, verbose=verbose)
+                                                                 no_validate=no_validate, verbose=verbose, update_docker=update_docker)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:
@@ -130,6 +131,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
+    if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
+        # non code formatters don't support update_docker param. remove it
+        del kwargs['update_docker']
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                          from_version=from_version,
                                                          **kwargs)

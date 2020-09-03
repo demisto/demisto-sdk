@@ -45,10 +45,11 @@ class StructureValidator(BaseValidator):
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
-                 suppress_print: bool = False):
+                 suppress_print: bool = False, support_level=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_valid = True
+        self.support_level = support_level
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
 

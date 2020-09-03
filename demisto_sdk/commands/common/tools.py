@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType, PACKS_PACK_META_FILE_NAME)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -1275,3 +1275,26 @@ def camel_to_snake(camel: str) -> str:
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake
+
+
+def get_support_level_from_file_path(file_path: str) -> str:
+    """
+    Returns the support value level from the meta data file of pack that the file_path belongs to.
+    Args:
+        file_path (str): A files path or file in a content pack.
+
+    Returns:
+        str: The support level that depends on the support value from the pack
+      """
+    while os.path.basename(file_path) != INTEGRATIONS_DIR:
+        if not file_path:
+            return None
+        file_path = os.path.dirname(file_path)
+    pack_meta_path = os.path.join(os.path.dirname(file_path), PACKS_PACK_META_FILE_NAME)
+    if not os.path.exists(pack_meta_path):
+        return None
+    pack_meta = json.load(io.open(pack_meta_path))
+    support_level = pack_meta.get('support')
+    if support_level == 'partner' and pack_meta.get('Certification'):
+        support_level = 'certified partner'
+    return support_level

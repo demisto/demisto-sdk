@@ -45,6 +45,11 @@ TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
 OLD_REPUTATION = 'reputations.json'
 
+XSOR = 'xsor'
+COMMUNITY = 'community'
+CERTIFIED_PARTNER = 'certified partner'
+PARTNER = 'partner'
+
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -844,6 +849,10 @@ IOC_OUTPUTS_DICT = {
 
 PACK_INITIAL_VERSION = '1.0.0'
 PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
+LEVEL_SUPPORT_OPTIONS_1 = [XSOR]
+LEVEL_SUPPORT_OPTIONS_2 = [XSOR, CERTIFIED_PARTNER]
+LEVEL_SUPPORT_OPTIONS_3 = [XSOR, CERTIFIED_PARTNER, PARTNER]
+LEVEL_SUPPORT_OPTIONS_4 = [XSOR, CERTIFIED_PARTNER, PARTNER, COMMUNITY]
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
@@ -930,13 +939,15 @@ FETCH_REQUIRED_PARAMS = [
         'name': 'isFetch',
         'required': False,
         'type': 8
-    },
-    {
-        'name': 'max_fetch',
-        'required': False,
-        'type': 0
     }
 ]
+
+MAX_FETCH_PARAM = {
+        'name': 'max_fetch',
+        'required': False,
+        'type': 0,
+        'defaultvalue': '50'
+    }
 
 FIRST_FETCH_PARAM = {
     'defaultvalue': '7 days',

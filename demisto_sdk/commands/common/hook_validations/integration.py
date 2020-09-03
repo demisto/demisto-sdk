@@ -4,8 +4,10 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
+                                                   MAX_FETCH_PARAM,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
+                                                   LEVEL_SUPPORT_OPTIONS_3,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -88,10 +90,13 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
         ]
 
+        answer3 = []
+        if self.support_level in LEVEL_SUPPORT_OPTIONS_3:
+            answers3 = [self.is_valid_max_fetch_and_first_fetch()]
+
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
-
-        return all(answers)
+        return all(answers + answer3)
 
     def are_tests_configured(self) -> bool:
         """
@@ -667,17 +672,9 @@ class IntegrationValidator(ContentEntityValidator):
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
-            first_fetch_param = None
-            default_value_in_max_fetch = False
             for param in params:
-                # the common names for the first_fetch param
-                if param.get('name') in ["fetch_time", "first_fetch"]:
-                    first_fetch_param = param
-                elif 'defaultvalue' in param:
-                    if param.get('name') is 'max_fetch':
-                        default_value_in_max_fetch = True
+                if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
@@ -685,14 +682,40 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         fetch_params_exist = False
 
-            if not default_value_in_max_fetch:
-                error_message, error_code = Errors.no_default_value_in_parameter('max_fetch')
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    fetch_params_exist = False
+        return fetch_params_exist
+
+    def is_valid_max_fetch_and_first_fetch(self) -> bool:
+        """
+        validate that the max_fetch and first_fetch params exist in the yml and the max_fetch has default value
+        Returns:
+            bool. True if the integration is defined as well False otherwise.
+        """
+        fetch_params_exist = True
+        if self.current_file.get('script', {}).get('isfetch') is True:
+            params = [_key for _key in self.current_file.get('configuration', [])]
+            first_fetch_param = None
+            max_fetch_param = None
+            for param in params:
+                # the common names for the first_fetch param
+                if param.get('name') in ["fetch_time", "first_fetch"]:
+                    first_fetch_param = param
+                elif param.get('name') is 'max_fetch':
+                    max_fetch_param = param
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml('first_fetch',
                                                                               yaml.dump(FIRST_FETCH_PARAM))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    fetch_params_exist = False
+
+            if not max_fetch_param:
+                error_message, error_code = Errors.parameter_missing_from_yml('max_fetch',
+                                                                              yaml.dump(MAX_FETCH_PARAM))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    fetch_params_exist = False
+
+            elif not max_fetch_param.get("defaultvalue"):
+                error_message, error_code = Errors.no_default_value_in_parameter('max_fetch')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 

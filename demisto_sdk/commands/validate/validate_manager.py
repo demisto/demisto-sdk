@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -94,6 +95,7 @@ class ValidateManager:
                                    FileType.TEST_PLAYBOOK,
                                    FileType.TEST_SCRIPT,
                                    )
+        self.support_level = None
 
         if is_external_repo:
             if not self.no_configuration_prints:
@@ -275,6 +277,8 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
+        self.support_level = tools.get_support_level_from_file_path(file_path)
+
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -291,7 +295,8 @@ class ValidateManager:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
-                                                 old_file_path=old_file_path)
+                                                 old_file_path=old_file_path,
+                                                 support_level=self.support_level)
 
         click.secho(f'Validating scheme for {file_path}')
         if not structure_validator.is_valid_file():

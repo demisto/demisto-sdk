@@ -77,6 +77,7 @@ class Linter:
             "errors": [],
             "images": [],
             "flake8_errors": None,
+            "xsoar_linter_errors": None,
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
@@ -343,6 +344,9 @@ class Linter:
         stdout, stderr, exit_code = run_command_os(
             command=build_xsoar_linter_command(lint_files, self._facts['support_level']),
             cwd=self._content_repo)
+        if exit_code == 4:
+            logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
+            exit_code = 0
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

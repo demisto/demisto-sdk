@@ -88,9 +88,15 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
         'certified partner': 'base_checker,community_level_checker,partner_level_checker,'
                              'certified_partner_level_checker',
         'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
-                 'xsoar_level_checker '
+                 'xsoar_level_checker'
     }
     plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
+    checker_path = ""
+    if support_levels.get(support_level):
+        checkers = support_levels.get(support_level)
+        support = checkers.split(',') if checkers else []
+        for checker in support:
+            checker_path += f"{plugin_path}/{checker},"
     command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
@@ -99,9 +105,10 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
     # Disable all errors
     command += " --disable=all"
     # Enable only Demisto Plugins errors.
-    command += " --enable=sys-exit-exists,print-exists"
+    command += " --enable=E9001,E9002"
     # Load plugins
-    command += f" --load-plugins {plugin_path}/{support_levels.get(support_level)}" if support_levels.get(support_level) else ""
+    if checker_path:
+        command += f" --load-plugins {checker_path}"
     # Generating path pattrens - file1 file2 file3,..
     files_list = [str(file) for file in files]
     command += " " + " ".join(files_list)

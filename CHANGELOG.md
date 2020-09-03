@@ -1,4 +1,5 @@
 # Changelog
+* Added templates to the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.
 * Fixed an issue where **validate** failed on deleted files.
 

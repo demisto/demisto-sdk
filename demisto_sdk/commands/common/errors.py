@@ -51,6 +51,7 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "no_default_value_in_parameter": "IN125",
     "invalid_v2_script_name": "SC100",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
@@ -230,6 +231,11 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+
+    @staticmethod
+    @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should be have a defaultvalue'.format(param_name)
 
     @staticmethod
     @error_code_decorator

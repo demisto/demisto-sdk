@@ -3,6 +3,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH_PARAM,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
@@ -666,15 +667,34 @@ class IntegrationValidator(ContentEntityValidator):
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
             params = [_key for _key in self.current_file.get('configuration', [])]
+            first_fetch_param = None
+            default_value_in_max_fetch = False
             for param in params:
-                if 'defaultvalue' in param:
+                # the common names for the first_fetch param
+                if param.get('name') in ["fetch_time", "first_fetch"]:
+                    first_fetch_param = param
+                elif 'defaultvalue' in param:
+                    if param.get('name') is 'max_fetch':
+                        default_value_in_max_fetch = True
                     param.pop('defaultvalue')
+
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         fetch_params_exist = False
+
+            if not default_value_in_max_fetch:
+                error_message, error_code = Errors.no_default_value_in_parameter('max_fetch')
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    fetch_params_exist = False
+
+            if not first_fetch_param:
+                error_message, error_code = Errors.parameter_missing_from_yml('first_fetch',
+                                                                              yaml.dump(FIRST_FETCH_PARAM))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    fetch_params_exist = False
 
         return fetch_params_exist
 

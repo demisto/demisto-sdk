@@ -930,8 +930,21 @@ FETCH_REQUIRED_PARAMS = [
         'name': 'isFetch',
         'required': False,
         'type': 8
+    },
+    {
+        'name': 'max_fetch',
+        'required': False,
+        'type': 0
     }
 ]
+
+FIRST_FETCH_PARAM = {
+    'defaultvalue': '7 days',
+    'display': 'First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)',
+    'name': 'first_fetch',
+    'required': False,
+    'type': 0
+}
 
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
 # Ignore list for all 'run_all_validations_on_file' method

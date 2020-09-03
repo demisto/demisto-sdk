@@ -1,4 +1,8 @@
 # Changelog
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
+
+# 1.1.11
 * Added line number to secrets' path in **secrets** command report.
 * Fixed an issue where **init** a community pack did not present the valid support URL.
 * Fixed an issue where **init** offered a non relevant pack support type.

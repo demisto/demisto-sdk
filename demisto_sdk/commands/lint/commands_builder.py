@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.lint.helpers import Msg_XSOAR_linter
+
 # Third party packages
 # Local imports
 
@@ -92,20 +94,23 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
     }
     plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
     checker_path = ""
+    message_enable = ""
     if support_levels.get(support_level):
         checkers = support_levels.get(support_level)
         support = checkers.split(',') if checkers else []
         for checker in support:
             checker_path += f"{plugin_path}/{checker},"
+            checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
+            for msg in checker_msgs_list:
+                message_enable += f"{msg},"
+
     command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
-    command += " -E"
-    # Disable all errors
-    command += " --disable=all"
+    command += " -E --disable=all"
     # Enable only Demisto Plugins errors.
-    command += " --enable=E9001,E9002"
+    command += f" --enable={message_enable}"
     # Load plugins
     if checker_path:
         command += f" --load-plugins {checker_path}"

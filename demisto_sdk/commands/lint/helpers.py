@@ -38,6 +38,19 @@ EXIT_CODES = {
     "pwsh_test": 0b10000000,
     "image": 0b100000000,
 }
+Msg_XSOAR_linter: dict = {
+    'base_checker': {
+        "E9001": ("Sys.exit use is found, Please use return instead.", "sys-exit-exists",
+                  "Ensure to not use sys.exit in the code.",),
+        "E9002": ("Print is found, Please remove all prints from the code.", "print-exists",
+                  "Please remove all prints from the code.",)
+    },
+    'community_level_checker': {},
+    'partner_level_checker': {},
+    'certified_partner_level_checker': {},
+    'xsoar_level_checker': {}
+}
+
 
 # Execution exit codes
 SUCCESS = 0b0

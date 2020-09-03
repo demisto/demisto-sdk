@@ -28,6 +28,7 @@ PYTHON2_REQ = ["flake8", "vulture"]
 # Define check exit code if failed
 EXIT_CODES = {
     "flake8": 0b1,
+    "xsoar_linter": 0b1000000000,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
@@ -45,7 +46,7 @@ RERUN = 0b10
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint", "xsoar_linter"]
+PY_CHCEKS = ["flake8", "xsoar_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -71,9 +72,11 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_xsoar_linter: bool,
                             no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
+    no_xsoar_linter(bool): Whether to skip xsoar linter.
     no_bandit(bool): Whether to skip bandit.
     no_mypy(bool): Whether to skip mypy.
     no_vulture(bool): Whether to skip vulture
@@ -87,6 +90,8 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     if not os.environ.get('CI'):
         if no_flake8:
             skipped_code |= EXIT_CODES["flake8"]
+        if no_xsoar_linter:
+            skipped_code |= EXIT_CODES["xsoar_linter"]
         if no_bandit:
             skipped_code |= EXIT_CODES["bandit"]
         if no_mypy or not docker_engine:
@@ -376,24 +381,3 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
-
-
-@contextmanager
-def handle_lint_plugin(path: Path, pack_type: str):
-    """
-    Function which links the given path with the content of pylint plugins folder in resources.
-    The main purpose is to link each pack with the pylint plugins.
-    Args:
-        path: Pack path.
-        pack_type: the type of the given pack.
-    """
-    try:
-        if pack_type == TYPE_PYTHON:
-            plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
-            for file in plugin_path.iterdir():
-                os.link(file, path / file.name)
-        yield
-    finally:
-        if pack_type == TYPE_PYTHON:
-            for file in plugin_path.iterdir():
-                (path / file.name).unlink()

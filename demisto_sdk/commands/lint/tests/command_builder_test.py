@@ -24,6 +24,19 @@ def test_build_flak8_command(files):
 
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, "base")
+    files = [str(file) for file in files]
+    plugin_path = Path(__file__).parent.parent / 'resources' / 'pylint_plugins'
+    expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=all --enable=sys-exit-exists,print-exists --load-plugins " \
+               f"{plugin_path}/base_checker {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_bandit_command(files):
     """Build bandit command"""
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
@@ -68,7 +81,7 @@ def test_build_pylint_command(files):
     output = build_pylint_command(files)
     files = [str(file) for file in files]
     expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --load-plugins base_checker -d duplicate-string-formatting-argument" \
+               "conftest.py,venv -E -d duplicate-string-formatting-argument" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output
 

@@ -28,7 +28,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                add_typing_module,
                                                get_file_from_container,
                                                get_python_version_from_image,
-                                               handle_lint_plugin,
                                                stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
@@ -270,7 +269,7 @@ class Linter:
         """
         if self._facts["lint_files"]:
             exit_code: int = 0
-            for lint_check in ["flake8", "bandit", "mypy", "vulture", "xsoar_linter"]:
+            for lint_check in ["flake8", "xsoar_linter", "bandit", "mypy", "vulture"]:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
@@ -330,21 +329,20 @@ class Linter:
         return SUCCESS, ""
 
     def _run_xsoar_linter(self, lint_files: List[Path]) -> Tuple[int, str]:
-        """ Runs flake8 in pack dir
+        """ Runs Xsaor linter in pack dir
 
         Args:
-            py_num(float): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
            int:  0 on successful else 1, errors
-           str: Bandit errors
+           str: Xsoar linter errors
         """
         log_prompt = f"{self._pack_name} - Xsoar Linter"
         logger.info(f"{log_prompt} - Start")
-        with handle_lint_plugin(self._pack_abs_dir, self._pkg_lint_status['pack_type']):
-            stdout, stderr, exit_code = run_command_os(command=build_xsoar_linter_command(lint_files, self._facts['support_level']),
-                                                       cwd=self._content_repo)
+        stdout, stderr, exit_code = run_command_os(
+            command=build_xsoar_linter_command(lint_files, self._facts['support_level']),
+            cwd=self._content_repo)
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

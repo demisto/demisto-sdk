@@ -221,16 +221,16 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
-                         no_vulture: bool, no_xsoar_linter: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
-            no_xsoar_linter:
             parallel(int): Whether to run command on multiple threads
             no_flake8(bool): Whether to skip flake8
+            no_xsoar_linter(bool): Whether to skip xsoar linter
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
@@ -247,6 +247,7 @@ class LintManager:
         """
         lint_status: Dict = {
             "fail_packs_flake8": [],
+            "fail_packs_xsoar_linter": [],
             "fail_packs_bandit": [],
             "fail_packs_mypy": [],
             "fail_packs_vulture": [],
@@ -265,7 +266,7 @@ class LintManager:
 
         # Skiped lint and test codes
         skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
-                                               no_vulture=no_vulture,
+                                               no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
@@ -387,7 +388,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "bandit", "mypy", "vulture"]:
+        for check in ["flake8", "xsoar_linter", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")

@@ -305,16 +305,19 @@ class TestRunLintInHost:
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         mocker.patch.object(linter_obj, '_run_bandit')
+        mocker.patch.object(linter_obj, '_run_xsoar_linter')
         mocker.patch.object(linter_obj, '_run_mypy')
         mocker.patch.object(linter_obj, '_run_vulture')
 
         linter_obj._run_lint_in_host(no_flake8=False,
                                      no_bandit=False,
+                                     no_xsoar_linter=False,
                                      no_mypy=False,
                                      no_vulture=False)
 
         linter_obj._run_flake8.assert_not_called()
         linter_obj._run_bandit.assert_not_called()
+        linter_obj._run_xsoar_linter.assert_not_called()
         linter_obj._run_mypy.assert_not_called()
         linter_obj._run_vulture.assert_not_called()
 

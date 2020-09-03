@@ -31,8 +31,8 @@ def test_build_xsoar_linter_command(files):
     files = [str(file) for file in files]
     plugin_path = Path(__file__).parent.parent / 'resources' / 'pylint_plugins'
     expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=sys-exit-exists,print-exists --load-plugins " \
-               f"{plugin_path}/base_checker {' '.join(files)}"
+               "conftest.py,venv -E --disable=all --enable=E9001,E9002 --load-plugins " \
+               f"{plugin_path}/base_checker, {' '.join(files)}"
     assert output == expected
 
 

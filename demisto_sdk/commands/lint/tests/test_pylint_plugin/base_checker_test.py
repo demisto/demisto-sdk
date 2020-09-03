@@ -71,6 +71,37 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
 
+    def test_number_of_prints(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - print function exists in the code couple of times.
+        Then:
+            - Ensure that it catches all the prints .
+        """
+        node_a, node_b = astroid.extract_node("""
+            def test_function():
+                print("first") #@
+                a=1
+                if(a==1):
+                    print("second") #@
+                return True
+        """)
+        assert node_a is not None and node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='print-exists',
+                    node=node_b,
+                ),
+                pylint.testutils.Message(
+                    msg_id='print-exists',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_call(node_b)
+            self.checker.visit_call(node_a)
+
 
 class TestSysExitChecker(pylint.testutils.CheckerTestCase):
     """

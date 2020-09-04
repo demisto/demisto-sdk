@@ -329,7 +329,8 @@ class ValidateManager:
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.IMAGE:
+        # Validate only images of packs
+        elif file_type == FileType.IMAGE and file_path.endswith('_image.png'):
             return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.

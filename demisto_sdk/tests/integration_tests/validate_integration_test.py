@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.tests.constants_test import NOT_VALID_IMAGE_PATH
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
     LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
@@ -1291,6 +1292,27 @@ class TestImageValidation:
         assert f'Validating {image_path} as image' in result.stdout
         assert 'IM106' in result.stdout
         assert 'This is the default image, please change to the integration image.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_image_should_not_be_validated(self, mocker, repo):
+        """
+        Given
+        - The image file which path does not end with _image.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate does not validates it as an image.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
+        assert f'Validating {NOT_VALID_IMAGE_PATH} as image' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 

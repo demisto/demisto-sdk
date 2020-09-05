@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 from demisto_sdk.commands.common.tools import (print_error,
-                                               server_version_compare)
+                                               server_version_compare,
+                                               get_support_level_from_file_path)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -72,6 +73,8 @@ class IntegrationValidator(ContentEntityValidator):
             Returns:
                 bool: True if integration is valid, False otherwise.
         """
+        support_level = get_support_level_from_file_path(self.file_path)
+
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
@@ -92,7 +95,7 @@ class IntegrationValidator(ContentEntityValidator):
         ]
 
         answers3 = []
-        if self.support_level in LEVEL_SUPPORT_OPTIONS_3:
+        if support_level in LEVEL_SUPPORT_OPTIONS_3:
             answers3 = [self.is_valid_max_fetch_and_first_fetch()]
 
         if not skip_test_conf:

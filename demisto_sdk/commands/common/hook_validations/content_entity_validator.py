@@ -26,7 +26,6 @@ class ContentEntityValidator(BaseValidator):
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
         self.file_path = structure_validator.file_path
-        self.support_level = structure_validator.support_level
         self.is_valid = structure_validator.is_valid
         self.skip_docker_check = skip_docker_check
 

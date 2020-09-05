@@ -4,10 +4,10 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
-                                                   MAX_FETCH_PARAM,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
                                                    LEVEL_SUPPORT_OPTIONS_3,
+                                                   MAX_FETCH_PARAM,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -62,7 +62,8 @@ class IntegrationValidator(ContentEntityValidator):
         return not any(answers)
 
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
-        """Check whether the Integration is valid or not
+        """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
+        that depends on the contributor type
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
@@ -90,13 +91,13 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
         ]
 
-        answer3 = []
+        answers3 = []
         if self.support_level in LEVEL_SUPPORT_OPTIONS_3:
             answers3 = [self.is_valid_max_fetch_and_first_fetch()]
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
-        return all(answers + answer3)
+        return all(answers + answers3)
 
     def are_tests_configured(self) -> bool:
         """
@@ -671,7 +672,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
-            params = [_key for _key in self.current_file.get('configuration', [])]
+            params = [dict.copy(_key) for _key in self.current_file.get('configuration', [])]
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
@@ -692,14 +693,14 @@ class IntegrationValidator(ContentEntityValidator):
         """
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
-            params = [_key for _key in self.current_file.get('configuration', [])]
+            params = self.current_file.get('configuration', [])
             first_fetch_param = None
             max_fetch_param = None
             for param in params:
                 # the common names for the first_fetch param
                 if param.get('name') in ["fetch_time", "first_fetch"]:
                     first_fetch_param = param
-                elif param.get('name') is 'max_fetch':
+                elif param.get('name') == 'max_fetch':
                     max_fetch_param = param
 
             if not first_fetch_param:

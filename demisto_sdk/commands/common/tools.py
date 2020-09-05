@@ -1286,11 +1286,11 @@ def get_support_level_from_file_path(file_path: str) -> str:
     Returns:
         str: The support level that depends on the support value from the pack
       """
-    while os.path.basename(file_path) != INTEGRATIONS_DIR:
+    while os.path.basename(os.path.dirname(file_path)) != PACKS_DIR:
         if not file_path:
             return None
         file_path = os.path.dirname(file_path)
-    pack_meta_path = os.path.join(os.path.dirname(file_path), PACKS_PACK_META_FILE_NAME)
+    pack_meta_path = os.path.join(file_path, PACKS_PACK_META_FILE_NAME)
     if not os.path.exists(pack_meta_path):
         return None
     pack_meta = json.load(io.open(pack_meta_path))

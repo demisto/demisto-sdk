@@ -235,7 +235,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def no_default_value_in_parameter(param_name):
-        return 'The {} parameter should be have a defaultvalue'.format(param_name)
+        return 'The {} parameter should have a default value'.format(param_name)
 
     @staticmethod
     @error_code_decorator

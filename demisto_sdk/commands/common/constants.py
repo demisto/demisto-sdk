@@ -45,7 +45,6 @@ TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
 OLD_REPUTATION = 'reputations.json'
 
-XSOR = 'xsor'
 COMMUNITY = 'community'
 CERTIFIED_PARTNER = 'certified partner'
 PARTNER = 'partner'
@@ -846,15 +845,15 @@ IOC_OUTPUTS_DICT = {
     'ip': {'IP.Address'},
     'url': {'URL.Data'}
 }
-
-PACK_INITIAL_VERSION = '1.0.0'
-PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
-LEVEL_SUPPORT_OPTIONS_1 = [XSOR]
-LEVEL_SUPPORT_OPTIONS_2 = [XSOR, CERTIFIED_PARTNER]
-LEVEL_SUPPORT_OPTIONS_3 = [XSOR, CERTIFIED_PARTNER, PARTNER]
-LEVEL_SUPPORT_OPTIONS_4 = [XSOR, CERTIFIED_PARTNER, PARTNER, COMMUNITY]
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
+PACK_INITIAL_VERSION = '1.0.0'
+PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
+LEVEL_SUPPORT_OPTIONS_1 = [XSOAR_SUPPORT]
+LEVEL_SUPPORT_OPTIONS_2 = [XSOAR_SUPPORT, CERTIFIED_PARTNER]
+LEVEL_SUPPORT_OPTIONS_3 = [XSOAR_SUPPORT, CERTIFIED_PARTNER, PARTNER]
+LEVEL_SUPPORT_OPTIONS_4 = [XSOAR_SUPPORT, CERTIFIED_PARTNER, PARTNER, COMMUNITY]
+
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
@@ -943,11 +942,11 @@ FETCH_REQUIRED_PARAMS = [
 ]
 
 MAX_FETCH_PARAM = {
-        'name': 'max_fetch',
-        'required': False,
-        'type': 0,
-        'defaultvalue': '50'
-    }
+    'name': 'max_fetch',
+    'required': False,
+    'type': 0,
+    'defaultvalue': '50'
+}
 
 FIRST_FETCH_PARAM = {
     'defaultvalue': '7 days',

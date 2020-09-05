@@ -1287,7 +1287,7 @@ def get_support_level_from_file_path(file_path: str) -> str:
         str: The support level that depends on the support value from the pack
       """
     while os.path.basename(os.path.dirname(file_path)) != PACKS_DIR:
-        if not file_path:
+        if not file_path or file_path == '/':
             return None
         file_path = os.path.dirname(file_path)
     pack_meta_path = os.path.join(file_path, PACKS_PACK_META_FILE_NAME)

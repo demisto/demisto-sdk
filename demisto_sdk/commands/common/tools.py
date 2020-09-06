@@ -756,7 +756,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         return FileType.CHANGELOG
 
-    if path.endswith('.png'):
+    # integration image
+    if path.endswith('_image.png'):
         return FileType.IMAGE
 
     if path.endswith('.ps1'):

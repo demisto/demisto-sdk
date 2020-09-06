@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
                                                get_pack_name, get_yaml,
                                                pack_name_to_path, print_color,
                                                print_error, print_warning,
-                                               run_command, get_parent_directory_name)
+                                               run_command, get_parent_directory_name, get_api_module_integrations)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -447,6 +447,7 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
                                                                                                      'origin/master')
+    modified = [file_[1] if isinstance(file_, tuple) else file_ for file_ in modified]
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -509,13 +510,31 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()
 
-    # if _pack == 'ApiModules':
-    #     # case: ApiModules
-    #     print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
-    #     if not os.path.isfile('./Tests/id_set.json'):
-    #         print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is"
-    #                     "available. Please run `demisto-sdk create-id-set` to generate it.")
-    #     else:
-    #         with open('./Tests/id_set.json', 'r') as conf_file:
-    #             id_set = json.load(conf_file)
-    #             get_parent_directory_name()
+    if _pack == 'ApiModules':
+        # case: ApiModules
+        print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+        if not os.path.isfile('./Tests/id_set.json'):
+            print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is"
+                        "available. Please run `demisto-sdk create-id-set` to generate it.")
+        else:
+            with open('./Tests/id_set.json', 'r') as conf_file:
+                id_set = json.load(conf_file)
+                api_module_set = get_api_module_ids(added)
+                api_module_set.union(get_api_module_ids(modified))
+                integrations = get_api_module_integrations(api_module_set, id_set.get(id_set.get('integrations'), []))
+                for integration in integrations:
+                    update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
+                                              pre_release=pre_release, added_files=added,
+                                              specific_version=specific_version)
+
+
+def get_api_module_ids(modified):
+    api_module_set = set()
+    if modified:
+        for pf in modified:
+            parent = pf
+            while '/ApiModules/Scripts/' in pf:
+                parent = get_parent_directory_name(parent, abs_path=True)
+            if parent != pf:
+                api_module_set.add(os.path.basename(parent))
+    return api_module_set

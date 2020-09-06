@@ -368,7 +368,7 @@ def get_script_or_integration_id(file_path):
 
 
 def get_api_module_integrations(changed_api_modules, integration_set):
-    integration_to_version = {}
+    integration_from_to_version = {}
     integration_ids_to_test = set([])
     for integration in integration_set:
         integration_data = list(integration.values())[0]
@@ -376,10 +376,10 @@ def get_api_module_integrations(changed_api_modules, integration_set):
             file_path = integration_data.get('file_path')
             integration_id = get_script_or_integration_id(file_path)
             integration_ids_to_test.add(integration_id)
-            integration_to_version[integration_id] = (get_from_version(file_path),
-                                                      get_to_version(file_path))
+            integration_from_to_version[integration_id] = (get_from_version(file_path),
+                                                           get_to_version(file_path))
 
-    return integration_ids_to_test, integration_to_version
+    return integration_ids_to_test, integration_from_to_version
 
 
 def get_entity_id_by_entity_type(data: dict, content_entity: str):

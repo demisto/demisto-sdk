@@ -492,7 +492,7 @@ class TestValidators:
             -  validator should ignore those files
         """
         validate_manager = ValidateManager()
-        assert validate_manager.run_validations_on_file(IGNORED_PNG, None)
+        assert validate_manager.run_validations_on_file(IGNORED_PNG, False)
 
     def test_get_error_ignore_list(self, mocker):
         """

@@ -275,9 +275,7 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
-        # skip unified yml and images of README
-        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml') \
-                or (file_type == FileType.IMAGE and not file_path.endswith('_image.png')):
+        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
         elif file_type is None:
@@ -331,7 +329,7 @@ class ValidateManager:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
 
         # Validate only images of packs
-        elif file_type == FileType.IMAGE and file_path.endswith('_image.png'):
+        elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.

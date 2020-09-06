@@ -5,6 +5,7 @@
 * Fixed an issue where **validate** failed on deleted files.
 * Fixed an issue where **validate** validated all images instead of packs only.
 * Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
+* Added handling of incorrect layout paths via the **format** command.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

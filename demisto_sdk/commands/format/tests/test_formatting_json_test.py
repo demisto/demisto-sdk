@@ -12,8 +12,7 @@ from demisto_sdk.commands.format.update_incidenttype import \
     IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
-from demisto_sdk.commands.format.update_layout import (
-    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
@@ -191,7 +190,7 @@ class TestFormattingLayoutscontainer:
 
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
-        layoutscontainer_formatter = LayoutsContainerJSONFormat(
+        layoutscontainer_formatter = LayoutBaseFormat(
             input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
@@ -273,7 +272,7 @@ class TestFormattingLayout:
 
     @pytest.fixture(autouse=True)
     def layouts_formatter(self, layouts_copy):
-        yield LayoutJSONFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
+        yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
 
     def test_remove_unnecessary_keys(self, layouts_formatter):
         """

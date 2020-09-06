@@ -1,3 +1,4 @@
+import os
 import re
 from abc import ABC
 from typing import Tuple
@@ -21,6 +22,8 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'detailsV2',
                            'mobile']
 LAYOUT_KIND = 'layout'
+LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
+LAYOUT_PREFIX = 'layout-'
 
 
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
@@ -70,11 +73,32 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         # version is both in layout key and in base dict
         self.set_version_to_default(self.data['layout'])
         self.set_toVersion()
+        output_basename = os.path.basename(self.output_file)
+        if not output_basename.startswith(LAYOUT_PREFIX):
+            new_output_basename = LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
+
+            # rename file if source and output are the same
+            if self.output_file == self.source_file:
+                os.rename(self.source_file, new_output_path)
+                self.source_file = new_output_path
+            self.output_file = new_output_path
 
     def __layoutscontainer__run_format(self):
         click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
         self.set_fromVersion(from_version=VERSION_6_0_0)
         self.set_group_field()
+        output_basename = os.path.basename(self.output_file)
+        if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
+            new_output_basename = LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
+
+            # rename file if source and output are the same
+            if self.output_file == self.source_file:
+                os.rename(self.source_file, new_output_path)
+                self.source_file = new_output_path
+            self.output_file = new_output_path
+            self.output_file = self.output_file.replace(output_basename, new_output_basename)
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""

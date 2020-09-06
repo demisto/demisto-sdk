@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 
@@ -24,7 +25,8 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                 self.is_valid_version() and
                 self.is_valid_from_version() and
                 self.is_valid_to_version() and
-                self.is_to_version_higher_than_from_version())
+                self.is_to_version_higher_than_from_version() and
+                self.is_valid_file_path())
 
     def is_valid_version(self) -> bool:
         """Checks if version field is valid. uses default method.
@@ -55,6 +57,10 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
     def is_valid_to_version(self) -> bool:
         pass
 
+    @abstractmethod
+    def is_valid_file_path(self) -> bool:
+        pass
+
 
 class LayoutsContainerValidator(LayoutBaseValidator):
     def is_valid_from_version(self) -> bool:
@@ -80,6 +86,10 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_valid_file_path(self) -> bool:
+        output_basename = os.path.basename(self.file_path)
+        return output_basename.startswith('layoutscontainer-')
 
 
 class LayoutValidator(LayoutBaseValidator):
@@ -108,3 +118,7 @@ class LayoutValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_valid_file_path(self) -> bool:
+        output_basename = os.path.basename(self.file_path)
+        return output_basename.startswith('layout-')

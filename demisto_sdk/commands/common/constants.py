@@ -975,8 +975,6 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts'
 ]
 
-FIRST_FETCH_OPTIONS = ['fetch_time', 'first_fetch', 'fetchTime', 'first_run', 'first_fetch_timestamp',
-                       'first_fetch_time_interval_days', 'first_fetch_time', 'first_fetch_delta']
+FIRST_FETCH = 'first_fetch'
 
-MAX_FETCH_OPTIONS = ['max_fetch', 'page_limit', 'max_results', 'incidents_per_fetch', 'fetch_limit',
-                     'fetchLimitCases', 'fetch_size', 'fetch_count', 'fetchLimit', 'max_alerts']
+MAX_FETCH = 'max_fetch'

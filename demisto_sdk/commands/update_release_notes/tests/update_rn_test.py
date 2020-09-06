@@ -119,6 +119,50 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
+    def test_build_rn_template_file__maintenance(self):
+        """
+            Given:
+                - a dict of changed items, with a maintenance rn update
+            When:
+                - we want to produce a release notes template for files without descriptions like :
+                'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            Then:
+                - return a markdown string
+        """
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+                          "- Maintenance and stability enhancements.\n"\
+
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='maintenance', pack_files={'HelloWorld'},
+                             added_files=set())
+        changed_items = {
+            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+        }
+        release_notes = update_rn.build_rn_template(changed_items)
+        assert expected_result == release_notes
+
+    def test_build_rn_template_file__documentation(self):
+        """
+            Given:
+                - a dict of changed items, with a maintenance rn update
+            When:
+                - we want to produce a release notes template for files without descriptions like :
+                'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            Then:
+                - return a markdown string
+        """
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+                          "- Documentation and metadata improvements.\n"\
+
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='documentation', pack_files={'HelloWorld'},
+                             added_files=set())
+        changed_items = {
+            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+        }
+        release_notes = update_rn.build_rn_template(changed_items)
+        assert expected_result == release_notes
+
     def test_build_rn_template_when_only_pack_metadata_changed(self):
         """
         Given:
@@ -598,3 +642,26 @@ class TestRNUpdateUnit:
         mocker.patch('sys.exit', return_value=None)
         bump_result = update_rn.is_bump_required()
         assert bump_result is expected_result
+
+    def test_renamed_files(self):
+        """
+        Given:
+            A file was renamed
+        When:
+            Bumping release notes with update-release-notes command.
+        Then:
+            file list should contain the new file path and ignore the old path.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        modified_files = {
+            'file1',
+            ('file2', 'file2_new'),
+            'file3'
+        }
+        update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', pack_files=modified_files,
+                             added_files=set())
+
+        assert 'file1' in update_rn.pack_files
+        assert 'file2_new' in update_rn.pack_files
+        assert ('file2', 'file2_new') not in update_rn.pack_files
+        assert 'file3' in update_rn.pack_files

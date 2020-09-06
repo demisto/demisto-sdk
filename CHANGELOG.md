@@ -1,4 +1,8 @@
 # Changelog
+* Added revision templates to the **update-release-notes** command.
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
+* Fixed an issue where **validate** validated all images instead of packs only.
 * **format** command now prints a warning in case a non-supported file type is inputted.
 
 # 1.1.11

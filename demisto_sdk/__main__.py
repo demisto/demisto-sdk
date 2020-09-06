@@ -839,7 +839,8 @@ def update_pack_releasenotes(**kwargs):
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
-
+    print("old " + str(old))
+    print("packs " + str(_packs))
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -858,7 +859,8 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -p parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1):
+    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+        print("changed_meta_files " + str(changed_meta_files))
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')

@@ -809,7 +809,7 @@ class ValidateManager:
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        packs = self.get_packs(modified_files)
+        packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
         return modified_files, added_files, old_format_files, changed_meta_files, packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):

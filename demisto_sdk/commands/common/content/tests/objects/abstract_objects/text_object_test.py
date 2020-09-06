@@ -2,8 +2,7 @@ from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common.content.errors import ContentInitializeError
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    TextObject
+from demisto_sdk.commands.common.content.objects.base_objects import TextObject
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'

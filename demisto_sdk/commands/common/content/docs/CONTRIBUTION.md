@@ -29,7 +29,7 @@ The structure should contain a single file `<new-object>.py` (snake-case) with t
 ```python
 from typing import Union
 
-from demisto_sdk.commands.common.content.objects.abstract_objects.json_object import JSONObject
+from demisto_sdk.commands.common.content.objects.base_objects.json_object import JSONObject
 from wcmatch.pathlib import Path
 
 
@@ -47,12 +47,12 @@ The folder should contain a single file `<new-object>.py` (snake-case) with the 
 ```python
 from typing import Union
 
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
-    YAMLContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.base_pack_objects.yaml_pack_object import \
+    YAMLPackObject
 from wcmatch.pathlib import Path
 
 
-class NewObject(YAMLContentObject):
+class NewObject(YAMLPackObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, 'file-prefix')
 ```
@@ -65,12 +65,12 @@ Existing code:
 ```python
 from typing import Union
 
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
-    YAMLContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.base_pack_objects.yaml_pack_object import \
+    YAMLPackObject
 from wcmatch.pathlib import Path
 
 
-class NewObject(YAMLContentObject):
+class NewObject(YAMLPackObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, 'file-prefix')
 ```
@@ -79,12 +79,12 @@ Adding property example:
 ```python
 from typing import Union
 
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
-    YAMLContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.base_pack_objects.yaml_pack_object import \
+    YAMLPackObject
 from wcmatch.pathlib import Path
 
 
-class NewObject(YAMLContentObject):
+class NewObject(YAMLPackObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, 'file-prefix')
 

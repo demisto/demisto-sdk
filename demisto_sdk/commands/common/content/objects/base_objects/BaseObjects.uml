@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement />
+  <nodes>
+    <node x="623.0" y="516.0">demisto_sdk.commands.common.content.objects.base_objects.yaml_object.YAMLObject</node>
+    <node x="228.5" y="302.0">demisto_sdk.commands.common.content.objects.base_objects.dictionary_based_object.DictionaryBasedObject</node>
+    <node x="642.5" y="0.0">demisto_sdk.commands.common.content.objects.base_objects.general_object.GeneralObject</node>
+    <node x="0.0" y="516.0">demisto_sdk.commands.common.content.objects.base_objects.json_object.JSONObject</node>
+    <node x="1017.5" y="302.0">demisto_sdk.commands.common.content.objects.base_objects.text_object.TextObject</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="demisto_sdk.commands.common.content.objects.base_objects.text_object.TextObject" target="demisto_sdk.commands.common.content.objects.base_objects.general_object.GeneralObject">
+      <point x="0.0" y="-82.0" />
+      <point x="1319.0" y="277.0" />
+      <point x="1127.75" y="277.0" />
+      <point x="161.75" y="126.0" />
+    </edge>
+    <edge source="demisto_sdk.commands.common.content.objects.base_objects.yaml_object.YAMLObject" target="demisto_sdk.commands.common.content.objects.base_objects.dictionary_based_object.DictionaryBasedObject">
+      <point x="0.0" y="-71.0" />
+      <point x="924.5" y="491.0" />
+      <point x="805.25" y="491.0" />
+      <point x="192.25" y="82.0" />
+    </edge>
+    <edge source="demisto_sdk.commands.common.content.objects.base_objects.dictionary_based_object.DictionaryBasedObject" target="demisto_sdk.commands.common.content.objects.base_objects.general_object.GeneralObject">
+      <point x="0.0" y="-82.0" />
+      <point x="613.0" y="277.0" />
+      <point x="804.25" y="277.0" />
+      <point x="-161.75" y="126.0" />
+    </edge>
+    <edge source="demisto_sdk.commands.common.content.objects.base_objects.json_object.JSONObject" target="demisto_sdk.commands.common.content.objects.base_objects.dictionary_based_object.DictionaryBasedObject">
+      <point x="0.0" y="-71.0" />
+      <point x="301.5" y="491.0" />
+      <point x="420.75" y="491.0" />
+      <point x="-192.25" y="82.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="749.0" y="462.5" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Methods</Category>
+    <Category>Inner Classes</Category>
+    <Category>Fields</Category>
+  </Categories>
+</Diagram>

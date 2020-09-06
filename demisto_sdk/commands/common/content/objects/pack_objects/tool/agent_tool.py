@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import TOOL
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
+from demisto_sdk.commands.common.content.objects.base_objects import \
     GeneralObject
 from wcmatch.pathlib import Path
 
@@ -79,6 +79,6 @@ class AgentTool(GeneralObject):
         Returns:
             List[Path]: Path of new created files.
         """
-        dest_dir = self._create_target_dump_dir(dest_dir)
+        dest_dir = self.create_target_dump_dir(dest_dir)
 
         return self._serialize(dest_dir)

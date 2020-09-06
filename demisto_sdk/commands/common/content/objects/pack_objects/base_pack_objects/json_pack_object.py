@@ -1,44 +1,22 @@
 import re
 from typing import List, Optional, Union
 
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    JSONObject
-from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
-    ChangeLog
+from demisto_sdk.commands.common.content.objects.base_objects import JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
 
-class JSONContentObject(JSONObject):
+class JSONPackObject(JSONObject):
     def __init__(self, path: Union[Path, str], file_name_prefix):
         """JSON content object.
 
         Built from:
             1. <file_name>_README.md
-            2. <file_name>_CHANGELOG.md
         """
         super().__init__(self._fix_path(path), file_name_prefix)
         self._readme: Optional[Readme] = None
-        self._change_log: Optional[ChangeLog] = None
-
-    @property
-    def changelog(self) -> Optional[ChangeLog]:
-        """JSON related ChangeLog object.
-
-        Returns:
-            Changelog object or None if Changelog not found.
-
-        Notes:
-            1. Should be deprecated in the future.
-        """
-        if not self._change_log:
-            change_log_file = next(self.path.parent.glob(patterns=fr'{re.escape(self.path.stem)}_CHANGELOG.md'), None)
-            if change_log_file:
-                self._change_log = ChangeLog(change_log_file)
-
-        return self._change_log
 
     @property
     def readme(self) -> Optional[Readme]:
@@ -80,13 +58,11 @@ class JSONContentObject(JSONObject):
         """
         return parse(self.get('toVersion', '99.99.99'))
 
-    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
-             readme: Optional[bool] = False) -> List[Path]:
+    def dump(self, dest_dir: Optional[Union[str, Path]] = None, readme: Optional[bool] = False) -> List[Path]:
         """Dump JSONContentObject.
 
         Args:
             dest_dir: Destination directory.
-            change_log: True if to dump also related CHANGELOG.md.
             readme: True if to dump also related README.md.
 
         Returns:
@@ -97,9 +73,6 @@ class JSONContentObject(JSONObject):
         """
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
-        # Dump changelog if requested and availble
-        if change_log and self.changelog:
-            created_files.extend(self.changelog.dump(dest_dir))
         # Dump readme if requested and availble
         if readme and self.readme:
             created_files.extend(self.readme.dump(dest_dir))

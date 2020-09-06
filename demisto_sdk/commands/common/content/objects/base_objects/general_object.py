@@ -52,7 +52,7 @@ class GeneralObject(object):
 
         return normalize_file_name
 
-    def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
+    def create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in
          path of origin object.
 
@@ -88,6 +88,6 @@ class GeneralObject(object):
         TODO:
             1. Implement dump of modified object.
         """
-        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
+        dest_file = self.create_target_dump_dir(dest_dir) / self.normalize_file_name()
 
         return [copyfile(src=self.path, dst=dest_file)]

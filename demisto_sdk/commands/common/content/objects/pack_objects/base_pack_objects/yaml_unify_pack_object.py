@@ -7,10 +7,10 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
 from demisto_sdk.commands.unify.unifier import Unifier
 from wcmatch.pathlib import EXTMATCH, Path
 
-from .yaml_content_object import YAMLContentObject
+from .yaml_pack_object import YAMLPackObject
 
 
-class YAMLContentUnifiedObject(YAMLContentObject):
+class YAMLPackUnifiedObject(YAMLPackObject):
     def __init__(self, path: Union[Path, str], content_type: FileType, file_name_prefix: str):
         """YAML content object.
 
@@ -147,13 +147,12 @@ class YAMLContentUnifiedObject(YAMLContentObject):
 
         return [Path(path) for path in created_files]
 
-    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
-             readme: Optional[bool] = False, unify: bool = True) -> List[Path]:
+    def dump(self, dest_dir: Optional[Union[str, Path]] = None, readme: Optional[bool] = False,
+             unify: bool = True) -> List[Path]:
         """ Dump YAMLContentUnfiedObject.
 
         Args:
             dest_dir: Destination directory.
-            change_log: True if to dump also related CHANGELOG.md.
             readme: True if to dump also related README.md.
             unify: True if dump as unify else dump as is.
 
@@ -165,15 +164,14 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Spcific handling if unified and unit-tests or code.
         """
         created_files: List[Path] = []
-        dest_dir = self._create_target_dump_dir(dest_dir)
+        dest_dir = self.create_target_dump_dir(dest_dir)
 
         # Handling case where object is not unified and dump should be unify.
         if unify and not self.is_unify():
             # Unify in dest dir.
             created_files.extend(self._unify(dest_dir))
-            # Adding readme and changelog if requested.
-            created_files.extend(super().dump(dest_dir=dest_dir, yaml=False,
-                                              readme=readme, change_log=change_log))
+            # Adding readme if requested.
+            created_files.extend(super().dump(dest_dir=dest_dir, yaml=False, readme=readme))
 
         # Handling case where object is unified
         else:
@@ -183,14 +181,12 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             if self.docker_image_4_5:
                 # Split file as described above.
                 created_files.extend(self._split_yaml_4_5_0(dest_dir))
-                # Adding readme and changelog if requested.
-                created_files.extend(super().dump(dest_dir=dest_dir, yaml=False,
-                                                  readme=readme, change_log=change_log))
+                # Adding readme if requested.
+                created_files.extend(super().dump(dest_dir=dest_dir, yaml=False, readme=readme))
 
             # Handling case where copy of object should be without modifications.
             else:
                 # Dump as YAMLContentObject
-                created_files.extend(super().dump(dest_dir=dest_dir,
-                                                  readme=readme, change_log=change_log))
+                created_files.extend(super().dump(dest_dir=dest_dir, readme=readme))
 
         return created_files

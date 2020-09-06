@@ -19,7 +19,6 @@ class TestNotUnifiedIntegration:
         obj = Integration(datadir["sample.yml"])
         assert obj.readme.path == Path(datadir["README.md"])
         assert obj.code_path == Path(datadir["sample.py"])
-        assert obj.changelog.path == Path(datadir["CHANGELOG.md"])
         assert obj.description_path == Path(datadir["sample_description.md"])
         assert obj.png_path == Path(datadir["sample_image.png"])
 
@@ -40,7 +39,6 @@ class TestUnifiedIntegration:
     def test_files_detection(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])
         assert obj.readme.path == Path(datadir["integration-sample_README.md"])
-        assert obj.changelog.path == Path(datadir["integration-sample_CHANGELOG.md"])
 
     def test_is_unify(self, datadir):
         obj = Integration(datadir["integration-sample.yml"])

@@ -2,11 +2,11 @@
 from __future__ import absolute_import
 
 import inspect
+from typing import Union
 
-from .abstract_pack_objects.json_content_object import *  # lgtm [py/polluting-import]
-from .abstract_pack_objects.yaml_content_object import *  # lgtm [py/polluting-import]
-from .abstract_pack_objects.yaml_unify_content_object import *  # lgtm [py/polluting-import]
-from .change_log.change_log import *  # lgtm [py/polluting-import]
+from .base_pack_objects.json_pack_object import *  # lgtm [py/polluting-import]
+from .base_pack_objects.yaml_pack_object import *  # lgtm [py/polluting-import]
+from .base_pack_objects.yaml_unify_pack_object import *  # lgtm [py/polluting-import]
 from .classifier.classifier import *  # lgtm [py/polluting-import]
 from .connection.connection import *  # lgtm [py/polluting-import]
 from .dashboard.dashboard import *  # lgtm [py/polluting-import]

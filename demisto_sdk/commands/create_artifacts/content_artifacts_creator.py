@@ -16,10 +16,9 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
-                                                 ContentFactoryError, Pack)
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, Script, TextObject, YAMLContentObject,
-    YAMLContentUnifiedObject)
+                                                 ContentFactoryError, Pack,
+                                                 PackObject, RootObject,
+                                                 Script)
 from demisto_sdk.commands.common.logger import logging_setup
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -35,7 +34,6 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
-ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger = logging_setup(3)
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -151,12 +149,12 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
 #####################################################
 
 
-def is_in_content_packs(content_object: ContentObject) -> bool:
+def is_in_content_packs(content_object: PackObject) -> bool:
     """ Rules content_packs:
             1. to_version >= First marketplace version.
 
         Args:
-            content_object: Content object as specified in global variable - ContentObject.
+            content_object: Content object as specified in global variable - PackObject.
 
         Returns:
             bool: True if object should be included in content_packs artifacts else False.
@@ -164,7 +162,7 @@ def is_in_content_packs(content_object: ContentObject) -> bool:
     return content_object.to_version >= FIRST_MARKETPLACE_VERSION
 
 
-def is_in_content_test(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+def is_in_content_test(artifact_manager: ArtifactsManager, content_object: PackObject) -> bool:
     """Rules content_test:
             1. flag of only packs is off.
             2. Object located in TestPlaybooks directory (*/TestPlaybooks/*).
@@ -173,7 +171,7 @@ def is_in_content_test(artifact_manager: ArtifactsManager, content_object: Conte
 
         Args:
             artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
+            content_object: Content object as specified in global variable - PackObject.
 
         Returns:
             bool: True if object should be included in content_test artifacts else False.
@@ -184,7 +182,7 @@ def is_in_content_test(artifact_manager: ArtifactsManager, content_object: Conte
             IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts)
 
 
-def is_in_content_new(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+def is_in_content_new(artifact_manager: ArtifactsManager, content_object: PackObject) -> bool:
     """ Rules content_new:
             1. flag of only packs is off.
             2. Object not located in TestPlaybooks directory (*/TestPlaybooks/*).
@@ -192,7 +190,7 @@ def is_in_content_new(artifact_manager: ArtifactsManager, content_object: Conten
 
         Args:
             artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
+            content_object: Content object as specified in global variable - PackObject.
 
         Returns:
             bool: True if object should be included in content_new artifacts else False.
@@ -202,13 +200,13 @@ def is_in_content_new(artifact_manager: ArtifactsManager, content_object: Conten
             content_object.from_version < FIRST_MARKETPLACE_VERSION)
 
 
-def is_in_content_all(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
+def is_in_content_all(artifact_manager: ArtifactsManager, content_object: PackObject) -> bool:
     """ Rules content_all:
             1. If in content_new or content_test.
 
         Args:
             artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
+            content_object: Content object as specified in global variable - PackObject.
 
         Returns:
             bool: True if object should be included in content_all artifacts else False.
@@ -402,7 +400,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     return pack_report
 
 
-def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
+def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: PackObject) -> ObjectReport:
     """ Dump pack object by the following logic
 
     Args:
@@ -448,7 +446,7 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
 
 
 @contextmanager
-def content_files_handler(artifact_manager: ArtifactsManager, content_object: ContentObject):
+def content_files_handler(artifact_manager: ArtifactsManager, content_object: PackObject):
     """ Pre-processing pack, perform the following:
             1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
                 a. CONTENT_RELEASE_VERSION to given content version flag.
@@ -561,7 +559,7 @@ class DuplicateFiles(Exception):
         self.msg = f"\nFound duplicate files\n1. {src}\n2. {exiting_file}"
 
 
-def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentObject,
+def dump_link_files(artifact_manager: ArtifactsManager, content_object: Union[PackObject, RootObject],
                     dest_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
     """ Dump content object to requested destination dir.
     Due to perfomence issue if known files allredy created and dump is done for the same object, This function
@@ -600,7 +598,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
     return new_created_files
 
 
-def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
+def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: Union[PackObject, RootObject]) -> Path:
     relative_pack_path = content_object.path.relative_to(artifact_manager.content.path / PACKS_DIR)
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):

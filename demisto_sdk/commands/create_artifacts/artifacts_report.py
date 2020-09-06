@@ -1,19 +1,17 @@
 from copy import deepcopy
 from typing import List, Union
 
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, TextObject, YAMLContentObject, YAMLContentUnifiedObject)
+from demisto_sdk.commands.common.content import PackObject, RootObject
 from demisto_sdk.commands.common.logger import Colors
 from pandas import DataFrame
 from tabulate import tabulate
 from wcmatch.pathlib import Path
 
-ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
-
 
 class ObjectReport:
-    def __init__(self, content_object: ContentObject, content_test: bool = False, content_packs: bool = False,
-                 content_new: bool = False, content_all: bool = False):
+    def __init__(self, content_object: Union[PackObject, RootObject],
+                 content_test: bool = False, content_packs: bool = False, content_new: bool = False,
+                 content_all: bool = False):
         """ Content objcet report, Each object has the following include state:
                 1. content_test.
                 2. content_new.

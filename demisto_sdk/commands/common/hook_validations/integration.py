@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH, FIRST_FETCH_OPTIONS, MAX_FETCH_OPTIONS)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -695,9 +695,9 @@ class IntegrationValidator(ContentEntityValidator):
             max_fetch_param = None
             for param in params:
                 # the common names for the first_fetch param
-                if param.get('name') in ["fetch_time", "first_fetch"]:
+                if param.get('name') in FIRST_FETCH_OPTIONS:
                     first_fetch_param = param
-                elif param.get('name') == 'max_fetch':
+                elif param.get('name') in MAX_FETCH_OPTIONS:
                     max_fetch_param = param
 
             if not first_fetch_param:

@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
+* Added revision templates to the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.
 * Fixed an issue where **validate** failed on deleted files.
 * Fixed an issue where **validate** validated all images instead of packs only.

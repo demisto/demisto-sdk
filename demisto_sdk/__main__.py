@@ -816,7 +816,7 @@ def id_set_command(**kwargs):
     "-i", "--input", help="The path of the content pack."
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
+    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=RNInputValidation()
 )
 @click.option(

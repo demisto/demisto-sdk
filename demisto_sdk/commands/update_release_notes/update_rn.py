@@ -258,7 +258,7 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type == 'revision':
+        elif self.update_type in ['revision', 'maintenance', 'documentation']:
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[2] = str(int(version[2]) + 1)
@@ -316,11 +316,7 @@ class UpdateRN:
             if not _type or content_name == 'N/A':
                 continue
 
-            if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
-                rn_desc = f'- **{content_name}**\n'
-            else:
-                rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
-                    else f'##### {content_name}\n- %%UPDATE_RN%%\n'
+            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file)
 
             if _type == 'Integration':
                 if not integration_header:
@@ -383,6 +379,22 @@ class UpdateRN:
                     connections_header = True
                 rn_string += rn_desc
         return rn_string
+
+    def build_rn_desc(self, _type, content_name, desc, is_new_file):
+        if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
+            rn_desc = f'- **{content_name}**\n'
+        else:
+            if is_new_file:
+                rn_desc = f'##### New: {content_name}\n- {desc}\n'
+            else:
+                rn_desc = f'##### {content_name}\n'
+                if self.update_type == 'maintenance':
+                    rn_desc += '- Maintenance and stability enhancements.\n'
+                elif self.update_type == 'documentation':
+                    rn_desc += '- Documentation and metadata improvements.\n'
+                else:
+                    rn_desc += '- %%UPDATE_RN%%\n'
+        return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):
         new_rn = current_rn

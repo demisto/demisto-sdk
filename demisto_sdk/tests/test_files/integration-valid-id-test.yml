@@ -25,6 +25,15 @@ configuration:
   name: isFetch
   type: 8
   required: false
+- defaultvalue: '50'
+  display: Max fetch
+  name: max_fetch
+  required: false
+  type: 0
+- display: First fetch timestamp
+  name: fetch_time
+  required: false
+  type: 0
 - display: Incident type
   name: incidentType
   type: 13

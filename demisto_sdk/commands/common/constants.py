@@ -940,6 +940,7 @@ MAX_FETCH_PARAM = {
     'defaultvalue': '50'
 }
 
+# for reference, the defaultvalue and display are not enforced.
 FIRST_FETCH_PARAM = {
     'defaultvalue': '7 days',
     'display': 'First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)',

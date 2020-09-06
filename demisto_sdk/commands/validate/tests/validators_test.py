@@ -35,8 +35,8 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
-    INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
+    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
     INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
@@ -481,6 +481,18 @@ class TestValidators:
         """
         validate_manager = ValidateManager()
         assert validate_manager.run_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION, None)
+
+    def test_non_integration_png_files_ignored(self):
+        """
+            Given
+            - A png file
+            When
+            - Validating it
+            Then
+            -  validator should ignore those files
+        """
+        validate_manager = ValidateManager()
+        assert validate_manager.run_validations_on_file(IGNORED_PNG, None)
 
     def test_get_error_ignore_list(self, mocker):
         """

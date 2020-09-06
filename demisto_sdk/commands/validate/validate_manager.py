@@ -275,10 +275,10 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
-        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
+        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml') \
+                or not file_path.endswith('_image.png'):
             self.ignored_files.add(file_path)
             return True
-
         elif file_type is None:
             error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,

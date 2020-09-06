@@ -12,7 +12,6 @@ UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
-VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
@@ -181,7 +180,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     if os.path.exists(rn_path):
         os.remove(rn_path)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'VMwareValid')])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'VMware')])
 
     assert result.exit_code == 0
     assert not result.exception

@@ -36,7 +36,8 @@ from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+                                              VALID_WIDGET_PATH,
+                                              IGNORED_PNG)
 
 
 class TestGenericFunctions:
@@ -87,6 +88,7 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (IGNORED_PNG, None),
         ('', None)
     ]
 

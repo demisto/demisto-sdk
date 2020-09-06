@@ -596,8 +596,9 @@ class TestValidators:
                        'Packs/PackName3/ReleaseNotes/1_1_1.md'}
 
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files,
-                                                                      old_format_files, added_files) is True
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=old_format_files,
+                                                                      added_files=added_files) is True
 
     def test_validate_no_missing_release_notes__missing_rn_in_modified_files(self, repo, mocker):
         """
@@ -617,10 +618,10 @@ class TestValidators:
         modified_files = {incident_field1.get_path_from_pack(),
                           incident_field2.get_path_from_pack()}
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
-        old_format_files = set()
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, old_format_files,
-                                                                      added_files) is False
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is False
 
     def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(self, repo, mocker):
         """
@@ -641,8 +642,9 @@ class TestValidators:
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
         old_format_files = {incident_field2.get_path_from_pack()}
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, old_format_files,
-                                                                      added_files) is False
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=old_format_files,
+                                                                      added_files=added_files) is False
 
     def test_validate_no_missing_release_notes__missing_rn_for_added_file_in_existing_pack(self, repo, mocker):
         """
@@ -657,17 +659,15 @@ class TestValidators:
         pack1 = repo.create_pack('PackName1')
         incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
-        modified_files = set()
         added_files = {incident_field1.get_path_from_pack()}
-        old_format_files = set()
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, old_format_files,
-                                                                      added_files) is False
+            assert validate_manager.validate_no_missing_release_notes(modified_files=set(), old_format_files=set(),
+                                                                      added_files=added_files) is False
 
     def test_validate_no_missing_release_notes__no_missing_rn_new_pack(self, repo, mocker):
         """
             Given:
-                - an added file iin a new pack
+                - an added file in a new pack
             When:
                 - running validate_no_missing_release_notes on the files
             Then:
@@ -678,12 +678,11 @@ class TestValidators:
         incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         validate_manager.new_packs = {'PackName1'}
-        modified_files = set()
         added_files = {incident_field1.get_path_from_pack()}
-        old_format_files = set()
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, old_format_files,
-                                                                      added_files) is True
+            assert validate_manager.validate_no_missing_release_notes(modified_files=set(),
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is True
 
     def test_validate_no_old_format__with_toversion(self):
         """

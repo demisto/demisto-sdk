@@ -12,7 +12,7 @@ FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117'],
+    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
     'non-certified-partner': ['CJ']
 }
 
@@ -52,6 +52,7 @@ ERROR_CODE = {
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
     "no_default_value_in_parameter": "IN125",
+    "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_v2_script_name": "SC100",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
@@ -351,6 +352,16 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def parameter_missing_from_yml(name, correct_format):
+        return f'A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should ' \
+               f'be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_missing_from_yml_not_community_contributor(name, correct_format):
+        """
+            This error is ignored if the contributor is community
+        """
         return f'A required parameter "{name}" is missing or malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'

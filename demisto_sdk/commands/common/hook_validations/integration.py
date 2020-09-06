@@ -6,7 +6,6 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FIRST_FETCH_PARAM,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT,
-                                                   LEVEL_SUPPORT_OPTIONS_3,
                                                    MAX_FETCH_PARAM,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
@@ -92,15 +91,12 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
+            self.is_valid_max_fetch_and_first_fetch()
         ]
-
-        answers3 = []
-        if support_level in LEVEL_SUPPORT_OPTIONS_3:
-            answers3 = [self.is_valid_max_fetch_and_first_fetch()]
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
-        return all(answers + answers3)
+        return all(answers)
 
     def are_tests_configured(self) -> bool:
         """
@@ -707,14 +703,14 @@ class IntegrationValidator(ContentEntityValidator):
                     max_fetch_param = param
 
             if not first_fetch_param:
-                error_message, error_code = Errors.parameter_missing_from_yml('first_fetch',
-                                                                              yaml.dump(FIRST_FETCH_PARAM))
+                error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
+                    'first_fetch', yaml.dump(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
-                error_message, error_code = Errors.parameter_missing_from_yml('max_fetch',
-                                                                              yaml.dump(MAX_FETCH_PARAM))
+                error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
+                    'max_fetch', yaml.dump(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 

@@ -1277,7 +1277,7 @@ def camel_to_snake(camel: str) -> str:
     return snake
 
 
-def get_support_level_from_file_path(file_path: str) -> str:
+def get_support_level_from_file_path(file_path: str) -> Any:
     """
     Returns the support value level from the meta data file of pack that the file_path belongs to.
     Args:

@@ -1,5 +1,5 @@
 # Changelog
-
+* **format** command now prints a warning in case a non-supported file type is inputted.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

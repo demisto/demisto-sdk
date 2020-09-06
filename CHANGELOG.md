@@ -3,7 +3,7 @@
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.
 * Fixed an issue where **validate** failed on deleted files.
 * Fixed an issue where **validate** validated all images instead of packs only.
-* **format** command now prints a warning in case a non-supported file type is inputted.
+* Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

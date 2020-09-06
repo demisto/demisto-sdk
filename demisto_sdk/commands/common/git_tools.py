@@ -1,12 +1,15 @@
+import os
 import re
 from typing import Callable, List
 
+import git
 from demisto_sdk.commands.common.tools import run_command
 
 
 def git_path() -> str:
-    git_path = run_command('git rev-parse --show-toplevel')
-    return git_path.replace('\n', '')
+    git_repo = git.Repo(os.getcwd(),
+                        search_parent_directories=True)
+    return git_repo.working_dir
 
 
 def get_current_working_branch() -> str:

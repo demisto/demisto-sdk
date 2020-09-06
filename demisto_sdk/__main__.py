@@ -873,7 +873,7 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified.union(old),
                                       pre_release=pre_release, added_files=added,
                                       specific_version=specific_version)
             update_pack_rn.execute_update()
@@ -892,7 +892,7 @@ def update_pack_releasenotes(**kwargs):
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified.union(old),
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()

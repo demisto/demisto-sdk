@@ -82,6 +82,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             if self.output_file == self.source_file:
                 os.rename(self.source_file, new_output_path)
                 self.source_file = new_output_path
+
             self.output_file = new_output_path
 
     def __layoutscontainer__run_format(self):
@@ -97,8 +98,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             if self.output_file == self.source_file:
                 os.rename(self.source_file, new_output_path)
                 self.source_file = new_output_path
+
             self.output_file = new_output_path
-            self.output_file = self.output_file.replace(output_basename, new_output_basename)
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""

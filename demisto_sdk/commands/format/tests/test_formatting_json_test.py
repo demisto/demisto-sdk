@@ -59,8 +59,8 @@ class TestFormattingJson:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, output=target, verbose=True)
-        os.remove(target)
-        os.rmdir(path)
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
 
         assert res is answer
 
@@ -186,7 +186,7 @@ class TestFormattingLayoutscontainer:
         os.makedirs(LAYOUTS_CONTAINER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
-        os.rmdir(LAYOUTS_CONTAINER_PATH)
+        shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):

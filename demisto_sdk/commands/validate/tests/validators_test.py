@@ -489,10 +489,10 @@ class TestValidators:
             When
             - Validating it
             Then
-            -  validator should ignore those files
+            -  validator should ignore those files and return False
         """
         validate_manager = ValidateManager()
-        assert validate_manager.run_validations_on_file(IGNORED_PNG, False)
+        assert validate_manager.run_validations_on_file(IGNORED_PNG, None) is False
 
     def test_get_error_ignore_list(self, mocker):
         """

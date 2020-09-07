@@ -6,6 +6,7 @@ import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
+from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.format.format_module import format_manager
@@ -167,10 +168,10 @@ EQUAL_TEST = [
 
 @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
 @patch('builtins.input', lambda *args: '5.0.0')
-def test_eqaul_value_in_file(input, output, path):
+def test_equal_value_in_file(input, output, path):
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(input, output)
-    format = format_manager(input=output)
+    format_ = format_manager(input=output)
     check = True
     with open(output, 'r') as f:
         if 'simple: =' in f:
@@ -178,7 +179,7 @@ def test_eqaul_value_in_file(input, output, path):
     os.remove(output)
     os.rmdir(path)
     assert check
-    assert not format
+    assert not format_
 
 
 @pytest.mark.parametrize('yml_file, yml_type', [
@@ -442,6 +443,30 @@ def test_run_format_on_tpb():
     assert formatter.data.get('fromversion') == '5.0.0'
     os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
     os.rmdir(TEST_PLAYBOOK_PATH)
+
+
+@patch('builtins.input', lambda *args: 'no')
+def test_run_format_on_integration_wiht_test_playbook(mocker):
+    """
+    Given
+        - An integration file.
+    When
+        - Run format on the integration
+    Then
+        - Ensure run_format return value is 0
+        - Ensure `tests` field gets the Test Playbook ID
+    """
+    TEST_FILES_PATH = os.path.join(git_path(), 'demisto_sdk', 'tests')
+    VMWARE_INTEGRATION_YML_PATH = os.path.join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware',
+                                               'Integrations', 'integration-VMware.yml')
+    VMWARE_INTEGRATION_YML_OUTPUT_PATH = os.path.join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs',
+                                                      'VMware', 'Integrations', 'integration-VMware_new.yml')
+    formatter = IntegrationYMLFormat(input=VMWARE_INTEGRATION_YML_PATH, output=VMWARE_INTEGRATION_YML_OUTPUT_PATH)
+    mocker.patch.object(IntegrationYMLFormat, 'is_old_file', return_value={})
+    res = formatter.run_format()
+    assert res == 0
+    assert formatter.data.get('tests') == ['aa']
+    os.remove(VMWARE_INTEGRATION_YML_OUTPUT_PATH)
 
 
 def test_update_docker_format(tmpdir, mocker):

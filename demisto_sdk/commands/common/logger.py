@@ -1,8 +1,10 @@
 import logging
 import os
+from typing import Optional
 
 
-def logging_setup(verbose: int, quiet: bool, log_path: str) -> logging.Logger:
+def logging_setup(verbose: int, quiet: Optional[bool] = False,
+                  log_path: Optional[str] = None) -> logging.Logger:
     """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 

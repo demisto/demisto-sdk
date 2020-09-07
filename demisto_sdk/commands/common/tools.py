@@ -103,6 +103,18 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     return files
 
 
+def src_root() -> Path:
+    """ Demisto-sdk absolute path from src root.
+
+    Returns:
+        Path: src root path.
+    """
+    git_dir = git.Repo(Path.cwd(),
+                       search_parent_directories=True).working_tree_dir
+
+    return Path(git_dir) / 'demisto_sdk'
+
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 
@@ -369,7 +381,7 @@ def get_script_or_integration_id(file_path):
 
 def get_api_module_integrations(changed_api_modules, integration_set):
     integration_from_to_version = {}
-    integration_ids_to_test = set([])
+    integration_ids_to_test = set()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
         if integration_data.get('api_modules', '') in changed_api_modules:

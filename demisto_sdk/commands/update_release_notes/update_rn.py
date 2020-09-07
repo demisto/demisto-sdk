@@ -26,15 +26,20 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
 
 
 class UpdateRN:
-    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: Union[set, list], added_files: set,
+    def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
                  pack_metadata_only: bool = False, ignore_bump_check: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
+
         # renamed files will appear in the modified list as a tuple: (old path, new path)
-        self.pack_files = {file_[1] if isinstance(file_, tuple) else file_ for file_ in pack_files}
+        modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
+        self.modified_files_in_pack = set()
+        for file_path in modified_files_in_pack:
+            self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(file_path))
+
         self.added_files = added_files
         self.pre_release = pre_release
         self.specific_version = specific_version
@@ -47,6 +52,19 @@ class UpdateRN:
             print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
                         f"the pack path is correct.")
             sys.exit(1)
+
+    @staticmethod
+    def check_for_release_notes_valid_file_path(file_path):
+        """A method to change image and description file paths to the corresponding yml file path
+        if a non-image or description file path is given, it remains unchanged
+        """
+        if file_path.endswith('_image.png'):
+            return file_path.replace('_image.png', '.yml')
+
+        elif file_path.endswith('_description.md'):
+            return file_path.replace('_description.md', '.yml')
+
+        return file_path
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -70,7 +88,7 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            for packfile in self.pack_files:
+            for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
 
                 changed_files[file_name] = {
@@ -142,18 +160,19 @@ class UpdateRN:
         return True
 
     def only_readme_changed(self):
-        changed_files = self.added_files.union(self.pack_files)
+        changed_files = self.added_files.union(self.modified_files_in_pack)
         if len(changed_files) == 1 and 'README' in changed_files.pop():
             return True
         return False
 
     def find_added_pack_files(self):
+        """Check for added files in the given pack that require RN"""
         for a_file in self.added_files:
             if self.pack in a_file:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                     continue
                 else:
-                    self.pack_files.add(a_file)
+                    self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(a_file))
 
     def return_release_notes_path(self, input_version: str):
         _new_version = input_version.replace('.', '_')

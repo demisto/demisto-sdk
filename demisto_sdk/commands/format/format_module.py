@@ -18,8 +18,7 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_layout import (
-    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -37,8 +36,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'incidenttype': IncidentTypesJSONFormat,
     'indicatorfield': IndicatorFieldJSONFormat,
     'reputation': IndicatorTypeJSONFormat,
-    'layout': LayoutJSONFormat,
-    'layoutscontainer': LayoutsContainerJSONFormat,
+    'layout': LayoutBaseFormat,
+    'layoutscontainer': LayoutBaseFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,

@@ -124,6 +124,7 @@ mapping:
               occurred:
                 required: false
                 type: map
+                allowempty: True
                 mapping:
                   simple:
                     type: text

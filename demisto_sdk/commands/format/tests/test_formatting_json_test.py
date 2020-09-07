@@ -347,9 +347,9 @@ class TestFormattingClassifier:
         Given
             - A classifier file with fields that dont exit in classifier schema.
         When
-            - Run format on classifier file
+            - Run the arguments_to_remove function.
         Then
-            - Ensure that unnecessary keys were removed
+            - Ensure the keys that should be removed are identified correctly.
         """
         classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
         args_to_remove = classifier_formatter.arguments_to_remove()

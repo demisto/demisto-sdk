@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
 
 
 class UpdateRN:
-    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
+    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: Union[set, list], added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
                  pack_metadata_only: bool = False, ignore_bump_check: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
@@ -482,7 +482,6 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
                                                                                                      'origin/master')
-    modified = [file_[1] if isinstance(file_, tuple) else file_ for file_ in modified]
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -504,7 +503,7 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
                             f"To update release notes in a specific pack, please use the -p parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1):
+    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
@@ -522,7 +521,7 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified.union(old),
                                       pre_release=pre_release, added_files=added,
                                       specific_version=specific_version)
             update_pack_rn.execute_update()
@@ -540,7 +539,7 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified.union(old),
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()
@@ -563,10 +562,11 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
                                               specific_version=specific_version)
 
 
-def get_api_module_ids(modified):
+def get_api_module_ids(file_list):
+    """Extracts the APIModule ID from the file list"""
     api_module_set = set()
-    if modified:
-        for pf in modified:
+    if file_list:
+        for pf in file_list:
             parent = pf
             while '/ApiModules/Scripts/' in pf:
                 parent = get_parent_directory_name(parent, abs_path=True)

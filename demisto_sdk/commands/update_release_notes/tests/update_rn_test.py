@@ -193,7 +193,8 @@ class TestRNUpdate(unittest.TestCase):
             - case 1: validate that the output of the function is True
             - case 2: validate that the output of the function is False
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
 
         # case 1:
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld/README.md'},
@@ -320,7 +321,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '2.0.0'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, specific_version='2.0.0',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH,
@@ -499,7 +501,8 @@ class TestRNUpdateUnit:
             Then:
                 - create the directory if it does not exist
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes')
         update_rn = UpdateRN(pack_path="Packs/VulnDB", update_type='minor', modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.check_rn_dir(filepath)
@@ -564,7 +567,8 @@ class TestRNUpdateUnit:
             Then:
                 - return a list of relevant pack files which were added.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         added_files = {'HelloWorld/something_new.md', 'HelloWorld/test_data/nothing.md'}
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
                              added_files=added_files)

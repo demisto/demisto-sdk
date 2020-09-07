@@ -804,7 +804,7 @@ def id_set_command(**kwargs):
     "-i", "--input", help="The path of the content pack."
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
+    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=RNInputValidation()
 )
 @click.option(
@@ -827,7 +827,6 @@ def update_pack_releasenotes(**kwargs):
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
-
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -846,7 +845,7 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -p parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1):
+    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
@@ -862,7 +861,7 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified.union(old),
                                       pre_release=pre_release, added_files=added,
                                       specific_version=specific_version)
             update_pack_rn.execute_update()
@@ -881,7 +880,7 @@ def update_pack_releasenotes(**kwargs):
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified.union(old),
                                           pre_release=pre_release, added_files=added,
                                           specific_version=specific_version)
                 update_pack_rn.execute_update()

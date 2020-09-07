@@ -31,6 +31,8 @@ Supported content entities:
     - major
     - minor
     - revision
+    - maintenance (revision)
+    - documentation (revision)
 
 * **--all**
 

@@ -44,6 +44,7 @@ class ReleaseNotesValidator(BaseValidator):
                 if find_type(file) in self.file_types_that_should_not_appear_in_rn:
                     continue
                 elif self.pack_name + '/' in file:
+                    # Refer image and description file paths to the corresponding yml files
                     file = UpdateRN.check_for_release_notes_valid_file_path(file)
                     update_rn_util = UpdateRN(pack_path=self.release_notes_file_path, modified_files_in_pack=set(),
                                               update_type=None, added_files=set(), pack=self.pack_name)

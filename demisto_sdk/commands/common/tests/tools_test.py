@@ -25,7 +25,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
-from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+                                              INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
@@ -36,8 +37,7 @@ from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH,
-                                              IGNORED_PNG)
+                                              VALID_WIDGET_PATH)
 
 
 class TestGenericFunctions:

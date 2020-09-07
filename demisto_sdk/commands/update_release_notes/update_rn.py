@@ -14,13 +14,15 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               get_api_module_integrations,
+                                               get_json,
                                                get_latest_release_notes_text,
-                                               get_pack_name, get_yaml,
-                                               pack_name_to_path, print_color,
-                                               print_error, print_warning,
-                                               run_command, get_parent_directory_name, get_api_module_integrations)
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+                                               get_pack_name,
+                                               get_parent_directory_name,
+                                               get_yaml, pack_name_to_path,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 
 class UpdateRN:
@@ -476,8 +478,7 @@ def get_file_description(path, file_type):
     return '%%UPDATE_RN%%'
 
 
-def run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type):
-    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+def run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type, validate_manager):
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
                                                                                                      'origin/master')

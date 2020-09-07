@@ -14,9 +14,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name,
-                                               pack_name_to_path, print_error,
-                                               print_warning)
+                                               print_error, print_warning)
 from demisto_sdk.commands.create_artifacts.content_creator import \
     ContentCreator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -44,7 +42,8 @@ from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import run_release_notes_validation
+from demisto_sdk.commands.update_release_notes.update_rn import \
+    run_release_notes_validation
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -836,7 +835,8 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     print("Starting to update release notes.")
 
-    run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type)
+    validate_manager = ValidateManager(skip_pack_rn_validation=True)
+    run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type, validate_manager)
 
 
 # ====================== find-dependencies ====================== #

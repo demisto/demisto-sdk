@@ -119,6 +119,50 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
+    def test_build_rn_template_file__maintenance(self):
+        """
+            Given:
+                - a dict of changed items, with a maintenance rn update
+            When:
+                - we want to produce a release notes template for files without descriptions like :
+                'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            Then:
+                - return a markdown string
+        """
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+                          "- Maintenance and stability enhancements.\n"\
+
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='maintenance', pack_files={'HelloWorld'},
+                             added_files=set())
+        changed_items = {
+            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+        }
+        release_notes = update_rn.build_rn_template(changed_items)
+        assert expected_result == release_notes
+
+    def test_build_rn_template_file__documentation(self):
+        """
+            Given:
+                - a dict of changed items, with a maintenance rn update
+            When:
+                - we want to produce a release notes template for files without descriptions like :
+                'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            Then:
+                - return a markdown string
+        """
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+                          "- Documentation and metadata improvements.\n"\
+
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='documentation', pack_files={'HelloWorld'},
+                             added_files=set())
+        changed_items = {
+            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+        }
+        release_notes = update_rn.build_rn_template(changed_items)
+        assert expected_result == release_notes
+
     def test_build_rn_template_when_only_pack_metadata_changed(self):
         """
         Given:
@@ -556,3 +600,68 @@ class TestRNUpdateUnit:
         update_rn = UpdateRN(pack_path="Packs/Legacy", update_type='minor', pack_files=set(),
                              added_files=set())
         update_rn.execute_update()
+
+    diff_package = [
+        ("1.0.1", "1.0.2", True),
+        ("1.0.5", "1.0.4", False),
+        ("1.0.5", "1.0.5", True),
+        ("1.0.0", '99.99.99', True)
+    ]
+
+    @pytest.mark.parametrize('pack_current_version, git_current_version, expected_result', diff_package)
+    def test_is_bump_required(self, pack_current_version, git_current_version, expected_result, mocker):
+        """
+        Given:
+            - Case 1: Version in origin/master is higher than the current version for the pack
+            - Case 2: Version of origin/master is lower than current version (indicating bump has
+                      happened already.
+            - Case 3: Version is the same indicating a bump is necessary.
+            - Case 4: Version was not found so default of 99.99.99 is used.
+        When:
+            - Case 1: Bumping release notes with update-release-notes command.
+            - Case 2: Bumping release notes with update-release-notes command.
+            - Case 3: Bumping release notes with update-release-notes command.
+            - Case 4: Bumping release notes with update-release-notes command.
+        Then:
+            - Case 1: Return True and throw error saying "The master branch is currently ahead of
+                      your pack's version. Please pull from master and re-run the command."
+            - Case 2: Return False since bump has already happened.
+            - Case 3: Return True since a bump is necessary.
+            - Case 4: Return True and throw error saying "The master branch is currently ahead of
+                      your pack's version. Please pull from master and re-run the command."
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from subprocess import Popen
+        import json
+        update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', pack_files=set(),
+                             added_files=set())
+        mocker.patch.object(UpdateRN, 'get_pack_metadata',
+                            return_value={"currentVersion": pack_current_version})
+        mocker.patch.object(Popen, 'communicate',
+                            return_value=(json.dumps({"currentVersion": git_current_version}), ''))
+        mocker.patch('sys.exit', return_value=None)
+        bump_result = update_rn.is_bump_required()
+        assert bump_result is expected_result
+
+    def test_renamed_files(self):
+        """
+        Given:
+            A file was renamed
+        When:
+            Bumping release notes with update-release-notes command.
+        Then:
+            file list should contain the new file path and ignore the old path.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        modified_files = {
+            'file1',
+            ('file2', 'file2_new'),
+            'file3'
+        }
+        update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', pack_files=modified_files,
+                             added_files=set())
+
+        assert 'file1' in update_rn.pack_files
+        assert 'file2_new' in update_rn.pack_files
+        assert ('file2', 'file2_new') not in update_rn.pack_files
+        assert 'file3' in update_rn.pack_files

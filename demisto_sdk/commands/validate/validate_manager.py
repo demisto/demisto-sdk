@@ -329,7 +329,8 @@ class ValidateManager:
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.IMAGE:
+        # Validate only images of packs
+        elif file_type == FileType.IMAGE and file_path.endswith('_image.png'):
             return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.
@@ -387,14 +388,15 @@ class ValidateManager:
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
                                                                         changed_meta_files))
 
-        if not self.skip_pack_rn_validation:
-            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files, added_files))
-
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
                         fg="bright_cyan")
             validation_results.add(self.validate_no_old_format(old_format_files))
+
+        if not self.skip_pack_rn_validation:
+            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files,
+                                                                          old_format_files, added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -607,6 +609,7 @@ class ValidateManager:
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
+                                                                                               added_files,
                                                                                                changed_meta_packs)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
@@ -668,11 +671,12 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def validate_no_missing_release_notes(self, modified_files, added_files):
+    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files):
         """Validate that there are no missing RN for changed files
 
         Args:
             modified_files (set): a set of modified files.
+            old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
 
         Returns:
@@ -681,11 +685,15 @@ class ValidateManager:
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
-        packs_that_should_have_new_rn = get_pack_names_from_files(modified_files,
+        changed_files = modified_files.union(old_format_files).union(added_files)
+        packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,
                                                                                    FileType.TEST_PLAYBOOK,
                                                                                    FileType.TEST_SCRIPT})
+
+        # new packs should not have RN
+        packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs
 
         packs_that_have_new_rn = self.get_packs_with_added_release_notes(added_files)
 
@@ -805,8 +813,8 @@ class ValidateManager:
             added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        packs = self.get_packs(modified_files)
-        return modified_files, added_files, old_format_files, changed_meta_files, packs
+        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
+        return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
         """Get lists of the modified files in your branch according to the files string.
@@ -838,8 +846,9 @@ class ValidateManager:
                 file_path = file_data[2]
 
             # if the file is a code file - change path to the associated yml path to trigger release notes validation.
-            if find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and file_status.lower() != 'd' \
-                    and not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
+            if file_status.lower() != 'd' and \
+                find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                    not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
 
@@ -849,7 +858,7 @@ class ValidateManager:
                 continue
 
             # identify deleted files
-            if file_status.lower() == 'd' and find_type(file_path) and not file_path.startswith('.'):
+            if file_status.lower() == 'd' and not file_path.startswith('.'):
                 deleted_files.add(file_path)
 
             # ignore directories
@@ -1017,13 +1026,19 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    @staticmethod
-    def get_packs_that_should_have_version_raised(modified_files, changed_meta_packs):
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files, changed_meta_packs):
         # modified packs (where the change is not test-playbook, test-script, readme or release notes)
         # and packs where the meta file changed should have their version raised
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
+
+        # also existing packs with added files which are not test-playbook, test-script readme or release notes
+        # should have their version raised
+        modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
+            get_pack_names_from_files(added_files, skip_file_types={
+                FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
+                FileType.TEST_SCRIPT}) - self.new_packs)
 
         return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
 

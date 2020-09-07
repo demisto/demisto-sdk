@@ -74,8 +74,8 @@ class TestSecrets:
         assert is_txt is True
 
     def test_search_potential_secrets__no_secrets_found(self):
-        secrets_found = self.validator.search_potential_secrets([self.TEST_YML_FILE])
-        assert not secrets_found
+        secret_to_location = self.validator.search_potential_secrets([self.TEST_YML_FILE])
+        assert not secret_to_location
 
     def test_search_potential_secrets__secrets_found(self):
         create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
@@ -100,7 +100,7 @@ print(some_dict.some_foo)
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {7: ['OIifdsnsjkgnj3254nkdfsjKNJD0345']}
 
     def test_ignore_entropy(self):
         """
@@ -136,7 +136,7 @@ some_dict = {
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['fooo@someorg.com']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {4: ['fooo@someorg.com']}
 
     def test_two_files_with_same_name(self):
         """
@@ -171,8 +171,8 @@ my_email = "fooo@someorg.com"
 
 ''')
         secrets_found = validator.search_potential_secrets([file1_path, file2_path], True)
-        assert secrets_found[os.path.join(dir1_path, file_name)] == ['fooo@someorg.com']
-        assert secrets_found[os.path.join(dir2_path, file_name)] == ['fooo@someorg.com']
+        assert secrets_found[os.path.join(dir1_path, file_name)] == {4: ['fooo@someorg.com']}
+        assert secrets_found[os.path.join(dir2_path, file_name)] == {4: ['fooo@someorg.com']}
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'

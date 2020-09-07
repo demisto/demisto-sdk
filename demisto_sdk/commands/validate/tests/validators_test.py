@@ -574,7 +574,7 @@ class TestValidators:
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
         """
             Given:
-                - packs with modified files and release notes
+                - packs with modified files, modified old format files and release notes for all of them
             When:
                 - running validate_no_missing_release_notes on the files
             Then:
@@ -585,17 +585,25 @@ class TestValidators:
         pack2 = repo.create_pack('PackName2')
         incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
+        pack3 = repo.create_pack('PackName3')
+        incident_field3 = pack3.create_incident_field('incident-field', content=INCIDENT_FIELD)
+
         modified_files = {incident_field1.get_path_from_pack(),
                           incident_field2.get_path_from_pack()}
+        old_format_files = {incident_field3.get_path_from_pack()}
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md',
-                       'Packs/PackName2/ReleaseNotes/1_1_1.md'}
-        with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is True
+                       'Packs/PackName2/ReleaseNotes/1_1_1.md',
+                       'Packs/PackName3/ReleaseNotes/1_1_1.md'}
 
-    def test_validate_no_missing_release_notes__missing_rn(self, repo, mocker):
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=old_format_files,
+                                                                      added_files=added_files) is True
+
+    def test_validate_no_missing_release_notes__missing_rn_in_modified_files(self, repo, mocker):
         """
             Given:
-                - 2 packs with modified files and release notes for only one
+                - 2 packs with modified files and release notes for only one and no old format files
             When:
                 - running validate_no_missing_release_notes on the files
             Then:
@@ -611,7 +619,70 @@ class TestValidators:
                           incident_field2.get_path_from_pack()}
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
-            assert validate_manager.validate_no_missing_release_notes(modified_files, added_files) is False
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(self, repo, mocker):
+        """
+            Given:
+                - 2 packs one modified files the other an old format file and release notes for only one
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a False as there are release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        pack2 = repo.create_pack('PackName2')
+        incident_field2 = pack2.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        modified_files = {incident_field1.get_path_from_pack()}
+        added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
+        old_format_files = {incident_field2.get_path_from_pack()}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=old_format_files,
+                                                                      added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__missing_rn_for_added_file_in_existing_pack(self, repo, mocker):
+        """
+            Given:
+                - an existing pack with an added file which does not have release notes
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a False as there are release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        added_files = {incident_field1.get_path_from_pack()}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=set(), old_format_files=set(),
+                                                                      added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__no_missing_rn_new_pack(self, repo, mocker):
+        """
+            Given:
+                - an added file in a new pack
+            When:
+                - running validate_no_missing_release_notes on the files
+            Then:
+                - return a True as there are no release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('PackName1')
+        incident_field1 = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
+        validate_manager = ValidateManager()
+        validate_manager.new_packs = {'PackName1'}
+        added_files = {incident_field1.get_path_from_pack()}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=set(),
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is True
 
     def test_validate_no_old_format__with_toversion(self):
         """

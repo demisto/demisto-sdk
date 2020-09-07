@@ -3,6 +3,7 @@ from typing import Set, Union
 
 import click
 import yaml
+import re
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -95,10 +96,34 @@ class BaseUpdate:
         data_keys = set(data.keys())
         for key in data_keys:
             if key not in schema.keys():
-                data.pop(key, None)
+                # check if one of the schema keys is a regex that matches the key
+                matching_key = self.regex_matching_key(key, schema.keys())
+                if matching_key:
+                    if schema.get(matching_key).get('mapping'):
+                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(key))
+                else:
+                    if self.verbose:
+                        print(f'Removing {key} key')
+                    data.pop(key, None)
             else:
                 if schema.get(key).get('mapping'):
                     self.recursive_remove_unnecessary_keys(schema.get(key).get('mapping'), data.get(key))
+
+    def regex_matching_key(self, key, schema_keys):
+        """
+        Checks if the given key matches a regex field in the schema.
+        Args:
+            key: the key that should be matched.
+            schema_keys: the keys in the schema that the key should checked upon.
+
+        Returns:
+            the schema-key that is a regex which matches the given, if such a key exists, otherwise none
+        """
+        regex_keys = [regex_key for regex_key in schema_keys if 'regex;' in regex_key]
+        for reg in regex_keys:
+            if re.match(reg.split(';')[1], key):
+                return reg
+        return None
 
     def set_fromVersion(self, from_version=None):
         """Sets fromversion key in file:

@@ -25,14 +25,12 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             click.echo('Adding descriptions for the playbook and to relevant tasks')
         if 'description' not in set(self.data.keys()):
             click.secho('No description is specified for this playbook, would you like to add a description? [Y/n]',
-                        fg='red')
+                        fg='bright_red')
             user_answer = input()
             if user_answer in ['n', 'N', 'no', 'No']:
-                print_error('Adding empty description for the playbook.')
                 user_description = ''
             else:
-                click.secho('Please enter the description', fg='yellow')
-                user_description = input()
+                user_description = input("Please enter the description\n")
             self.data['description'] = user_description
 
         for task_id, task in self.data.get('tasks', {}).items():

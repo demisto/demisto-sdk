@@ -21,12 +21,13 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         Returns:
             bool. Whether the layout is valid or not
         """
-        return (super().is_valid_file(validate_rn) and
-                self.is_valid_version() and
-                self.is_valid_from_version() and
-                self.is_valid_to_version() and
-                self.is_to_version_higher_than_from_version() and
-                self.is_valid_file_path())
+        return all([super().is_valid_file(validate_rn),
+                    self.is_valid_version(),
+                    self.is_valid_from_version(),
+                    self.is_valid_to_version(),
+                    self.is_to_version_higher_than_from_version(),
+                    self.is_valid_file_path()
+                    ])
 
     def is_valid_version(self) -> bool:
         """Checks if version field is valid. uses default method.
@@ -89,7 +90,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
-        return output_basename.startswith('layoutscontainer-')
+        if not output_basename.startswith('layoutscontainer-'):
+            error_message, error_code = Errors.invalid_file_path_layoutscontainer(output_basename)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
 
 class LayoutValidator(LayoutBaseValidator):
@@ -121,4 +126,8 @@ class LayoutValidator(LayoutBaseValidator):
 
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
-        return output_basename.startswith('layout-')
+        if not output_basename.startswith('layout-'):
+            error_message, error_code = Errors.invalid_file_path_layout(output_basename)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

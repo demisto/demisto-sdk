@@ -35,7 +35,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
     SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
     SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER,
-    SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+    SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH, DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY)
 from mock import patch
 
 
@@ -185,7 +185,8 @@ class TestFormattingLayoutscontainer:
     def layoutscontainer_copy(self):
         os.makedirs(LAYOUTS_CONTAINER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
-        os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+        if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
+            os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
     @pytest.fixture(autouse=True)
@@ -260,6 +261,26 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.set_fromVersion('6.0.0')
         assert layoutscontainer_formatter.data.get('fromVersion') == '6.0.0'
 
+    def test_set_output_path(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layout file without an invalid output path
+            - The input is the same as the output
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the output file path was updated with the correct path
+            - Ensure the original file was renamed
+        """
+        expected_path = 'Layouts/layoutscontainer-formatted_layoutscontainer-test.json'
+        invalid_output_path = layoutscontainer_formatter.output_file
+        layoutscontainer_formatter.layoutscontainer__set_output_path()
+        assert invalid_output_path != layoutscontainer_formatter.output_file
+        assert expected_path == layoutscontainer_formatter.output_file
+
+        # since we are renaming the file, we need to clean it here
+        os.remove(layoutscontainer_formatter.output_file)
+
 
 class TestFormattingLayout:
 
@@ -273,6 +294,10 @@ class TestFormattingLayout:
     @pytest.fixture(autouse=True)
     def layouts_formatter(self, layouts_copy):
         yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
+
+    @pytest.fixture(autouse=True)
+    def invalid_path_layouts_formatter(self, layouts_copy):
+        yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY)
 
     def test_remove_unnecessary_keys(self, layouts_formatter):
         """
@@ -311,6 +336,21 @@ class TestFormattingLayout:
         """
         layouts_formatter.set_toVersion()
         assert layouts_formatter.data.get('toVersion') == '5.9.9'
+
+    def test_set_output_path(self, invalid_path_layouts_formatter):
+        """
+        Given
+            - A layout file without an invalid output path
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the output file path was updated with the correct path
+        """
+        expected_path = 'Layouts/layout-layoutt-copy.json'
+        invalid_output_path = invalid_path_layouts_formatter.output_file
+        invalid_path_layouts_formatter.layout__set_output_path()
+        assert invalid_output_path != invalid_path_layouts_formatter.output_file
+        assert expected_path == invalid_path_layouts_formatter.output_file
 
 
 class TestFormattingClassifier:

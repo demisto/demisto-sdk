@@ -31,7 +31,7 @@ configuration:
   required: false
   type: 0
 - display: First fetch timestamp
-  name: fetch_time
+  name: first_fetch
   required: false
   type: 0
 - display: Incident type

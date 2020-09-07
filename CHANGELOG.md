@@ -6,6 +6,7 @@
 * Fixed an issue where **validate** validated all images instead of packs only.
 * Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
 * Fixed an issue where **validate** did not fail if no release notes were added when adding files to existing packs.
+* Added handling of incorrect layout paths via the **format** command.
 * Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
 
 # 1.1.11

@@ -342,6 +342,21 @@ class TestFormattingClassifier:
                       'system', 'toServerVersion']:
             assert field not in classifier_formatter.data
 
+    def test_arguments_to_remove(self, classifier_formatter):
+        """
+        Given
+            - A classifier file with fields that dont exit in classifier schema.
+        When
+            - Run format on classifier file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
+        args_to_remove = classifier_formatter.arguments_to_remove()
+        expected_args = ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
+                         'system', 'toServerVersion', 'sourceClassifierId', 'fromServerVersion', 'nameRaw']
+        assert set(expected_args) == args_to_remove
+
     def test_set_keyTypeMap(self, classifier_formatter):
         """
         Given

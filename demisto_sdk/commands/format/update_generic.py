@@ -1,9 +1,9 @@
 import os
+import re
 from typing import Set, Union
 
 import click
 import yaml
-import re
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,

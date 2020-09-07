@@ -3,11 +3,12 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH,
                                                    FIRST_FETCH_PARAM,
                                                    INTEGRATION_CATEGORIES,
-                                                   IOC_OUTPUTS_DICT,
+                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH, FIRST_FETCH, MAX_FETCH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

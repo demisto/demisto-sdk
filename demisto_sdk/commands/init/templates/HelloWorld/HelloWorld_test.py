@@ -185,8 +185,8 @@ def test_scan_results(requests_mock):
     get_scan_results API response, loaded from a local JSON file. Checks
     the output of the command function with the expected output.
     """
-    from HelloWorld import Client, scan_results_command
     from CommonServerPython import Common
+    from HelloWorld import Client, scan_results_command
 
     mock_response = util_load_json('test_data/scan_results.json')
     requests_mock.get('https://test.com/api/v1/get_scan_results?scan_id=100', json=mock_response)
@@ -338,8 +338,8 @@ def test_ip(requests_mock):
     ip reputation API response, loaded from a local JSON file. Checks
     the output of the command function with the expected output.
     """
-    from HelloWorld import Client, ip_reputation_command
     from CommonServerPython import Common
+    from HelloWorld import Client, ip_reputation_command
 
     ip_to_check = '151.1.1.1'
     mock_response = util_load_json('test_data/ip_reputation.json')
@@ -379,8 +379,8 @@ def test_domain(requests_mock):
     domain reputation API response, loaded from a local JSON file. Checks
     the output of the command function with the expected output.
     """
-    from HelloWorld import Client, domain_reputation_command
     from CommonServerPython import Common
+    from HelloWorld import Client, domain_reputation_command
 
     domain_to_check = 'google.com'
     mock_response = util_load_json('test_data/domain_reputation.json')

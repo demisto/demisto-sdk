@@ -34,7 +34,8 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
             "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
             "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
@@ -68,7 +69,8 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n" \
 
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
             "Hello World Playbook": {"type": "Playbook",
@@ -89,7 +91,8 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
 
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
             "Hello World Playbook": {"type": "Playbook",
@@ -111,7 +114,8 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
 
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         changed_items = {
             "Hello World IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
@@ -175,7 +179,8 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Integrations\n##### HelloWorld\n- Documentation and metadata improvements.\n"\
 
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files=set(), added_files=set(),
                              pack_metadata_only=True)
         changed_items = {}
@@ -193,7 +198,8 @@ class TestRNUpdate(unittest.TestCase):
             - case 1: validate that the output of the function is True
             - case 2: validate that the output of the function is False
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
 
         # case 1:
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld/README.md'},
@@ -223,7 +229,8 @@ class TestRNUpdate(unittest.TestCase):
                 - return only the yml of the changed file
         """
         expected_result = "Integration/HelloWorld.yml"
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = 'Integration/HelloWorld.py'
         filename = update_rn.find_corresponding_yml(filepath)
@@ -239,7 +246,8 @@ class TestRNUpdate(unittest.TestCase):
                 - the filepath of the correct release notes.
         """
         expected_result = 'Packs/HelloWorld/ReleaseNotes/1_1_1.md'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         input_version = '1.1.1'
         result = update_rn.return_release_notes_path(input_version)
@@ -257,7 +265,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '1.1.0'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
         version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
@@ -278,7 +287,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '2.0.0'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
         version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
@@ -299,7 +309,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '1.0.1'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
         version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
@@ -320,7 +331,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '2.0.0'
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, specific_version='2.0.0',
                              pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH,
@@ -343,7 +355,8 @@ class TestRNUpdate(unittest.TestCase):
         """
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
@@ -362,7 +375,8 @@ class TestRNUpdate(unittest.TestCase):
         """
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
@@ -381,7 +395,8 @@ class TestRNUpdate(unittest.TestCase):
         """
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
@@ -398,7 +413,8 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return ValueError
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
         self.assertRaises(SystemExit, update_rn.bump_version_number)
@@ -412,7 +428,8 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return ValueError
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, pack_files={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
@@ -482,7 +499,8 @@ class TestRNUpdateUnit:
             Then:
                 - return tuple where first value is the pack name, and second is the item type
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path=pack_name, update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
@@ -499,7 +517,8 @@ class TestRNUpdateUnit:
             Then:
                 - create the directory if it does not exist
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes')
         update_rn = UpdateRN(pack_path="Packs/VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         update_rn.check_rn_dir(filepath)
@@ -513,7 +532,8 @@ class TestRNUpdateUnit:
             Then:
                 - create the file or skip if it exists.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/VulnDB", update_type='minor', pack_files={'HelloWorld'}, added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
@@ -528,7 +548,8 @@ class TestRNUpdateUnit:
             Then:
                 - return updated release notes while preserving the integrity of the existing notes.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
@@ -545,7 +566,8 @@ class TestRNUpdateUnit:
         """
         ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         TEMP_FILE = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json')
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files={'HelloWorld'},
                              added_files=set())
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
@@ -564,7 +586,8 @@ class TestRNUpdateUnit:
             Then:
                 - return a list of relevant pack files which were added.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         added_files = {'HelloWorld/something_new.md', 'HelloWorld/test_data/nothing.md'}
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files=set(),
                              added_files=added_files)
@@ -580,7 +603,8 @@ class TestRNUpdateUnit:
             Then:
                 - return False to indicate it does not exist.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', pack_files=set(),
                              added_files=set())
         update_rn.metadata_path = 'This/Doesnt/Exist'
@@ -596,7 +620,8 @@ class TestRNUpdateUnit:
             Then:
                 - return an error message and exit.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         update_rn = UpdateRN(pack_path="Packs/Legacy", update_type='minor', pack_files=set(),
                              added_files=set())
         update_rn.execute_update()

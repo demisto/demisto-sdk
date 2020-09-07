@@ -103,6 +103,18 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     return files
 
 
+def src_root() -> Path:
+    """ Demisto-sdk absolute path from src root.
+
+    Returns:
+        Path: src root path.
+    """
+    git_dir = git.Repo(Path.cwd(),
+                       search_parent_directories=True).working_tree_dir
+
+    return Path(git_dir) / 'demisto_sdk'
+
+
 def print_error(error_str):
     print_color(error_str, LOG_COLORS.RED)
 

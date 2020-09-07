@@ -55,8 +55,8 @@ class TestIncidentFieldsValidator:
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_NAMES)
     def test_is_valid_name_sanity(self, current_file, answer):
-        import sys
         import os
+        import sys
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file

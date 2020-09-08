@@ -57,7 +57,8 @@ class TestOpenAPICodeGen:
         Then
             - Ensure the configuration file is generated correctly
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import \
+            DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
 
@@ -82,7 +83,9 @@ class TestOpenAPICodeGen:
            - Ensure the yaml file is generated correctly
        """
         import yaml
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+
+        from demisto_sdk.commands.common.hook_validations.docker import \
+            DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
         integration = self.init_integration()
@@ -149,7 +152,8 @@ class TestOpenAPICodeGen:
         Then
            - Ensure the arguments are generated correctly
         """
-        from demisto_sdk.commands.openapi_codegen.openapi_codegen import base_data
+        from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
+            base_data
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'create-user'][0]
 

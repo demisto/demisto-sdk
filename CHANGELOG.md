@@ -6,6 +6,7 @@
 * Fixed an issue where **validate** validated all images instead of packs only.
 * Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
 * Fixed an issue where **validate** did not fail if no release notes were added when adding files to existing packs.
+* Fixed an issue where **validate** did not recognize added files if they were modified locally.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

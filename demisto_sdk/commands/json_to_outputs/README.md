@@ -5,7 +5,7 @@ Convert JSON format to demisto entry context yaml format.
 * *-c, --command*
     Command name (e.g. xdr-get-incidents)
 * *-i, --input*
-    Valid JSON file path. If not specified then script will wait for user input in the terminal
+    A JSON file path. If not specified then script will wait for user input in the terminal.
 * *-p, --prefix*
     Output prefix like Jira.Ticket, VirusTotal.IP
 * *-o, --output*

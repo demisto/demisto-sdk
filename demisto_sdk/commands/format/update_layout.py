@@ -1,3 +1,4 @@
+import os
 import re
 from abc import ABC
 from typing import Tuple
@@ -21,6 +22,8 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'detailsV2',
                            'mobile']
 LAYOUT_KIND = 'layout'
+LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
+LAYOUT_PREFIX = 'layout-'
 
 
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
@@ -30,6 +33,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose)
 
+        # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
+        self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
+
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
         format = self.run_format()
@@ -38,10 +44,71 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         else:
             return format, self.initiate_file_validator(LayoutValidator)
 
-    def run_format(self):
-        self.update_json()
-        self.set_description()
-        self.save_json_to_destination_file()
+    def run_format(self) -> int:
+        try:
+            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            if self.is_container:
+                self.layoutscontainer__run_format()
+            else:
+                self.layout__run_format()
+            self.update_json()
+            self.set_description()
+            self.save_json_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception:
+            return ERROR_RETURN_CODE
+
+    def arguments_to_remove(self):
+        """ Finds diff between keys in file and schema of file type
+        Returns:
+            Tuple -
+                Set of keys that should be deleted from file
+                Dict with layout kinds as keys and set of keys that should
+                be deleted as values.
+        """
+        if self.is_container:
+            return self.layoutscontainer__arguments_to_remove()
+        return self.layout__arguments_to_remove()
+
+    def layout__run_format(self):
+        """toVersion 5.9.9 layout format"""
+        self.set_layout_key()
+        # version is both in layout key and in base dict
+        self.set_version_to_default(self.data['layout'])
+        self.set_toVersion()
+        self.layout__set_output_path()
+
+    def layout__set_output_path(self):
+        output_basename = os.path.basename(self.output_file)
+        if not output_basename.startswith(LAYOUT_PREFIX):
+            new_output_basename = LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
+
+            # rename file if source and output are the same
+            if self.output_file == self.source_file:
+                os.rename(self.source_file, new_output_path)
+                self.source_file = new_output_path
+
+            self.output_file = new_output_path
+
+    def layoutscontainer__run_format(self):
+        """fromVersion 6.0.0 layout (container) format"""
+        self.set_fromVersion(from_version=VERSION_6_0_0)
+        self.set_group_field()
+        self.layoutscontainer__set_output_path()
+
+    def layoutscontainer__set_output_path(self):
+        output_basename = os.path.basename(self.output_file)
+        if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
+            new_output_basename = LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
+
+            # rename file if source and output are the same
+            if self.output_file == self.source_file:
+                os.rename(self.source_file, new_output_path)
+                self.source_file = new_output_path
+
+            self.output_file = new_output_path
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
@@ -57,27 +124,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
 
-
-class LayoutJSONFormat(LayoutBaseFormat):
-    """LayoutJSONFormat class is designed to update layout JSON file according to Demisto's convention.
-
-        Attributes:
-            input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the JSON to.
-    """
-
-    def run_format(self) -> int:
-        try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            self.set_layout_key()
-            # version is both in layout key and in base dict
-            self.set_version_to_default(self.data['layout'])
-            self.set_toVersion()
-            super().run_format()
-            return SUCCESS_RETURN_CODE
-        except Exception:
-            return ERROR_RETURN_CODE
-
     def set_layout_key(self):
         if "layout" not in self.data.keys():
             kind = self.data['kind']
@@ -90,45 +136,6 @@ class LayoutJSONFormat(LayoutBaseFormat):
                 "fromVersion": NEW_FILE_DEFAULT_5_FROMVERSION,
                 "layout": self.data
             }
-
-    def arguments_to_remove(self):
-        """ Finds diff between keys in file and schema of file type
-        Returns:
-            Tuple -
-                Set of keys that should be deleted from file
-                Dict with layout kinds as keys and set of keys that should
-                be deleted as values.
-        """
-        with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
-        schema_fields = a.get('mapping').keys()
-        first_level_args = set(self.data.keys()) - set(schema_fields)
-
-        second_level_args = {}
-        kind_schema = a['mapping'][LAYOUT_KIND]['mapping'].keys()
-        second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(kind_schema)
-
-        return first_level_args, second_level_args
-
-
-class LayoutsContainerJSONFormat(LayoutBaseFormat):
-    """LayoutsContainerJSONFormat class is designed to update layoutscontainer JSON file
-        according to Demisto's convention.
-
-        Attributes:
-            input (str): the path to the file we are updating at the moment.
-            output (str): the desired file name to save the updated version of the JSON to.
-    """
-
-    def run_format(self) -> int:
-        try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            self.set_fromVersion(from_version=VERSION_6_0_0)
-            self.set_group_field()
-            super().run_format()
-            return SUCCESS_RETURN_CODE
-        except Exception:
-            return ERROR_RETURN_CODE
 
     def set_group_field(self):
         if self.data['group'] != 'incident' and self.data['group'] != 'indicator':
@@ -149,7 +156,26 @@ class LayoutsContainerJSONFormat(LayoutBaseFormat):
             else:
                 print_error('Group is not valid')
 
-    def arguments_to_remove(self):
+    def layout__arguments_to_remove(self):
+        """ Finds diff between keys in file and schema of file type
+        Returns:
+            Tuple -
+                Set of keys that should be deleted from file
+                Dict with layout kinds as keys and set of keys that should
+                be deleted as values.
+        """
+        with open(self.schema_path, 'r') as file_obj:
+            a = yaml.safe_load(file_obj)
+        schema_fields = a.get('mapping').keys()
+        first_level_args = set(self.data.keys()) - set(schema_fields)
+
+        second_level_args = {}
+        kind_schema = a['mapping'][LAYOUT_KIND]['mapping'].keys()
+        second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(kind_schema)
+
+        return first_level_args, second_level_args
+
+    def layoutscontainer__arguments_to_remove(self):
         """ Finds diff between keys in file and schema of file type
         Returns:
             Tuple -

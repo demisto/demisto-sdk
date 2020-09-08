@@ -169,6 +169,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": "MP104",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
+    "invalid_file_path_layout": "LO102",
+    "invalid_file_path_layoutscontainer": "LO103",
 }
 
 
@@ -454,12 +456,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
                f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
@@ -970,6 +973,17 @@ class Errors:
     @error_code_decorator
     def invalid_version_in_layoutscontainer(version_field):
         return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layout(file_name):
+        return f'Invalid file name - {file_name}. layout file name should start with "layout-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layoutscontainer(file_name):
+        return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
+               '"layoutscontainer-" prefix.'
 
     @staticmethod
     @error_code_decorator

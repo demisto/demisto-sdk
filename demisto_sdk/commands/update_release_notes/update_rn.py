@@ -23,14 +23,20 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 
 
 class UpdateRN:
-    def __init__(self, pack_path: str, update_type: Union[str, None], pack_files: set, added_files: set,
+    def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
                  pack_metadata_only: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         self.pack_path = pack_name_to_path(self.pack)
-        self.pack_files = pack_files
+
+        # renamed files will appear in the modified list as a tuple: (old path, new path)
+        modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
+        self.modified_files_in_pack = set()
+        for file_path in modified_files_in_pack:
+            self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(file_path))
+
         self.added_files = added_files
         self.pre_release = pre_release
         self.specific_version = specific_version
@@ -42,6 +48,19 @@ class UpdateRN:
             print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
                         f"the pack path is correct.")
             sys.exit(1)
+
+    @staticmethod
+    def check_for_release_notes_valid_file_path(file_path):
+        """A method to change image and description file paths to the corresponding yml file path
+        if a non-image or description file path is given, it remains unchanged
+        """
+        if file_path.endswith('_image.png'):
+            return file_path.replace('_image.png', '.yml')
+
+        elif file_path.endswith('_description.md'):
+            return file_path.replace('_description.md', '.yml')
+
+        return file_path
 
     def execute_update(self):
         if self.pack in IGNORED_PACK_NAMES:
@@ -65,7 +84,7 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            for packfile in self.pack_files:
+            for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
 
                 changed_files[file_name] = {
@@ -135,18 +154,19 @@ class UpdateRN:
         return True
 
     def only_readme_changed(self):
-        changed_files = self.added_files.union(self.pack_files)
+        changed_files = self.added_files.union(self.modified_files_in_pack)
         if len(changed_files) == 1 and 'README' in changed_files.pop():
             return True
         return False
 
     def find_added_pack_files(self):
+        """Check for added files in the given pack that require RN"""
         for a_file in self.added_files:
             if self.pack in a_file:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                     continue
                 else:
-                    self.pack_files.add(a_file)
+                    self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(a_file))
 
     def return_release_notes_path(self, input_version: str):
         _new_version = input_version.replace('.', '_')
@@ -257,7 +277,7 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type == 'revision':
+        elif self.update_type in ['revision', 'maintenance', 'documentation']:
             version = data_dictionary.get('currentVersion', '99.99.99')
             version = version.split('.')
             version[2] = str(int(version[2]) + 1)
@@ -315,11 +335,7 @@ class UpdateRN:
             if not _type or content_name == 'N/A':
                 continue
 
-            if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
-                rn_desc = f'- **{content_name}**\n'
-            else:
-                rn_desc = f'##### New: {content_name}\n- {desc}\n' if is_new_file \
-                    else f'##### {content_name}\n- %%UPDATE_RN%%\n'
+            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file)
 
             if _type == 'Integration':
                 if not integration_header:
@@ -382,6 +398,22 @@ class UpdateRN:
                     connections_header = True
                 rn_string += rn_desc
         return rn_string
+
+    def build_rn_desc(self, _type, content_name, desc, is_new_file):
+        if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
+            rn_desc = f'- **{content_name}**\n'
+        else:
+            if is_new_file:
+                rn_desc = f'##### New: {content_name}\n- {desc}\n'
+            else:
+                rn_desc = f'##### {content_name}\n'
+                if self.update_type == 'maintenance':
+                    rn_desc += '- Maintenance and stability enhancements.\n'
+                elif self.update_type == 'documentation':
+                    rn_desc += '- Documentation and metadata improvements.\n'
+                else:
+                    rn_desc += '- %%UPDATE_RN%%\n'
+        return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):
         new_rn = current_rn

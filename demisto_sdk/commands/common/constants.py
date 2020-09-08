@@ -77,6 +77,7 @@ class FileType(Enum):
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'
+    DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'

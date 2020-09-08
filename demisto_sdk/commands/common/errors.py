@@ -26,7 +26,6 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
-    "invalid_id_set": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -223,13 +222,6 @@ class Errors:
                "demisto/content.git\ngit fetch upstream\n\nMore info about configuring " \
                "a remote for a fork is available here: https://help.github.com/en/" \
                "github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork"
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_id_set():
-        return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
-               "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
-               "Then re-run the `validate` command."
 
     @staticmethod
     @error_code_decorator

@@ -5,7 +5,6 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
-from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -118,21 +117,3 @@ class TestPackUniqueFilesValidator:
         assert not fake_validator.check_timestamp_format(missing_z)
         assert not fake_validator.check_timestamp_format(only_date)
         assert not fake_validator.check_timestamp_format(with_hyphen)
-
-    def test_validate_pack_dependencies_invalid_id_set(self, mocker, repo):
-        """
-        Given
-        - An invalid id set error being raised
-
-        When
-        - Running validate_pack_dependencies.
-
-        Then
-        - Ensure that the validation fails and that the invalid id set error is printed.
-        """
-        def error_raising_function(argument):
-            raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
-
-        mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
-        assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
-        assert Errors.invalid_id_set()[0] in self.validator.get_errors()

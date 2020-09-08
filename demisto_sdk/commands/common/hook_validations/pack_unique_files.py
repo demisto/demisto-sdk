@@ -292,36 +292,27 @@ class PackUniqueFilesValidator(BaseValidator):
 
     # pack dependencies validation
     def validate_pack_dependencies(self, id_set_path=None):
-        try:
-            click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
-                        fg="bright_cyan")
-            core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+        click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
+                    fg="bright_cyan")
+        core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
-            first_level_dependencies = PackDependencies.find_dependencies(
-                self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False)
+        first_level_dependencies = PackDependencies.find_dependencies(
+            self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
+            update_pack_metadata=False)
 
-            for core_pack in core_pack_list:
-                first_level_dependencies.pop(core_pack, None)
-            if not first_level_dependencies:
-                return True
-
-            dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
-            click.echo(click.style(dependency_result, bold=True))
-            non_supported_pack = first_level_dependencies.get('NonSupported', {})
-            deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
-
-            if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
-                error_message, error_code = Errors.invalid_package_dependencies(self.pack)
-                if self._add_error((error_message, error_code), file_path=self.pack_path):
-                    return False
+        for core_pack in core_pack_list:
+            first_level_dependencies.pop(core_pack, None)
+        if not first_level_dependencies:
             return True
-        except ValueError as e:
-            if "Couldn't find any items for pack" in str(e):
-                error_message, error_code = Errors.invalid_id_set()
-                if self._add_error((error_message, error_code), file_path=self.pack_path):
-                    return False
-                return True
-            else:
-                raise
+
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
+        click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
+        click.echo(click.style(dependency_result, bold=True))
+        non_supported_pack = first_level_dependencies.get('NonSupported', {})
+        deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
+
+        if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
+            error_message, error_code = Errors.invalid_package_dependencies(self.pack)
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True

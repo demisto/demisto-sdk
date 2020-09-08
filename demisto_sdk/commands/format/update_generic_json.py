@@ -34,7 +34,8 @@ class BaseUpdateJSON(BaseUpdate):
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(self.data, file, indent=4)
+            ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+                       ensure_ascii=False)
 
     def update_json(self):
         """Manager function for the generic JSON updates."""

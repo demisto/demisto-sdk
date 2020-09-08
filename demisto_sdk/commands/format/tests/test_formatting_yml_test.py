@@ -242,8 +242,13 @@ FORMAT_FILES = [
 
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
-@patch('builtins.input', lambda *args: '5.0.0')
-def test_format_file(source, target, path, answer):
+@patch('builtins.input')
+def test_format_file(user_input, source, target, path, answer):
+    user_responses = [Mock(), Mock(), Mock()]
+    user_responses[0] = 'y'  # answer to update fromVersion choice
+    user_responses[1] = '5.0.0'  # version that should be added
+    user_responses[2] = 'n'  # answer to adding description question
+    user_input.side_effect = user_responses
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
     res = format_manager(input=target, output=target, verbose=True)

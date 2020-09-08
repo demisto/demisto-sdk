@@ -1,9 +1,13 @@
 import json
+import os
 from typing import Dict, List
 
 import click
-from demisto_sdk.commands.common.tools import (_get_file_id,
-                                               get_not_registered_tests)
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
+                                               get_entity_id_by_entity_type,
+                                               get_not_registered_tests,
+                                               get_yaml)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -92,11 +96,31 @@ class BaseUpdateYML(BaseUpdate):
         'No tests' under 'tests' key or not and format the file according to the answer
         """
         if not self.data.get('tests', ''):
-            should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
-                                                    f'Do you want to configure it with "No tests"?')
-            if should_modify_yml_tests:
-                click.echo(f'Formatting {self.output_file} with "No tests"')
-                self.data['tests'] = ['No tests (auto formatted)']
+            # try to get the test playbook files from the TestPlaybooks dir in the pack
+            pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
+            test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
+            test_playbook_ids = []
+            try:
+                test_playbooks_files = os.listdir(test_playbook_dir_path)
+                if test_playbooks_files:
+                    for file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
+                        is_yml_file = file_path.endswith('.yml')
+                        # concat as we might not be in content repo
+                        tpb_file_path = os.path.join(test_playbook_dir_path, file_path)
+                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK:
+                            test_playbook_data = get_yaml(tpb_file_path)
+                            test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
+                                                                            content_entity='')
+                            test_playbook_ids.append(test_playbook_id)
+                    self.data['tests'] = test_playbook_ids
+            except FileNotFoundError:
+                pass
+            if not test_playbook_ids:
+                should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
+                                                        f'configured. Do you want to configure it with "No tests"?')
+                if should_modify_yml_tests:
+                    click.echo(f'Formatting {self.output_file} with "No tests"')
+                    self.data['tests'] = ['No tests (auto formatted)']
 
     def update_conf_json(self, file_type: str) -> None:
         """

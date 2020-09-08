@@ -323,3 +323,5 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error((error_message, error_code), file_path=self.pack_path):
                     return False
                 return True
+            else:
+                raise e

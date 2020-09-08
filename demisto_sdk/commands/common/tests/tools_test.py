@@ -25,7 +25,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
-from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+                                              INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
@@ -87,6 +88,7 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (IGNORED_PNG, None),
         ('', None)
     ]
 

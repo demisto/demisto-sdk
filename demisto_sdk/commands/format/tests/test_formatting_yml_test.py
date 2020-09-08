@@ -24,7 +24,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
-from mock import patch
+from mock import Mock, patch
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -242,8 +242,13 @@ FORMAT_FILES = [
 
 
 @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
-@patch('builtins.input', lambda *args: '5.0.0')
-def test_format_file(source, target, path, answer):
+@patch('builtins.input')
+def test_format_file(user_input, source, target, path, answer):
+    user_responses = [Mock(), Mock(), Mock()]
+    user_responses[0] = 'y'  # answer to update fromVersion choice
+    user_responses[1] = '5.0.0'  # version that should be added
+    user_responses[2] = 'n'  # answer to adding description question
+    user_input.side_effect = user_responses
     os.makedirs(path, exist_ok=True)
     shutil.copyfile(source, target)
     res = format_manager(input=target, output=target, verbose=True)
@@ -253,7 +258,45 @@ def test_format_file(source, target, path, answer):
     assert res is answer
 
 
-def test_add_playbooks_description():
+@pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
+def test_remove_unnecessary_keys_from_playbook(source_path):
+    """
+    Given:
+        - Playbook file to format, with excessive keys in it
+    When:
+        - Running the remove_unnecessary_keys function
+    Then:
+        - Validate that the excessive keys were removed successfully
+    """
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+    base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+
+    # Assert the unnecessary keys are indeed in the playbook file
+    assert 'excessiveKey' in base_yml.data.keys()
+    assert 'itemVersion' in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
+
+    base_yml.remove_unnecessary_keys()
+
+    # Assert the unnecessary keys were successfully removed
+    assert 'excessiveKey' not in base_yml.data.keys()
+    assert 'itemVersion' not in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
+
+
+@patch('builtins.input', lambda *args: 'n')
+def test_add_tasks_description_and_empty_playbook_description():
+    """
+    Given:
+        - A playbook file with missing playbook description and missing tasks descriptions.
+
+    When:
+        - Running the add_description function of update_playbook.py.
+        - User's choice not to update the description of the playbook.
+
+    Then:
+        - Validate that an empty description was added to the file.
+        - Validate that empty descriptions were added only to the desired tasks.
+    """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
     base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True)
@@ -293,13 +336,63 @@ def test_add_playbooks_description():
         }
     }
     base_yml.add_description()
-    assert 'description' not in base_yml.data
+    assert base_yml.data.get('description') == ''
     assert base_yml.data['tasks']['1']['task']['description'] == ''
     assert base_yml.data['tasks']['2']['task']['description'] == 'else'
     assert 'description' not in base_yml.data['tasks']['3']['task']
     assert base_yml.data['tasks']['4']['task']['description'] == ''
     assert base_yml.data['tasks']['5']['task']['description'] == ''
     assert base_yml.data['tasks']['6']['task']['description'] == ''
+
+
+@patch('builtins.input')
+def test_add_playbook_description(user_input):
+    """
+    Given:
+        - A playbook file with missing playbook description and missing tasks descriptions.
+
+    When:
+        - Running the add_description function of update_playbook.py.
+        - User's choice to update the description of the playbook with the description: 'User-entered description'.
+
+    Then:
+        - Validate that a description field with the given description message was added to the file.
+        - Validate that empty descriptions were added only to the desired tasks.
+    """
+    user_responses = [Mock(), Mock(), Mock()]
+    user_responses[0] = 'err'  # test invalid input by user
+    user_responses[1] = 'y'
+    user_responses[2] = 'User-entered description'
+    user_input.side_effect = user_responses
+
+    schema_path = os.path.normpath(
+        os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+    base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True)
+    base_yml.data = {
+        "tasks": {
+            "1": {
+                "type": "playbook",
+                "task": {
+                }
+            },
+            "2": {
+                "type": "something",
+                "task": {
+                    "description": "else"
+                }
+            },
+            "3": {
+                "type": "something",
+                "task": {
+                }
+            },
+        }
+    }
+    base_yml.add_description()
+    assert base_yml.data.get('description') == 'User-entered description'
+    assert base_yml.data['tasks']['1']['task']['description'] == ''
+    assert base_yml.data['tasks']['2']['task']['description'] == 'else'
+    assert 'description' not in base_yml.data['tasks']['3']['task']
 
 
 FORMAT_FILES_FETCH = [

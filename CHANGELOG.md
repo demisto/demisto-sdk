@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **format** did not update the test playbook from its pack.
+* Fixed an issue where **validate** validated non integration images.
 * Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
 * Added revision templates to the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.

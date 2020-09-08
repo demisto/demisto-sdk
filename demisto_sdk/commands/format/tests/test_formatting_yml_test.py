@@ -446,7 +446,7 @@ def test_run_format_on_tpb():
 
 
 @patch('builtins.input', lambda *args: 'no')
-def test_run_format_on_integration_wiht_test_playbook(mocker):
+def test_update_tests_on_integration_with_test_playbook():
     """
     Given
         - An integration file.
@@ -456,17 +456,13 @@ def test_run_format_on_integration_wiht_test_playbook(mocker):
         - Ensure run_format return value is 0
         - Ensure `tests` field gets the Test Playbook ID
     """
-    TEST_FILES_PATH = os.path.join(git_path(), 'demisto_sdk', 'tests')
-    VMWARE_INTEGRATION_YML_PATH = os.path.join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware',
+    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+    vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs', 'VMware',
                                                'Integrations', 'integration-VMware.yml')
-    VMWARE_INTEGRATION_YML_OUTPUT_PATH = os.path.join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs',
-                                                      'VMware', 'Integrations', 'integration-VMware_new.yml')
-    formatter = IntegrationYMLFormat(input=VMWARE_INTEGRATION_YML_PATH, output=VMWARE_INTEGRATION_YML_OUTPUT_PATH)
-    mocker.patch.object(IntegrationYMLFormat, 'is_old_file', return_value={})
-    res = formatter.run_format()
-    assert res == 0
-    assert formatter.data.get('tests') == ['aa']
-    os.remove(VMWARE_INTEGRATION_YML_OUTPUT_PATH)
+    formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
+    res = formatter.update_tests()
+    assert res is None
+    assert formatter.data.get('tests') == ['VMWare Test']
 
 
 def test_update_docker_format(tmpdir, mocker):

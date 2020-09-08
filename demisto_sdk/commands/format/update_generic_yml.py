@@ -97,7 +97,7 @@ class BaseUpdateYML(BaseUpdate):
         """
         if not self.data.get('tests', ''):
             # try to get the test playbook files from the TestPlaybooks dir in the pack
-            pack_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(self.source_file))))
+            pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
             try:

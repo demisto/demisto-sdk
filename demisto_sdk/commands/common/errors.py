@@ -169,6 +169,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": "MP104",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
+    "invalid_file_path_layout": "LO102",
+    "invalid_file_path_layoutscontainer": "LO103",
 }
 
 
@@ -971,6 +973,17 @@ class Errors:
     @error_code_decorator
     def invalid_version_in_layoutscontainer(version_field):
         return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layout(file_name):
+        return f'Invalid file name - {file_name}. layout file name should start with "layout-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layoutscontainer(file_name):
+        return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
+               '"layoutscontainer-" prefix.'
 
     @staticmethod
     @error_code_decorator

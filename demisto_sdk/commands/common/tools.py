@@ -811,7 +811,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'preProcessingScript' in _dict:
+        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1215,8 +1215,8 @@ def is_path_of_classifier_directory(path: str) -> bool:
 def get_parent_directory_name(path: str) -> str:
     """
     Retrieves the parent directory name
-    :param path: path to get the parent dir om
-    :return: parent directory nme
+    :param path: path to get the parent dir name
+    :return: parent directory name
     """
     return os.path.basename(os.path.dirname(os.path.abspath(path)))
 

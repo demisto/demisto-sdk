@@ -93,35 +93,36 @@ class BaseUpdate:
 
     def recursive_remove_unnecessary_keys(self, schema, data):
         """Recursively removes all the unnecessary fields in the file"""
-        data_keys = set(data.keys())
-        for key in data_keys:
-            if key not in schema.keys():
-                # check if one of the schema keys is a regex that matches the key
-                matching_key = self.regex_matching_key(key, schema.keys())
+        data_fields = set(data.keys())
+        for field in data_fields:
+            if field not in schema.keys():
+                # check if one of the schema keys is a regex that matches the data field - for example refer to the
+                # tasks key in playbook.yml schema where a field should match the regex (^[0-9]+$)
+                matching_key = self.regex_matching_key(field, schema.keys())
                 if matching_key:
                     if schema.get(matching_key).get('mapping'):
-                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(key))
+                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(field))
                 else:
                     if self.verbose:
-                        print(f'Removing {key} key')
-                    data.pop(key, None)
+                        print(f'Removing {field} field')
+                    data.pop(field, None)
             else:
-                if schema.get(key).get('mapping'):
-                    self.recursive_remove_unnecessary_keys(schema.get(key).get('mapping'), data.get(key))
+                if schema.get(field).get('mapping'):
+                    self.recursive_remove_unnecessary_keys(schema.get(field).get('mapping'), data.get(field))
 
-    def regex_matching_key(self, key, schema_keys):
+    def regex_matching_key(self, field, schema_keys):
         """
-        Checks if the given key matches a regex field in the schema.
+        Checks if the given data field matches a regex key in the schema.
         Args:
-            key: the key that should be matched.
-            schema_keys: the keys in the schema that the key should checked upon.
+            field: the data field that should be matched.
+            schema_keys: the keys in the schema that the data field should be checked against.
 
         Returns:
-            the schema-key that is a regex which matches the given, if such a key exists, otherwise none
+            the schema-key that is a regex which matches the given data field, if such a key exists, otherwise None.
         """
         regex_keys = [regex_key for regex_key in schema_keys if 'regex;' in regex_key]
         for reg in regex_keys:
-            if re.match(reg.split(';')[1], key):
+            if re.match(reg.split(';')[1], field):
                 return reg
         return None
 

@@ -278,7 +278,6 @@ class ValidateManager:
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
-
         elif file_type is None:
             error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
@@ -330,7 +329,7 @@ class ValidateManager:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
 
         # Validate only images of packs
-        elif file_type == FileType.IMAGE and file_path.endswith('_image.png'):
+        elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
         # incident fields and indicator fields are using the same scheme.

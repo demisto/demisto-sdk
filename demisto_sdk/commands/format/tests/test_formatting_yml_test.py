@@ -359,9 +359,10 @@ def test_add_playbook_description(user_input):
         - Validate that a description field with the given description message was added to the file.
         - Validate that empty descriptions were added only to the desired tasks.
     """
-    user_responses = [Mock(), Mock()]
-    user_responses[0] = 'y'
-    user_responses[1] = 'User-entered description'
+    user_responses = [Mock(), Mock(), Mock()]
+    user_responses[0] = 'err'  # test invalid input by user
+    user_responses[1] = 'y'
+    user_responses[2] = 'User-entered description'
     user_input.side_effect = user_responses
 
     schema_path = os.path.normpath(

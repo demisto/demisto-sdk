@@ -388,7 +388,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
     if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
         return data.get('commonfields', {}).get('id', '')
-    elif content_entity == LAYOUTS_DIR:
+    elif content_entity == LAYOUTS_DIR and 'layout' in data:
         return data.get('typeId', '')
     else:
         return data.get('id', '')
@@ -401,7 +401,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file name
     """
-    if content_entity == LAYOUTS_DIR:
+    if content_entity == LAYOUTS_DIR and 'layout' in data:
         return data.get('typeId', '')
     else:
         return data.get('name', '')
@@ -831,8 +831,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'mapping' in _dict:
             return FileType.MAPPER
 
-        if 'layout' in _dict or 'kind' in _dict:
-            if 'kind' in _dict or 'typeId' in _dict:
+        if 'layout' in _dict or 'kind' in _dict or os.path.basename(path).startswith('layoutscontainer-'):
+            if 'kind' in _dict or 'typeId' in _dict or os.path.basename(path).startswith('layoutscontainer-'):
                 return FileType.LAYOUT
 
             return FileType.DASHBOARD

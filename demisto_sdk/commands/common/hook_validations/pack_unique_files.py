@@ -324,4 +324,4 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
                 return True
             else:
-                raise e
+                raise

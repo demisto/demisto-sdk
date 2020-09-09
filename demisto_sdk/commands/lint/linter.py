@@ -339,7 +339,7 @@ class Linter:
            int:  0 on successful else 1, errors
            str: Xsoar linter errors
         """
-        log_prompt = f"{self._pack_name} - Xsoar Linter"
+        log_prompt = f"{self._pack_name} - XSOAR Linter"
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(
             command=build_xsoar_linter_command(lint_files, self._facts['support_level']),

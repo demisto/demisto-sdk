@@ -277,7 +277,8 @@ class Linter:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_files"])
                 elif lint_check == "xsoar_linter" and not no_xsoar_linter:
-                    exit_code, output = self._run_xsoar_linter(lint_files=self._facts["lint_files"])
+                    exit_code, output = self._run_xsoar_linter(py_num=self._facts["images"][0][1],
+                                                               lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
                 elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
@@ -329,7 +330,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_xsoar_linter(self, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
         Args:
@@ -342,7 +343,7 @@ class Linter:
         log_prompt = f"{self._pack_name} - XSOAR Linter"
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(
-            command=build_xsoar_linter_command(lint_files, self._facts['support_level']),
+            command=build_xsoar_linter_command(lint_files, py_num, self._facts['support_level']),
             cwd=self._content_repo)
         if exit_code == 4:
             logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")

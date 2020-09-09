@@ -50,6 +50,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     lint_status = {
         "fail_packs_flake8": [],
         "fail_packs_bandit": [],
+        "fail_xsoar_linter": [],
         "fail_packs_mypy": ['Infoblox'],
         "fail_packs_vulture": [],
         "fail_packs_pylint": ['HelloWorld'],
@@ -86,6 +87,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     lint_status = {
         "fail_packs_flake8": [],
         "fail_packs_bandit": [],
+        "fail_xsoar_linter": [],
         "fail_packs_mypy": [],
         "fail_packs_vulture": [],
         "fail_packs_pylint": [],

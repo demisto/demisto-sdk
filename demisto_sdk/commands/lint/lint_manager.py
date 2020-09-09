@@ -136,7 +136,7 @@ class LintManager:
                           "test which require docker!")
             logger.info("demisto-sdk-Can't communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
-
+        print(facts)
         return facts
 
     def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:

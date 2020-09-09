@@ -24,10 +24,23 @@ def test_build_flak8_command(files):
 
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
-def test_build_xsoar_linter_command(files):
+def test_build_xsoar_linter_py3_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
-    output = build_xsoar_linter_command(files, "base")
+    output = build_xsoar_linter_command(files, 3.8, "base")
+    files = [str(file) for file in files]
+    plugin_path = Path(__file__).parent.parent / 'resources' / 'pylint_plugins'
+    expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
+               f"{plugin_path}/base_checker, {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_py2_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     plugin_path = Path(__file__).parent.parent / 'resources' / 'pylint_plugins'
     expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \

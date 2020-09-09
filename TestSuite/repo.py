@@ -174,3 +174,7 @@ class Repo:
         pack = Pack(self._packs_path, name, repo=self)
         self.packs.append(pack)
         return pack
+
+    def working_dir(self):
+        return self.path
+

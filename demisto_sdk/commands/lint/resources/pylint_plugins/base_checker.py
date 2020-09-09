@@ -1,9 +1,21 @@
-from demisto_sdk.commands.lint.helpers import Msg_XSOAR_linter
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
 # You can find documentation about adding new checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
+
+Msg_XSOAR_linter = {
+    'base_checker': {
+        "E9001": ("Sys.exit use is found, Please use return instead.", "sys-exit-exists",
+                  "Ensure to not use sys.exit in the code.",),
+        "E9002": ("Print is found, Please remove all prints from the code.", "print-exists",
+                  "Please remove all prints from the code.",)
+    },
+    'community_level_checker': {},
+    'partner_level_checker': {},
+    'certified_partner_level_checker': {},
+    'xsoar_level_checker': {}
+}
 
 
 class CustomBaseChecker(BaseChecker):
@@ -18,6 +30,10 @@ class CustomBaseChecker(BaseChecker):
     def visit_call(self, node):
         self._sys_exit_checker(node)
         self._print_checker(node)
+
+    # Print statment for Python2 only.
+    def visit_print(self, node):
+        self.add_message("print-exists", node=node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 

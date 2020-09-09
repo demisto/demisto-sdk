@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.lint.helpers import Msg_XSOAR_linter
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import Msg_XSOAR_linter
 
 # Third party packages
 # Local imports
@@ -74,9 +74,10 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
+def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:
+        py_num(float): The python version in use
         files(List[Path]): files to execute lint
         support_level: Support level for the file
 
@@ -92,6 +93,7 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
         'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
                  'xsoar_level_checker'
     }
+
     plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
     checker_path = ""
     message_enable = ""
@@ -104,7 +106,7 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
-    command = "python -m pylint"
+    command = f"{get_python_exec(py_num)} -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors

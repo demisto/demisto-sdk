@@ -18,8 +18,7 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_layout import (
-    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -37,8 +36,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'incidenttype': IncidentTypesJSONFormat,
     'indicatorfield': IndicatorFieldJSONFormat,
     'reputation': IndicatorTypeJSONFormat,
-    'layout': LayoutJSONFormat,
-    'layoutscontainer': LayoutsContainerJSONFormat,
+    'layout': LayoutBaseFormat,
+    'layoutscontainer': LayoutBaseFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,
@@ -105,6 +104,12 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                     log_list.extend([(info_res, print_success)])
                 if skip_res:
                     log_list.extend([(skip_res, print_warning)])
+            elif file_type:
+                log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
+                                  f"supported by format command"], print_warning))
+            else:
+                log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
+                                 print_error))
 
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))

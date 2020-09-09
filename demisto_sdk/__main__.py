@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_pack_name,
                                                pack_name_to_path, print_error,
                                                print_warning)
-from demisto_sdk.commands.create_artifacts.content_creator import \
-    ContentCreator
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+    ArtifactsManager, create_content_artifacts)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -302,36 +302,24 @@ def validate(config, **kwargs):
 # ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
-    hidden=True,
-    short_help='Create content artifacts. This will generate content_new.zip file which can be used to '
-               'upload to your server in order to upload a whole new content version to your Demisto '
-               'instance.',
-)
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    '-a', '--artifacts_path', help='The path of the directory in which you want to save the created content artifacts')
-@click.option(
-    '-v', '--content_version', default='', help='The content version which you want to appear in CommonServerPython.')
-@click.option(
-    '-p', '--preserve_bundles', is_flag=True, default=False, show_default=True,
-    help='Keep the bundles created in the process of making the content artifacts')
-@click.option(
-    '--no-update-commonserver', is_flag=True, help='Whether to update CommonServerPython or not - used for local runs.'
-)
-@click.option(
-    '-s', '--suffix', help='The added suffix to all files in the created artifacts', hidden=True)
-@click.option(
-    '--no-fromversion', is_flag=True, help='Whether to update fromversion on yml and json files or not.'
-)
-@click.option(
-    '--packs', is_flag=True,
-    help='If passed, will create only content_packs.zip'
-)
-def create(**kwargs):
-    content_creator = ContentCreator(**kwargs)
-    return content_creator.run()
+    short_help='Generating the following artifacts:'
+               '1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)'
+               '2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
+               '3. content_test - Contains all test scripts/playbooks (from_version < 6.0.0)'
+               '4. content_all - Contains all from content_new and content_test.')
+@click.help_option('-h', '--help')
+@click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
+              type=click.Path(file_okay=False, resolve_path=True))
+@click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
+@click.option('--content-packs', help='Create only content_packs artifacts.', default=False)
+@click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
+@click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
+@click.option('--cpus',
+              help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
+                   'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
+def create_arifacts(**kwargs) -> int:
+    artifacts_conf = ArtifactsManager(**kwargs)
+    return create_content_artifacts(artifacts_conf)
 
 
 # ====================== secrets ====================== #
@@ -818,7 +806,7 @@ def id_set_command(**kwargs):
     "-i", "--input", help="The path of the content pack."
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision]",
+    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=RNInputValidation()
 )
 @click.option(
@@ -841,7 +829,6 @@ def update_pack_releasenotes(**kwargs):
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
     modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
-
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -860,12 +847,12 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -p parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1):
+    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
         else:
-            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=set(),
+            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, modified_files_in_pack=set(),
                                       pre_release=pre_release, added_files=set(),
                                       specific_version=specific_version, pack_metadata_only=True)
             update_pack_rn.execute_update()
@@ -876,9 +863,9 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type, pack_files=modified,
-                                      pre_release=pre_release, added_files=added,
-                                      specific_version=specific_version)
+            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type,
+                                      modified_files_in_pack=modified.union(old), pre_release=pre_release,
+                                      added_files=added, specific_version=specific_version)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -895,9 +882,9 @@ def update_pack_releasenotes(**kwargs):
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-p {_pack}` without specifying the update_type.")
             else:
-                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, pack_files=modified,
-                                          pre_release=pre_release, added_files=added,
-                                          specific_version=specific_version)
+                update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type,
+                                          modified_files_in_pack=modified.union(old), pre_release=pre_release,
+                                          added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
 
 

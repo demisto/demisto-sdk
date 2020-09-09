@@ -31,7 +31,7 @@ class Integration:
         self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
         self.changelog = File(self._tmpdir_integration_path / 'CHANGELOG.md', self._repo.path)
-        self.image = File(self._tmpdir_integration_path / f'{self.name}.png', self._repo.path)
+        self.image = File(self._tmpdir_integration_path / f'{self.name}_image.png', self._repo.path)
 
     def build(
             self,

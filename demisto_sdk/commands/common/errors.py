@@ -26,6 +26,7 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
+    "invalid_id_set": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -169,6 +170,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": "MP104",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
+    "invalid_file_path_layout": "LO102",
+    "invalid_file_path_layoutscontainer": "LO103",
 }
 
 
@@ -220,6 +223,13 @@ class Errors:
                "demisto/content.git\ngit fetch upstream\n\nMore info about configuring " \
                "a remote for a fork is available here: https://help.github.com/en/" \
                "github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_id_set():
+        return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
+               "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
+               "Then re-run the `validate` command."
 
     @staticmethod
     @error_code_decorator
@@ -971,6 +981,17 @@ class Errors:
     @error_code_decorator
     def invalid_version_in_layoutscontainer(version_field):
         return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layout(file_name):
+        return f'Invalid file name - {file_name}. layout file name should start with "layout-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layoutscontainer(file_name):
+        return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
+               '"layoutscontainer-" prefix.'
 
     @staticmethod
     @error_code_decorator

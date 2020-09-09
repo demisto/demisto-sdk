@@ -17,6 +17,9 @@ jinja2>=2.11.1
 mergedeep>=1.3.0
 mypy>=0.761
 networkx>=2.4
+packaging>=20.1
+pandas>=1.0.3
+Pebble>=4.5.3
 pipenv==2018.11.26
 pykwalify>=1.7.0
 PyPDF2>=1.26.0

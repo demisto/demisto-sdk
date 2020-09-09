@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -10,12 +11,14 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 
 def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator = ReleaseNotesValidator("")
-    release_notes_validator.file_path = os.path.join(FILES_PATH, 'CortexXDR')
+    release_notes_validator.release_notes_file_path = os.path.join(FILES_PATH, 'CortexXDR')
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
     release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
+    release_notes_validator.file_types_that_should_not_appear_in_rn = {
+        FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README, FileType.RELEASE_NOTES, None}
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
     return release_notes_validator
@@ -69,7 +72,7 @@ def test_init():
     """
     filepath = os.path.join(FILES_PATH, 'ReleaseNotes', '1_1_1.md')
     release_notes_validator = ReleaseNotesValidator(filepath)
-    release_notes_validator.file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'
+    release_notes_validator.release_notes_file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'
     assert release_notes_validator.release_notes_path == filepath
     assert release_notes_validator.latest_release_notes == '### Test'
 
@@ -125,6 +128,7 @@ TEST_RELEASE_NOTES_TEST_BANK_1 = [
 ]
 MODIFIED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_image.png'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
@@ -132,6 +136,7 @@ MODIFIED_FILES = [
 ]
 ADDED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_description.md'),
     os.path.join(FILES_PATH, 'CortexXDR', 'ReleaseNotes/1_0_0.md'),
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
 ]

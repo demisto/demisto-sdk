@@ -11,6 +11,8 @@
 * Added handling of incorrect layout paths via the **format** command.
 * Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
 * Fixed an issue where image and description files were not handled correctly by **validate** and **update-release-notes** commands.
+* Fixed an issue where the **format** command didn't remove all extra fields in a file.
+* Added an error in case an invalid id_set.json file is found while running the **validate** command.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

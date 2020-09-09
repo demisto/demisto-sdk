@@ -119,6 +119,7 @@ class Repo:
         incident_type.write_json({'id': f'{name} - incident_type'})
         incident_type.update({'name': f'{name} - incident_type'})
         incident_type.update({'preProcessingScript': ''})
+        incident_type.update({'color': 'test'})
 
         incident_field = pack.create_incident_field(f'{name}_incident-field')
         incident_field.write_json({'id': f'incident_{name} - incident_field'})

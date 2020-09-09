@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where **format** did not update the test playbook from its pack.
+* Fixed an issue where **validate** validated non integration images.
 * Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
 * Added revision templates to the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.
@@ -9,6 +11,8 @@
 * Added handling of incorrect layout paths via the **format** command.
 * Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
 * Fixed an issue where image and description files were not handled correctly by **validate** and **update-release-notes** commands.
+* Fixed an issue where the **format** command didn't remove all extra fields in a file.
+* Added an error in case an invalid id_set.json file is found while running the **validate** command.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

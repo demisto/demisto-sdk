@@ -379,19 +379,28 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
-def get_api_module_integrations(changed_api_modules, integration_set):
-    integration_from_to_version = {}
-    integration_ids_to_test = set()
+def get_api_module_integrations_set(changed_api_modules, integration_set):
+    integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
         if integration_data.get('api_modules', '') in changed_api_modules:
-            file_path = integration_data.get('file_path')
-            integration_id = get_script_or_integration_id(file_path)
-            integration_ids_to_test.add(integration_id)
-            integration_from_to_version[integration_id] = (get_from_version(file_path),
-                                                           get_to_version(file_path))
+            integrations_set.append(integration_data)
+    return integrations_set
 
-    return integration_ids_to_test, integration_from_to_version
+
+def get_api_module_ids(file_list):
+    """Extracts APIModule IDs from the file list"""
+    api_module_set = set()
+    if file_list:
+        for pf in file_list:
+            parent = pf
+            while '/ApiModules/Scripts/' in parent:
+                parent = get_parent_directory_name(parent, abs_path=True)
+                if '/ApiModules/Scripts/' in parent:
+                    pf = parent
+            if parent != pf:
+                api_module_set.add(os.path.basename(pf))
+    return api_module_set
 
 
 def get_entity_id_by_entity_type(data: dict, content_entity: str):

@@ -388,7 +388,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
     if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
         return data.get('commonfields', {}).get('id', '')
-    elif content_entity == LAYOUTS_DIR and 'layout' in data:
+    elif content_entity == LAYOUTS_DIR:
         return data.get('typeId', '')
     else:
         return data.get('id', '')
@@ -401,7 +401,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file name
     """
-    if content_entity == LAYOUTS_DIR and 'layout' in data:
+    if content_entity == LAYOUTS_DIR:
         return data.get('typeId', '')
     else:
         return data.get('name', '')

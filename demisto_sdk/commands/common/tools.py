@@ -779,11 +779,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.ps1'):
         return FileType.POWERSHELL_FILE
 
+    if path.endswith('.py'):
+        return FileType.PYTHON_FILE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-
-    if file_type == 'py':
-        return FileType.PYTHON_FILE
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -831,8 +831,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'mapping' in _dict:
             return FileType.MAPPER
 
-        if 'layout' in _dict or 'kind' in _dict or os.path.basename(path).startswith('layoutscontainer-'):
-            if 'kind' in _dict or 'typeId' in _dict or os.path.basename(path).startswith('layoutscontainer-'):
+        if 'layout' in _dict or 'kind' in _dict:
+            if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
             return FileType.DASHBOARD

@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.
 * Fixed an issue where **validate** validated non integration images.
 * Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.

@@ -526,6 +526,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - if the isfetch identifier is true make sure the first_fetch and max_fetch params exists
     - make sure max_fetch param has a default value
     """
+
     def setup(self):
         config = {
             'configuration': deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),

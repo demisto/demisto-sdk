@@ -90,7 +90,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.is_valid_max_fetch_and_first_fetch()
+            self.is_valid_max_fetch_and_first_fetch(),
         ]
 
         if not skip_test_conf:

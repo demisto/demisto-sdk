@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue were doc_images required release-notes and validations.
+* Fixed an issue were doc_images required release-notes and validations
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

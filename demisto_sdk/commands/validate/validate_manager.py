@@ -93,7 +93,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.TEST_PLAYBOOK,
                                    FileType.TEST_SCRIPT,
-                                   )
+                                   FileType.DOC_IMAGE)
 
         if is_external_repo:
             if not self.no_configuration_prints:
@@ -690,7 +690,8 @@ class ValidateManager:
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,
                                                                                    FileType.TEST_PLAYBOOK,
-                                                                                   FileType.TEST_SCRIPT})
+                                                                                   FileType.TEST_SCRIPT,
+                                                                                   FileType.DOC_IMAGE})
 
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs

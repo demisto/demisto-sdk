@@ -182,16 +182,18 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_only_readme_changed(self):
+    def test_only_docs_changed(self):
         """
         Given:
             - case 1: only the readme was added/modified
             - case 2: other files except the readme were added/modified
+            - case 3: only docs images were added/modified
         When:
             - calling the function that check if only the readme changed
         Then:
             - case 1: validate that the output of the function is True
             - case 2: validate that the output of the function is False
+            - case 3: validate that the output of the function is True
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -199,20 +201,29 @@ class TestRNUpdate(unittest.TestCase):
         # case 1:
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld/README.md'},
                              added_files=set())
-        assert update_rn.only_readme_changed()
+        assert update_rn.only_docs_changed()
 
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
                              added_files={'HelloWorld/README.md'})
-        assert update_rn.only_readme_changed()
+        assert update_rn.only_docs_changed()
 
         # case 2:
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld/README.md'},
                              added_files={'HelloWorld/HelloWorld.py'})
-        assert not update_rn.only_readme_changed()
+        assert not update_rn.only_docs_changed()
 
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor',
                              modified_files_in_pack={'HelloWorld/HelloWorld.yml', 'HelloWorld/README.md'}, added_files=set())
-        assert not update_rn.only_readme_changed()
+        assert not update_rn.only_docs_changed()
+
+        # case 3:
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
+                             added_files={'HelloWorld/doc_files/added_params.png'})
+        assert update_rn.only_docs_changed()
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld/README.md'},
+                             added_files={'HelloWorld/doc_files/added_params.png'})
+        assert update_rn.only_docs_changed()
 
     def test_find_corresponding_yml(self):
         """
@@ -639,8 +650,9 @@ class TestRNUpdateUnit:
         import json
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
-        mocker.patch.object(UpdateRN, 'get_pack_metadata',
-                            return_value={"currentVersion": pack_current_version})
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
+        # mocking the only_docs_changed to test only the is_bump_required
+        mocker.patch.object(UpdateRN, 'only_docs_changed', return_value=False)
         mocker.patch.object(Popen, 'communicate',
                             return_value=(json.dumps({"currentVersion": git_current_version}), ''))
         mocker.patch('sys.exit', return_value=None)

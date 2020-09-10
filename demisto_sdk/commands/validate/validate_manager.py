@@ -93,7 +93,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.TEST_PLAYBOOK,
                                    FileType.TEST_SCRIPT,
-                                   )
+                                   FileType.DOC_IMAGE)
 
         if is_external_repo:
             if not self.no_configuration_prints:

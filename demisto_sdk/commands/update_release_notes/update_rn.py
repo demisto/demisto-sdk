@@ -128,7 +128,7 @@ class UpdateRN:
         Master branch.
         """
         try:
-            if self.only_readme_changed():
+            if self.only_docs_changed():
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
@@ -153,9 +153,10 @@ class UpdateRN:
             sys.exit(0)
         return True
 
-    def only_readme_changed(self):
+    def only_docs_changed(self):
         changed_files = self.added_files.union(self.modified_files_in_pack)
-        if len(changed_files) == 1 and 'README' in changed_files.pop():
+        if (len(changed_files) == 1 and 'README' in changed_files.pop()) or \
+                (all('README' in file or '.png' in file for file in changed_files)):
             return True
         return False
 

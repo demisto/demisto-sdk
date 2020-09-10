@@ -822,14 +822,14 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return FileType.CLASSIFIER
+        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
+            if _dict.get('type') == 'classification':
+                return FileType.CLASSIFIER
+            else:
+                return FileType.MAPPER
 
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
-
-        if 'mapping' in _dict:
-            return FileType.MAPPER
 
         if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:

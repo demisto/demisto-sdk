@@ -650,8 +650,9 @@ class TestRNUpdateUnit:
         import json
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
-        mocker.patch.object(UpdateRN, 'get_pack_metadata',
-                            return_value={"currentVersion": pack_current_version})
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
+        # mocking the only_docs_changed to test only the is_bump_required
+        mocker.patch.object(UpdateRN, 'only_docs_changed', return_value=False)
         mocker.patch.object(Popen, 'communicate',
                             return_value=(json.dumps({"currentVersion": git_current_version}), ''))
         mocker.patch('sys.exit', return_value=None)

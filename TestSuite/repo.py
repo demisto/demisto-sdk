@@ -99,6 +99,7 @@ class Repo:
         classifier.update({'name': f'{name} - classifier'})
         classifier.update({'transformer': ''})
         classifier.update({'keyTypeMap': {}})
+        classifier.update({'type': 'classification'})
 
         layout = pack.create_layout(f'{name}_layout')
         layout.write_json({'id': f'{name} - layout'})

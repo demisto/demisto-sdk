@@ -69,7 +69,7 @@ class BaseUpdateJSON(BaseUpdate):
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if field in self.data and self.data[field] in (None, '', [], {}) and \
-                    not a.get('mapping').get(field).get('required'):
+                    not a.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
     def update_id(self, field='name'):

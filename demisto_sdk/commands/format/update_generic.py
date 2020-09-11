@@ -146,6 +146,11 @@ class BaseUpdate:
                 else:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
 
+            # If user wants to modify fromversion key and the key already existed
+            elif from_version:
+                self.data[self.from_version_key] = from_version
+
+
         # If there is an existing file in content repo
         else:
             # If current file does not have fromversion key

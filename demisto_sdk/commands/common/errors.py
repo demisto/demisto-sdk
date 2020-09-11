@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN125', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],

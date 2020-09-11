@@ -150,7 +150,6 @@ class BaseUpdate:
             elif from_version:
                 self.data[self.from_version_key] = from_version
 
-
         # If there is an existing file in content repo
         else:
             # If current file does not have fromversion key

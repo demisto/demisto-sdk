@@ -119,8 +119,8 @@ class StructureValidator(BaseValidator):
         if self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION:
             return True
         try:
-            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
-            log = logging.getLogger('pykwalify.core')
+            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.base_objects:validation.valid
+            log = logging.getLogger('pykwalify.base_objects')
             log.setLevel(logging.WARNING)
             if self.suppress_print:
                 logging.disable(logging.CRITICAL)

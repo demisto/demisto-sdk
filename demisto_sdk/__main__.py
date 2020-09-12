@@ -51,7 +51,7 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 class DemistoSDK:
     """
-    The core class for the SDK.
+    The base_objects class for the SDK.
     """
 
     def __init__(self):

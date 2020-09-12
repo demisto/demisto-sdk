@@ -1,14 +1,20 @@
 from typing import Optional, Union
 
-from demisto_sdk.commands.common.constants import INTEGRATION, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
+from demisto_sdk.commands.common.constants import INTEGRATION
+from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import YamlFile
+from demisto_sdk.commands.common.content.objects.pack_objects.base_mixins.yaml_pack_unify_mixins import \
+    YamlPackUnifyMixin, YamlPackUnifyDumpMixin
 from wcmatch.pathlib import Path
 
 
-class Integration(YAMLContentUnifiedObject):
+class Integration(YamlFile, YamlPackUnifyMixin, YamlPackUnifyDumpMixin):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, FileType.INTEGRATION, INTEGRATION)
+        super().__init__(path=path, prefix=INTEGRATION)
+
+    @property
+    def script(self) -> dict:
+        """Script item in object dict"""
+        return self.get('script', {})
 
     @property
     def png_path(self) -> Optional[Path]:

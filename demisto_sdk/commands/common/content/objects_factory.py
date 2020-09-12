@@ -2,7 +2,7 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, ChangeLog, Classifier, ClassifierMapper, Connection, Dashboard,
+    AgentTool, Classifier, ClassifierMapper, Connection, Dashboard,
     DocFile, IncidentField, IncidentType, IndicatorField, IndicatorType,
     Integration, Layout, LayoutsContainer, OldClassifier, OldIndicatorType,
     PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
@@ -33,7 +33,6 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,
     FileType.INCIDENT_TYPE: IncidentType,
-    FileType.CHANGELOG: ChangeLog,
     FileType.CONNECTION: Connection,
     FileType.DESCRIPTION: Readme,
     FileType.README: Readme,

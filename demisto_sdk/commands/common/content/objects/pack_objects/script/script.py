@@ -1,11 +1,17 @@
 from typing import Union
 
-from demisto_sdk.commands.common.constants import SCRIPT, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
+from demisto_sdk.commands.common.constants import SCRIPT
+from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import YamlFile
+from demisto_sdk.commands.common.content.objects.pack_objects.base_mixins.yaml_pack_unify_mixins import \
+    YamlPackUnifyMixin, YamlPackUnifyDumpMixin
 from wcmatch.pathlib import Path
 
 
-class Script(YAMLContentUnifiedObject):
+class Script(YamlFile, YamlPackUnifyMixin, YamlPackUnifyDumpMixin):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, FileType.SCRIPT, SCRIPT)
+        super(YamlFile).__init__(path=path, prefix=SCRIPT)
+
+    @property
+    def script(self) -> dict:
+        """Script item in object dict"""
+        return self.__dict__()

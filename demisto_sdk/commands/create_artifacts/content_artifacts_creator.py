@@ -18,8 +18,8 @@ from demisto_sdk.commands.common.constants import (BASE_PACK,
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, Script, TextObject, YAMLContentObject,
-    YAMLContentUnifiedObject)
+    JsonPackMixin, Script, TextObject, YamlPackMixin,
+    YamlPackUnifyMixin)
 from demisto_sdk.commands.common.logger import logging_setup
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -35,7 +35,7 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
-ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
+ContentObject = Union[YamlPackUnifyMixin, YamlPackMixin, JsonPackMixin, TextObject]
 logger = logging_setup(3)
 EX_SUCCESS = 0
 EX_FAIL = 1

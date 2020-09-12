@@ -1,10 +1,11 @@
 from typing import Union
 
-from demisto_sdk.commands.common.content.objects.abstract_objects.json_object import \
-    JSONObject
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.content.objects.base_objects.dump_file_mixin import FileDumpMixin
+from demisto_sdk.commands.common.content.objects.base_objects.json_file import JsonFile
 
-class ContentDescriptor(JSONObject):
+
+class ContentDescriptor(JsonFile, FileDumpMixin):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path)
+        super(JsonFile).__init__(path=path)

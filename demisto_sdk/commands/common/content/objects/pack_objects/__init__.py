@@ -3,10 +3,9 @@ from __future__ import absolute_import
 
 import inspect
 
-from .abstract_pack_objects.json_content_object import *  # lgtm [py/polluting-import]
-from .abstract_pack_objects.yaml_content_object import *  # lgtm [py/polluting-import]
-from .abstract_pack_objects.yaml_unify_content_object import *  # lgtm [py/polluting-import]
-from .change_log.change_log import *  # lgtm [py/polluting-import]
+from .base_mixins.json_pack_mixins import *  # lgtm [py/polluting-import]
+from .base_mixins.yaml_pack_mixins import *  # lgtm [py/polluting-import]
+from .base_mixins.yaml_pack_unify_mixins import *  # lgtm [py/polluting-import]
 from .classifier.classifier import *  # lgtm [py/polluting-import]
 from .connection.connection import *  # lgtm [py/polluting-import]
 from .dashboard.dashboard import *  # lgtm [py/polluting-import]

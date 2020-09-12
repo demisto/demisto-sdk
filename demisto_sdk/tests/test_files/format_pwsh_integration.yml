@@ -43,7 +43,7 @@ script:
     - contextPath: PowerShellSSH.Query.Command
       description: The command sent to target machine, used as ID of that query
       type: string
-    description: Remote to target machine which has powershell core installed on it
+    description: Remote to target machine which has powershell base_objects installed on it
       and is set up for remoting
     execution: true
   dockerimage: demisto/powershell:6.2.3.5563

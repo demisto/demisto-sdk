@@ -1,16 +1,17 @@
 from typing import Union
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.content.objects.base_objects.json_file import JsonFile
+from demisto_sdk.commands.common.content.objects.pack_objects.base_mixins.json_pack_mixins import \
+    JsonPackMixin, JsonPackDumpMixin
 from wcmatch.pathlib import Path
 
 
-class Layout(JSONContentObject):
+class Layout(JsonFile, JsonPackMixin, JsonPackDumpMixin):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, LAYOUT)
+        super(JsonFile).__init__(path=path, prefix=LAYOUT)
 
 
-class LayoutsContainer(JSONContentObject):
+class LayoutsContainer(JsonFile, JsonPackMixin, JsonPackDumpMixin):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, LAYOUTS_CONTAINER)
+        super(JsonFile).__init__(path=path, prefix=LAYOUTS_CONTAINER)

@@ -29,6 +29,3 @@ class BytesFile:
                 raise exc.ContentSerializeError(self, self.path, str(e))
 
         return self._loaded_data
-
-
-

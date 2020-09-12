@@ -53,7 +53,7 @@ def split_yaml_4_5_0(source_dir: Path, source_dict: dict) -> List[Path]:
     # Directory configuration - Integrations or Scripts
     unify_dir = SCRIPTS_DIR if SCRIPTS_DIR in source_dir.parts else INTEGRATIONS_DIR
     # Split step
-    unifier = Unifier(input=str(source_dir), dir_name=unify_dir, output=source_dir,force=True)
+    unifier = Unifier(input=str(source_dir), dir_name=unify_dir, output=source_dir, force=True)
     source_dict_copy = copy.deepcopy(source_dict)
     script_values = source_dict if SCRIPTS_DIR in source_dir.parts else source_dict.get('script', {})
     created_files: List[str] = unifier.write_yaml_with_docker(source_dict_copy, source_dict, script_values).keys()

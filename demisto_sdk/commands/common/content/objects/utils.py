@@ -13,4 +13,3 @@ def normalize_file_name(file_name: str, file_prefix: str) -> str:
         file_name = f'{file_prefix}-{file_name}'
 
     return file_name
-

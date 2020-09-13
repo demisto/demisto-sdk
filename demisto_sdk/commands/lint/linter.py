@@ -359,10 +359,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
         if exit_code:
             logger.info(f"{log_prompt}- Finished errors found")
-            if stderr:
-                return FAIL, stdout
-            else:
-                return FAIL, stdout
+            return FAIL, stdout
 
         logger.info(f"{log_prompt} - Successfully finished")
 

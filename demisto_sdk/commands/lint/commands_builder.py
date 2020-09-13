@@ -101,17 +101,13 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
                  'xsoar_level_checker'
     }
 
-    plugin_path = Path(__file__).parent / 'resources' / 'pylint_plugins'
     checker_path = ""
     message_enable = ""
     if support_levels.get(support_level):
         checkers = support_levels.get(support_level)
         support = checkers.split(',') if checkers else []
         for checker in support:
-            if get_python_exec(py_num, True) == 'python3':
-                checker_path += f"{plugin_path}/{checker},"
-            else:
-                checker_path += f"{checker},"
+            checker_path += f"{checker},"
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"

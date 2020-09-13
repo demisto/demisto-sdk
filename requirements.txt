@@ -22,7 +22,7 @@ pandas>=1.0.3
 Pebble>=4.5.3
 pipenv==2018.11.26
 pykwalify>=1.7.0
-pylint>=2.6.0
+pylint>=2.5.3
 PyPDF2>=1.26.0
 PyYAML>=5.3.1
 requests>=2.22.0

@@ -188,12 +188,14 @@ class TestRNUpdate(unittest.TestCase):
             - case 1: only the readme was added/modified
             - case 2: other files except the readme were added/modified
             - case 3: only docs images were added/modified
+            - case 4: readme and py files were added/modified
         When:
             - calling the function that check if only the readme changed
         Then:
             - case 1: validate that the output of the function is True
             - case 2: validate that the output of the function is False
             - case 3: validate that the output of the function is True
+            - case 4: validate that the output of the function is False
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -224,6 +226,16 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld/README.md'},
                              added_files={'HelloWorld/doc_files/added_params.png'})
         assert update_rn.only_docs_changed()
+
+        # case 4:
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
+                             added_files={'HelloWorld/doc_files/added_params.png', 'HelloWorld/HelloWorld.yml'})
+        assert not update_rn.only_docs_changed()
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor',
+                             modified_files_in_pack={'HelloWorld/README.md', 'HelloWorld/HelloWorld.yml'},
+                             added_files=set())
+        assert not update_rn.only_docs_changed()
 
     def test_find_corresponding_yml(self):
         """

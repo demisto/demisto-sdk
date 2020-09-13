@@ -1,7 +1,6 @@
 deprecated
 mock
 pre-commit
-pylint
 pytest
 pytest-cov
 pytest-datadir-ng

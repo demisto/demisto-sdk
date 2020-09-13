@@ -17,7 +17,7 @@ PRESET_ERROR_TO_IGNORE = {
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA', 'IN125', 'IN126', 'PB104', 'SC101'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
 ERROR_CODE = {
@@ -54,8 +54,8 @@ ERROR_CODE = {
     "found_hidden_param": "IN124",
     "no_default_value_in_parameter": "IN125",
     "parameter_missing_from_yml_not_community_contributor": "IN126",
-    "invalid_deprecated_integration_display_name": "IN125",
-    "invalid_deprecated_integration_description": "IN126",
+    "invalid_deprecated_integration_display_name": "IN127",
+    "invalid_deprecated_integration_description": "IN128",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",

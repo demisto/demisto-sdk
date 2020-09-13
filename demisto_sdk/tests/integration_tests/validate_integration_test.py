@@ -136,7 +136,7 @@ class TestDeprecatedIntegration:
         - Running validation on it.
 
         Then
-        - Ensure validation fails on IN125 - invalid_deprecated_integration.
+        - Ensure validation fails on IN127 / IN128 - invalid_deprecated_integration.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
@@ -150,8 +150,8 @@ class TestDeprecatedIntegration:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
-        assert 'IN125' in result.stdout
-        assert 'IN126' in result.stdout
+        assert 'IN127' in result.stdout
+        assert 'IN128' in result.stdout
         assert '"Deprecated."' in result.stdout
         assert result.exit_code == 1
 

@@ -3,7 +3,8 @@ import os
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import Msg_XSOAR_linter
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
+    Msg_XSOAR_linter
 
 # Third party packages
 # Local imports
@@ -21,7 +22,7 @@ def get_python_exec(py_num: float) -> str:
         str: python executable
     """
     if py_num < 3:
-        py_str = ""
+        py_str = "2"
     else:
         py_str = "3"
 
@@ -84,6 +85,8 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     Returns:
        str: xsoar linter command using pylint load plugins
     """
+    if not support_level:
+        support_level = 'base'
     support_levels = {
         'base': 'base_checker',
         'community': 'base_checker,community_level_checker',
@@ -101,7 +104,10 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
         checkers = support_levels.get(support_level)
         support = checkers.split(',') if checkers else []
         for checker in support:
-            checker_path += f"{plugin_path}/{checker},"
+            if get_python_exec(py_num) == 'python3':
+                checker_path += f"{plugin_path}/{checker},"
+            else:
+                checker_path += f"{checker},"
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"

@@ -24,10 +24,12 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
-                                               SUCCESS, add_tmp_lint_files,
+                                               SUCCESS, WARNING,
+                                               add_tmp_lint_files,
                                                add_typing_module,
                                                get_file_from_container,
                                                get_python_version_from_image,
+                                               pylint_plugin,
                                                stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
@@ -77,7 +79,7 @@ class Linter:
             "errors": [],
             "images": [],
             "flake8_errors": None,
-            "xsoar_linter_errors": None,
+            "XSOAR_linter_errors": None,
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
@@ -270,13 +272,13 @@ class Linter:
         """
         if self._facts["lint_files"]:
             exit_code: int = 0
-            for lint_check in ["flake8", "xsoar_linter", "bandit", "mypy", "vulture"]:
+            for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_files"])
-                elif lint_check == "xsoar_linter" and not no_xsoar_linter:
+                elif lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["images"][0][1],
                                                                lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
@@ -340,21 +342,23 @@ class Linter:
            int:  0 on successful else 1, errors
            str: Xsoar linter errors
         """
-        log_prompt = f"{self._pack_name} - XSOAR Linter"
-        logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(
-            command=build_xsoar_linter_command(lint_files, py_num, self._facts['support_level']),
-            cwd=self._content_repo)
-        if exit_code == 4:
+        with pylint_plugin(self._pack_abs_dir):
+            log_prompt = f"{self._pack_name} - XSOAR Linter"
+            logger.info(f"{log_prompt} - Start")
+            stdout, stderr, exit_code = run_command_os(
+                command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
+                cwd=self._pack_abs_dir)
+
+        if exit_code == WARNING:
             logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
-            exit_code = 0
+            exit_code = SUCCESS
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
-        if stderr or exit_code:
+        if exit_code:
             logger.info(f"{log_prompt}- Finished errors found")
             if stderr:
-                return FAIL, stderr
+                return FAIL, stdout
             else:
                 return FAIL, stdout
 

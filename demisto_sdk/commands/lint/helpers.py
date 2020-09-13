@@ -28,7 +28,7 @@ PYTHON2_REQ = ["flake8", "vulture"]
 # Define check exit code if failed
 EXIT_CODES = {
     "flake8": 0b1,
-    "xsoar_linter": 0b1000000000,
+    "XSOAR_linter": 0b1000000000,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
@@ -44,10 +44,12 @@ EXIT_CODES = {
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
+WARNING = 0b100
+
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "xsoar_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -92,7 +94,7 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
         if no_flake8:
             skipped_code |= EXIT_CODES["flake8"]
         if no_xsoar_linter:
-            skipped_code |= EXIT_CODES["xsoar_linter"]
+            skipped_code |= EXIT_CODES["XSOAR_linter"]
         if no_bandit:
             skipped_code |= EXIT_CODES["bandit"]
         if no_mypy or not docker_engine:
@@ -382,3 +384,25 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
+
+
+@contextmanager
+def pylint_plugin(dest: Path):
+    """
+    Function which links the given path with the content of pylint plugins folder in resources.
+    The main purpose is to link each pack with the pylint plugins.
+    Args:
+        dest: Pack path.
+    """
+    plugin_dirs = Path(__file__).parent / 'resources' / 'pylint_plugins'
+
+    try:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                os.link(file, dest / file.name)
+
+        yield
+    finally:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                (dest / f'{file.name}').unlink()

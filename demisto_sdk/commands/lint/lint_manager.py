@@ -136,7 +136,6 @@ class LintManager:
                           "test which require docker!")
             logger.info("demisto-sdk-Can't communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
-        print(facts)
         return facts
 
     def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:
@@ -247,7 +246,7 @@ class LintManager:
         """
         lint_status: Dict = {
             "fail_packs_flake8": [],
-            "fail_packs_xsoar_linter": [],
+            "fail_packs_XSOAR_linter": [],
             "fail_packs_bandit": [],
             "fail_packs_mypy": [],
             "fail_packs_vulture": [],
@@ -368,7 +367,10 @@ class LintManager:
         longest_check_key = len(max(EXIT_CODES.keys(), key=len))
         for check, code in EXIT_CODES.items():
             spacing = longest_check_key - len(check)
-            check_str = check.capitalize().replace('_', ' ')
+            if 'XSOAR_linter' in check:
+                check_str = check.replace('_', ' ')
+            else:
+                check_str = check.capitalize().replace('_', ' ')
             if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
                 if code & skipped_code:
                     print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
@@ -388,7 +390,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "xsoar_linter", "bandit", "mypy", "vulture"]:
+        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")

@@ -411,28 +411,27 @@ class TestClassifierValidation:
         assert f"Validating {classifier.path} as classifier" in result.stdout
         assert 'Must have fromVersion field in new classifiers' in result.stdout
 
-    # def test_invalid_type_in_new_classifier(self, mocker, repo):
-    #     """
-    #     Given
-    #     - New classifier with invalid type field.
-    #
-    #     When
-    #     - Running validate on it.
-    #
-    #     Then
-    #     - Ensure validate found errors.
-    #     """
-    #     mocker.patch.object(tools, 'is_external_repository', return_value=True)
-    #     pack = repo.create_pack('PackName')
-    #     new_classifier_copy = NEW_CLASSIFIER.copy()
-    #     new_classifier_copy['type'] = 'test'
-    #     classifier = pack.create_classifier('new_classifier', new_classifier_copy)
-    #     with ChangeCWD(pack.repo_path):
-    #         runner = CliRunner(mix_stderr=False)
-    #         result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-    #     assert f"Validating {classifier.path} as classification" in result.stdout
-    #     assert 'Classifiers type must be classification' in result.stdout
-    #     assert result.exit_code == 1
+    def test_invalid_type_in_new_classifier(self, mocker, repo):
+        """
+        Given
+        - New classifier with invalid type field.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate found errors.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        new_classifier_copy = NEW_CLASSIFIER.copy()
+        new_classifier_copy['type'] = 'test'
+        classifier = pack.create_classifier('new_classifier', new_classifier_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
+        assert 'The file type is not supported in validate command' in result.stdout
+        assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
         """
@@ -682,8 +681,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 

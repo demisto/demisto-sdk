@@ -64,12 +64,12 @@ class BaseUpdateJSON(BaseUpdate):
     def remove_null_fields(self):
         """Remove empty fields from file root."""
         with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
-        schema_fields = a.get('mapping').keys()
+            schema_data = yaml.safe_load(file_obj)
+        schema_fields = schema_data.get('mapping').keys()
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if field in self.data and self.data[field] in (None, '', [], {}) and \
-                    not a.get('mapping', {}).get(field, {}).get('required'):
+                    not schema_data.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
     def update_id(self, field='name'):

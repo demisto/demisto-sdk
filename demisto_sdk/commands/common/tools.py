@@ -823,10 +823,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.OLD_CLASSIFIER
 
         if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
-            if _dict.get('type') == 'classification':
+            if _dict.get('type') and _dict.get('type') == 'classification':
                 return FileType.CLASSIFIER
-            else:
+            elif _dict.get('type') and 'mapping' in _dict.get('type'):
                 return FileType.MAPPER
+            return None
 
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION

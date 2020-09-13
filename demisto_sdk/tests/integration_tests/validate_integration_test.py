@@ -136,7 +136,7 @@ class TestDeprecatedIntegration:
         - Running validation on it.
 
         Then
-        - Ensure validation fails on IN127 / IN128 - invalid_deprecated_integration.
+        - Ensure validation fails on - invalid_deprecated_integration.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')

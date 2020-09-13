@@ -9,10 +9,10 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117'],
+    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
     'non-certified-partner': ['CJ']
 }
 
@@ -26,6 +26,7 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
+    "invalid_id_set": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -51,6 +52,8 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "no_default_value_in_parameter": "IN125",
+    "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_v2_script_name": "SC100",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
@@ -225,6 +228,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_id_set():
+        return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
+               "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
+               "Then re-run the `validate` command."
+
+    @staticmethod
+    @error_code_decorator
     def wrong_display_name(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -232,6 +242,11 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+
+    @staticmethod
+    @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
 
     @staticmethod
     @error_code_decorator
@@ -347,6 +362,16 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def parameter_missing_from_yml(name, correct_format):
+        return f'A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should ' \
+               f'be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_missing_from_yml_not_community_contributor(name, correct_format):
+        """
+            This error is ignored if the contributor is community
+        """
         return f'A required parameter "{name}" is missing or malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'

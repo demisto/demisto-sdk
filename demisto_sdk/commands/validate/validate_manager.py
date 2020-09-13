@@ -93,7 +93,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.TEST_PLAYBOOK,
                                    FileType.TEST_SCRIPT,
-                                   )
+                                   FileType.DOC_IMAGE)
 
         if is_external_repo:
             if not self.no_configuration_prints:
@@ -275,6 +275,7 @@ class ValidateManager:
             bool. true if file is valid, false otherwise.
         """
         file_type = find_type(file_path)
+
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -689,7 +690,8 @@ class ValidateManager:
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,
                                                                                    FileType.TEST_PLAYBOOK,
-                                                                                   FileType.TEST_SCRIPT})
+                                                                                   FileType.TEST_SCRIPT,
+                                                                                   FileType.DOC_IMAGE})
 
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs

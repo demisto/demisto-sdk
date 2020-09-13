@@ -346,7 +346,10 @@ class Linter:
             log_prompt = f"{self._pack_name} - XSOAR Linter"
             logger.info(f"{log_prompt} - Start")
             myenv = os.environ.copy()
-            myenv['PYTHONPATH'] += ':' + str(self._pack_abs_dir)
+            if myenv.get('PYTHONPATH'):
+                myenv['PYTHONPATH'] += ':' + str(self._pack_abs_dir)
+            else:
+                myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)

@@ -3,17 +3,13 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.tests.constants_test import (GIT_ROOT,
-                                              XSOAR_LINTER_PY2_INVALID,
-                                              XSOAR_LINTER_PY2_VALID,
                                               XSOAR_LINTER_PY3_INVALID,
                                               XSOAR_LINTER_PY3_VALID)
 
-files = [(Path(f"{XSOAR_LINTER_PY2_INVALID}"), 2.7, 1, ['Sys.exit use is found, Please use return instead.',
-                                                        'Print is found, Please remove all prints from the code.']),
-         (Path(f"{XSOAR_LINTER_PY2_VALID}"), 2.7, 0, []),
-         (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 0, []),
-         (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 1, ['Sys.exit use is found, Please use return instead.',
-                                                        'Print is found, Please remove all prints from the code.'])]
+files = [
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.7, 0, []),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.7, 1, ['Sys.exit use is found, Please use return instead.',
+                                                   'Print is found, Please remove all prints from the code.'])]
 
 
 @pytest.mark.parametrize('file, python_version,exit_code,error_msgs', files)

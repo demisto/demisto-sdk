@@ -6,7 +6,7 @@ import pytest
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 
 
-@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python2')])
+@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python')])
 def test_get_python_exec(py_num, expected_exec):
     """Get python exec"""
     from demisto_sdk.commands.lint.commands_builder import get_python_exec

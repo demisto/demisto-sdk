@@ -1,18 +1,19 @@
 import re
 from typing import List, Optional, Union
 
-from ...utils import normalize_file_name
-from demisto_sdk.commands.common.content.objects.base_objects.dictionary_file_mixins import DictBaseFileMixin
-from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import YamlFile
+from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import \
+    YamlFile
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import EXTGLOB, Path
 
+from ...utils import normalize_file_name
 
-class YamlPackMixin:
+
+class YamlPackReamdeMixin:
     @property
-    def readme(self: DictBaseFileMixin) -> Optional[Readme]:
+    def readme(self: YamlFile) -> Optional[Readme]:
         """YAML related Readme object.
 
         Returns:
@@ -24,8 +25,10 @@ class YamlPackMixin:
         if readme_file:
             return Readme(readme_file)
 
+
+class YamlPackVersionsMixin:
     @property
-    def from_version(self: DictBaseFileMixin) -> Union[Version, LegacyVersion]:
+    def from_version(self: YamlFile) -> Union[Version, LegacyVersion]:
         """Object from_version attribute.
 
         Returns:
@@ -38,7 +41,7 @@ class YamlPackMixin:
         return parse(self.get('fromversion', '0.0.0'))
 
     @property
-    def to_version(self: DictBaseFileMixin) -> Union[Version, LegacyVersion]:
+    def to_version(self: YamlFile) -> Union[Version, LegacyVersion]:
         """Object to_version attribute.
 
         Returns:
@@ -52,7 +55,7 @@ class YamlPackMixin:
 
 
 class YamlPackDumpMixin:
-    def dump(self: Union[YamlPackMixin, YamlFile, DictBaseFileMixin],
+    def dump(self: Union[YamlFile, YamlPackReamdeMixin],
              dest_dir: Optional[Union[str, Path]] = None, readme: Optional[bool] = False) -> List[Path]:
         """Dump YAMLContentObject.
 

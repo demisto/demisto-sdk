@@ -1,8 +1,8 @@
-from typing import Union, Optional
-
-from wcmatch.pathlib import Path
+from shutil import copytree
+from typing import Optional, Union
 
 import demisto_sdk.commands.common.content.errors as exc
+from wcmatch.pathlib import Path
 
 
 class BytesFile:
@@ -10,6 +10,7 @@ class BytesFile:
         self._path = Path(path)
         self._prefix = prefix
         self._loaded_data: Optional[bytes] = None
+        self._data_changed: bool = False
 
     @property
     def path(self):
@@ -17,7 +18,10 @@ class BytesFile:
 
     def _serialize(self, dest_file: Path):
         try:
-            dest_file.write_bytes(self._unserialize())
+            if self._data_changed:
+                dest_file.write_bytes(self._unserialize())
+            else:
+                copytree(self.path, dest_file)
         except Exception as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 

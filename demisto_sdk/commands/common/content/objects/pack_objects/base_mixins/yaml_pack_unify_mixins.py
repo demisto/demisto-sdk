@@ -1,72 +1,17 @@
-import copy
 from typing import List, Optional, Union
 
-from demisto_sdk.commands.common.constants import SCRIPTS_DIR, INTEGRATIONS_DIR
-from ...base_objects.dictionary_file_mixins import DictBaseFileMixin
-from ...utils import normalize_file_name
-from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import YamlFile
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR
+from demisto_sdk.commands.common.content.objects.base_objects.yaml_file import \
+    YamlFile
 from wcmatch.pathlib import EXTMATCH, Path
 
-from demisto_sdk.commands.unify.unifier import Unifier
-from .yaml_pack_mixins import YamlPackMixin
+from ...utils import normalize_file_name, split_yaml_4_5_0, unify_handler
+from .yaml_pack_mixins import YamlPackReamdeMixin
 
 
-def unify_handler(source_dir: Path, dest_dir: Path) -> List[Path]:
-    """Unify YAMLContentUnfiedObject in destination dir.
-
-    Args:
-        source_dir:
-        file_type:
-        dest_dir: Destination directory.
-
-    Returns:
-        List[Path]: List of new created files.
-    """
-    # Directory configuration - Integrations or Scripts
-    unify_dir = SCRIPTS_DIR if SCRIPTS_DIR in source_dir.parts else INTEGRATIONS_DIR
-    # Unify step
-    unifier = Unifier(input=str(source_dir), dir_name=unify_dir, output=str(dest_dir), force=True)
-    created_files: List[str] = unifier.merge_script_package_to_yml()
-    # Validate that unify succeed - there is not exception raised in unify module.
-    if not created_files:
-        raise Exception()
-
-    return [Path(path) for path in created_files]
-
-
-def split_yaml_4_5_0(source_dir: Path, source_dict: dict) -> List[Path]:
-    """Split YAMLContentUnfiedObject in destination dir.
-
-    Args:
-        source_dict:
-        source_dir:
-        file_type:
-
-    Returns:
-        List[Path]: List of new created files.
-
-    Notes:
-        1. If object contain docker_image_4_5 key with value -> should split to:
-            a. <original_file>
-            b. <original_file_name>_4_5.yml
-    """
-    # Directory configuration - Integrations or Scripts
-    unify_dir = SCRIPTS_DIR if SCRIPTS_DIR in source_dir.parts else INTEGRATIONS_DIR
-    # Split step
-    unifier = Unifier(input=str(source_dir), dir_name=unify_dir, output=source_dir, force=True)
-    source_dict_copy = copy.deepcopy(source_dict)
-    script_values = source_dict if SCRIPTS_DIR in source_dir.parts else source_dict.get('script', {})
-    created_files: List[str] = unifier.write_yaml_with_docker(source_dict_copy, source_dict, script_values).keys()
-    # Validate that split succeed - there is not exception raised in unify module.
-    if not created_files:
-        raise Exception()
-
-    return [Path(path) for path in created_files]
-
-
-class YamlPackUnifyMixin(YamlPackMixin):
+class YamlPackUnifyFilesMixin:
     @property
-    def code_path(self: DictBaseFileMixin) -> Optional[Path]:
+    def code_path(self: YamlFile) -> Optional[Path]:
         """YAML related code path.
 
         Returns:
@@ -76,7 +21,7 @@ class YamlPackUnifyMixin(YamlPackMixin):
         return next(self.path.parent.glob(patterns=patterns, flags=EXTMATCH), None)
 
     @property
-    def unittest_path(self: DictBaseFileMixin) -> Optional[Path]:
+    def unittest_path(self: YamlFile) -> Optional[Path]:
         """YAML related unit-test path.
 
         Returns:
@@ -84,6 +29,29 @@ class YamlPackUnifyMixin(YamlPackMixin):
         """
         patterns = ["test_*.py", "*_test.py"]
         return next(self.path.parent.glob(patterns=patterns), None)
+
+    def is_unify(self) -> bool:
+        """Check if Content object is unified or not.
+
+        Returns:
+            bool: True if unified else False.
+        """
+        return self.code_path is None
+
+
+class YamlPackUnifyDockerImages:
+    @property
+    def script(self: YamlFile) -> dict:
+        """Script item in object dict:
+            1. Script - Loacted under main keys.
+            2. Integration - Located under second level key (script -> script).
+        """
+        if INTEGRATIONS_DIR in self.path.parts:
+            script = self.get('script', {})
+        else:
+            script = self.__dict__()
+
+        return script
 
     @property
     def docker_image(self) -> str:
@@ -109,17 +77,9 @@ class YamlPackUnifyMixin(YamlPackMixin):
         """
         return self.script.get('dockerimage45', '')
 
-    def is_unify(self) -> bool:
-        """Check if Content object is unified or not.
-
-        Returns:
-            bool: True if unified else False.
-        """
-        return self.code_path is None
-
 
 class YamlPackUnifyDumpMixin:
-    def dump(self: Union[DictBaseFileMixin, YamlPackUnifyMixin, YamlFile],
+    def dump(self: Union[YamlFile, YamlPackUnifyFilesMixin, YamlPackReamdeMixin, YamlPackUnifyDockerImages],
              dest_dir: Optional[Union[str, Path]] = None, readme: Optional[bool] = False, unify: bool = True,
              version_split: bool = True) -> List[Path]:
         """ Dump YAMLContentUnfiedObject.
@@ -147,15 +107,14 @@ class YamlPackUnifyDumpMixin:
             # If not unified -> Save old data a side -> serialize -> unify -> revert to old data
             old_data = self.path.read_bytes()
             self._serialize(dest_file)
-            created_files.extend(unify_handler(source_dir=self.path.parent, dest_dir=dest_dir, file_type=type(self)))
+            created_files.extend(unify_handler(source_dir=self.path.parent, dest_dir=dest_dir))
             self.path.write_bytes(old_data)
         else:
             created_files.append(self._serialize(dest_file))
 
         # IF docker_4_5 exists split file to seprated files.
         if version_split and self.docker_image_4_5:
-            created_files.extend(split_yaml_4_5_0(source_dir=self.path.parent, source_dict=self.__dict__(),
-                                                  file_type=type(self)))
+            created_files.extend(split_yaml_4_5_0(source_dir=self.path.parent, source_dict=self.__dict__()))
         # Dump readme if requested and availble
         if readme and self.readme:
             created_files.extend(self.readme.dump(dest_dir))

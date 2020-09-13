@@ -1,20 +1,21 @@
 from __future__ import annotations
+
 import re
 from typing import List, Optional, Union
 
-from demisto_sdk.commands.common.content.objects.base_objects.dictionary_file_mixins import DictBaseFileMixin
-from demisto_sdk.commands.common.content.objects.base_objects.json_file import JsonFile
+from demisto_sdk.commands.common.content.objects.base_objects.json_file import \
+    JsonFile
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
+from demisto_sdk.commands.common.content.objects.utils import \
+    normalize_file_name
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
-from ...utils import normalize_file_name
 
-
-class JsonPackMixin:
+class JsonPackReadmeMixin:
     @property
-    def readme(self: DictBaseFileMixin) -> Optional[Readme]:
+    def readme(self: JsonFile) -> Optional[Readme]:
         """JSON related Readme object.
 
         Returns:
@@ -24,8 +25,10 @@ class JsonPackMixin:
         if readme_file:
             return Readme(readme_file)
 
+
+class JsonPackVersionMixin:
     @property
-    def from_version(self: DictBaseFileMixin) -> Union[Version, LegacyVersion]:
+    def from_version(self: JsonFile) -> Union[Version, LegacyVersion]:
         """Object from_version attribute.
 
         Returns:
@@ -38,7 +41,7 @@ class JsonPackMixin:
         return parse(self.get('fromVersion', '0.0.0'))
 
     @property
-    def to_version(self: DictBaseFileMixin) -> Union[Version, LegacyVersion]:
+    def to_version(self: JsonFile) -> Union[Version, LegacyVersion]:
         """Object to_version attribute.
 
         Returns:
@@ -52,7 +55,7 @@ class JsonPackMixin:
 
 
 class JsonPackDumpMixin:
-    def dump(self: Union[DictBaseFileMixin, JsonFile, JsonPackMixin],
+    def dump(self: Union[JsonPackReadmeMixin, JsonFile],
              dest_dir: Optional[Union[str, Path]] = None, readme: Optional[bool] = False) -> List[Path]:
         """Dump JSONContentObject.
 

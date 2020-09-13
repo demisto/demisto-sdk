@@ -1106,7 +1106,8 @@ def test_dependencies_case_2(mocker, repo):
     integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': ''})
     mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
                                                                           'name': 'mapper_in_bar',
-                                                                          'mapping': {}})
+                                                                          'mapping': {},
+                                                                          'type': 'mapping'})
     # Pack can not be empty
     pack_common_types.create_integration('integration_common_types',
                                          yml={'name': 'integration_common_types', 'category': ''})

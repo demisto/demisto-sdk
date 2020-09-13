@@ -241,8 +241,8 @@ class TestRunLintInHost:
             assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8']
         elif not no_xsoar_linter:
             linter_obj._run_xsoar_linter.assert_called_once()
-            assert linter_obj._pkg_lint_status.get("xsoar_linter_errors") == 'Error'
-            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['xsoar_linter']
+            assert linter_obj._pkg_lint_status.get("XSOAR_linter_errors") == 'Error'
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['XSOAR_linter']
         elif not no_bandit:
             linter_obj._run_bandit.assert_called_once()
             assert linter_obj._pkg_lint_status.get("bandit_errors") == 'Error'
@@ -284,7 +284,7 @@ class TestRunLintInHost:
         linter_obj._run_flake8.assert_called_once()
         assert linter_obj._pkg_lint_status.get("flake8_errors") == 'Error'
         linter_obj._run_xsoar_linter.assert_called_once()
-        assert linter_obj._pkg_lint_status.get("xsoar_linter_errors") == 'Error'
+        assert linter_obj._pkg_lint_status.get("XSOAR_linter_errors") == 'Error'
         linter_obj._run_bandit.assert_called_once()
         assert linter_obj._pkg_lint_status.get("bandit_errors") == 'Error'
         linter_obj._run_mypy.assert_called_once()
@@ -292,7 +292,7 @@ class TestRunLintInHost:
         linter_obj._run_vulture.assert_called_once()
         assert linter_obj._pkg_lint_status.get("vulture_errors") == 'Error'
         assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8'] + EXIT_CODES['bandit'] + \
-            EXIT_CODES['mypy'] + EXIT_CODES['vulture'] + EXIT_CODES['xsoar_linter']
+            EXIT_CODES['mypy'] + EXIT_CODES['vulture'] + EXIT_CODES['XSOAR_linter']
 
     def test_no_lint_files(self, mocker, linter_obj):
         """No lint files exsits - not running any lint check"""
@@ -426,4 +426,4 @@ class TestRunLintInHost:
         linter_obj._run_mypy.assert_called_once()
         linter_obj._run_vulture.assert_called_once()
         assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES['flake8'] + EXIT_CODES['bandit'] + \
-            EXIT_CODES['mypy'] + EXIT_CODES['vulture'] + EXIT_CODES['xsoar_linter']
+            EXIT_CODES['mypy'] + EXIT_CODES['vulture'] + EXIT_CODES['XSOAR_linter']

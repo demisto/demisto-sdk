@@ -1,4 +1,3 @@
-from collections import Callable
 from pathlib import Path
 
 import pytest
@@ -18,14 +17,13 @@ files = [(Path(f"{XSOAR_LINTER_PY2_INVALID}"), 2.7, 1, ['Sys.exit use is found, 
 
 
 @pytest.mark.parametrize('file, python_version,exit_code,error_msgs', files)
-def test_xsoar_linter(mocker, file, python_version, exit_code, error_msgs, demisto_content: Callable):
+def test_xsoar_linter(mocker, file, python_version, exit_code, error_msgs):
     """
     Given
     - file to run the linter on.
     - Python version of the file.
     - expected exit code of the xsoar linter function.
     - expected error messages of the xosar linter.
-    - demisto content.
 
     When
     - Running xsoar linter using demisto lint.
@@ -42,7 +40,7 @@ def test_xsoar_linter(mocker, file, python_version, exit_code, error_msgs, demis
     linter.Linter._docker_login.return_value = False
     test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
 
-    runner = linter.Linter(content_repo=demisto_content,
+    runner = linter.Linter(content_repo=test_path,
                            pack_dir=test_path,
                            req_2=[],
                            req_3=[],

@@ -6,7 +6,7 @@ import pytest
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 
 
-@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python')])
+@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python2')])
 def test_get_python_exec(py_num, expected_exec):
     """Get python exec"""
     from demisto_sdk.commands.lint.commands_builder import get_python_exec
@@ -42,10 +42,9 @@ def test_build_xsoar_linter_py2_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
-    plugin_path = Path(__file__).parent.parent / 'resources' / 'pylint_plugins'
-    expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+    expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
-               f"{plugin_path}/base_checker, {' '.join(files)}"
+               f"base_checker, {' '.join(files)}"
     assert output == expected
 
 
@@ -53,9 +52,9 @@ def test_build_xsoar_linter_py2_command(files):
 def test_build_xsoar_linter_no_base_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
-    output = build_xsoar_linter_command(files, "unsupported")
+    output = build_xsoar_linter_command(files, 2.7, "unsupported")
     files = [str(file) for file in files]
-    expected = f"python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+    expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                f"conftest.py,venv -E --disable=all --enable= {' '.join(files)}"
     assert output == expected
 

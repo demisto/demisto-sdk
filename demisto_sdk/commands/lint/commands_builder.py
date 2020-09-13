@@ -12,17 +12,21 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def get_python_exec(py_num: float) -> str:
+def get_python_exec(py_num: float, is_py2: bool = False) -> str:
     """ Get python executable
 
     Args:
         py_num(float): Python version X.Y
+        is_py2(bool): for python 2 version, Set True if the returned result should have python2 or False for python.
 
     Returns:
         str: python executable
     """
     if py_num < 3:
-        py_str = "2"
+        if is_py2:
+            py_str = "2"
+        else:
+            py_str = ""
     else:
         py_str = "3"
 
@@ -104,7 +108,7 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
         checkers = support_levels.get(support_level)
         support = checkers.split(',') if checkers else []
         for checker in support:
-            if get_python_exec(py_num) == 'python3':
+            if get_python_exec(py_num, True) == 'python3':
                 checker_path += f"{plugin_path}/{checker},"
             else:
                 checker_path += f"{checker},"
@@ -112,7 +116,7 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
-    command = f"{get_python_exec(py_num)} -m pylint"
+    command = f"{get_python_exec(py_num, True)} -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors

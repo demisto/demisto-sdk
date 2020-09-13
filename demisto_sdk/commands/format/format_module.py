@@ -18,8 +18,7 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_layout import (
-    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -37,8 +36,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'incidenttype': IncidentTypesJSONFormat,
     'indicatorfield': IndicatorFieldJSONFormat,
     'reputation': IndicatorTypeJSONFormat,
-    'layout': LayoutJSONFormat,
-    'layoutscontainer': LayoutsContainerJSONFormat,
+    'layout': LayoutBaseFormat,
+    'layoutscontainer': LayoutBaseFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,
@@ -46,6 +45,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'widget': WidgetJSONFormat,
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
+    'testscript': ScriptYMLFormat,
 }
 UNFORMATTED_FILES = ['canvas-context-connections',
                      'readme',
@@ -54,13 +54,16 @@ UNFORMATTED_FILES = ['canvas-context-connections',
                      'changelog',
                      'image',
                      'javascriptfile',
-                     'powershellfile']
+                     'powershellfile',
+                     'betaintegration',
+                     ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = None):
+def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = False,
+                   verbose: bool = False, update_docker: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -68,6 +71,8 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
+        verbose (bool): Whether to print verbose logs or not
+        update_docker (flag): Whether to update the docker image.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -90,7 +95,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
                                                                  from_version=from_version, output=output,
-                                                                 no_validate=no_validate)
+                                                                 no_validate=no_validate, verbose=verbose, update_docker=update_docker)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:
@@ -99,17 +104,22 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
                     log_list.extend([(info_res, print_success)])
                 if skip_res:
                     log_list.extend([(skip_res, print_warning)])
+            elif file_type:
+                log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
+                                  f"supported by format command"], print_warning))
+            else:
+                log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
+                                 print_error))
 
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
-    if error_list:
-        for string, print_func in log_list:
-            print_func('\n'.join(string))
-        return 1
-
+    print('')  # Just adding a new line before summary
     for string, print_func in log_list:
         print_func('\n'.join(string))
+
+    if error_list:
+        return 1
     return 0
 
 
@@ -126,6 +136,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     """
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
+    if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
+        # non code formatters don't support update_docker param. remove it
+        del kwargs['update_docker']
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                          from_version=from_version,
                                                          **kwargs)

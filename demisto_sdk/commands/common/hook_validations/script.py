@@ -178,7 +178,8 @@ class ScriptValidator(ContentEntityValidator):
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
                                                       ignored_errors=self.ignored_errors,
-                                                      print_as_warnings=self.print_as_warnings)
+                                                      print_as_warnings=self.print_as_warnings,
+                                                      suppress_print=self.suppress_print)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False
@@ -190,7 +191,7 @@ class ScriptValidator(ContentEntityValidator):
         else:
             name = self.current_file.get('name')
             correct_name = "V2"
-            if not name.endswith(correct_name):
+            if not name.endswith(correct_name):  # type: ignore
                 error_message, error_code = Errors.invalid_v2_script_name()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

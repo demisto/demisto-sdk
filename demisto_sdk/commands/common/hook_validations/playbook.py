@@ -56,7 +56,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         file_type = self.structure_validator.scheme_name
         if not isinstance(file_type, str):
-            file_type = file_type.value
+            file_type = file_type.value  # type: ignore
 
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)

@@ -11,7 +11,7 @@ repos:
     -   id: debug-statements
         language_version: python3
     -   id: name-tests-test
-        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/*|demisto_sdk/commands/create_artifacts/tests/data
+        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: https://github.com/pre-commit/mirrors-autopep8

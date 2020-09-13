@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.tests.constants_test import NOT_VALID_IMAGE_PATH
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
     LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
@@ -951,7 +952,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout = pack._create_json_based(name='layout-name', prefix='', content=LAYOUT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -959,7 +960,7 @@ class TestLayoutValidation:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_layout(self, mocker, repo):
+    def test_invalid_layout__version(self, mocker, repo):
         """
         Given
         - an invalid layout (wrong version).
@@ -974,13 +975,37 @@ class TestLayoutValidation:
         pack = repo.create_pack('PackName')
         layout_copy = LAYOUT.copy()
         layout_copy['version'] = 2
-        layout = pack._create_json_based(name='layout', prefix='', content=layout_copy)
+        layout = pack._create_json_based(name='layout-name', prefix='', content=layout_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
         assert f'Validating {layout.path} as layout' in result.stdout
         assert 'BA100' in result.stdout
         assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_layout__path(self, mocker, repo):
+        """
+        Given
+        - an invalid layout (wrong path).
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on - BA100 wrong version error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['version'] = 2
+        layout = pack._create_json_based(name='wrongpath', prefix='', content=layout_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'LO102' in result.stdout
+        assert 'layout file name should start with "layout-" prefix.' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_layoutscontainer(self, mocker, repo):
@@ -996,7 +1021,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        layout = pack._create_json_based(name='layoutscontainer', prefix='', content=LAYOUTS_CONTAINER)
+        layout = pack._create_json_based(name='layoutscontainer-test', prefix='', content=LAYOUTS_CONTAINER)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -1004,7 +1029,7 @@ class TestLayoutValidation:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_layoutscontainer(self, mocker, repo):
+    def test_invalid_layoutscontainer__version(self, mocker, repo):
         """
         Given
         - an invalid Layout_Container (wrong version).
@@ -1026,6 +1051,28 @@ class TestLayoutValidation:
         assert f'Validating {layout.path} as layoutscontainer' in result.stdout
         assert 'BA100' in result.stdout
         assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_layoutscontainer__path(self, mocker, repo):
+        """
+        Given
+        - an invalid Layout_Container (wrong path).
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on - LO103 wrong file path.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout = pack._create_json_based(name='wrongname', prefix='', content=LAYOUTS_CONTAINER)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layoutscontainer' in result.stdout
+        assert 'LO103' in result.stdout
+        assert 'layoutscontainer file name should start with "layoutscontainer-" prefix.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_from_version_in_layoutscontaier(self, mocker, repo):
@@ -1443,6 +1490,26 @@ class TestImageValidation:
         assert f'Validating {image_path} as image' in result.stdout
         assert 'IM106' in result.stdout
         assert 'This is the default image, please change to the integration image.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_image_should_not_be_validated(self, mocker, repo):
+        """
+        Given
+        - The image file which path does not end with _image.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate does not validates it as an image.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 

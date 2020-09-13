@@ -79,6 +79,12 @@ mapping:
         type: bool
       longRunningPort:
         type: bool
+      ismappable:
+        type: bool
+      isremotesyncin:
+        type: bool
+      isremotesyncout:
+        type: bool
       commands:
         type: seq
         sequence:
@@ -92,8 +98,6 @@ mapping:
         type: bool
       isFetchSamples:
         type: bool
-      sourcemoduleid:
-        type: str
   system:
     type: bool
   hidden:

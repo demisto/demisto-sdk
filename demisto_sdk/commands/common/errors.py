@@ -9,10 +9,10 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117'],
+    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
     'non-certified-partner': ['CJ']
 }
 
@@ -26,6 +26,7 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
+    "invalid_id_set": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -51,6 +52,8 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "no_default_value_in_parameter": "IN125",
+    "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_deprecated_integration_display_name": "IN125",
     "invalid_deprecated_integration_description": "IN126",
     "invalid_v2_script_name": "SC100",
@@ -173,6 +176,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": "MP104",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
+    "invalid_file_path_layout": "LO102",
+    "invalid_file_path_layoutscontainer": "LO103",
 }
 
 
@@ -227,6 +232,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_id_set():
+        return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
+               "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
+               "Then re-run the `validate` command."
+
+    @staticmethod
+    @error_code_decorator
     def wrong_display_name(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -234,6 +246,11 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+
+    @staticmethod
+    @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
 
     @staticmethod
     @error_code_decorator
@@ -349,6 +366,16 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def parameter_missing_from_yml(name, correct_format):
+        return f'A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should ' \
+               f'be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_missing_from_yml_not_community_contributor(name, correct_format):
+        """
+            This error is ignored if the contributor is community
+        """
         return f'A required parameter "{name}" is missing or malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
@@ -473,12 +500,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
                f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
@@ -994,6 +1022,17 @@ class Errors:
     @error_code_decorator
     def invalid_version_in_layoutscontainer(version_field):
         return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layout(file_name):
+        return f'Invalid file name - {file_name}. layout file name should start with "layout-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layoutscontainer(file_name):
+        return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
+               '"layoutscontainer-" prefix.'
 
     @staticmethod
     @error_code_decorator

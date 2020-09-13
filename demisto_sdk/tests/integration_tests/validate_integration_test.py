@@ -127,7 +127,7 @@ class TestDeprecatedIntegration:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_deprecated_integration(self, mocker, repo):
+    def test_invalid_deprecated_integration_display_name(self, mocker, repo):
         """
         Given
         - invalid deprecated integration - The fields of deprecated are missing.
@@ -144,6 +144,7 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
         invalid_integration_yml['deprecated'] = True
+        invalid_integration_yml['description'] = 'Deprecated.'
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -151,8 +152,35 @@ class TestDeprecatedIntegration:
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN127' in result.stdout
+        assert 'Deprecated' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_deprecated_integration_description(self, mocker, repo):
+        """
+        Given
+        - invalid deprecated integration - The fields of deprecated are missing.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on - invalid_deprecated_integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml['deprecated'] = True
+        invalid_integration_yml['display'] = '(Deprecated)'
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN128' in result.stdout
-        assert '"Deprecated."' in result.stdout
+        assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
 
 

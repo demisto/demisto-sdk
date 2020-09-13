@@ -155,7 +155,8 @@ class UpdateRN:
 
     def only_docs_changed(self):
         changed_files = self.added_files.union(self.modified_files_in_pack)
-        if (len(changed_files) == 1 and 'README' in changed_files) or \
+        changed_files_copy = changed_files  # copying as pop will leave the file out of the set
+        if (len(changed_files) == 1 and 'README' in changed_files_copy.pop()) or \
                 (all('README' in file or ('.png' in file and '_image.png' not in file) for file in changed_files)):
             return True
         return False

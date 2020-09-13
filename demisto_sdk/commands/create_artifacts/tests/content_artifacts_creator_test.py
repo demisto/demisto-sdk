@@ -156,7 +156,7 @@ def test_dump_pack(mock_git):
                                   zip=False,
                                   suffix='',
                                   cpus=1,
-                                  content_packs=False)
+                                  packs=False)
 
         create_dirs(artifact_manager=config)
         dump_pack(artifact_manager=config, pack=Pack(TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'))
@@ -174,7 +174,7 @@ def test_create_content_artifacts(mock_git):
                                   zip=False,
                                   suffix='',
                                   cpus=1,
-                                  content_packs=False)
+                                  packs=False)
         exit_code = create_content_artifacts(artifact_manager=config)
 
         assert exit_code == 0
@@ -192,7 +192,7 @@ def test_create_private_content_artifacts(private_repo):
                                   zip=False,
                                   suffix='',
                                   cpus=1,
-                                  content_packs=False)
+                                  packs=False)
         config.content = Content(private_repo)
         exit_code = create_content_artifacts(artifact_manager=config)
 
@@ -210,7 +210,7 @@ def test_malformed_file_failue(suffix: str, mock_git):
                                   zip=False,
                                   suffix='',
                                   cpus=1,
-                                  content_packs=False)
+                                  packs=False)
 
         with destroy_by_ext(suffix):
             exit_code = create_content_artifacts(artifact_manager=config)
@@ -227,7 +227,7 @@ def test_duplicate_file_failure(mock_git):
                                   zip=False,
                                   suffix='',
                                   cpus=1,
-                                  content_packs=False)
+                                  packs=False)
 
         with duplicate_file():
             exit_code = create_content_artifacts(artifact_manager=config)

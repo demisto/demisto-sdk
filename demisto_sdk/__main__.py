@@ -815,16 +815,21 @@ def id_set_command(**kwargs):
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
+@click.option(
+    "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
+    type=click.Path(resolve_path=True))
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
+    id_set_path = kwargs.get('id_set_path')
     print("Starting to update release notes.")
 
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
-    run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type, validate_manager)
+    run_release_notes_validation(_pack, is_all, pre_release, specific_version, update_type, validate_manager,
+                                 id_set_path)
 
 
 # ====================== find-dependencies ====================== #

@@ -3,7 +3,7 @@
 * Fixed an issue where doc_images required release-notes and validations.
 * Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
     * Added new argument *--id-set-path* for id_set.json path.
-    * When changes to *APIModule* is detected and an id_set.json is availble - the command will update the dependent pack as well.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

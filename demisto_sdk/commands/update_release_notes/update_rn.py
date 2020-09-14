@@ -564,22 +564,26 @@ def run_release_notes_validation(_pack, is_all, pre_release, specific_version, u
 
     if 'ApiModules' in _pack:
         # case: ApiModules
-        print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
-        if not id_set_path:
-            if not os.path.isfile('./Tests/id_set.json'):
-                print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is"
-                            "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
-                sys.exit(0)
-            id_set_path = './Tests/id_set.json'
-        with open(id_set_path, 'r') as conf_file:
-            id_set = json.load(conf_file)
-        api_module_set = get_api_module_ids(added)
-        api_module_set = api_module_set.union(get_api_module_ids(modified))
-        integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
-        for integration in integrations:
-            integration_path = integration.get('file_path')
-            integration_pack = integration.get('pack')
-            update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
-                                      modified_files_in_pack={integration_path}, pre_release=pre_release,
-                                      added_files=set(), pack=integration_pack)
-            update_pack_rn.execute_update()
+        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
+
+
+def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None):
+    print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+    if not id_set_path:
+        if not os.path.isfile('./Tests/id_set.json'):
+            print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is "
+                        "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
+            return
+        id_set_path = './Tests/id_set.json'
+    with open(id_set_path, 'r') as conf_file:
+        id_set = json.load(conf_file)
+    api_module_set = get_api_module_ids(added)
+    api_module_set = api_module_set.union(get_api_module_ids(modified))
+    integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+    for integration in integrations:
+        integration_path = integration.get('file_path')
+        integration_pack = integration.get('pack')
+        update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
+                                  modified_files_in_pack={integration_path}, pre_release=pre_release,
+                                  added_files=set(), pack=integration_pack)
+        update_pack_rn.execute_update()

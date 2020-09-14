@@ -7,8 +7,8 @@ from demisto_sdk.tests.constants_test import (GIT_ROOT,
                                               XSOAR_LINTER_PY3_VALID)
 
 files = [
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.7, 0, []),
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.7, 1, ['Sys.exit use is found, Please use return instead.',
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 0, []),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 1, ['Sys.exit use is found, Please use return instead.',
                                                    'Print is found, Please remove all prints from the code.'])]
 
 

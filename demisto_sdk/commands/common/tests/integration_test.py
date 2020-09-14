@@ -4,7 +4,9 @@ from typing import Optional
 
 import pytest
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS)
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH_PARAM,
+                                                   MAX_FETCH_PARAM)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
@@ -512,6 +514,56 @@ class TestIsFetchParamsExist:
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
         assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
+
+
+class TestIsValidMaxFetchAndFirstFetch:
+    """
+    Given
+    - yml file of integration as config
+    When
+    - run validate checks
+    Then
+    - if the isfetch identifier is true make sure the first_fetch and max_fetch params exists
+    - make sure max_fetch param has a default value
+    """
+
+    def setup(self):
+        config = {
+            'configuration': deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
+            'script': {'isfetch': True}
+        }
+        self.validator = IntegrationValidator(mock_structure("", config))
+
+    def test_valid(self):
+        assert self.validator.is_valid_max_fetch_and_first_fetch(), 'is_valid_fetch() returns False instead True'
+
+    def test_missing_max_fetch(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'max_fetch']
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_missing_default_value_in_max_fetch(self):
+        # missing param in configuration
+        for param in self.validator.current_file['configuration']:
+            if param.get('name') == 'max_fetch':
+                param.pop('defaultvalue')
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_missing_fetch_time(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'first_fetch']
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_not_fetch(self):
+        self.validator.is_valid = True
+        self.validator.current_file['script']['isfetch'] = False
+        assert self.validator.is_valid_max_fetch_and_first_fetch(),\
+            'is_valid_fetch() returns False instead True'
 
 
 class TestIsFeedParamsExist:

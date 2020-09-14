@@ -310,7 +310,7 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True))
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
-@click.option('--content-packs', help='Create only content_packs artifacts.', default=False)
+@click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',

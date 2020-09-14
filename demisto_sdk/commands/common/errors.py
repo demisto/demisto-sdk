@@ -9,15 +9,15 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117'],
+    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
     'non-certified-partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
 ERROR_CODE = {
@@ -52,7 +52,12 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "no_default_value_in_parameter": "IN125",
+    "parameter_missing_from_yml_not_community_contributor": "IN126",
+    "invalid_deprecated_integration_display_name": "IN127",
+    "invalid_deprecated_integration_description": "IN128",
     "invalid_v2_script_name": "SC100",
+    "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -100,6 +105,7 @@ ERROR_CODE = {
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
+    "invalid_deprecated_playbook": "PB104",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -243,6 +249,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
     def wrong_required_value(param_name):
         return 'The required field of the {} parameter should be False'.format(param_name)
 
@@ -361,6 +372,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def parameter_missing_from_yml_not_community_contributor(name, correct_format):
+        """
+            This error is ignored if the contributor is community
+        """
+        return f'A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should ' \
+               f'be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
     def parameter_missing_for_feed(name, correct_format):
         return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
@@ -379,9 +400,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should start with "Deprecated.".'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_script_name():
         return "The name of this v2 script is incorrect , should be **name**V2." \
                " e.g: DBotTrainTextClassifierV2"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_script():
+        return "Every deprecated script's comment has to start with 'Deprecated.'"
 
     @staticmethod
     @error_code_decorator
@@ -676,6 +712,11 @@ class Errors:
     @error_code_decorator
     def playbook_unconnected_tasks(orphan_tasks):
         return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_playbook():
+        return 'The playbook description has to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator

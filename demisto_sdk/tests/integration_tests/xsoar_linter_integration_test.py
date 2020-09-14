@@ -41,7 +41,9 @@ def test_xsoar_linter(mocker, file, python_version, exit_code, error_msgs):
                            req_2=[],
                            req_3=[],
                            docker_engine=True)
-    exit_code_actual, output = runner._run_xsoar_linter(python_version, [file])
-    assert exit_code == exit_code_actual
-    for msg in error_msgs:
-        assert msg in output
+    exit_code_actual = runner._run_xsoar_linter(python_version, [file])
+    print(exit_code_actual)
+    assert False
+    # assert exit_code == exit_code_actual
+    # for msg in error_msgs:
+    #     assert msg in output

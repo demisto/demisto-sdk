@@ -353,7 +353,9 @@ class Linter:
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
-
+        print(stdout)
+        print(stderr)
+        print(str(myenv['PYTHONPATH']))
         if exit_code == WARNING:
             logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
             exit_code = SUCCESS

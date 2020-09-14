@@ -47,13 +47,14 @@ EX_FAIL = 1
 
 
 class ArtifactsManager:
-    def __init__(self, artifacts_path: str, content_version: str, suffix: str, zip: bool, content_packs: bool,
+    def __init__(self, artifacts_path: str, content_version: str, suffix: str, zip: bool, packs: bool,
                  cpus: int):
         """ Content artifacts configuration
 
         Args:
             artifacts_path: existing destination directory for creating artifacts.
-            content_version:
+            content_version: release content varsion.
+            packs: create only content_packs artifacts if True.
             suffix: suffix to add all file we creates.
             zip: True for zip all content artifacts to 3 diffrent zip files in same structure else False.
             cpus: Availble cpus in the computer.
@@ -61,7 +62,7 @@ class ArtifactsManager:
         self.suffix = suffix
         self.content_version = content_version
         self.zip_artifacts = zip
-        self.only_content_packs = content_packs
+        self.only_content_packs = packs
         self.artifacts_path = Path(artifacts_path)
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
@@ -690,6 +691,10 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
     if artifact_manager.only_content_packs:
         logger.info(template.format(artifact_manager.content_packs_path))
-    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
-                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
-        logger.info(template.format(artifact_dir))
+
+    logger.info(template.format(artifact_manager.content_packs_path))
+
+    if not artifact_manager.only_content_packs:
+        for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
+                             artifact_manager.content_all_path]:
+            logger.info(template.format(artifact_dir))

@@ -21,13 +21,13 @@ import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, ID_IN_COMMONFIELDS,
-    ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -101,6 +101,18 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
             return [project_dir]
         files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
     return files
+
+
+def src_root() -> Path:
+    """ Demisto-sdk absolute path from src root.
+
+    Returns:
+        Path: src root path.
+    """
+    git_dir = git.Repo(Path.cwd(),
+                       search_parent_directories=True).working_tree_dir
+
+    return Path(git_dir) / 'demisto_sdk'
 
 
 def print_error(error_str):
@@ -365,6 +377,30 @@ def get_script_or_integration_id(file_path):
     if data_dictionary:
         commonfields = data_dictionary.get('commonfields', {})
         return commonfields.get('id', ['-', ])
+
+
+def get_api_module_integrations_set(changed_api_modules, integration_set):
+    integrations_set = list()
+    for integration in integration_set:
+        integration_data = list(integration.values())[0]
+        if integration_data.get('api_modules', '') in changed_api_modules:
+            integrations_set.append(integration_data)
+    return integrations_set
+
+
+def get_api_module_ids(file_list):
+    """Extracts APIModule IDs from the file list"""
+    api_module_set = set()
+    if file_list:
+        for pf in file_list:
+            parent = pf
+            while '/ApiModules/Scripts/' in parent:
+                parent = get_parent_directory_name(parent, abs_path=True)
+                if '/ApiModules/Scripts/' in parent:
+                    pf = parent
+            if parent != pf:
+                api_module_set.add(os.path.basename(pf))
+    return api_module_set
 
 
 def get_entity_id_by_entity_type(data: dict, content_entity: str):
@@ -756,17 +792,22 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         return FileType.CHANGELOG
 
-    if path.endswith('.png'):
+    # integration image
+    if path.endswith('_image.png'):
         return FileType.IMAGE
+
+    # doc files images
+    if path.endswith('.png') and DOC_FILES_DIR in path:
+        return FileType.DOC_IMAGE
 
     if path.endswith('.ps1'):
         return FileType.POWERSHELL_FILE
 
+    if path.endswith('.py'):
+        return FileType.PYTHON_FILE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-
-    if file_type == 'py':
-        return FileType.PYTHON_FILE
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -794,7 +835,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'preProcessingScript' in _dict:
+        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -805,14 +846,15 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return FileType.CLASSIFIER
+        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
+            if _dict.get('type') and _dict.get('type') == 'classification':
+                return FileType.CLASSIFIER
+            elif _dict.get('type') and 'mapping' in _dict.get('type'):
+                return FileType.MAPPER
+            return None
 
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
-
-        if 'mapping' in _dict:
-            return FileType.MAPPER
 
         if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
@@ -1195,13 +1237,17 @@ def is_path_of_classifier_directory(path: str) -> bool:
     return os.path.basename(path) == CLASSIFIERS_DIR
 
 
-def get_parent_directory_name(path: str) -> str:
+def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     """
     Retrieves the parent directory name
-    :param path: path to get the parent dir om
-    :return: parent directory nme
+    :param path: path to get the parent dir name
+    :param abs_path: when set to true, will return absolute path
+    :return: parent directory name
     """
-    return os.path.basename(os.path.dirname(os.path.abspath(path)))
+    parent_dir_name = os.path.dirname(os.path.abspath(path))
+    if abs_path:
+        return parent_dir_name
+    return os.path.basename(parent_dir_name)
 
 
 def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:

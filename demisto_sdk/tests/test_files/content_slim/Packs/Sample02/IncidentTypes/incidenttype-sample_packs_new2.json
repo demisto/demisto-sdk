@@ -1,4 +1,5 @@
 {
   "fromVersion": "4.0.0",
-  "preProcessingScript": "test"
+  "preProcessingScript": "test",
+  "color": "test"
 }

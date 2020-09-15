@@ -1,6 +1,28 @@
 # Changelog
+* Fixed an issue where renamed files were failing on *validate*.
+* Fixed an issue where single changed files did not required release notes update.
+* Fixed an issue where doc_images required release-notes and validations.
+* Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Fixed an issue where the find_type function didn't recognize file types correctly.
+
+# 1.2.0
+* Fixed an issue where **format** did not update the test playbook from its pack.
+* Fixed an issue where **validate** validated non integration images.
+* Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
+* Added revision templates to the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** crashed when a file was renamed.
 * Fixed an issue where **validate** failed on deleted files.
+* Fixed an issue where **validate** validated all images instead of packs only.
+* Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
+* Fixed an issue where **validate** did not fail if no release notes were added when adding files to existing packs.
+* Added handling of incorrect layout paths via the **format** command.
+* Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
+* Fixed an issue where image and description files were not handled correctly by **validate** and **update-release-notes** commands.
+* Fixed an issue where the **format** command didn't remove all extra fields in a file.
+* Added an error in case an invalid id_set.json file is found while running the **validate** command.
+* Added fetch params checks to the **validate** command.
 
 # 1.1.11
 * Added line number to secrets' path in **secrets** command report.

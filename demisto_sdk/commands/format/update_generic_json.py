@@ -34,7 +34,8 @@ class BaseUpdateJSON(BaseUpdate):
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(self.data, file, indent=4)
+            ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+                       ensure_ascii=False)
 
     def update_json(self):
         """Manager function for the generic JSON updates."""
@@ -63,11 +64,12 @@ class BaseUpdateJSON(BaseUpdate):
     def remove_null_fields(self):
         """Remove empty fields from file root."""
         with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
-        schema_fields = a.get('mapping').keys()
+            schema_data = yaml.safe_load(file_obj)
+        schema_fields = schema_data.get('mapping').keys()
         for field in schema_fields:
-            # We want to keep 'false' and 0 values.
-            if field in self.data and self.data[field] in (None, '', [], {}):
+            # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
+            if field in self.data and self.data[field] in (None, '', [], {}) and \
+                    not schema_data.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
     def update_id(self, field='name'):

@@ -1,7 +1,7 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-xsoar_msg = {'msg'}
+xsoar_msg: dict = {}
 
 
 class XsoarChecker(BaseChecker):

@@ -1,7 +1,7 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-community_msg = {'msg'}
+community_msg: dict = {}
 
 
 class CommunityChecker(BaseChecker):

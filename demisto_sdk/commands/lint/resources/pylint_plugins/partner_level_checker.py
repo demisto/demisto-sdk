@@ -1,7 +1,7 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-partner_msg = {'msg'}
+partner_msg: dict = {}
 
 
 class PartnerChecker(BaseChecker):

@@ -843,7 +843,7 @@ def update_pack_releasenotes(**kwargs):
                 pass
             else:
                 print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
-                            f"To update release notes in a specific pack, please use the -p parameter "
+                            f"To update release notes in a specific pack, please use the -i parameter "
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
@@ -879,7 +879,7 @@ def update_pack_releasenotes(**kwargs):
             if _pack in packs_existing_rn_abs_path and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-p {_pack}` without specifying the update_type.")
+                            f"-i {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type,
                                           modified_files_in_pack=modified.union(old), pre_release=pre_release,

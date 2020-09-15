@@ -3,23 +3,30 @@ import os
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
+    Msg_XSOAR_linter
+
 # Third party packages
 # Local imports
 
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def get_python_exec(py_num: float) -> str:
+def get_python_exec(py_num: float, is_py2: bool = False) -> str:
     """ Get python executable
 
     Args:
         py_num(float): Python version X.Y
+        is_py2(bool): for python 2 version, Set True if the returned result should have python2 or False for python.
 
     Returns:
         str: python executable
     """
     if py_num < 3:
-        py_str = ""
+        if is_py2:
+            py_str = "2"
+        else:
+            py_str = ""
     else:
         py_str = "3"
 
@@ -69,6 +76,55 @@ def build_bandit_command(files: List[Path]) -> str:
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
 
+    return command
+
+
+def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: str = "base") -> str:
+    """ Build command to execute with xsoar linter module
+    Args:
+        py_num(float): The python version in use
+        files(List[Path]): files to execute lint
+        support_level: Support level for the file
+
+    Returns:
+       str: xsoar linter command using pylint load plugins
+    """
+    if not support_level:
+        support_level = 'base'
+    support_levels = {
+        'base': 'base_checker',
+        'community': 'base_checker,community_level_checker',
+        'partner': 'base_checker,community_level_checker,partner_level_checker',
+        'certified partner': 'base_checker,community_level_checker,partner_level_checker,'
+                             'certified_partner_level_checker',
+        'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
+                 'xsoar_level_checker'
+    }
+
+    checker_path = ""
+    message_enable = ""
+    if support_levels.get(support_level):
+        checkers = support_levels.get(support_level)
+        support = checkers.split(',') if checkers else []
+        for checker in support:
+            checker_path += f"{checker},"
+            checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
+            for msg in checker_msgs_list:
+                message_enable += f"{msg},"
+
+    command = f"{get_python_exec(py_num, True)} -m pylint"
+    # Excluded files
+    command += f" --ignore={','.join(excluded_files)}"
+    # Disable all errors
+    command += " -E --disable=all"
+    # Enable only Demisto Plugins errors.
+    command += f" --enable={message_enable}"
+    # Load plugins
+    if checker_path:
+        command += f" --load-plugins {checker_path}"
+    # Generating path pattrens - file1 file2 file3,..
+    files_list = [str(file) for file in files]
+    command += " " + " ".join(files_list)
     return command
 
 
@@ -130,7 +186,6 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
         command += f" {whitelist}"
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
-
     return command
 
 
@@ -156,7 +211,6 @@ def build_pylint_command(files: List[Path]) -> str:
     # Generating path pattrens - file1 file2 file3,..
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
-
     return command
 
 

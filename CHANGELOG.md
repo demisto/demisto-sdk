@@ -1,4 +1,7 @@
 # Changelog
+* Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
+    * `Sys.exit` usages with non zero value.
+    * Any `Print` usages.
 * Fixed an issue where renamed files were failing on *validate*.
 * Fixed an issue where single changed files did not required release notes update.
 * Fixed an issue where doc_images required release-notes and validations.

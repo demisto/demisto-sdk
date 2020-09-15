@@ -302,6 +302,7 @@ def validate(config, **kwargs):
 # ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
+    hidden=True,
     short_help='Generating the following artifacts:'
                '1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)'
                '2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'

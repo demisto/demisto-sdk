@@ -20,7 +20,6 @@ class ReleaseNotesValidator(BaseValidator):
         release_notes_file_path (str): the path to the file we are examining at the moment.
         release_notes_path (str): the path to the changelog file of the examined file.
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
-        master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,

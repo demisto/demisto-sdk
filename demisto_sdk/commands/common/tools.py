@@ -379,6 +379,30 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
+def get_api_module_integrations_set(changed_api_modules, integration_set):
+    integrations_set = list()
+    for integration in integration_set:
+        integration_data = list(integration.values())[0]
+        if integration_data.get('api_modules', '') in changed_api_modules:
+            integrations_set.append(integration_data)
+    return integrations_set
+
+
+def get_api_module_ids(file_list):
+    """Extracts APIModule IDs from the file list"""
+    api_module_set = set()
+    if file_list:
+        for pf in file_list:
+            parent = pf
+            while '/ApiModules/Scripts/' in parent:
+                parent = get_parent_directory_name(parent, abs_path=True)
+                if '/ApiModules/Scripts/' in parent:
+                    pf = parent
+            if parent != pf:
+                api_module_set.add(os.path.basename(pf))
+    return api_module_set
+
+
 def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
     Returns the id of the content entity given its entity type
@@ -1213,13 +1237,17 @@ def is_path_of_classifier_directory(path: str) -> bool:
     return os.path.basename(path) == CLASSIFIERS_DIR
 
 
-def get_parent_directory_name(path: str) -> str:
+def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     """
     Retrieves the parent directory name
     :param path: path to get the parent dir name
+    :param abs_path: when set to true, will return absolute path
     :return: parent directory name
     """
-    return os.path.basename(os.path.dirname(os.path.abspath(path)))
+    parent_dir_name = os.path.dirname(os.path.abspath(path))
+    if abs_path:
+        return parent_dir_name
+    return os.path.basename(parent_dir_name)
 
 
 def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:

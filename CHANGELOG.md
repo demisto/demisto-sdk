@@ -5,6 +5,9 @@
 * Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
     * Added new argument *--id-set-path* for id_set.json path.
     * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Added handling of dependent packs when running **validate** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will validate that the dependent pack has release notes as well.
 * Fixed an issue where the find_type function didn't recognize file types correctly.
 
 # 1.2.0

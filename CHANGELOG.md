@@ -1,9 +1,11 @@
 # Changelog
+* Fixed an issue where renamed files were failing on *validate*.
 * Fixed an issue where single changed files did not required release notes update.
 * Fixed an issue where doc_images required release-notes and validations.
 * Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
     * Added new argument *--id-set-path* for id_set.json path.
     * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Fixed an issue where the find_type function didn't recognize file types correctly.
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

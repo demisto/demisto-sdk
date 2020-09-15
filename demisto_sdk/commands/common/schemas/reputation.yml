@@ -22,6 +22,7 @@ mapping:
     type: bool
   regex:
     type: str
+    required: True
   details:
     type: str
     required: True

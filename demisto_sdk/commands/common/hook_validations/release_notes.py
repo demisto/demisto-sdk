@@ -40,6 +40,10 @@ class ReleaseNotesValidator(BaseValidator):
         modified_added_files = itertools.chain.from_iterable((self.added_files or [], self.modified_files or []))
         if modified_added_files:
             for file in modified_added_files:
+                # renamed files will appear in the modified list as a tuple: (old path, new path)
+                if isinstance(file, tuple):
+                    file = file[1]
+
                 if find_type(file) in self.file_types_that_should_not_appear_in_rn:
                     continue
                 elif self.pack_name + '/' in file:

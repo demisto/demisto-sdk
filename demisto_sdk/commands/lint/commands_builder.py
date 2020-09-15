@@ -125,7 +125,6 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     # Generating path pattrens - file1 file2 file3,..
     files_list = [str(file) for file in files]
     command += " " + " ".join(files_list)
-    print(str(command))
     return command
 
 
@@ -187,7 +186,6 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
         command += f" {whitelist}"
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
-
     return command
 
 

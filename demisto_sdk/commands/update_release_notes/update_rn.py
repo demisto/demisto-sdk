@@ -42,7 +42,6 @@ class UpdateRN:
 
         self.added_files = added_files
         self.pre_release = pre_release
-        self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.pack_metadata_only = pack_metadata_only

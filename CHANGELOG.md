@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where renamed files were failing on *validate*.
 * Fixed an issue where single changed files did not required release notes update.
 * Fixed an issue where doc_images required release-notes and validations.
 

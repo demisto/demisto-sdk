@@ -241,6 +241,32 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
+def test_are_release_notes_complete_renamed_file(mocker):
+    """
+    Given
+    -
+    When
+    - Running validation on release notes.
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    -
+    """
+    renamed_file = [
+        (os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_old.yml'),
+         os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'))
+    ]
+    release_notes = """
+    ### Integrations
+    #### Palo Alto Networks Cortex XDR - Investigation and Response
+    - Test
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    validator = get_validator(release_notes, renamed_file)
+    validator.suppress_print = False
+    assert validator.are_release_notes_complete()
+
+
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items

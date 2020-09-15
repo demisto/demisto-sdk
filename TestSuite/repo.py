@@ -180,4 +180,3 @@ class Repo:
 
     def working_dir(self):
         return self.path
-

@@ -99,6 +99,7 @@ class Repo:
         classifier.update({'name': f'{name} - classifier'})
         classifier.update({'transformer': ''})
         classifier.update({'keyTypeMap': {}})
+        classifier.update({'type': 'classification'})
 
         layout = pack.create_layout(f'{name}_layout')
         layout.write_json({'id': f'{name} - layout'})
@@ -114,11 +115,13 @@ class Repo:
         mapper.write_json({'id': f'{name} - mapper'})
         mapper.update({'name': f'{name} - mapper'})
         mapper.update({'mapping': {}})
+        mapper.update({'type': 'mapping'})
 
         incident_type = pack.create_incident_type(f'{name}_incident-type')
         incident_type.write_json({'id': f'{name} - incident_type'})
         incident_type.update({'name': f'{name} - incident_type'})
         incident_type.update({'preProcessingScript': ''})
+        incident_type.update({'color': 'test'})
 
         incident_field = pack.create_incident_field(f'{name}_incident-field')
         incident_field.write_json({'id': f'incident_{name} - incident_field'})

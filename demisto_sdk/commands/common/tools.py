@@ -779,11 +779,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.ps1'):
         return FileType.POWERSHELL_FILE
 
+    if path.endswith('.py'):
+        return FileType.PYTHON_FILE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-
-    if file_type == 'py':
-        return FileType.PYTHON_FILE
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -811,7 +811,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'preProcessingScript' in _dict:
+        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -822,14 +822,15 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return FileType.CLASSIFIER
+        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
+            if _dict.get('type') and _dict.get('type') == 'classification':
+                return FileType.CLASSIFIER
+            elif _dict.get('type') and 'mapping' in _dict.get('type'):
+                return FileType.MAPPER
+            return None
 
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
-
-        if 'mapping' in _dict:
-            return FileType.MAPPER
 
         if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:

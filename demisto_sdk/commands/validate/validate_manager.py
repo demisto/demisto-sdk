@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -49,7 +50,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (filter_packagify_changes,
-                                               find_type,
+                                               find_type, get_api_module_ids,
+                                               get_api_module_integrations_set,
                                                get_content_release_identifier,
                                                get_pack_name,
                                                get_pack_names_from_files,
@@ -695,6 +697,15 @@ class ValidateManager:
                                                                                    FileType.TEST_PLAYBOOK,
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
+        if 'ApiModules' in packs_that_should_have_new_rn:
+            if not os.path.isfile(self.id_set_path):
+                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
+            with open(self.id_set_path, 'r') as conf_file:
+                id_set = json.load(conf_file)
+            api_module_set = get_api_module_ids(changed_files)
+            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
+                set(map(lambda integration: integration.get('pack'), integrations)))
 
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs

@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from io import StringIO
@@ -630,6 +631,44 @@ class TestValidators:
         modified_files = {incident_field1.get_path_from_pack(),
                           incident_field2.get_path_from_pack()}
         added_files = {'Packs/PackName1/ReleaseNotes/1_0_0.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__missing_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
+        """
+            Given:
+                - APIModule pack has a change relevant for another pack
+                - APIModule modified files and release notes present
+                - dependent pack has NO CHANGES
+                - dependent pack release notes are missing
+            When:
+                - running validate_no_missing_release_notes on the file
+            Then:
+                - return a False as there are release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('ApiModules')
+        api_script1 = pack1.create_script('APIScript')
+        pack2_name = 'ApiDependent'
+        pack2 = repo.create_pack(pack2_name)
+        integration2 = pack2.create_integration(pack2_name)
+        id_set_content = {'integrations':
+                          [
+                              {'ApiDependent':
+                               {'name': integration2.name,
+                                'file_path': integration2.path,
+                                'pack': pack2_name,
+                                'api_modules': api_script1.name
+                                }
+                               }
+                          ]}
+        id_set_f = tmpdir / "id_set.json"
+        id_set_f.write(json.dumps(id_set_content))
+        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        modified_files = {api_script1.yml_path}
+        added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=set(),

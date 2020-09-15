@@ -63,7 +63,7 @@ class ValidateManager:
     def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
                  print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
                  validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False):
+                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -83,6 +83,9 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
+        if not id_set_path:
+            id_set_path = 'Tests/id_set.json'
+        self.id_set_path = id_set_path
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -614,8 +617,8 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile('Tests/id_set.json'):
-            IDSetCreator(print_logs=False, output='Tests/id_set.json').create_id_set()
+        if not os.path.isfile(self.id_set_path):
+            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:
             raise_version = False
@@ -624,7 +627,7 @@ class ValidateManager:
                 raise_version = True
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
-                id_set_path='Tests/id_set.json'))
+                id_set_path=self.id_set_path))
 
         return all(valid_pack_files)
 

@@ -273,6 +273,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
+@click.option(
+    "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
+    type=click.Path(resolve_path=True))
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -296,7 +299,8 @@ def validate(config, **kwargs):
                                     print_ignored_files=kwargs['print_ignored_files'],
                                     no_docker_checks=kwargs['no_docker_checks'],
                                     silence_init_prints=kwargs['silence_init_prints'],
-                                    skip_dependencies=kwargs['skip_pack_dependencies'])
+                                    skip_dependencies=kwargs['skip_pack_dependencies'],
+                                    id_set_path=kwargs.get('id_set_path'))
         return validator.run_validation()
 
 

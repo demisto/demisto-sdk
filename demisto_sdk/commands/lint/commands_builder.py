@@ -4,7 +4,15 @@ from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
-    Msg_XSOAR_linter
+    base_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import \
+    cert_partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import \
+    community_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import \
+    partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import \
+    xsoar_msg
 
 # Third party packages
 # Local imports
@@ -91,6 +99,8 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     """
     if not support_level:
         support_level = 'base'
+
+    # linters by support level
     support_levels = {
         'base': 'base_checker',
         'community': 'base_checker,community_level_checker',
@@ -100,6 +110,11 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
         'xsoar': 'base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,'
                  'xsoar_level_checker'
     }
+
+    # messages from all level linters
+    Msg_XSOAR_linter = {'base_checker': base_msg, 'community_level_checker': community_msg,
+                        'partner_level_checker': partner_msg, 'certified_partner_level_checker': cert_partner_msg,
+                        'xsoar_level_checker': xsoar_msg}
 
     checker_path = ""
     message_enable = ""

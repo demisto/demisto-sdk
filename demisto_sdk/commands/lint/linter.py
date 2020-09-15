@@ -67,6 +67,7 @@ class Linter:
             "test": False,
             "lint_files": [],
             "support_level": None,
+            "is_long_running": False,
             "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine
@@ -174,6 +175,7 @@ class Linter:
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
 
+            self._facts['is_long_running'] = script_obj.get('longRunning')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -350,13 +352,16 @@ class Linter:
                 myenv['PYTHONPATH'] += ':' + str(self._pack_abs_dir)
             else:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
+            if self._facts['is_long_running']:
+                myenv['LONGRUNNING'] = 'True'
+
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
 
         if exit_code == WARNING:
             logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
-            exit_code = SUCCESS
+            return SUCCESS, stdout
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

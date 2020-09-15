@@ -39,13 +39,11 @@ EXIT_CODES = {
     "image": 0b100000000,
 }
 
-
 # Execution exit codes
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
 WARNING = 0b100
-
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]

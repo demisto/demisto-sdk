@@ -125,7 +125,7 @@ def parse_response(lst: list):
     for dic in lst:
         context_dict = convert_dict_snake_to_camel(dic)
         list_res.append(context_dict)
-    time.sleep(10000)
+    demisto.log('log test')
     return list_res
 
 
@@ -823,7 +823,6 @@ def parse_incidents(items: list, fetch_limit: str, time_format: str, parsed_last
         incidents: List of incidents.
         parsed_last_time: Time of last incident.
     """
-    sys.exit(3)
     count = 0
     incidents = []
     for item in items:
@@ -851,7 +850,6 @@ def split_fields(fields: str = '') -> dict:
     Returns:
         dic_fields object for request.
     """
-    print('tests')
     dic_fields = {}
     if fields:
         if '=' not in fields:
@@ -865,7 +863,7 @@ def split_fields(fields: str = '') -> dict:
     return dic_fields
 
 
-def main():
+try:
     """
         PARSE AND VALIDATE INTEGRATION PARAMS
     """
@@ -914,7 +912,5 @@ def main():
     except Exception as e:
         return_error(f'Error from QuestKace Integration.\n'
                      f'Failed to execute {demisto.command()} command.\n\n Error: {str(e)}')
-
-
-if __name__ in ('__main__', '__builtin__', 'builtins'):
-    main()
+except:
+    pass

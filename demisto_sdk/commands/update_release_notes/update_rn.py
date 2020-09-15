@@ -14,7 +14,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
+                                               get_api_module_integrations_set,
+                                               get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_yaml,
                                                pack_name_to_path, print_color,
@@ -491,3 +493,25 @@ def get_file_description(path, file_type):
         return json_file.get('description', '')
 
     return '%%UPDATE_RN%%'
+
+
+def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None):
+    print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+    if not id_set_path:
+        if not os.path.isfile('./Tests/id_set.json'):
+            print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is "
+                        "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
+            return
+        id_set_path = './Tests/id_set.json'
+    with open(id_set_path, 'r') as conf_file:
+        id_set = json.load(conf_file)
+    api_module_set = get_api_module_ids(added)
+    api_module_set = api_module_set.union(get_api_module_ids(modified))
+    integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+    for integration in integrations:
+        integration_path = integration.get('file_path')
+        integration_pack = integration.get('pack')
+        update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
+                                  modified_files_in_pack={integration_path}, pre_release=pre_release,
+                                  added_files=set(), pack=integration_pack)
+        update_pack_rn.execute_update()

@@ -44,7 +44,8 @@ from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.update_release_notes.update_rn import (
+    UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -817,17 +818,22 @@ def id_set_command(**kwargs):
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
+@click.option(
+    "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
+    type=click.Path(resolve_path=True))
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
+    id_set_path = kwargs.get('id_set_path')
     print("Starting to update release notes.")
 
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
+                                                                                                     'origin/master')
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -836,7 +842,10 @@ def update_pack_releasenotes(**kwargs):
     if len(packs_existing_rn):
         existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
         print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
+
+    # create release notes:
     if len(_packs) > 1:
+        # case: multiple packs
         pack_list = ''.join(f"{p}, " for p in _packs)
         if not is_all:
             if _pack:
@@ -847,6 +856,7 @@ def update_pack_releasenotes(**kwargs):
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+        # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
@@ -857,6 +867,7 @@ def update_pack_releasenotes(**kwargs):
             update_pack_rn.execute_update()
         sys.exit(0)
 
+    # default case:
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)
         packs_list = ''.join(f"{p}, " for p in packs)
@@ -871,7 +882,6 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     else:
         if _pack:
-
             packs_existing_rn_abs_path = set()
             for item in packs_existing_rn:
                 packs_existing_rn_abs_path.add(os.path.abspath(pack_name_to_path(item)))
@@ -885,6 +895,10 @@ def update_pack_releasenotes(**kwargs):
                                           modified_files_in_pack=modified.union(old), pre_release=pre_release,
                                           added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
+
+    if 'ApiModules' in _pack:
+        # case: ApiModules
+        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
 
 
 # ====================== find-dependencies ====================== #

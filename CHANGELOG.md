@@ -6,7 +6,7 @@
     * Added new argument *--id-set-path* for id_set.json path.
     * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
 * Fixed an issue where the find_type function didn't recognize file types correctly.
-* Fix update-release-notes command on Windows OS.
+* Fix update-release-notes command on Windows.
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

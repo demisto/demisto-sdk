@@ -697,7 +697,7 @@ class ValidateManager:
                                                                                    FileType.TEST_PLAYBOOK,
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
-        if 'ApiModules' in packs_that_should_have_new_rn:
+        if API_MODULES_PACK in packs_that_should_have_new_rn:
             if not os.path.isfile(self.id_set_path):
                 IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
             with open(self.id_set_path, 'r') as conf_file:

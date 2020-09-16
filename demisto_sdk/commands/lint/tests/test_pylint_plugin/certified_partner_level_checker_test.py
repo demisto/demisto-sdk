@@ -95,7 +95,7 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
 
 class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
     """
-    Class which tests the functionality of sys exit checker .
+    Class which tests the functionality of demisto.log checker .
     """
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 

@@ -21,7 +21,9 @@ files = [
      ['Sys.exit use is found, Please use return instead.',
       'Sleep is found, Please remove all sleep statements from the code.']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', True, 1,
-     ['Sys.exit use is found, Please use return instead.'])
+     ['Sys.exit use is found, Please use return instead.']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'community', False, 1,
+     ['Print is found, Please remove all prints from the code.']),
 ]
 
 

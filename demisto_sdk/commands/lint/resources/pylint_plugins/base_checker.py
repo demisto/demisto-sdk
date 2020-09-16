@@ -48,6 +48,8 @@ class CustomBaseChecker(BaseChecker):
             try:
                 if node.func.attrname == 'sleep' and node.func.expr.name == 'time':
                     self.add_message("sleep-exists", node=node)
+                if node.func.name == 'sleep':
+                    self.add_message("sleep-exists", node=node)
             except Exception:
                 pass
 

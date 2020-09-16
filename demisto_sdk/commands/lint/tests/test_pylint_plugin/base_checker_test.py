@@ -105,7 +105,7 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
 
 class TestSleepChecker(pylint.testutils.CheckerTestCase):
     """
-    Class which tests the functionality of sys exit checker .
+    Class which tests the functionality of Sleep checker .
     """
     CHECKER_CLASS = base_checker.CustomBaseChecker
 

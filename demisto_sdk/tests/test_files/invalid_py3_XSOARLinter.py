@@ -165,6 +165,7 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
+        sleep(6)
         if not token:
             raise DemistoException("Could not get token")
         if not cookie:

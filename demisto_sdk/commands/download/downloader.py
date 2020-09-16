@@ -307,7 +307,10 @@ class Downloader:
     def update_file_prefix(file_name: str) -> str:
         """
         Custom content scripts are prefixed with automation instead of script.
+        Removing the "playbook-" prefix from files name.
         """
+        if file_name.startswith('playbook-'):
+            return file_name[len('playbook-'):]
         if file_name.startswith('automation-'):
             return file_name.replace('automation-', 'script-')
         return file_name
@@ -494,7 +497,7 @@ class Downloader:
         temp_dir = mkdtemp()
 
         extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
-                              no_logging=not self.log_verbose, no_changelog=True, no_pipenv=True, no_readme=True,
+                              no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
                               no_auto_create_dir=True)
         extractor.extract_to_package_format()
 

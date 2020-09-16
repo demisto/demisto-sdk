@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
+from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.text_based import TextBased
@@ -33,12 +34,18 @@ class Pack:
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
         self.classifiers: List[JSONBased] = list()
-        self.mapper: List[JSONBased] = list()
+        self.mappers: List[JSONBased] = list()
         self.dashboards: List[JSONBased] = list()
         self.incident_types: List[JSONBased] = list()
-        self.incident_field: List[JSONBased] = list()
-        self.indicator_field: List[JSONBased] = list()
+        self.incident_fields: List[JSONBased] = list()
+        self.indicator_fields: List[JSONBased] = list()
+        self.indicator_types: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.layoutcontainers: List[JSONBased] = list()
+        self.reports: List[JSONBased] = list()
+        self.widgets: List[JSONBased] = list()
+        self.playbooks: List[Playbook] = list()
+        self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
 
         # Create base pack
@@ -55,6 +62,9 @@ class Pack:
 
         self._playbooks_path = self._pack_path / 'Playbooks'
         self._playbooks_path.mkdir()
+
+        self._test_playbooks_path = self._pack_path / 'TestPlaybooks'
+        self._test_playbooks_path.mkdir()
 
         self._classifiers_path = self._pack_path / 'Classifiers'
         self._classifiers_path.mkdir()
@@ -73,6 +83,18 @@ class Pack:
         self._indicator_fields = self._pack_path / 'IndicatorFields'
         self._indicator_fields.mkdir()
 
+        self._indicator_types = self._pack_path / 'IndicatorTypes'
+        self._indicator_types.mkdir()
+
+        self._layout_path = self._pack_path / 'Layouts'
+        self._layout_path.mkdir()
+
+        self._report_path = self._pack_path / 'Reports'
+        self._report_path.mkdir()
+
+        self._widget_path = self._pack_path / 'Widgets'
+        self._widget_path.mkdir()
+
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
 
@@ -82,7 +104,7 @@ class Pack:
 
         self.readme = TextBased(self._pack_path, 'README.md')
 
-        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata.json', '')
+        self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
     def create_integration(
             self,
@@ -93,7 +115,7 @@ class Pack:
             description: Optional[str] = None,
             changelog: Optional[str] = None,
             image: Optional[bytes] = None
-    ):
+    ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
@@ -118,7 +140,7 @@ class Pack:
             readme: str = '',
             description: str = '',
             changelog: str = '',
-            image: bytes = b''):
+            image: bytes = b'') -> Script:
         if name is None:
             name = f'script{len(self.integrations)}'
         if yml is None:
@@ -135,7 +157,7 @@ class Pack:
         self.scripts.append(script)
         return script
 
-    def create_test_script(self):
+    def create_test_script(self) -> Script:
         script = self.create_script('sample_script')
         script.create_default_script()
         return script
@@ -146,7 +168,7 @@ class Pack:
             prefix: str,
             content: dict = None,
             dir_path: Path = None
-    ):
+    ) -> JSONBased:
         if content is None:
             content = {}
         if dir_path:
@@ -161,7 +183,7 @@ class Pack:
             name,
             content: str = '',
             dir_path: Path = None
-    ):
+    ) -> TextBased:
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
@@ -173,7 +195,7 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'classifier'
         classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
@@ -183,17 +205,17 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'classifier-mapper'
         mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
-        self.mapper.append(mapper)
+        self.mappers.append(mapper)
         return mapper
 
     def create_dashboard(
             self,
             name,
             content: dict = None
-    ):
+    ) -> JSONBased:
         prefix = 'dashboard'
         dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
@@ -204,21 +226,22 @@ class Pack:
             name,
             content: dict = None,
             release_notes: bool = False
-    ):
-        prefix = 'incident-field'
+    ) -> JSONBased:
+        prefix = 'incidentfield'
         incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
         if release_notes:
-            release_notes_to_append = self._create_text_based(f'{incident_field}_CHANGELOG.md',
-                                                              dir_path=self._incidents_field_path)
-            self.incident_field.append(release_notes_to_append)
-        self.incident_field.append(incident_field)
+            # release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+            # dir_path=self._incidents_field_path)
+            # self.incident_fields.append(release_notes)
+            pass
+        self.incident_fields.append(incident_field)
         return incident_field
 
     def create_incident_type(
             self,
             name,
-            content: dict = None):
-        prefix = 'incident-type'
+            content: dict = None) -> JSONBased:
+        prefix = 'incidenttype'
         incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
@@ -227,10 +250,98 @@ class Pack:
             self,
             name,
             content: dict = None
-    ):
-        prefix = 'incident-field'
+    ) -> JSONBased:
+        prefix = 'incidentfield'
         indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
-        self.indicator_field.append(indicator_field)
+        self.indicator_fields.append(indicator_field)
+        return indicator_field
+
+    def create_indicator_type(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'reputation'
+        indicator_type = self._create_json_based(name, prefix, content, dir_path=self._indicator_types)
+        self.indicator_types.append(indicator_type)
+        return indicator_type
+
+    def create_layout(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'layout'
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
+        self.layouts.append(layout)
+        return layout
+
+    def create_layoutcontainer(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'layoutcontainer'
+        layoutcontainer = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
+        self.layoutcontainers.append(layoutcontainer)
+        return layoutcontainer
+
+    def create_report(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'report'
+        report = self._create_json_based(name, prefix, content, dir_path=self._report_path)
+        self.reports.append(report)
+        return report
+
+    def create_widget(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'widget'
+        widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
+        self.widgets.append(widget)
+        return widget
+
+    def create_playbook(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+    ) -> Playbook:
+        if name is None:
+            name = f'playbook-{len(self.playbooks)}.yml'
+        if yml is None:
+            yml = {}
+        playbook = Playbook(self._playbooks_path, name, self._repo)
+        playbook.build(
+            yml,
+            readme,
+        )
+        self.playbooks.append(playbook)
+        return playbook
+
+    def create_test_playbook(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+            changelog: Optional[str] = None,
+    ) -> Playbook:
+        if name is None:
+            name = f'playbook-{len(self.test_playbooks)}'
+        if yml is None:
+            yml = {}
+        playbook = Playbook(self._test_playbooks_path, name, self._repo, is_test_playbook=True)
+        playbook.build(
+            yml,
+            readme,
+        )
+        self.test_playbooks.append(playbook)
+        return playbook
 
     def create_release_notes(self, version: str, content: str = ''):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)

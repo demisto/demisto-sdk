@@ -11,16 +11,33 @@ INVALID_INTEGRATION_NO_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/non-val
 INVALID_INTEGRATION_NON_CONFIGURED_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/' \
                                            f'non-valid-integration-test-not-configured.yml'
 TEST_PLAYBOOK = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-TestPlaybooks.yml'
+
+VALID_PYTHON_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration_test.py"
+VALID_PYTHON_INTEGRATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.py"
+VALID_METADATA1_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/1.pack_metadata.json'
+VALID_METADATA2_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/2.pack_metadata.json'
+VALID_DESCRIPTION_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_description.md'
+VALID_README_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_README.md'
+VALID_IMAGE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test_image.png'
+NOT_VALID_IMAGE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/default.png'
+VALID_PIPEFILE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/Pipfile'
+VALID_PIPEFILE_LOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/Pipfile.lock'
+VALID_PACK_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.pack-ignore'
+VALID_SECRETS_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.secrets-ignore'
+VALID_CLASSIFIER_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/classifier.json'
+
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'
 VALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-id-test.yml"
 INVALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-id-test.yml"
+VALID_BETA_INTEGRATION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test-beta.yml"
 INVALID_PLAYBOOK_PATH_FROM_ROOT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-disconnected_from_root.yml"
 VALID_PLAYBOOK_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-valid-id-test.yml"
 INVALID_PLAYBOOK_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-id-test.yml"
 INVALID_PLAYBOOK_CONDITION_1 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-Invalid_condition_unhandled_" \
                                f"branch.yml"
 INVALID_IGNORED_UNIFIED_INTEGRATION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/integration_ignored_invalid_unified.yml'
+IGNORED_PNG = f'{GIT_ROOT}/demisto_sdk/tests/test_files/docs_test/closing_params.png'
 SCRIPT_WITH_PLAYBOOK = 'demisto_sdk/tests/test_files/script-with-test-playbook.yml'
 INVALID_PLAYBOOK_CONDITION_2 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-Invalid_condition_unhandled_" \
                                f"branch_and_unhandled_condition.yml"
@@ -113,15 +130,49 @@ INDICATORTYPE_PATH = "Packs/Base/Misc"
 
 SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
+DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY = "Layouts/layoutt-copy.json"
 LAYOUT_PATH = "Layouts"
+LAYOUT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layout.yml"
+
+SOURCE_FORMAT_LAYOUTS_CONTAINER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-for-class-test.json"
+SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-test.json"
+DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = "Layouts/formatted_layoutscontainer-test.json"
+LAYOUTS_CONTAINER_PATH = "Layouts"
+LAYOUTS_CONTAINER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layoutscontainer.yml"
+
+SOURCE_FORMAT_CLASSIFIER_5_9_9 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_classifier_5_9_9.json"
+DESTINATION_FORMAT_CLASSIFIER_5_9_9 = "Classifiers/formatted_classifier_5_9_9.json"
+CLASSIFIER_5_9_9_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier_5_9_9.yml"
+
+SOURCE_FORMAT_CLASSIFIER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_new_classifier.json"
+DESTINATION_FORMAT_CLASSIFIER = "Classifiers/formatted_classifier.json"
+CLASSIFIER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/classifier.yml"
+CLASSIFIER_PATH = "Classifiers"
+
+SOURCE_FORMAT_MAPPER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_mapper.json"
+DESTINATION_FORMAT_MAPPER = "Classifiers/formatted_mapper.json"
+MAPPER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/mapper.yml"
+MAPPER_PATH = "Classifiers"
 
 SOURCE_FORMAT_DASHBOARD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_dashboard-copy.json"
 DESTINATION_FORMAT_DASHBOARD_COPY = "Dashboards/dashboard-copy.json"
 DASHBOARD_PATH = "Dashboards"
 
+SOURCE_FORMAT_WIDGET = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_widget.json"
+DESTINATION_FORMAT_WIDGET = "Widgets/formatted-widget.json"
+WIDGET_PATH = "Widgets"
+
+SOURCE_FORMAT_REPORT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_report.json"
+DESTINATION_FORMAT_REPORT = "Reports/formatted-Reports.json"
+REPORT_PATH = "Reports"
+
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"
+
+SOURCE_FORMAT_TEST_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_test_playbook.yml"
+DESTINATION_FORMAT_TEST_PLAYBOOK = "TestPlaybook/test-playbook.yml"
+TEST_PLAYBOOK_PATH = "TestPlaybook"
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -132,13 +183,16 @@ VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
-CONF_JSON_MOCK_PATH = 'demisto_sdk/tests/test_files/conf.json'
+CONF_JSON_MOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/conf.json'
 
 SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-valid.yml"
 SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"
 
 FEED_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feedvalid.yml"
 FEED_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-invalid.yml"
+
+XSOAR_LINTER_PY3_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_py3_XSOARLinter.py"
+XSOAR_LINTER_PY3_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid_py3_XSOARLinter.py"
 
 
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"

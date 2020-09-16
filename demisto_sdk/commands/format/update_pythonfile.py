@@ -22,17 +22,20 @@ class PythonFileFormat(BaseUpdate):
     """
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = True):
-        super().__init__(input, output, path, from_version, no_validate)
+                 no_validate: bool = True, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
-    def format_py_using_autopep(self, py_file_path):
+    @staticmethod
+    def format_py_using_autopep(py_file_path, verbose: bool = False):
         """Run autopep8 formatter on python file.
         Args:
             py_file_path (str): The python file path.
         Returns:
             bool. True if succeed to run autopep8 on file, False otherwise.
         """
-        print("\nRunning autopep8 on file: {}\n".format(py_file_path))
+        if verbose:
+            print(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(["autopep8", "-i", "--max-line-length", AUTOPEP_LINE_LENGTH, py_file_path])
         except FileNotFoundError:
@@ -47,15 +50,14 @@ class PythonFileFormat(BaseUpdate):
         copy(str(self.source_file), str(self.output_file))
 
     def run_format(self) -> int:
-        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
+        print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
         py_file_path = self.source_file
         if self.output_file != self.source_file:
             self.create_output_file()
             py_file_path = self.output_file
 
-        is_autopep_passed = self.format_py_using_autopep(py_file_path)
+        is_autopep_passed = self.format_py_using_autopep(py_file_path, self.verbose)
         if is_autopep_passed:
-            print_color(F'=======Finished updates for files: {self.output_file}=======\n', LOG_COLORS.WHITE)
             return SUCCESS_RETURN_CODE
         return ERROR_RETURN_CODE
 

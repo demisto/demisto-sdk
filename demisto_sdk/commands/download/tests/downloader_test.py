@@ -196,10 +196,12 @@ class TestHelperMethods:
         downloader = Downloader(output='', input='')
         assert downloader.get_extracted_file_detail(ending) == output
 
-    @pytest.mark.parametrize('name, output', [('automation-demisto', 'script-demisto'), ('wow', 'wow')])
+    @pytest.mark.parametrize('name, output', [('automation-demisto', 'script-demisto'), ('wow', 'wow'),
+                                              ("playbook-demisto", "demisto")])
     def test_update_file_prefix(self, name, output):
         downloader = Downloader(output='', input='')
         assert downloader.update_file_prefix(name) == output
+        assert not downloader.update_file_prefix(name).startswith("playbook-")
 
     @pytest.mark.parametrize('name', ['GSM', 'G S M', 'G_S_M', 'G-S-M', 'G S_M', 'G_S-M'])
     def test_create_dir_name(self, name):
@@ -608,12 +610,11 @@ class TestMergeNewFile:
         parameters = [
             {
                 'custom_content_object': env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md',
-                              'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md']
             },
             {
                 'custom_content_object': env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md']
             }
         ]
         for param in parameters:

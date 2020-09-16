@@ -1,10 +1,13 @@
 import json
+import os
 from typing import Dict, List
 
 import click
-from demisto_sdk.commands.common.tools import (LOG_COLORS, _get_file_id,
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
+                                               get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               print_color)
+                                               get_yaml)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -26,12 +29,14 @@ class BaseUpdateYML(BaseUpdate):
         'IntegrationYMLFormat': 'commonfields',
         'ScriptYMLFormat': 'commonfields',
         'PlaybookYMLFormat': '',
+        'TestPlaybookYMLFormat': '',
     }
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
+                 no_validate: bool = False, verbose: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -53,13 +58,18 @@ class BaseUpdateYML(BaseUpdate):
         return self.data.get(path, self.data)
 
     def update_id_to_equal_name(self):
-        """Updates the id of the YML to be the same as it's name."""
-        print('Updating YML ID to be the same as YML name')
-        self.id_and_version_location['id'] = self.data['name']
+        """Updates the id of the YML to be the same as it's name
+            Only relevant for new files.
+        """
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID to be the same as YML name')
+            self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print(F'Saving output YML file to {self.output_file} \n')
+        if self.source_file != self.output_file and self.verbose:
+            click.secho(f'Saving output YML file to {self.output_file} \n', fg='white')
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -72,7 +82,6 @@ class BaseUpdateYML(BaseUpdate):
 
     def update_yml(self):
         """Manager function for the generic YML updates."""
-        print_color(F'\n=======Starting updates for file: {self.source_file}=======', LOG_COLORS.WHITE)
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
@@ -81,22 +90,37 @@ class BaseUpdateYML(BaseUpdate):
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
 
-        print_color(F'=======Finished updates for file: {self.output_file}=======\n', LOG_COLORS.WHITE)
-
     def update_tests(self) -> None:
         """
         If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
         'No tests' under 'tests' key or not and format the file according to the answer
         """
-        # No need to add test playbooks for test playbooks
-        if 'TestPlaybooks' in self.source_file:
-            return
         if not self.data.get('tests', ''):
-            should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
-                                                    f'Do you want to configure it with "No tests"?')
-            if should_modify_yml_tests:
-                click.echo(f'Formatting {self.output_file} with "No tests"')
-                self.data['tests'] = ['No tests (auto formatted)']
+            # try to get the test playbook files from the TestPlaybooks dir in the pack
+            pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
+            test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
+            test_playbook_ids = []
+            try:
+                test_playbooks_files = os.listdir(test_playbook_dir_path)
+                if test_playbooks_files:
+                    for file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
+                        is_yml_file = file_path.endswith('.yml')
+                        # concat as we might not be in content repo
+                        tpb_file_path = os.path.join(test_playbook_dir_path, file_path)
+                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK:
+                            test_playbook_data = get_yaml(tpb_file_path)
+                            test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
+                                                                            content_entity='')
+                            test_playbook_ids.append(test_playbook_id)
+                    self.data['tests'] = test_playbook_ids
+            except FileNotFoundError:
+                pass
+            if not test_playbook_ids:
+                should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
+                                                        f'configured. Do you want to configure it with "No tests"?')
+                if should_modify_yml_tests:
+                    click.echo(f'Formatting {self.output_file} with "No tests"')
+                    self.data['tests'] = ['No tests (auto formatted)']
 
     def update_conf_json(self, file_type: str) -> None:
         """

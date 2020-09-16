@@ -3,6 +3,8 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
+orbs:
+  node: circleci/node@4.0.0
 references:
     tag_filter: &tag_filter
       filters:
@@ -15,7 +17,7 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-7
+        - tox3-8
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -34,22 +36,14 @@ jobs:
               echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
   tox3-7:
       docker:
-        - image: python:3.8
+        - image: python:3.7
       steps:
         - checkout
         - run:
             name: Tox build
             command: |
               pip install tox
-              tox -e py37 -v -- --cov=demisto_sdk --cov-report=html
-        - store_artifacts:
-            path: coverage_html_report
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - coverage_html_report
-              - .coverage
-              - .tox
+              tox -e py37 -v
   tox3-8:
       docker:
         - image: python:3.8
@@ -59,7 +53,15 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py38 -v
+              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+        - store_artifacts:
+            path: coverage_html_report
+        - persist_to_workspace:
+            root: ~/project
+            paths:
+              - coverage_html_report
+              - .coverage
+              - .tox
   precommit-checks:
       docker:
         - image: python:3.8
@@ -70,7 +72,7 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
               pre-commit --version
               pre-commit run -a
               deactivate
@@ -100,7 +102,7 @@ jobs:
         - run:
             name: Checkout the Content Repo
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
               git clone https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
@@ -113,15 +115,18 @@ jobs:
         - image: python:3.8
       steps:
         - checkout
+        - node/install:
+            install-npm: false
         - attach_workspace:
             at: ~/project
         - run:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
 
               cd content
+              npm install @mdx-js/mdx fs-extra commander
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
                 demisto-sdk validate -i Packs/dnstwist
                 exit 0
@@ -148,7 +153,7 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                   echo "Skipping creating ID set on non master branch"
                   exit 0
@@ -167,7 +172,7 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
 
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
                 echo "Skipping creating content artifacts on non master branch"
@@ -222,7 +227,7 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-8
+            - tox3-7
             - precommit-checks
             - coveralls-upload
             - validate-files

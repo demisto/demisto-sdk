@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import PosixPath
 from typing import List
 
@@ -7,6 +8,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format import update_generic
@@ -250,7 +252,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
-    assert '=======Starting updates for file: ' in result.stdout
+    assert '======= Updating file: ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
     with open(playbook_path, 'r') as f:
         content = f.read()
@@ -279,12 +281,11 @@ def test_format_on_valid_py(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
-    assert '=======Starting updates for file:' in result.stdout
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=True)
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert valid_py == integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_empty_lines(mocker, repo):
@@ -305,13 +306,12 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_dict(mocker, repo):
@@ -332,13 +332,12 @@ def test_format_on_invalid_py_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
 
 
 def test_format_on_invalid_py_long_dict(mocker, repo):
@@ -360,10 +359,68 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '=======Starting updates for file:' in result.stdout
+    assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
-    assert '=======Finished updates for files:' in result.stdout
+
+
+def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
+    """
+    (This is the same test as the previous one only not using the '-v' argument)
+    Given
+    - Invalid python file - long dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes and that the verbose is off
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
+                 "'test4':'testing4','test5':'testing5','test6':'testing6'}"
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '======= Updating file:' in result.stdout
+    assert 'Running autopep8 on file' not in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+
+
+def test_format_on_relative_path_playbook(mocker, repo):
+    """
+    Given
+    - playbook to validate on with a relative path
+
+    When
+    - Running format
+    - Running validate
+
+    Then
+    - Ensure format passes.
+    - Ensure validate passes.
+    """
+    pack = repo.create_pack('PackName')
+    playbook = pack.create_playbook('playbook')
+    playbook.create_default_playbook()
+    mocker.patch.object(update_generic, 'is_file_from_content_repo',
+                        return_value=(True, f'{playbook.path}/playbook.yml'))
+    mocker.patch.object(tools, 'is_external_repository', return_value=True)
+    success_reg = re.compile("Format Status .+?- Success\n")
+    with ChangeCWD(playbook.path):
+        runner = CliRunner(mix_stderr=False)
+        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
+        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
+                                        catch_exceptions=False)
+
+    assert '======= Updating file:' in result_format.stdout
+    assert success_reg.search(result_format.stdout)
+    assert 'The files are valid' in result_validate.stdout

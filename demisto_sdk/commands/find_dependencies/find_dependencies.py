@@ -2,12 +2,15 @@ import glob
 import json
 import os
 import sys
+from distutils.version import LooseVersion
 
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+
+MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 
 
 class VerboseFile:
@@ -158,23 +161,22 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         if not isinstance(items_names, list):
             items_names = [items_names]
 
-        content_items = list(
-            filter(lambda s: list(s.values())[0].get('name', '') in items_names and 'pack' in list(s.values())[0],
-                   items_list))
+        pack_names = set()
+        for item in items_list:
+            item_details = list(item.values())[0]
+            if item_details.get('name', '') in items_names and 'pack' in item_details and \
+                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                pack_names.add(item_details.get('pack'))
 
-        if content_items:
-            pack_names = list(map(lambda s: next(iter(s.values()))['pack'], content_items))
-            if not exclude_ignored_dependencies:
-                return set(pack_names)
-            return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
-
-        return None
+        if not exclude_ignored_dependencies:
+            return set(pack_names)
+        return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
     def _search_packs_by_items_names_or_ids(items_names, items_list, exclude_ignored_dependencies=True):
@@ -187,7 +189,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set or None: found pack ids or None in case nothing was found.
+            set: found pack ids.
 
         """
         packs = set()
@@ -201,6 +203,7 @@ class PackDependencies:
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_names or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
+                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
                     packs.add(item_details.get('pack'))
@@ -219,17 +222,16 @@ class PackDependencies:
         Returns:
             set: pack id without ignored packs.
         """
-        integrations = list(
-            filter(lambda i: command in list(i.values())[0].get('commands', []) and 'pack' in list(i.values())[0],
-                   id_set['integrations']))
+        pack_names = set()
+        for item in id_set['integrations']:
+            item_details = list(item.values())[0]
+            if command in item_details.get('commands', []) and 'pack' in item_details and \
+                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                pack_names.add(item_details.get('pack'))
 
-        if integrations:
-            pack_names = [next(iter(i.values()))['pack'] for i in integrations]
-            if not exclude_ignored_dependencies:
-                return set(pack_names)
-            return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
-
-        return None
+        if not exclude_ignored_dependencies:
+            return set(pack_names)
+        return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
     def _detect_generic_commands_dependencies(pack_ids):
@@ -297,7 +299,11 @@ class PackDependencies:
             script_dependencies = set()
 
             # depends on list can have both scripts and integration commands
-            dependencies_commands = script.get('depends_on', [])
+            depends_on = script.get('depends_on', [])
+            command_to_integration = list(script.get('command_to_integration', {}).keys())
+            script_executions = script.get('script_executions', [])
+
+            dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first
@@ -430,12 +436,12 @@ class PackDependencies:
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
-            if packs_found_from_incident_fields:
+            if packs_found_from_indicator_fields:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
             if playbook_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
                     f'{playbook_dependencies}  '
@@ -487,7 +493,7 @@ class PackDependencies:
                 layout_dependencies.update(pack_dependencies_data)
 
             if layout_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
                     f'{layout_dependencies}  '
@@ -538,7 +544,7 @@ class PackDependencies:
                 incident_field_dependencies.update(pack_dependencies_data)
 
             if incident_field_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
                     f'{incident_field_dependencies}  '
@@ -589,7 +595,7 @@ class PackDependencies:
                 indicator_type_dependencies.update(pack_dependencies_data)
 
             if indicator_type_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
                     f'{indicator_type_dependencies}  '
@@ -652,7 +658,7 @@ class PackDependencies:
                 dependencies_packs.update(pack_dependencies_data)
 
             if integration_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
                     f'{integration_dependencies}  '
@@ -703,7 +709,7 @@ class PackDependencies:
                 incident_type_dependencies.update(pack_dependencies_data)
 
             if incident_type_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
                     f'{incident_type_dependencies}  '
@@ -744,7 +750,7 @@ class PackDependencies:
                 classifier_dependencies.update(pack_dependencies_data)
 
             if classifier_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
                     f'{classifier_dependencies}  '
@@ -794,12 +800,53 @@ class PackDependencies:
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:
-                # do not trim spaces from end of string, there are required for the MD structure.
+                # do not trim spaces from the end of the string, they are required for the MD structure.
                 verbose_file.write(
                     f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
                     f'{mapper_dependencies}  '
                 )
             dependencies_packs.update(mapper_dependencies)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_widget_dependencies(pack_widgets, id_set, verbose_file, exclude_ignored_dependencies=True):
+        """
+        Collects widget dependencies.
+
+        Args:
+            pack_widgets (list): collection of pack widget data.
+            id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+        verbose_file.write('\n### Widgets')
+
+        for widget in pack_widgets:
+            widget_data = next(iter(widget.values()))
+            widget_dependencies = set()
+
+            related_scripts = widget_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                widget_dependencies.update(pack_dependencies_data)
+
+            if widget_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                verbose_file.write(
+                    f'{os.path.basename(widget_data.get("file_path", ""))} depends on: '
+                    f'{widget_dependencies}  '
+                )
+            dependencies_packs.update(widget_dependencies)
 
         return dependencies_packs
 
@@ -826,6 +873,7 @@ class PackDependencies:
         pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
         pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
         pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
+        pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
 
         if not sum(pack_items.values(), []):
             raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
@@ -903,11 +951,17 @@ class PackDependencies:
             verbose_file,
             exclude_ignored_dependencies
         )
+        widget_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['widgets'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies |
             incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies
+            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies
         )
 
         return pack_dependencies

@@ -108,6 +108,17 @@ class TestDependsOnScriptAndIntegration:
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)})
                               ])
     def test_collect_scripts_depends_on_script(self, dependency_script, expected_result, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on a script.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize the pack.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -134,6 +145,17 @@ class TestDependsOnScriptAndIntegration:
                               ("alienvault-get-indicators", {("FeedAlienVault", True)})
                               ])
     def test_collect_scripts_depends_on_integration(self, dependency_integration_command, expected_result, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on integration commands.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize the pack.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -155,6 +177,17 @@ class TestDependsOnScriptAndIntegration:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_scripts_depends_on_two_scripts(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on 2 scripts.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('HelloWorld', True), ('PrismaCloudCompute', True)}
 
         test_input = [
@@ -178,7 +211,53 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_scripts__filter_toversion(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on QRadar command.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should ignore the Deprecated pack due to toversion settings of old QRadar integration.
+        """
+        expected_result = {('QRadar', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "DummyScript",
+                    "file_path": "dummy_path",
+                    "depends_on": [
+                        "qradar-searches",
+                    ],
+                    "pack": "dummy_pack"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      exclude_ignored_dependencies=False
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
     def test_collect_scripts_depends_on_two_integrations(self, id_set):
+        """
+        Given
+            - A script entry in the id_set depending on 2 integrations.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
 
         test_input = [
@@ -202,7 +281,142 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_scripts_command_to_integration(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing command_to_integration.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the pack that the script depends on.
+            - Should recognize the pack.
+        """
+        expected_result = {('Active_Directory_Query', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "ADGetUser",
+                    "file_path": "Packs/Active_Directory_Query/Scripts/script-ADGetUser.yml",
+                    "depends_on": [
+                    ],
+                    "command_to_integration": {
+                        "ad-search": "activedir"
+                    },
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_scripts_script_executions(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing a script_executions, e.g: demisto.executeCommand(<command>).
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the pack that the script depends on.
+            - Should recognize the pack.
+        """
+        expected_result = {('Active_Directory_Query', True)}
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "ADIsUserMember",
+                    "file_path": "Packs/DeprecatedContent/Scripts/script-ADIsUserMember.yml",
+                    "deprecated": False,
+                    "depends_on": [
+                    ],
+                    "script_executions": [
+                        "ADGetUser",
+                    ],
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_scripts_command_to_integrations_and_script_executions(self, id_set):
+        """
+        Given
+            - A script entry in the id_set containing command_to_integrations with a reputation command
+             and script_executions.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the script depends on.
+            - Should recognize the mandatory pack and the non mandatory packs.
+        """
+        expected_result = {
+            ('Active_Directory_Query', True), ('Recorded_Future', False), ('illuminate', False), ('ThreatQ', False),
+            ('Anomali_ThreatStream', False), ('URLHaus', False), ('Symantec_Deepsight', False),
+            ('XForceExchange', False), ('Active_Directory_Query', True), ('XFE', False), ('MISP', False),
+            ('AlienVault_OTX', False), ('ThreatMiner', False), ('isight', False), ('CrowdStrikeIntel', False),
+            ('ReversingLabs_A1000', False), ('PolySwarm', False), ('TruSTAR', False),
+            ('ReversingLabs_Titanium_Cloud', False), ('ThreatExchange', False), ('EclecticIQ', False),
+            ('AutoFocus', False), ('McAfee-TIE', False), ('Maltiverse', False), ('Palo_Alto_Networks_WildFire', False),
+            ('Polygon', False), ('Cofense-Intelligence', False), ('Lastline', False), ('ThreatConnect', False),
+            ('VirusTotal', False), ('Flashpoint', False)
+        }
+
+        test_input = [
+            {
+                "DummyScript": {
+                    "name": "double_dependency",
+                    "file_path": "Packs/DeprecatedContent/Scripts/script-ADIsUserMember.yml",
+                    "deprecated": False,
+                    "depends_on": [
+                    ],
+                    "command_to_integration": {
+                        "file": "many integrations"
+                    },
+                    "script_executions": [
+                        "ADGetUser",
+                    ],
+                    "pack": "Active_Directory_Query"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
     def test_collect_scripts_depends_on_with_two_inputs(self, id_set):
+        """
+        Given
+            - 2 scripts entries in the id_set depending on different integrations.
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should recognize both packs.
+        """
         expected_result = {('Active_Directory_Query', True), ('Feedsslabusech', True)}
 
         test_input = [
@@ -568,6 +782,46 @@ class TestDependsOnLayout:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_layouts_dependencies_filter_toversion(self, id_set):
+        """
+        Given
+            - A layout entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+            - Should ignore the NonSupported pack due to toversion settings of both indicator type and field.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "edit",
+                    "path": "dummy_path",
+                    "incident_and_indicator_types": [
+                        "accountRep",
+                    ],
+                    "incident_and_indicator_fields": [
+                        "indicator_tags",
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose_file=VerboseFile(),
+                                                                      exclude_ignored_dependencies=False,
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnIncidentField:
     def test_collect_incident_field_dependencies(self, id_set):
@@ -812,6 +1066,40 @@ class TestDependsOnMappers:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
+class TestDependsOnWidgets:
+    def test_collect_widgets_dependencies(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on.
+        """
+        expected_result = {('CommonScripts', True)}
+
+        test_input = [
+            {
+                "Dummy_widget": {
+                    "name": "Dummy Widget",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": [
+                        "AssignAnalystToIncident"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_widget_dependencies(
+            pack_widgets=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
 SEARCH_PACKS_INPUT = [
     (['type'], 'IncidentFields', set()),
     (['emailaddress'], 'IncidentFields', {'Compliance'}),
@@ -864,4 +1152,4 @@ class TestDependencyGraph:
 
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
-        assert 'NonSupported' in pack_dependencies
+        assert 'NonSupported' not in pack_dependencies

@@ -28,6 +28,7 @@ PYTHON2_REQ = ["flake8", "vulture"]
 # Define check exit code if failed
 EXIT_CODES = {
     "flake8": 0b1,
+    "XSOAR_linter": 0b1000000000,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
@@ -38,14 +39,17 @@ EXIT_CODES = {
     "image": 0b100000000,
 }
 
+
 # Execution exit codes
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
+WARNING = 0b100
+
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -71,9 +75,11 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_xsoar_linter: bool,
                             no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
+    no_xsoar_linter(bool): Whether to skip xsoar linter.
     no_bandit(bool): Whether to skip bandit.
     no_mypy(bool): Whether to skip mypy.
     no_vulture(bool): Whether to skip vulture
@@ -82,22 +88,27 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     docker_engine(bool): docker engine exists.
     """
     skipped_code = 0b0
-    if no_flake8:
-        skipped_code |= EXIT_CODES["flake8"]
-    if no_bandit:
-        skipped_code |= EXIT_CODES["bandit"]
-    if no_mypy or not docker_engine:
-        skipped_code |= EXIT_CODES["mypy"]
-    if no_vulture or not docker_engine:
-        skipped_code |= EXIT_CODES["vulture"]
-    if no_pylint or not docker_engine:
-        skipped_code |= EXIT_CODES["pylint"]
-    if no_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pytest"]
-    if no_pwsh_analyze or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_analyze"]
-    if no_pwsh_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_test"]
+    # When the CI env var is not set - on local env - check if any linters should be skipped
+    # Otherwise - When the CI env var is set - Run all linters without skipping
+    if not os.environ.get('CI'):
+        if no_flake8:
+            skipped_code |= EXIT_CODES["flake8"]
+        if no_xsoar_linter:
+            skipped_code |= EXIT_CODES["XSOAR_linter"]
+        if no_bandit:
+            skipped_code |= EXIT_CODES["bandit"]
+        if no_mypy or not docker_engine:
+            skipped_code |= EXIT_CODES["mypy"]
+        if no_vulture or not docker_engine:
+            skipped_code |= EXIT_CODES["vulture"]
+        if no_pylint or not docker_engine:
+            skipped_code |= EXIT_CODES["pylint"]
+        if no_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pytest"]
+        if no_pwsh_analyze or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_analyze"]
+        if no_pwsh_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_test"]
 
     return skipped_code
 
@@ -255,7 +266,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         yield
     except Exception as e:
         logger.error(str(e))
-        pass
     finally:
         # If we want to change handling of files after finishing - do it here
         pass
@@ -377,3 +387,25 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
+
+
+@contextmanager
+def pylint_plugin(dest: Path):
+    """
+    Function which links the given path with the content of pylint plugins folder in resources.
+    The main purpose is to link each pack with the pylint plugins.
+    Args:
+        dest: Pack path.
+    """
+    plugin_dirs = Path(__file__).parent / 'resources' / 'pylint_plugins'
+
+    try:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                os.link(file, dest / file.name)
+
+        yield
+    finally:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                (dest / f'{file.name}').unlink()

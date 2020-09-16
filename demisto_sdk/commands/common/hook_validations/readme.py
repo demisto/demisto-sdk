@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
@@ -23,8 +24,9 @@ class ReadMeValidator(BaseValidator):
             export DEMISTO_README_VALIDATION=True
     """
 
-    def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -36,8 +38,12 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            return self.is_mdx_file()
+            return all([
+                self.is_image_path_valid(),
+                self.is_mdx_file()
+            ])
         else:
+            print_warning(f"Skipping README validation of {self.file_path}")
             return True
 
     def is_mdx_file(self) -> bool:
@@ -48,8 +54,9 @@ class ReadMeValidator(BaseValidator):
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             # run the java script mdx parse validator
-            _, stderr, is_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path, env=os.environ)
-            if is_valid:
+            _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path,
+                                                     env=os.environ)
+            if is_not_valid:
                 error_message, error_code = Errors.readme_error(stderr)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
@@ -93,3 +100,18 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return txt.startswith('<p>') or ('<thead>' in txt and '<tbody>' in txt)
+
+    def is_image_path_valid(self) -> bool:
+        with open(self.file_path) as f:
+            readme_content = f.read()
+        invalid_paths = re.findall(
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
+            re.IGNORECASE)
+        if invalid_paths:
+            for path in invalid_paths:
+                path = path[2]
+                alternative_path = path.replace('blob', 'raw')
+                error_message, error_code = Errors.image_path_error(path, alternative_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
+        return True

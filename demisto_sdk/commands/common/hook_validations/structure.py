@@ -11,14 +11,12 @@ from typing import Optional, Tuple
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ACCEPTED_FILE_EXTENSIONS, FILE_TYPES_PATHS_TO_VALIDATE,
-    JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES, SCHEMA_TO_REGEX, FileType)
+    ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
+    FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (checked_type,
-                                               get_content_file_type_dump,
-                                               get_matching_regex,
+from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
                                                get_remote_file)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
@@ -46,8 +44,10 @@ class StructureValidator(BaseValidator):
     }
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
-                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master'):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+                 configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
+                 suppress_print: bool = False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.is_valid = True
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
@@ -96,7 +96,7 @@ class StructureValidator(BaseValidator):
         """
 
         for scheme_name, regex_list in SCHEMA_TO_REGEX.items():
-            if get_matching_regex(self.file_path, regex_list):
+            if checked_type_by_reg(self.file_path, regex_list):
                 return scheme_name
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
@@ -116,13 +116,15 @@ class StructureValidator(BaseValidator):
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
-        if checked_type(self.file_path, JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES):
+        if self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION:
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.WARNING)
-            scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value
+            if self.suppress_print:
+                logging.disable(logging.CRITICAL)
+            scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value  # type: ignore
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
             core = Core(source_file=self.file_path,
@@ -338,7 +340,7 @@ class StructureValidator(BaseValidator):
                     else:
                         key_list.append(single_path)
                 else:
-                    curr = curr.get(single_path)
+                    curr = curr.get(single_path)  # type: ignore
                     key_list.append(single_path)
 
             curr_string_transformer = get_content_file_type_dump(self.file_path)
@@ -346,17 +348,17 @@ class StructureValidator(BaseValidator):
             # if the error is from arguments of file
             if curr.get('name'):
                 return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('name')),
+                                                          curr_string_transformer(curr.get('name')),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
 
             # if the error is from outputs of file
             elif curr.get('contextPath'):
                 return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('contextPath')),
+                                                          curr_string_transformer(curr.get('contextPath')),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
             # if the error is from neither arguments , outputs nor root
             else:
-                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),
+                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),  # type: ignore
                                                           str(key_list).strip('[]').replace(',', '->'))
         else:
             err_msg = str(err).lower()
@@ -380,3 +382,28 @@ class StructureValidator(BaseValidator):
                 return False
 
         return True
+
+
+def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
+    """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list which contains all
+     supported file regexes.
+
+    Args:
+        file_path: (str) on which the check is done.
+        compared_regexes: (list) of str which represent the regexes that will be check on file_path.
+        return_regex: (bool) Whether the function will return the regex that was matched or not.
+
+    Returns:
+            String/Bool
+            Depends on if return_regex was set to True or False.
+            Returns Bool when the return_regex is False and the return value is whether any regex was matched or not.
+            Returns String when the return_regex is True and the return value is the regex that was found as a match.
+
+    """
+    compared_regexes = compared_regexes or CHECKED_TYPES_REGEXES
+    for regex in compared_regexes:
+        if re.search(regex, file_path, re.IGNORECASE):
+            if return_regex:
+                return regex
+            return True
+    return False

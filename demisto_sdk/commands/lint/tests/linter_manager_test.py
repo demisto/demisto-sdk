@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.git_tools import git_path
 def test_report_pass_lint_checks(mocker, return_exit_code: int, skipped_code: int, pkgs_type: list):
     from demisto_sdk.commands.lint import lint_manager
     lint_manager.LintManager.report_pass_lint_checks(return_exit_code, skipped_code, pkgs_type)
-    assert mocker.call_count == 8
+    assert mocker.call_count == 9
 
 
 def test_report_failed_image_creation():
@@ -50,6 +50,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     lint_status = {
         "fail_packs_flake8": [],
         "fail_packs_bandit": [],
+        "fail_xsoar_linter": [],
         "fail_packs_mypy": ['Infoblox'],
         "fail_packs_vulture": [],
         "fail_packs_pylint": ['HelloWorld'],
@@ -86,6 +87,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     lint_status = {
         "fail_packs_flake8": [],
         "fail_packs_bandit": [],
+        "fail_xsoar_linter": [],
         "fail_packs_mypy": [],
         "fail_packs_vulture": [],
         "fail_packs_pylint": [],

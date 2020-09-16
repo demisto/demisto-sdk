@@ -9,16 +9,15 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116']
-
+ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', "RM"],
+    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
     'non-certified-partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
 ERROR_CODE = {
@@ -27,6 +26,7 @@ ERROR_CODE = {
     "file_type_not_supported": "BA102",
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
+    "invalid_id_set": "BA105",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -52,7 +52,12 @@ ERROR_CODE = {
     "parameter_missing_for_feed": "IN122",
     "invalid_v2_integration_name": "IN123",
     "found_hidden_param": "IN124",
+    "no_default_value_in_parameter": "IN125",
+    "parameter_missing_from_yml_not_community_contributor": "IN126",
+    "invalid_deprecated_integration_display_name": "IN127",
+    "invalid_deprecated_integration_description": "IN128",
     "invalid_v2_script_name": "SC100",
+    "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -100,6 +105,7 @@ ERROR_CODE = {
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
+    "invalid_deprecated_playbook": "PB104",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -135,8 +141,10 @@ ERROR_CODE = {
     "pack_metadata_missing_url_and_email": "PA113",
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
-    "invalid_package_dependencies": 'PA116',
+    "invalid_package_dependencies": "PA116",
+    "pack_readme_file_missing": "PA117",
     "readme_error": "RM100",
+    "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
@@ -168,6 +176,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": "MP104",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
+    "invalid_file_path_layout": "LO102",
+    "invalid_file_path_layoutscontainer": "LO103",
 }
 
 
@@ -222,6 +232,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_id_set():
+        return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
+               "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
+               "Then re-run the `validate` command."
+
+    @staticmethod
+    @error_code_decorator
     def wrong_display_name(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -229,6 +246,11 @@ class Errors:
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
         return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+
+    @staticmethod
+    @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
 
     @staticmethod
     @error_code_decorator
@@ -350,6 +372,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def parameter_missing_from_yml_not_community_contributor(name, correct_format):
+        """
+            This error is ignored if the contributor is community
+        """
+        return f'A required parameter "{name}" is missing or malformed ' \
+               f'in the YAML file.\nThe correct format of the parameter should ' \
+               f'be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
     def parameter_missing_for_feed(name, correct_format):
         return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
@@ -368,9 +400,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should start with "Deprecated.".'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_script_name():
         return "The name of this v2 script is incorrect , should be **name**V2." \
                " e.g: DBotTrainTextClassifierV2"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_script():
+        return "Every deprecated script's comment has to start with 'Deprecated.'"
 
     @staticmethod
     @error_code_decorator
@@ -453,12 +500,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name):
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
                f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n'
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
@@ -600,9 +648,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_file_empty():
-        return "Your release notes file is empty, please complete it. If you are trying to exclude " \
-               "an item from the release notes, please refer to the documentation found here: " \
-               "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
+        return "Your release notes file is empty, please complete it\nHaving empty release notes " \
+               "looks bad in the product UI.\nIf the change you made was minor, please use " \
+               "\"Maintenance and stability enhancements.\" for general changes, or use " \
+               "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod
     @error_code_decorator
@@ -614,7 +663,7 @@ class Errors:
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
         return f"Release notes were not found. Please run `demisto-sdk " \
-               f"update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate release notes according to the new standard. You can refer to the documentation " \
                f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -636,7 +685,8 @@ class Errors:
     @error_code_decorator
     def modified_existing_release_notes(pack_name):
         return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
-               f"if needed by running:\n`demisto-sdk update-release-notes -p {pack_name} -u (major|minor|revision)`\n" \
+               f"if needed by running:\n`demisto-sdk update-release-notes -i Packs/{pack_name} -u " \
+               f"(major|minor|revision)`\n" \
                f"You can refer to the documentation found here: " \
                f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -662,6 +712,11 @@ class Errors:
     @error_code_decorator
     def playbook_unconnected_tasks(orphan_tasks):
         return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_playbook():
+        return 'The playbook description has to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator
@@ -844,7 +899,7 @@ class Errors:
                f"make sure you are merged from master and " \
                f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
-               f"`demisto-sdk update-release-notes -p {pack} -u (major|minor|revision)` to " \
+               f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
 
     @staticmethod
@@ -857,6 +912,12 @@ class Errors:
     @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
+
+    @staticmethod
+    @error_code_decorator
+    def image_path_error(path, alternative_path):
+        return f'Detected following image url:\n{path}\n' \
+               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
 
     @staticmethod
     @error_code_decorator
@@ -886,7 +947,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def structure_doesnt_match_scheme(pretty_formatted_string_of_regexes):
-        return f"The file does not match any scheme we have, please refer to the following list" \
+        return f"The file does not match any scheme we have, please refer to the following list " \
                f"for the various file name options we have in our repo {pretty_formatted_string_of_regexes}"
 
     @staticmethod
@@ -919,13 +980,18 @@ class Errors:
     @error_code_decorator
     def invalid_package_structure(invalid_files):
         return 'You should update the following files to the package format, for further details please visit ' \
-               'https://github.com/demisto/content/tree/master/docs/package_directory_structure. ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
                'The files are:\n{}'.format('\n'.join(list(invalid_files)))
 
     @staticmethod
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
         return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_readme_file_missing(file_name):
+        return f'{file_name} file does not exist, create one in the root of the pack'
 
     @staticmethod
     @error_code_decorator
@@ -956,6 +1022,17 @@ class Errors:
     @error_code_decorator
     def invalid_version_in_layoutscontainer(version_field):
         return f'{version_field} field in layoutscontainer needs to be higher or equal to 6.0.0'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layout(file_name):
+        return f'Invalid file name - {file_name}. layout file name should start with "layout-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_file_path_layoutscontainer(file_name):
+        return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
+               '"layoutscontainer-" prefix.'
 
     @staticmethod
     @error_code_decorator

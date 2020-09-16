@@ -37,12 +37,13 @@ class PackUniqueFilesValidator(BaseValidator):
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
-                 should_version_raise=False, id_set_path=None):
+                 should_version_raise=False, id_set_path=None, suppress_print=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
         """
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.pack = pack
         self.pack_path = pack_name_to_path(self.pack) if not pack_path else pack_path
         self.secrets_file = PACKS_WHITELIST_FILE_NAME
@@ -270,10 +271,11 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack README.md validation
     def validate_readme_file(self):
         """Validate everything related to README.md file"""
-        if self._is_pack_file_exists(self.readme_file):
-            return True
+        if not os.path.isfile(self._get_pack_file_path(self.readme_file)):
+            if self._add_error(Errors.pack_readme_file_missing(self.readme_file), self.readme_file):
+                return False
 
-        return False
+        return True
 
     def validate_pack_unique_files(self):
         """Main Execution Method"""
@@ -290,27 +292,36 @@ class PackUniqueFilesValidator(BaseValidator):
 
     # pack dependencies validation
     def validate_pack_dependencies(self, id_set_path=None):
-        click.secho(f'\n================= Running pack dependencies validation on {self.pack}=================',
-                    fg="bright_cyan")
-        core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+        try:
+            click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
+                        fg="bright_cyan")
+            core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
-        first_level_dependencies = PackDependencies.find_dependencies(
-            self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-            update_pack_metadata=False)
+            first_level_dependencies = PackDependencies.find_dependencies(
+                self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
+                update_pack_metadata=False)
 
-        for core_pack in core_pack_list:
-            first_level_dependencies.pop(core_pack, None)
-        if not first_level_dependencies:
+            for core_pack in core_pack_list:
+                first_level_dependencies.pop(core_pack, None)
+            if not first_level_dependencies:
+                return True
+
+            dependency_result = json.dumps(first_level_dependencies, indent=4)
+            click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
+            click.echo(click.style(dependency_result, bold=True))
+            non_supported_pack = first_level_dependencies.get('NonSupported', {})
+            deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
+
+            if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
+                error_message, error_code = Errors.invalid_package_dependencies(self.pack)
+                if self._add_error((error_message, error_code), file_path=self.pack_path):
+                    return False
             return True
-
-        dependency_result = json.dumps(first_level_dependencies, indent=4)
-        click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
-        click.echo(click.style(dependency_result, bold=True))
-        non_supported_pack = first_level_dependencies.get('NonSupported', {})
-        deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
-
-        if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
-            error_message, error_code = Errors.invalid_package_dependencies(self.pack)
-            if self._add_error((error_message, error_code), file_path=self.pack_path):
-                return False
-        return True
+        except ValueError as e:
+            if "Couldn't find any items for pack" in str(e):
+                error_message, error_code = Errors.invalid_id_set()
+                if self._add_error((error_message, error_code), file_path=self.pack_path):
+                    return False
+                return True
+            else:
+                raise

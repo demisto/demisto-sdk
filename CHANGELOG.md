@@ -1,4 +1,95 @@
 # Changelog
+* Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
+    * `Sys.exit` usages with non zero value.
+    * Any `Print` usages.
+* Fixed an issue where renamed files were failing on *validate*.
+* Fixed an issue where single changed files did not required release notes update.
+* Fixed an issue where doc_images required release-notes and validations.
+* Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Fixed an issue where the find_type function didn't recognize file types correctly.
+* Added support for indicator fields in **update-release-notes** command.
+
+# 1.2.0
+* Fixed an issue where **format** did not update the test playbook from its pack.
+* Fixed an issue where **validate** validated non integration images.
+* Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
+* Added revision templates to the **update-release-notes** command.
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
+* Fixed an issue where **validate** validated all images instead of packs only.
+* Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
+* Fixed an issue where **validate** did not fail if no release notes were added when adding files to existing packs.
+* Added handling of incorrect layout paths via the **format** command.
+* Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
+* Fixed an issue where image and description files were not handled correctly by **validate** and **update-release-notes** commands.
+* Fixed an issue where the **format** command didn't remove all extra fields in a file.
+* Added an error in case an invalid id_set.json file is found while running the **validate** command.
+* Added fetch params checks to the **validate** command.
+
+# 1.1.11
+* Added line number to secrets' path in **secrets** command report.
+* Fixed an issue where **init** a community pack did not present the valid support URL.
+* Fixed an issue where **init** offered a non relevant pack support type.
+* Fixed an issue where **lint** did not pull docker images for powershell.
+* Fixed an issue where **find-dependencies** did not find all the script dependencies.
+* Fixed an issue where **find-dependencies** did not collect indicator fields as dependencies for playbooks.
+* Updated the **validate** and the **secrets** commands to be less dependent on regex.
+* Fixed an issue where **lint** did not run on circle when docker did not return ping.
+* Updated the missing release notes error message (RN106) in the **Validate** command.
+* Fixed an issue where **Validate** would return missing release notes when two packs with the same substring existed in the modified files.
+* Fixed an issue where **update-release-notes** would add duplicate release notes when two packs with the same substring existed in the modified files.
+* Fixed an issue where **update-release-notes** would fail to bump new versions if the feature branch was out of sync with the master branch.
+* Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
+* Added dependencies check for *widgets* in **find-dependencies** command.
+* Added a `update-docker` flag to **format** command.
+* Added a `json-to-outputs` flag to the **run** command.
+* Added a verbose (`-v`) flag to **format** command.
+* Fixed an issue where **download** added the prefix "playbook-" to the name of playbooks.
+
+# 1.1.10
+* Updated the **init** command. Relevant only when passing the *--contribution* argument.
+   * Added the *--author* option.
+   * The *support* field of the pack's metadata is set to *community*.
+* Added a proper error message in the **Validate** command upon a missing description in the root of the yml.
+* **Format** now works with a relative path.
+* **Validate** now fails when all release notes have been excluded.
+* Fixed issue where correct error message would not propagate for invalid images.
+* Added the *--skip-pack-dependencies* flag to **validate** command to skip pack dependencies validation. Relevant when using the *-g* flag.
+* Fixed an issue where **Validate** and **Format** commands failed integrations with `defaultvalue` field in fetch incidents related parameters.
+* Fixed an issue in the **Validate** command in which unified YAML files were not ignored.
+* Fixed an issue in **generate-docs** where scripts and playbooks inputs and outputs were not parsed correctly.
+* Fixed an issue in the **openapi-codegen** command where missing reference fields in the swagger JSON caused errors.
+* Fixed an issue in the **openapi-codegen** command where empty objects in the swagger JSON paths caused errors.
+* **update-release-notes** command now accept path of the pack instead of pack name.
+* Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
+* Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
+* Fixed an issue where **validate** did not check for missing release notes in old format files.
+
+# 1.1.9
+* Fixed an issue where **update-release-notes** command failed on invalid file types.
+
+# 1.1.8
+* Fixed a regression where **upload** command failed on test playbooks.
+* Added new *githubUser* field in pack metadata init command.
+* Support beta integration in the commands **split-yml, extract-code, generate-test-playbook and generate-docs.**
+* Fixed an issue where **find-dependencies** ignored *toversion* field in content items.
+* Added support for *layoutscontainer*, *classifier_5_9_9*, *mapper*, *report*, and *widget* in the **Format** command.
+* Fixed an issue where **Format** will set the `ID` field to be equal to the `name` field in modified playbooks.
+* Fixed an issue where **Format** did not work for test playbooks.
+* Improved **update-release-notes** command:
+    * Write content description to release notes for new items.
+    * Update format for file types without description: Connections, Incident Types, Indicator Types, Layouts, Incident Fields.
+* Added a validation for feedTags param in feeds in **validate** command.
+* Fixed readme validation issue in community support packs.
+* Added the **openapi-codegen** command to generate integrations from OpenAPI specification files.
+* Fixed an issue were release notes validations returned wrong results for *CommonScripts* pack.
+* Added validation for image links in README files in **validate** command.
+* Added a validation for default value of fetch param in feeds in **validate** command.
+* Fixed an issue where the **Init** command failed on scripts.
+
+# 1.1.7
 * Fixed an issue where running the **format** command on feed integrations removed the `defaultvalue` fields.
 * Playbook branch marked with *skipunavailable* is now set as an optional dependency in the **find-dependencies** command.
 * The **feedReputation** parameter can now be hidden in a feed integration.
@@ -6,7 +97,6 @@
 * Added the *--no-update* flag to the **find-dependencies** command.
 * Added the following validations in **validate** command:
    * Validating that a pack does not depend on NonSupported / Deprecated packs.
-* Added new *githubUser* field in pack metadata init command.
 
 # 1.1.6
 * Added the *--description* option to the **init** command.

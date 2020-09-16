@@ -6,11 +6,8 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PLAYBOOK_YML_REGEX,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOK_YML_REGEX,
-                                                   FileType)
+                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
+                                                   SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_packagify_changes,
@@ -21,7 +18,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_file, get_files_in_dir,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
-                                               get_matching_regex,
                                                get_release_notes_file_path,
                                                get_ryaml,
                                                has_remote_configured,
@@ -29,8 +25,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
-from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+                                              INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
+                                              VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
@@ -90,6 +88,7 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (IGNORED_PNG, None),
         ('', None)
     ]
 
@@ -97,6 +96,15 @@ class TestGenericFunctions:
     def test_find_type(self, path, _type):
         output = find_type(str(path))
         assert output == _type, f'find_type({path}) returns: {output} instead {_type}'
+
+    def test_find_type_ignore_sub_categories(self):
+        output = find_type(VALID_BETA_INTEGRATION_PATH)
+        assert output == FileType.BETA_INTEGRATION, \
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.BETA_INTEGRATION}'
+
+        output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
+        assert output == FileType.INTEGRATION, \
+            f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
     test_path_md = [
         VALID_MD
@@ -125,12 +133,31 @@ class TestGenericFunctions:
     def test_get_code_lang(self, data, entity, output):
         assert get_code_lang(data, entity) == output
 
+    def test_camel_to_snake(self):
+        snake = tools.camel_to_snake('CamelCase')
+
+        assert snake == 'camel_case'
+
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
+
+    def test_get_remote_file_content_sanity(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        assert hello_world_py
+
+    def test_get_remote_file_content(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        hello_world_text = hello_world_py.decode()
+        assert isinstance(hello_world_py, bytes)
+        assert hello_world_py
+        assert 'main()' in hello_world_text
+        assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
@@ -189,18 +216,6 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
-
-
-class TestGetMatchingRegex:
-    INPUTS = [
-        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
-         PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
-    ]
-
-    @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
-    def test_get_matching_regex(self, string_to_match, regexes, answer):
-        assert get_matching_regex(string_to_match, regexes) == answer
 
 
 class TestServerVersionCompare:

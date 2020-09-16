@@ -25,8 +25,10 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 class DockerImageValidator(BaseValidator):
 
-    def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
+                 suppress_print: bool = False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -77,7 +79,8 @@ class DockerImageValidator(BaseValidator):
             # If docker image tag is not the most updated one that exists in docker-hub
             error_message, error_code = Errors.docker_not_on_the_latest_tag(self.docker_image_tag,
                                                                             self.docker_image_latest_tag,
-                                                                            self.docker_image_name)
+                                                                            self.docker_image_name,
+                                                                            self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_latest_tag = False
 
@@ -219,6 +222,50 @@ class DockerImageValidator(BaseValidator):
                 latest_tag_name = tag.get('name')
         return latest_tag_name
 
+    @staticmethod
+    def get_docker_image_latest_tag_request(docker_image_name: str) -> str:
+        """
+        Get the latest tag for a docker image by request to docker hub.
+        Args:
+            docker_image_name: The docker image name.
+
+        Returns:
+            The latest tag for the docker image.
+        """
+        tag = ''
+        auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
+        headers = ACCEPT_HEADER.copy()
+        if auth_token:
+            headers['Authorization'] = 'Bearer {}'.format(auth_token)
+        # first try to get the docker image tags using normal http request
+        res = requests.get(
+            url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
+            verify=False,
+            timeout=TIMEOUT,
+        )
+        if res.status_code == 200:
+            tags = res.json().get('results', [])
+            # if http request successful find the latest tag by date in the response
+            if tags:
+                tag = DockerImageValidator.find_latest_tag_by_date(tags)
+
+        else:
+            # if http request did not succeed than get tags using the API.
+            # See: https://docs.docker.com/registry/spec/api/#listing-image-tags
+            res = requests.get(
+                'https://{}/v2/{}/tags/list'.format(DEFAULT_REGISTRY, docker_image_name),
+                headers=headers,
+                timeout=TIMEOUT,
+                verify=False
+            )
+            res.raise_for_status()
+            # the API returns tags in lexical order with no date info - so try an get the numeric highest tag
+            tags = res.json().get('tags', [])
+            if tags:
+                tag = DockerImageValidator.lexical_find_latest_tag(tags)
+
+        return tag
+
     def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image):
         """Returns the docker image latest tag of the given docker image
 
@@ -240,39 +287,7 @@ class DockerImageValidator(BaseValidator):
                     return ''
                 return "no-tag-required"
         try:
-            tag = ''
-            auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
-            headers = ACCEPT_HEADER.copy()
-            if auth_token:
-                headers['Authorization'] = 'Bearer {}'.format(auth_token)
-
-            # first try to get the docker image tags using normal http request
-            res = requests.get(
-                url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
-                verify=False,
-                timeout=TIMEOUT,
-            )
-            if res.status_code == 200:
-                tags = res.json().get('results', [])
-                # if http request successful find the latest tag by date in the response
-                if tags:
-                    tag = DockerImageValidator.find_latest_tag_by_date(tags)
-
-            else:
-                # if http request did not succeed than get tags using the API.
-                # See: https://docs.docker.com/registry/spec/api/#listing-image-tags
-                res = requests.get(
-                    'https://{}/v2/{}/tags/list'.format(DEFAULT_REGISTRY, docker_image_name),
-                    headers=headers,
-                    timeout=TIMEOUT,
-                    verify=False
-                )
-                res.raise_for_status()
-                # the API returns tags in lexical order with no date info - so try an get the numeric highest tag
-                tags = res.json().get('tags', [])
-                if tags:
-                    tag = DockerImageValidator.lexical_find_latest_tag(tags)
-            return tag
+            return self.get_docker_image_latest_tag_request(docker_image_name)
         except (requests.exceptions.RequestException, Exception):
             if not docker_image_name:
                 docker_image_name = yml_docker_image

@@ -115,16 +115,18 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
             - String of a code part which is being examined by pylint plugin.
         When:
             - time.sleep(0) exists in the code twice
+            - sleep(0) exists in the code.
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a, node_b, _ = astroid.extract_node("""
+        _, node_a, node_b, node_c, _ = astroid.extract_node("""
             def test_function(): #@
                 time.sleep(60) #@
                 time.sleep(70) #@
+                sleep(100) #@
                 return True #@
         """)
-        assert node_b is not None and node_a is not None
+        assert node_b is not None and node_a is not None and node_c is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='sleep-exists',
@@ -134,9 +136,14 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
                     msg_id='sleep-exists',
                     node=node_b,
                 ),
+                pylint.testutils.Message(
+                    msg_id='sleep-exists',
+                    node=node_c,
+                ),
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
+            self.checker.visit_call(node_c)
 
     def test_no_sleep(self):
         """

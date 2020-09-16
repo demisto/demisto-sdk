@@ -263,7 +263,8 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
-    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool):
+    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
+                          no_xsoar_linter: bool):
         """ Run lint check on host
 
         Args:

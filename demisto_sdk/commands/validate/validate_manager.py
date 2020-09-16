@@ -860,6 +860,8 @@ class ValidateManager:
             # ignore changes in TESTS_DIRECTORIES files.
             elif any(file_path in test_dir for test_dir in TESTS_DIRECTORIES):
                 self.ignored_files.add(file_path)
+                if print_ignored_files:
+                     click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
 
             # identify deleted files

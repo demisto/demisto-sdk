@@ -10,6 +10,7 @@
     * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
 * Fixed an issue where the find_type function didn't recognize file types correctly.
 * Added support for indicator fields in **update-release-notes** command.
+* Fixed an issue where files in test dirs where being validated.
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

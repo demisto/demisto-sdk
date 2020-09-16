@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -837,6 +838,8 @@ class ValidateManager:
         for f in all_files:
             file_data = list(filter(None, f.split('\t')))
             if not file_data:
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
 
             file_status = file_data[0]
@@ -852,34 +855,38 @@ class ValidateManager:
                     not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
-
             # ignore changes in JS files and unit test files.
             elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
                 self.ignored_files.add(file_path)
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                continue
+            # ignore changes in TESTS_DIRECTORIES files.
+            elif any(test_dir in file_path for test_dir in TESTS_DIRECTORIES):
+                self.ignored_files.add(file_path)
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
 
             # identify deleted files
             if file_status.lower() == 'd' and not file_path.startswith('.'):
                 deleted_files.add(file_path)
-
             # ignore directories
             elif not os.path.isfile(file_path):
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
-
             # changes in old scripts and integrations - unified python scripts/integrations
             elif file_status.lower() in ['m', 'a', 'r'] and find_type(file_path) in [FileType.INTEGRATION,
                                                                                      FileType.SCRIPT] and \
                     self._is_py_script_or_integration(file_path):
                 old_format_files.add(file_path)
-
             # identify modified files
             elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
-
             # identify added files
             elif file_status.lower() == 'a' and find_type(file_path) and not file_path.startswith('.'):
                 added_files_list.add(file_path)
-
             # identify renamed files
             elif file_status.lower().startswith('r') and find_type(file_path):
                 # if a code file changed, take the associated yml file.
@@ -889,18 +896,15 @@ class ValidateManager:
                 else:
                     # file_data[1] = old name, file_data[2] = new name
                     modified_files_list.add((file_data[1], file_data[2]))
-
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
-
             # handle meta data file changes
             elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
                 if file_status.lower() == 'a':
                     self.new_packs.add(get_pack_name(file_path))
                 elif file_status.lower() == 'm':
                     changed_meta_files.add(file_path)
-
             else:
                 # pipefile and pipelock files should not enter to ignore_files
                 if 'Pipfile' not in file_path:

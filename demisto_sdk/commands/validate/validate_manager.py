@@ -838,6 +838,8 @@ class ValidateManager:
         for f in all_files:
             file_data = list(filter(None, f.split('\t')))
             if not file_data:
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
 
             file_status = file_data[0]
@@ -856,12 +858,14 @@ class ValidateManager:
             # ignore changes in JS files and unit test files.
             elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
                 self.ignored_files.add(file_path)
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
             # ignore changes in TESTS_DIRECTORIES files.
-            elif any(file_path in test_dir for test_dir in TESTS_DIRECTORIES):
+            elif any(test_dir in file_path for test_dir in TESTS_DIRECTORIES):
                 self.ignored_files.add(file_path)
                 if print_ignored_files:
-                     click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
 
             # identify deleted files
@@ -869,6 +873,8 @@ class ValidateManager:
                 deleted_files.add(file_path)
             # ignore directories
             elif not os.path.isfile(file_path):
+                if print_ignored_files:
+                    click.secho('Ignoring file path: {}'.format(file_path), fg="yellow")
                 continue
             # changes in old scripts and integrations - unified python scripts/integrations
             elif file_status.lower() in ['m', 'a', 'r'] and find_type(file_path) in [FileType.INTEGRATION,

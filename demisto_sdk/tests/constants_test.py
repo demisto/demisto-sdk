@@ -25,6 +25,8 @@ VALID_PIPEFILE_LOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/Pipfile.loc
 VALID_PACK_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.pack-ignore'
 VALID_SECRETS_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.secrets-ignore'
 VALID_CLASSIFIER_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/classifier.json'
+VALID_JSON_FILE_FOR_UNIT_TESTING = f'{GIT_ROOT}/demisto_sdk/tests/test_files/fake_pack/Integrations/' \
+                                   f'test_data/results_json.pu'
 
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'

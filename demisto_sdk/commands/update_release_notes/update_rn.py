@@ -136,7 +136,7 @@ class UpdateRN:
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
             master_metadata = run_command(
-                str(PurePosixPath(PureWindowsPath(f"git show origin/master:{self.metadata_path}"))))
+                f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
             if len(master_metadata) > 0:
                 master_metadata_json = json.loads(master_metadata)
                 master_current_version = master_metadata_json.get('currentVersion', '0.0.0')

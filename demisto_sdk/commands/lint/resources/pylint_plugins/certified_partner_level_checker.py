@@ -8,7 +8,13 @@ cert_partner_msg = {
               "demisto-log-exists",
               "Please remove all demisto.log usage and exchange it with Logger/demisto.debug",),
     "W9005": ("Main function wasnt found in the file, Please add main()", "main-func-doesnt-exist",
-              "Please remove all prints from the code.",)
+              "Please remove all prints from the code.",),
+    "W9008": (
+        "Do not use demisto.results function. Please return CommandResults object instead.", "demisto-results-exists",
+        "Do not use demisto.results function.",),
+    "W9009": (
+        "Do not use return_outputs function. Please return CommandResults object instead.", "return-output-exists",
+        "Do not use return_outputs function.",)
 }
 
 
@@ -25,6 +31,8 @@ class CertifiedPartnerChecker(BaseChecker):
     def visit_call(self, node):
         self._sys_exit_checker(node)
         self._demisto_log_checker(node)
+        self._return_outputs_checker(node)
+        self._demisto_results_checker(node)
 
     def visit_functiondef(self, node):
         self.list_of_function_names.add(node.name)
@@ -51,6 +59,14 @@ class CertifiedPartnerChecker(BaseChecker):
     def _main_function(self, node):
         if 'main' not in self.list_of_function_names:
             self.add_message("main-func-doesnt-exist", node=node)
+
+    def _return_outputs_checker(self, node):
+        if node.func.name == 'return_outputs':
+            self.add_message("return-output-exists", node=node)
+
+    def _demisto_results_checker(self, node):
+        if node.func.attrname == 'results' and node.func.expr.name == 'demisto':
+            self.add_message("demisto-results-exists", node=node)
 
 
 def register(linter):

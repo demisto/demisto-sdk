@@ -220,8 +220,7 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
-                         no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -256,8 +255,6 @@ class LintManager:
             "fail_packs_pwsh_analyze": [],
             "fail_packs_pwsh_test": [],
             "fail_packs_image": [],
-            "warning_packs_XSOAR_linter": [],
-
         }
 
         # Python or powershell or both
@@ -329,7 +326,6 @@ class LintManager:
                              skipped_code=int(skipped_code),
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
-        self._create_warnings_packs_report(lint_status=lint_status, path=failure_report)
 
         return return_exit_code
 
@@ -351,9 +347,6 @@ class LintManager:
         self.report_failed_lint_checks(return_exit_code=return_exit_code,
                                        pkgs_status=pkgs_status,
                                        lint_status=lint_status)
-        self.report_warnings_lint_checks(return_exit_code=return_exit_code,
-                                         pkgs_status=pkgs_status,
-                                         lint_status=lint_status)
         self.report_unit_tests(return_exit_code=return_exit_code,
                                pkgs_status=pkgs_status,
                                lint_status=lint_status)
@@ -387,24 +380,6 @@ class LintManager:
                     print(f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}")
             elif check != 'image':
                 print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
-
-    @staticmethod
-    def report_warnings_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
-        """ Log failed lint log if exsits
-
-        Args:
-            lint_status(dict): Overall lint status
-            pkgs_status(dict): All pkgs status dict
-            return_exit_code(int): exit code will indicate which lint or test failed
-        """
-        check = "XSOAR_linter"
-        sentence = f" {check.capitalize()} warnings "
-        print(f"\n{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}")
-        print(f"{Colors.Fg.yellow}{sentence}{Colors.reset}")
-        print(f"{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}\n")
-        for warning_pack in lint_status[f"warning_packs_{check}"]:
-            print(f"{Colors.Fg.yellow}{pkgs_status[warning_pack]['pkg']}{Colors.reset}")
-            print(pkgs_status[warning_pack][f"{check}_warnings"])
 
     @staticmethod
     def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -620,21 +595,3 @@ class LintManager:
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))
-
-    @staticmethod
-    def _create_warnings_packs_report(lint_status: dict, path: str):
-        """
-        Creates and saves a file containing all lint failed packs
-        :param lint_status: dict
-            Dictionary containing type of failures and corresponding failing tests. Looks like this:
-             lint_status = {
-            "warning_packs_XSOAR_": [],
-
-        }
-        :param path: str
-            The path to save the report.
-        """
-        warning_ut: Set[Any] = set().union([second_val for val in lint_status.values() for second_val in val])
-        if path and warning_ut:
-            file_path = Path(path) / "warning_lint_report.txt"
-            file_path.write_text('\n'.join(warning_ut))

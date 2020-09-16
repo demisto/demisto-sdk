@@ -81,7 +81,6 @@ class Linter:
             "images": [],
             "flake8_errors": None,
             "XSOAR_linter_errors": None,
-            "XSOAR_linter_warnings": None,
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
@@ -295,9 +294,6 @@ class Linter:
                 if exit_code:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
-                # support warnings on report
-                if not exit_code and output and lint_check == 'XSOAR_linter':
-                    self._pkg_lint_status[f"{lint_check}_warnings"] = output
         if self._facts['lint_unittest_files']:
             for lint_check in ["flake8"]:
                 exit_code = SUCCESS

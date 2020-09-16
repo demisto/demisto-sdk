@@ -26,6 +26,7 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
             "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
             "\n#### Incident Types\n- **Hello World Incident Type**\n" \
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
             "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
             "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
             "\n#### Layouts\n- **Hello World Layout**\n" \
@@ -48,6 +49,7 @@ class TestRNUpdate(unittest.TestCase):
             "Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
             "Hello World Incident Type": {"type": "Incident Types", "description": "", "is_new_file": False},
             "Hello World Indicator Type": {"type": "Indicator Types", "description": "", "is_new_file": False},
+            "Hello World Indicator Field": {"type": "Indicator Fields", "description": "", "is_new_file": False},
             "Second Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
             "Hello World Widget": {"type": "Widgets", "description": "", "is_new_file": False},
             "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
@@ -492,6 +494,8 @@ class TestRNUpdateUnit:
                     ('Packs/VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
                     ('Packs/VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
                     ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
+                    ('Packs/CommonTypes', 'Packs/CommonTypes/IndicatorFields/VulnDB.json',
+                     ('VulnDB', 'Indicator Fields')),
                     ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
                     ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB',
                                                                                                          'Playbook')),

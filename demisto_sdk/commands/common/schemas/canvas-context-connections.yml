@@ -2,6 +2,7 @@ type: map
 mapping:
   canvasContextConnections:
     type: seq
+    required: True
     sequence:
       - include: canvas_context_conncetion
   fromVersion:

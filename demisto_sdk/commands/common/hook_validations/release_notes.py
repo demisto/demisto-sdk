@@ -20,7 +20,6 @@ class ReleaseNotesValidator(BaseValidator):
         release_notes_file_path (str): the path to the file we are examining at the moment.
         release_notes_path (str): the path to the changelog file of the examined file.
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
-        master_diff (str): the changes in the changelog file compared to origin/master.
     """
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
@@ -41,6 +40,10 @@ class ReleaseNotesValidator(BaseValidator):
         modified_added_files = itertools.chain.from_iterable((self.added_files or [], self.modified_files or []))
         if modified_added_files:
             for file in modified_added_files:
+                # renamed files will appear in the modified list as a tuple: (old path, new path)
+                if isinstance(file, tuple):
+                    file = file[1]
+
                 if find_type(file) in self.file_types_that_should_not_appear_in_rn:
                     continue
                 elif self.pack_name + '/' in file:

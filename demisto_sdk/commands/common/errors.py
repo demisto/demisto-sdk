@@ -17,7 +17,7 @@ PRESET_ERROR_TO_IGNORE = {
 }
 
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
 ERROR_CODE = {
@@ -54,7 +54,10 @@ ERROR_CODE = {
     "found_hidden_param": "IN124",
     "no_default_value_in_parameter": "IN125",
     "parameter_missing_from_yml_not_community_contributor": "IN126",
+    "invalid_deprecated_integration_display_name": "IN127",
+    "invalid_deprecated_integration_description": "IN128",
     "invalid_v2_script_name": "SC100",
+    "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -102,6 +105,7 @@ ERROR_CODE = {
     "playbook_unreachable_condition": "PB101",
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
+    "invalid_deprecated_playbook": "PB104",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -396,9 +400,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should start with "Deprecated.".'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_script_name():
         return "The name of this v2 script is incorrect , should be **name**V2." \
                " e.g: DBotTrainTextClassifierV2"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_script():
+        return "Every deprecated script's comment has to start with 'Deprecated.'"
 
     @staticmethod
     @error_code_decorator
@@ -693,6 +712,11 @@ class Errors:
     @error_code_decorator
     def playbook_unconnected_tasks(orphan_tasks):
         return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_playbook():
+        return 'The playbook description has to start with "Deprecated."'
 
     @staticmethod
     @error_code_decorator

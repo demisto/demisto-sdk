@@ -128,48 +128,8 @@ mapping:
           description:
             type: str
   sections:
-    type: seq
+    type: any
     required: True
-    sequence:
-      - include: section_schema
-
-schema;section_schema:
-  type: map
-  mapping:
-    type:
-      type: str
-      required: True
-      enum: ['header', 'date', 'placeholder', 'divider', 'text', 'chart', 'table',
-      'image', 'globalSection', 'markdown', 'automation', 'json']
-    data:
-      type: any
-    automation:
-      type: map
-      mapping:
-        name:
-          type: str
-        args:
-          type: int
-    title:
-      type: str
-    layout:
-     type: any
-    query:
-      type: map
-      mapping:
-        type:
-          type: str
-          required: True
-        groupBy:
-          type: seq
-          sequence:
-            - type: str
-        keys:
-          type: seq
-          sequence:
-            - type: str
-        filter:
-          type: any
 
 schema;layout_schema:
   type: map

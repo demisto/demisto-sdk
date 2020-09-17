@@ -1,6 +1,7 @@
 import os
 from os.path import join
 
+import conftest  # noqa: F401
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -240,3 +241,63 @@ def test_update_release_notes_existing(demisto_client, mocker):
         rn = f.read()
     os.remove(rn_path)
     assert expected_rn == rn
+
+
+def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
+    """
+    Given
+    - ApiModules_script.yml which is part of APIModules pack was changed.
+    - FeedTAXII pack path exists and uses ApiModules_script
+    - id_set.json indicates FeedTAXII uses APIModules
+
+    When
+    - Running demisto-sdk update-release-notes command.
+
+    Then
+    - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII:
+    - Ensure message is printed when update release notes process finished.
+    """
+    repo.setup_one_pack("ApiModules")
+    api_module_pack = repo.packs[0]
+    api_module_script_path = join(api_module_pack.path, "Scripts/ApiModules_script/ApiModules_script.yml")
+
+    repo.setup_one_pack("FeedTAXII")
+    taxii_feed_pack = repo.packs[1]
+    taxii_feed_integration_path = join(taxii_feed_pack.path,
+                                       "Integrations/FeedTAXII_integration/FeedTAXII_integration.yml")
+    repo.id_set.update({
+        "scripts": [
+            {
+                "ApiModules_script": {
+                    "name": "ApiModules_script",
+                    "file_path": api_module_script_path,
+                    "pack": "ApiModules"
+                }
+            }
+        ],
+        "integrations": [
+            {
+                "FeedTAXII_integration": {
+                    "name": "FeedTAXII_integration",
+                    "file_path": taxii_feed_integration_path,
+                    "pack": "FeedTAXII",
+                    "api_modules": "ApiModules_script"
+                }
+            }
+        ]
+    })
+
+    modified_files = {api_module_script_path}
+    runner = CliRunner(mix_stderr=False)
+
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
+                                                                                       set(), set(), set()))
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ApiModules'), "-idp", repo.id_set.path])
+
+    assert result.exit_code == 0
+    assert not result.exception
+    assert 'Changes were detected. Bumping ApiModules to version: 1.0.1' in result.stdout
+    assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.2' in result.stdout

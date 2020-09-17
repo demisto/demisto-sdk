@@ -32,6 +32,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
                     return True
                 except:
                     return False
+                    return_error('error')
         """)
         assert node_b is not None
         with self.assertNoMessages():
@@ -52,6 +53,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
                 return True
             def main():
                 return True
+                return_error('err')
 
         """)
         assert node_b is not None
@@ -183,7 +185,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertNoMessages():
-            self.checker.visit_functiondef(node_b)
+            self.checker.visit_call(node_b)
             self.checker.leave_module(node_b)
 
     def test_return_error_exists_more_than_once(self):
@@ -195,14 +197,15 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node("""
+            return_error()
             def test_function():
-                return_error('again')
+                return_error('again') #@
             def main():
                 try:
                     return True
                 except:
-                    return_error('not ok')
+                    return_error('not ok') #@
 
         """)
         assert node_b is not None
@@ -213,4 +216,5 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
                 ),
         ):
             self.checker.visit_call(node_b)
+            self.checker.visit_call(node_a)
             self.checker.leave_module(node_b)

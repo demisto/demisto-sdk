@@ -2,7 +2,6 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-# noqa: E722
 partner_msg: dict = {
     "W9010": (
         "try and except statements were not found in main function. Please add them", "try-except-main-doesnt-exists",
@@ -27,7 +26,6 @@ class PartnerChecker(BaseChecker):
     def __init__(self, linter=None):
         super(PartnerChecker, self).__init__(linter)
         self.return_error_count = 0
-        self.return_error_in_main_only = True
 
     def visit_call(self, node):
         self._return_error_function_count(node)
@@ -42,17 +40,13 @@ class PartnerChecker(BaseChecker):
     # -------------------------------------------- Validations--------------------------------------------------
 
     def _try_except_in_main(self, node):
-        try:
-            if node.name == 'main':
-                try_except_exists = False
-                for child in node.get_children():
-                    if isinstance(child, astroid.TryExcept):
-                        try_except_exists = True
-
-                if not try_except_exists:
-                    self.add_message("try-except-main-doesnt-exists", node=node)
-        except AttributeError:
-            pass
+        if node.name == 'main':
+            try_except_exists = False
+            for child in node.get_children():
+                if isinstance(child, astroid.TryExcept):
+                    try_except_exists = True
+            if not try_except_exists:
+                self.add_message("try-except-main-doesnt-exists", node=node)
 
     def _return_error_in_main_checker(self, node):
         try:

@@ -224,6 +224,7 @@ class Initiator:
                     dst_path = os.path.join(pack_dir, dst_name)
                     if os.path.exists(dst_path):
                         # move src folder files to dst folder
+                        content_item_dir = dst_path
                         for _, _, files in os.walk(src_path, topdown=False):
                             for name in files:
                                 src_file_path = os.path.join(src_path, name)

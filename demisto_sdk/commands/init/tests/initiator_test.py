@@ -12,9 +12,9 @@ import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    INTEGRATION_CATEGORIES, LAYOUTS_CONTAINER, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL)
+    INTEGRATION_CATEGORIES, LAYOUT, LAYOUTS_CONTAINER,
+    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
 from mock import patch
 from TestSuite.contribution import Contribution
@@ -382,9 +382,11 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 
     layouts_path = converted_pack_path / 'Layouts'
     sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
+    sample_layout = layouts_path / f'{LAYOUT}-fakelayout.json'
 
     assert layouts_path.exists()
     assert sample_layoutscontainer.exists()
+    assert sample_layout.exists()
 
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')

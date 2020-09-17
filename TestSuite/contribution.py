@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import LAYOUTS_CONTAINER
+from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
@@ -167,6 +167,15 @@ class Contribution:
         self.dashboards.append(dashboard)
         return dashboard
 
+    def create_layout(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = LAYOUT
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
+        self.layouts_containers.append(layout)
+
     def create_layoutscontainer(
             self,
             name,
@@ -230,6 +239,7 @@ class Contribution:
         self.create_classifier(name='fakeclassifier')
         self.create_dashboard(name='fakedashboard')
         self.create_layoutscontainer(name='fakelayoutscontainer')
+        self.create_layout(name='fakelayout')
         self.create_incident_field(name='fakeincidentfield')
         self.create_incident_type(name='fakeincidenttype')
         self.create_indicator_field(name='fakeindicatorfield')

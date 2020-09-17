@@ -222,7 +222,15 @@ class Initiator:
                     dst_name = ENTITY_TYPE_TO_DIR.get(basename)
                     src_path = os.path.join(pack_dir, basename)
                     dst_path = os.path.join(pack_dir, dst_name)
-                    content_item_dir = shutil.move(src_path, dst_path)
+                    if os.path.exists(dst_path):
+                        # move src folder files to dst folder
+                        for _, _, files in os.walk(src_path, topdown=False):
+                            for name in files:
+                                src_file_path = os.path.join(src_path, name)
+                                shutil.move(src_file_path, dst_path)
+                    else:
+                        # replace dst folder with src folder
+                        content_item_dir = shutil.move(src_path, dst_path)
                     if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
                         self.content_item_to_package_format(content_item_dir, del_unified=True)
             # create pack's base files

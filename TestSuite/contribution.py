@@ -77,7 +77,7 @@ class Contribution:
         self._reputations_path = self.target_dir / 'reputation'
         self._reputations_path.mkdir()
 
-        self._layouts_path = self.target_dir / 'layout'        
+        self._layouts_path = self.target_dir / 'layout'
         self._layouts_path.mkdir()
 
         self._layoutscontainer_path = self.target_dir / 'layoutscontainer'

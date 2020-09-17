@@ -77,6 +77,9 @@ class Contribution:
         self._reputations_path = self.target_dir / 'reputation'
         self._reputations_path.mkdir()
 
+        self._layouts_path = self.target_dir / 'layout'        
+        self._layouts_path.mkdir()
+
         self._layoutscontainer_path = self.target_dir / 'layoutscontainer'
         self._layoutscontainer_path.mkdir()
 
@@ -173,8 +176,9 @@ class Contribution:
             content: dict = None
     ):
         prefix = LAYOUT
-        layout = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
-        self.layouts_containers.append(layout)
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layouts_path)
+        self.layouts.append(layout)
+        return layout
 
     def create_layoutscontainer(
             self,
@@ -184,6 +188,7 @@ class Contribution:
         prefix = LAYOUTS_CONTAINER
         layoutscontainer = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
         self.layouts_containers.append(layoutscontainer)
+        return layoutscontainer
 
     def create_incident_field(
             self,

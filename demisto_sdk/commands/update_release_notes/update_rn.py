@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from distutils.version import LooseVersion
+from pathlib import PurePosixPath, PureWindowsPath
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (
@@ -135,13 +136,14 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            master_metadata = run_command(f"git show origin/master:{self.metadata_path}")
+            master_metadata = run_command(
+                f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
             if len(master_metadata) > 0:
                 master_metadata_json = json.loads(master_metadata)
                 master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
             else:
-                master_current_version = '99.99.99'
-                print_warning("Unable to locate the metadata on the master branch.")
+                print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata}")
+                sys.exit(0)
             if LooseVersion(master_current_version) == LooseVersion(new_version):
                 return True
             elif LooseVersion(master_current_version) > LooseVersion(new_version):

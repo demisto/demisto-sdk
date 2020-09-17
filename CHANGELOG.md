@@ -1,4 +1,7 @@
 # Changelog
+
+
+# 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
     * `Sys.exit` usages with non zero value.
     * Any `Print` usages.

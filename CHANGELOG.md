@@ -1,5 +1,5 @@
 # Changelog
-
+* Added support for layoutscontainer in **init** contribution flow.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

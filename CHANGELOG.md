@@ -1,5 +1,6 @@
 # Changelog
 * Added support for layoutscontainer in **init** contribution flow.
+* Added a validation for tlp_color param in feeds in **validate** command.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
@@ -15,8 +16,10 @@
     * Added new argument *--id-set-path* for id_set.json path.
     * When changes to *APIModule* is detected and an id_set.json is available - the command will validate that the dependent pack has release notes as well.
 * Fixed an issue where the find_type function didn't recognize file types correctly.
+* Fixed an issue where **update-release-notes** command did not work properly on Windows.
 * Added support for indicator fields in **update-release-notes** command.
 * Fixed an issue where files in test dirs where being validated.
+
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

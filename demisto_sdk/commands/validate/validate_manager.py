@@ -8,7 +8,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,

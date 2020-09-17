@@ -11,7 +11,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name,
@@ -900,7 +900,7 @@ def update_pack_releasenotes(**kwargs):
                                           added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
 
-    if 'ApiModules' in _pack:
+    if API_MODULES_PACK in _pack:
         # case: ApiModules
         update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
 

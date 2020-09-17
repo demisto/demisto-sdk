@@ -19,7 +19,7 @@ import requests
 import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CLASSIFIERS_DIR,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
@@ -394,9 +394,9 @@ def get_api_module_ids(file_list):
     if file_list:
         for pf in file_list:
             parent = pf
-            while '/ApiModules/Scripts/' in parent:
+            while f'/{API_MODULES_PACK}/Scripts/' in parent:
                 parent = get_parent_directory_name(parent, abs_path=True)
-                if '/ApiModules/Scripts/' in parent:
+                if f'/{API_MODULES_PACK}/Scripts/' in parent:
                     pf = parent
             if parent != pf:
                 api_module_set.add(os.path.basename(pf))

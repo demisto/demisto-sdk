@@ -1,5 +1,15 @@
 # Changelog
-
+* Added new code validations to `XSOAR-linter`.
+    * As error messages:
+        * sleep statments for non longrunning integrations.
+    * As warnings messages:
+        * `demisto.log` should not be used.
+        * main function existence.
+        * `demito.results` should not be used.
+        * `return_output` should not be used.
+        * try-except statement in main function.
+        * `return_error` usage in main function.
+        * only once `return_error` usage.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

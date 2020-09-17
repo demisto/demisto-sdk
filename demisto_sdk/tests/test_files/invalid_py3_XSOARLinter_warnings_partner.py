@@ -737,6 +737,7 @@ def shaping_fetch(client: Client, fetch_queue_id: list) -> str:
             'shaping_fields': fetch_shaping,
             'valid_until': int(time.time()) + 3600 * 24
         }
+        return_error('error')
         demisto.setIntegrationContext(integration_context)
     return fetch_shaping
 
@@ -836,7 +837,7 @@ def parse_incidents(items: list, fetch_limit: str, time_format: str, parsed_last
             'occurred': incident_created_time.strftime(time_format),
             'rawJSON': json.dumps(item)
         }
-
+        return_error('error')
         incidents.append(incident)
         count += 1
         parsed_last_time = incident_created_time
@@ -909,5 +910,3 @@ def main():
         demisto.results(incidents)
     else:
         raise NotImplementedError(f'{command} is not an existing QuestKace command')
-    return_error(f'Error from QuestKace Integration.\n'
-                 f'Failed to exfecute {demisto.command()} command.\n\n Error: {str(e)}')

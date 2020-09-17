@@ -2,16 +2,17 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
+# noqa: E722
 partner_msg: dict = {
-    "W9006": (
+    "W9010": (
         "try and except statements were not found in main function. Please add them", "try-except-main-doesnt-exists",
         "Ensure to not try except in the main function.",),
-    "W9007": (
+    "W9011": (
         "return_error used too many times, should be used only once in the code, in main function. Please remove "
         "other usages.",
         "too-many-return-error",
         "return.error should be used only once in the code",),
-    "W9008": ("return_error should be used in main function. Please add it.",
+    "W9012": ("return_error should be used in main function. Please add it.",
               "return-error-does-not-exist-in-main",
               "return_error should be used in main function",),
 }
@@ -36,7 +37,7 @@ class PartnerChecker(BaseChecker):
         self._return_error_in_main_checker(node)
 
     def leave_module(self, node):
-        self._return_error_checker(node)
+        self._return_error_count_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -50,38 +51,47 @@ class PartnerChecker(BaseChecker):
 
                 if not try_except_exists:
                     self.add_message("try-except-main-doesnt-exists", node=node)
-        except:
+        except AttributeError:
             pass
 
     def _return_error_in_main_checker(self, node):
         try:
             if node.name == 'main':
-                return_error_exists = self._inner_search_return_error(node)
-
+                return_error_exists = False
+                for child in self._inner_search_return_error(node):
+                    if isinstance(child, astroid.Call):
+                        try:
+                            if child.func.name == 'return_error':
+                                return_error_exists = True
+                        except AttributeError:
+                            pass
                 if not return_error_exists:
                     self.add_message("return-error-does-not-exist-in-main", node=node)
-        except:
+        except AttributeError:
             pass
 
     def _return_error_function_count(self, node):
         try:
             if node.func.name == 'return_error':
-                self.return_error_count += 1
-        except:
+                self.return_error_count = self.return_error_count + 1
+        except AttributeError:
             pass
 
-    def _return_error_checker(self, node):
+    def _return_error_count_checker(self, node):
         if self.return_error_count > 1:
             self.add_message("too-many-return-error", node=node)
 
     def _inner_search_return_error(self, node):
-        for child in node.get_children():
-            if isinstance(child, astroid.Call):
-                if child.func.name == 'return_error':
-                    return True
-            else:
-                self._inner_search_return_error(child)
-        return False
+        try:
+            for subnode in list(node.get_children()):
+                yield subnode
+                yield from self._inner_search_return_error(subnode)
+
+        except AttributeError:
+            yield node
+
+        except TypeError:
+            yield node
 
 
 def register(linter):

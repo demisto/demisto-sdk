@@ -28,6 +28,14 @@ files = [
      ['Print is found, Please remove all prints from the code.']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'partner', False, 0,
      ['try and except statements were not found in main function.']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'community', False, 0,
+     []),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'partner', False, 0,
+     ['return_error should be used in main function. Please add it.',
+      'return_error used too many times, should be used only once in the code, in main function.']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'xsoar', False, 0,
+     ['return_error should be used in main function. Please add it.',
+      'return_error used too many times, should be used only once in the code, in main function.']),
 
 ]
 

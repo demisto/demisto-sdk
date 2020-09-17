@@ -1,4 +1,7 @@
 # Changelog
+* Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
+    * `Sys.exit` usages with non zero value.
+    * Any `Print` usages.
 * Fixed an issue where renamed files were failing on *validate*.
 * Fixed an issue where single changed files did not required release notes update.
 * Fixed an issue where doc_images required release-notes and validations.
@@ -7,6 +10,9 @@
     * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
 * Fixed an issue where the find_type function didn't recognize file types correctly.
 * Fix update-release-notes command on Windows.
+* Added support for indicator fields in **update-release-notes** command.
+* Fixed an issue where files in test dirs where being validated.
+
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

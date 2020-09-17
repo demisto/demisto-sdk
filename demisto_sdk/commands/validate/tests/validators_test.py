@@ -55,8 +55,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
     VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
+    VALID_JSON_FILE_FOR_UNIT_TESTING, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
@@ -765,7 +765,8 @@ class TestValidators:
                       f"A	{VALID_README_PATH}\n" \
                       f"A	{VALID_METADATA2_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}\n" \
-                      f"D	{VALID_DASHBOARD_PATH}"
+                      f"D	{VALID_DASHBOARD_PATH}\n" \
+                      f"A	{VALID_JSON_FILE_FOR_UNIT_TESTING}"
 
         validate_manager = ValidateManager()
         modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \
@@ -781,6 +782,9 @@ class TestValidators:
         # checking that there are no unwanted files in modified files
         assert VALID_PIPEFILE_LOCK_PATH not in modified_files
         assert VALID_SCRIPT_PATH not in modified_files
+
+        # checking that files in tests dir are not in modified_files
+        assert VALID_JSON_FILE_FOR_UNIT_TESTING not in modified_files
 
         # check that the modified code file is not there but the yml file is
         assert VALID_INTEGRATION_TEST_PATH in old_format_files

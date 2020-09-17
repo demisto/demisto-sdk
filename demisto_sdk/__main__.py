@@ -380,6 +380,7 @@ def secrets(config, **kwargs):
               show_default=True)
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option("--no-xsoar-linter", is_flag=True, help="Do NOT run XSOAR linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
@@ -393,7 +394,7 @@ def secrets(config, **kwargs):
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
@@ -411,6 +412,7 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
                                          no_bandit=no_bandit,
                                          no_mypy=no_mypy,
                                          no_vulture=no_vulture,
+                                         no_xsoar_linter=no_xsoar_linter,
                                          no_pylint=no_pylint,
                                          no_test=no_test,
                                          no_pwsh_analyze=no_pwsh_analyze,

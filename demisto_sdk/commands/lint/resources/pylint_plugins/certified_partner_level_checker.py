@@ -13,7 +13,7 @@ cert_partner_msg = {
         "Do not use demisto.results function. Please return CommandResults object instead.", "demisto-results-exists",
         "Do not use demisto.results function.",),
     "W9009": (
-        "Do not use return_outputs function. Please return CommandResults object instead.", "return-output-exists",
+        "Do not use return_outputs function. Please return CommandResults object instead.", "return-outputs-exists",
         "Do not use return_outputs function.",)
 }
 
@@ -61,12 +61,18 @@ class CertifiedPartnerChecker(BaseChecker):
             self.add_message("main-func-doesnt-exist", node=node)
 
     def _return_outputs_checker(self, node):
-        if node.func.name == 'return_outputs':
-            self.add_message("return-output-exists", node=node)
+        try:
+            if node.func.name == 'return_outputs':
+                self.add_message("return-outputs-exists", node=node)
+        except:
+            pass
 
     def _demisto_results_checker(self, node):
-        if node.func.attrname == 'results' and node.func.expr.name == 'demisto':
-            self.add_message("demisto-results-exists", node=node)
+        try:
+            if node.func.attrname == 'results' and node.func.expr.name == 'demisto':
+                self.add_message("demisto-results-exists", node=node)
+        except:
+            pass
 
 
 def register(linter):

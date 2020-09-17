@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 import re
 import sys
@@ -36,7 +37,7 @@ FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
-logger = logging_setup(3)
+logger: logging.Logger
 EX_SUCCESS = 0
 EX_FAIL = 1
 
@@ -75,6 +76,9 @@ class ArtifactsManager:
 
 
 def create_content_artifacts(artifact_manager: ArtifactsManager) -> int:
+    global logger
+    logger = logging_setup(3)
+
     with ArtifactsDirsHandler(artifact_manager), ProcessPoolHandler(artifact_manager) as pool:
         futures: List[ProcessFuture] = []
         # content/Packs

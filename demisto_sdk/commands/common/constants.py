@@ -923,14 +923,14 @@ FEED_REQUIRED_PARAMS = [
         'required': False,
         'type': 0
     },
-    {
-        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
-        'display': 'Traffic Light Protocol Color',
-        'name': 'tlp_color',
-        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
-        'required': False,
-        'type': 15
-    }
+    # {
+    #     'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
+    #     'display': 'Traffic Light Protocol Color',
+    #     'name': 'tlp_color',
+    #     'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+    #     'required': False,
+    #     'type': 15
+    # }
 ]
 
 FETCH_REQUIRED_PARAMS = [

@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.script import Script
@@ -38,6 +39,7 @@ class Contribution:
         self.incident_field: List[JSONBased] = list()
         self.indicator_field: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
+        self.layouts_containers: List[JSONBased] = list()
 
         self.name = name
         self.created_zip_filepath = ''
@@ -74,6 +76,12 @@ class Contribution:
 
         self._reputations_path = self.target_dir / 'reputation'
         self._reputations_path.mkdir()
+
+        self._layouts_path = self.target_dir / 'layout'
+        self._layouts_path.mkdir()
+
+        self._layoutscontainer_path = self.target_dir / 'layoutscontainer'
+        self._layoutscontainer_path.mkdir()
 
     def create_integration(
             self,
@@ -162,6 +170,26 @@ class Contribution:
         self.dashboards.append(dashboard)
         return dashboard
 
+    def create_layout(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = LAYOUT
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layouts_path)
+        self.layouts.append(layout)
+        return layout
+
+    def create_layoutscontainer(
+            self,
+            name,
+            content: dict = None
+    ):
+        prefix = LAYOUTS_CONTAINER
+        layoutscontainer = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
+        self.layouts_containers.append(layoutscontainer)
+        return layoutscontainer
+
     def create_incident_field(
             self,
             name,
@@ -215,6 +243,8 @@ class Contribution:
     def create_zip(self, zip_dst: Optional[Path] = None, del_src_files: bool = True):
         self.create_classifier(name='fakeclassifier')
         self.create_dashboard(name='fakedashboard')
+        self.create_layoutscontainer(name='fakelayoutscontainer')
+        self.create_layout(name='fakelayout')
         self.create_incident_field(name='fakeincidentfield')
         self.create_incident_type(name='fakeincidenttype')
         self.create_indicator_field(name='fakeindicatorfield')

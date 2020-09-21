@@ -538,7 +538,7 @@ def suffix_handler(artifact_manager: ArtifactsManager):
                                                                      flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
         file_content_new = artifact_manager.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
                                                                    flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-        file_content_all = artifact_manager.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
+        file_content_all = artifact_manager.content_all_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
                                                                    flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
         for files in [file_content_new, files_content_packs, file_content_test, file_content_all]:
             for file in files:

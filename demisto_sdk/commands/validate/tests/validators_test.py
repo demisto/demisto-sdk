@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from io import StringIO
@@ -55,8 +56,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
     VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
+    VALID_JSON_FILE_FOR_UNIT_TESTING, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
@@ -519,7 +520,7 @@ class TestValidators:
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BC101", "BC102", "BC103", "BC104"]
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -634,6 +635,82 @@ class TestValidators:
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=set(),
                                                                       added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__missing_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
+        """
+            Given:
+                - APIModule pack has a change relevant for another pack
+                - APIModule modified files and release notes present
+                - dependent pack has NO CHANGES
+                - dependent pack release notes are missing
+            When:
+                - running validate_no_missing_release_notes on the file
+            Then:
+                - return a False as there are release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('ApiModules')
+        api_script1 = pack1.create_script('APIScript')
+        pack2_name = 'ApiDependent'
+        pack2 = repo.create_pack(pack2_name)
+        integration2 = pack2.create_integration(pack2_name)
+        id_set_content = {'integrations':
+                          [
+                              {'ApiDependent':
+                               {'name': integration2.name,
+                                'file_path': integration2.path,
+                                'pack': pack2_name,
+                                'api_modules': api_script1.name
+                                }
+                               }
+                          ]}
+        id_set_f = tmpdir / "id_set.json"
+        id_set_f.write(json.dumps(id_set_content))
+        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        modified_files = {api_script1.yml_path}
+        added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is False
+
+    def test_validate_no_missing_release_notes__happy_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
+        """
+            Given:
+                - APIModule pack has a change relevant for another pack
+                - APIModule modified files and release notes present
+                - dependent pack has NO CHANGES
+                - dependent pack has release notes
+            When:
+                - running validate_no_missing_release_notes on the file
+            Then:
+                - return a True as there are no release notes missing
+        """
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
+        pack1 = repo.create_pack('ApiModules')
+        api_script1 = pack1.create_script('APIScript')
+        pack2_name = 'ApiDependent'
+        pack2 = repo.create_pack(pack2_name)
+        integration2 = pack2.create_integration(pack2_name)
+        id_set_content = {'integrations':
+                          [
+                              {'ApiDependent':
+                               {'name': integration2.name,
+                                'file_path': integration2.path,
+                                'pack': pack2_name,
+                                'api_modules': api_script1.name
+                                }
+                               }
+                          ]}
+        id_set_f = tmpdir / "id_set.json"
+        id_set_f.write(json.dumps(id_set_content))
+        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        modified_files = {api_script1.yml_path}
+        added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md', 'Packs/ApiDependent/ReleaseNotes/1_0_0.md'}
+        with ChangeCWD(repo.path):
+            assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
+                                                                      old_format_files=set(),
+                                                                      added_files=added_files) is True
 
     def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(self, repo, mocker):
         """
@@ -765,7 +842,8 @@ class TestValidators:
                       f"A	{VALID_README_PATH}\n" \
                       f"A	{VALID_METADATA2_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}\n" \
-                      f"D	{VALID_DASHBOARD_PATH}"
+                      f"D	{VALID_DASHBOARD_PATH}\n" \
+                      f"A	{VALID_JSON_FILE_FOR_UNIT_TESTING}"
 
         validate_manager = ValidateManager()
         modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \
@@ -781,6 +859,9 @@ class TestValidators:
         # checking that there are no unwanted files in modified files
         assert VALID_PIPEFILE_LOCK_PATH not in modified_files
         assert VALID_SCRIPT_PATH not in modified_files
+
+        # checking that files in tests dir are not in modified_files
+        assert VALID_JSON_FILE_FOR_UNIT_TESTING not in modified_files
 
         # check that the modified code file is not there but the yml file is
         assert VALID_INTEGRATION_TEST_PATH in old_format_files

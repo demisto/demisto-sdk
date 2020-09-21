@@ -1058,7 +1058,7 @@ def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create
     widgets_list = []
     mappers_list = []
 
-    pool = Pool(processes=cpu_count() * 2)
+    pool = Pool(processes=int(cpu_count() * 1.5))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 

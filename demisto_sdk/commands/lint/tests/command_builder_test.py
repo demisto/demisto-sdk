@@ -24,6 +24,41 @@ def test_build_flak8_command(files):
 
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_py3_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, 3.8, "base")
+    files = [str(file) for file in files]
+    expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
+               f"base_checker, {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_py2_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, 2.7, "base")
+    files = [str(file) for file in files]
+    expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
+               f"base_checker, {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
+def test_build_xsoar_linter_no_base_command(files):
+    """Build xsoar linter command"""
+    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    output = build_xsoar_linter_command(files, 2.7, "unsupported")
+    files = [str(file) for file in files]
+    expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               f"conftest.py,venv -E --disable=all --enable= {' '.join(files)}"
+    assert output == expected
+
+
+@pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_bandit_command(files):
     """Build bandit command"""
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command

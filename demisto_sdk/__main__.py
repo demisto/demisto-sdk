@@ -11,7 +11,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name,
@@ -44,7 +44,8 @@ from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.update_release_notes.update_rn import (
+    UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -272,6 +273,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
+@click.option(
+    "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
+    type=click.Path(resolve_path=True))
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -295,13 +299,15 @@ def validate(config, **kwargs):
                                     print_ignored_files=kwargs['print_ignored_files'],
                                     no_docker_checks=kwargs['no_docker_checks'],
                                     silence_init_prints=kwargs['silence_init_prints'],
-                                    skip_dependencies=kwargs['skip_pack_dependencies'])
+                                    skip_dependencies=kwargs['skip_pack_dependencies'],
+                                    id_set_path=kwargs.get('id_set_path'))
         return validator.run_validation()
 
 
 # ====================== create-content-artifacts ====================== #
 @main.command(
     name="create-content-artifacts",
+    hidden=True,
     short_help='Generating the following artifacts:'
                '1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)'
                '2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
@@ -311,7 +317,7 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True))
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
-@click.option('--content-packs', help='Create only content_packs artifacts.', default=False)
+@click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',
@@ -378,6 +384,7 @@ def secrets(config, **kwargs):
               show_default=True)
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
 @click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
+@click.option("--no-xsoar-linter", is_flag=True, help="Do NOT run XSOAR linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
 @click.option("--no-pylint", is_flag=True, help="Do NOT run pylint linter")
@@ -391,7 +398,7 @@ def secrets(config, **kwargs):
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
@@ -409,6 +416,7 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
                                          no_bandit=no_bandit,
                                          no_mypy=no_mypy,
                                          no_vulture=no_vulture,
+                                         no_xsoar_linter=no_xsoar_linter,
                                          no_pylint=no_pylint,
                                          no_test=no_test,
                                          no_pwsh_analyze=no_pwsh_analyze,
@@ -816,17 +824,22 @@ def id_set_command(**kwargs):
 @click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
+@click.option(
+    "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
+    type=click.Path(resolve_path=True))
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
     specific_version = kwargs.get('version')
+    id_set_path = kwargs.get('id_set_path')
     print("Starting to update release notes.")
 
     validate_manager = ValidateManager(skip_pack_rn_validation=True)
     validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...', 'origin/master')
+    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
+                                                                                                     'origin/master')
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -835,17 +848,21 @@ def update_pack_releasenotes(**kwargs):
     if len(packs_existing_rn):
         existing_rns = ''.join(f"{p}, " for p in packs_existing_rn)
         print_warning(f"Found existing release notes for the following packs: {existing_rns.rstrip(', ')}")
+
+    # create release notes:
     if len(_packs) > 1:
+        # case: multiple packs
         pack_list = ''.join(f"{p}, " for p in _packs)
         if not is_all:
             if _pack:
                 pass
             else:
                 print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
-                            f"To update release notes in a specific pack, please use the -p parameter "
+                            f"To update release notes in a specific pack, please use the -i parameter "
                             f"along with the pack name.")
                 sys.exit(0)
     if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+        # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
@@ -856,6 +873,7 @@ def update_pack_releasenotes(**kwargs):
             update_pack_rn.execute_update()
         sys.exit(0)
 
+    # default case:
     if is_all and not _pack:
         packs = list(_packs - packs_existing_rn)
         packs_list = ''.join(f"{p}, " for p in packs)
@@ -870,7 +888,6 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     else:
         if _pack:
-
             packs_existing_rn_abs_path = set()
             for item in packs_existing_rn:
                 packs_existing_rn_abs_path.add(os.path.abspath(pack_name_to_path(item)))
@@ -878,12 +895,16 @@ def update_pack_releasenotes(**kwargs):
             if _pack in packs_existing_rn_abs_path and update_type is not None:
                 print_error(f"New release notes file already found for {_pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-p {_pack}` without specifying the update_type.")
+                            f"-i {_pack}` without specifying the update_type.")
             else:
                 update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type,
                                           modified_files_in_pack=modified.union(old), pre_release=pre_release,
                                           added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
+
+    if API_MODULES_PACK in _pack:
+        # case: ApiModules
+        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
 
 
 # ====================== find-dependencies ====================== #

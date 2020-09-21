@@ -1,6 +1,7 @@
 # Changelog
 * Added support for layoutscontainer in **init** contribution flow.
 * Added a validation for tlp_color param in feeds in **validate** command.
+* Added a validation for removal of integration parameters in **validate** command.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

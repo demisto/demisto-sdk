@@ -83,6 +83,11 @@ class Linter:
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
+            "flake8_warnings": None,
+            "XSOAR_linter_warnings": None,
+            "bandit_warnings": None,
+            "mypy_warnings": None,
+            "vulture_warnings": None,
             "exit_code": SUCCESS
         }
 
@@ -289,9 +294,12 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
-                if exit_code:
+                if exit_code == FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
+                if exit_code == WARNING:
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_warnings"] = output
         if self._facts['lint_unittest_files']:
             for lint_check in ["flake8"]:
                 exit_code = SUCCESS
@@ -299,9 +307,12 @@ class Linter:
                 if lint_check == "flake8" and not no_flake8:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_unittest_files"])
-                if exit_code:
+                if exit_code == FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_errors"] = output
+                if exit_code == WARNING:
+                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_warnings"] = output
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
@@ -356,7 +367,7 @@ class Linter:
 
         if exit_code == WARNING:
             logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
-            exit_code = SUCCESS
+            return WARNING, stdout
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

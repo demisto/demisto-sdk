@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (print_error, print_v,
                                                print_warning)
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, PWSH_CHECKS,
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                get_test_modules, validate_env)
@@ -299,8 +299,9 @@ class LintManager:
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
                         for check, code in EXIT_CODES.items():
-                            if pkg_status["exit_code"] & code:
+                            if pkg_status["exit_code"] == FAIL & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                            # if pkg_status['exit_code']
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["pack_type"] not in pkgs_type:

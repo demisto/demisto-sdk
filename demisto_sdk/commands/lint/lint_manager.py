@@ -140,7 +140,7 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str)\
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
             -> List[Path]:
         """ Get packages paths to run lint command.
 
@@ -209,13 +209,13 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-              f"{content_repo.active_branch}{Colors.reset}")
+        print(
+            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch != content_repo.heads.master:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         content_repo.remote().refs.master)
+        if content_repo.active_branch == 'master':
+            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
         else:
             last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                          f'{content_repo.remote()}/{base_branch}')
@@ -226,7 +226,8 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+                         no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:

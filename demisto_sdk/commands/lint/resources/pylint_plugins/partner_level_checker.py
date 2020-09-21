@@ -2,7 +2,7 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-partner_msg: dict = {
+partner_msg = {
     "W9010": (
         "try and except statements were not found in main function. Please add them", "try-except-main-doesnt-exists",
         "Ensure to not try except in the main function.",),

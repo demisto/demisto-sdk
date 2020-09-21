@@ -140,7 +140,7 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str)\
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
             -> List[Path]:
         """ Get packages paths to run lint command.
 
@@ -171,7 +171,7 @@ class LintManager:
         total_found = len(pkgs)
         if git:
             pkgs = self._filter_changed_packages(content_repo=content_repo,
-                                                 pkgs=pkgs, base_branch=base_branch)
+                                                 pkgs=pkgs, base_branch=base_branch, prev_ver=self._prev_ver)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -198,7 +198,7 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str, prev_ver: str) -> List[Path]:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
@@ -209,16 +209,21 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-              f"{content_repo.active_branch}{Colors.reset}")
+        print(
+            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch != content_repo.heads.master:
+        if prev_ver != 'master':
+            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                         f'{content_repo.remote()}/{base_branch}')
+
+        elif content_repo.active_branch != content_repo.heads.master:
             last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                          content_repo.remote().refs.master)
         else:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         f'{content_repo.remote()}/{base_branch}')
+            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
+
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)
@@ -226,7 +231,8 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+                         no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:

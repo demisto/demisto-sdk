@@ -902,7 +902,7 @@ def update_pack_releasenotes(**kwargs):
                                           added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
 
-    if API_MODULES_PACK in _pack:
+    if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
         update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
 

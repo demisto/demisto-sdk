@@ -26,7 +26,7 @@ class CertifiedPartnerChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(CertifiedPartnerChecker, self).__init__(linter)
-        self.list_of_function_names: set = set()
+        self.list_of_function_names = set()
 
     def visit_call(self, node):
         self._sys_exit_checker(node)

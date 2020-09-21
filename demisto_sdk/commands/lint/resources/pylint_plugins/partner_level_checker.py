@@ -79,7 +79,8 @@ class PartnerChecker(BaseChecker):
         try:
             for subnode in list(node.get_children()):
                 yield subnode
-                yield from self._inner_search_return_error(subnode)
+                for sub in self._inner_search_return_error(subnode):
+                    yield sub
 
         except AttributeError:
             yield node

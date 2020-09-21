@@ -64,14 +64,14 @@ class CertifiedPartnerChecker(BaseChecker):
         try:
             if node.func.name == 'return_outputs':
                 self.add_message("return-outputs-exists", node=node)
-        except:
+        except Exception:
             pass
 
     def _demisto_results_checker(self, node):
         try:
             if node.func.attrname == 'results' and node.func.expr.name == 'demisto':
                 self.add_message("demisto-results-exists", node=node)
-        except:
+        except Exception:
             pass
 
 

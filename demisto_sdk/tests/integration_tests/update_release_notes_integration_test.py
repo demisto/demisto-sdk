@@ -195,6 +195,28 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     assert expected_rn == rn
 
 
+def test_update_release_notes_non_content_path(demisto_client, mocker):
+    """
+    Given
+    - non content pack path.
+
+    When
+    - Running demisto-sdk update-release-notes command.
+
+    Then
+    - Ensure an error is raised
+    """
+    runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Users', 'MyPacks', 'VMware')])
+
+    assert result.exit_code == 1
+    assert result.exception
+    assert "You are not running" in result.stdout  # check error str is in stdout
+
+
 def test_update_release_notes_existing(demisto_client, mocker):
     """
     Given

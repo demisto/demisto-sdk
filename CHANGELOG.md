@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running **validate**, **update-release-notes** outside of content repo crushed without a meaningful error message.
 * Added support for layoutscontainer in **init** contribution flow.
 * Added a validation for tlp_color param in feeds in **validate** command.
 * Added a validation for removal of integration parameters in **validate** command.

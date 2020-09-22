@@ -8,6 +8,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
+import git
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -285,23 +286,27 @@ def validate(config, **kwargs):
         print_error(f'File {file_path} was not found')
         return 1
     else:
-        is_external_repo = tools.is_external_repository()
-
-        validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
-                                    only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                    skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
-                                    file_path=file_path,
-                                    validate_all=kwargs.get('validate_all'),
-                                    validate_id_set=kwargs['id_set'],
-                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                    print_ignored_errors=kwargs['print_ignored_errors'],
-                                    is_external_repo=is_external_repo,
-                                    print_ignored_files=kwargs['print_ignored_files'],
-                                    no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'],
-                                    skip_dependencies=kwargs['skip_pack_dependencies'],
-                                    id_set_path=kwargs.get('id_set_path'))
-        return validator.run_validation()
+        try:
+            is_external_repo = tools.is_external_repository()
+            validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
+                                        only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                        skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
+                                        file_path=file_path,
+                                        validate_all=kwargs.get('validate_all'),
+                                        validate_id_set=kwargs['id_set'],
+                                        skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+                                        print_ignored_errors=kwargs['print_ignored_errors'],
+                                        is_external_repo=is_external_repo,
+                                        print_ignored_files=kwargs['print_ignored_files'],
+                                        no_docker_checks=kwargs['no_docker_checks'],
+                                        silence_init_prints=kwargs['silence_init_prints'],
+                                        skip_dependencies=kwargs['skip_pack_dependencies'],
+                                        id_set_path=kwargs.get('id_set_path'))
+            return validator.run_validation()
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+            print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
+                        "Please run the command from content directory")
+            sys.exit(1)
 
 
 # ====================== create-content-artifacts ====================== #
@@ -836,10 +841,16 @@ def update_pack_releasenotes(**kwargs):
     id_set_path = kwargs.get('id_set_path')
     print("Starting to update release notes.")
 
-    validate_manager = ValidateManager(skip_pack_rn_validation=True)
-    validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
-                                                                                                     'origin/master')
+    try:
+        validate_manager = ValidateManager(skip_pack_rn_validation=True)
+        validate_manager.setup_git_params()
+        modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
+            '...', 'origin/master')
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
+                    "Please run `cd content` from your terminal and run the command again")
+        sys.exit(1)
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:

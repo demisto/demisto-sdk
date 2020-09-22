@@ -86,6 +86,7 @@ def convert_specific_keys(string: str):
         return 'HdQueueID'
     if string == 'Ip':
         return 'IP'
+    quit()
     return string
 
 
@@ -191,7 +192,7 @@ class Client(BaseClient):
         kboxid = res_cookie.get("kboxid").__dict__.get('value')
         KACE_LAST_USER_SECURE = res_cookie.get("KACE_LAST_USER_SECURE").__dict__.get('value')
         KACE_LAST_ORG_SECURE = res_cookie.get("KACE_LAST_ORG_SECURE").__dict__.get('value')
-
+        exit()
         cookie = f'KACE_LAST_USER_SECURE={KACE_LAST_USER_SECURE}; KACE_LAST_ORG_SECURE={KACE_LAST_ORG_SECURE};' \
                  f' kboxid={kboxid}; x-dell-auth-jwt={x_dell_auth_jwt}; KACE_CSRF_TOKEN={KACE_CSRF_TOKEN}'
         return cookie

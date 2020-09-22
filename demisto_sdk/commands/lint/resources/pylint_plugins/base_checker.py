@@ -10,7 +10,11 @@ base_msg = {
     "E9002": ("Print is found, Please remove all prints from the code.", "print-exists",
               "Please remove all prints from the code.",),
     "E9003": ("Sleep is found, Please remove all sleep statements from the code.", "sleep-exists",
-              "Please remove all sleep statments from the code.",),
+              "Please remove all sleep statements from the code.",),
+    "E9004": ("exit is found, Please remove all exit() statements from the code.", "exit-exists",
+              "Please remove all exit() statements from the code.",),
+    "E9005": ("quit is found, Please remove all quit() statements from the code.", "quit-exists",
+              "Please remove all quit statements from the code.",),
 }
 
 
@@ -29,6 +33,8 @@ class CustomBaseChecker(BaseChecker):
     def visit_call(self, node):
         self._print_checker(node)
         self._sleep_checker(node)
+        self._quit_checker(node)
+        self._exit_checker(node)
 
     # Print statment for Python2 only.
     def visit_print(self, node):
@@ -54,6 +60,20 @@ class CustomBaseChecker(BaseChecker):
                         self.add_message("sleep-exists", node=node)
                 except Exception:
                     pass
+
+    def _exit_checker(self, node):
+        try:
+            if node.func.name == 'exit':
+                self.add_message("exit-exists", node=node)
+        except Exception:
+            pass
+
+    def _quit_checker(self, node):
+        try:
+            if node.func.name == 'quit':
+                self.add_message("quit-exists", node=node)
+        except Exception:
+            pass
 
 
 def register(linter):

@@ -162,3 +162,108 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
+
+
+class TestExitChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of exit checker .
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_exit_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - exit() exists in the code.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
+        """
+        _, node_a, node_b, = astroid.extract_node("""
+            def test_function(): #@
+                if True:
+                    exit() #@
+                return True
+            exit() #@
+        """)
+        assert node_b is not None and node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='exit-exists',
+                    node=node_a,
+                ),
+                pylint.testutils.Message(
+                    msg_id='exit-exists',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+
+    def test_no_exit(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - exit() does not exists in the code .
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a, node_b = astroid.extract_node("""
+            def test_function(): #@
+                return True #@
+        """)
+        assert node_a is not None and node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+
+
+class TestQuithecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of quit checker .
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_exit_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - quit() exists in the code.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
+        """
+        _, node_a = astroid.extract_node("""
+            def test_function(): #@
+                return True
+            quit() #@
+        """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='quit-exists',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+
+    def test_no_quit(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - quit() does not exists in the code .
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a, node_b, node_c = astroid.extract_node("""
+            def test_function(): #@
+                return True #@
+                # quit() #@
+        """)
+        assert node_a is not None and node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+            self.checker.visit_call(node_c)

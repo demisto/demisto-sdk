@@ -36,6 +36,10 @@ files = [
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'xsoar', False, 0,
      ['return_error should be used in main function. Please add it.',
       'return_error used too many times, should be used only once in the code, in main function.']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, '', False, 1,
+     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'xsoar', False, 1,
+     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
 
 ]
 

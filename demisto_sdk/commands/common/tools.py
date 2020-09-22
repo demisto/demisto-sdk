@@ -669,7 +669,7 @@ def get_ignore_pack_skipped_tests(pack_name: str) -> set:
                 config = ConfigParser(allow_no_value=True)
                 config.read(pack_ignore_path)
 
-                # create file specific ignored errors list
+                # create file specific ignored tests set
                 for section in config.sections():
                     if section.startswith("file:"):
                         file_name = section[5:]

@@ -52,11 +52,12 @@ class CustomBaseChecker(BaseChecker):
     def _sleep_checker(self, node):
         if not os.getenv('LONGRUNNING'):
             try:
-                if node.func.attrname == 'sleep' and node.func.expr.name == 'time':
+                if node.func.attrname == 'sleep' and node.func.expr.name == 'time' and node and int(
+                        node.args[0].value) > 10:
                     self.add_message("sleep-exists", node=node)
             except Exception:
                 try:
-                    if node.func.name == 'sleep':
+                    if node.func.name == 'sleep' and int(node.args[0].value) > 10:
                         self.add_message("sleep-exists", node=node)
                 except Exception:
                     pass

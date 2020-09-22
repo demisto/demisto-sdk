@@ -218,6 +218,8 @@ def build_pylint_command(files: List[Path]) -> str:
     command += f" --ignore={','.join(excluded_files)}"
     # Prints only errors
     command += " -E"
+    # disable xsoar linter messages
+    command += " --disable=bad-option-value"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger

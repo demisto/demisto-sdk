@@ -845,7 +845,7 @@ def update_pack_releasenotes(**kwargs):
         modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
             '...', 'origin/master')
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are running demisto-sdk validate not in the content repository.")
+        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.")
 
     packs_existing_rn = set()
     for pf in added:

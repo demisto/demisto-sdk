@@ -545,7 +545,7 @@ def suffix_handler(artifact_manager: ArtifactsManager):
                 file_name_split = file.name.split('.')
                 file_real_stem = ".".join(file_name_split[:-1])
                 suffix = file_name_split[-1]
-                file.rename(file.with_name(f'{file_real_stem}-{artifact_manager.suffix}.{suffix}'))
+                file.rename(file.with_name(f'{file_real_stem}{artifact_manager.suffix}.{suffix}'))
 
 
 ###########

@@ -306,6 +306,7 @@ def validate(config, **kwargs):
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
             print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
                         "Please run the command from content directory")
+            sys.exit(1)
 
 
 # ====================== create-content-artifacts ====================== #
@@ -848,6 +849,7 @@ def update_pack_releasenotes(**kwargs):
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")
+        sys.exit(1)
 
     packs_existing_rn = set()
     for pf in added:

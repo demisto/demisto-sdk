@@ -26,4 +26,4 @@ class GlobalSecrets:
             ),
             generic_strings=generic_strings
         )
-        self._secrets_path.write_text(json.dumps(secrets_content))
+        self._secrets_path.write_text(json.dumps(secrets_content), None)

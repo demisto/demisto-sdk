@@ -522,9 +522,11 @@ def suffix_handler(artifact_manager: ArtifactsManager):
             2. README.
             3. content_descriptor.json
             3. ReleaseNotes/**
+
         Include:
             1. *.json
             2. *.(yaml|yml)
+
     Args:
         artifact_manager: Artifacts manager object.
     """

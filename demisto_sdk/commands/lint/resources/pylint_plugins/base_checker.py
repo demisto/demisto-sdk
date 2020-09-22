@@ -55,12 +55,18 @@ class CustomBaseChecker(BaseChecker):
                 if node.func.attrname == 'sleep' and node.func.expr.name == 'time' and node and int(
                         node.args[0].value) > 10:
                     self.add_message("sleep-exists", node=node)
-            except Exception:
-                try:
-                    if node.func.name == 'sleep' and int(node.args[0].value) > 10:
-                        self.add_message("sleep-exists", node=node)
-                except Exception:
-                    pass
+            except Exception as exp:
+                if str(exp) == "'Name' object has no attribute 'value'":
+                    self.add_message("sleep-exists", node=node)
+                else:
+                    try:
+                        if node.func.name == 'sleep' and int(node.args[0].value) > 10:
+                            self.add_message("sleep-exists", node=node)
+                    except AttributeError as e:
+                        if str(e) == "'Name' object has no attribute 'value'":
+                            self.add_message("sleep-exists", node=node)
+                        else:
+                            pass
 
     def _exit_checker(self, node):
         try:

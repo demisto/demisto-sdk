@@ -121,8 +121,9 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
         """
         _, node_a, node_b, node_c, _ = astroid.extract_node("""
             def test_function(): #@
+                a=9
                 time.sleep(60) #@
-                time.sleep(70) #@
+                time.sleep(a) #@
                 sleep(100) #@
                 return True #@
         """)

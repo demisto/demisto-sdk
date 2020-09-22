@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
@@ -23,11 +24,12 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -651,6 +653,39 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
+
+
+def get_pack_ignore_file_path(pack_name):
+    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+
+
+def get_ignore_pack_skipped_tests(pack_name: str) -> set:
+    ignored_tests_set = set()
+    if pack_name:
+        pack_ignore_path = get_pack_ignore_file_path(pack_name)
+
+        if os.path.isfile(pack_ignore_path):
+            try:
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
+
+                # create file specific ignored errors list
+                for section in config.sections():
+                    if section.startswith("file:"):
+                        file_name = section[5:]
+                        for key in config[section]:
+                            if key == 'ignore':
+                                ignore_list = str(config[section][key]).split(',')
+                                if PACK_IGNORE_TEST_FLAG in ignore_list:
+                                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
+                                    if os.path.isfile(path):
+                                        test_yaml = get_yaml(path)
+                                        if 'id' in test_yaml:
+                                            ignored_tests_set.add(test_yaml['id'])
+            except MissingSectionHeaderError:
+                pass
+
+    return ignored_tests_set
 
 
 def get_all_docker_images(script_obj) -> List[str]:

@@ -305,7 +305,7 @@ def validate(config, **kwargs):
             return validator.run_validation()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
             print_error("You are not running `demisto-sdk validate` command in the content repository.\n"
-                        "Please run `cd content` from your terminal and run the command again")
+                        "Please run the command from content directory")
 
 
 # ====================== create-content-artifacts ====================== #

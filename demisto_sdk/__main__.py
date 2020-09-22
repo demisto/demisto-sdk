@@ -304,7 +304,8 @@ def validate(config, **kwargs):
                                         id_set_path=kwargs.get('id_set_path'))
             return validator.run_validation()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-            print_error("You are not running `demisto-sdk validate` command in the content repository.")
+            print_error("You are not running `demisto-sdk validate` command in the content repository.\n"
+                        "Please run `cd content` from your terminal and run the command again")
 
 
 # ====================== create-content-artifacts ====================== #
@@ -845,7 +846,8 @@ def update_pack_releasenotes(**kwargs):
         modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
             '...', 'origin/master')
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.")
+        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
+                    "Please run `cd content` from your terminal and run the command again")
 
     packs_existing_rn = set()
     for pf in added:

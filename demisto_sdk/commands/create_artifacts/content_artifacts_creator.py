@@ -522,31 +522,29 @@ def suffix_handler(artifact_manager: ArtifactsManager):
             2. README.
             3. content_descriptor.json
             3. ReleaseNotes/**
-
         Include:
             1. *.json
             2. *.(yaml|yml)
-
     Args:
         artifact_manager: Artifacts manager object.
     """
+    files_pattern_to_add_suffix = "!reputations.json|!pack_metadata.json|" \
+                                  "!doc-*.json|!content-descriptor.json|*.{json,yml,yaml}"
     if artifact_manager.suffix:
         files_content_packs = artifact_manager.content_packs_path.rglob(
-            "!README.md|!pack_metadata.json|*.{json,yml,yaml}",
-            flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-        file_content_test = artifact_manager.content_test_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
-                                                                     flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-        file_content_new = artifact_manager.content_new_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
-                                                                   flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-        file_content_all = artifact_manager.content_all_path.rglob("!content_descriptor.json|*.{json,yml,yaml}",
-                                                                   flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
-        for files in [file_content_new, files_content_packs, file_content_test, file_content_all]:
+            files_pattern_to_add_suffix, flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        files_content_test = artifact_manager.content_test_path.rglob(files_pattern_to_add_suffix,
+                                                                      flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        files_content_new = artifact_manager.content_new_path.rglob(files_pattern_to_add_suffix,
+                                                                    flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        files_content_all = artifact_manager.content_all_path.rglob(files_pattern_to_add_suffix,
+                                                                    flags=BRACE | SPLIT | EXTMATCH | NODIR | NEGATE)
+        for files in [files_content_new, files_content_packs, files_content_test, files_content_all]:
             for file in files:
                 file_name_split = file.name.split('.')
                 file_real_stem = ".".join(file_name_split[:-1])
                 suffix = file_name_split[-1]
                 file.rename(file.with_name(f'{file_real_stem}{artifact_manager.suffix}.{suffix}'))
-
 
 ###########
 # Helpers #

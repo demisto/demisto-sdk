@@ -18,6 +18,11 @@
         * `return_error` usage in main function.
         * only once `return_error` usage.
 * Fixed an issue where **lint** command printed logs twice.
+* Fixed the functionality of *suffix* flag in **create-content-artifacts** command.
+* Added support for *prev-ver* flag in **lint** and **secrets** command.
+* Added support for *text* flag to **update-release-notes** command to add the same text to all release notes.
+*
+
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

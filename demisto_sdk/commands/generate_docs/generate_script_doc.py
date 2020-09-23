@@ -47,7 +47,6 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
         used_in = get_used_in(id_set, script_id)
 
         description = script.get('comment', '')
-        deprecated = script.get('deprecated', False)
         # get inputs/outputs
         inputs, inputs_errors = get_inputs(script)
         outputs, outputs_errors = get_outputs(script)
@@ -56,12 +55,9 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
         errors.extend(outputs_errors)
 
         if not description:
-            errors.append('Error! You are missing description for the playbook')
+            errors.append('Error! You are missing a description for the Script')
 
-        if deprecated:
-            doc.append('`Deprecated`')
-
-        doc.append(description)
+        doc.append(description + '\n')
 
         doc.extend(generate_table_section(secript_info, 'Script Data'))
 
@@ -121,9 +117,11 @@ def get_script_info(script_path):
 
     from_version = get_from_version(script_path)
 
-    return [{'Name': 'Script Type', 'Description': script_type},
-            {'Name': 'Tags', 'Description': tags},
-            {'Name': 'Demisto Version', 'Description': from_version}]
+    res = [{'Name': 'Script Type', 'Description': script_type},
+           {'Name': 'Tags', 'Description': tags}]
+    if from_version != '0.0.0':
+        res.append({'Name': 'Demisto Version', 'Description': from_version})
+    return res
 
 
 def get_inputs(script):
@@ -219,7 +217,7 @@ def generate_script_example(script_name, example=None):
     if context_example:
         example.extend([
             '## Context Example',
-            '```',
+            '```json',
             '{}'.format(context_example),
             '```',
             '',

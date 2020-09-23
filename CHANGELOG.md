@@ -4,7 +4,9 @@
 * Fixed an issue where **update-release-notes** was failing with a wrong error message when no pack or input was given.
 * Added new code validations to `XSOAR-linter`.
     * As error messages:
-        * sleep statments for non longrunning integrations.
+        * Longer than10 seconds sleep statements for non long running integrations.
+        * exit() usage.
+        * quit() usage.
     * As warnings messages:
         * `demisto.log` should not be used.
         * main function existence.

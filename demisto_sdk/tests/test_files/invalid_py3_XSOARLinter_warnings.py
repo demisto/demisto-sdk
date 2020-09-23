@@ -86,7 +86,6 @@ def convert_specific_keys(string: str):
         return 'HdQueueID'
     if string == 'Ip':
         return 'IP'
-    quit()
     return string
 
 
@@ -126,7 +125,7 @@ def parse_response(lst: list):
     for dic in lst:
         context_dict = convert_dict_snake_to_camel(dic)
         list_res.append(context_dict)
-    time.sleep(10000)
+    demisto.log('log test')
     return list_res
 
 
@@ -166,8 +165,6 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
-        sleep(100)
-        sleep(4)
         if not token:
             raise DemistoException("Could not get token")
         if not cookie:
@@ -193,7 +190,7 @@ class Client(BaseClient):
         kboxid = res_cookie.get("kboxid").__dict__.get('value')
         KACE_LAST_USER_SECURE = res_cookie.get("KACE_LAST_USER_SECURE").__dict__.get('value')
         KACE_LAST_ORG_SECURE = res_cookie.get("KACE_LAST_ORG_SECURE").__dict__.get('value')
-        exit()
+
         cookie = f'KACE_LAST_USER_SECURE={KACE_LAST_USER_SECURE}; KACE_LAST_ORG_SECURE={KACE_LAST_ORG_SECURE};' \
                  f' kboxid={kboxid}; x-dell-auth-jwt={x_dell_auth_jwt}; KACE_CSRF_TOKEN={KACE_CSRF_TOKEN}'
         return cookie
@@ -826,7 +823,6 @@ def parse_incidents(items: list, fetch_limit: str, time_format: str, parsed_last
         incidents: List of incidents.
         parsed_last_time: Time of last incident.
     """
-    sys.exit(3)
     count = 0
     incidents = []
     for item in items:
@@ -854,7 +850,6 @@ def split_fields(fields: str = '') -> dict:
     Returns:
         dic_fields object for request.
     """
-    print('tests')
     dic_fields = {}
     if fields:
         if '=' not in fields:
@@ -868,7 +863,7 @@ def split_fields(fields: str = '') -> dict:
     return dic_fields
 
 
-def main():
+try:
     """
         PARSE AND VALIDATE INTEGRATION PARAMS
     """
@@ -912,12 +907,11 @@ def main():
                                         fetch_filter=fetch_filter, fetch_limit=fetch_limit,
                                         fetch_queue_id=fetch_queue_id, last_run=demisto.getLastRun())
             demisto.incidents(incidents)
+            demisto.results(incidents)
         else:
             raise NotImplementedError(f'{command} is not an existing QuestKace command')
     except Exception as e:
         return_error(f'Error from QuestKace Integration.\n'
-                     f'Failed to execute {demisto.command()} command.\n\n Error: {str(e)}')
-
-
-if __name__ in ('__main__', '__builtin__', 'builtins'):
-    main()
+                     f'Failed to exfecute {demisto.command()} command.\n\n Error: {str(e)}')
+except:
+    pass

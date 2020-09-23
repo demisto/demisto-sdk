@@ -770,7 +770,8 @@ class ValidateManager:
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        if not prev_ver.startswith('origin'):
+        # If git base not provided - check against origin/prev_ver
+        if '/' not in prev_ver:
             prev_ver = 'origin/' + prev_ver
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(

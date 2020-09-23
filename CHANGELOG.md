@@ -2,6 +2,7 @@
 * Added support for layoutscontainer in **init** contribution flow.
 * Added a validation for tlp_color param in feeds in **validate** command.
 * Fixed an issue where **update-release-notes** was failing with a wrong error message when no pack or input was given.
+* Improved formatting output of the **generate-docs** command.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

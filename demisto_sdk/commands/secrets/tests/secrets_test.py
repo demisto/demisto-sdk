@@ -1,7 +1,6 @@
 import io
 import json
 import os
-import pytest
 import shutil
 
 from demisto_sdk.commands.common.git_tools import git_path

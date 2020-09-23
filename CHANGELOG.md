@@ -15,6 +15,7 @@
         * try-except statement in main function.
         * `return_error` usage in main function.
         * only once `return_error` usage.
+* Fixed an issue where **lint** command printed logs twice.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

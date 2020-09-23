@@ -1,6 +1,23 @@
 # Changelog
+* Fixed an issue where running **validate**, **update-release-notes** outside of content repo crushed without a meaningful error message.
 * Added support for layoutscontainer in **init** contribution flow.
 * Added a validation for tlp_color param in feeds in **validate** command.
+* Added a validation for removal of integration parameters in **validate** command.
+* Fixed an issue where **update-release-notes** was failing with a wrong error message when no pack or input was given.
+* Added new code validations to `XSOAR-linter`.
+    * As error messages:
+        * Longer than 10 seconds sleep statements for non long running integrations.
+        * exit() usage.
+        * quit() usage.
+    * As warnings messages:
+        * `demisto.log` should not be used.
+        * main function existence.
+        * `demito.results` should not be used.
+        * `return_output` should not be used.
+        * try-except statement in main function.
+        * `return_error` usage in main function.
+        * only once `return_error` usage.
+* Fixed an issue where **lint** command printed logs twice.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

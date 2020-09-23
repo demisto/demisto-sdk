@@ -68,13 +68,14 @@ class SecretsValidator(object):
     def __init__(
             self,
             configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
-            input_path=''
+            input_path='', prev_ver=None
     ):
         self.input_paths = input_path.split(',') if input_path else None
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
+        self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -122,8 +123,15 @@ class SecretsValidator(object):
         :param is_circle: boolean to check if being ran from circle
         :return: list: list of text files
         """
-        changed_files_string = run_command("git diff --name-status origin/master...{}".format(branch_name)) \
-            if is_circle else run_command("git diff --name-status --no-merges HEAD")
+        if is_circle:
+            if not self.prev_ver.startswith('origin'):
+                self.prev_ver = 'origin/' + self.prev_ver
+            print(f"Running secrets validation against {self.prev_ver}")
+
+            changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
+        else:
+            print("Running secrets validation on all changes")
+            changed_files_string = run_command("git diff --name-status --no-merges HEAD")
         return list(self.get_diff_text_files(changed_files_string))
 
     def get_diff_text_files(self, files_string):

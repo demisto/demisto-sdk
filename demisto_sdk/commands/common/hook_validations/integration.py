@@ -50,6 +50,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         answers = [
             self.is_changed_context_path(),
+            self.is_removed_integration_parameters(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
             self.is_there_duplicate_args(),
@@ -546,6 +547,23 @@ class IntegrationValidator(ContentEntityValidator):
                         return True
 
         return False
+
+    def is_removed_integration_parameters(self):
+        # type: () -> bool
+        """Check if integration parameters were removed."""
+        is_removed_parameter = False
+        current_configuration = self.current_file.get('configuration', [])
+        old_configuration = self.old_file.get('configuration', [])
+        current_param_names = {param.get('name') for param in current_configuration}
+        old_param_names = {param.get('name') for param in old_configuration}
+        if not old_param_names.issubset(current_param_names):
+            removed_parameters = old_param_names - current_param_names
+            error_message, error_code = Errors.removed_integration_parameters(repr(removed_parameters))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                is_removed_parameter = True
+
+        return is_removed_parameter
 
     @staticmethod
     def _get_field_to_required_dict(integration_json):

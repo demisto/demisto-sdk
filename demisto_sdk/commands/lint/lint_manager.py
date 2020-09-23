@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -53,11 +53,13 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
+        self._prev_ver = prev_ver
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
-                                                    all_packs=all_packs)
+                                                    all_packs=all_packs,
+                                                    base_branch=self._prev_ver)
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -138,7 +140,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
+            -> List[Path]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -146,6 +149,7 @@ class LintManager:
             input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
+            base_branch (str): Name of the branch to run the diff on.
 
         Returns:
             List[Path]: Pkgs to run lint
@@ -166,8 +170,8 @@ class LintManager:
 
         total_found = len(pkgs)
         if git:
-            pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
-                                                        pkgs=pkgs)
+            pkgs = self._filter_changed_packages(content_repo=content_repo,
+                                                 pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -194,28 +198,29 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path]) -> List[Path]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
         Args:
             pkgs(List[Path]): pkgs to check
+            base_branch (str): Name of the branch to run the diff on.
 
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/master{Colors.reset} using branch {Colors.Fg.cyan}"
+        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch != content_repo.heads.master:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         content_repo.remote().refs.master)
-        else:
+        if content_repo.active_branch == 'master':
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
-        changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
-                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
-        all_changed = staged_files.union(changed_from_master)
+        else:
+            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                         f'{content_repo.remote()}/{base_branch}')
+        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
+                             content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
+        all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)
@@ -299,9 +304,9 @@ class LintManager:
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
                         for check, code in EXIT_CODES.items():
-                            if pkg_status["exit_code"] == FAIL & code:
+                            if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                            # if pkg_status['exit_code']
+                                return_exit_code = FAIL
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["pack_type"] not in pkgs_type:

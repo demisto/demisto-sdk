@@ -86,7 +86,6 @@ def convert_specific_keys(string: str):
         return 'HdQueueID'
     if string == 'Ip':
         return 'IP'
-    quit()
     return string
 
 
@@ -126,7 +125,7 @@ def parse_response(lst: list):
     for dic in lst:
         context_dict = convert_dict_snake_to_camel(dic)
         list_res.append(context_dict)
-    time.sleep(10000)
+    demisto.log('log test')
     return list_res
 
 
@@ -166,8 +165,6 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
-        sleep(100)
-        sleep(4)
         if not token:
             raise DemistoException("Could not get token")
         if not cookie:
@@ -193,7 +190,7 @@ class Client(BaseClient):
         kboxid = res_cookie.get("kboxid").__dict__.get('value')
         KACE_LAST_USER_SECURE = res_cookie.get("KACE_LAST_USER_SECURE").__dict__.get('value')
         KACE_LAST_ORG_SECURE = res_cookie.get("KACE_LAST_ORG_SECURE").__dict__.get('value')
-        exit()
+
         cookie = f'KACE_LAST_USER_SECURE={KACE_LAST_USER_SECURE}; KACE_LAST_ORG_SECURE={KACE_LAST_ORG_SECURE};' \
                  f' kboxid={kboxid}; x-dell-auth-jwt={x_dell_auth_jwt}; KACE_CSRF_TOKEN={KACE_CSRF_TOKEN}'
         return cookie
@@ -740,6 +737,7 @@ def shaping_fetch(client: Client, fetch_queue_id: list) -> str:
             'shaping_fields': fetch_shaping,
             'valid_until': int(time.time()) + 3600 * 24
         }
+        return_error('error')
         demisto.setIntegrationContext(integration_context)
     return fetch_shaping
 
@@ -826,7 +824,6 @@ def parse_incidents(items: list, fetch_limit: str, time_format: str, parsed_last
         incidents: List of incidents.
         parsed_last_time: Time of last incident.
     """
-    sys.exit(3)
     count = 0
     incidents = []
     for item in items:
@@ -840,7 +837,7 @@ def parse_incidents(items: list, fetch_limit: str, time_format: str, parsed_last
             'occurred': incident_created_time.strftime(time_format),
             'rawJSON': json.dumps(item)
         }
-
+        return_error('error')
         incidents.append(incident)
         count += 1
         parsed_last_time = incident_created_time
@@ -854,7 +851,6 @@ def split_fields(fields: str = '') -> dict:
     Returns:
         dic_fields object for request.
     """
-    print('tests')
     dic_fields = {}
     if fields:
         if '=' not in fields:
@@ -885,39 +881,32 @@ def main():
     fetch_shaping = params.get('fetch_shaping')
     fetch_filter = params.get('fetch_filter')
     fetch_queue_id = argToList(params.get('fetch_queue_id'))
-    try:
-        client = Client(
-            url=base_url,
-            username=username,
-            password=password,
-            verify=verify_certificate,
-            proxy=proxy)
-        command = demisto.command()
-        LOG(f'Command being called is {command}')
-        # Commands dict
-        commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
-            'test-module': test_module,
-            'kace-machines-list': get_machines_list_command,
-            'kace-assets-list': get_assets_list_command,
-            'kace-queues-list': get_queues_list_command,
-            'kace-tickets-list': get_tickets_list_command,
-            'kace-ticket-create': create_ticket_command,
-            'kace-ticket-update': update_ticket_command,
-            'kace-ticket-delete': delete_ticket_command,
-        }
-        if command in commands:
-            return_outputs(*commands[command](client, demisto.args()))
-        elif command == 'fetch-incidents':
-            incidents = fetch_incidents(client, fetch_time=fetch_time, fetch_shaping=fetch_shaping,
-                                        fetch_filter=fetch_filter, fetch_limit=fetch_limit,
-                                        fetch_queue_id=fetch_queue_id, last_run=demisto.getLastRun())
-            demisto.incidents(incidents)
-        else:
-            raise NotImplementedError(f'{command} is not an existing QuestKace command')
-    except Exception as e:
-        return_error(f'Error from QuestKace Integration.\n'
-                     f'Failed to execute {demisto.command()} command.\n\n Error: {str(e)}')
-
-
-if __name__ in ('__main__', '__builtin__', 'builtins'):
-    main()
+    client = Client(
+        url=base_url,
+        username=username,
+        password=password,
+        verify=verify_certificate,
+        proxy=proxy)
+    command = demisto.command()
+    LOG(f'Command being called is {command}')
+    # Commands dict
+    commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
+        'test-module': test_module,
+        'kace-machines-list': get_machines_list_command,
+        'kace-assets-list': get_assets_list_command,
+        'kace-queues-list': get_queues_list_command,
+        'kace-tickets-list': get_tickets_list_command,
+        'kace-ticket-create': create_ticket_command,
+        'kace-ticket-update': update_ticket_command,
+        'kace-ticket-delete': delete_ticket_command,
+    }
+    if command in commands:
+        return_outputs(*commands[command](client, demisto.args()))
+    elif command == 'fetch-incidents':
+        incidents = fetch_incidents(client, fetch_time=fetch_time, fetch_shaping=fetch_shaping,
+                                    fetch_filter=fetch_filter, fetch_limit=fetch_limit,
+                                    fetch_queue_id=fetch_queue_id, last_run=demisto.getLastRun())
+        demisto.incidents(incidents)
+        demisto.results(incidents)
+    else:
+        raise NotImplementedError(f'{command} is not an existing QuestKace command')

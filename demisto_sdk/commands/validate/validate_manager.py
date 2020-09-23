@@ -770,7 +770,8 @@ class ValidateManager:
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-
+        if not prev_ver.startswith('origin'):
+            prev_ver = 'origin/' + prev_ver
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')

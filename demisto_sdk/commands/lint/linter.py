@@ -345,6 +345,8 @@ class Linter:
            int:  0 on successful else 1, errors
            str: Xsoar linter errors
         """
+        status = SUCCESS
+        FAIL_PYLINT = 0b10
         with pylint_plugin(self._pack_abs_dir):
             log_prompt = f"{self._pack_name} - XSOAR Linter"
             logger.info(f"{log_prompt} - Start")
@@ -359,20 +361,29 @@ class Linter:
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
-
-        if exit_code == WARNING:
-            logger.warning(f"{log_prompt} - Finished warnings found : {stdout}")
-            return SUCCESS, stdout
+        if exit_code & FAIL_PYLINT:
+            logger.info(f"{log_prompt}- Finished errors found")
+            status = FAIL
+        elif exit_code & WARNING:
+            logger.info(f"{log_prompt} - Finished warnings found : {stdout}")
+        # if pylint did not run and failure exit code has been returned from run commnad
+        elif exit_code & FAIL:
+            status = FAIL
+            # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
+            if os.environ.get('CI'):
+                stdout = "Xsoar linter could not run, Please merge from master"
+            else:
+                stdout = "Xsoar linter could not run, please make sure you have" \
+                         " the necessary Pylint version for both py2 and py3"
+            logger.info(f"{log_prompt}- Finished errors found")
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
-        if exit_code:
-            logger.info(f"{log_prompt}- Finished errors found")
-            return FAIL, stdout
 
-        logger.info(f"{log_prompt} - Successfully finished")
+        if not exit_code:
+            logger.info(f"{log_prompt} - Successfully finished")
 
-        return SUCCESS, ""
+        return status, stdout
 
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir

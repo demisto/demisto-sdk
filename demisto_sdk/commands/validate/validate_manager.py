@@ -54,6 +54,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_content_release_identifier,
+                                               get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
@@ -941,10 +942,6 @@ class ValidateManager:
     """ ######################################## Validate Tools ############################################### """
 
     @staticmethod
-    def get_pack_ignore_file_path(pack_name):
-        return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
-
-    @staticmethod
     def create_ignored_errors_list(errors_to_check):
         ignored_error_list = []
         all_errors = ERROR_CODE.values()
@@ -978,7 +975,7 @@ class ValidateManager:
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list = {}
         if pack_name:
-            pack_ignore_path = self.get_pack_ignore_file_path(pack_name)
+            pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
             if os.path.isfile(pack_ignore_path):
                 try:

@@ -387,7 +387,7 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(lint_status=lint_status)
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status)
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -598,7 +598,8 @@ class LintManager:
                     print(wrapper_image.fill(image["image"]))
                     print(wrapper_error.fill(image["image_errors"]))
 
-    def report_summary(self, lint_status: dict):
+    @staticmethod
+    def report_summary(pkg, lint_status: dict):
         """ Log failed image creation if occured
 
         Args:
@@ -622,8 +623,8 @@ class LintManager:
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
-        print(f"Packages: {len(self._pkgs)}")
-        print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
+        print(f"Packages: {len(pkg)}")
+        print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
         print(f"Packages WARNING: {Colors.Fg.yellow}{len(warnings)}{Colors.reset}")
 

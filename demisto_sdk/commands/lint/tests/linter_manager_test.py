@@ -1,4 +1,5 @@
 import os
+from pathlib import PosixPath
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -287,3 +288,59 @@ def test_report_warning_lint_checks_all_packages_tests(capsys):
                                                         pkgs_status=pkgs_status, all_packs=True)
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_report_summary_with_warnings(capsys):
+    """
+    Given:
+        - Lint manager dictionary with one pack which has warnings.
+
+    When:
+        - Creating summary of the lint.
+
+    Then:
+        - Ensure that there are warnings printed in the summary and failed packs.
+    """
+    from demisto_sdk.commands.lint import lint_manager
+    lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
+                   'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
+                   'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
+                   'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'], 'warning_packs_bandit': [],
+                   'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
+                   'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
+                   'warning_packs_image': []}
+    pkg = [PosixPath('/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
+    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
+    captured = capsys.readouterr()
+    assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
+    assert "Packages WARNING: \x1b[93m1\x1b[0m" in captured.out
+    assert "Packages FAIL: [31m1[0m" in captured.out
+
+
+def test_report_summary_no_warnings(capsys):
+    """
+    Given:
+        - Lint manager dictionary with one pack which has warnings.
+
+    When:
+        - Creating summary of the lint.
+
+    Then:
+        - Ensure that there are no warnings printed in the summary and all passed.
+    """
+    from demisto_sdk.commands.lint import lint_manager
+    lint_status = {'fail_packs_flake8': [], 'fail_packs_XSOAR_linter': [],
+                   'fail_packs_bandit': [], 'fail_packs_mypy': [], 'fail_packs_vulture': [],
+                   'fail_packs_pylint': [], 'fail_packs_pytest': [],
+                   'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': [], 'warning_packs_bandit': [],
+                   'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
+                   'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
+                   'warning_packs_image': []}
+    pkg = [PosixPath('/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
+    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
+    captured = capsys.readouterr()
+    assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
+    assert "Packages WARNING: \x1b[93m0\x1b[0m" in captured.out
+    assert "Packages FAIL: [31m0[0m" in captured.out

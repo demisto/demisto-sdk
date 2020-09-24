@@ -881,7 +881,7 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -i parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+    if not is_all and (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
@@ -899,7 +899,7 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type,
+            update_pack_rn = UpdateRN(pack_path='', pack=pack, update_type=update_type,
                                       modified_files_in_pack=modified.union(old), pre_release=pre_release,
                                       added_files=added, specific_version=specific_version, text=text)
             update_pack_rn.execute_update()

@@ -306,7 +306,6 @@ class LintManager:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                                return_exit_code = FAIL
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
@@ -332,7 +331,8 @@ class LintManager:
                              skipped_code=int(skipped_code),
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
-
+        if return_exit_code:
+            return_exit_code = FAIL
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int,

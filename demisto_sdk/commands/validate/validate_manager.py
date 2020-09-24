@@ -770,7 +770,8 @@ class ValidateManager:
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        if not prev_ver.startswith('origin'):
+        # If git base not provided - check against origin/prev_ver
+        if '/' not in prev_ver:
             prev_ver = 'origin/' + prev_ver
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
@@ -786,13 +787,13 @@ class ValidateManager:
                 if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files from fork against the content master")
 
-                # all local non-committed changes and changes against prev_ver
+                # only changes against prev_ver (without local changes)
                 all_changed_files_string = run_command(
                     'git diff --name-status upstream/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
-                # only changes against prev_ver (without local changes)
+                # all local non-committed changes and changes against prev_ver
                 outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
@@ -806,12 +807,12 @@ class ValidateManager:
                 if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files against the content master")
 
-                # all local non-committed changes and changes against prev_ver
+                # only changes against prev_ver (without local changes)
                 all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
-                # only changes against prev_ver (without local changes)
+                # all local non-committed changes and changes against prev_ver
                 outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
@@ -827,7 +828,7 @@ class ValidateManager:
                 changed_meta_files_from_tag.intersection(nc_changed_meta_files))
 
             modified_files = modified_files - set(nc_deleted_files)
-            added_files = added_files - set(nc_modified_files) - set(nc_deleted_files)
+            added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
         modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))

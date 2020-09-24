@@ -12,8 +12,7 @@ from demisto_sdk.commands.format.update_incidenttype import \
     IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
-from demisto_sdk.commands.format.update_layout import (
-    LayoutJSONFormat, LayoutsContainerJSONFormat)
+from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
@@ -25,6 +24,7 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INCIDENTTYPE_COPY,
     DESTINATION_FORMAT_INDICATORFIELD_COPY,
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
+    DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
     DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
     INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
@@ -59,16 +59,16 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
-        os.remove(target)
-        os.rmdir(path)
+        res = format_manager(input=target, output=target, verbose=True)
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
 
         assert res is answer
 
     @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(input=invalid_output, output=invalid_output)
+            res_invalid = format_manager(input=invalid_output, output=invalid_output, verbose=True)
             assert res_invalid
         except Exception as e:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
@@ -186,12 +186,13 @@ class TestFormattingLayoutscontainer:
     def layoutscontainer_copy(self):
         os.makedirs(LAYOUTS_CONTAINER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
-        os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
-        os.rmdir(LAYOUTS_CONTAINER_PATH)
+        if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
+            os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+        shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
-        layoutscontainer_formatter = LayoutsContainerJSONFormat(
+        layoutscontainer_formatter = LayoutBaseFormat(
             input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
@@ -261,6 +262,26 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.set_fromVersion('6.0.0')
         assert layoutscontainer_formatter.data.get('fromVersion') == '6.0.0'
 
+    def test_set_output_path(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layout file without an invalid output path
+            - The input is the same as the output
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the output file path was updated with the correct path
+            - Ensure the original file was renamed
+        """
+        expected_path = 'Layouts/layoutscontainer-formatted_layoutscontainer-test.json'
+        invalid_output_path = layoutscontainer_formatter.output_file
+        layoutscontainer_formatter.layoutscontainer__set_output_path()
+        assert invalid_output_path != layoutscontainer_formatter.output_file
+        assert expected_path == layoutscontainer_formatter.output_file
+
+        # since we are renaming the file, we need to clean it here
+        os.remove(layoutscontainer_formatter.output_file)
+
 
 class TestFormattingLayout:
 
@@ -273,7 +294,11 @@ class TestFormattingLayout:
 
     @pytest.fixture(autouse=True)
     def layouts_formatter(self, layouts_copy):
-        yield LayoutJSONFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
+        yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
+
+    @pytest.fixture(autouse=True)
+    def invalid_path_layouts_formatter(self, layouts_copy):
+        yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY)
 
     def test_remove_unnecessary_keys(self, layouts_formatter):
         """
@@ -313,6 +338,21 @@ class TestFormattingLayout:
         layouts_formatter.set_toVersion()
         assert layouts_formatter.data.get('toVersion') == '5.9.9'
 
+    def test_set_output_path(self, invalid_path_layouts_formatter):
+        """
+        Given
+            - A layout file without an invalid output path
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the output file path was updated with the correct path
+        """
+        expected_path = 'Layouts/layout-layoutt-copy.json'
+        invalid_output_path = invalid_path_layouts_formatter.output_file
+        invalid_path_layouts_formatter.layout__set_output_path()
+        assert invalid_output_path != invalid_path_layouts_formatter.output_file
+        assert expected_path == invalid_path_layouts_formatter.output_file
+
 
 class TestFormattingClassifier:
 
@@ -341,6 +381,21 @@ class TestFormattingClassifier:
         for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
                       'system', 'toServerVersion']:
             assert field not in classifier_formatter.data
+
+    def test_arguments_to_remove(self, classifier_formatter):
+        """
+        Given
+            - A classifier file with fields that dont exit in classifier schema.
+        When
+            - Run the arguments_to_remove function.
+        Then
+            - Ensure the keys that should be removed are identified correctly.
+        """
+        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
+        args_to_remove = classifier_formatter.arguments_to_remove()
+        expected_args = ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
+                         'system', 'toServerVersion', 'sourceClassifierId', 'fromServerVersion', 'nameRaw']
+        assert set(expected_args) == args_to_remove
 
     def test_set_keyTypeMap(self, classifier_formatter):
         """

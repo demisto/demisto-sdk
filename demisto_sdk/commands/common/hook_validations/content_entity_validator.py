@@ -17,9 +17,11 @@ class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False):
-        # type: (StructureValidator, dict, bool, bool) -> None
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 suppress_print=False):
+        # type: (StructureValidator, dict, bool, bool, bool) -> None
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
@@ -131,7 +133,7 @@ class ContentEntityValidator(BaseValidator):
         conf_json_tests = self._load_conf_file()['tests']
         file_type = self.structure_validator.scheme_name
         if not isinstance(file_type, str):
-            file_type = file_type.value
+            file_type = file_type.value  # type: ignore
 
         content_item_id = _get_file_id(file_type, self.current_file)
 

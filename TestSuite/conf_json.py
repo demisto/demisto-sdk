@@ -39,4 +39,4 @@ class ConfJSON:
             'nightly_integrations': nightly_integrations,
             'unmockable_integrations': unmockable_integrations,
             'docker_thresholds': docker_thresholds
-        }))
+        }), None)

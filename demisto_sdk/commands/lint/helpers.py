@@ -28,6 +28,7 @@ PYTHON2_REQ = ["flake8", "vulture"]
 # Define check exit code if failed
 EXIT_CODES = {
     "flake8": 0b1,
+    "XSOAR_linter": 0b1000000000,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
@@ -42,10 +43,11 @@ EXIT_CODES = {
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
+WARNING = 0b100
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -71,9 +73,11 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_xsoar_linter: bool,
                             no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
+    no_xsoar_linter(bool): Whether to skip xsoar linter.
     no_bandit(bool): Whether to skip bandit.
     no_mypy(bool): Whether to skip mypy.
     no_vulture(bool): Whether to skip vulture
@@ -87,6 +91,8 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     if not os.environ.get('CI'):
         if no_flake8:
             skipped_code |= EXIT_CODES["flake8"]
+        if no_xsoar_linter:
+            skipped_code |= EXIT_CODES["XSOAR_linter"]
         if no_bandit:
             skipped_code |= EXIT_CODES["bandit"]
         if no_mypy or not docker_engine:
@@ -133,7 +139,10 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
         for module in modules:
-            modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            try:
+                modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            except FileNotFoundError:
+                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
@@ -376,3 +385,25 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
+
+
+@contextmanager
+def pylint_plugin(dest: Path):
+    """
+    Function which links the given path with the content of pylint plugins folder in resources.
+    The main purpose is to link each pack with the pylint plugins.
+    Args:
+        dest: Pack path.
+    """
+    plugin_dirs = Path(__file__).parent / 'resources' / 'pylint_plugins'
+
+    try:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                os.link(file, dest / file.name)
+
+        yield
+    finally:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                (dest / f'{file.name}').unlink()

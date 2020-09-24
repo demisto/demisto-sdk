@@ -25,6 +25,7 @@ TOOLS_DIR = 'Tools'
 RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
+DOCUMENTATION_DIR = 'Documentation'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -32,6 +33,7 @@ INTEGRATION = 'integration'
 PLAYBOOK = 'playbook'
 TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
+LAYOUTS_CONTAINER = 'layoutscontainer'
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -40,9 +42,13 @@ CLASSIFIER = 'classifier'
 DASHBOARD = 'dashboard'
 REPORT = 'report'
 INDICATOR_TYPE = 'reputation'
+OLD_INDICATOR_TYPE = 'reputations'
 WIDGET = 'widget'
 TOOL = 'tools'
 BETA_INTEGRATION = 'betaintegration'
+DOCUMENTATION = 'doc'
+MAPPER = 'classifier-mapper'
+CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
 
 
@@ -71,6 +77,7 @@ class FileType(Enum):
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'
+    DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
@@ -82,6 +89,7 @@ ENTITY_TYPE_TO_DIR = {
     SCRIPT: SCRIPTS_DIR,
     AUTOMATION: SCRIPTS_DIR,
     LAYOUT: LAYOUTS_DIR,
+    LAYOUTS_CONTAINER: LAYOUTS_DIR,
     INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
     INCIDENT_TYPE: INCIDENT_TYPES_DIR,
     INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
@@ -647,6 +655,8 @@ IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_R
 
 IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
 
+PACK_IGNORE_TEST_FLAG = 'auto-test'
+
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
 OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
@@ -841,12 +851,14 @@ IOC_OUTPUTS_DICT = {
     'ip': {'IP.Address'},
     'url': {'URL.Data'}
 }
-
-PACK_INITIAL_VERSION = '1.0.0'
-PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
+PACK_INITIAL_VERSION = '1.0.0'
+PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
+
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
+MARKETPLACE_LIVE_DISCUSSIONS = \
+    'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -913,6 +925,14 @@ FEED_REQUIRED_PARAMS = [
         'name': 'feedTags',
         'required': False,
         'type': 0
+    },
+    {
+        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
+        'display': 'Traffic Light Protocol Color',
+        'name': 'tlp_color',
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+        'required': False,
+        'type': 15
     }
 ]
 
@@ -930,6 +950,22 @@ FETCH_REQUIRED_PARAMS = [
         'type': 8
     }
 ]
+
+MAX_FETCH_PARAM = {
+    'name': 'max_fetch',
+    'required': False,
+    'type': 0,
+    'defaultvalue': '50'
+}
+
+# for reference, the defaultvalue and display are not enforced.
+FIRST_FETCH_PARAM = {
+    'defaultvalue': '7 days',
+    'display': 'First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)',
+    'name': 'first_fetch',
+    'required': False,
+    'type': 0
+}
 
 DOCS_COMMAND_SECTION_REGEX = r'(?:###\s{}).+?(?:(?=(?:\n###\s))|(?=(?:\n##\s))|\Z)'
 # Ignore list for all 'run_all_validations_on_file' method
@@ -956,3 +992,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts'
 ]
+
+FIRST_FETCH = 'first_fetch'
+
+MAX_FETCH = 'max_fetch'

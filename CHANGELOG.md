@@ -1,4 +1,67 @@
 # Changelog
+* Fixed an issue where running **validate**, **update-release-notes** outside of content repo crushed without a meaningful error message.
+* Added support for layoutscontainer in **init** contribution flow.
+* Added a validation for tlp_color param in feeds in **validate** command.
+* Added a validation for removal of integration parameters in **validate** command.
+* Fixed an issue where **update-release-notes** was failing with a wrong error message when no pack or input was given.
+* Added new code validations to `XSOAR-linter`.
+    * As error messages:
+        * Longer than 10 seconds sleep statements for non long running integrations.
+        * exit() usage.
+        * quit() usage.
+    * As warnings messages:
+        * `demisto.log` should not be used.
+        * main function existence.
+        * `demito.results` should not be used.
+        * `return_output` should not be used.
+        * try-except statement in main function.
+        * `return_error` usage in main function.
+        * only once `return_error` usage.
+* Fixed an issue where **lint** command printed logs twice.
+* Fixed an issue where *suffix* did not work as expected in the **create-content-artifacts** command.
+* Added support for *prev-ver* flag in **lint** and **secrets** commands.
+* Added support for *text* flag to **update-release-notes** command to add the same text to all release notes.
+* Fixed an issue where **validate** did not recognize added files if they were modified locally.
+
+# 1.2.1
+* Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
+    * `Sys.exit` usages with non zero value.
+    * Any `Print` usages.
+* Fixed an issue where renamed files were failing on *validate*.
+* Fixed an issue where single changed files did not required release notes update.
+* Fixed an issue where doc_images required release-notes and validations.
+* Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Added handling of dependent packs when running **validate** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will validate that the dependent pack has release notes as well.
+* Fixed an issue where the find_type function didn't recognize file types correctly.
+* Fixed an issue where **update-release-notes** command did not work properly on Windows.
+* Added support for indicator fields in **update-release-notes** command.
+* Fixed an issue where files in test dirs where being validated.
+
+
+# 1.2.0
+* Fixed an issue where **format** did not update the test playbook from its pack.
+* Fixed an issue where **validate** validated non integration images.
+* Fixed an issue where **update-release-notes** did not identified old yml integrations and scripts.
+* Added revision templates to the **update-release-notes** command.
+* Fixed an issue where **update-release-notes** crashed when a file was renamed.
+* Fixed an issue where **validate** failed on deleted files.
+* Fixed an issue where **validate** validated all images instead of packs only.
+* Fixed an issue where a warning was not printed in the **format** in case a non-supported file type is inputted.
+* Fixed an issue where **validate** did not fail if no release notes were added when adding files to existing packs.
+* Added handling of incorrect layout paths via the **format** command.
+* Refactor **create-content-artifacts** command - Efficient artifacts creation and better logging.
+* Fixed an issue where image and description files were not handled correctly by **validate** and **update-release-notes** commands.
+* Fixed an issue where the **format** command didn't remove all extra fields in a file.
+* Added an error in case an invalid id_set.json file is found while running the **validate** command.
+* Added fetch params checks to the **validate** command.
+
+# 1.1.11
+* Added line number to secrets' path in **secrets** command report.
+* Fixed an issue where **init** a community pack did not present the valid support URL.
 * Fixed an issue where **init** offered a non relevant pack support type.
 * Fixed an issue where **lint** did not pull docker images for powershell.
 * Fixed an issue where **find-dependencies** did not find all the script dependencies.
@@ -8,9 +71,13 @@
 * Updated the missing release notes error message (RN106) in the **Validate** command.
 * Fixed an issue where **Validate** would return missing release notes when two packs with the same substring existed in the modified files.
 * Fixed an issue where **update-release-notes** would add duplicate release notes when two packs with the same substring existed in the modified files.
+* Fixed an issue where **update-release-notes** would fail to bump new versions if the feature branch was out of sync with the master branch.
 * Fixed an issue where a non-descriptive error would be returned when giving the **update-release-notes** command a pack which can not be found.
 * Added dependencies check for *widgets* in **find-dependencies** command.
+* Added a `update-docker` flag to **format** command.
 * Added a `json-to-outputs` flag to the **run** command.
+* Added a verbose (`-v`) flag to **format** command.
+* Fixed an issue where **download** added the prefix "playbook-" to the name of playbooks.
 
 # 1.1.10
 * Updated the **init** command. Relevant only when passing the *--contribution* argument.
@@ -29,6 +96,7 @@
 * **update-release-notes** command now accept path of the pack instead of pack name.
 * Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
 * Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
+* Fixed an issue where **validate** did not check for missing release notes in old format files.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

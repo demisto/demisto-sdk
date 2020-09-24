@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (print_error, print_v,
                                                print_warning)
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, PWSH_CHECKS,
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                get_test_modules, validate_env)
@@ -43,7 +43,7 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -53,11 +53,13 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
+        self._prev_ver = prev_ver
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
-                                                    all_packs=all_packs)
+                                                    all_packs=all_packs,
+                                                    base_branch=self._prev_ver)
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -136,10 +138,10 @@ class LintManager:
                           "test which require docker!")
             logger.info("demisto-sdk-Can't communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
-
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool) -> List[Path]:
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
+            -> List[Path]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -147,6 +149,7 @@ class LintManager:
             input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
+            base_branch (str): Name of the branch to run the diff on.
 
         Returns:
             List[Path]: Pkgs to run lint
@@ -167,8 +170,8 @@ class LintManager:
 
         total_found = len(pkgs)
         if git:
-            pkgs = LintManager._filter_changed_packages(content_repo=content_repo,
-                                                        pkgs=pkgs)
+            pkgs = self._filter_changed_packages(content_repo=content_repo,
+                                                 pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -195,33 +198,34 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path]) -> List[Path]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
         """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
         run on Lint.
 
         Args:
             pkgs(List[Path]): pkgs to check
+            base_branch (str): Name of the branch to run the diff on.
 
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/master{Colors.reset} using branch {Colors.Fg.cyan}"
+        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
               f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch != content_repo.heads.master:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         content_repo.remote().refs.master)
-        else:
+        if content_repo.active_branch == 'master':
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
-        changed_from_master = {content_repo.working_dir / Path(item.b_path).parent for item in
-                               content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
-        all_changed = staged_files.union(changed_from_master)
+        else:
+            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                         f'{content_repo.remote()}/{base_branch}')
+        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
+                             content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
+        all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -230,6 +234,7 @@ class LintManager:
         Args:
             parallel(int): Whether to run command on multiple threads
             no_flake8(bool): Whether to skip flake8
+            no_xsoar_linter(bool): Whether to skip xsoar linter
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
@@ -246,6 +251,7 @@ class LintManager:
         """
         lint_status: Dict = {
             "fail_packs_flake8": [],
+            "fail_packs_XSOAR_linter": [],
             "fail_packs_bandit": [],
             "fail_packs_mypy": [],
             "fail_packs_vulture": [],
@@ -264,7 +270,7 @@ class LintManager:
 
         # Skiped lint and test codes
         skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
-                                               no_vulture=no_vulture,
+                                               no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
@@ -284,6 +290,7 @@ class LintManager:
                                                no_bandit=no_bandit,
                                                no_mypy=no_mypy,
                                                no_vulture=no_vulture,
+                                               no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint,
                                                no_test=no_test,
                                                no_pwsh_analyze=no_pwsh_analyze,
@@ -299,6 +306,7 @@ class LintManager:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                                return_exit_code = FAIL
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
@@ -365,7 +373,10 @@ class LintManager:
         longest_check_key = len(max(EXIT_CODES.keys(), key=len))
         for check, code in EXIT_CODES.items():
             spacing = longest_check_key - len(check)
-            check_str = check.capitalize().replace('_', ' ')
+            if 'XSOAR_linter' in check:
+                check_str = check.replace('_', ' ')
+            else:
+                check_str = check.capitalize().replace('_', ' ')
             if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
                 if code & skipped_code:
                     print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
@@ -385,7 +396,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "bandit", "mypy", "vulture"]:
+        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")

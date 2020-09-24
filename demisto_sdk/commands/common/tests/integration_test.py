@@ -4,7 +4,9 @@ from typing import Optional
 
 import pytest
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS)
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH_PARAM,
+                                                   MAX_FETCH_PARAM)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
@@ -52,6 +54,31 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
+
+    IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
+        ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, False),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}, {"name": "test2"}]}, True),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "old_param"}, {"name": "test2"}]}, True),
+    ]
+
+    @pytest.mark.parametrize("current_file, old_file, answer", IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS)
+    def test_is_removed_integration_parameters(self, current_file, old_file, answer):
+        """
+        Given
+        - integration configuration with different parameters
+
+        When
+        - running the validation is_removed_integration_parameters()
+
+        Then
+        - upon removal of parameters: it should set is_valid to False and return True
+        - upon non removal or addition of parameters: it should set is_valid to True and return False
+        """
+        structure = mock_structure("", current_file, old_file)
+        validator = IntegrationValidator(structure)
+        assert validator.is_removed_integration_parameters() is answer
+        assert validator.is_valid is not answer
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -130,7 +157,7 @@ class TestIntegrationValidator:
     def test_with_duplicate_params(self, print_error):
         """
         Given
-        - integration configuratiton contains duplicate parameter (called test)
+        - integration configuration contains duplicate parameter (called test)
 
         When
         - running the validation is_there_duplicate_params()
@@ -512,6 +539,56 @@ class TestIsFetchParamsExist:
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
         assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
+
+
+class TestIsValidMaxFetchAndFirstFetch:
+    """
+    Given
+    - yml file of integration as config
+    When
+    - run validate checks
+    Then
+    - if the isfetch identifier is true make sure the first_fetch and max_fetch params exists
+    - make sure max_fetch param has a default value
+    """
+
+    def setup(self):
+        config = {
+            'configuration': deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
+            'script': {'isfetch': True}
+        }
+        self.validator = IntegrationValidator(mock_structure("", config))
+
+    def test_valid(self):
+        assert self.validator.is_valid_max_fetch_and_first_fetch(), 'is_valid_fetch() returns False instead True'
+
+    def test_missing_max_fetch(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'max_fetch']
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_missing_default_value_in_max_fetch(self):
+        # missing param in configuration
+        for param in self.validator.current_file['configuration']:
+            if param.get('name') == 'max_fetch':
+                param.pop('defaultvalue')
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_missing_fetch_time(self):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'first_fetch']
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+            'is_valid_fetch() returns True instead False'
+
+    def test_not_fetch(self):
+        self.validator.is_valid = True
+        self.validator.current_file['script']['isfetch'] = False
+        assert self.validator.is_valid_max_fetch_and_first_fetch(),\
+            'is_valid_fetch() returns False instead True'
 
 
 class TestIsFeedParamsExist:

@@ -386,9 +386,10 @@ class Linter:
         if exit_code & FAIL_PYLINT:
             logger.info(f"{log_prompt}- Finished errors found")
             status = FAIL
-        elif exit_code & WARNING:
-            logger.info(f"{log_prompt} - Finished warnings found : {stdout}")
-            status = WARNING
+        if exit_code & WARNING:
+            logger.info(f"{log_prompt} - Finished warnings found")
+            if not status:
+                status = WARNING
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL

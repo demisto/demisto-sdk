@@ -457,7 +457,7 @@ class LintManager:
                 print(f"\n{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.yellow}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}\n")
-                for fail_pack in lint_status[f"fail_packs_{check}"]:
+                for fail_pack in lint_status[f"warning_packs_{check}"]:
                     print(f"{Colors.Fg.yellow}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_warnings"])
 
@@ -605,8 +605,12 @@ class LintManager:
                                                  subsequent_indent=' ' * len(fail_pack_prefix))
         # intersection of all failed packages
         failed: Set[str] = set()
-        for packs in lint_status.values():
-            failed = failed.union(packs)
+        warnings: Set[str] = set()
+        for key in lint_status:
+            if key.startswith('fail'):
+                failed = failed.union(lint_status[key])
+            if key.startswith('warning'):
+                warnings = warnings.union(lint_status[key])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -615,6 +619,8 @@ class LintManager:
         print(f"Packages: {len(self._pkgs)}")
         print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
+        print(f"Packages WARNING: {Colors.Fg.yellow}{len(warnings)}{Colors.reset}")
+
         if failed:
             print("Failed packages:")
         for fail_pack in failed:

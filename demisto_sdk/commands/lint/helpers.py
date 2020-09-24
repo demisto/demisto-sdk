@@ -407,3 +407,15 @@ def pylint_plugin(dest: Path):
         for file in plugin_dirs.iterdir():
             if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
                 (dest / f'{file.name}').unlink()
+
+
+def split_warnings_errors(output: str):
+    output_lst = output.split('\n')
+    warnings_list = []
+    error_list = []
+    for msg in output_lst:
+        if msg.startswith('W'):
+            warnings_list.append(msg)
+        elif msg.startswith('E'):
+            error_list.append(msg)
+    return error_list, warnings_list

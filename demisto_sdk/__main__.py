@@ -40,6 +40,8 @@ from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
 # Import demisto-sdk commands
+from demisto_sdk.commands.response_to_mapping_fields.response_to_mapping_fields import \
+    ResponseToMappingFields
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
@@ -1074,6 +1076,26 @@ def openapi_codegen_command(**kwargs):
     else:
         tools.print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)
+
+
+# ====================== response-to-mapping-fields ====================== #
+@main.command(name="response-to-mapping-fields",
+              short_help='''Generates a mapped fields to use in get-mapping-fields command''',
+              help='''Generates a scheme from a given JSON file that will map each key to a value as {'key': 1}
+               will result in {'key': 'int'}''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input-file', help='A response from an API to generate a scheme for. The file must be in JSON format',
+    required=True)
+@click.option(
+    '-o', '--output-file', help='An output path to write the file to. If not given, the command will create a new file.',
+    required=False)
+def generate_scheme(**kwargs):
+    input_path = kwargs['input_file']
+    output = kwargs.get('output_file', None)
+    ResponseToMappingFields().run(input_path, output)
 
 
 @main.resultcallback()

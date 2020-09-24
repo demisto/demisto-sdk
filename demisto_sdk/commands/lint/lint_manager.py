@@ -350,9 +350,10 @@ class LintManager:
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
+        # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
+        # then 512 and will not cause failure on the exit code.
         if return_exit_code:
             return_exit_code = FAIL
-
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int, skipped_code: int,

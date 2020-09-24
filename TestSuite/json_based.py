@@ -18,7 +18,7 @@ class JSONBased:
         self.write_json({})
 
     def write_json(self, obj: dict):
-        self._file_path.write_text(json.dumps(obj))
+        self._file_path.write_text(json.dumps(obj), None)
 
     def get_path_from_pack(self):
         dir_parts = str(self._file_path).split('/')

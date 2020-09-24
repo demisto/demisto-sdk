@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False):
+                 pack_metadata_only: bool = False, text: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -44,6 +44,7 @@ class UpdateRN:
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
+        self.text = text
         self.pack_metadata_only = pack_metadata_only
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -342,7 +343,7 @@ class UpdateRN:
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
-            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file)
+            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file, self.text)
             if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
@@ -408,9 +409,10 @@ class UpdateRN:
                     rn_string += '\n#### Indicator Fields\n'
                     ind_fld_header = True
                 rn_string += rn_desc
+
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file):
+    def build_rn_desc(self, _type, content_name, desc, is_new_file, text):
         if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
                      'Indicator Fields'):
             rn_desc = f'- **{content_name}**\n'
@@ -424,7 +426,8 @@ class UpdateRN:
                 elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += '- %%UPDATE_RN%%\n'
+                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
         return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):

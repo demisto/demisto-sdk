@@ -56,6 +56,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_deprecated_integration_display_name": "IN127",
     "invalid_deprecated_integration_description": "IN128",
+    "removed_integration_parameters": "IN129",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -339,6 +340,11 @@ class Errors:
     @error_code_decorator
     def added_required_fields(field):
         return "You've added required, the field is '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
+    def removed_integration_parameters(field):
+        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
 
     @staticmethod
     @error_code_decorator

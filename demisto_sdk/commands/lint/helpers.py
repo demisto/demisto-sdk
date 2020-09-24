@@ -39,13 +39,11 @@ EXIT_CODES = {
     "image": 0b100000000,
 }
 
-
 # Execution exit codes
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
 WARNING = 0b100
-
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
@@ -141,7 +139,10 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
         for module in modules:
-            modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            try:
+                modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            except FileNotFoundError:
+                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:

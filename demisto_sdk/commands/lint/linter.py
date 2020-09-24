@@ -282,6 +282,7 @@ class Linter:
         """
         warning = []
         error = []
+        other = []
         if self._facts["lint_files"]:
             exit_code: int = 0
             for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
@@ -304,13 +305,18 @@ class Linter:
 
                 # check for any exit code other than 0
                 if exit_code:
-                    error, warning = split_warnings_errors(output)
+                    error, warning, other = split_warnings_errors(output)
                 if exit_code and warning:
                     self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
                 if exit_code & FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # if the error were extracted correctly as they start with E
+                    if error:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # if there were errors but they do not start with E
+                    else:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
         if self._facts['lint_unittest_files']:
             for lint_check in ["flake8"]:
@@ -320,10 +326,14 @@ class Linter:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
-                    error, warning = split_warnings_errors(output)
+                    error, warning, other = split_warnings_errors(output)
                 if exit_code & FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    if error:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # for errors whihc start with 'E'
+                    else:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
                 if exit_code and WARNING:
                     self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
                     self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)

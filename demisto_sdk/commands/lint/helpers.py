@@ -410,6 +410,11 @@ def pylint_plugin(dest: Path):
 
 
 def split_warnings_errors(output: str):
+    """
+        Function which splits the given string into warning messages and error using W or E in the beginning of string
+        Args:
+            output(str): string which contains messages from linters.
+        """
     output_lst = output.split('\n')
     warnings_list = []
     error_list = []

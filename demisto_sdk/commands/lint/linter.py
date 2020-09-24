@@ -301,6 +301,8 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
+
+                # check for any exit code other than 0
                 if exit_code:
                     error, warning = split_warnings_errors(output)
                 if exit_code and warning:

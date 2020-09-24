@@ -363,6 +363,7 @@ class LintManager:
             lint_status(dict): Overall lint status
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
+            return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
 
@@ -443,12 +444,12 @@ class LintManager:
 
     @staticmethod
     def report_warning_lint_checks(lint_status: dict, pkgs_status: dict, return_warning_code: int):
-        """ Log warnings lint log if exsits
+        """ Log warnings lint log if exists
 
         Args:
             lint_status(dict): Overall lint status
             pkgs_status(dict): All pkgs status dict
-            return_warning_code(int): exit code will indicate which lint or test failed
+            return_warning_code(int): exit code will indicate which lint or test caused warnings
         """
         for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_warning_code:

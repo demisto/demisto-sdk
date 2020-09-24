@@ -939,6 +939,7 @@ class ValidateManager:
                             if print_ignored_files:
                                 click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
 
+            # handle a case where a file was deleted locally though recognised as added against master.
             except FileNotFoundError:
                 if file_path not in self.ignored_files:
                     self.ignored_files.add(file_path)

@@ -655,6 +655,8 @@ IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_R
 
 IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
 
+PACK_IGNORE_TEST_FLAG = 'auto-test'
+
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
 OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
@@ -924,14 +926,14 @@ FEED_REQUIRED_PARAMS = [
         'required': False,
         'type': 0
     },
-    # {
-    #     'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
-    #     'display': 'Traffic Light Protocol Color',
-    #     'name': 'tlp_color',
-    #     'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
-    #     'required': False,
-    #     'type': 15
-    # }
+    {
+        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
+        'display': 'Traffic Light Protocol Color',
+        'name': 'tlp_color',
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+        'required': False,
+        'type': 15
+    }
 ]
 
 FETCH_REQUIRED_PARAMS = [

@@ -5,6 +5,7 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
+import demisto_sdk.commands.validate.validate_manager
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
@@ -508,7 +509,8 @@ class TestValidators:
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path, 'fake_pack/.pack-ignore')
 
-        mocker.patch.object(ValidateManager, 'get_pack_ignore_file_path', return_value=test_file)
+        mocker.patch.object(demisto_sdk.commands.validate.validate_manager,
+                            'get_pack_ignore_file_path', return_value=test_file)
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")

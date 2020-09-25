@@ -5,10 +5,11 @@ import os
 import re
 import time
 from collections import OrderedDict
+from datetime import datetime
 from distutils.version import LooseVersion
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 import click
 import networkx
@@ -1036,8 +1037,46 @@ def get_general_paths(path):
     return files
 
 
-def re_create_id_set(id_set_path: str = "./Tests/id_set.json", objects_to_create: list = None,  # noqa: C901
+DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+
+
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
+    """Re create the id set
+
+    Args:
+        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
+            Defaults to DEFAULT_ID_SET_PATH.
+        objects_to_create (list, optional): [description]. Defaults to None.
+
+    Returns: id set object
+    """
+    if id_set_path == "":
+        id_set_path = DEFAULT_ID_SET_PATH
+    if id_set_path and os.path.exists(id_set_path):
+        refresh_interval = int(os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL', -1))
+        if refresh_interval > 0:  # if file is newer than refersh interval use it as is
+            mtime = os.path.getmtime(id_set_path)
+            mtime_dt = datetime.fromtimestamp(mtime)
+            target_time = time.time() - (refresh_interval * 60)
+            if mtime >= target_time:
+                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
+                            f" modify time: {mtime_dt} "
+                            "doesn't require a refresh. Will use current id set. "
+                            "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.", LOG_COLORS.GREEN)
+                with open(id_set_path, mode="r") as f:
+                    return json.load(f)
+            else:
+                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set but current id_set: {id_set_path} "
+                            f"modify time: {mtime_dt} is older than refresh interval. "
+                            "Will re-generate the id set.", LOG_COLORS.GREEN)
+        else:
+            print_color("Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
+                        f"Will re-generate the id set even though file exists: {id_set_path}. "
+                        "If you would like to avoid re-generating the id set every run, you can set the env var "
+                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL to a refresh interval in minutes.", LOG_COLORS.GREEN)
+        print("")  # add an empty line for clarity
+
     if objects_to_create is None:
         objects_to_create = CONTENT_ENTITIES
 

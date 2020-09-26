@@ -7,7 +7,7 @@ class IDSetCreator:
 
         Args:
             output (str, optional): The output path. Set to None to avoid creation of a file. '' means the default path.
-             Defaults to ''.
+             Defaults to 'Tests/id_set.json'.
             print_logs (bool, optional): Print log output. Defaults to True.
         """
         self.output = output

@@ -6,6 +6,8 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc)
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -441,6 +443,17 @@ def test_generate_commands_with_permissions_section():
         '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_script_doc(tmp_path, mocker):
+    d = tmp_path / "script_doc_out"
+    d.mkdir()
+    in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
+    generate_script_doc(in_script, '', str(d), verbose=True)
+    readme = d / "README.md"
+    with open(readme) as f:
+        text = f.read()
+        assert 'There are no outputs for this script.' in text
 
 
 class TestAppendOrReplaceCommandInDocs:

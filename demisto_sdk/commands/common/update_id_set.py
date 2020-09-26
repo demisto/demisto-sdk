@@ -1059,10 +1059,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
         except ValueError:
             refresh_interval = -1
             print_color(
-                f"Re-creating id_set.\n"
-                f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set with value: "
+                "Re-creating id_set.\n"
+                "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set with value: "
                 f"{os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL')} which is an illegal integer."
-                f"\nPlease modify or unset env var.", LOG_COLORS.YELLOW
+                "\nPlease modify or unset env var.", LOG_COLORS.YELLOW
             )
         if refresh_interval > 0:  # if file is newer than refersh interval use it as is
             mtime = os.path.getmtime(id_set_path)

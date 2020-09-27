@@ -1,9 +1,10 @@
+import json
 import os
 
 import pytest
-from demisto_sdk.commands.common import update_id_set
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc)
@@ -450,12 +451,16 @@ def test_generate_script_doc(tmp_path, mocker):
     d = tmp_path / "script_doc_out"
     d.mkdir()
     in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
-    mocker.patch.object(update_id_set, 're_create_id_set', return_value={})
+    id_set_file = os.path.join(FILES_PATH, 'docs_test', 'id_set.json')
+    with open(id_set_file, 'r') as f:
+        id_set = json.load(f)
+    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
     generate_script_doc(in_script, '', str(d), verbose=True)
+    patched.assert_called()
     readme = d / "README.md"
     with open(readme) as f:
         text = f.read()
-        assert 'There are no outputs for this script.' in text
+        assert 'Sample usage of this script can be found in the following playbooks and scripts' in text
 
 
 class TestAppendOrReplaceCommandInDocs:

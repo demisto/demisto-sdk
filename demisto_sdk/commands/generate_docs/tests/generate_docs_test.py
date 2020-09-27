@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from demisto_sdk.commands.common import update_id_set
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -449,6 +450,7 @@ def test_generate_script_doc(tmp_path, mocker):
     d = tmp_path / "script_doc_out"
     d.mkdir()
     in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
+    mocker.patch.object(update_id_set, 're_create_id_set', return_value={})
     generate_script_doc(in_script, '', str(d), verbose=True)
     readme = d / "README.md"
     with open(readme) as f:

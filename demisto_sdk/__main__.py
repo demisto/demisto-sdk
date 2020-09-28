@@ -727,9 +727,10 @@ def init(**kwargs):
     required=False
 )
 @click.option(
-    "-e", "--examples", help="Path for file containing command or script examples."
-                             " Each Command should be in a separate line."
-                             " For script - the script example surrounded by double quotes.")
+    "-e", "--examples", help="Integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " Scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'")
 @click.option(
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
@@ -806,7 +807,7 @@ def generate_doc(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+    "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()

@@ -24,6 +24,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
+        structure.prev_ver = 'master'
         return structure
 
 

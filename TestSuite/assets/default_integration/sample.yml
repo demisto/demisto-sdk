@@ -5,6 +5,7 @@ name: Sample
 display: Sample
 category: Authentication
 description: This is a sample integration
+fromversion: 5.0.0
 configuration:
 - display: Server URL (e.g. https://soar.monstersofhack.com)
   name: url

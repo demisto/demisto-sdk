@@ -43,6 +43,7 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.report import ReportValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
@@ -311,8 +312,8 @@ class ValidateManager:
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 return False
 
-        # Note: these file are not ignored but there are no additional validators for reports nor connections
-        if file_type in {FileType.REPORT, FileType.CONNECTION}:
+        # Note: these file are not ignored but there are no additional validators for connections
+        if file_type in {FileType.CONNECTION}:
             return True
 
         elif file_type == FileType.RELEASE_NOTES:
@@ -322,6 +323,9 @@ class ValidateManager:
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
+
+        elif file_type == FileType.REPORT:
+            return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
             return self.validate_playbook(structure_validator, pack_error_ignore_list)
@@ -483,6 +487,12 @@ class ValidateManager:
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors)
         return image_validator.is_valid()
+
+    def validate_report(self, structure_validator, pack_error_ignore_list):
+        report_validator = ReportValidator(structure_validator=structure_validator,
+                                           ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors)
+        return report_validator.is_valid_file(validate_rn=False)
 
     def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified):
         incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,

@@ -599,7 +599,7 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def report_summary(pkg, lint_status: dict, all_packs: bool):
+    def report_summary(pkg, lint_status: dict, all_packs: bool = False):
         """ Log failed image creation if occured
 
         Args:

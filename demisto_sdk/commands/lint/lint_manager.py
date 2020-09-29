@@ -387,7 +387,7 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status)
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -599,11 +599,12 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def report_summary(pkg, lint_status: dict):
+    def report_summary(pkg, lint_status: dict, all_packs: bool):
         """ Log failed image creation if occured
 
         Args:
             lint_status(dict): Overall lint status
+            all_packs(bool): True when running lint command with -a flag.
      """
         preferred_width = 100
         fail_pack_indent = 3
@@ -631,7 +632,13 @@ class LintManager:
         print(f"Packages: {len(pkg)}")
         print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
-        print(f"Packages WARNING: {Colors.Fg.yellow}{len(warnings)}{Colors.reset}")
+        print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.yellow}{len(warnings)}{Colors.reset}\n")
+
+        if not all_packs:
+            if warnings:
+                print("Warning packages:")
+            for warning in warnings:
+                print(f"{Colors.Fg.yellow}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
 
         if failed:
             print("Failed packages:")

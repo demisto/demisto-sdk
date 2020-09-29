@@ -85,17 +85,17 @@ def test_copy_dir_to_container(mocker, archive_response: bool, expected_count: i
 
 
 MSG = [('flake8',
-        "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
-        "'typing.Tuple' imported but unused\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+        "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
+        "'typing.Tuple' imported but unused\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
         "/Maltiverse/Maltiverse.py:6:1: F401 'typing.Dict' imported but "
-        "unused\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
+        "unused\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
         "'typing.Any' imported but unused",
         [], [], [
-            "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
+            "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
             "'typing.Tuple' imported but unused",
-            "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
+            "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
             "'typing.Dict' imported but unused",
-            "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
+            "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse/Maltiverse.py:6:1: F401 "
             "'typing.Any' imported but unused"]),
        ('xsoar_linter',
         "************* Module Maltiverse\nMaltiverse.py:509:0: W9010: try and except statements were not found in "

@@ -124,7 +124,7 @@ def test_report_warning_lint_checks_not_packages_tests(capsys):
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
     pkgs_status = {
-        'Maltiverse': {'pkg': 'Maltiverse', 'pack_type': 'python', 'path': '/Users/yorhov/dev/demisto/content',
+        'Maltiverse': {'pkg': 'Maltiverse', 'pack_type': 'python', 'path': '/Users/test_user/dev/demisto/content',
                        'errors': [], 'images': [{'image': 'demisto/python3:3.8.2.6981', 'image_errors': '',
                                                  'pylint_errors': "************* Module "
                                                                   "Maltiverse\nMaltiverse.py:521:0: E0602: Undefined "
@@ -162,16 +162,16 @@ def test_report_warning_lint_checks_not_packages_tests(capsys):
                                                                                         'duration': 0.1635439395904541},
                                                                             'created_at': '2020-09-24 15:38:19.053978'}},
                                                  'pwsh_analyze_errors': '', 'pwsh_test_errors': ''}],
-                       'flake8_errors': "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
+                       'flake8_errors': "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
                                         "/Maltiverse.py:508:1: E302 expected 2 blank lines, "
                                         "found "
-                                        "1\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "1\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:511:1: E302 expected 2 blank lines, "
                                         "found "
-                                        "1\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "1\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:516:5: F841 local variable 'client' is assigned to "
                                         "but never "
-                                        "used\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "used\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:521:1: E305 expected 2 blank lines after class or "
                                         "function definition, found 1\n",
                        'XSOAR_linter_errors': 'Maltiverse.py:513:4: E9002: Print is found, Please remove all prints '
@@ -220,7 +220,7 @@ def test_report_warning_lint_checks_all_packages_tests(capsys):
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
     pkgs_status = {
-        'Maltiverse': {'pkg': 'Maltiverse', 'pack_type': 'python', 'path': '/Users/yorhov/dev/demisto/content',
+        'Maltiverse': {'pkg': 'Maltiverse', 'pack_type': 'python', 'path': '/Users/test_user/dev/demisto/content',
                        'errors': [], 'images': [{'image': 'demisto/python3:3.8.2.6981', 'image_errors': '',
                                                  'pylint_errors': "************* Module "
                                                                   "Maltiverse\nMaltiverse.py:521:0: E0602: Undefined "
@@ -258,16 +258,16 @@ def test_report_warning_lint_checks_all_packages_tests(capsys):
                                                                                         'duration': 0.1635439395904541},
                                                                             'created_at': '2020-09-24 15:38:19.053978'}},
                                                  'pwsh_analyze_errors': '', 'pwsh_test_errors': ''}],
-                       'flake8_errors': "/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
+                       'flake8_errors': "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
                                         "/Maltiverse.py:508:1: E302 expected 2 blank lines, "
                                         "found "
-                                        "1\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "1\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:511:1: E302 expected 2 blank lines, "
                                         "found "
-                                        "1\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "1\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:516:5: F841 local variable 'client' is assigned to "
                                         "but never "
-                                        "used\n/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations"
+                                        "used\n/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations"
                                         "/Maltiverse/Maltiverse.py:521:1: E305 expected 2 blank lines after class or "
                                         "function definition, found 1\n",
                        'XSOAR_linter_errors': 'Maltiverse.py:513:4: E9002: Print is found, Please remove all prints '
@@ -310,7 +310,7 @@ def test_report_summary_with_warnings(capsys):
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
-    pkg = [PosixPath('/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
+    pkg = [PosixPath('/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
     lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
@@ -338,7 +338,7 @@ def test_report_summary_no_warnings(capsys):
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
-    pkg = [PosixPath('/Users/yorhov/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
+    pkg = [PosixPath('/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
     lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out

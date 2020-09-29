@@ -417,7 +417,7 @@ def split_warnings_errors(output: str):
             - Fail msgs
             - Fail msgs and warnings msgs
             - Passed msgs
-            - Passed msgs and warninsg msgs
+            - Passed msgs and warnings msgs
             - warning msgs
         Args:
             output(str): string which contains messages from linters.

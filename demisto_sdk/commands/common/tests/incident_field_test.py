@@ -64,6 +64,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
 
@@ -106,6 +107,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_content_flag() is answer
@@ -134,6 +136,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_system_flag() is answer
@@ -154,6 +157,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_cliname_is_builtin_key()
@@ -174,6 +178,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_cliname_is_builtin_key()
@@ -193,6 +198,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_matching_cliname_regex()
@@ -214,6 +220,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_matching_cliname_regex()
@@ -228,6 +235,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_cliname()
@@ -242,6 +250,7 @@ class TestIncidentFieldsValidator:
             structure.file_path = "random_path"
             structure.is_valid = True
             structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_valid_cliname()
@@ -256,7 +265,6 @@ class TestIncidentFieldsValidator:
     def test_is_valid_version(self, version, is_valid):
         structure = StructureValidator("")
         structure.current_file = {"version": version}
-        structure.prev_ver = 'master'
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
 
@@ -277,7 +285,6 @@ class TestIncidentFieldsValidator:
     def test_is_changed_from_version(self, current_from_version, old_from_version, answer):
         structure = StructureValidator("")
         structure.old_file = old_from_version
-        structure.prev_ver = 'master'
         structure.current_file = current_from_version
         validator = IncidentFieldValidator(structure)
         assert validator.is_changed_from_version() is answer
@@ -312,7 +319,6 @@ class TestIncidentFieldsValidator:
         structure = StructureValidator("")
         structure.current_file = {"type": current_type}
         structure.old_file = {"type": old_type}
-        structure.prev_ver = 'master'
         validator = IncidentFieldValidator(structure)
         assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
                                                         f' returns {not is_valid}.'

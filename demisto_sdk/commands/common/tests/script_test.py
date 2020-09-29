@@ -13,6 +13,7 @@ def get_validator(current_file=None, old_file=None, file_path=""):
         structure.file_path = file_path
         structure.is_valid = True
         structure.prev_ver = 'master'
+        structure.branch_name = ''
         validator = ScriptValidator(structure)
         validator.old_script = old_file
         validator.current_script = current_file

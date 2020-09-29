@@ -7,7 +7,6 @@ import yaml
 from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_tools import get_current_working_branch
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -33,6 +32,7 @@ class ContentEntityValidator(BaseValidator):
         self.is_valid = structure_validator.is_valid
         self.skip_docker_check = skip_docker_check
         self.prev_ver = structure_validator.prev_ver
+        self.branch_name = structure_validator.branch_name
 
     def is_valid_file(self, validate_rn=True):
         tests = [
@@ -193,12 +193,16 @@ class ContentEntityValidator(BaseValidator):
                 return False
         return True
 
-    def is_valid_fromversion(self):
-        current_branch_name = get_current_working_branch()
-
+    def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in current_branch_name)
+        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
                for feature_branch_name in FEATURE_BRANCHES):
+            return False
+
+        return True
+
+    def is_valid_fromversion(self):
+        if not self.should_run_fromversion_validation():
             return True
 
         if self.file_path.endswith('json'):

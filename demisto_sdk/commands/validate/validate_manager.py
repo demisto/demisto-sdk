@@ -298,7 +298,7 @@ class ValidateManager:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
-                                                 old_file_path=old_file_path)
+                                                 old_file_path=old_file_path, branch_name=self.branch_name)
 
         click.secho(f'Validating scheme for {file_path}')
         if not structure_validator.is_valid_file():

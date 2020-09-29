@@ -612,7 +612,12 @@ class LintManager:
                                                  subsequent_indent=' ' * len(fail_pack_prefix))
         # intersection of all failed packages
         failed: Set[str] = set()
+
+        # intersection of all warnings packages
         warnings: Set[str] = set()
+
+        # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
+        # warnings packages.
         for key in lint_status:
             if key.startswith('fail'):
                 failed = failed.union(lint_status[key])

@@ -413,6 +413,12 @@ def split_warnings_errors(output: str):
     """
         Function which splits the given string into warning messages and error using W or E in the beginning of string
         For error messages that do not start with E , they will be returned as other.
+        The output of a certain pack can both include:
+            - Fail msgs
+            - Fail msgs and warnings msgs
+            - Passed msgs
+            - Passed msgs and warninsg msgs
+            - warning msgs
         Args:
             output(str): string which contains messages from linters.
         return:

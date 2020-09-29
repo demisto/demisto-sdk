@@ -48,7 +48,7 @@ class TestIDSetCreator:
     def test_create_id_set_no_output(self, mocker):
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'cpu_count', return_value=1)
-        id_set_creator = IDSetCreator()
+        id_set_creator = IDSetCreator(output=None)
 
         id_set = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)

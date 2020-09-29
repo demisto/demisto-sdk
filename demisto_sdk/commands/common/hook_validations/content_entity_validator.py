@@ -195,8 +195,9 @@ class ContentEntityValidator(BaseValidator):
 
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
+        # also skip if the file in question is reputations.json
         if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
-               for feature_branch_name in FEATURE_BRANCHES):
+               for feature_branch_name in FEATURE_BRANCHES) or self.file_path.endswith('reputations.json'):
             return False
 
         return True

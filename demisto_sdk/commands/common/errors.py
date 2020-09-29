@@ -867,7 +867,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_certification_isnt_certified(pack_meta_file):
-        return f'Pack metadata {pack_meta_file} - certification field should be \'certified\'.'
+        return f'Pack metadata {pack_meta_file} - certification field should be \'certified\' or \'verified\'.'
 
     @staticmethod
     @error_code_decorator

@@ -202,6 +202,9 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     def is_valid_fromversion(self):
+        """Check if the file has a fromversion 5.0.0 or higher
+            This is not checked if checking on or against a feature branch.
+        """
         if not self.should_run_fromversion_validation():
             return True
 

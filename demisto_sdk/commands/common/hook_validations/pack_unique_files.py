@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, PACK_METADATA_CERTIFICATION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -246,6 +246,13 @@ class PackUniqueFilesValidator(BaseValidator):
                         if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
                                            self.pack_meta_file):
                             return False
+
+            # check 'certification' field equals 'certified' if key exists
+            certification = metadata.get(PACK_METADATA_CERTIFICATION)
+            if certification and certification != 'certified':
+                if self._add_error(Errors.pack_metadata_certification_isnt_certified(self.pack_meta_file),
+                                   self.pack_meta_file):
+                    return False
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):

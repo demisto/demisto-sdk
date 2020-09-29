@@ -144,6 +144,7 @@ ERROR_CODE = {
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
+    "pack_metadata_certification_isnt_certified": "PA118",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -862,6 +863,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_should_be_dict(pack_meta_file):
         return f'Pack metadata {pack_meta_file} should be a dictionary.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_certification_isnt_certified(pack_meta_file):
+        return f'Pack metadata {pack_meta_file} - certification field should be \'certified\'.'
 
     @staticmethod
     @error_code_decorator

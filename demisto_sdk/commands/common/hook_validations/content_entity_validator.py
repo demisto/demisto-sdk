@@ -211,7 +211,6 @@ class ContentEntityValidator(BaseValidator):
                                                                                   OLDEST_SUPPORTED_VERSION)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-
         elif self.file_path.endswith('.yml'):
             if LooseVersion(self.current_file.get('fromversion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
                 error_message, error_code = Errors.no_minimal_fromversion_in_file('fromversion',

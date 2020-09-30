@@ -542,12 +542,19 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
 
 
 def check_docker_image_changed(added_or_modified_yml):
-    diff = run_command(f'git diff origin/master -- {added_or_modified_yml}')
-    diff_lines = diff.splitlines()
-    for diff_line in diff_lines:
-        if '+  dockerimage:' in diff_line:
-            return True, diff_line.split()[-1]
-    return False, ''
+    try:
+        diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
+    except RuntimeError as e:
+        if any(['is outside repository' in exp for exp in e.args]):
+            return False, ''
+        else:
+            raise
+    else:
+        diff_lines = diff.splitlines()
+        for diff_line in diff_lines:
+            if '+  dockerimage:' in diff_line:
+                return True, diff_line.split()[-1]
+        return False, ''
 
 
 

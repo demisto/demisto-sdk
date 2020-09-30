@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from distutils.version import LooseVersion
+from pathlib import PurePosixPath, PureWindowsPath
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (
@@ -14,7 +15,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
+                                               get_api_module_integrations_set,
+                                               get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_yaml,
                                                pack_name_to_path, print_color,
@@ -25,7 +28,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_json,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False):
+                 pack_metadata_only: bool = False, text: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -41,6 +44,7 @@ class UpdateRN:
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
+        self.text = text
         self.pack_metadata_only = pack_metadata_only
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -132,13 +136,14 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            master_metadata = run_command(f"git show origin/master:{self.metadata_path}")
+            master_metadata = run_command(
+                f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
             if len(master_metadata) > 0:
                 master_metadata_json = json.loads(master_metadata)
                 master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
             else:
-                master_current_version = '99.99.99'
-                print_warning("Unable to locate the metadata on the master branch.")
+                print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata}")
+                sys.exit(0)
             if LooseVersion(master_current_version) == LooseVersion(new_version):
                 return True
             elif LooseVersion(master_current_version) > LooseVersion(new_version):
@@ -221,6 +226,8 @@ class UpdateRN:
             # incident fields and indicator fields are using the same scheme.
             elif 'IncidentFields' in file_path:
                 _file_type = 'Incident Fields'
+            elif 'IndicatorFields' in file_path:
+                _file_type = 'Indicator Fields'
             elif 'IndicatorTypes' in file_path:
                 _file_type = 'Indicator Types'
             elif 'IncidentTypes' in file_path:
@@ -323,22 +330,20 @@ class UpdateRN:
         widgets_header = False
         dashboards_header = False
         connections_header = False
+        ind_fld_header = False
+
         if self.pack_metadata_only:
             rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
             return rn_string
-
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: x[1].get('type', '') if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
-
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
-
-            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file)
-
+            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file, self.text)
             if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
@@ -399,10 +404,17 @@ class UpdateRN:
                     rn_string += '\n#### Connections\n'
                     connections_header = True
                 rn_string += rn_desc
+            elif _type == 'Indicator Fields':
+                if not ind_fld_header:
+                    rn_string += '\n#### Indicator Fields\n'
+                    ind_fld_header = True
+                rn_string += rn_desc
+
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file):
-        if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
+    def build_rn_desc(self, _type, content_name, desc, is_new_file, text):
+        if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
+                     'Indicator Fields'):
             rn_desc = f'- **{content_name}**\n'
         else:
             if is_new_file:
@@ -414,7 +426,8 @@ class UpdateRN:
                 elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += '- %%UPDATE_RN%%\n'
+                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
         return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):
@@ -491,3 +504,25 @@ def get_file_description(path, file_type):
         return json_file.get('description', '')
 
     return '%%UPDATE_RN%%'
+
+
+def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None):
+    print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+    if not id_set_path:
+        if not os.path.isfile('./Tests/id_set.json'):
+            print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is "
+                        "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
+            return
+        id_set_path = './Tests/id_set.json'
+    with open(id_set_path, 'r') as conf_file:
+        id_set = json.load(conf_file)
+    api_module_set = get_api_module_ids(added)
+    api_module_set = api_module_set.union(get_api_module_ids(modified))
+    integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+    for integration in integrations:
+        integration_path = integration.get('file_path')
+        integration_pack = integration.get('pack')
+        update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
+                                  modified_files_in_pack={integration_path}, pre_release=pre_release,
+                                  added_files=set(), pack=integration_pack)
+        update_pack_rn.execute_update()

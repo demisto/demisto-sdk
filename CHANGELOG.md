@@ -1,6 +1,52 @@
 # Changelog
+* Add support for warning msgs in the report and summary to **lint** command.
+* Fixed an issue where **json-to-outputs** determined bool values as int.
+* Fixed an issue where **update-release-notes** was crushing on `--all` flag.
+* Fixed an issue where running **validate**, **update-release-notes** outside of content repo crushed without a meaningful error message.
+* Added support for layoutscontainer in **init** contribution flow.
+* Added a validation for tlp_color param in feeds in **validate** command.
+* Added a validation for removal of integration parameters in **validate** command.
+* Fixed an issue where **update-release-notes** was failing with a wrong error message when no pack or input was given.
+* Improved formatting output of the **generate-docs** command.
+* Add support for env variable *DEMISTO_SDK_ID_SET_REFRESH_INTERVAL*. Set this env variable to the refresh interval in minutes. The id set will be regenerated only if the refresh interval has passed since the last generation. Useful when generating Script documentation, to avoid re-generating the id_set every run.
+* Added new code validations to `XSOAR-linter`.
+    * As error messages:
+        * Longer than 10 seconds sleep statements for non long running integrations.
+        * exit() usage.
+        * quit() usage.
+    * As warnings messages:
+        * `demisto.log` should not be used.
+        * main function existence.
+        * `demito.results` should not be used.
+        * `return_output` should not be used.
+        * try-except statement in main function.
+        * `return_error` usage in main function.
+        * only once `return_error` usage.
+* Fixed an issue where **lint** command printed logs twice.
+* Fixed an issue where *suffix* did not work as expected in the **create-content-artifacts** command.
+* Added support for *prev-ver* flag in **lint** and **secrets** commands.
+* Added support for *text* flag to **update-release-notes** command to add the same text to all release notes.
+* Fixed an issue where **validate** did not recognize added files if they were modified locally.
+* Added a validation to the **validate** command that checks that the certification field in the pack_metadata file is valid.
+
+# 1.2.1
+* Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:
+    * `Sys.exit` usages with non zero value.
+    * Any `Print` usages.
+* Fixed an issue where renamed files were failing on *validate*.
 * Fixed an issue where single changed files did not required release notes update.
 * Fixed an issue where doc_images required release-notes and validations.
+* Added handling of dependent packs when running **update-release-notes** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will update the dependent pack as well.
+* Added handling of dependent packs when running **validate** on changed *APIModules*.
+    * Added new argument *--id-set-path* for id_set.json path.
+    * When changes to *APIModule* is detected and an id_set.json is available - the command will validate that the dependent pack has release notes as well.
+* Fixed an issue where the find_type function didn't recognize file types correctly.
+* Fixed an issue where **update-release-notes** command did not work properly on Windows.
+* Added support for indicator fields in **update-release-notes** command.
+* Fixed an issue where files in test dirs where being validated.
+
 
 # 1.2.0
 * Fixed an issue where **format** did not update the test playbook from its pack.

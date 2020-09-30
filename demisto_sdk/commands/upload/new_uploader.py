@@ -60,7 +60,7 @@ class NewUploader:
 
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
-;
+
 
 def file_uploader(path: str, client: demisto_client, demisto_version: Version, log_verbose: bool,
                   failed_uploaded_files: List[Tuple[str, str]],

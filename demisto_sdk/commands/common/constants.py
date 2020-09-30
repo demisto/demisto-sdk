@@ -89,6 +89,7 @@ ENTITY_TYPE_TO_DIR = {
     SCRIPT: SCRIPTS_DIR,
     AUTOMATION: SCRIPTS_DIR,
     LAYOUT: LAYOUTS_DIR,
+    LAYOUTS_CONTAINER: LAYOUTS_DIR,
     INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
     INCIDENT_TYPE: INCIDENT_TYPES_DIR,
     INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
@@ -654,6 +655,8 @@ IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_R
 
 IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
 
+PACK_IGNORE_TEST_FLAG = 'auto-test'
+
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
 OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
@@ -922,6 +925,14 @@ FEED_REQUIRED_PARAMS = [
         'name': 'feedTags',
         'required': False,
         'type': 0
+    },
+    {
+        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
+        'display': 'Traffic Light Protocol Color',
+        'name': 'tlp_color',
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+        'required': False,
+        'type': 15
     }
 ]
 
@@ -985,3 +996,7 @@ VALIDATED_PACK_ITEM_TYPES = [
 FIRST_FETCH = 'first_fetch'
 
 MAX_FETCH = 'max_fetch'
+
+OLDEST_SUPPORTED_VERSION = '5.0.0'
+
+FEATURE_BRANCHES = ['v4.5.0']

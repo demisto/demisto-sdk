@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS = []  # type: list
 FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
@@ -27,6 +27,7 @@ ERROR_CODE = {
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
+    "no_minimal_fromversion_in_file": "BA106",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -56,6 +57,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_deprecated_integration_display_name": "IN127",
     "invalid_deprecated_integration_description": "IN128",
+    "removed_integration_parameters": "IN129",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -143,6 +145,7 @@ ERROR_CODE = {
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
+    "pack_metadata_certification_is_invalid": "PA118",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -236,6 +239,16 @@ class Errors:
         return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
                "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
                "Then re-run the `validate` command."
+
+    @staticmethod
+    @error_code_decorator
+    def no_minimal_fromversion_in_file(fromversion, oldest_supported_version):
+        if fromversion == 'fromversion':
+            return f"{fromversion} field is invalid.\nAdd `{fromversion}: " \
+                   f"{oldest_supported_version}` to the file."
+        else:
+            return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
+                   f'to the file.'
 
     @staticmethod
     @error_code_decorator
@@ -339,6 +352,11 @@ class Errors:
     @error_code_decorator
     def added_required_fields(field):
         return "You've added required, the field is '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
+    def removed_integration_parameters(field):
+        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
 
     @staticmethod
     @error_code_decorator
@@ -789,11 +807,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incident_field_or_type_from_version_5():
-        return 'fromVersion must be at least 5.0.0'
-
-    @staticmethod
-    @error_code_decorator
     def invalid_incident_field_or_type_from_version():
         return '"fromVersion" has an invalid value.'
 
@@ -856,6 +869,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_should_be_dict(pack_meta_file):
         return f'Pack metadata {pack_meta_file} should be a dictionary.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_certification_is_invalid(pack_meta_file):
+        return f'Pack metadata {pack_meta_file} - certification field should be \'certified\' or \'verified\'.'
 
     @staticmethod
     @error_code_decorator

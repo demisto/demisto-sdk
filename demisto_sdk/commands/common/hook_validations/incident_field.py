@@ -2,10 +2,8 @@
 This module is designed to validate the correctness of incident field entities in content.
 """
 import re
-from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
-import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -189,7 +187,6 @@ class IncidentFieldValidator(ContentEntityValidator):
                 self.is_valid_system_flag(),
                 self.is_valid_cliname(),
                 self.is_valid_version(),
-                self.is_current_valid_from_version(),
                 self.is_valid_required()
             ]
         )
@@ -310,34 +307,6 @@ class IncidentFieldValidator(ContentEntityValidator):
             error_message, error_code = Errors.invalid_incident_field_cli_name_value(cliname)
             if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = True
-        return is_valid
-
-    def is_current_valid_from_version(self):
-        # type: () -> bool
-        error_msg = None
-        is_valid = True
-
-        # if not a new file, will be checked here
-        # if has an old_file, will be checked in BC checks
-        if not self.old_file:
-            try:
-                from_version = self.current_file.get("fromVersion", "0.0.0")
-                if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_message, error_code = Errors.incident_field_or_type_from_version_5()
-                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
-                    if formatted_error:
-                        error_msg = formatted_error
-                        is_valid = False
-
-            except (AttributeError, ValueError):
-                error_message, error_code = Errors.invalid_incident_field_or_type_from_version()
-                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path, should_print=False)
-                if formatted_error:
-                    error_msg = formatted_error
-                    is_valid = False
-
-        if error_msg:
-            click.secho(error_msg, fg="bright_red")
         return is_valid
 
     def is_valid_required(self):

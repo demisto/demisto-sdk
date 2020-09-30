@@ -520,8 +520,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'Classifiers type must be classification' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -772,8 +771,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1800,3 +1798,47 @@ class TestValidationUsingGit:
                                           '--skip-pack-release-notes'], catch_exceptions=False)
         assert 'Running pack dependencies validation on' in result.stdout
         assert result.exit_code == 1
+
+    def test_validation_non_content_path(self):
+        """
+        Given
+        - non content pack path file, file not existing.
+
+        When
+        - Running demisto-sdk validate command.
+
+        Then
+        - Ensure an error is raised on the non found file
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', join('Users', 'MyPacks', 'VMware'), '--no-docker-checks',
+                                      '--no-conf-json', '--skip-pack-release-notes'], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert result.exception
+        assert "File Users/MyPacks/VMware was not found" in result.stdout  # check error str is in stdout
+
+    def test_validation_non_content_path_mocked_repo(self, mocker, repo):
+        """
+        Given
+        - non content pack path file, file existing.
+
+        When
+        - Running demisto-sdk validate command.
+        - mocking the 'get_modified_and_added_files' for a FileNotFoundError error
+
+        Then
+        - Ensure an error is raised on the non found file
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes'], catch_exceptions=False)
+
+        assert result.exit_code == 1
+        assert "You are not running" in result.stdout  # check error str is in stdout

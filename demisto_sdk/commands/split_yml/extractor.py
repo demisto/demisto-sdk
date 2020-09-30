@@ -146,8 +146,10 @@ class Extractor:
                 self.print_logs("Copying pipenv files from: {}".format(pip_env_dir), log_color=LOG_COLORS.NATIVE)
                 shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
                 shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
+                env = os.environ.copy()
+                env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                 try:
-                    subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
+                    subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
                     self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
                                     LOG_COLORS.NATIVE)
                     requirements = subprocess.check_output(["docker", "run", "--rm", docker,
@@ -158,7 +160,7 @@ class Extractor:
                     fp.close()
 
                     try:
-                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
 
                     except Exception:
                         self.print_logs("Failed installing requirements in pipenv.\n "
@@ -166,11 +168,11 @@ class Extractor:
 
                     os.unlink(fp.name)
                     self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
-                except FileNotFoundError:
+                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
+                except FileNotFoundError as err:
                     self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                                     "Make sure to install it with: pip3 install pipenv.\n"
-                                    "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
+                                    f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
                 arg_path = os.path.relpath(output_path)
                 self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
                 next_steps: str = "Next steps: \n" \

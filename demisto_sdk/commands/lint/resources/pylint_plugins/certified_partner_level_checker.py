@@ -14,7 +14,15 @@ cert_partner_msg = {
         "Do not use demisto.results function.",),
     "W9009": (
         "Do not use return_outputs function. Please return CommandResults object instead.", "return-outputs-exists",
-        "Do not use return_outputs function.",)
+        "Do not use return_outputs function.",),
+    "W9014": (
+        "Function arguments are missing type annotations. Please add type annotations",
+        "args-type-annotations-doesnt-exist",
+        "Function arguments are missing type annotations. Please add type annotations",),
+    "W9015": (
+        "Function return value type annotation is missing. Please add type annotations",
+        "return-type-annotations-doesnt-exist",
+        "Function return value type annotation is missing. Please add type annotations",),
 }
 
 
@@ -36,6 +44,7 @@ class CertifiedPartnerChecker(BaseChecker):
 
     def visit_functiondef(self, node):
         self.list_of_function_names.add(node.name)
+        self._type_annotations_checker(node)
 
     def leave_module(self, node):
         self._main_function(node)
@@ -73,6 +82,16 @@ class CertifiedPartnerChecker(BaseChecker):
                 self.add_message("demisto-results-exists", node=node)
         except Exception:
             pass
+
+    def _type_annotations_checker(self, node):
+        annotation = True
+        for ann, args in zip(node.args.annotations, node.args.args):
+            if not ann and args.name != 'self':
+                annotation = False
+        if not annotation and node.name not in ['main', '__init__']:
+            self.add_message("args-type-annotations-doesnt-exist", node=node)
+        if not node.returns and node.name not in ['main', '__init__']:
+            self.add_message("return-type-annotations-doesnt-exist", node=node)
 
 
 def register(linter):

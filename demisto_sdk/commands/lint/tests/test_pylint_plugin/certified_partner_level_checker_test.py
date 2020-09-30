@@ -326,3 +326,152 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_c)
+
+
+class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that all functions have type annotations .
+    """
+    CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
+
+    def test_type_annotations_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - return_output exists in the code
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        node_a, node_b = astroid.extract_node("""
+            def test_num1(a: str, b:int) ->str: #@
+                return "test function"
+            def test_num2(a: bool, b: bool, c:int) -> bool: #@
+                if a:
+                    return True
+                if b:
+                    return False
+                else:
+                    return None
+        """)
+        assert node_b is not None and node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node_a)
+            self.checker.visit_functiondef(node_b)
+
+    def test_args_annotations_doesnt_exist(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Two given function which do not have type annotation.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        node_a, node_b = astroid.extract_node("""
+            def test_num1(a: str, b:int) ->str: #@
+                return "test function"
+            def test_num2(a, b: bool, c:int) -> bool: #@
+                if a:
+                    return True
+                if b:
+                    return False
+                else:
+                    return None
+        """)
+        assert node_b is not None and node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='args-type-annotations-doesnt-exist',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_functiondef(node_a)
+            self.checker.visit_functiondef(node_b)
+
+        node_a, node_b = astroid.extract_node("""
+            def test_num1(a, b) ->str: #@
+                return "test function"
+            def test_num2(a, b: bool, c:int) -> bool: #@
+                if a:
+                    return True
+                if b:
+                    return False
+                else:
+                    return None
+        """)
+
+        assert node_b is not None and node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='args-type-annotations-doesnt-exist',
+                    node=node_a,
+                ),
+                pylint.testutils.Message(
+                    msg_id='args-type-annotations-doesnt-exist',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_functiondef(node_a)
+            self.checker.visit_functiondef(node_b)
+
+    def test_return_type_annotation_doesnt_exist(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Two given function which one have return type and the other doesnt
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a, node_b, node_c = astroid.extract_node("""
+                    def test_num1(a: str, b: str): #@
+                        return "test function"
+                    def test_num2(a: bool, b: bool, c:int) -> bool: #@
+                        if a:
+                            return True
+                        if b:
+                            return False
+                        else:
+                            return None
+                    def client(self): #@
+                        return True
+                """)
+
+        assert node_b is not None and node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='return-type-annotations-doesnt-exist',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_functiondef(node_a)
+            self.checker.visit_functiondef(node_b)
+            self.checker.visit_functiondef(node_c)
+
+    def test_return_type_annotation_exist(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Two given function which both have return type annotations.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a, node_b = astroid.extract_node("""
+                    def test_num1(a: str, b: str) -> str: #@
+                        return "test function"
+                    def test_num2(a: bool, b: bool, c:int) -> bool: #@
+                        if a:
+                            return True
+                        if b:
+                            return False
+                        else:
+                            return None
+                    def main():
+                        print("main")
+                """)
+        assert node_b is not None and node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node_a)
+            self.checker.visit_functiondef(node_b)

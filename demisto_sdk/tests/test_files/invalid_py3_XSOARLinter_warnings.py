@@ -415,7 +415,7 @@ def get_machines_list_command(client, args) -> Tuple[str, dict, dict]:
     return human_readable_markdown, context, raw_response
 
 
-def get_assets_list_command(client, args) -> Tuple[str, dict, dict]:
+def get_assets_list_command(client: Client, args) -> Tuple[str, dict, dict]:
     """Function which returns all assets in the system.
         Args:
             client : Integretion client which communicates with the api.
@@ -438,7 +438,7 @@ def get_assets_list_command(client, args) -> Tuple[str, dict, dict]:
     return human_readable_markdown, context, raw_response
 
 
-def get_queues_list_command(client, args) -> Tuple[str, dict, dict]:
+def get_queues_list_command(client: Client, args) -> Tuple[str, dict, dict]:
     """Function which returns all queues in the system.
         Args:
             client : Integretion client which communicates with the api.
@@ -459,7 +459,7 @@ def get_queues_list_command(client, args) -> Tuple[str, dict, dict]:
     return human_readable_markdown, context, raw_response
 
 
-def get_tickets_list_command(client, args) -> Tuple[str, dict, dict]:
+def get_tickets_list_command(client: Client, args: list) -> Tuple[str, dict, dict]:
     """Function which returns all tickets in the system.
         Args:
             client : Integretion client which communicates with the api.
@@ -483,7 +483,7 @@ def get_tickets_list_command(client, args) -> Tuple[str, dict, dict]:
     return human_readable_markdown, context, raw_response
 
 
-def create_ticket_command(client, args) -> Tuple[str, dict, dict]:
+def create_ticket_command(client: Client, args: list) -> Tuple[str, dict, dict]:
     """Function which creates a new ticket to the system according to users arguments.
         Args:
             client : Integretion client which communicates with the api.
@@ -585,7 +585,7 @@ def create_body_from_args(hd_queue_id: Union[str, int] = None, title: Union[str,
     return body
 
 
-def update_ticket_command(client, args) -> Tuple[str, dict, dict]:
+def update_ticket_command(client: Client, args) -> Tuple[str, dict, dict]:
     """Function which updates the body of the request from user arguments.
         Args:
             client : Integretion client which communicates with the api.
@@ -631,7 +631,7 @@ def update_ticket_command(client, args) -> Tuple[str, dict, dict]:
     return ticket_view, {}, {}
 
 
-def delete_ticket_command(client, args) -> Tuple[str, dict, dict]:
+def delete_ticket_command(client: Client, args) -> Tuple[str, dict, dict]:
     """Function which deleted a specific ticket by ticket id.
         Args:
             client : Integretion client which communicates with the api.
@@ -733,7 +733,7 @@ def shaping_fetch(client: Client, fetch_queue_id: list) -> str:
     return fetch_shaping
 
 
-def get_fields_by_queue(client, queue: Optional[list]) -> list:
+def get_fields_by_queue(client: Client, queue: Optional[list]) -> list:
     """
     Creating a list of all queue ids that are in the system.
     Args:
@@ -788,7 +788,7 @@ def shaping_by_fields(fields: list) -> str:
     return shaping
 
 
-def set_shaping(client, queue: Optional[list] = None) -> str:
+def set_shaping(client: Client, queue: Optional[list] = None) -> str:
     """
     Creating a shaping for the request.
     Args:

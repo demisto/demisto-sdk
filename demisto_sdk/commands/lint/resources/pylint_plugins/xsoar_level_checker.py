@@ -18,11 +18,11 @@ class XsoarChecker(BaseChecker):
         super(XsoarChecker, self).__init__(linter)
 
     def visit_functiondef(self, node):
-        self._check_docstring(node)
+        self._docstring_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
-    def _check_docstring(self, node):
+    def _docstring_checker(self, node):
         if not node.doc and node.name != 'main':
             self.add_message("docstring-doesnt-exits", node=node)
 

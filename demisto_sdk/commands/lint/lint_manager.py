@@ -460,11 +460,11 @@ class LintManager:
             for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
-                    print(f"\n{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}")
-                    print(f"{Colors.Fg.yellow}{sentence}{Colors.reset}")
-                    print(f"{Colors.Fg.yellow}{'#' * len(sentence)}{Colors.reset}\n")
+                    print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")
+                    print(f"{Colors.Fg.orange}{sentence}{Colors.reset}")
+                    print(f"{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}\n")
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
-                        print(f"{Colors.Fg.yellow}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
+                        print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
@@ -632,13 +632,13 @@ class LintManager:
         print(f"Packages: {len(pkg)}")
         print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
-        print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.yellow}{len(warnings)}{Colors.reset}\n")
+        print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n")
 
         if not all_packs:
             if warnings:
                 print("Warning packages:")
             for warning in warnings:
-                print(f"{Colors.Fg.yellow}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
+                print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
 
         if failed:
             print("Failed packages:")

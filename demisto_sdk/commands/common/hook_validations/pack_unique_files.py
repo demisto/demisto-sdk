@@ -30,6 +30,7 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import \
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -249,7 +250,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
-            if certification and certification not in ['certified', 'verified']:
+            if certification and certification not in ALLOWED_CERTIFICATION_VALUES:
                 if self._add_error(Errors.pack_metadata_certification_is_invalid(self.pack_meta_file),
                                    self.pack_meta_file):
                     return False

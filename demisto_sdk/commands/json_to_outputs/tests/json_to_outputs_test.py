@@ -1,4 +1,6 @@
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import parse_json
+import pytest
+from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
+    determine_type, parse_json)
 
 
 def test_json_to_outputs__json_from_file():
@@ -86,3 +88,23 @@ outputs:
   description: ''
   type: Date
 '''
+
+
+INPUT = [(True, 'Boolean'),
+         (0, 'Number'),
+         (1, 'Number'),
+         (False, 'Boolean'),
+         ("test string", 'String')]
+
+
+@pytest.mark.parametrize('value, type', INPUT)
+def test_determine_type(value, type):
+    """
+    Given
+        - value of the dict.
+    When
+        - determine type function runs
+    Then
+        - ensure the returned type is correct
+    """
+    assert determine_type(value) == type

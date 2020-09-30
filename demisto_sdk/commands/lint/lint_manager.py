@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (print_error, print_v,
                                                print_warning)
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, PWSH_CHECKS,
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                get_test_modules, validate_env)
@@ -332,6 +332,10 @@ class LintManager:
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
+        # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
+        # then 512 and will not cause failure on the exit code.
+        if return_exit_code:
+            return_exit_code = FAIL
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int,

@@ -873,7 +873,7 @@ class TestRNUpdateUnit:
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={'Packs/Test/Test.yml'},
                           added_files=set())
         client.execute_update()
-        with open('tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
         assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
 

@@ -247,10 +247,10 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
-            # check 'certification' field equals 'certified' if key exists
+            # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
             if certification and certification not in ['certified', 'verified']:
-                if self._add_error(Errors.pack_metadata_certification_isnt_certified(self.pack_meta_file),
+                if self._add_error(Errors.pack_metadata_certification_is_invalid(self.pack_meta_file),
                                    self.pack_meta_file):
                     return False
 

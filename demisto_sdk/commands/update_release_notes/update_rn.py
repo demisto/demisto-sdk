@@ -557,4 +557,3 @@ def check_docker_image_changed(added_or_modified_yml):
         return False, ''
 
 
-

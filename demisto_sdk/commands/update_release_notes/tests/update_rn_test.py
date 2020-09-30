@@ -812,7 +812,7 @@ class TestRNUpdateUnit:
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
         is_docker_image_changed, docker_image_name = check_docker_image_changed('test.yml')
-        assert is_docker_image_changed == False
+        assert is_docker_image_changed is False
         assert docker_image_name == ''
 
     def test_update_docker_image_in_yml(self, mocker):
@@ -912,4 +912,3 @@ class TestRNUpdateUnit:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
-

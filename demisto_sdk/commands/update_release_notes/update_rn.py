@@ -555,5 +555,3 @@ def check_docker_image_changed(added_or_modified_yml):
             if '+  dockerimage:' in diff_line:
                 return True, diff_line.split()[-1]
         return False, ''
-
-

@@ -14,6 +14,9 @@ partner_msg = {
     "W9012": ("return_error should be used in main function. Please add it.",
               "return-error-does-not-exist-in-main",
               "return_error should be used in main function",),
+    "W9016": ("Initialize of params was found outside of main function. Please initialize params only inside main func",
+              "init-params-outside-main",
+              "Initialize of params was found outside of main function. Please initialize params only inside main func",),
 }
 
 
@@ -29,6 +32,7 @@ class PartnerChecker(BaseChecker):
 
     def visit_call(self, node):
         self._return_error_function_count(node)
+        self._init_params_checker(node)
 
     def visit_functiondef(self, node):
         self._try_except_in_main(node)
@@ -87,6 +91,20 @@ class PartnerChecker(BaseChecker):
 
         except TypeError:
             yield node
+
+    def _init_params_checker(self, node):
+        try:
+            if node.func.attrname == 'params' and node.func.expr.name == 'demisto':
+                check_param = True
+                parent = node.parent
+                while check_param and parent:
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == 'main':
+                        check_param = False
+                    parent = parent.parent
+                if check_param:
+                    self.add_message("init-params-outside-main", node=node)
+        except AttributeError:
+            pass
 
 
 def register(linter):

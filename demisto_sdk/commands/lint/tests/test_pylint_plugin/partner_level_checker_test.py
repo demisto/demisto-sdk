@@ -218,3 +218,64 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_a)
             self.checker.leave_module(node_b)
+
+
+class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of sys exit checker .
+    """
+    CHECKER_CLASS = partner_level_checker.PartnerChecker
+
+    def test_init_params_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - in main function , try except statement exists.
+        Then:
+            - Ensure that it does not raise any errors, Check that there is no error message.
+
+        """
+        node_b = astroid.extract_node("""
+            def main():
+                params = demisto.params() #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+        node_b = astroid.extract_node("""
+            def main():
+                name = demisto.params().get('name') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+    def test_init_params_not_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - in main function , there is no try except statement.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        node_b = astroid.extract_node("""
+            def test_function():
+                demisto.params()
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='init-params-outside-main',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_b)

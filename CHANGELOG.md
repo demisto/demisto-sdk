@@ -26,6 +26,7 @@
 * Added support for *prev-ver* flag in **lint** and **secrets** commands.
 * Added support for *text* flag to **update-release-notes** command to add the same text to all release notes.
 * Fixed an issue where **validate** did not recognize added files if they were modified locally.
+* Add enhancement to **update-release-notes**: update release notes automatically when upgrading docker image.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

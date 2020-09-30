@@ -1,3 +1,4 @@
+import demisto_client
 from typing import Union
 
 from demisto_sdk.commands.common.constants import PLAYBOOK
@@ -9,3 +10,14 @@ from wcmatch.pathlib import Path
 class Playbook(YAMLContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, PLAYBOOK)
+
+    def upload(self, client: demisto_client):
+        """
+        Upload the playbook to demisto_client
+        Args:
+            client: The demisto_client object of the desired XSOAR machine to upload to.
+
+        Returns:
+            The result of the upload command from demisto_client
+        """
+        client.import_playbook(file=self.path)

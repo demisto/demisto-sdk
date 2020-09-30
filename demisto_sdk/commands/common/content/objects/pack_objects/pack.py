@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
     Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
     ReleaseNote, Report, Script, SecretIgnore, Widget)
-from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+
 from wcmatch.pathlib import Path
 
 
@@ -40,7 +40,7 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
-            yield ContentObjectFactory.from_path(object_path)
+            yield path_to_pack_object(object_path)
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
         """Generic content objcets iterable generator
@@ -53,7 +53,7 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=["*/"])
         for object_path in objects_path:
-            yield ContentObjectFactory.from_path(object_path)
+            yield path_to_pack_object(object_path)
 
     @property
     def id(self) -> str:

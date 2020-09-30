@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import (
     is_path_of_incident_type_directory, is_path_of_integration_directory,
     is_path_of_layout_directory, is_path_of_playbook_directory,
     is_path_of_script_directory, is_path_of_test_playbook_directory,
-    is_path_of_widget_directory, print_color, print_error, print_v)
+    is_path_of_widget_directory, print_color, print_error, print_v, get_demisto_version)
 from demisto_sdk.commands.unify.unifier import Unifier
 from tabulate import tabulate
 
@@ -36,6 +36,7 @@ class Uploader:
         self.status_code = 0
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
         self.failed_uploaded_files: List[Tuple[str, str]] = []
+        self.demisto_version = get_demisto_version(self.client)
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.

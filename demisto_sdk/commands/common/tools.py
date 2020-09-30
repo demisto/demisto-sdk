@@ -6,11 +6,13 @@ import os
 import re
 import shlex
 import sys
+import demisto_client
 from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from packaging.version import parse
 
 import click
 import colorama
@@ -1292,3 +1294,16 @@ def camel_to_snake(camel: str) -> str:
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake
+
+
+def get_demisto_version(demisto_client: demisto_client) -> str:
+    """
+    Args:
+        demisto_client: A configured demisto_client instance
+
+    Returns:
+        the server version of the Demisto instance.
+    """
+    resp = demisto_client.generic_request('/about', 'GET')
+    about_data = json.loads(resp[0].replace("'", '"'))
+    return parse(about_data.get('demistoVersion'))

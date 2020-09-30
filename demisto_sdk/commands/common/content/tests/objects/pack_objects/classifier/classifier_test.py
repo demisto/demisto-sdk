@@ -1,8 +1,7 @@
 from demisto_sdk.commands.common.constants import CLASSIFIERS_DIR, PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     Classifier, ClassifierMapper, OldClassifier)
-from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -12,7 +11,7 @@ CLASSIFIER = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / CLASSIFIERS_DIR / 'cla
 
 class TestClassifierType:
     def test_objects_factory(self):
-        obj = ContentObjectFactory.from_path(CLASSIFIER)
+        obj = path_to_pack_object(CLASSIFIER)
         assert isinstance(obj, Classifier)
 
     def test_prefix(self):
@@ -22,7 +21,7 @@ class TestClassifierType:
 
 class TestOldClassifierType:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir['old_classifier.json'])
+        obj = path_to_pack_object(datadir['old_classifier.json'])
         assert isinstance(obj, OldClassifier)
 
     def test_prefix(self, datadir):
@@ -32,7 +31,7 @@ class TestOldClassifierType:
 
 class TestClassifierMapperType:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir['classifier_mapper.json'])
+        obj = path_to_pack_object(datadir['classifier_mapper.json'])
         assert isinstance(obj, ClassifierMapper)
 
     def test_prefix(self, datadir):

@@ -1,7 +1,6 @@
 from demisto_sdk.commands.common.constants import DOC_FILES_DIR, PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import DocFile
-from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -10,7 +9,7 @@ DOC_FILE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / DOC_FILES_DIR / 'sample_
 
 
 def test_objects_factory():
-    obj = ContentObjectFactory.from_path(DOC_FILE)
+    obj = path_to_pack_object(DOC_FILE)
     assert isinstance(obj, DocFile)
 
 

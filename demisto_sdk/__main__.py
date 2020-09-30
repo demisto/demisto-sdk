@@ -46,6 +46,7 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.commands.upload.new_uploader import NewUploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -464,7 +465,7 @@ def format_yml(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 def upload(**kwargs):
-    uploader = Uploader(**kwargs)
+    uploader = NewUploader(**kwargs)
     return uploader.upload()
 
 

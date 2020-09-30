@@ -1,8 +1,7 @@
 import pytest
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import Readme
-from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 from wcmatch.pathlib import Path
 
@@ -14,7 +13,7 @@ PLAYBOOK_README = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / '
 
 @pytest.mark.parametrize(argnames="file", argvalues=[README, PLAYBOOK_README])
 def test_objects_factory(file: Path):
-    obj = ContentObjectFactory.from_path(README)
+    obj = path_to_pack_object(README)
     assert isinstance(obj, Readme)
 
 

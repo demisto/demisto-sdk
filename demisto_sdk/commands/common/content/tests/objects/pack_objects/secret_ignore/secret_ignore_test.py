@@ -1,8 +1,7 @@
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     SecretIgnore
-from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -11,7 +10,7 @@ SECRETS_IGNORE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / ".secrets-ignore"
 
 
 def test_objects_factory():
-    obj = ContentObjectFactory.from_path(SECRETS_IGNORE)
+    obj = path_to_pack_object(SECRETS_IGNORE)
     assert isinstance(obj, SecretIgnore)
 
 

@@ -134,11 +134,42 @@ class TestValidators:
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_valid_version(self, source, target, answer, validator):
         # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        """
+        Given
+        - A file with either a valid or invalid version
+
+        When
+        - Running is_valid_version
+
+        Then
+        -  Ensure returns the expected results
+        """
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
             assert res_validator.is_valid_version() is answer
+        finally:
+            os.remove(target)
+
+    @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
+    def test_is_valid_fromversion(self, source, target, answer, validator):
+        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        """
+        Given
+        - A file with either a valid or invalid fromversion
+
+        When
+        - Running is_valid_fromversion
+
+        Then
+        -  Ensure returns the expected results
+        """
+        try:
+            copyfile(source, target)
+            structure = StructureValidator(source)
+            res_validator = validator(structure)
+            assert res_validator.is_valid_fromversion() is answer
         finally:
             os.remove(target)
 
@@ -514,7 +545,7 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'IF107']
+        assert ignore_errors_list['file_name'] == ['BA101', 'BA106']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
@@ -522,7 +553,8 @@ class TestValidators:
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BC101", "BC102", "BC103", "BC104"]
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106",
+                                "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

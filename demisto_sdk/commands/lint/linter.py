@@ -30,6 +30,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                pylint_plugin,
+                                               split_warnings_errors,
                                                stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
@@ -84,7 +85,13 @@ class Linter:
             "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
-            "exit_code": SUCCESS
+            "flake8_warnings": None,
+            "XSOAR_linter_warnings": None,
+            "bandit_warnings": None,
+            "mypy_warnings": None,
+            "vulture_warnings": None,
+            "exit_code": SUCCESS,
+            "warning_code": SUCCESS,
         }
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -273,6 +280,9 @@ class Linter:
             no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
+        warning = []
+        error = []
+        other = []
         if self._facts["lint_files"]:
             exit_code: int = 0
             for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
@@ -292,9 +302,22 @@ class Linter:
                 elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
+
+                # check for any exit code other than 0
                 if exit_code:
+                    error, warning, other = split_warnings_errors(output)
+                if exit_code and warning:
+                    self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+                if exit_code & FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_errors"] = output
+                    # if the error were extracted correctly as they start with E
+                    if error:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # if there were errors but they do not start with E
+                    else:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+
         if self._facts['lint_unittest_files']:
             for lint_check in ["flake8"]:
                 exit_code = SUCCESS
@@ -303,8 +326,17 @@ class Linter:
                     exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
                                                          lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
+                    error, warning, other = split_warnings_errors(output)
+                if exit_code & FAIL:
                     self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_errors"] = output
+                    if error:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                    # for errors whihc start with 'E'
+                    else:
+                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+                if exit_code and WARNING:
+                    self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+                    self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
@@ -364,8 +396,10 @@ class Linter:
         if exit_code & FAIL_PYLINT:
             logger.info(f"{log_prompt}- Finished errors found")
             status = FAIL
-        elif exit_code & WARNING:
-            logger.info(f"{log_prompt} - Finished warnings found : {stdout}")
+        if exit_code & WARNING:
+            logger.info(f"{log_prompt} - Finished warnings found")
+            if not status:
+                status = WARNING
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
@@ -376,6 +410,7 @@ class Linter:
                 stdout = "Xsoar linter could not run, please make sure you have" \
                          " the necessary Pylint version for both py2 and py3"
             logger.info(f"{log_prompt}- Finished errors found")
+
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

@@ -40,6 +40,8 @@ files = [
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'xsoar', False, 1,
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
+     ['Doc Strings wasnt found, Please add to function.']),
 
 ]
 

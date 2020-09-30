@@ -1,7 +1,11 @@
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-xsoar_msg = {}  # type: ignore
+xsoar_msg = {
+    "W9013": (
+        "Doc Strings wasnt found, Please add to function.", "docstring-doesnt-exits",
+        "Ensure to not try except in the main function.",)
+}
 
 
 class XsoarChecker(BaseChecker):
@@ -12,9 +16,15 @@ class XsoarChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(XsoarChecker, self).__init__(linter)
-        self.list_of_function_names = set()
+
+    def visit_functiondef(self, node):
+        self._check_docstring(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
+
+    def _check_docstring(self, node):
+        if not node.doc and node.name != 'main':
+            self.add_message("docstring-doesnt-exits", node=node)
 
 
 def register(linter):

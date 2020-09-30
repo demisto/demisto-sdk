@@ -710,14 +710,6 @@ def fetch_incidents(client: Client, fetch_time: str, fetch_shaping: str, last_ru
 
 
 def shaping_fetch(client: Client, fetch_queue_id: list) -> str:
-    """
-    Create and Update shaping fields once a day and saves them in integration context.
-    Args:
-        client: Client for the api.
-        fetch_queue_id:
-    Returns:
-        the current shaping.
-    """
     integration_context = demisto.getIntegrationContext()
     if integration_context:
         valid_until = integration_context.get('valid_until')

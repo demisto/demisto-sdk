@@ -314,7 +314,7 @@ def test_report_summary_with_warnings(capsys):
     lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
-    assert "Packages WARNING (can either PASS or FAIL): \x1b[93m1\x1b[0m" in captured.out
+    assert "Packages WARNING (can either PASS or FAIL): \x1b[33m1\x1b[0m" in captured.out
     assert "Packages FAIL: [31m1[0m" in captured.out
 
 
@@ -342,5 +342,5 @@ def test_report_summary_no_warnings(capsys):
     lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
-    assert "Packages WARNING (can either PASS or FAIL): \x1b[93m0\x1b[0m" in captured.out
+    assert "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out
     assert "Packages FAIL: [31m0[0m" in captured.out

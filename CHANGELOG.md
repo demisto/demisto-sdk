@@ -1,6 +1,5 @@
 # Changelog
-* Fixed an issue where running **validate** failed on playbook with task that performs tagging.
-
+* Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
 
 # 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.

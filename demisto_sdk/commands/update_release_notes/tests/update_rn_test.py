@@ -838,9 +838,11 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
-                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_1_0.md')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={'Packs/Test/Test.yml'},
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files=set())
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
@@ -868,10 +870,11 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
-                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md')
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_0_0.md')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={'Packs/Test/Test.yml'},
-                          added_files=set())
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
@@ -902,10 +905,12 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
-        mocker.patch.object(UpdateRN, 'return_release_notes_path',
-                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
+                                                                                '/update_release_notes/tests_data'
+                                                                                '/Packs/release_notes/1_1_0.md')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={'Packs/Test/Test.yml'},
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'},
                           added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:

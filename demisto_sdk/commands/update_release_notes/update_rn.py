@@ -91,7 +91,7 @@ class UpdateRN:
             is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile:
+                if 'yml' in packfile and file_type == 'Integration':
                     is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
@@ -552,6 +552,7 @@ def check_docker_image_changed(added_or_modified_yml):
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
-            if '+  dockerimage:' in diff_line:
+            if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
+                # changed.
                 return True, diff_line.split()[-1]
         return False, ''

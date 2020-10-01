@@ -1,4 +1,5 @@
 # Changelog
+* Add support for warning msgs in the report and summary to **lint** command.
 * Fixed an issue where **json-to-outputs** determined bool values as int.
 * Fixed an issue where **update-release-notes** was crushing on `--all` flag.
 * Fixed an issue where running **validate**, **update-release-notes** outside of content repo crushed without a meaningful error message.
@@ -26,7 +27,9 @@
 * Added support for *prev-ver* flag in **lint** and **secrets** commands.
 * Added support for *text* flag to **update-release-notes** command to add the same text to all release notes.
 * Fixed an issue where **validate** did not recognize added files if they were modified locally.
-* Add enhancement to **update-release-notes**: update release notes automatically when upgrading docker image.
+* Added a validation that checks the `fromversion` field exists and is set to 5.0.0 or above when working or comparing to a non-feature branch in **validate** command.
+* Added a validation that checks the certification field in the pack_metadata file is valid in **validate** command.
+* The **update-release-notes** command will now automatically add docker image update to the release notes.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

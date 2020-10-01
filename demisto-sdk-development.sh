@@ -64,5 +64,5 @@ mkvirtualenv ${VIRTUALENV_NAME}
 pip3 install -e ${SDK_WORKDIR}
 
 # Summary log
-printf "\n\nDemisto-sdk virtual env setup finished succefully:\n  1. Restart your termianl.\n  2. In order to activate enviorment ${GREEN}workon ${VIRTUALENV_NAME}${NC}\n  3. Inorder to deactivate enviorment ${RED}deactivate${NC}\n"
+printf "\n\nDemisto-sdk virtual env setup finished succefully:\n  1. Restart your terminal.\n  2. In order to activate enviorment ${GREEN}workon ${VIRTUALENV_NAME}${NC}\n  3. Inorder to deactivate enviorment ${RED}deactivate${NC}\n"
 exit 0

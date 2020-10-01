@@ -41,12 +41,13 @@ This will be used as your testing environment, you do not need to update it agai
 3. Run the script: `~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
    * You might need to setup your SHELL env variable by running `export SHELL=/bin/zsh` or `export SHELL=/bin/bash`.
 
+4. Restart your terminal.
+
 You have now setup the your `demisto-sdk-dev` env!
 
 To activate it simply run: `workon demisto-sdk-dev`
    * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
      If not, while your current working directory is the `demisto-sdk` root repo by runnning `cd ~/dev/demisto/demisto-sdk` and then run `pip3 install -e .`.
-   * In case the `workon` command is not recognized follow the instructions [here](https://stackoverflow.com/questions/21928555/virtualenv-workon-command-not-found) for a solution.
 
 To deactivate the virtual environment and return simply run: `deactivate`.
    * Note that your local `demisto-sdk` version should remain unchanged.

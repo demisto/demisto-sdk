@@ -6,7 +6,7 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 ## Getting started
 
 1. [Clone demisto-sdk repository](#1-Clone-demisto-sdk-repository)
-2. [Install demisto-sdk as editable versions](#2-Install-demisto-sdk-as-editable-version)
+2. [Install demisto sdk dev environment](#2-Install-demisto-sdk-dev-environment)
 3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
 4. [DemistoContentPython Libary](#4-DemistoContentPython-Libary)
 5. [Develop new command](#5-Develop-new-command)
@@ -26,7 +26,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 
 ---
 
-### 2. Install demisto sdk as editable version
+### 2. Install demisto sdk dev environment
 
 We will now setup a quick virtualenv in which we will install the `demisto-sdk` version you are currently working on.
 This will be used as your testing environment, you do not need to update it again or re-run in any way.
@@ -46,6 +46,7 @@ You have now setup the your `demisto-sdk-dev` env!
 To activate it simply run: `workon demisto-sdk-dev`
    * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
      If not, while your current working directory is the `demisto-sdk` root repo by runnning `cd ~/dev/demisto/demisto-sdk` and then run `pip3 install -e .`.
+   * In case the `workon` command is not recognized follow the instructions [here](https://stackoverflow.com/questions/21928555/virtualenv-workon-command-not-found) for a solution.
 
 To deactivate the virtual environment and return simply run: `deactivate`.
    * Note that your local `demisto-sdk` version should remain unchanged.

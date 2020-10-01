@@ -910,8 +910,7 @@ class TestRNUpdateUnit:
                                                                                 '/Packs/release_notes/1_1_0.md')
 
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-            'Packs/Test/Integrations/Test.yml'},
-                          added_files=set('Packs/Test/some_added_file.py'))
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()

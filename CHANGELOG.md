@@ -39,6 +39,7 @@
 * Fixed an issue where **validate** did not recognize added files if they were modified locally.
 * Added a validation that checks the `fromversion` field exists and is set to 5.0.0 or above when working or comparing to a non-feature branch in **validate** command.
 * Added a validation that checks the certification field in the pack_metadata file is valid in **validate** command.
+* The **update-release-notes** command will now automatically add docker image update to the release notes.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

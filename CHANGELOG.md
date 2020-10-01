@@ -1,4 +1,7 @@
 # Changelog
+
+
+# 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.
 * Fixed an issue where **json-to-outputs** determined bool values as int.
 * Fixed an issue where **update-release-notes** was crushing on `--all` flag.

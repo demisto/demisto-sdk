@@ -727,9 +727,10 @@ def init(**kwargs):
     required=False
 )
 @click.option(
-    "-e", "--examples", help="Path for file containing command or script examples."
-                             " Each Command should be in a separate line."
-                             " For script - the script example surrounded by double quotes.")
+    "-e", "--examples", help="Integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " Scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'")
 @click.option(
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
@@ -806,7 +807,7 @@ def generate_doc(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+    "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
@@ -881,7 +882,7 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -i parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+    if not is_all and (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
@@ -899,7 +900,7 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type,
+            update_pack_rn = UpdateRN(pack_path='', pack=pack, update_type=update_type,
                                       modified_files_in_pack=modified.union(old), pre_release=pre_release,
                                       added_files=added, specific_version=specific_version, text=text)
             update_pack_rn.execute_update()

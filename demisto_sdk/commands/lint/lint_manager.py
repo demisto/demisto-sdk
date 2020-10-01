@@ -54,6 +54,7 @@ class LintManager:
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
+        self._all_packs = all_packs
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
@@ -260,6 +261,16 @@ class LintManager:
             "fail_packs_pwsh_analyze": [],
             "fail_packs_pwsh_test": [],
             "fail_packs_image": [],
+            "warning_packs_flake8": [],
+            "warning_packs_XSOAR_linter": [],
+            "warning_packs_bandit": [],
+            "warning_packs_mypy": [],
+            "warning_packs_vulture": [],
+            "warning_packs_pylint": [],
+            "warning_packs_pytest": [],
+            "warning_packs_pwsh_analyze": [],
+            "warning_packs_pwsh_test": [],
+            "warning_packs_image": [],
         }
 
         # Python or powershell or both
@@ -276,6 +287,7 @@ class LintManager:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             return_exit_code: int = 0
+            return_warning_code: int = 0
             results = []
             # Executing lint checks in different threads
             for pack in self._pkgs:
@@ -306,9 +318,14 @@ class LintManager:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                                return_exit_code = FAIL
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
+                    if pkg_status["warning_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["warning_code"] & code:
+                                lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_warning_code & pkg_status["warning_code"]:
+                            return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
             except KeyboardInterrupt:
@@ -329,13 +346,19 @@ class LintManager:
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,
+                             return_warning_code=return_warning_code,
                              skipped_code=int(skipped_code),
                              pkgs_type=pkgs_type)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
+        # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
+        # then 512 and will not cause failure on the exit code.
+        if return_exit_code:
+            return_exit_code = FAIL
         return return_exit_code
 
-    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, skipped_code: int,
+    def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
+                        skipped_code: int,
                         pkgs_type: list):
         """ Log report to console
 
@@ -343,6 +366,7 @@ class LintManager:
             lint_status(dict): Overall lint status
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
+            return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
 
@@ -353,13 +377,17 @@ class LintManager:
         self.report_failed_lint_checks(return_exit_code=return_exit_code,
                                        pkgs_status=pkgs_status,
                                        lint_status=lint_status)
+        self.report_warning_lint_checks(return_warning_code=return_warning_code,
+                                        pkgs_status=pkgs_status,
+                                        lint_status=lint_status,
+                                        all_packs=self._all_packs)
         self.report_unit_tests(return_exit_code=return_exit_code,
                                pkgs_status=pkgs_status,
                                lint_status=lint_status)
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(lint_status=lint_status)
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -417,6 +445,27 @@ class LintManager:
                     print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
                     for image in pkgs_status[fail_pack]["images"]:
                         print(image[f"{check}_errors"])
+
+    @staticmethod
+    def report_warning_lint_checks(lint_status: dict, pkgs_status: dict, return_warning_code: int, all_packs: bool):
+        """ Log warnings lint log if exists
+
+        Args:
+            lint_status(dict): Overall lint status
+            pkgs_status(dict): All pkgs status dict
+            return_warning_code(int): exit code will indicate which lint or test caused warnings
+            all_packs(bool) if all packs runs then no need for warnings messages.
+        """
+        if not all_packs:
+            for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+                if EXIT_CODES[check] & return_warning_code:
+                    sentence = f" {check.capitalize()} warnings "
+                    print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")
+                    print(f"{Colors.Fg.orange}{sentence}{Colors.reset}")
+                    print(f"{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}\n")
+                    for fail_pack in lint_status[f"warning_packs_{check}"]:
+                        print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
+                        print(pkgs_status[fail_pack][f"{check}_warnings"])
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed unit-tests , if verbosity specified will log also success unit-tests
@@ -549,11 +598,13 @@ class LintManager:
                     print(wrapper_image.fill(image["image"]))
                     print(wrapper_error.fill(image["image_errors"]))
 
-    def report_summary(self, lint_status: dict):
+    @staticmethod
+    def report_summary(pkg, lint_status: dict, all_packs: bool = False):
         """ Log failed image creation if occured
 
         Args:
             lint_status(dict): Overall lint status
+            all_packs(bool): True when running lint command with -a flag.
      """
         preferred_width = 100
         fail_pack_indent = 3
@@ -562,16 +613,33 @@ class LintManager:
                                                  subsequent_indent=' ' * len(fail_pack_prefix))
         # intersection of all failed packages
         failed: Set[str] = set()
-        for packs in lint_status.values():
-            failed = failed.union(packs)
+
+        # intersection of all warnings packages
+        warnings: Set[str] = set()
+
+        # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
+        # warnings packages.
+        for key in lint_status:
+            if key.startswith('fail'):
+                failed = failed.union(lint_status[key])
+            if key.startswith('warning'):
+                warnings = warnings.union(lint_status[key])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
-        print(f"Packages: {len(self._pkgs)}")
-        print(f"Packages PASS: {Colors.Fg.green}{len(self._pkgs) - len(failed)}{Colors.reset}")
+        print(f"Packages: {len(pkg)}")
+        print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
+        print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n")
+
+        if not all_packs:
+            if warnings:
+                print("Warning packages:")
+            for warning in warnings:
+                print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
+
         if failed:
             print("Failed packages:")
         for fail_pack in failed:

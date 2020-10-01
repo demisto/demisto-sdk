@@ -20,7 +20,7 @@ cert_partner_msg = {
 
 class CertifiedPartnerChecker(BaseChecker):
     __implements__ = IAstroidChecker
-    name = "community-checker"
+    name = "certified-partner-checker"
     priority = -1
     msgs = cert_partner_msg
 

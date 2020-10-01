@@ -407,3 +407,33 @@ def pylint_plugin(dest: Path):
         for file in plugin_dirs.iterdir():
             if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
                 (dest / f'{file.name}').unlink()
+
+
+def split_warnings_errors(output: str):
+    """
+        Function which splits the given string into warning messages and error using W or E in the beginning of string
+        For error messages that do not start with E , they will be returned as other.
+        The output of a certain pack can both include:
+            - Fail msgs
+            - Fail msgs and warnings msgs
+            - Passed msgs
+            - Passed msgs and warnings msgs
+            - warning msgs
+        Args:
+            output(str): string which contains messages from linters.
+        return:
+            list of error messags, list of warnings messages, list of all undetected messages
+        """
+    output_lst = output.split('\n')
+    warnings_list = []
+    error_list = []
+    other_msg_list = []
+    for msg in output_lst:
+        if msg.startswith('W') or 'W90' in msg:
+            warnings_list.append(msg)
+        elif msg.startswith('E') or 'E90' in msg:
+            error_list.append(msg)
+        else:
+            other_msg_list.append(msg)
+
+    return error_list, warnings_list, other_msg_list

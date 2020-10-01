@@ -14,5 +14,6 @@ args:
   defaultValue: "6"
 scripttarget: 0
 runonce: false
+fromversion: 5.0.0
 tests:
   - No tests

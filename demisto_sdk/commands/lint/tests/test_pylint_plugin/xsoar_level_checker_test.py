@@ -24,7 +24,7 @@ class TestDocStringChecker(pylint.testutils.CheckerTestCase):
 
         """
         node_a, node_b = astroid.extract_node("""
-            def test_function(): #@
+            def test_function() -> str: #@
                 '''
                 test docs
                 '''
@@ -53,7 +53,7 @@ class TestDocStringChecker(pylint.testutils.CheckerTestCase):
              fucntion.
         """
         node_a, node_b = astroid.extract_node("""
-            def test_function(): #@
+            def test_function() -> bool: #@
                 sys.exit(1)
                 return True
             def main(): #@
@@ -81,7 +81,7 @@ class TestDocStringChecker(pylint.testutils.CheckerTestCase):
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
         node_a, node_b = astroid.extract_node("""
-            def test_function(): #@
+            def test_function() -> bool: #@
                 '''
                 This function has docs string
                 '''

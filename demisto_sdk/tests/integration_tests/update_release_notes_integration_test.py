@@ -40,7 +40,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     - Ensure the release motes content is valid and as expected.
     """
 
-    expected_rn = '\n' + '#### Integrations\n' +\
+    expected_rn = '\n' + '#### Integrations\n' + \
                   '##### New: Azure Feed\n' + \
                   '- Azure.CloudIPs Feed Integration.\n'
 
@@ -83,7 +83,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     - Ensure the release motes content is valid and as expected.
     """
 
-    expected_rn = '\n' + '#### Integrations\n' +\
+    expected_rn = '\n' + '#### Integrations\n' + \
                   '##### Azure Feed\n' + \
                   '- %%UPDATE_RN%%\n'
     modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
@@ -126,7 +126,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     - Ensure the release motes content is valid and as expected.
     """
 
-    expected_rn = '\n' + '#### Incident Fields\n' +\
+    expected_rn = '\n' + '#### Incident Fields\n' + \
                   '- **City**\n'
 
     runner = CliRunner(mix_stderr=False)
@@ -195,6 +195,28 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     assert expected_rn == rn
 
 
+def test_update_release_notes_non_content_path(demisto_client, mocker):
+    """
+    Given
+    - non content pack path.
+
+    When
+    - Running demisto-sdk update-release-notes command.
+
+    Then
+    - Ensure an error is raised
+    """
+    runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Users', 'MyPacks', 'VMware')])
+
+    assert result.exit_code == 1
+    assert result.exception
+    assert "You are not running" in result.stdout  # check error str is in stdout
+
+
 def test_update_release_notes_existing(demisto_client, mocker):
     """
     Given
@@ -208,13 +230,13 @@ def test_update_release_notes_existing(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
-    expected_rn = '\n' + '#### Integrations\n' +\
+    expected_rn = '\n' + '#### Integrations\n' + \
                   '##### New: Azure Feed\n' + \
                   '- Azure.CloudIPs Feed Integration.\n' + \
                   '\n' + '#### Incident Fields\n' + \
                   '- **City**'
 
-    input_rn = '\n' + '#### Integrations\n' +\
+    input_rn = '\n' + '#### Integrations\n' + \
                '##### New: Azure Feed\n' + \
                '- Azure.CloudIPs Feed Integration.\n'
 
@@ -301,3 +323,27 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     assert not result.exception
     assert 'Changes were detected. Bumping ApiModules to version: 1.0.1' in result.stdout
     assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.2' in result.stdout
+
+
+def test_update_release_notes_all(demisto_client, mocker):
+    """
+    Given
+    - --all flag
+
+    When
+    - Running demisto-sdk update-release-notes command.
+
+    Then
+    - Ensure release notes are detected.
+    """
+    runner = CliRunner(mix_stderr=False)
+
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(set(), set(), set(), set(),
+                                                                                       {'FeedAzureValid'}))
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
+
+    assert result.exit_code == 0
+    assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout

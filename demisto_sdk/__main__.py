@@ -8,6 +8,7 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
+import git
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -285,23 +286,27 @@ def validate(config, **kwargs):
         print_error(f'File {file_path} was not found')
         return 1
     else:
-        is_external_repo = tools.is_external_repository()
-
-        validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
-                                    only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                    skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
-                                    file_path=file_path,
-                                    validate_all=kwargs.get('validate_all'),
-                                    validate_id_set=kwargs['id_set'],
-                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                    print_ignored_errors=kwargs['print_ignored_errors'],
-                                    is_external_repo=is_external_repo,
-                                    print_ignored_files=kwargs['print_ignored_files'],
-                                    no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'],
-                                    skip_dependencies=kwargs['skip_pack_dependencies'],
-                                    id_set_path=kwargs.get('id_set_path'))
-        return validator.run_validation()
+        try:
+            is_external_repo = tools.is_external_repository()
+            validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
+                                        only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+                                        skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
+                                        file_path=file_path,
+                                        validate_all=kwargs.get('validate_all'),
+                                        validate_id_set=kwargs['id_set'],
+                                        skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+                                        print_ignored_errors=kwargs['print_ignored_errors'],
+                                        is_external_repo=is_external_repo,
+                                        print_ignored_files=kwargs['print_ignored_files'],
+                                        no_docker_checks=kwargs['no_docker_checks'],
+                                        silence_init_prints=kwargs['silence_init_prints'],
+                                        skip_dependencies=kwargs['skip_pack_dependencies'],
+                                        id_set_path=kwargs.get('id_set_path'))
+            return validator.run_validation()
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+            print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
+                        "Please run the command from content directory")
+            sys.exit(1)
 
 
 # ====================== create-content-artifacts ====================== #
@@ -352,6 +357,8 @@ def create_arifacts(**kwargs) -> int:
 @click.option(
     '-wl', '--whitelist', default='./Tests/secrets_white_list.json', show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"')
+@click.option(
+    '--prev-ver', help='The branch against which to run secrets validation')
 @pass_config
 def secrets(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -360,7 +367,8 @@ def secrets(config, **kwargs):
         is_circle=kwargs['post_commit'],
         ignore_entropy=kwargs['ignore_entropy'],
         white_list_path=kwargs['whitelist'],
-        input_path=kwargs.get('input')
+        input_path=kwargs.get('input'),
+        prev_ver=kwargs.get('prev_ver')
     )
     return secrets_validator.run()
 
@@ -392,6 +400,7 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
+@click.option("--prev-ver", default='master', help="Previous branch or SHA1 commit to run checks against")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
@@ -399,7 +408,7 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
-         no_pwsh_test: bool, keep_container: bool, test_xml: str, failure_report: str, log_path: str):
+         no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
@@ -410,7 +419,8 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
                                all_packs=all_packs,
                                verbose=verbose,
                                quiet=quiet,
-                               log_path=log_path)
+                               log_path=log_path,
+                               prev_ver=prev_ver)
     return lint_manager.run_dev_packages(parallel=parallel,
                                          no_flake8=no_flake8,
                                          no_bandit=no_bandit,
@@ -717,9 +727,10 @@ def init(**kwargs):
     required=False
 )
 @click.option(
-    "-e", "--examples", help="Path for file containing command or script examples."
-                             " Each Command should be in a separate line."
-                             " For script - the script example surrounded by double quotes.")
+    "-e", "--examples", help="Integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " Scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'")
 @click.option(
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
@@ -796,7 +807,7 @@ def generate_doc(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-o", "--output", help="Output file path, the default is the Tests directory.", required=False)
+    "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
@@ -822,6 +833,9 @@ def id_set_command(**kwargs):
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
+    '--text', help="Text to add to all of the release notes files",
+)
+@click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 @click.option(
@@ -832,14 +846,21 @@ def update_pack_releasenotes(**kwargs):
     update_type = kwargs.get('update_type')
     pre_release = kwargs.get('pre_release')
     is_all = kwargs.get('all')
+    text = kwargs.get('text')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     print("Starting to update release notes.")
 
-    validate_manager = ValidateManager(skip_pack_rn_validation=True)
-    validate_manager.setup_git_params()
-    modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files('...',
-                                                                                                     'origin/master')
+    try:
+        validate_manager = ValidateManager(skip_pack_rn_validation=True)
+        validate_manager.setup_git_params()
+        modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
+            '...', 'origin/master')
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
+                    "Please run `cd content` from your terminal and run the command again")
+        sys.exit(1)
+
     packs_existing_rn = set()
     for pf in added:
         if 'ReleaseNotes' in pf:
@@ -861,7 +882,7 @@ def update_pack_releasenotes(**kwargs):
                             f"To update release notes in a specific pack, please use the -i parameter "
                             f"along with the pack name.")
                 sys.exit(0)
-    if (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
+    if not is_all and (len(modified) < 1) and (len(added) < 1) and (len(old) < 1):
         # case: changed_meta_files
         if len(changed_meta_files) < 1:
             print_warning('No changes were detected. If changes were made, please commit the changes '
@@ -879,9 +900,9 @@ def update_pack_releasenotes(**kwargs):
         packs_list = ''.join(f"{p}, " for p in packs)
         print_warning(f"Adding release notes to the following packs: {packs_list.rstrip(', ')}")
         for pack in packs:
-            update_pack_rn = UpdateRN(pack_path=pack, update_type=update_type,
+            update_pack_rn = UpdateRN(pack_path='', pack=pack, update_type=update_type,
                                       modified_files_in_pack=modified.union(old), pre_release=pre_release,
-                                      added_files=added, specific_version=specific_version)
+                                      added_files=added, specific_version=specific_version, text=text)
             update_pack_rn.execute_update()
     elif is_all and _pack:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -902,7 +923,7 @@ def update_pack_releasenotes(**kwargs):
                                           added_files=added, specific_version=specific_version)
                 update_pack_rn.execute_update()
 
-    if API_MODULES_PACK in _pack:
+    if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
         update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
 

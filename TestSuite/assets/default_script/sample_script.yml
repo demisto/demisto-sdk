@@ -17,4 +17,5 @@ args:
   description: sample arg
 scripttarget: 0
 runonce: false
+fromversion: 5.0.0
 dockerimage: demisto/python3:3.8.3.8715

@@ -300,3 +300,16 @@ my_email = "fooo@someorg.com"
 
         secrets_output = self.validator.reformat_secrets_output([])
         assert secrets_output == ''
+
+    def test_get_all_diff_text_files(self, mocker):
+        mocker.patch('demisto_sdk.commands.secrets.secrets.run_command',
+                     return_value='m\tPacks/Integrations/integration/testing.py\n')
+        validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
+                                                                                  TestSecrets.WHITE_LIST_FILE_NAME))
+
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
+
+        validator.prev_ver = 'Testing_branch'
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']

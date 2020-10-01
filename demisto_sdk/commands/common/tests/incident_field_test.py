@@ -63,6 +63,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
 
@@ -104,6 +106,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_content_flag() is answer
@@ -131,6 +135,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_system_flag() is answer
@@ -150,6 +156,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_cliname_is_builtin_key()
@@ -169,6 +177,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_cliname_is_builtin_key()
@@ -187,6 +197,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_matching_cliname_regex()
@@ -207,6 +219,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_matching_cliname_regex()
@@ -220,6 +234,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert validator.is_valid_cliname()
@@ -233,6 +249,8 @@ class TestIncidentFieldsValidator:
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
             validator = IncidentFieldValidator(structure)
             validator.current_file = current_file
             assert not validator.is_valid_cliname()
@@ -249,25 +267,6 @@ class TestIncidentFieldsValidator:
         structure.current_file = {"version": version}
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
-
-    data_is_valid_from_version = [
-        ('5.0.0', True),
-        ('4.', False),
-        ('', False),
-        ('4.0.0', False),
-        ('5.0.1', True),
-        ('100.0.0', True),
-        ('5', False),
-        (None, False)
-    ]
-
-    @pytest.mark.parametrize('from_version, is_valid', data_is_valid_from_version)
-    def test_is_current_valid_from_version(self, from_version, is_valid):
-        structure = StructureValidator("")
-        structure.current_file = {"fromVersion": from_version}
-        validator = IncidentFieldValidator(structure)
-        assert validator.is_current_valid_from_version() == is_valid, f'is_valid_from_version({from_version})' \
-                                                                      f' returns {not is_valid}.'
 
     IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}

@@ -548,7 +548,8 @@ def check_docker_image_changed(added_or_modified_yml):
         if any(['is outside repository' in exp for exp in e.args]):
             return False, ''
         else:
-            raise
+            print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
+            return False, ''
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:

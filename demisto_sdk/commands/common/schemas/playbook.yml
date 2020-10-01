@@ -131,6 +131,7 @@ mapping:
               tags:
                 type: map
                 required: false
+                allowempty: True
                 mapping:
                   simple:
                     type: text

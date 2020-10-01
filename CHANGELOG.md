@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running **validate** failed on playbook with task that performs tagging.
 
 
 # 1.2.2

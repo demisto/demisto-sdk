@@ -843,6 +843,7 @@ def split_fields(fields: str = '') -> dict:
         dic_fields object for request.
     """
     dic_fields = {}
+    a = demisto.args()
     if fields:
         if '=' not in fields:
             raise Exception(

@@ -3,7 +3,7 @@ from pylint.interfaces import IAstroidChecker
 
 xsoar_msg = {
     "W9013": (
-        "Doc Strings wasnt found, Please add to function.", "docstring-doesnt-exits",
+        "Docstrings was not found, Please add to function.", "docstring-doesnt-exits",
         "Ensure to not try except in the main function.",)
 }
 

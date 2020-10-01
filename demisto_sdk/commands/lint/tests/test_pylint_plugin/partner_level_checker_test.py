@@ -18,7 +18,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - in main function , try except statement exists.
+            - in main function, try except statement exists.
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
 
@@ -104,7 +104,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
         When:
             - in main function , there is no return_error statement and in no other section in the code.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_b = astroid.extract_node("""
             def test_function():
@@ -133,7 +133,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
         When:
             - return_error statment exists but not in main function but in a different one.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_b = astroid.extract_node("""
             def test_function():
@@ -195,7 +195,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
         When:
             - return_error usage exists more than once in the code.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_a, node_b = astroid.extract_node("""
             return_error()
@@ -222,7 +222,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
 
 class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
     """
-    Class which tests the functionality of sys exit checker .
+    Class which tests that demisto.params() is used only in main function.
     """
     CHECKER_CLASS = partner_level_checker.PartnerChecker
 
@@ -231,7 +231,7 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - in main function , try except statement exists.
+            - main function exists and demisto.params() used only inside it.
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
 
@@ -249,9 +249,9 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - in main function , there is no try except statement.
+            - demisto.params() used in a global space outside of main.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_b = astroid.extract_node("""
             demisto.params() #@
@@ -267,6 +267,59 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='init-params-outside-main',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_b)
+
+
+class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that demisto.args() is used only in main function.
+    """
+    CHECKER_CLASS = partner_level_checker.PartnerChecker
+
+    def test_init_args_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - main function exists and demisto.args() used only inside it.
+        Then:
+            - Ensure that there are no errors, Check that there is no error message.
+
+        """
+        node_b = astroid.parse("""
+            def main():
+                demisto.args().get('name') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+    def test_init_params_not_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - demisto.args() used in a global space outside of main.
+        Then:
+            - Ensure that the correct message id is being added to the messages of pylint
+        """
+        node_b = astroid.extract_node("""
+            demisto.args() #@
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='init-args-outside-main',
                     node=node_b,
                 ),
         ):

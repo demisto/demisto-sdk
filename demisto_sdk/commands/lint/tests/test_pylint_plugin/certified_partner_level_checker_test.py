@@ -178,9 +178,9 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct error message is added to pylint error message list.
         """
         node_a, node_b, node_c, node_d = astroid.extract_node("""
-            def test_function():  #@
+            def test_function() -> bool:  #@
                 return True  #@
-            def another_function():#@
+            def another_function() -> bool:#@
                 return False  #@
         """)
         with self.assertAddsMessages(
@@ -364,9 +364,9 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Two given function which do not have type annotation.
+            - Two given function, One does not have type annotations and the other does.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
         node_a, node_b = astroid.extract_node("""
             def test_num1(a: str, b:int) ->str: #@
@@ -420,9 +420,9 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Two given function which one have return type and the other doesnt
+            - Three given function, one function should raise warnings and the others should not
         Then:
-            - Ensure that there is no errors, Check that there is no error message.
+            - Ensure that the correct message id is being added to the messages of pylint regarding function test_num1
         """
         node_a, node_b, node_c = astroid.extract_node("""
                     def test_num1(a: str, b: str): #@
@@ -434,7 +434,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                             return False
                         else:
                             return None
-                    def client(self): #@
+                    def client(self) -> bool: #@
                         return True
                 """)
 
@@ -454,9 +454,10 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Two given function which both have return type annotations.
+            - Three given functions,Two of which have return type annotations and one is main which should cause
+             warnings.
         Then:
-            - Ensure that there is no errors, Check that there is no error message.
+            - Ensure that there are no errors, Check that there is no error message.
         """
         node_a, node_b = astroid.extract_node("""
                     def test_num1(a: str, b: str) -> str: #@

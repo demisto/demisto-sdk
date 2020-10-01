@@ -47,6 +47,7 @@ elif [[ $SHELL == *"bin/bash"* ]]; then
     source ~/.bash_profile
 else
     printf "${RED}Currnltly only bash/zsh is supported as base shell.\n${output}${NC}"
+    printf "${RED}Run 'export SHELL=/bin/zsh' or 'export SHELL=/bin/bash' and rerun the script.\n${output}${NC}"
     exit 1
 fi
 

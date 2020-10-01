@@ -27,33 +27,28 @@ git clone https://github.com/demisto/demisto-sdk.git
 ---
 
 ### 2. Install demisto sdk as editable version
-1. If you are using virtualenv for this process you can skip this step, uninstall current installed version of
-   `demisto-sdk`:
 
-   ```shell
-   pip3 uninstall demisto-sdk
-   ```
+We will now setup a quick virtualenv in which we will install the `demisto-sdk` version you are currently working on.
+This will be used as your testing environment, you do not need to update it again or re-run in any way.
 
-2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
+1. Make sure you are running python version 3.8. If you are running using pyenv do the following:
+   * Run `pyenv versions` and make sure 3.8.0 is installed and selected.
+   * If you do not see the version please run `pyenv install 3.8.0`.
+   * If it is not selected please run `pyenv global 3.8.0`.
 
-   ```shell
-   pip3 install -e .
-   ```
+2. Add executable permissions to our setup script by running `chmod a+x ~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
 
-3. Validate that `demisto-sdk` installed path is correct by
+3. Run the script: `~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
+   * You might need to setup your SHELL env variable by running `export SHELL=/bin/zsh` or `export SHELL=/bin/bash`.
 
-   ```shell
-   pip3 show demisto-sdk  | grep Location
-   ```
+You have now setup the your `demisto-sdk-dev` env!
 
+To activate it simply run: `workon demisto-sdk-dev`
+   * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
+     If not, while your current working directory is the `demisto-sdk` root repo by runnning `cd ~/dev/demisto/demisto-sdk` and then run `pip3 install -e .`.
 
-   should be `demisto-sdk` repository in your local enviorment.
-
-4. Install dev-requirements -
-
-   ```shell
-   pip3 install -r <repo>/requirements-dev.txt
-   ```
+To deactivate the virtual environment and return simply run: `deactivate`.
+   * Note that your local `demisto-sdk` version should remain unchanged.
 
 ---
 

@@ -44,6 +44,8 @@ files = [
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
      ['Doc Strings wasnt found, Please add to function.']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'partner', False, 4,
+     ['Initialize of params was found outside of main function. Please initialize params only inside main func']),
 
 ]
 

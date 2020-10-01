@@ -236,17 +236,9 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that it does not raise any errors, Check that there is no error message.
 
         """
-        node_b = astroid.extract_node("""
+        node_b = astroid.parse("""
             def main():
-                params = demisto.params() #@
-        """)
-        assert node_b is not None
-        with self.assertNoMessages():
-            self.checker.visit_call(node_b)
-
-        node_b = astroid.extract_node("""
-            def main():
-                name = demisto.params().get('name') #@
+                demisto.params().get('name') #@
         """)
         assert node_b is not None
         with self.assertNoMessages():
@@ -262,8 +254,8 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct message id is being added to the message errors of pylint
         """
         node_b = astroid.extract_node("""
+            demisto.params() #@
             def test_function():
-                demisto.params()
                 sys.exit(1)
                 return True
             def main():

@@ -49,7 +49,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 
    should be `demisto-sdk` repository in your local enviorment.
 
-4. Install dev-requirements -
+4. Install dev-requirements:
 
    ```shell
    pip3 install -r <repo>/requirements-dev.txt
@@ -117,7 +117,7 @@ For more information read the following [guide](demisto_sdk/commands/common/cont
 
 ### 6. Running unit-tests using tox
 
-[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it inorder to check unit-tests on python versions 3.7 and 3.8.
+[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it in order to check unit-tests on python versions 3.7 and 3.8.
 
 > If you have one interpreter in your local environment it will skip the missing interpreter and not failed - the 2 versions test will be performed in the CircleCI build.
 

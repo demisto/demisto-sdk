@@ -40,9 +40,9 @@ else
 fi
 
 # Init PATH variables
-if [[ $SHELL == "/usr/local/bin/zsh" ]]; then
+if [[ $SHELL == *"bin/zsh"* ]]; then
     source ~/.zshrc
-elif [[ $SHELL == "/usr/local/bin/bash" ]]; then
+elif [[ $SHELL == *"bin/bash"* ]]; then
     source ~/.bash_profile
 else
     printf "${RED}Currnltly only bash/zsh is supported as base shell.\n${output}${NC}"

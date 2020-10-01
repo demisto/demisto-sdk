@@ -1,6 +1,7 @@
 #!/bin/zsh
 
 VIRTUALENV_NAME="demisto-sdk-dev"
+SDK_WORKDIR="${HOME}/dev/demisto/demisto-sdk"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,7 +60,7 @@ echo pyenv virtualenvwrapper >> ~/.bash_profile
 rmvirtualenv ${VIRTUALENV_NAME}
 mkvirtualenv ${VIRTUALENV_NAME}
 
-pip3 install -e .
+pip3 install -e ${SDK_WORKDIR}
 
 # Summary log
 printf "\n\nDemisto-sdk virtual env setup finished succefully:\n  1. Restart your termianl.\n  2. In order to activate enviorment ${GREEN}workon ${VIRTUALENV_NAME}${NC}\n  3. Inorder to deactivate enviorment ${RED}deactivate${NC}\n"

@@ -129,8 +129,11 @@ mapping:
                   simple:
                     type: text
               tags:
+                type: map
                 required: false
-                type: text
+                mapping:
+                  simple:
+                    type: text
           task:
             type: map
             required: true

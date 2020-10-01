@@ -1,3 +1,4 @@
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -15,14 +16,14 @@ cert_partner_msg = {
     "W9009": (
         "Do not use return_outputs function. Please return CommandResults object instead.", "return-outputs-exists",
         "Do not use return_outputs function.",),
-    "W9014": (
-        "Function arguments are missing type annotations. Please add type annotations",
-        "args-type-annotations-doesnt-exist",
-        "Function arguments are missing type annotations. Please add type annotations",),
-    "W9015": (
-        "Function return value type annotation is missing. Please add type annotations",
-        "return-type-annotations-doesnt-exist",
-        "Function return value type annotation is missing. Please add type annotations",),
+    "W9016": ("Initialize of params was found outside of main function. Please use demisto.params() only inside main"
+              "func",
+              "init-params-outside-main",
+              "Initialize of params was found outside of main function. Please initialize params only inside main func",),
+    "W9017": ("Initialize of args was found outside of main function. Please use demisto.args() only inside main func",
+              "init-args-outside-main",
+              "Initialize of args was found outside of main function. Please use demisto.args() only inside main func",),
+
 }
 
 
@@ -41,10 +42,11 @@ class CertifiedPartnerChecker(BaseChecker):
         self._demisto_log_checker(node)
         self._return_outputs_checker(node)
         self._demisto_results_checker(node)
+        self._init_params_checker(node)
+        self._init_args_checker(node)
 
     def visit_functiondef(self, node):
         self.list_of_function_names.add(node.name)
-        self._type_annotations_checker(node)
 
     def leave_module(self, node):
         self._main_function(node)
@@ -83,15 +85,33 @@ class CertifiedPartnerChecker(BaseChecker):
         except Exception:
             pass
 
-    def _type_annotations_checker(self, node):
-        annotation = True
-        for ann, args in zip(node.args.annotations, node.args.args):
-            if not ann and args.name != 'self':
-                annotation = False
-        if not annotation and node.name not in ['main', '__init__']:
-            self.add_message("args-type-annotations-doesnt-exist", node=node)
-        if not node.returns and node.name not in ['main', '__init__']:
-            self.add_message("return-type-annotations-doesnt-exist", node=node)
+    def _init_params_checker(self, node):
+        try:
+            if node.func.attrname == 'params' and node.func.expr.name == 'demisto':
+                check_param = True
+                parent = node.parent
+                while check_param and parent:
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == 'main':
+                        check_param = False
+                    parent = parent.parent
+                if check_param:
+                    self.add_message("init-params-outside-main", node=node)
+        except AttributeError:
+            pass
+
+    def _init_args_checker(self, node):
+        try:
+            if node.func.attrname == 'args' and node.func.expr.name == 'demisto':
+                check_param = True
+                parent = node.parent
+                while check_param and parent:
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == 'main':
+                        check_param = False
+                    parent = parent.parent
+                if check_param:
+                    self.add_message("init-args-outside-main", node=node)
+        except AttributeError:
+            pass
 
 
 def register(linter):

@@ -328,151 +328,107 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_c)
 
 
-class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
+class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
     """
-    Class which tests that all functions have type annotations .
+    Class which tests that demisto.params() is used only in main function.
     """
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
-    def test_type_annotations_exists(self):
+    def test_init_params_in_main(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - return_output exists in the code
+            - main function exists and demisto.params() used only inside it.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that it does not raise any errors, Check that there is no error message.
+
         """
-        node_a, node_b = astroid.extract_node("""
-            def test_num1(a: str, b:int) ->str: #@
-                return "test function"
-            def test_num2(a: bool, b: bool, c:int) -> bool: #@
-                if a:
-                    return True
-                if b:
-                    return False
-                else:
-                    return None
+        node_b = astroid.parse("""
+            def main():
+                demisto.params().get('name') #@
         """)
-        assert node_b is not None and node_a is not None
+        assert node_b is not None
         with self.assertNoMessages():
-            self.checker.visit_functiondef(node_a)
-            self.checker.visit_functiondef(node_b)
+            self.checker.visit_call(node_b)
 
-    def test_args_annotations_doesnt_exist(self):
+    def test_init_params_not_in_main(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Two given function, One does not have type annotations and the other does.
+            - demisto.params() used in a global space outside of main.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
+            - Ensure that the correct message id is being added to the messages of pylint
         """
-        node_a, node_b = astroid.extract_node("""
-            def test_num1(a: str, b:int) ->str: #@
-                return "test function"
-            def test_num2(a, b: bool, c:int) -> bool: #@
-                if a:
-                    return True
-                if b:
-                    return False
-                else:
-                    return None
+        node_b = astroid.extract_node("""
+            demisto.params() #@
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
         """)
-        assert node_b is not None and node_a is not None
+        assert node_b is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id='args-type-annotations-doesnt-exist',
+                    msg_id='init-params-outside-main',
                     node=node_b,
                 ),
         ):
-            self.checker.visit_functiondef(node_a)
-            self.checker.visit_functiondef(node_b)
+            self.checker.visit_call(node_b)
 
-        node_a, node_b = astroid.extract_node("""
-            def test_num1(a, b) ->str: #@
-                return "test function"
-            def test_num2(a, b: bool, c:int) -> bool: #@
-                if a:
-                    return True
-                if b:
-                    return False
-                else:
-                    return None
-        """)
 
-        assert node_b is not None and node_a is not None
-        with self.assertAddsMessages(
-                pylint.testutils.Message(
-                    msg_id='args-type-annotations-doesnt-exist',
-                    node=node_a,
-                ),
-                pylint.testutils.Message(
-                    msg_id='args-type-annotations-doesnt-exist',
-                    node=node_b,
-                ),
-        ):
-            self.checker.visit_functiondef(node_a)
-            self.checker.visit_functiondef(node_b)
+class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that demisto.args() is used only in main function.
+    """
+    CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
-    def test_return_type_annotation_doesnt_exist(self):
+    def test_init_args_in_main(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Three given function, one function should raise warnings and the others should not
-        Then:
-            - Ensure that the correct message id is being added to the messages of pylint regarding function test_num1
-        """
-        node_a, node_b, node_c = astroid.extract_node("""
-                    def test_num1(a: str, b: str): #@
-                        return "test function"
-                    def test_num2(a: bool, b: bool, c:int) -> bool: #@
-                        if a:
-                            return True
-                        if b:
-                            return False
-                        else:
-                            return None
-                    def client(self) -> bool: #@
-                        return True
-                """)
-
-        assert node_b is not None and node_a is not None
-        with self.assertAddsMessages(
-                pylint.testutils.Message(
-                    msg_id='return-type-annotations-doesnt-exist',
-                    node=node_a,
-                ),
-        ):
-            self.checker.visit_functiondef(node_a)
-            self.checker.visit_functiondef(node_b)
-            self.checker.visit_functiondef(node_c)
-
-    def test_return_type_annotation_exist(self):
-        """
-        Given:
-            - String of a code part which is being examined by pylint plugin.
-        When:
-            - Three given functions,Two of which have return type annotations and one is main which should cause
-             warnings.
+            - main function exists and demisto.args() used only inside it.
         Then:
             - Ensure that there are no errors, Check that there is no error message.
+
         """
-        node_a, node_b = astroid.extract_node("""
-                    def test_num1(a: str, b: str) -> str: #@
-                        return "test function"
-                    def test_num2(a: bool, b: bool, c:int) -> bool: #@
-                        if a:
-                            return True
-                        if b:
-                            return False
-                        else:
-                            return None
-                    def main():
-                        print("main")
-                """)
-        assert node_b is not None and node_a is not None
+        node_b = astroid.parse("""
+            def main():
+                demisto.args().get('name') #@
+        """)
+        assert node_b is not None
         with self.assertNoMessages():
-            self.checker.visit_functiondef(node_a)
-            self.checker.visit_functiondef(node_b)
+            self.checker.visit_call(node_b)
+
+    def test_init_args_not_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - demisto.args() used in a global space outside of main.
+        Then:
+            - Ensure that the correct message id is being added to the messages of pylint
+        """
+        node_b = astroid.extract_node("""
+            demisto.args() #@
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='init-args-outside-main',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_b)

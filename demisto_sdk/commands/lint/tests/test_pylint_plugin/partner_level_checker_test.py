@@ -297,7 +297,7 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
 
-    def test_init_params_not_in_main(self):
+    def test_init_args_not_in_main(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.

@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
 * Added new code validations to `XSOAR-linter`.
     * As warnings messages:
         * `demisto.params()` should not be used only inside main function.

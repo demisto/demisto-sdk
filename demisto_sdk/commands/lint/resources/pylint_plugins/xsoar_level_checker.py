@@ -38,7 +38,7 @@ class XsoarChecker(BaseChecker):
             self.add_message("docstring-doesnt-exits", node=node)
 
     def _type_annotations_checker(self, node):
-        if os.getenv('PY2'):
+        if not os.getenv('PY2'):
             annotation = True
             for ann, args in zip(node.args.annotations, node.args.args):
                 if not ann and args.name != 'self':

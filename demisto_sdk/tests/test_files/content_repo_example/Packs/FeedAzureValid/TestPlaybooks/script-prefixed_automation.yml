@@ -15,5 +15,6 @@ args:
   description: Amount of seconds to sleep
 scripttarget: 0
 timeout: 1h40m0s
+fromversion: 5.0.0
 tests:
   - No tests

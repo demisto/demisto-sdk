@@ -7,7 +7,7 @@ class TestPlaybookValidator(ContentEntityValidator):
     """
 
     def is_valid_file(self, validate_rn=True):
-        """Check whether the report file is valid or not
+        """Check whether the test playbook file is valid or not
         """
 
         return all([

@@ -7,6 +7,7 @@
         * Functions args should have type annotations.
         * Functions should have return type annotation.
         * Functions should have docstrings.
+* Added `fromversion` field validation to test playbooks and scripts in **validate** command.
 
 # 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.

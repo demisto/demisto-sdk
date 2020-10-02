@@ -49,6 +49,8 @@ from demisto_sdk.commands.common.hook_validations.reputation import \
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import \
+    TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                find_type, get_api_module_ids,
@@ -98,8 +100,6 @@ class ValidateManager:
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DESCRIPTION,
-                                   FileType.TEST_PLAYBOOK,
-                                   FileType.TEST_SCRIPT,
                                    FileType.DOC_IMAGE)
 
         if is_external_repo:
@@ -300,11 +300,12 @@ class ValidateManager:
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
                                                  old_file_path=old_file_path, branch_name=self.branch_name)
 
-        click.secho(f'Validating scheme for {file_path}')
-        if not structure_validator.is_valid_file():
-            return False
+        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+            click.secho(f'Validating scheme for {file_path}')
+            if not structure_validator.is_valid_file():
+                return False
 
-        elif self.check_only_schema:
+        if self.check_only_schema:
             return True
 
         if self.validate_in_id_set:
@@ -315,6 +316,9 @@ class ValidateManager:
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type in {FileType.CONNECTION}:
             return True
+
+        elif file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+            return self.validate_test_playbook(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.RELEASE_NOTES:
             if not self.skip_pack_rn_validation:
@@ -423,6 +427,12 @@ class ValidateManager:
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
         return readme_validator.is_valid_file()
+
+    def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
+        test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
+                                                        ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors)
+        return test_playbook_validator.is_valid_file(validate_rn=False)
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)

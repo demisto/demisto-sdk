@@ -3,11 +3,12 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 
 
 class TestPlaybookValidator(ContentEntityValidator):
-    """TestPlaybookValidator is designed to validate the correctness of the file structure we enter to content repo.
+    """TestPlaybookValidator is designed to validate the correctness of the file structure we enter to content repo for
+    both test playbooks and scripts.
     """
 
     def is_valid_file(self, validate_rn=True):
-        """Check whether the test playbook file is valid or not
+        """Check whether the test playbook or script file is valid or not
         """
 
         return all([

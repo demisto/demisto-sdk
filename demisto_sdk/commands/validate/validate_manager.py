@@ -300,14 +300,18 @@ class ValidateManager:
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
                                                  old_file_path=old_file_path, branch_name=self.branch_name)
 
+        # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
             click.secho(f'Validating scheme for {file_path}')
             if not structure_validator.is_valid_file():
                 return False
 
+        # Passed schema validation
+        # if only schema validation is required - stop check here
         if self.check_only_schema:
             return True
 
+        # id_set validation
         if self.validate_in_id_set:
             click.echo(f"Validating id set registration for {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path):
@@ -317,6 +321,7 @@ class ValidateManager:
         if file_type in {FileType.CONNECTION}:
             return True
 
+        # test playbooks and test scripts are using the same validation.
         elif file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
             return self.validate_test_playbook(structure_validator, pack_error_ignore_list)
 
@@ -337,7 +342,7 @@ class ValidateManager:
         elif file_type == FileType.INTEGRATION:
             return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+        elif file_type in FileType.SCRIPT:
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.BETA_INTEGRATION:
@@ -347,7 +352,7 @@ class ValidateManager:
         elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
-        # incident fields and indicator fields are using the same scheme.
+        # incident fields and indicator fields are using the same validation.
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
 

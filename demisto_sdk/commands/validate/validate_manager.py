@@ -318,7 +318,7 @@ class ValidateManager:
                 return False
 
         # Note: these file are not ignored but there are no additional validators for connections
-        if file_type in {FileType.CONNECTION}:
+        if file_type == FileType.CONNECTION:
             return True
 
         # test playbooks and test scripts are using the same validation.
@@ -342,7 +342,7 @@ class ValidateManager:
         elif file_type == FileType.INTEGRATION:
             return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type in FileType.SCRIPT:
+        elif file_type == FileType.SCRIPT:
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.BETA_INTEGRATION:

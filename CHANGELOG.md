@@ -7,6 +7,7 @@
         * Functions args should have type annotations.
         * Functions should have return type annotation.
         * Functions should have docstrings.
+* Added the *displaypassword* field to the integration schema.
 
 # 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.

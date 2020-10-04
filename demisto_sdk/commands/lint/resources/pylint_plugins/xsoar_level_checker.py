@@ -1,3 +1,5 @@
+import os
+
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -36,14 +38,15 @@ class XsoarChecker(BaseChecker):
             self.add_message("docstring-doesnt-exits", node=node)
 
     def _type_annotations_checker(self, node):
-        annotation = True
-        for ann, args in zip(node.args.annotations, node.args.args):
-            if not ann and args.name != 'self':
-                annotation = False
-        if not annotation and node.name not in ['main', '__init__']:
-            self.add_message("args-type-annotations-doesnt-exist", node=node)
-        if not node.returns and node.name not in ['main', '__init__']:
-            self.add_message("return-type-annotations-doesnt-exist", node=node)
+        if not os.getenv('PY2'):
+            annotation = True
+            for ann, args in zip(node.args.annotations, node.args.args):
+                if not ann and args.name != 'self':
+                    annotation = False
+            if not annotation and node.name not in ['main', '__init__']:
+                self.add_message("args-type-annotations-doesnt-exist", node=node)
+            if not node.returns and node.name not in ['main', '__init__']:
+                self.add_message("return-type-annotations-doesnt-exist", node=node)
 
 
 def register(linter):

@@ -2,11 +2,9 @@
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
 * Added new code validations to `XSOAR-linter`.
     * As warnings messages:
-        * `demisto.params()` should not be used only inside main function.
-        * `demisto.args()` should not be used only inside main function.
+        * `demisto.params()` should be used only inside main function.
+        * `demisto.args()` should be used only inside main function.
         * Functions args should have type annotations.
-        * Functions should have return type annotation.
-        * Functions should have docstrings.
 
 # 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.

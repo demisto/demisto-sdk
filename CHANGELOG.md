@@ -6,6 +6,7 @@
         * `demisto.params()` should be used only inside main function.
         * `demisto.args()` should be used only inside main function.
         * Functions args should have type annotations.
+* Added `fromversion` field validation to test playbooks and scripts in **validate** command.
 
 # 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.

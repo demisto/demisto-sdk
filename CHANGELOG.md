@@ -1,12 +1,11 @@
 # Changelog
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
+* Added the *displaypassword* field to the integration schema.
 * Added new code validations to `XSOAR-linter`.
     * As warnings messages:
-        * `demisto.params()` should not be used only inside main function.
-        * `demisto.args()` should not be used only inside main function.
+        * `demisto.params()` should be used only inside main function.
+        * `demisto.args()` should be used only inside main function.
         * Functions args should have type annotations.
-        * Functions should have return type annotation.
-        * Functions should have docstrings.
 * Added `fromversion` field validation to test playbooks and scripts in **validate** command.
 
 # 1.2.2

@@ -142,6 +142,8 @@ schema;configuration_schema:
       - type: str
     additionalinfo:
       type: str
+    displaypassword:
+      type: str
 
 # integration->script->command
 schema;command_schema:

@@ -665,7 +665,10 @@ class LintManager:
         :param path: str
             The path to save the report.
         """
-        failed_ut: Set[Any] = set().union([second_val for val in lint_status.values() for second_val in val])
+        failed_ut: set = set()
+        for key in lint_status:
+            if key.startswith('fail'):
+                failed_ut = failed_ut.union(lint_status[key])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))

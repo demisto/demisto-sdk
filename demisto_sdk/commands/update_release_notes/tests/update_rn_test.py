@@ -785,3 +785,134 @@ class TestRNUpdateUnit:
         update_api_modules_dependents_rn(_pack='ApiModules', pre_release=None, update_type=None, added=added,
                                          modified=modified, id_set_path=id_set_f.strpath)
         assert execute_update_mock.call_count == 1
+
+    def test_update_docker_image_when_yml_has_changed_but_not_docker_image_property(self, mocker):
+        """
+        Given
+            - Modified .yml file
+        When
+            - Working on an integration's yml, but haven't update docker image
+
+        Then
+            - No changes should be done in release notes
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import check_docker_image_changed
+
+        return_value = '+category: Utilities\
+                        +commonfields:\
+                        +  id: Test\
+                        +  version: -1\
+                        +configuration:\
+                        +- defaultvalue: https://soar.test.com\
+                        +  display: Server URL (e.g. https://soar.test.com)\
+                        +- display: Fetch incidents\
+                        +  name: isFetch\
+                        +- display: Incident type'
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
+
+        is_docker_image_changed, docker_image_name = check_docker_image_changed('test.yml')
+        assert is_docker_image_changed is False
+        assert docker_image_name == ''
+
+    def test_update_docker_image_in_yml(self, mocker):
+        """
+        Given
+            - Modified .yml file
+        When
+            - Updating docker image tag
+
+        Then
+            - A new release notes is created. and it has a new record for updating docker image.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        import os
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            pack_data = json.load(file)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
+                     return_value='+  dockerimage:python/test:1243')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
+                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
+        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
+        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
+        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_1_0.md')
+
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+                          added_files=set())
+        client.execute_update()
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+            RN = file.read()
+        os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+
+    def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
+        """
+        Given
+            - Modified .yml file, but relevant release notes is already exist.
+        When
+            - Updating docker image tag.
+
+        Then
+            - A new record with the updated docker image is added.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            pack_data = json.load(file)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
+                     return_value='+  dockerimage:python/test:1243')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
+        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
+        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
+        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_0_0.md')
+
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
+        client.execute_update()
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
+            RN = file.read()
+        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
+            file.write('')
+
+    def test_add_and_modify_files_without_update_docker_image(self, mocker):
+        """
+        Given
+            - Modified .yml file, but relevant release notes is already exist.
+        When
+            - Updating docker image tag.
+
+        Then
+            - A new record with the updated docker image is added.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        import os
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            pack_data = json.load(file)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
+                     return_value='+  type:True')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
+                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
+        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
+        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
+        mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
+                                                                                '/update_release_notes/tests_data'
+                                                                                '/Packs/release_notes/1_1_0.md')
+
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        client.execute_update()
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+            RN = file.read()
+        os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+        assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN

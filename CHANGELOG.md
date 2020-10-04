@@ -1,4 +1,14 @@
 # Changelog
+* Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
+* Added the *displaypassword* field to the integration schema.
+* Added new code validations to `XSOAR-linter`.
+    * As warnings messages:
+        * `demisto.params()` should be used only inside main function.
+        * `demisto.args()` should be used only inside main function.
+        * Functions args should have type annotations.
+* Added `fromversion` field validation to test playbooks and scripts in **validate** command.
+
+# 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.
 * Fixed an issue where **json-to-outputs** determined bool values as int.
 * Fixed an issue where **update-release-notes** was crushing on `--all` flag.
@@ -29,6 +39,7 @@
 * Fixed an issue where **validate** did not recognize added files if they were modified locally.
 * Added a validation that checks the `fromversion` field exists and is set to 5.0.0 or above when working or comparing to a non-feature branch in **validate** command.
 * Added a validation that checks the certification field in the pack_metadata file is valid in **validate** command.
+* The **update-release-notes** command will now automatically add docker image update to the release notes.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

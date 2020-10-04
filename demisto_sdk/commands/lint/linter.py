@@ -389,7 +389,8 @@ class Linter:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
-
+            if py_num < 3:
+                myenv['PY2'] = 'True'
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)

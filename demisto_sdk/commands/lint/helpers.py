@@ -433,9 +433,9 @@ def split_warnings_errors(output: str):
     for msg in output_lst:
         # 'W:' for python2 xsoar linter
         # 'W[0-9]' for python3 xsoar linter
-        if (msg.startswith('W') and msg[1].isdigit()) or msg.startswith('W:') or 'W90' in msg:
+        if (msg.startswith('W') and msg[1].isdigit()) or 'W:' in msg or 'W90' in msg:
             warnings_list.append(msg)
-        elif (msg.startswith('E') and msg[1].isdigit()) or msg.startswith('E:') or 'E90' in msg:
+        elif (msg.startswith('E') and msg[1].isdigit()) or 'E:' in msg or 'E90' in msg:
             error_list.append(msg)
         else:
             other_msg_list.append(msg)

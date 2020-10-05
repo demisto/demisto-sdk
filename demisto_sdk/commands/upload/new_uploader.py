@@ -1,34 +1,31 @@
+import glob
 import json
 import os
-from tempfile import NamedTemporaryFile
-from typing import List, Tuple
-import click
-import glob
+from typing import List, Tuple, Union
 
+import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
-                                                   CONTENT_ENTITY_UPLOAD_ORDER,
                                                    INTEGRATIONS_DIR, PACKS_DIR,
-                                                   SCRIPTS_DIR, FileType)
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, find_type, get_child_directories, get_child_files, get_json,
-    get_parent_directory_name, is_path_of_classifier_directory,
-    is_path_of_dashboard_directory, is_path_of_incident_field_directory,
-    is_path_of_incident_type_directory, is_path_of_integration_directory,
-    is_path_of_layout_directory, is_path_of_playbook_directory,
-    is_path_of_script_directory, is_path_of_test_playbook_directory,
-    is_path_of_widget_directory, print_color, print_error, print_v, get_demisto_version, server_version_compare)
-from demisto_sdk.commands.unify.unifier import Unifier
+                                                   SCRIPTS_DIR)
+from demisto_sdk.commands.common.content.objects.abstract_objects import (
+    JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects_factory import \
+    path_to_pack_object
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_demisto_version,
+                                               get_parent_directory_name,
+                                               print_color, print_error,
+                                               print_v)
+from packaging.version import Version
 from tabulate import tabulate
-from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-from packaging.version import LegacyVersion, Version, parse
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = ['Integration', 'Script', 'Playbook', 'Widget', 'IncidentType', 'Classifier',
                              'OldClassifier', 'Layout', 'LayoutsContainer', 'Dashboard', 'IncidentField']
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
+
 
 class NewUploader:
     """Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
@@ -61,7 +58,6 @@ class NewUploader:
         elif os.path.isfile(self.path):
             status_code = self.file_uploader(self.path) or status_code
 
-
         # Uploading an entity directory
         elif os.path.isdir(self.path):
             parent_dir_name = get_parent_directory_name(self.path)
@@ -72,11 +68,8 @@ class NewUploader:
             elif parent_dir_name == PACKS_DIR:
                 status_code = self.pack_uploader(self.path) or status_code
 
-
-
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
-
 
     def file_uploader(self, path: str) -> int:
         """
@@ -87,17 +80,17 @@ class NewUploader:
         Returns:
 
         """
-        upload_object = path_to_pack_object(path)
-        file_name = upload_object.path.name
+        upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
+        file_name = upload_object.path.name  # type: ignore
         entity_type = type(upload_object).__name__
 
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-            if upload_object.from_version < self.demisto_version < upload_object.to_version:
+            if upload_object.from_version < self.demisto_version < upload_object.to_version:  # type: ignore
                 try:
-                    if entity_type in ['Integration', 'Script']:
-                        result = upload_object.upload(self.client, override=self.override)
+                    if entity_type in ['Integration', 'Script', 'Playbook']:
+                        result = upload_object.upload(self.client, override=self.override)  # type: ignore
                     else:
-                        result = upload_object.upload(self.client)
+                        result = upload_object.upload(self.client)  # type: ignore
                     # Print results
                     print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                     click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
@@ -128,7 +121,6 @@ class NewUploader:
             self.failed_uploaded_files.append((file_name, 'Classifier', 'Unsuported file path/type'))
             return 1
 
-
     def unified_entity_uploader(self, path) -> int:
         """
         Uploads unified entity folder
@@ -147,7 +139,8 @@ class NewUploader:
                 yml_files.append(file)
         if len(yml_files) > 1:
             self.failed_uploaded_files.append((path, "Entity Folder",
-                                        "The folder contains more than one `.yml` file (not including `_unified.yml`)"))
+                                               "The folder contains more than one `.yml` file "
+                                               "(not including `_unified.yml`)"))
             return 1
         if not yml_files:
             self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a .yml file"))
@@ -185,8 +178,10 @@ class NewUploader:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
 
+
 def parse_error_response(error: ApiException, file_type: str, file_name: str):
-    """Parses error message from exception raised in call to client to upload a file
+    """
+    Parses error message from exception raised in call to client to upload a file
 
     error (ApiException): The exception which was raised in call in to client
     file_type (str): The file type which was attempted to be uploaded
@@ -226,13 +221,9 @@ def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed
     if unuploaded_due_to_version:
         print_color('\nNOT UPLOADED DUE TO VERSION MISMATCH:', LOG_COLORS.YELLOW)
         print_color(tabulate(unuploaded_due_to_version, headers=['NAME', 'TYPE', 'XSOAR Version',
-                                                                      'FILE_FROM_VERSION', 'FILE_TO_VERSION'],
+                                                                 'FILE_FROM_VERSION', 'FILE_TO_VERSION'],
                              tablefmt="fancy_grid") + '\n', LOG_COLORS.YELLOW)
     if failed_uploaded_files:
         print_color('\nFAILED UPLOADS:', LOG_COLORS.RED)
         print_color(tabulate(failed_uploaded_files, headers=['NAME', 'TYPE', 'ERROR'],
                              tablefmt="fancy_grid") + '\n', LOG_COLORS.RED)
-
-
-#TODO:
-# Implement verbose

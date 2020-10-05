@@ -1,13 +1,14 @@
-import demisto_client
+import tempfile
 from typing import Optional, Union
 
+import demisto_client
 from demisto_sdk.commands.common.constants import INTEGRATION, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
-from wcmatch.pathlib import Path
+from demisto_sdk.commands.common.tools import (get_demisto_version,
+                                               unlock_entity)
 from packaging.version import parse
-import tempfile
-from demisto_sdk.commands.common.tools import get_demisto_version, unlock_entity
+from wcmatch.pathlib import Path
 
 
 class Integration(YAMLContentUnifiedObject):
@@ -25,7 +26,7 @@ class Integration(YAMLContentUnifiedObject):
         self.dun
         return next(self._path.parent.glob(patterns=patterns), None)
 
-    def upload(self, client: demisto_client=None, insecure: bool=False, override: bool = False):
+    def upload(self, client: demisto_client = None, override: bool = False):
         """
         Upload the integration to demisto_client
         Args:
@@ -35,10 +36,8 @@ class Integration(YAMLContentUnifiedObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        if not client:
-            client = demisto_client.configure(verify_ssl=not insecure)
         if self.is_unify():
-            return client.integration_upload(file=self.path)
+            return client.integration_upload(file=self.path)  # type: ignore
         else:
             with tempfile.TemporaryDirectory() as dir:
                 unified_files = self._unify(dir)
@@ -47,11 +46,11 @@ class Integration(YAMLContentUnifiedObject):
                         # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                         try:
-                            return client.integration_upload(file=file)
+                            return client.integration_upload(file=file)  # type: ignore
                         except Exception as e:
-                            if 'Item is system' in e.body and override:
+                            if 'Item is system' in e.body and override:  # type: ignore
                                 integration_id = self.__getitem__('commonfields').get('id')
                                 unlock_entity(client, FileType.INTEGRATION, integration_id)
-                                return client.integration_upload(file=file)
+                                return client.integration_upload(file=file)  # type: ignore
                             else:
                                 raise

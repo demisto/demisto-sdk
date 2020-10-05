@@ -1,4 +1,5 @@
 import argparse
+import ast
 import glob
 import io
 import json
@@ -6,10 +7,8 @@ import os
 import re
 import shlex
 import sys
-import ast
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
-from packaging.version import parse
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -17,11 +16,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_client
 import git
 import requests
 import urllib3
 import yaml
-import demisto_client
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
@@ -33,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
     UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+from packaging.version import parse
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -1392,7 +1392,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     return parse(about_data.get('demistoVersion'))
 
 
-def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str) -> int:
+def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str):
     """
     Unlocks the entity in the demisto client.
     Args:
@@ -1400,24 +1400,25 @@ def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str)
         entity_type: an entity type. Only works for FileType.INTEGRATION, FileType.SCRIPT and FileType.PLAYBOOK
         entity_id: The id of the entity. Can usually be found in the yml `under common_fields->id`
 
-    Returns:
-        returns 1 if
     """
     unlock_keys = {FileType.INTEGRATION: 'content.unlock.integrations',
                    FileType.SCRIPT: 'content.unlock.scripts',
                    FileType.PLAYBOOK: 'content.unlock.playbooks'}
     if entity_type not in unlock_keys.keys():
         raise ValueError("Trying to unlock an entity that isn't a script, integration or playbook.")
+
     try:
         system_conf_response = demisto_client.generic_request_func(self=client, path='/system/config', method='GET')
     except Exception as e:
         raise ValueError(f"Could not get the XSOAR configurations when trying to unlock {entity_id}, due to {str(e)}")
+
     server_config = ast.literal_eval(system_conf_response[0]).get('sysConf', {})
-    unlocked_entities = server_config.get(unlock_keys[entity_type])
+    unlock_text = unlock_keys[entity_type]
+    unlocked_entities = server_config.get(unlock_text)
     if unlocked_entities:
-        server_config['content.unlock.integrations'] = f'{unlocked_entities},{entity_id}'
+        server_config[unlock_text] = f'{unlocked_entities},{entity_id}'
     else:
-        server_config['content.unlock.integrations'] = entity_id
+        server_config[unlock_text] = entity_id
 
     data = {
         'data': server_config,
@@ -1427,4 +1428,3 @@ def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str)
         demisto_client.generic_request_func(self=client, path='/system/config', method='POST', body=data)
     except Exception as e:
         raise ValueError(f"Could not unlock {entity_id}, due to {str(e)}")
-

@@ -1,4 +1,7 @@
 # Changelog
+
+
+# 1.2.3
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
 * Added the *displaypassword* field to the integration schema.
 * Added new code validations to `XSOAR-linter`.

@@ -3,6 +3,7 @@ import os
 from tempfile import NamedTemporaryFile
 from typing import List, Tuple
 import click
+import glob
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -27,6 +28,7 @@ from packaging.version import LegacyVersion, Version, parse
 UPLOAD_SUPPORTED_ENTITIES = ['Integration', 'Script', 'Playbook', 'Widget', 'IncidentType', 'Classifier',
                              'OldClassifier', 'Layout', 'LayoutsContainer', 'Dashboard', 'IncidentField']
 
+UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 class NewUploader:
     """Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
@@ -36,14 +38,15 @@ class NewUploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, override: bool = False):
         self.path = input
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
-        self.failed_uploaded_files: List[Tuple[str, str]] = []
+        self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
+        self.override = override
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -52,62 +55,135 @@ class NewUploader:
         print(f"Uploading {self.path} ...")
         if not os.path.exists(self.path):
             print_error(f'Error: Given input path: {self.path} does not exist')
-            status_code = 1
+            return 1
 
         # Uploading a file
         elif os.path.isfile(self.path):
-            status_code = status_code or file_uploader(**self.__dict__)
+            status_code = self.file_uploader(self.path) or status_code
+
+
+        # Uploading an entity directory
+        elif os.path.isdir(self.path):
+            parent_dir_name = get_parent_directory_name(self.path)
+            if parent_dir_name in UNIFIED_ENTITIES_DIR:
+                status_code = self.unified_entity_uploader(self.path) or status_code
+            elif os.path.basename(self.path.rstrip('/')) in CONTENT_ENTITIES_DIRS:
+                status_code = self.entity_dir_uploader(self.path) or status_code
+            elif parent_dir_name == PACKS_DIR:
+                status_code = self.pack_uploader(self.path) or status_code
+
+
 
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
 
 
-def file_uploader(path: str, client: demisto_client, demisto_version: Version, log_verbose: bool,
-                  failed_uploaded_files: List[Tuple[str, str]],
-                  unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]],
-                  successfully_uploaded_files: List[Tuple[str, str]]) -> int:
-    upload_object = path_to_pack_object(path)
-    file_name = upload_object.path.name
-    entity_type = type(upload_object).__name__
+    def file_uploader(self, path: str) -> int:
+        """
+        Upload a file.
+        Args:
+            path: The path of the file to upload. The rest of the parameters are taken from self.
 
-    if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-        if upload_object.from_version < demisto_version < upload_object.to_version:
-            try:
-                result = upload_object.upload(client)
-                # Print results
-                print_v(f'Result:\n{result.to_str()}', log_verbose)
-                click.secho(f'Uploaded classifier - \'{os.path.basename(path)}\': successfully', fg='green')
-                return True
-            except Exception as err:
-                parse_error_response(err, 'classifier', file_name)
-                failed_uploaded_files.append((file_name, entity_type))
+        Returns:
+
+        """
+        upload_object = path_to_pack_object(path)
+        file_name = upload_object.path.name
+        entity_type = type(upload_object).__name__
+
+        if entity_type in UPLOAD_SUPPORTED_ENTITIES:
+            if upload_object.from_version < self.demisto_version < upload_object.to_version:
+                try:
+                    if entity_type in ['Integration', 'Script']:
+                        result = upload_object.upload(self.client, override=self.override)
+                    else:
+                        result = upload_object.upload(self.client)
+                    # Print results
+                    print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+                    click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
+                    self.successfully_uploaded_files.append((file_name, entity_type))
+                    return True
+                except Exception as err:
+                    message = parse_error_response(err, 'classifier', file_name)
+                    self.failed_uploaded_files.append((file_name, entity_type, message))
+                    return 1
+            else:
+                click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
+                            f"XSOAR version is: {self.demisto_version} while the file's version is "
+                            f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
+                self.unuploaded_due_to_version.append((file_name, entity_type, self.demisto_version,
+                                                       upload_object.from_version, upload_object.to_version))
                 return 1
         else:
-            click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
-                        f"XSOAR version is: {demisto_version} while the file's version is "
-                        f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
-            unuploaded_due_to_version.append((file_name, entity_type, demisto_version,
-                                                   upload_object.from_version, upload_object.to_version))
+            click.secho(
+                f'\nError: Given input path: {path} is not valid. '
+                f'Input path should point to one of the following:\n'
+                f'  1. Pack\n'
+                f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
+                f'a Layouts directory\n'
+                f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                f'For example a playbook: helloWorld.yml',
+                fg='bright_red'
+            )
+            self.failed_uploaded_files.append((file_name, 'Classifier', 'Unsuported file path/type'))
             return 1
-    else:
-        click.secho(
-            f'\nError: Given input path: {path} is not valid. '
-            f'Input path should point to one of the following:\n'
-            f'  1. Pack\n'
-            f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
-            f'a Layouts directory\n'
-            f'  3. Valid file that can be imported to Cortex XSOAR manually. '
-            f'For example a playbook: helloWorld.yml',
-            fg='bright_red'
-        )
-        failed_uploaded_files.append((file_name, 'Classifier'))
+
+
+    def unified_entity_uploader(self, path) -> int:
+        """
+        Uploads unified entity folder
+
+        Args:
+            path: the folder path of a unified entity in the format `Pack/{Pack_Name}/Integration/{Integration_Name}`
+
+        Returns:
+            status code
+        """
+        if get_parent_directory_name(path) not in UNIFIED_ENTITIES_DIR:
+            return 1
+        yml_files = []
+        for file in glob.glob(f"{path}/*.yml"):
+            if not file.endswith('_unified.yml'):
+                yml_files.append(file)
+        if len(yml_files) > 1:
+            self.failed_uploaded_files.append((path, "Entity Folder",
+                                        "The folder contains more than one `.yml` file (not including `_unified.yml`)"))
+            return 1
+        if not yml_files:
+            self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a .yml file"))
+            return 1
+        return self.file_uploader(yml_files[0])
+
+    def entity_dir_uploader(self, path: str) -> int:
+        """
+        Uploads an entity path directory
+        Args:
+            path: an entity path in the following format `Packs/{Pack_Name}/{Entity_Type}`
+
+        Returns:
+            The status code of the operation.
+
+        """
+        status_code = 0
+        dir_name = os.path.basename(path.rstrip('/'))
+        if dir_name in [INTEGRATIONS_DIR, SCRIPTS_DIR]:
+            for entity_folder in glob.glob(f"{path}/*/"):
+                status_code = self.unified_entity_uploader(entity_folder) or status_code
+        elif dir_name in CONTENT_ENTITIES_DIRS:
+            # upload json or yml files. Other files such as `.md`, `.png` should be ignored
+            for file in glob.glob(f"{path}/*.yml"):
+                status_code = status_code or self.file_uploader(file)
+            for file in glob.glob(f"{path}/*.json"):
+                status_code = self.file_uploader(file) or status_code
+            return status_code
         return 1
 
-    def entity_dir_uploader(self):
-        pass
-
-    def pack_uploader(self):
-        pass
+    def pack_uploader(self, path: str) -> int:
+        status_code = 0
+        for entity_folder in glob.glob(f"{path}/*/"):
+            if os.path.basename(entity_folder.rstrip('/')) in CONTENT_ENTITIES_DIRS:
+                status_code = self.entity_dir_uploader(entity_folder) or status_code
+        return status_code
 
 def parse_error_response(error: ApiException, file_type: str, file_name: str):
     """Parses error message from exception raised in call to client to upload a file
@@ -134,6 +210,7 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str):
                 message += '\nTry checking your API key configuration.'
     click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
     click.secho(str(message), fg='bright_red')
+    return message
 
 
 def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed_uploaded_files):
@@ -153,5 +230,9 @@ def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed
                              tablefmt="fancy_grid") + '\n', LOG_COLORS.YELLOW)
     if failed_uploaded_files:
         print_color('\nFAILED UPLOADS:', LOG_COLORS.RED)
-        print_color(tabulate(failed_uploaded_files, headers=['NAME', 'TYPE'],
+        print_color(tabulate(failed_uploaded_files, headers=['NAME', 'TYPE', 'ERROR'],
                              tablefmt="fancy_grid") + '\n', LOG_COLORS.RED)
+
+
+#TODO:
+# Implement verbose

@@ -6,13 +6,14 @@ import os
 import re
 import shlex
 import sys
-import demisto_client
+import ast
+from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
+from packaging.version import parse
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-from packaging.version import parse
 
 import click
 import colorama
@@ -20,16 +21,18 @@ import git
 import requests
 import urllib3
 import yaml
+import demisto_client
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, CLASSIFIERS_DIR,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -381,6 +384,30 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
+def get_api_module_integrations_set(changed_api_modules, integration_set):
+    integrations_set = list()
+    for integration in integration_set:
+        integration_data = list(integration.values())[0]
+        if integration_data.get('api_modules', '') in changed_api_modules:
+            integrations_set.append(integration_data)
+    return integrations_set
+
+
+def get_api_module_ids(file_list):
+    """Extracts APIModule IDs from the file list"""
+    api_module_set = set()
+    if file_list:
+        for pf in file_list:
+            parent = pf
+            while f'/{API_MODULES_PACK}/Scripts/' in parent:
+                parent = get_parent_directory_name(parent, abs_path=True)
+                if f'/{API_MODULES_PACK}/Scripts/' in parent:
+                    pf = parent
+            if parent != pf:
+                api_module_set.add(os.path.basename(pf))
+    return api_module_set
+
+
 def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
     Returns the id of the content entity given its entity type
@@ -631,6 +658,57 @@ def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 
 
+def get_pack_ignore_file_path(pack_name):
+    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+
+
+def get_ignore_pack_skipped_tests(pack_name: str) -> set:
+    """
+    Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
+
+    expected ignored tests structure in .pack-ignore:
+        [file:playbook-Not-To-Run-Directly.yml]
+        ignore=auto-test
+
+    Arguments:
+        pack name (str): name of the pack
+
+    Returns:
+        ignored_tests_set (set[str]): set of ignored test ids
+
+    """
+    ignored_tests_set = set()
+    if pack_name:
+        pack_ignore_path = get_pack_ignore_file_path(pack_name)
+
+        if os.path.isfile(pack_ignore_path):
+            try:
+                # read pack_ignore using ConfigParser
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
+
+                # go over every file in the config
+                for section in config.sections():
+                    if section.startswith("file:"):
+                        # given section is of type file
+                        file_name = section[5:]
+                        for key in config[section]:
+                            if key == 'ignore':
+                                # group ignore codes to a list
+                                ignore_list = str(config[section][key]).split(',')
+                                if PACK_IGNORE_TEST_FLAG in ignore_list:
+                                    # given file is to be ignored, try to get its id directly from yaml
+                                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
+                                    if os.path.isfile(path):
+                                        test_yaml = get_yaml(path)
+                                        if 'id' in test_yaml:
+                                            ignored_tests_set.add(test_yaml['id'])
+            except MissingSectionHeaderError:
+                pass
+
+    return ignored_tests_set
+
+
 def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
@@ -781,11 +859,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.ps1'):
         return FileType.POWERSHELL_FILE
 
+    if path.endswith('.py'):
+        return FileType.PYTHON_FILE
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
-
-    if file_type == 'py':
-        return FileType.PYTHON_FILE
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -813,7 +891,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'preProcessingScript' in _dict:
+        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -824,14 +902,15 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if 'transformer' in _dict and 'keyTypeMap' in _dict:
-            return FileType.CLASSIFIER
+        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
+            if _dict.get('type') and _dict.get('type') == 'classification':
+                return FileType.CLASSIFIER
+            elif _dict.get('type') and 'mapping' in _dict.get('type'):
+                return FileType.MAPPER
+            return None
 
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
-
-        if 'mapping' in _dict:
-            return FileType.MAPPER
 
         if 'layout' in _dict or 'kind' in _dict:
             if 'kind' in _dict or 'typeId' in _dict:
@@ -1214,13 +1293,17 @@ def is_path_of_classifier_directory(path: str) -> bool:
     return os.path.basename(path) == CLASSIFIERS_DIR
 
 
-def get_parent_directory_name(path: str) -> str:
+def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     """
     Retrieves the parent directory name
     :param path: path to get the parent dir name
+    :param abs_path: when set to true, will return absolute path
     :return: parent directory name
     """
-    return os.path.basename(os.path.dirname(os.path.abspath(path)))
+    parent_dir_name = os.path.dirname(os.path.abspath(path))
+    if abs_path:
+        return parent_dir_name
+    return os.path.basename(parent_dir_name)
 
 
 def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
@@ -1307,3 +1390,41 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     resp = demisto_client.generic_request('/about', 'GET')
     about_data = json.loads(resp[0].replace("'", '"'))
     return parse(about_data.get('demistoVersion'))
+
+
+def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str) -> int:
+    """
+    Unlocks the entity in the demisto client.
+    Args:
+        client: A configured demisto_client instance
+        entity_type: an entity type. Only works for FileType.INTEGRATION, FileType.SCRIPT and FileType.PLAYBOOK
+        entity_id: The id of the entity. Can usually be found in the yml `under common_fields->id`
+
+    Returns:
+        returns 1 if
+    """
+    unlock_keys = {FileType.INTEGRATION: 'content.unlock.integrations',
+                   FileType.SCRIPT: 'content.unlock.scripts',
+                   FileType.PLAYBOOK: 'content.unlock.playbooks'}
+    if entity_type not in unlock_keys.keys():
+        raise ValueError("Trying to unlock an entity that isn't a script, integration or playbook.")
+    try:
+        system_conf_response = demisto_client.generic_request_func(self=client, path='/system/config', method='GET')
+    except Exception as e:
+        raise ValueError(f"Could not get the XSOAR configurations when trying to unlock {entity_id}, due to {str(e)}")
+    server_config = ast.literal_eval(system_conf_response[0]).get('sysConf', {})
+    unlocked_entities = server_config.get(unlock_keys[entity_type])
+    if unlocked_entities:
+        server_config['content.unlock.integrations'] = f'{unlocked_entities},{entity_id}'
+    else:
+        server_config['content.unlock.integrations'] = entity_id
+
+    data = {
+        'data': server_config,
+        'version': -1
+    }
+    try:
+        demisto_client.generic_request_func(self=client, path='/system/config', method='POST', body=data)
+    except Exception as e:
+        raise ValueError(f"Could not unlock {entity_id}, due to {str(e)}")
+

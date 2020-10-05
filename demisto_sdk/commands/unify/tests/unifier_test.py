@@ -593,6 +593,23 @@ PACK_METADATA_XSOAR = json.dumps({
     "keywords": []
 })
 
+PACK_METADATA_COMMUNITY = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "community",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "created": "2020-04-14T00:00:00Z",
+    "categories": [
+        "Endpoint"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
+
 PARTNER_UNIFY = {
     'script': {},
     'type': 'python',
@@ -603,10 +620,12 @@ PARTNER_UNIFY = {
 PARTNER_UNIFY_NO_EMAIL = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_NO_URL = PARTNER_UNIFY.copy()
 XSOAR_UNIFY = PARTNER_UNIFY.copy()
+COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
 PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
+COMMUNITY_DISPLAY_NAME = 'test (Community Contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
@@ -734,3 +753,33 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     # Verifying the unified file data
     assert 'Partner' not in XSOAR_UNIFY["display"]
     assert 'partner' not in XSOAR_UNIFY["detaileddescription"]
+
+
+def test_unify_community_contributed(mocker, repo):
+    """
+    Given
+        - Community contribution.
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create unified file with community detailed description.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
+    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_COMMUNITY, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying unified process
+    assert 'Merging package:' in result.stdout
+    assert 'Created unified yml:' in result.stdout
+    # Verifying the unified file data
+    assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
+    assert '#### Integration Author:' in COMMUNITY_UNIFY["detaileddescription"]
+    assert 'No support or maintenance is provided by the author.' in COMMUNITY_UNIFY["detaileddescription"]

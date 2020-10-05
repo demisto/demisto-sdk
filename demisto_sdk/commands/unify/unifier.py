@@ -28,6 +28,13 @@ CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
                             'Support and maintenance for this integration are provided by the author. ' \
                             'Please use the following contact details:'
 
+CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### {} Contributed Integration\n ' \
+                                      '#### Integration Author: {}\n ' \
+                                      'No support or maintenance is provided by the author. Customers are encouraged ' \
+                                      'to engage with the user community for questions and guidance at the' \
+                                      '[Cortex XSOAR Live Discussions](https://live.paloaltonetworks.com/' \
+                                      't5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions).'
+
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 
 
@@ -413,11 +420,14 @@ class Unifier:
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
-        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
-        if contributor_email:
-            contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
-        if contributor_url:
-            contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
+        if contributor_type == 'community':
+            contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(contributor_type.capitalize(), author)
+        else:
+            contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
+            if contributor_email:
+                contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
+            if contributor_url:
+                contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml

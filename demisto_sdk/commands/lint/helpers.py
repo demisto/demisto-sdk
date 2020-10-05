@@ -429,9 +429,9 @@ def split_warnings_errors(output: str):
     error_list = []
     other_msg_list = []
     for msg in output_lst:
-        if msg.startswith('W') or 'W90' in msg:
+        if (msg.startswith('W') and msg[1].isdigit()) or 'W90' in msg:
             warnings_list.append(msg)
-        elif msg.startswith('E') or 'E90' in msg:
+        elif (msg.startswith('E') and msg[1].isdigit()) or 'E90' in msg:
             error_list.append(msg)
         else:
             other_msg_list.append(msg)

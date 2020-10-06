@@ -598,8 +598,8 @@ PACK_METADATA_COMMUNITY = json.dumps({
     "description": "test",
     "support": "community",
     "currentVersion": "1.0.0",
-    "author": "Cortex XSOAR",
-    "url": "https://www.paloaltonetworks.com/cortex",
+    "author": "Community Contributor",
+    "url": "",
     "email": "",
     "created": "2020-04-14T00:00:00Z",
     "categories": [
@@ -767,7 +767,7 @@ def test_unify_community_contributed(mocker, repo):
 
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
-    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
+    pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(COMMUNITY_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(COMMUNITY_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(COMMUNITY_UNIFY, ''))

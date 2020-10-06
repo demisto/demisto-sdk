@@ -28,7 +28,7 @@ CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
                             'Support and maintenance for this integration are provided by the author. ' \
                             'Please use the following contact details:'
 
-CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### {} Contributed Integration\n ' \
+CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### Community Contributed Integration\n ' \
                                       '#### Integration Author: {}\n ' \
                                       'No support or maintenance is provided by the author. Customers are encouraged ' \
                                       'to engage with the user community for questions and guidance at the ' \
@@ -36,6 +36,7 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### {} Contributed Integration\n ' \
                                       't5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions).'
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+COMMUNITY_CONTRIBUTOR = 'community'
 
 
 class Unifier:
@@ -420,8 +421,8 @@ class Unifier:
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
-        if contributor_type == 'community':
-            contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(contributor_type.capitalize(), author)
+        if contributor_type == COMMUNITY_CONTRIBUTOR:
+            contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:

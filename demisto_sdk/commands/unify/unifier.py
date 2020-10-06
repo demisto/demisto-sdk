@@ -5,7 +5,7 @@ import io
 import json
 import os
 import re
-from typing import Tuple
+from typing import Tuple, Dict
 
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
@@ -406,8 +406,8 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml, contributor_type: str, contributor_email: str,
-                                 contributor_url: str, author=''):
+    def add_contributors_support(self, unified_yml: Dict, contributor_type: str, contributor_email: str,
+                                 contributor_url: str, author: str = '') -> Dict:
         """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:

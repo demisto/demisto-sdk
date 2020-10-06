@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
-
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 

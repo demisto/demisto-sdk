@@ -406,7 +406,8 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url, author=''):
+    def add_contributors_support(self, unified_yml, contributor_type: str, contributor_email: str,
+                                 contributor_url: str, author=''):
         """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:

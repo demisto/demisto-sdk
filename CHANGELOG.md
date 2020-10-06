@@ -1,5 +1,5 @@
 # Changelog
-
+* Updated detailed description for community integrations.
 
 # 1.2.3
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.

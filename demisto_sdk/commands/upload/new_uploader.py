@@ -22,7 +22,8 @@ from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = ['Integration', 'Script', 'Playbook', 'Widget', 'IncidentType', 'Classifier',
-                             'OldClassifier', 'Layout', 'LayoutsContainer', 'Dashboard', 'IncidentField']
+                             'OldClassifier', 'Layout', 'LayoutsContainer', 'Dashboard', 'IncidentField',
+                             'ClassifierMapper']
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
@@ -91,34 +92,36 @@ class NewUploader:
                         result = upload_object.upload(self.client, override=self.override)  # type: ignore
                     else:
                         result = upload_object.upload(self.client)  # type: ignore
-                    # Print results
-                    print_v(f'Result:\n{result.to_str()}', self.log_verbose)
-                    click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
+                    if self.log_verbose:
+                        print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+                        click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type))
                     return True
                 except Exception as err:
-                    message = parse_error_response(err, 'classifier', file_name)
+                    message = parse_error_response(err, 'classifier', file_name, self.log_verbose)
                     self.failed_uploaded_files.append((file_name, entity_type, message))
                     return 1
             else:
-                click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
-                            f"XSOAR version is: {self.demisto_version} while the file's version is "
-                            f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
+                if self.log_verbose:
+                    click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
+                                f"XSOAR version is: {self.demisto_version} while the file's version is "
+                                f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
                 self.unuploaded_due_to_version.append((file_name, entity_type, self.demisto_version,
                                                        upload_object.from_version, upload_object.to_version))
                 return 1
         else:
-            click.secho(
-                f'\nError: Given input path: {path} is not valid. '
-                f'Input path should point to one of the following:\n'
-                f'  1. Pack\n'
-                f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
-                f'a Layouts directory\n'
-                f'  3. Valid file that can be imported to Cortex XSOAR manually. '
-                f'For example a playbook: helloWorld.yml',
-                fg='bright_red'
-            )
-            self.failed_uploaded_files.append((file_name, 'Classifier', 'Unsuported file path/type'))
+            if self.log_verbose:
+                click.secho(
+                    f'\nError: Given input path: {path} is not valid. '
+                    f'Input path should point to one of the following:\n'
+                    f'  1. Pack\n'
+                    f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
+                    f'a Layouts directory\n'
+                    f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                    f'For example a playbook: helloWorld.yml',
+                    fg='bright_red'
+                )
+            self.failed_uploaded_files.append((file_name, entity_type, 'Unsuported file path/type'))
             return 1
 
     def unified_entity_uploader(self, path) -> int:
@@ -179,7 +182,7 @@ class NewUploader:
         return status_code
 
 
-def parse_error_response(error: ApiException, file_type: str, file_name: str):
+def parse_error_response(error: ApiException, file_type: str, file_name: str, print_error: bool = False):
     """
     Parses error message from exception raised in call to client to upload a file
 
@@ -203,8 +206,9 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str):
 
             if error_body.get('status') == 403:
                 message += '\nTry checking your API key configuration.'
-    click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
-    click.secho(str(message), fg='bright_red')
+    if print_error:
+        click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
+        click.secho(str(message), fg='bright_red')
     return message
 
 

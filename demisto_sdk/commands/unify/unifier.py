@@ -5,7 +5,10 @@ import io
 import json
 import os
 import re
-from typing import Tuple, Dict
+from typing import Dict, Tuple
+
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
@@ -18,8 +21,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
-from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -411,14 +412,14 @@ class Unifier:
         """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:
-            unified_yml: The unified yaml file.
+            unified_yml (dict): The unified yaml file.
             contributor_type (str): The contributor type - partner / developer / community
             contributor_email (str): The contributor email.
             contributor_url (str): The contributor url.
             author (str): The packs author.
 
         Returns:
-            The unified yaml file.
+            The unified yaml file (dict).
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')

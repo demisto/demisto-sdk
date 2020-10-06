@@ -108,6 +108,12 @@ MSG = [('flake8',
             "Maltiverse.py:509:0: W9012: return_error should be used in main function. Please add it. ("
             "return-error-does-not-exist-in-main)"],
         ["************* Module Maltiverse"]),
+       ('xsoar_linter',
+        "************* Module VirusTotal-Private_API\nW: 20,10: Initialize of params was found outside of main"
+        " function. Please use demisto.params() only inside mainfunc (init-params-outside-main)",
+        [], ["W: 20,10: Initialize of params was found outside of main function. Please use demisto.params()"
+             " only inside mainfunc (init-params-outside-main)"],
+        ["************* Module VirusTotal-Private_API"]),
        ('mypy',
         "Maltiverse.py:31:12: error: Incompatible return value type (got\nDict[Any, Any]', expected 'str')["
         "return-value]     \nreturn params^\n    Found 1 error in 1 file (checked 1 source file)",

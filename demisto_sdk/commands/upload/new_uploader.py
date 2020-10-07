@@ -75,7 +75,7 @@ class NewUploader:
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
         """
         status_code = 0
-        print(f"Uploading {self.path} ...")
+        click.secho(f"Uploading {self.path} ...")
         if not os.path.exists(self.path):
             print_error(f'Error: Given input path: {self.path} does not exist')
             return 1
@@ -94,7 +94,19 @@ class NewUploader:
             elif parent_dir_name == PACKS_DIR:
                 status_code = self.pack_uploader(self.path) or status_code
 
-        else:
+        if not self.successfully_uploaded_files and not self.failed_uploaded_files and \
+                not self.unuploaded_due_to_version:
+            # if not uploaded any file
+            click.secho(
+                f'\nError: Given input path: {self.path} is not valid. '
+                f'Input path should point to one of the following:\n'
+                f'  1. Pack\n'
+                f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
+                f'a Layouts directory\n'
+                f'  3. Valid file that can be imported to Cortex XSOAR manually. '
+                f'For example a playbook: helloWorld.yml',
+                fg='bright_red'
+            )
             return 1
 
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)

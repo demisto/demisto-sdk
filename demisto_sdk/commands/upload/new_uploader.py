@@ -6,17 +6,27 @@ from typing import List, Tuple, Union
 import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
-                                                   INTEGRATIONS_DIR, PACKS_DIR,
-                                                   SCRIPTS_DIR)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+                                                   CONTENT_ENTITIES_DIRS,
+                                                   DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR,
+                                                   INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR,
+                                                   INTEGRATIONS_DIR,
+                                                   LAYOUTS_DIR, PACKS_DIR,
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   WIDGETS_DIR)
+from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_demisto_version,
+from demisto_sdk.commands.common.tools import (get_child_directories,
+                                               get_demisto_version,
                                                get_parent_directory_name,
-                                               print_color, print_error,
-                                               print_v)
+                                               print_error, print_v)
 from packaging.version import Version
 from tabulate import tabulate
 
@@ -26,6 +36,21 @@ UPLOAD_SUPPORTED_ENTITIES = ['Integration', 'Script', 'Playbook', 'Widget', 'Inc
                              'ClassifierMapper']
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
+
+CONTENT_ENTITY_UPLOAD_ORDER = [
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    PLAYBOOKS_DIR,
+    TEST_PLAYBOOKS_DIR,
+    INCIDENT_TYPES_DIR,
+    INCIDENT_FIELDS_DIR,
+    INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR,
+    CLASSIFIERS_DIR,
+    WIDGETS_DIR,
+    LAYOUTS_DIR,
+    DASHBOARDS_DIR
+]
 
 
 class NewUploader:
@@ -69,6 +94,9 @@ class NewUploader:
             elif parent_dir_name == PACKS_DIR:
                 status_code = self.pack_uploader(self.path) or status_code
 
+        else:
+            return 1
+
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
 
@@ -81,7 +109,16 @@ class NewUploader:
         Returns:
 
         """
-        upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
+        try:
+            upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
+        except ContentFactoryError:
+            file_name = path.split('/')[-1]
+            message = f"Cannot upload {path} as the file type is not supported for upload."
+            if self.log_verbose:
+                click.secho(message)
+            self.failed_uploaded_files.append((file_name, "Unknown", message))
+            return 1
+
         file_name = upload_object.path.name  # type: ignore
         entity_type = type(upload_object).__name__
 
@@ -96,7 +133,7 @@ class NewUploader:
                         print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type))
-                    return True
+                    return 0
                 except Exception as err:
                     message = parse_error_response(err, 'classifier', file_name, self.log_verbose)
                     self.failed_uploaded_files.append((file_name, entity_type, message))
@@ -165,18 +202,18 @@ class NewUploader:
         if dir_name in [INTEGRATIONS_DIR, SCRIPTS_DIR]:
             for entity_folder in glob.glob(f"{path}/*/"):
                 status_code = self.unified_entity_uploader(entity_folder) or status_code
-        elif dir_name in CONTENT_ENTITIES_DIRS:
+        if dir_name in CONTENT_ENTITIES_DIRS:
             # upload json or yml files. Other files such as `.md`, `.png` should be ignored
             for file in glob.glob(f"{path}/*.yml"):
                 status_code = status_code or self.file_uploader(file)
             for file in glob.glob(f"{path}/*.json"):
                 status_code = self.file_uploader(file) or status_code
-            return status_code
-        return 1
+        return status_code
 
     def pack_uploader(self, path: str) -> int:
         status_code = 0
-        for entity_folder in glob.glob(f"{path}/*/"):
+        sorted_directories = sort_directories_based_on_dependencies(get_child_directories(path))
+        for entity_folder in sorted_directories:
             if os.path.basename(entity_folder.rstrip('/')) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
@@ -217,17 +254,36 @@ def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed
     Successful uploads grid based on `successfully_uploaded_files` attribute in green color
     Failed uploads grid based on `failed_uploaded_files` attribute in red color
     """
-    print_color('\n\nUPLOAD SUMMARY:', LOG_COLORS.NATIVE)
+    click.secho('\n\nUPLOAD SUMMARY:')
     if successfully_uploaded_files:
-        print_color('\nSUCCESSFUL UPLOADS:', LOG_COLORS.GREEN)
-        print_color(tabulate(successfully_uploaded_files, headers=['NAME', 'TYPE'],
-                             tablefmt="fancy_grid") + '\n', LOG_COLORS.GREEN)
+        click.secho('\nSUCCESSFUL UPLOADS:', fg='green')
+        click.secho(tabulate(successfully_uploaded_files, headers=['NAME', 'TYPE'],
+                             tablefmt="fancy_grid") + '\n', fg='green')
     if unuploaded_due_to_version:
-        print_color('\nNOT UPLOADED DUE TO VERSION MISMATCH:', LOG_COLORS.YELLOW)
-        print_color(tabulate(unuploaded_due_to_version, headers=['NAME', 'TYPE', 'XSOAR Version',
+        click.secho('\nNOT UPLOADED DUE TO VERSION MISMATCH:', fg='yellow')
+        click.secho(tabulate(unuploaded_due_to_version, headers=['NAME', 'TYPE', 'XSOAR Version',
                                                                  'FILE_FROM_VERSION', 'FILE_TO_VERSION'],
-                             tablefmt="fancy_grid") + '\n', LOG_COLORS.YELLOW)
+                             tablefmt="fancy_grid") + '\n', fg='yellow')
     if failed_uploaded_files:
-        print_color('\nFAILED UPLOADS:', LOG_COLORS.RED)
-        print_color(tabulate(failed_uploaded_files, headers=['NAME', 'TYPE', 'ERROR'],
-                             tablefmt="fancy_grid") + '\n', LOG_COLORS.RED)
+        click.secho('\nFAILED UPLOADS:', fg='bright_red')
+        click.secho(tabulate(failed_uploaded_files, headers=['NAME', 'TYPE', 'ERROR'],
+                             tablefmt="fancy_grid") + '\n', fg='bright_red')
+
+
+def sort_directories_based_on_dependencies(dir_list: List) -> List:
+    """
+    Sorts given list of directories based on logic order of content entities that depend on each other.
+    If a given directory does not appear in the CONTENT_ENTITY_UPLOAD_ORDER list it will be ignored
+
+    Args:
+        dir_list (List): List of directories to sort
+
+    Returns:
+        List. The sorted list of directories.
+    """
+    srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
+    for dir_path in dir_list:
+        if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
+            dir_list.remove(dir_path)
+    dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))
+    return dir_list

@@ -148,7 +148,7 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='Y')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, 'y'])
     assert not result.exception
     yml_content = get_dict_from_file(saved_file_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']

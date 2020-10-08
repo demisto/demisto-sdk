@@ -33,11 +33,18 @@ class BaseUpdate:
             data (dict): Dictionary of loaded file.
             file_type (str): Whether the file is yml or json.
             from_version_key (str): The fromVersion key in file, different between yml and json files.
-            verbose (bool): Whehter to print a verbose log
+            verbose (bool): Whether to print a verbose log
+            assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False, verbose: bool = False):
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 assume_yes: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
@@ -46,6 +53,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.verbose = verbose
+        self.no_interactive = assume_yes
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')

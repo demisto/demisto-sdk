@@ -21,8 +21,15 @@ class ScriptYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False,
-                 update_docker: bool = False, verbose: bool = False):
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 update_docker: bool = False,
+                 verbose: bool = False,
+                 **kwargs):
         super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
         self.update_docker = update_docker
         if not from_version and self.data.get("type") == TYPE_PWSH:

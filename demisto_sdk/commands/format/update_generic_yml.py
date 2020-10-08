@@ -33,10 +33,16 @@ class BaseUpdateYML(BaseUpdate):
     }
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False, verbose: bool = False):
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 assume_yes: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -116,8 +122,12 @@ class BaseUpdateYML(BaseUpdate):
             except FileNotFoundError:
                 pass
             if not test_playbook_ids:
-                should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
-                                                        f'configured. Do you want to configure it with "No tests"?')
+                # In case no_interactive flag was given - modify the tests without confirmation
+                if self.no_interactive:
+                    should_modify_yml_tests = True
+                else:
+                    should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
+                                                            f'configured. Do you want to configure it with "No tests"?')
                 if should_modify_yml_tests:
                     click.echo(f'Formatting {self.output_file} with "No tests"')
                     self.data['tests'] = ['No tests (auto formatted)']
@@ -144,9 +154,12 @@ class BaseUpdateYML(BaseUpdate):
                                                         test_playbooks)
         if not_registered_tests:
             not_registered_tests_string = '\n'.join(not_registered_tests)
-            should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
-                                                  f'{not_registered_tests_string}\n'
-                                                  f'Would you like to add them now?')
+            if self.no_interactive:
+                should_edit_conf_json = True
+            else:
+                should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
+                                                      f'{not_registered_tests_string}\n'
+                                                      f'Would you like to add them now?')
             if should_edit_conf_json:
                 conf_json_content['tests'].extend(self.get_test_playbooks_configuration(not_registered_tests,
                                                                                         content_item_id,

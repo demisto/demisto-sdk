@@ -21,8 +21,14 @@ class PythonFileFormat(BaseUpdate):
             no_validate (bool): Whether the user specifies not to run validate after format.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = True, verbose: bool = False):
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = True,
+                 verbose: bool = False,
+                 **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose)
 

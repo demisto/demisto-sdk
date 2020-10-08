@@ -53,7 +53,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.verbose = verbose
-        self.no_interactive = assume_yes
+        self.assume_yes = assume_yes
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')

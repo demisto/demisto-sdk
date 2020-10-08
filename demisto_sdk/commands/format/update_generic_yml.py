@@ -123,7 +123,7 @@ class BaseUpdateYML(BaseUpdate):
                 pass
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.no_interactive:
+                if self.assume_yes:
                     should_modify_yml_tests = True
                 else:
                     should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
@@ -154,7 +154,7 @@ class BaseUpdateYML(BaseUpdate):
                                                         test_playbooks)
         if not_registered_tests:
             not_registered_tests_string = '\n'.join(not_registered_tests)
-            if self.no_interactive:
+            if self.assume_yes:
                 should_edit_conf_json = True
             else:
                 should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '

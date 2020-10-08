@@ -33,3 +33,6 @@ script:
   script: ''
   subtype: python3
   type: python
+defaultclassifier: defaultclassifier
+defaultmapperin: defaultmapperin
+defaultmapperout: defaultmapperout

@@ -39,10 +39,10 @@ jobs:
       steps:
         - checkout
         - run:
-          # install npm modules so readme tests run with mdx verification
-          name: npm install
-          command: |
-            npm ci
+            # install npm modules so readme tests run with mdx verification
+            name: npm install
+            command: |
+              npm ci
         - run:
             name: Tox build
             command: |

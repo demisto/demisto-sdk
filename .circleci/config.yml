@@ -3,8 +3,6 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
-orbs:
-  node: circleci/node@4.0.0
 references:
     tag_filter: &tag_filter
       filters:
@@ -13,7 +11,7 @@ references:
 
     reqs_print_var: &reqs_print_var
       requires:
-        - print-env-vars
+        - setup-env
 
     reqs_tox: &reqs_tox
       requires:
@@ -26,7 +24,7 @@ references:
 jobs:
   print-env-vars:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - run:
@@ -35,10 +33,16 @@ jobs:
               echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
               echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
   tox3-7:
+      # docker image circleci/python:3.8.3-buster-node also contains python 3.7
       docker:
-        - image: python:3.7
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
+        - run:
+          # install npm modules so readme tests run with mdx verification
+          name: npm install
+          command: |
+            npm ci
         - run:
             name: Tox build
             command: |
@@ -46,9 +50,14 @@ jobs:
               tox -e py37 -v
   tox3-8:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
+        - run:
+            # install npm modules so readme tests run with mdx verification
+            name: npm install
+            command: |
+              npm ci
         - run:
             name: Tox build
             command: |
@@ -64,7 +73,7 @@ jobs:
               - .tox
   precommit-checks:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -78,7 +87,7 @@ jobs:
               deactivate
   coveralls-upload:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -94,7 +103,7 @@ jobs:
               fi
   checkout-content:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -112,11 +121,9 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - node/install:
-            install-npm: false
         - attach_workspace:
             at: ~/project
         - run:
@@ -126,7 +133,7 @@ jobs:
               . .tox/py38/bin/activate
 
               cd content
-              npm install @mdx-js/mdx fs-extra commander
+              npm ci
               if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
                 demisto-sdk validate -i Packs/dnstwist
                 exit 0
@@ -144,7 +151,7 @@ jobs:
               ./Tests/scripts/validate.sh
   create-id-set:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:

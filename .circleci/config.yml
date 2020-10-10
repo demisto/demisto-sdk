@@ -11,7 +11,7 @@ references:
 
     reqs_print_var: &reqs_print_var
       requires:
-        - setup-env
+        - print-env-vars
 
     reqs_tox: &reqs_tox
       requires:

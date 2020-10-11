@@ -134,21 +134,11 @@ jobs:
 
               cd content
               npm ci
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
-                demisto-sdk validate -i Packs/dnstwist
-                exit 0
-              fi
+              TEST_CONTENT_BRANCH=${CONTENT_BRANCH_NAME:-master}
+              echo "Using content branch for testing: $TEST_CONTENT_BRANCH"
 
-              if [ -n "${CONTENT_BRANCH_NAME}" ]; then
-                git checkout ${CONTENT_BRANCH_NAME}
-              fi
-
-              if [[ $FAKE_MASTER = true ]]; then
-                export CIRCLE_BRANCH="master"
-              fi
-
-              python3 ./Tests/scripts/update_conf_json.py
-              ./Tests/scripts/validate.sh
+              CIRCLE_BRANCH="$TEST_CONTENT_BRANCH" python3 ./Tests/scripts/update_conf_json.py
+              CIRCLE_BRANCH="$TEST_CONTENT_BRANCH" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
         - image: circleci/python:3.8.3-buster

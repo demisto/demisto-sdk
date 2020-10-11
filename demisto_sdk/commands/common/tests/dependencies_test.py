@@ -962,6 +962,9 @@ def test_dependencies(mocker, repo, test_number):
         Then
         - Update packs dependencies in pack metadata
     """
+    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack('CommonTypes')

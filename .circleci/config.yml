@@ -98,6 +98,7 @@ jobs:
               git clone --depth 1 https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
+              git log -1
         - persist_to_workspace:
             root: ~/project
             paths:

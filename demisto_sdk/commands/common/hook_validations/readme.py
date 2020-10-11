@@ -123,13 +123,13 @@ class ReadMeValidator(BaseValidator):
     def is_html_doc(self) -> bool:
         txt = ''
         with open(self.file_path, 'r') as f:
-            txt = f.read(2048)
+            txt = f.read(4096).strip()
         if txt.startswith(NO_HTML):
             return False
         if txt.startswith(YES_HTML):
             return True
         # use some heuristics to try to figure out if this is html
-        return txt.startswith('<p>') or ('<thead>' in txt and '<tbody>' in txt)
+        return txt.startswith('<p>') or txt.startswith('<!DOCTYPE html>') or ('<thead>' in txt and '<tbody>' in txt)
 
     def is_image_path_valid(self) -> bool:
         with open(self.file_path) as f:

@@ -271,16 +271,13 @@ def create_test_package(test_dir, package_name, base_yml, script_code, detailed_
 
 
 class TestMergeScriptPackageToYMLIntegration:
-    def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleIntegPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-SampleIntegPackage.yml')
-
-    def teardown(self):
-        if self.test_dir_path:
-            shutil.rmtree(self.test_dir_path)
 
     def test_unify_integration(self):
         """
@@ -432,16 +429,13 @@ final test: hi
 
 
 class TestMergeScriptPackageToYMLScript:
-    def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleScriptPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'script-SampleScriptPackage.yml')
-
-    def teardown(self):
-        if self.test_dir_path:
-            shutil.rmtree(self.test_dir_path)
 
     def test_unify_script(self):
         """

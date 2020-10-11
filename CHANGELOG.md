@@ -1,7 +1,7 @@
 # Changelog
 * Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.
 * Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
-
+* Updated the **format** command to adhere to the defined content schema and sub-schemas, aligning its behavior with the **validate** command.
 # 1.2.4
 * Updated detailed description for community integrations.
 

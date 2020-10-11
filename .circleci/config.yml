@@ -92,13 +92,10 @@ jobs:
         - image: circleci/python:3.8.3-buster
       steps:
         - checkout
-        - attach_workspace:
-            at: ~/project
         - run:
             name: Checkout the Content Repo
-            command: |
-              . .tox/py38/bin/activate
-              git clone https://github.com/demisto/content.git
+            command: |              
+              git clone -–depth 1 https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
         - persist_to_workspace:

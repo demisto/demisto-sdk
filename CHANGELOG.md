@@ -3,6 +3,7 @@
 * Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
 * Speed up improvements for `validate` of README files.
 * Updated the **format** command to adhere to the defined content schema and sub-schemas, aligning its behavior with the **validate** command.
+* Added support for canvasContextConnections files in **format** command.
 
 # 1.2.4
 * Updated detailed description for community integrations.

@@ -1,4 +1,5 @@
 import inspect
+import os
 import random
 from typing import List
 
@@ -993,6 +994,9 @@ def test_specific_entity(mocker, repo, entity_class):
         Then
         - Update packs dependencies in pack metadata
     """
+    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 20
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack('CommonTypes')

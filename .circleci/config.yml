@@ -8,11 +8,7 @@ references:
       filters:
         tags:
           only: /^v\d+\.\d+\.\d+$/
-
-    reqs_print_var: &reqs_print_var
-      requires:
-        - print-env-vars
-
+    
     reqs_tox: &reqs_tox
       requires:
         - tox3-8
@@ -22,16 +18,6 @@ references:
         - checkout-content
 
 jobs:
-  print-env-vars:
-      docker:
-        - image: circleci/python:3.8.3-buster
-      steps:
-        - checkout
-        - run:
-            name: Print environment variables
-            command: |
-              echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
-              echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
   tox3-7:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
       docker:
@@ -134,11 +120,9 @@ jobs:
 
               cd content
               npm ci
-              TEST_CONTENT_BRANCH=${CONTENT_BRANCH_NAME:-master}
-              echo "Using content branch for testing: $TEST_CONTENT_BRANCH"
-
-              CIRCLE_BRANCH="$TEST_CONTENT_BRANCH" python3 ./Tests/scripts/update_conf_json.py
-              CIRCLE_BRANCH="$TEST_CONTENT_BRANCH" ./Tests/scripts/validate.sh
+              
+              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
         - image: circleci/python:3.8.3-buster
@@ -151,13 +135,9 @@ jobs:
             when: always
             command: |
               . .tox/py38/bin/activate
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                  echo "Skipping creating ID set on non master branch"
-                  exit 0
-              fi
-
+              
               cd content
-              demisto-sdk create-id-set -o ./Tests/id_set.json
+              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
         - image: python:3.8
@@ -171,14 +151,10 @@ jobs:
             command: |
               . .tox/py38/bin/activate
 
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                echo "Skipping creating content artifacts on non master branch"
-                exit 0
-              fi
               cd content
               mkdir ./tmp
 
-              demisto-sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:
@@ -195,14 +171,10 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
-      - print-env-vars:
-          <<: *tag_filter
       - tox3-7:
-          <<: *tag_filter
-          <<: *reqs_print_var
+          <<: *tag_filter          
       - tox3-8:
-          <<: *tag_filter
-          <<: *reqs_print_var
+          <<: *tag_filter          
       - checkout-content:
           <<: *tag_filter
           <<: *reqs_tox

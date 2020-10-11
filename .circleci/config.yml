@@ -140,7 +140,7 @@ jobs:
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -159,7 +159,7 @@ jobs:
             path: content/tmp
   deploy:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - run:

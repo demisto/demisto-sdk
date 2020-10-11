@@ -95,7 +95,7 @@ jobs:
         - run:
             name: Checkout the Content Repo
             command: |              
-              git clone -–depth 1 https://github.com/demisto/content.git
+              git clone --depth 1 https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
         - persist_to_workspace:

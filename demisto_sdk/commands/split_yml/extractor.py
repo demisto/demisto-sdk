@@ -18,6 +18,12 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 
+def get_pip_requirements(docker_image: str):
+    return subprocess.check_output(["docker", "run", "--rm", docker_image,
+                                    "pip", "freeze", "--disable-pip-version-check"],
+                                   universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+
+
 class Extractor:
     """Extractor is a class that's designed to split a yml file to it's components.
 
@@ -152,9 +158,7 @@ class Extractor:
                     subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
                     self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
                                     LOG_COLORS.NATIVE)
-                    requirements = subprocess.check_output(["docker", "run", "--rm", docker,
-                                                            "pip", "freeze", "--disable-pip-version-check"],
-                                                           universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+                    requirements = get_pip_requirements(docker)
                     fp = tempfile.NamedTemporaryFile(delete=False)
                     fp.write(requirements.encode('utf-8'))
                     fp.close()

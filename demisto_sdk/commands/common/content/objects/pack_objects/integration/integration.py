@@ -23,7 +23,6 @@ class Integration(YAMLContentUnifiedObject):
     @property
     def description_path(self) -> Optional[Path]:
         patterns = [f"{self.path.stem}_description.md"]
-        self.dun
         return next(self._path.parent.glob(patterns=patterns), None)
 
     def upload(self, client: demisto_client = None, override: bool = False):

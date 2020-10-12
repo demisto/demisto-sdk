@@ -33,7 +33,8 @@ def demisto_client_configure(mocker):
     mocker.patch("demisto_sdk.commands.common.tools.get_demisto_version", return_value=parse('6.0.0'))
 
 
-def test_upload_integration_positive(demisto_client_configure):
+def test_upload_integration_positive(demisto_client_configure, mocker):
+    mocker.patch("demisto_sdk.commands.common.tools.get_demisto_version", return_value=parse('6.0.0'))
     from demisto_sdk.commands.upload.new_uploader import NewUploader
     integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
     integration_pckg_uploader = NewUploader(input=integration_pckg_path, insecure=False, verbose=False)

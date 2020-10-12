@@ -26,7 +26,7 @@ jobs:
       steps:
         - checkout
         - restore_cache:
-            key: tox-3-7-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -41,7 +41,7 @@ jobs:
             command: |              
               tox -e py37 -v
         - save_cache:
-            key: tox-3-7-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
               - .tox/py37
         - persist_to_workspace:
@@ -54,7 +54,7 @@ jobs:
       steps:
         - checkout
         - restore_cache:
-            key: tox-3-8-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -69,7 +69,7 @@ jobs:
             command: |              
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - save_cache:
-            key: tox-3-8-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
               - .tox/py38
         - store_artifacts:

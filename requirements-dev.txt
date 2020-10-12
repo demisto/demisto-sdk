@@ -5,6 +5,5 @@ pytest
 pytest-cov
 pytest-datadir-ng
 pytest-mock
-pytest-xdist
 requests_mock
 tox-pyenv

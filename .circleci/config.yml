@@ -34,7 +34,7 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py37 -v -- -n 4 --dist loadfile
+              tox -e py37 -v
         - persist_to_workspace:
             root: ~/project
             paths:
@@ -53,7 +53,7 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py38 -v -- -n 4 --dist loadfile --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - store_artifacts:
             path: coverage_html_report
         - run:

@@ -2,6 +2,7 @@
 * Updated detailed description for community integrations.
 * Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.
 * Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
+* Speed up improvements for `validate` of README files.
 
 # 1.2.3
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.

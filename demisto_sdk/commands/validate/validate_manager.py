@@ -652,6 +652,9 @@ class ValidateManager:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
+                # ignore version raise in NonSupported and Legacy pack
+                if 'NonSupported' or 'Legacy' in pack:
+                    continue
                 raise_version = True
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
@@ -744,7 +747,7 @@ class ValidateManager:
             is_valid = set()
             for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack
-                if 'NonSupported' in pack:
+                if 'NonSupported' or 'Legacy' in pack:
                     continue
                 ignored_errors_list = self.get_error_ignore_list(pack)
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)
@@ -788,15 +791,15 @@ class ValidateManager:
 
         Args:
             compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last releaese
+            prev_ver (str): Against which branch to run the comparision - master/last release
 
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        # If git base not provided - check against origin/prev_ver
-        if '/' not in prev_ver:
+        # If git base not provided - check against origin/prev_ver unless using release branch
+        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
             prev_ver = 'origin/' + prev_ver
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(

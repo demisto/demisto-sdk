@@ -8,14 +8,15 @@ references:
       filters:
         tags:
           only: /^v\d+\.\d+\.\d+$/
-    
+
     reqs_tox: &reqs_tox
       requires:
-        - tox3-8
+        - tox3-7
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
+        - tox3-7
 
 jobs:
   tox3-7:
@@ -33,7 +34,11 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py37 -v
+              tox -e py37 -v -- -n 4 --dist loadfile
+        - persist_to_workspace:
+            root: ~/project
+            paths:
+              - .tox
   tox3-8:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -48,15 +53,18 @@ jobs:
             name: Tox build
             command: |
               pip install tox
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v -- -n 4 --dist loadfile --cov=demisto_sdk --cov-report=html
         - store_artifacts:
             path: coverage_html_report
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - coverage_html_report
-              - .coverage
-              - .tox
+        - run:
+            name: Coveralls upload
+            command: |
+              if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+                pip install coveralls
+                coveralls
+              else
+                echo "Skipping coveralls"
+              fi
   precommit-checks:
       docker:
         - image: circleci/python:3.8.3-buster
@@ -67,26 +75,10 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
               pre-commit --version
               pre-commit run -a
               deactivate
-  coveralls-upload:
-      docker:
-        - image: circleci/python:3.8.3-buster
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ~/project
-        - run:
-            name: Coveralls upload
-            command: |
-              if [ -n "$COVERALLS_REPO_TOKEN" ]; then
-                pip install coveralls
-                coveralls
-              else
-                echo "Skipping coveralls"
-              fi
   checkout-content:
       docker:
         - image: circleci/python:3.8.3-buster
@@ -94,7 +86,7 @@ jobs:
         - checkout
         - run:
             name: Checkout the Content Repo
-            command: |              
+            command: |
               git clone --depth 1 https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
@@ -114,11 +106,11 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
               npm ci
-              
+
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
@@ -132,8 +124,8 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py38/bin/activate
-              
+              . .tox/py37/bin/activate
+
               cd content
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
@@ -147,7 +139,7 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
               mkdir ./tmp
@@ -170,16 +162,12 @@ workflows:
   build_and_release:
     jobs:
       - tox3-7:
-          <<: *tag_filter          
+          <<: *tag_filter
       - tox3-8:
-          <<: *tag_filter          
+          <<: *tag_filter
       - checkout-content:
           <<: *tag_filter
-          <<: *reqs_tox
       - precommit-checks:
-          <<: *tag_filter
-          <<: *reqs_tox
-      - coveralls-upload:
           <<: *tag_filter
           <<: *reqs_tox
       - validate-files:
@@ -194,9 +182,8 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7
+            - tox3-8
             - precommit-checks
-            - coveralls-upload
             - validate-files
             - create-id-set
             - create-content-artifacts

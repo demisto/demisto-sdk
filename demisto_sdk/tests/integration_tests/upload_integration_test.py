@@ -34,32 +34,36 @@ def test_integration_upload_pack_positive(demisto_client):
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
-    assert result.exit_code == 0
-    assert f"Uploading {pack_path} ..."
+    assert result.exit_code == 1
     assert f"Merging package: {join(pack_path, 'Integrations/FeedAzure')}" in result.output
-    assert "Uploaded integration - 'integration-FeedAzure.yml': successfully" in result.output
-    assert "Uploaded playbook - 'just_a_test_script.yml': successfully" in result.output
-    assert "Uploaded playbook - 'script-prefixed_automation.yml': successfully" in result.output
-    assert "Uploaded playbook - 'playbook-FeedAzure_test_copy_no_prefix.yml': successfully" in result.output
-    assert "Uploaded playbook - 'FeedAzure_test.yml': successfully" in result.output
-    assert "Uploaded incident field - 'incidentfield-city.json': successfully" in result.output
-    assert "UPLOAD SUMMARY:" in result.output
-    assert "SUCCESSFUL UPLOADS:" in result.output
-    assert "╒════════════════════════════════════════════╤════════════════╕" in result.output
-    assert "│ NAME                                       │ TYPE           │" in result.output
-    assert "╞════════════════════════════════════════════╪════════════════╡" in result.output
-    assert "│ integration-FeedAzure.yml                  │ Integration    │" in result.output
-    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
-    assert "│ just_a_test_script.yml                     │ Playbook       │" in result.output
-    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
-    assert "│ script-prefixed_automation.yml             │ Playbook       │" in result.output
-    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
-    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ Playbook       │" in result.output
-    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
-    assert "│ FeedAzure_test.yml                         │ Playbook       │" in result.output
-    assert "├────────────────────────────────────────────┼────────────────┤" in result.output
-    assert "│ incidentfield-city.json                    │ Incident Field │" in result.output
-    assert "╘════════════════════════════════════════════╧════════════════╛" in result.output
+    assert """UPLOAD SUMMARY:
+
+SUCCESSFUL UPLOADS:
+╒════════════════════════════════════════════╤═════════════╕
+│ NAME                                       │ TYPE        │
+╞════════════════════════════════════════════╪═════════════╡
+│ FeedAzure.yml                              │ Integration │
+├────────────────────────────────────────────┼─────────────┤
+│ FeedAzure_test.yml                         │ Playbook    │
+├────────────────────────────────────────────┼─────────────┤
+│ just_a_test_script.yml                     │ Script      │
+├────────────────────────────────────────────┼─────────────┤
+│ script-prefixed_automation.yml             │ Script      │
+├────────────────────────────────────────────┼─────────────┤
+│ playbook-FeedAzure_test_copy_no_prefix.yml │ Playbook    │
+├────────────────────────────────────────────┼─────────────┤
+│ FeedAzure_test.yml                         │ Playbook    │
+╘════════════════════════════════════════════╧═════════════╛
+
+
+FAILED UPLOADS:
+╒═════════════════════════╤═══════════════╤════════════════════════════════════╕
+│ NAME                    │ TYPE          │ ERROR                              │
+╞═════════════════════════╪═══════════════╪════════════════════════════════════╡
+│ incidentfield-city.json │ IncidentField │ Got empty incident field list (52) │
+╘═════════════════════════╧═══════════════╧════════════════════════════════════╛
+
+""" in result.output
     assert not result.stderr
 
 

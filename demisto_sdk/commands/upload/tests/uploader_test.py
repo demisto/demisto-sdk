@@ -561,6 +561,7 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     """
     mocker.patch("click.secho")
     from click import secho
+    mocker.patch("demisto_sdk.commands.common.tools.get_demisto_version", return_value=parse('6.0.0'))
     from demisto_sdk.commands.upload.new_uploader import print_summary
 
     unploaded_files = [("SomeScriptName", "Script", "6.0.0", "0.0.0", "5.0.0")]

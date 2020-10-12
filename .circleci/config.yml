@@ -43,7 +43,7 @@ jobs:
         - save_cache:
             key: tox-3-7-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
-              - .tox/py38
+              - .tox/py37
         - persist_to_workspace:
             root: ~/project
             paths:

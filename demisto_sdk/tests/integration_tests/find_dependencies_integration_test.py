@@ -38,6 +38,8 @@ def test_integration_find_dependencies__sanity(mocker, repo):
     - Ensure no error occurs.
     - Ensure debug file is created.
     """
+    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     pack = repo.create_pack('FindDependencyPack')
     integration = pack.create_integration('integration')
     mocker.patch(

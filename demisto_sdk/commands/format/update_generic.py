@@ -1,5 +1,6 @@
 import os
 import re
+from copy import deepcopy
 from typing import Set, Union
 
 import click
@@ -95,12 +96,59 @@ class BaseUpdate:
         """Removes keys that are in file but not in schema of file type"""
         with open(self.schema_path, 'r') as file_obj:
             schema = yaml.safe_load(file_obj)
+            extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
-        self.recursive_remove_unnecessary_keys(schema.get('mapping'), self.data)
+        self.recursive_remove_unnecessary_keys(extended_schema.get('mapping'), self.data)
 
-    def recursive_remove_unnecessary_keys(self, schema, data):
-        """Recursively removes all the unnecessary fields in the file"""
+    @staticmethod
+    def recursive_extend_schema(current_schema: Union[str, bool, list, dict],
+                                full_schema: dict) -> Union[str, bool, list, dict]:
+        """
+        Parses partial schemas into one schema.
+        Removing the `schema;(schema-name)` and include syntax.
+        See here for more info https://pykwalify.readthedocs.io/en/unstable/partial-schemas.html#schema-schema-name.
+
+        This method recursively returns the unified scheme
+        Args:
+            current_schema: The current analyzed recursive schema
+            full_schema: The original schema
+
+        Returns:
+            The unified schema with out the `schema;(schema-name)` and include syntax.
+        """
+        # This is the base condition, if the current schema is str or bool we can safely return it.
+        if isinstance(current_schema, str) or isinstance(current_schema, bool):
+            return current_schema
+        # If the current schema is a list - we will return the extended schema of each of it's elements
+        if isinstance(current_schema, list):
+            return [BaseUpdate.recursive_extend_schema(value, full_schema) for value in current_schema]
+        # If the current schema is a dict this is the main condition we will handle
+        if isinstance(current_schema, dict):
+            modified_schema = {}
+            for key, value in current_schema.items():
+                # There is no need to add the sub-schemas themselves, as we want to drop them
+                if key.startswith('schema;'):
+                    continue
+                # If this is a reference to a sub-schema - we will replace the reference with the original.
+                if isinstance(value, str) and key == 'include':
+                    extended_schema: dict = full_schema.get(f'schema;{value}')  # type: ignore
+                    if extended_schema is None:
+                        click.echo(f"Could not find sub-schema for {value}", LOG_COLORS.YELLOW)
+                    # sometimes the sub-schema can have it's own sub-schemas so we need to unify that too
+                    return BaseUpdate.recursive_extend_schema(deepcopy(extended_schema), full_schema)
+                else:
+                    # This is the mapping case in which we can let the recursive method do it's thing on the values
+                    modified_schema[key] = BaseUpdate.recursive_extend_schema(value, full_schema)
+            return modified_schema
+
+    def recursive_remove_unnecessary_keys(self, schema: dict, data: dict) -> None:
+        """Recursively removes all the unnecessary fields in the file
+
+        Args:
+            schema: The schema with which we can check if a field should be removed
+            data: The actual data of the file from which we will want to remove the fields.
+        """
         data_fields = set(data.keys())
         for field in data_fields:
             if field not in schema.keys():
@@ -108,15 +156,23 @@ class BaseUpdate:
                 # tasks key in playbook.yml schema where a field should match the regex (^[0-9]+$)
                 matching_key = self.regex_matching_key(field, schema.keys())
                 if matching_key:
-                    if schema.get(matching_key).get('mapping'):
-                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(field))
+                    if schema.get(matching_key).get('mapping'):  # type: ignore
+                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(field))  # type: ignore
                 else:
                     if self.verbose:
                         print(f'Removing {field} field')
                     data.pop(field, None)
             else:
-                if schema.get(field).get('mapping'):
-                    self.recursive_remove_unnecessary_keys(schema.get(field).get('mapping'), data.get(field))
+                if schema.get(field).get('mapping'):  # type: ignore
+                    self.recursive_remove_unnecessary_keys(schema.get(field).get('mapping'), data.get(field))  # type: ignore
+                # In case he have a sequence with mapping key in it's first element it's a continuation of the schema
+                # and we need to remove unnecessary keys from it too.
+                # In any other case there is nothing to do with the sequence
+                elif schema.get(field).get('sequence'):  # type: ignore
+                    if schema.get(field).get('sequence')[0].get('mapping'):  # type: ignore
+                        for list_element in data[field]:
+                            self.recursive_remove_unnecessary_keys(schema.get(field).get('sequence')[0].get('mapping'),  # type: ignore
+                                                                   list_element)
 
     def regex_matching_key(self, field, schema_keys):
         """

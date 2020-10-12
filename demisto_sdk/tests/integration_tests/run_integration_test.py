@@ -28,6 +28,8 @@ def set_environment_variables(monkeypatch):
     # Set environment variables required by runner
     monkeypatch.setenv('DEMISTO_BASE_URL', 'http://demisto.instance.com:8080/')
     monkeypatch.setenv('DEMISTO_API_KEY', 'API_KEY')
+    monkeypatch.delenv('DEMISTO_USERNAME', raising=False)
+    monkeypatch.delenv('DEMISTO_PASSWORD', raising=False)
 
 
 def test_integration_run_non_existing_command(mocker, set_environment_variables):

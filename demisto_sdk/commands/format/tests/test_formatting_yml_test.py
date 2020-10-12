@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 
+import click
 import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
@@ -9,7 +10,9 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
+from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -281,6 +284,11 @@ def test_remove_unnecessary_keys_from_playbook(source_path):
     # Assert the unnecessary keys were successfully removed
     assert 'excessiveKey' not in base_yml.data.keys()
     assert 'itemVersion' not in base_yml.data.get('contentitemexportablefields').get('contentitemfields').keys()
+
+    # One of the inputs has unsupported key 'some_key_to_remove', the inputs schema is a sub-schema and this
+    # assertion validates sub-schemas are enforced in format command too.
+    for input_ in base_yml.data.get('inputs'):
+        assert 'some_key_to_remove' not in input_
 
 
 @patch('builtins.input', lambda *args: 'n')
@@ -588,3 +596,58 @@ def test_update_docker_format(tmpdir, mocker):
     with open(dest) as f:
         data = yaml.safe_load(f)
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
+
+
+def test_recursive_extend_schema():
+    """
+        Given
+            - A dict that represents a schema with sub-playbooks
+        When
+            - Run recursive_extend_schema on that schema
+        Then
+            - Ensure The reference is gone from the modified schema
+            - Ensure the 'include' syntax has been replaced by the sub playbook itself
+        """
+    schema = {
+        'mapping': {
+            'inputs': {
+                'sequence': [{'include': 'input_schema'}],
+                'type': 'seq'}
+        },
+        'some-other-key': 'some-other-value'
+    }
+    sub_schema = {
+        'mapping': {
+            'required': {'type': 'bool'},
+            'value': {'type': 'any'}
+        },
+        'type': 'map'}
+    schema.update({'schema;input_schema': sub_schema})
+    modified_schema = BaseUpdate.recursive_extend_schema(schema, schema)
+    # Asserting the reference to the sub-playbook no longer exist in the modified schema
+    assert 'schema;input_schema' not in modified_schema
+    # Asserting the sub-playbook has replaced the reference
+    assert modified_schema['mapping']['inputs']['sequence'][0] == sub_schema
+    # Asserting some non related keys are not being deleted
+    assert 'some-other-key' in modified_schema
+
+
+def test_recursive_extend_schema_prints_warning(mocker):
+    """
+        Given
+            - A dict that represents a schema with sub-schema reference that has no actual sub-schema
+        When
+            - Run recursive_extend_schema on that schema
+        Then
+            - Ensure a warning about the missing sub-schema is printed
+        """
+    schema = {
+        'mapping': {
+            'inputs': {
+                'sequence': [{'include': 'input_schema'}],
+                'type': 'seq'}
+        },
+    }
+    mocker.patch('click.echo')
+    BaseUpdate.recursive_extend_schema(schema, schema)
+    click.echo.assert_called_once_with('Could not find sub-schema for input_schema', LOG_COLORS.YELLOW)

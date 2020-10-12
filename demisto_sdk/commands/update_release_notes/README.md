@@ -69,6 +69,6 @@ This will create a new markdown file in the `ReleaseNotes` folder for **all** ch
 <br/><br/>
 
 ```
-demisto-sdk update-release-notes -i HelloWorld -u revision --pre_release
+demisto-sdk update-release-notes -i Packs/HelloWorld -u revision --pre_release
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for the HellWorld pack and bump the `currentVersion` with a **revision** increment as well as append `pre_release` to the `currentVersion`.

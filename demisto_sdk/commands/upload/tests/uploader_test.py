@@ -375,6 +375,7 @@ def test_file_not_supported(demisto_client_configure, mocker):
     Then
         - Ensure uploaded failure message is printed as expected
     """
+    mocker.patch("demisto_sdk.commands.common.tools.get_demisto_version", return_value=parse('6.0.0'))
     mocker.patch("builtins.print")
     # This is imported here in order to apply the mock of `get_demisto_version`
     from demisto_sdk.commands.upload.new_uploader import NewUploader
@@ -510,9 +511,7 @@ def test_print_summary_successfully_uploaded_files(demisto_client_configure, moc
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
-    assert secho.call_args_list[1].kwargs.get('fg') == 'green'
     assert secho.call_args_list[2][0][0] == expected_successfully_uploaded_files
-    assert secho.call_args_list[2].kwargs.get('fg') == 'green'
 
 
 def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
@@ -544,9 +543,7 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
-    assert secho.call_args_list[1].kwargs.get('fg') == 'bright_red'
     assert secho.call_args_list[2][0][0] == expected_failed_uploaded_files
-    assert secho.call_args_list[2].kwargs.get('fg') == 'bright_red'
 
 
 def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
@@ -579,6 +576,4 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
-    assert secho.call_args_list[1].kwargs.get('fg') == 'yellow'
     assert secho.call_args_list[2][0][0] == expected_failed_uploaded_files
-    assert secho.call_args_list[2].kwargs.get('fg') == 'yellow'

@@ -19,9 +19,9 @@ Supported content entities:
 - Indicator Types
 
 ### Arguments
-* **-p, --pack <PACK_NAME>**
+* **-i, --input <PACK_PATH>**
 
-    The name of the pack you wish to generate release notes for.
+    The path of the content pack you wish to generate release notes for.
 
 * **-u, --update_type**
 

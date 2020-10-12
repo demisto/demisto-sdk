@@ -178,9 +178,9 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct error message is added to pylint error message list.
         """
         node_a, node_b, node_c, node_d = astroid.extract_node("""
-            def test_function():  #@
+            def test_function() -> bool:  #@
                 return True  #@
-            def another_function():#@
+            def another_function() -> bool:#@
                 return False  #@
         """)
         with self.assertAddsMessages(
@@ -326,3 +326,109 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_c)
+
+
+class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that demisto.params() is used only in main function.
+    """
+    CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
+
+    def test_init_params_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - main function exists and demisto.params() used only inside it.
+        Then:
+            - Ensure that it does not raise any errors, Check that there is no error message.
+
+        """
+        node_b = astroid.parse("""
+            def main():
+                demisto.params().get('name') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+    def test_init_params_not_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - demisto.params() used in a global space outside of main.
+        Then:
+            - Ensure that the correct message id is being added to the messages of pylint
+        """
+        node_b = astroid.extract_node("""
+            demisto.params() #@
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='init-params-outside-main',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_b)
+
+
+class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that demisto.args() is used only in main function.
+    """
+    CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
+
+    def test_init_args_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - main function exists and demisto.args() used only inside it.
+        Then:
+            - Ensure that there are no errors, Check that there is no error message.
+
+        """
+        node_b = astroid.parse("""
+            def main():
+                demisto.args().get('name') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+    def test_init_args_not_in_main(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - demisto.args() used in a global space outside of main.
+        Then:
+            - Ensure that the correct message id is being added to the messages of pylint
+        """
+        node_b = astroid.extract_node("""
+            demisto.args() #@
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                return True
+                return_error('err')
+
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='init-args-outside-main',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_b)

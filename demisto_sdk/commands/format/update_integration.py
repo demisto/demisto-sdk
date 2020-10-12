@@ -27,9 +27,16 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False, verbose: bool = False, update_docker: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 update_docker: bool = False,
+                 **kwargs):
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'

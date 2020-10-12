@@ -13,7 +13,7 @@ mapping:
       sortvalues:
         type: seq
         sequence:
-        - include: sortvalue_schema
+          - type: str
   name:
     type: str
     required: true
@@ -113,10 +113,6 @@ mapping:
   scriptNotVisible:
     type: bool
 
-schema;commonfields_schema:
-
-schema;sortvalue_schema:
-
 # integration->configuration
 schema;configuration_schema:
   type: map
@@ -141,6 +137,8 @@ schema;configuration_schema:
       sequence:
       - type: str
     additionalinfo:
+      type: str
+    displaypassword:
       type: str
 
 # integration->script->command

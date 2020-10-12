@@ -17,8 +17,14 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
             output (str): the desired file name to save the updated version of the JSON to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False, verbose: bool = False):
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 **kwargs):
         super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
 
     def run_format(self) -> int:

@@ -270,6 +270,7 @@ inputs:
       - operator: uniq
   required: false
   description: File MD5 hash to enrich.
+  some_key_to_remove: this key should be removed when formatting
 - key: SHA256
   value:
     complex:

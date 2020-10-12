@@ -1,3 +1,4 @@
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -14,7 +15,15 @@ cert_partner_msg = {
         "Do not use demisto.results function.",),
     "W9009": (
         "Do not use return_outputs function. Please return CommandResults object instead.", "return-outputs-exists",
-        "Do not use return_outputs function.",)
+        "Do not use return_outputs function.",),
+    "W9016": ("Initialize of params was found outside of main function. Please use demisto.params() only inside main"
+              "func",
+              "init-params-outside-main",
+              "Initialize of params was found outside of main function. Please initialize params only inside main func",),
+    "W9017": ("Initialize of args was found outside of main function. Please use demisto.args() only inside main func",
+              "init-args-outside-main",
+              "Initialize of args was found outside of main function. Please use demisto.args() only inside main func",),
+
 }
 
 
@@ -33,6 +42,8 @@ class CertifiedPartnerChecker(BaseChecker):
         self._demisto_log_checker(node)
         self._return_outputs_checker(node)
         self._demisto_results_checker(node)
+        self._init_params_checker(node)
+        self._init_args_checker(node)
 
     def visit_functiondef(self, node):
         self.list_of_function_names.add(node.name)
@@ -72,6 +83,34 @@ class CertifiedPartnerChecker(BaseChecker):
             if node.func.attrname == 'results' and node.func.expr.name == 'demisto':
                 self.add_message("demisto-results-exists", node=node)
         except Exception:
+            pass
+
+    def _init_params_checker(self, node):
+        try:
+            if node.func.attrname == 'params' and node.func.expr.name == 'demisto':
+                check_param = True
+                parent = node.parent
+                while check_param and parent:
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == 'main':
+                        check_param = False
+                    parent = parent.parent
+                if check_param:
+                    self.add_message("init-params-outside-main", node=node)
+        except AttributeError:
+            pass
+
+    def _init_args_checker(self, node):
+        try:
+            if node.func.attrname == 'args' and node.func.expr.name == 'demisto':
+                check_param = True
+                parent = node.parent
+                while check_param and parent:
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == 'main':
+                        check_param = False
+                    parent = parent.parent
+                if check_param:
+                    self.add_message("init-args-outside-main", node=node)
+        except AttributeError:
             pass
 
 

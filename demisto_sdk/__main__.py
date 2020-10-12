@@ -457,6 +457,10 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-ud", "--update-docker", help="Set if you want to update the docker image of the integration/script", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
+@click.option(
+    "-y", "--assume-yes",
+    help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
+    is_flag=True)
 def format_yml(**kwargs):
     return format_manager(**kwargs)
 

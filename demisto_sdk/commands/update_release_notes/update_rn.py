@@ -88,9 +88,11 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
+            is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-
+                if 'yml' in packfile and file_type == 'Integration':
+                    is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
@@ -102,6 +104,8 @@ class UpdateRN:
                 if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
+                if is_docker_image_changed:
+                    self.update_markdown(rn_path, f'- Upgraded the Docker image to {docker_image_name}.')
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
@@ -485,6 +489,15 @@ class UpdateRN:
             with open(release_notes_path, 'w') as fp:
                 fp.write(rn_string)
 
+    def update_markdown(self, release_notes_path: str, rn_string: str):
+        if os.path.exists(release_notes_path):
+            self.existing_rn_changed = True
+            with open(release_notes_path, 'a') as fp:
+                fp.write(rn_string)
+        else:
+            print_warning(f"Changes were detected, but could not find release notes file to update."
+                          f"\ngiven path: {release_notes_path}")
+
 
 def get_file_description(path, file_type):
     if not os.path.isfile(path):
@@ -526,3 +539,21 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
                                   modified_files_in_pack={integration_path}, pre_release=pre_release,
                                   added_files=set(), pack=integration_pack)
         update_pack_rn.execute_update()
+
+
+def check_docker_image_changed(added_or_modified_yml):
+    try:
+        diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
+    except RuntimeError as e:
+        if any(['is outside repository' in exp for exp in e.args]):
+            return False, ''
+        else:
+            print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
+            return False, ''
+    else:
+        diff_lines = diff.splitlines()
+        for diff_line in diff_lines:
+            if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
+                # changed.
+                return True, diff_line.split()[-1]
+        return False, ''

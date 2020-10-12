@@ -214,10 +214,9 @@ class Downloader:
         """
         output_pack_path = self.output_pack_path
         if not (os.path.isdir(output_pack_path) and
-                os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs' and
-                os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
+                os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs'):
             print_color(f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                        f" of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
+                        f" of format ~/.../Packs/$PACK_NAME", LOG_COLORS.RED)
             return False
         return True
 

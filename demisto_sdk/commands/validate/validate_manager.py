@@ -652,9 +652,6 @@ class ValidateManager:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                # ignore version raise in NonSupported and Legacy pack
-                if 'NonSupported' or 'Legacy' in pack:
-                    continue
                 raise_version = True
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
@@ -747,7 +744,7 @@ class ValidateManager:
             is_valid = set()
             for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack
-                if 'NonSupported' or 'Legacy' in pack:
+                if 'NonSupported' in pack:
                     continue
                 ignored_errors_list = self.get_error_ignore_list(pack)
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)

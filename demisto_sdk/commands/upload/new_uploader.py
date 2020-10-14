@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.content.objects_factory import \
 from demisto_sdk.commands.common.tools import (get_child_directories,
                                                get_demisto_version,
                                                get_parent_directory_name,
-                                               print_error, print_v)
+                                               print_v)
 from packaging.version import Version
 from tabulate import tabulate
 
@@ -77,7 +77,7 @@ class NewUploader:
         status_code = 0
         click.secho(f"Uploading {self.path} ...")
         if not os.path.exists(self.path):
-            print_error(f'Error: Given input path: {self.path} does not exist')
+            click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
             return 1
 
         # Uploading a file

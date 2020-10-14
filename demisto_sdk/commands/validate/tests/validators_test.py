@@ -1031,7 +1031,8 @@ def test_content_release_identifier_exists():
     ('v4.5.0', 'origin/v4.5.0'),
     ('master', 'origin/master'),
     ('20.13.0', 'origin/20.13.0'),
-    ('origin/master', 'origin/master')
+    ('origin/master', 'origin/master'),
+    ('64cac0b349187b861c4c717951a634de52caba03', 'origin/64cac0b349187b861c4c717951a634de52caba03')
 ])
 def test_add_origin(prev_ver, expected):
     """
@@ -1043,6 +1044,5 @@ def test_add_origin(prev_ver, expected):
         - validate add_origin runs as expected.
     """
     validate_manager = ValidateManager()
-    validate_manager.branch_name = 'test-branch'
     res = validate_manager.add_origin(prev_ver=prev_ver)
     assert res == expected

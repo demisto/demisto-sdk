@@ -7,6 +7,8 @@ import os
 import re
 from typing import Dict, Tuple
 
+import click
+import requests
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -18,6 +20,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
+from inflection import dasherize, underscore
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -37,6 +40,7 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### Community Contributed Integration\n '
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 COMMUNITY_CONTRIBUTOR = 'community'
+INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
 class Unifier:
@@ -214,9 +218,15 @@ class Unifier:
         if yml_data.get('detaileddescription') and self.use_force is False:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              f' in the package: {self.package_path}')
-        if desc_data:
-            yml_unified['detaileddescription'] = FoldedScalarString(desc_data.decode('utf-8'))
 
+        detailed_description = ''
+        if desc_data:
+            detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
+
+        integration_doc_link = self.get_integration_doc_link(yml_data)
+        if integration_doc_link:
+            detailed_description += integration_doc_link
+        yml_unified['detaileddescription'] = detailed_description
         return yml_unified, found_desc_path
 
     def get_data(self, path, extension):
@@ -433,3 +443,41 @@ class Unifier:
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml
+
+    def get_integration_doc_link(self, unified_yml: Dict) -> str:
+        """Generates the integration link to the integration documentation
+
+        Args:
+            unified_yml (Dict): The integration YAML dictionary object
+
+        Returns:
+            str: The integration doc markdown link to add to the detailed description (if reachable)
+        """
+        normalized_integration_id = self.normalize_integration_id(unified_yml['commonfields']['id'])
+        integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
+
+        try:
+            res = requests.get(integration_doc_link, verify=False, timeout=10)
+            res.raise_for_status()
+        except requests.HTTPError as ex:
+            click.secho(
+                f'Failed reaching to {integration_doc_link}, not adding doc link to detailed description - {ex}',
+                fg='yellow'
+            )
+            return ''
+
+        return f'\n[View Integration Documentation]({integration_doc_link})'
+
+    @staticmethod
+    def normalize_integration_id(integration_id: str) -> str:
+        """Normalizes integration ID to an identifier to be used as the integration documentation ID
+
+        Args:
+            integration_id (str): The integration ID to normalize
+
+        Returns:
+            str: The normalized identifier
+        """
+        dasherized_integration_id = dasherize(underscore(integration_id)).replace(' ', '-')
+        # replace all non word characters (dash is ok)
+        return re.sub(r'[^\w-]', '', dasherized_integration_id)

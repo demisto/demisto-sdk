@@ -1,4 +1,7 @@
 # Changelog
+
+
+# 1.2.5
 * Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.
 * Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
 * Speed up improvements for `validate` of README files.

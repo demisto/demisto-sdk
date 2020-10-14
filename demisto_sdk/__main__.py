@@ -824,7 +824,7 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The path of the content pack."
+    "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",

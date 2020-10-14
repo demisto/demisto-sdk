@@ -783,6 +783,12 @@ class ValidateManager:
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
+    def add_origin(self, prev_ver):
+        # If git base not provided - check against origin/prev_ver unless using release branch
+        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
+            prev_ver = 'origin/' + prev_ver
+        return prev_ver
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
@@ -795,9 +801,8 @@ class ValidateManager:
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        # If git base not provided - check against origin/prev_ver unless using release branch
-        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
-            prev_ver = 'origin/' + prev_ver
+
+        prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')

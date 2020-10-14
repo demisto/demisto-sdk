@@ -1025,3 +1025,24 @@ def test_content_release_identifier_exists():
     vm.branch_name = 'master'
     sha1 = vm.get_content_release_identifier()
     assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'
+
+
+@pytest.mark.parametrize('prev_ver, expected', [
+    ('v4.5.0', 'origin/v4.5.0'),
+    ('master', 'origin/master'),
+    ('20.13.0', 'origin/20.13.0'),
+    ('origin/master', 'origin/master')
+])
+def test_add_origin(prev_ver, expected):
+    """
+    Given
+        - Prev_ver to test on.
+    When
+        - Run the add origin command.
+    Then
+        - validate add_origin runs as expected.
+    """
+    validate_manager = ValidateManager()
+    validate_manager.branch_name = 'test-branch'
+    res = validate_manager.add_origin(prev_ver=prev_ver)
+    assert res == expected

@@ -161,6 +161,22 @@ def test_insert_description_to_yml():
         assert (desc_data + integration_doc_link) == yml_unified['detaileddescription']
 
 
+def test_get_integration_doc_link_negative(mocker):
+    """
+    Given:
+        - Getting integration documentation link
+
+    When:
+        - Integration doc does not exist (not reachable)
+
+    Then:
+        - Verify an empty string is returned
+    """
+    unifier = Unifier('')
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration Does Not Exist'}})
+    assert integration_doc_link == ''
+
+
 def test_insert_image_to_yml():
     with patch.object(Unifier, "__init__", lambda a, b, c, d, e: None):
         unifier = Unifier('', None, None, None)

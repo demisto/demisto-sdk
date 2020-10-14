@@ -29,7 +29,7 @@ def test_integration_upload_pack_positive(demisto_client, mocker):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
-    mocker.patch("click.secho")
+    mocker.patch("demisto_sdk.__main__.click.secho")
     from click import secho
 
     pack_path = join(
@@ -77,7 +77,7 @@ def test_integration_upload_path_does_not_exist(demisto_client, mocker):
     - Ensure upload fails.
     - Ensure failure upload message is printed.
     """
-    mocker.patch("click.secho")
+    mocker.patch("demisto_sdk.__main__.click.secho")
     from click import secho
 
     invalid_dir_path = join(
@@ -102,7 +102,7 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path, mocker
     - Ensure upload fails due to invalid path.
     - Ensure failure upload message is printed.
     """
-    mocker.patch("click.secho")
+    mocker.patch("demisto_sdk.__main__.click.secho")
     from click import secho
 
     invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"

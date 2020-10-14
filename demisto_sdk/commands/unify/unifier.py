@@ -226,7 +226,8 @@ class Unifier:
         integration_doc_link = self.get_integration_doc_link(yml_data)
         if integration_doc_link:
             detailed_description += integration_doc_link
-        yml_unified['detaileddescription'] = detailed_description
+        if detailed_description:
+            yml_unified['detaileddescription'] = detailed_description
         return yml_unified, found_desc_path
 
     def get_data(self, path, extension):

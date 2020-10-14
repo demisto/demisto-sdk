@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
+from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
@@ -46,9 +47,9 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
+    'canvas-context-connections': ConnectionJSONFormat
 }
-UNFORMATTED_FILES = ['canvas-context-connections',
-                     'readme',
+UNFORMATTED_FILES = ['readme',
                      'releasenotes',
                      'description',
                      'changelog',

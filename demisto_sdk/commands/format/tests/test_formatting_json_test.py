@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -7,6 +8,7 @@ from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
+from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
     IncidentTypesJSONFormat
@@ -73,6 +75,68 @@ class TestFormattingJson:
         except Exception as e:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
                              "  Please specify a correct output."
+
+
+def test_update_connection_removes_unnecessary_keys(tmpdir):
+    """
+    Given
+        - A connection json file with a key that's not exist in the schema
+    When
+        - Run format on it
+    Then
+        - Ensure the key is deleted from the connection file
+    """
+    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_content = {
+        "canvasContextConnections": [
+            {
+                "contextKey1": "MD5",
+                "contextKey2": "SHA256",
+                "connectionDescription": "Belongs to the same file",
+                "parentContextKey": "File",
+                "not_needed key": "not needed value"
+            }],
+        "fromVersion": "5.0.0"
+    }
+    with open(connection_file_path, 'w') as file:
+        json.dump(connection_file_content, file)
+    connection_formatter = ConnectionJSONFormat(input=connection_file_path, output=connection_file_path)
+    connection_formatter.format_file()
+    with open(connection_file_path, 'r') as file:
+        formatted_connection = json.load(file)
+    for connection in formatted_connection['canvasContextConnections']:
+        assert 'not_needed key' not in connection
+
+
+def test_update_connection_updates_from_version(tmpdir):
+    """
+    Given
+        - A connection json file
+    When
+        - Run format on it with from version parameter
+    Then
+        - Ensure fromVersion is updated accordingly
+    """
+    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_content = {
+        "canvasContextConnections": [
+            {
+                "contextKey1": "MD5",
+                "contextKey2": "SHA256",
+                "connectionDescription": "Belongs to the same file",
+                "parentContextKey": "File",
+            }],
+        "fromVersion": "5.0.0"
+    }
+    with open(connection_file_path, 'w') as file:
+        json.dump(connection_file_content, file)
+    connection_formatter = ConnectionJSONFormat(input=connection_file_path,
+                                                output=connection_file_path,
+                                                from_version='6.0.0')
+    connection_formatter.format_file()
+    with open(connection_file_path, 'r') as file:
+        formatted_connection = json.load(file)
+    assert formatted_connection['fromVersion'] == '6.0.0'
 
 
 def test_update_id_indicatortype_positive(mocker, tmpdir):

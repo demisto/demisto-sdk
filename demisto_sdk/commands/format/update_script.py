@@ -30,7 +30,7 @@ class ScriptYMLFormat(BaseUpdateYML):
                  update_docker: bool = False,
                  verbose: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'

@@ -1027,14 +1027,22 @@ def test_content_release_identifier_exists():
     assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'
 
 
-@pytest.mark.parametrize('prev_ver, expected', [
-    ('v4.5.0', 'origin/v4.5.0'),
-    ('master', 'origin/master'),
-    ('20.13.0', 'origin/20.13.0'),
-    ('origin/master', 'origin/master'),
-    ('64cac0b349187b861c4c717951a634de52caba03', 'origin/64cac0b349187b861c4c717951a634de52caba03')
+@pytest.mark.parametrize('branch_name, prev_ver, expected', [
+    ('master', 'v4.5.0', 'origin/v4.5.0'),
+    ('master', 'master', 'origin/master'),
+    ('master', '20.13.0', 'origin/20.13.0'),
+    ('master', 'origin/master', 'origin/master'),
+    ('master', '64cac0b349187b861c4c717951a634de52caba03', 'origin/64cac0b349187b861c4c717951a634de52caba03'),
+    ('4.5.0', 'v4.5.0', 'origin/v4.5.0'),
+    ('4.5.0', 'master', 'origin/master'),
+    ('4.5.0', 'origin/master', 'origin/master'),
+    ('4.5.0', '64cac0b349187b861c4c717951a634de52caba03', 'origin/64cac0b349187b861c4c717951a634de52caba03'),
+    ('20.13.0', 'master', 'master'),
+    ('20.13.0', '20.13.0', '20.13.0'),
+    ('20.13.0', 'origin/master', 'origin/master'),
+    ('20.13.0', '64cac0b349187b861c4c717951a634de52caba03', '64cac0b349187b861c4c717951a634de52caba03')
 ])
-def test_add_origin(prev_ver, expected):
+def test_add_origin(branch_name, prev_ver, expected):
     """
     Given
         - Prev_ver to test on.
@@ -1044,5 +1052,6 @@ def test_add_origin(prev_ver, expected):
         - validate add_origin runs as expected.
     """
     validate_manager = ValidateManager()
+    validate_manager.branch_name = branch_name
     res = validate_manager.add_origin(prev_ver=prev_ver)
     assert res == expected

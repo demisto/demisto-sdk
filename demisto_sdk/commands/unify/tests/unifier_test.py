@@ -151,10 +151,14 @@ def test_insert_description_to_yml():
         unifier.is_script_package = False
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
-        yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
+        integration_doc_link = '\n[View Integration Documentation]' \
+                               '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
+        yml_unified, found_data_path = unifier.insert_description_to_yml(
+            {'commonfields': {'id': 'VulnDB'}}, {}
+        )
 
         assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
-        assert desc_data == yml_unified['detaileddescription']
+        assert (desc_data + integration_doc_link) == yml_unified['detaileddescription']
 
 
 def test_insert_image_to_yml():

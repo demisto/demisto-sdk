@@ -204,7 +204,8 @@ def test_get_integration_doc_link_positive(tmp_path):
         '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
-        requests.get(link, verify=False, timeout=10)
+        r = requests.get(link, verify=False, timeout=10)
+        r.raise_for_status()
     except requests.HTTPError as ex:
         raise Exception(f'Failed reaching to integration doc link {link} - {ex}')
 

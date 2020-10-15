@@ -187,9 +187,10 @@ class SecretsValidator(object):
             # Init vars for current loop
             file_name = os.path.basename(file_path)
             _, file_extension = os.path.splitext(file_path)
-            skip_secrets = {'skip_once': False, 'skip_multi': False}
             # get file contents
             file_contents = self.get_file_contents(file_path, file_extension)
+            # if detected disable-secrets comments, removes the line/s
+            file_contents = self.remove_secrets_disabled_line(file_contents)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
                 file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
@@ -201,11 +202,6 @@ class SecretsValidator(object):
                 secrets_white_list = secrets_white_list.union(temp_white_list)
             # Search by lines after strings with high entropy / IoCs regex as possibly suspicious
             for line_num, line in enumerate(file_contents.split('\n')):
-                # if detected disable-secrets comments, skip the line/s
-                skip_secrets = self.is_secrets_disabled(line, skip_secrets)
-                if skip_secrets['skip_once'] or skip_secrets['skip_multi']:
-                    skip_secrets['skip_once'] = False
-                    continue
                 # REGEX scanning for IOCs and false positive groups
                 regex_secrets, false_positives = self.regex_for_secrets(line)
                 for regex_secret in regex_secrets:
@@ -497,6 +493,25 @@ class SecretsValidator(object):
             else:
                 print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
                 return False
+
+    def remove_secrets_disabled_line(self, file_content: str) -> str:
+        """Removes lines that have "disable-secrets-detection" from file content
+
+        Arguments:
+            file_content (str): The content of the file to remove the "disable-secrets-detection" lines from
+
+        Returns:
+            str: The new file content with the "disable-secrets-detection" lines removed.
+        """
+        skip_secrets = {'skip_once': False, 'skip_multi': False}
+        new_file_content = ""
+        for line in file_content.split('\n'):
+            skip_secrets = self.is_secrets_disabled(line, skip_secrets)
+            if skip_secrets['skip_once'] or skip_secrets['skip_multi']:
+                skip_secrets['skip_once'] = False
+            else:
+                new_file_content += f'{line}\n'
+        return new_file_content
 
     def run(self):
         if self.find_secrets():

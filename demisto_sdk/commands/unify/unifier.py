@@ -8,7 +8,6 @@ import re
 from typing import Dict, Tuple
 
 import click
-import requests
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -225,7 +224,10 @@ class Unifier:
 
         integration_doc_link = self.get_integration_doc_link(yml_data)
         if integration_doc_link:
-            detailed_description += integration_doc_link
+            if detailed_description:
+                detailed_description += '\n---\n' + integration_doc_link
+            else:
+                detailed_description += integration_doc_link
         if detailed_description:
             yml_unified['detaileddescription'] = detailed_description
         return yml_unified, found_desc_path
@@ -457,21 +459,28 @@ class Unifier:
         normalized_integration_id = self.normalize_integration_id(unified_yml['commonfields']['id'])
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
-        try:
-            res = requests.get(integration_doc_link, verify=False, timeout=10)
-            res.raise_for_status()
-        except requests.HTTPError as ex:
+        readme_path = os.path.join(self.package_path, 'README.md')
+        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+            # verify README file exists and is not empty
+            return f'[View Integration Documentation]({integration_doc_link})'
+        else:
             click.secho(
-                f'Failed reaching to {integration_doc_link}, not adding doc link to detailed description - {ex}',
-                fg='yellow'
+                f'Did not find README in {self.package_path}, not adding integration doc link',
+                fg="bright_cyan"
             )
             return ''
-
-        return f'\n[View Integration Documentation]({integration_doc_link})'
 
     @staticmethod
     def normalize_integration_id(integration_id: str) -> str:
         """Normalizes integration ID to an identifier to be used as the integration documentation ID
+
+        Examples
+            >>> normalize_integration_id('Cortex XDR - IOC')
+            cortex-xdr---ioc
+            >>> normalize_integration_id('Whois')
+            whois
+            >>> normalize_integration_id('SomeIntegration')
+            some-integration
 
         Args:
             integration_id (str): The integration ID to normalize
@@ -480,5 +489,5 @@ class Unifier:
             str: The normalized identifier
         """
         dasherized_integration_id = dasherize(underscore(integration_id)).replace(' ', '-')
-        # replace all non word characters (dash is ok)
+        # remove all non-word characters (dash is ok)
         return re.sub(r'[^\w-]', '', dasherized_integration_id)

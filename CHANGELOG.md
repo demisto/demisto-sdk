@@ -1,5 +1,5 @@
 # Changelog
-
+* Unifier now adds a link to the integration documentation to the integration detailed description.
 
 # 1.2.5
 * Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.

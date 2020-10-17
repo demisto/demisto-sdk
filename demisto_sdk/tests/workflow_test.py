@@ -1,6 +1,6 @@
 import uuid
 from subprocess import PIPE, Popen
-from typing import List, Tuple, Union
+from typing import Tuple
 
 import git
 import pytest
@@ -10,8 +10,8 @@ from ruamel import yaml
 from TestSuite.test_tools import ChangeCWD
 
 
-def run_command(cmd: Union[str, List[str]], *args, **kwargs) -> Tuple[str, str]:
-    p = Popen(cmd.split(), stdout=PIPE, stderr=PIPE, encoding='utf-8', *args, **kwargs)
+def run_command(cmd: str, stdout=PIPE, stderr=PIPE, encoding='utf-8') -> Tuple[str, str]:
+    p = Popen(cmd.split(), stdout=stdout, stderr=stderr, encoding=encoding)
     return p.communicate()
 
 

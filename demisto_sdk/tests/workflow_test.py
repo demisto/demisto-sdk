@@ -34,7 +34,7 @@ def get_uuid() -> str:
 
 class TestWorkflow:
     @pytest.fixture(autouse=True)
-    def setup_class(self, tmpdir):
+    def setup_class(self, tmpdir, capsys):
         """
         Will [copy in CircleCI, else will clone] the content to a temp dir.
         """
@@ -42,11 +42,14 @@ class TestWorkflow:
         self.branches = []
         self.content = tmpdir / "content"
         circle_content_dir = '/home/circleci/project/content'
-        if os.path.isdir(circle_content_dir):
-            run_command(f"cp -r /project/content {self.content}")
-        else:
-            with ChangeCWD(tmpdir):
-                run_command("git clone --depth 1 https://github.com/demisto/content.git")
+        with capsys.disabled():
+            if os.path.isdir(circle_content_dir):
+                print("Found content folder, copying it")
+                run_command(f"cp -r /project/content {self.content}")
+            else:
+                print("Could not find content folder, cloning it")
+                with ChangeCWD(tmpdir):
+                    run_command("git clone --depth 1 https://github.com/demisto/content.git")
 
     @pytest.fixture(autouse=True)
     def function_setup(self):

@@ -1,8 +1,8 @@
+import os
 import uuid
 from subprocess import PIPE, Popen
 from typing import Tuple
 
-import git
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -10,12 +10,25 @@ from ruamel import yaml
 from TestSuite.test_tools import ChangeCWD
 
 
-def run_command(cmd: str, stdout=PIPE, stderr=PIPE, encoding='utf-8') -> Tuple[str, str]:
-    p = Popen(cmd.split(), stdout=stdout, stderr=stderr, encoding=encoding)
+def run_command(cmd: str) -> Tuple[str, str]:
+    """
+    A simple command runner
+    Args:
+        cmd: command to run
+
+    Returns:
+        stdout, stderr
+    """
+    p = Popen(cmd.split(), stdout=PIPE, stderr=PIPE, encoding='utf-8')
     return p.communicate()
 
 
 def get_uuid() -> str:
+    """
+    Gets a uuid
+    Returns:
+        uuid
+    """
     return str(uuid.uuid1())
 
 
@@ -23,13 +36,17 @@ class TestWorkflow:
     @pytest.fixture(autouse=True)
     def setup_class(self, tmpdir):
         """
-        Will clone the content repo and manage open branches.
+        Will [copy in CircleCI, else will clone] the content to a temp dir.
         """
         # Copy content
         self.branches = []
         self.content = tmpdir / "content"
-        self.repo = git.Git(str(tmpdir))
-        self.repo.clone("https://github.com/demisto/content.git", depth=1)
+        circle_content_dir = '/project/content'
+        if os.path.isdir(circle_content_dir):
+            run_command(f"cp -r /project/content {self.content}")
+        else:
+            with ChangeCWD(tmpdir):
+                run_command("git clone --depth 1 https://github.com/demisto/content.git")
 
     @pytest.fixture(autouse=True)
     def function_setup(self):
@@ -75,11 +92,11 @@ class TestWorkflow:
                 )
                 assert res.exit_code == 0
                 run_command("git add .")
+                res = runner.invoke(main, "validate -g")
+                assert res.exit_code == 0
                 res = runner.invoke(main, "secrets")
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint")
-                assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g")
                 assert res.exit_code == 0
             except AssertionError as e:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}", e)

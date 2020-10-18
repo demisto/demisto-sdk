@@ -630,6 +630,10 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    @staticmethod
+    def should_raise_pack_version(pack):
+        return not (pack in IGNORED_PACK_NAMES or 'ApiModules' in pack)
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -652,10 +656,7 @@ class ValidateManager:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                if pack in IGNORED_PACK_NAMES or 'ApiModules' in pack:
-                    raise_version = False
-                else:
-                    raise_version = True
+                raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
                 id_set_path=self.id_set_path))

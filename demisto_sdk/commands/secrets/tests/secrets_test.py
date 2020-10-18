@@ -317,12 +317,12 @@ my_email = "fooo@someorg.com"
     def test_remove_secrets_disabled_line(self):
         """
         Given
-            1. String with a line that are disable-secrets-detection
-            1. String with a lines whit "disable-secrets-detection-start" & "disable-secrets-detection-end"
+            1. String with a line containing "disable-secrets-detection"
+            1. String with a lines containing "disable-secrets-detection-start" & "disable-secrets-detection-end"
         When
-            Removing the lines from the file
+            Removing content that belongs to ignored lines
         Then
-            Ensure secrets that that are in this lines isn't in the output.
+            Ensure secrets that are in these lines aren't in the output.
         """
         file_contents = '''
         import

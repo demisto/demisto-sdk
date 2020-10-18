@@ -1024,7 +1024,7 @@ def test_content_release_identifier_exists():
     vm = ValidateManager()
     vm.branch_name = 'master'
     sha1 = vm.get_content_release_identifier()
-    assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'
+    assert sha1, 'GIT_SHA1 path in config.yml has been changed. Fix the demisto-sdk or revert changes in content repo.'
 
 
 @pytest.mark.parametrize('branch_name, prev_ver, expected', [
@@ -1052,4 +1052,23 @@ def test_add_origin(branch_name, prev_ver, expected):
     validate_manager = ValidateManager()
     validate_manager.branch_name = branch_name
     res = validate_manager.add_origin(prev_ver=prev_ver)
+    assert res == expected
+
+
+@pytest.mark.parametrize('pack_name, expected', [
+    ('NonSupported', False),
+    ('PackName1', True)
+])
+def test_should_raise_pack_version(pack_name, expected):
+    """
+    Given
+        - NonSupported Pack - Should return False as no need to bump the pack version.
+        - Regular pack - should result as True, the pack version should be raised
+    When
+        - Run should_raise_pack_version command.
+    Then
+        - validate should_raise_pack_version runs as expected.
+    """
+    validate_manager = ValidateManager()
+    res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected

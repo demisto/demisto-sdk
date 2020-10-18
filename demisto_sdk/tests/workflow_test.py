@@ -41,7 +41,7 @@ class TestWorkflow:
         # Copy content
         self.branches = []
         self.content = tmpdir / "content"
-        circle_content_dir = '/project/content'
+        circle_content_dir = '/home/circleci/project/content'
         if os.path.isdir(circle_content_dir):
             run_command(f"cp -r /project/content {self.content}")
         else:

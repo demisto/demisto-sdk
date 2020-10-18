@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.
+* Will use env var `DEMISTO_VERIFY_SSL` to determine if to use a secure connection for commands interacting with the Server when `--insecure` is not passed. If working with a local Server without a trusted certificate, you can set env var `DEMISTO_VERIFY_SSL=no` to avoid using `--insecure` on each command.
 
 
 # 1.2.5

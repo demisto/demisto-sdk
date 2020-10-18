@@ -780,7 +780,7 @@ BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
 INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
-                          'Deception', 'Email Gateway']
+                          'Deception', 'Email Gateway', 'IAM']
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,

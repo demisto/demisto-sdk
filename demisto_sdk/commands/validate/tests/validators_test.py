@@ -1062,7 +1062,8 @@ def test_add_origin(branch_name, prev_ver, expected):
 def test_should_raise_pack_version(pack_name, expected):
     """
     Given
-        - Pack name.
+        - NonSupported Pack - Should return False as no need to bump the pack version.
+        - Regular pack - should result as True, the pack version should be raised
     When
         - Run should_raise_pack_version command.
     Then

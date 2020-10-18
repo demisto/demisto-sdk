@@ -632,15 +632,15 @@ class ValidateManager:
         return all(valid_files)
 
     @staticmethod
-    def should_raise_pack_version(pack):
+    def should_raise_pack_version(pack: str) -> bool:
         """
         Args:
             pack: The pack name.
 
-        Returns: False if pack is in IGNORED_PACK_NAMES or ApiModules else True.
+        Returns: False if pack is in IGNORED_PACK_NAMES else True.
 
         """
-        return not (pack in IGNORED_PACK_NAMES or 'ApiModules' in pack)
+        return pack not in IGNORED_PACK_NAMES
 
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',

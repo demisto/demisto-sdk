@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.
 
 
 # 1.2.5

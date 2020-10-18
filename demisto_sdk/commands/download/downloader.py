@@ -131,7 +131,8 @@ class Downloader:
         :return: True if fetched successfully, False otherwise
         """
         try:
-            self.client = demisto_client.configure(verify_ssl=not self.insecure)
+            verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+            self.client = demisto_client.configure(verify_ssl=verify)
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)

@@ -321,8 +321,8 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     assert result.exit_code == 0
     assert not result.exception
-    assert 'Changes were detected. Bumping ApiModules to version: 1.0.1' in result.stdout
-    assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.2' in result.stdout
+    assert 'Release notes are not required for the ApiModules pack since this pack is not versioned.' in result.stdout
+    assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.1' in result.stdout
 
 
 def test_update_release_notes_all(demisto_client, mocker):

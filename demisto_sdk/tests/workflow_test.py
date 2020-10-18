@@ -81,10 +81,9 @@ class ContentGitRepo:
     def create_branch(self, branch_name: str = get_uuid(), cwd: Optional[Path] = None) -> str:
         if cwd is None:
             cwd = self.content
-        with ChangeCWD(cwd):
-            self.branches.append(branch_name)
-            run_command_git(f"git checkout -b {branch_name}")
-            return branch_name
+        self.branches.append(branch_name)
+        run_command_git(f"git checkout -b {branch_name}")
+        return branch_name
 
 
 @pytest.fixture(autouse=True)
@@ -104,7 +103,7 @@ def function_setup():
         content_git_repo.branches = []
 
 
-def init_pack(content_repo):
+def init_pack(content_repo: ContentGitRepo):
     """
     Given: Instruction to create a new pack using the sdk.
         Fill metadata: y
@@ -136,7 +135,7 @@ def init_pack(content_repo):
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}", e)
 
 
-def init_integration(content_repo):
+def init_integration(content_repo: ContentGitRepo):
     """
     Given: Instruction to create a new integration using the sdk.
         Use ID for as dir name: y
@@ -166,7 +165,7 @@ def init_integration(content_repo):
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}", e)
 
 
-def modify_entity(content_repo):
+def modify_entity(content_repo: ContentGitRepo):
     """
     Given: Modify entity description.
 
@@ -213,11 +212,11 @@ def modify_entity(content_repo):
 content_git_repo = ContentGitRepo()
 
 
-@pytest.mark.parametrize('function', (
+@pytest.mark.parametrize('function', [
     init_pack,
     init_integration,
-    modify_entity
-))
+    modify_entity,
+])
 def test_sequential_run(function: Callable):
     """
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.

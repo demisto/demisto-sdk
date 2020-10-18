@@ -8,9 +8,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -630,6 +631,17 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    @staticmethod
+    def should_raise_pack_version(pack: str) -> bool:
+        """
+        Args:
+            pack: The pack name.
+
+        Returns: False if pack is in IGNORED_PACK_NAMES else True.
+
+        """
+        return pack not in IGNORED_PACK_NAMES
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -652,7 +664,7 @@ class ValidateManager:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                raise_version = True
+                raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
                 id_set_path=self.id_set_path))

@@ -1060,6 +1060,14 @@ def test_add_origin(branch_name, prev_ver, expected):
     ('PackName1', True)
 ])
 def test_should_raise_pack_version(pack_name, expected):
+    """
+    Given
+        - Pack name.
+    When
+        - Run should_raise_pack_version command.
+    Then
+        - validate should_raise_pack_version runs as expected.
+    """
     validate_manager = ValidateManager()
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected

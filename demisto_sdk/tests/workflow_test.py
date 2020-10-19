@@ -42,7 +42,7 @@ class ContentGitRepo:
         """
         # Copy content
         self.branches = []
-        circle_content_dir = '/home/circleci/project/content'
+        circle_content_dir = '~/project/content'
         self.tmpdir = tempfile.TemporaryDirectory()
         tmpdir = Path(self.tmpdir.name)
         self.content = tmpdir / 'content'
@@ -55,8 +55,7 @@ class ContentGitRepo:
             self.run_command(f"cp -r {curr_content} {tmpdir}", cwd=Path(os.getcwd()))
         # Cloning content
         else:
-            with ChangeCWD(tmpdir):
-                self.run_command("git clone --depth 1 https://github.com/demisto/content.git")
+            self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
         # Resetting the git branch
         self.git_cleanup()
         # pulling if not pulled

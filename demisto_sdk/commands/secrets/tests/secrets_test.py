@@ -337,7 +337,9 @@ my_email = "fooo@someorg.com"
         8.8.8.8 # disable-secrets-detection-start
         4.4.4.4
         end # disable-secrets-detection-end
+        8.8.8.4
         '''
         file_contents1 = self.validator.remove_secrets_disabled_line(file_contents1)
         assert "8.8.8.8" not in file_contents1
         assert "4.4.4.4" not in file_contents1
+        assert "8.8.8.4" in file_contents1

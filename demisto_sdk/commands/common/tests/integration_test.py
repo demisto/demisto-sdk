@@ -719,7 +719,7 @@ class TestIsFeedParamsExist:
 
         When: running validate on integration with no one of commands, fetch, feed or long-running
 
-        Then: Validate it's valid.
+        Then: Validate it's invalid.
         """
         current = {"script": {}}
         structure = mock_structure("", current)

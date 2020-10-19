@@ -26,41 +26,6 @@ def list_files(path: Path) -> Generator[str, None, None]:
             yield file
 
 
-def run_command(cmd: str, raise_error: bool = True) -> Tuple[str, str]:
-    """
-    A simple command runner
-    Args:
-        cmd: command to run
-        raise_error: should raise error (if returncode != 0)
-
-    Returns:
-        stdout, stderr
-    """
-    # reset git lock
-    res = Popen(cmd.split(), stderr=PIPE, stdout=PIPE, encoding='utf-8')
-    stdout, stderr = res.communicate()
-    if raise_error and res.returncode != 0:
-        raise SystemExit(f"Error in command \"{cmd}\"\nstdout={stdout}\nsterr={stderr}")
-    return stdout, stderr
-
-
-def run_command_git(cmd: str, raise_error: bool = True) -> Tuple[str, str]:
-    """
-    Runs git commands and removing the lock between runs.
-
-    Args:
-        cmd: git command to run. can be provided without the git prefix.
-        raise_error: Should raise error if returncode is not 0
-
-    Returns:
-        stdout, stderr
-    """
-    run_command('rm -f .git/index.lock')
-    if cmd.split()[0] != 'git':
-        cmd = 'git' + cmd
-    return run_command(cmd, raise_error)
-
-
 def get_uuid() -> str:
     """
     Gets a uuid
@@ -87,17 +52,17 @@ class ContentGitRepo:
         # Local machine - search for content alias
         elif os.environ.get('CONTENT'):
             curr_content = os.environ.get('CONTENT')
-            run_command(f"cp -r {curr_content} {tmpdir}")
+            self.run_command(f"cp -r {curr_content} {tmpdir}")
         # Cloning content
         else:
             with ChangeCWD(tmpdir):
-                run_command_git("git clone --depth 1 https://github.com/demisto/content.git")
+                self.run_command_git("git clone --depth 1 https://github.com/demisto/content.git")
         # Resetting the git branch
         with ChangeCWD(self.content):
-            run_command_git("git reset --hard origin/master")
-            run_command_git("git clean -f -xd")
-            run_command_git("git checkout master")
-            run_command_git("git pull")
+            self.run_command_git("git reset --hard origin/master")
+            self.run_command_git("git clean -f -xd")
+            self.run_command_git("git checkout master")
+            self.run_command_git("git pull")
 
     def __exit__(self):
         """
@@ -116,13 +81,47 @@ class ContentGitRepo:
             if not branch_name:
                 branch_name = get_uuid()
             self.branches.append(branch_name)
-            run_command_git(f"git checkout -b {branch_name}")
+            self.run_command_git(f"git checkout -b {branch_name}")
             return branch_name
+
+    def run_command_git(self, cmd: str, raise_error: bool = True) -> Tuple[str, str]:
+        """
+        Runs git commands and removing the lock between runs.
+
+        Args:
+            cmd: git command to run. can be provided without the git prefix.
+            raise_error: Should raise error if returncode is not 0
+
+        Returns:
+            stdout, stderr
+        """
+        self.run_command('rm -f .git/index.lock')
+        if cmd.split()[0] != 'git':
+            cmd = 'git' + cmd
+        return self.run_command(cmd, raise_error)
+
+    def run_command(self, cmd: str, raise_error: bool = True) -> Tuple[str, str]:
+        """
+        A simple command runner
+        Args:
+            cmd: command to run
+            raise_error: should raise error (if returncode != 0)
+
+        Returns:
+            stdout, stderr
+        """
+        # reset git lock
+        with ChangeCWD(self.content):
+            res = Popen(cmd.split(), stderr=PIPE, stdout=PIPE, encoding='utf-8')
+            stdout, stderr = res.communicate()
+            if raise_error and res.returncode != 0:
+                raise SystemExit(f"Error in command \"{cmd}\"\nstdout={stdout}\nsterr={stderr}")
+            return stdout, stderr
 
     def run_validations(self):
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
-            run_command_git("git add .")
+            self.run_command_git("git add .")
             res = runner.invoke(main, "secrets")
             try:
                 assert res.exit_code == 0
@@ -146,10 +145,10 @@ def function_setup():
         yield  # Separator buildup/teardown
         # Function teardown - Reset to original repo
     with ChangeCWD(content_git_repo.content):
-        run_command_git("git reset --hard origin/master")
-        run_command_git("git checkout master")
+        content_git_repo.run_command_git("git reset --hard origin/master")
+        content_git_repo.run_command_git("git checkout master")
         for branch in content_git_repo.branches:
-            run_command_git(f"git branch -D {branch}", raise_error=False)
+            content_git_repo.run_command_git(f"git branch -D {branch}", raise_error=False)
         content_git_repo.branches = []
 
 
@@ -194,7 +193,7 @@ def init_integration(content_repo: ContentGitRepo):
     with ChangeCWD(hello_world_path):
         res = runner.invoke(main, "init --integration -n Sample", input='y')
         assert res.exit_code == 0
-        run_command_git("git add .")
+        content_git_repo.run_command_git("git add .")
 
     with ChangeCWD(content_repo.content):
         try:
@@ -219,13 +218,13 @@ def modify_entity(content_repo: ContentGitRepo):
         script = yaml.safe_load(open("./HelloWorldScript.yml"))
         script['args'][0]["description"] = "new description"
         yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
-        run_command_git("git add .")
+        content_git_repo.run_command_git("git add .")
     with ChangeCWD(content_repo.content):
         res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         assert res.exit_code == 0
-        run_command_git("git add .")
+        content_git_repo.run_command_git("git add .")
         # Get the newest rn file and modify it.
-        stdout, stderr = run_command_git("git status")
+        stdout, stderr = content_git_repo.run_command_git("git status")
         lines = stdout.split("\n")
         for line in lines:
             if "ReleaseNotes" in line:
@@ -260,7 +259,7 @@ def all_files_renamed(content_repo: ContentGitRepo):
         for file in list_files(hello_world_path):
             new_file = file.replace('HelloWorld', 'Test')
             if not file == new_file:
-                run_command_git(f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}")
+                content_git_repo.run_command_git(f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}")
         content_repo.run_validations()
 
 
@@ -276,7 +275,7 @@ def rename_incident_field(content_repo: ContentGitRepo):
     with ChangeCWD(content_repo.content):
         hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
         curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
-        run_command_git(f"git mv {curr_incident_field}, {hello_world_incidentfields_path / 'incidentfield-new.json'}")
+        content_git_repo.run_command_git(f"git mv {curr_incident_field}, {hello_world_incidentfields_path / 'incidentfield-new.json'}")
         content_repo.run_validations()
 
 

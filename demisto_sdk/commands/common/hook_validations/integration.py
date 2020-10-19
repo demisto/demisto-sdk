@@ -86,6 +86,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_valid_fetch(),
+            self.is_there_a_runnable(),
             self.is_valid_display_name(),
             self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
@@ -234,6 +235,8 @@ class IntegrationValidator(ContentEntityValidator):
             bool. Whether a reputation command hold a valid argument
         """
         commands = self.current_file.get('script', {}).get('commands', [])
+        if commands is None:  # If no commands, at least isFetch should be.
+            commands = []
         flag = True
         for command in commands:
             command_name = command.get('name')
@@ -841,4 +844,26 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             if not description_validator.is_valid():
                 return False
+        return True
+
+    def is_there_a_runnable(self) -> bool:
+        """Verifies there's at least one runnable command.
+            at least one of:
+            command in commands section
+            isFetch
+            feed
+            long-running
+
+        Returns:
+            if there's at least one runnable in the yaml
+        """
+        script = self.current_file.get('script', {})
+
+        if not any([
+            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"), script.get('longRunning')]
+        ):
+            self.is_valid = False
+            print_error(f"{self.file_path}: Could not find any runnable command in the integration."
+                        f"Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`")
+            return False
         return True

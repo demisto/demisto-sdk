@@ -678,3 +678,51 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_pwsh() == res
+
+    def test_empty_commands(self):
+        """
+        Given: an integration with no commands
+
+        When: running validate on integration with no command.
+
+        Then: Validate it's valid.
+        """
+        current = {"script": {"commands": None}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_default_arguments() is True
+
+    @pytest.mark.parametrize('param', [
+        {'commands': ['something']},
+        {'isFetch': True},
+        {'longRunning': True},
+        {'feed': True}
+    ])
+    def test_is_there_a_runnable(self, param):
+        """
+        Given: one of any runnable integration
+
+        When: running validate on integration with at least one of commands, fetch, feed or long-running
+
+        Then: Validate it's valid.
+        """
+        current = {"script": param}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_there_a_runnable() is True
+
+    def test_is_there_a_runnable_negative(self):
+        """
+        Given: an integration with no runnable param
+
+        When: running validate on integration with no one of commands, fetch, feed or long-running
+
+        Then: Validate it's valid.
+        """
+        current = {"script": {}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_there_a_runnable() is False

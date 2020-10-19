@@ -3,7 +3,7 @@ import tempfile
 import uuid
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Callable, Generator, Tuple
+from typing import Callable, Generator, Optional, Tuple
 
 import pytest
 from click.testing import CliRunner
@@ -52,17 +52,15 @@ class ContentGitRepo:
         # Local machine - search for content alias
         elif os.environ.get('CONTENT'):
             curr_content = os.environ.get('CONTENT')
-            self.run_command(f"cp -r {curr_content} {tmpdir}")
+            self.run_command(f"cp -r {curr_content} {tmpdir}", cwd=Path(os.getcwd()))
         # Cloning content
         else:
             with ChangeCWD(tmpdir):
                 self.run_command_git("git clone --depth 1 https://github.com/demisto/content.git")
         # Resetting the git branch
-        with ChangeCWD(self.content):
-            self.run_command_git("git reset --hard origin/master")
-            self.run_command_git("git clean -f -xd")
-            self.run_command_git("git checkout master")
-            self.run_command_git("git pull")
+        self.git_cleanup()
+        # pulling if not pulled
+        self.run_command_git("git pull")
 
     def __exit__(self):
         """
@@ -100,18 +98,21 @@ class ContentGitRepo:
             cmd = 'git' + cmd
         return self.run_command(cmd, raise_error)
 
-    def run_command(self, cmd: str, raise_error: bool = True) -> Tuple[str, str]:
+    def run_command(self, cmd: str, raise_error: bool = True, cwd: Optional[Path] = None) -> Tuple[str, str]:
         """
         A simple command runner
         Args:
             cmd: command to run
             raise_error: should raise error (if returncode != 0)
+            cwd: working dir to run the command. default is self.content
 
         Returns:
             stdout, stderr
         """
         # reset git lock
-        with ChangeCWD(self.content):
+        if cwd is None:
+            cwd = self.content
+        with ChangeCWD(cwd):
             res = Popen(cmd.split(), stderr=PIPE, stdout=PIPE, encoding='utf-8')
             stdout, stderr = res.communicate()
             if raise_error and res.returncode != 0:
@@ -125,31 +126,29 @@ class ContentGitRepo:
             res = runner.invoke(main, "secrets")
             try:
                 assert res.exit_code == 0
-                res = runner.invoke(main, "lint -g")
+                res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
                 # res = runner.invoke(main, "validate -g --skip-pack-dependencies")
                 # assert res.exit_code == 0
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
 
+    def git_cleanup(self):
+        with ChangeCWD(self.content):
+            self.run_command_git("git reset --hard origin/master")
+            self.run_command_git("git clean -f -xd")
+            self.run_command_git("git checkout master")
+
 
 @pytest.fixture(autouse=True)
 def function_setup():
     """
-    Cleaning the content repo after every function
+    Cleaning the content repo before every function
     """
     global content_git_repo
-    # Function set up
-    with ChangeCWD(content_git_repo.content):
-        content_git_repo.create_branch()
-        yield  # Separator buildup/teardown
-        # Function teardown - Reset to original repo
-    with ChangeCWD(content_git_repo.content):
-        content_git_repo.run_command_git("git reset --hard origin/master")
-        content_git_repo.run_command_git("git checkout master")
-        for branch in content_git_repo.branches:
-            content_git_repo.run_command_git(f"git branch -D {branch}", raise_error=False)
-        content_git_repo.branches = []
+    # Function setup
+    content_git_repo.git_cleanup()
+    content_git_repo.create_branch()
 
 
 def init_pack(content_repo: ContentGitRepo):
@@ -259,7 +258,9 @@ def all_files_renamed(content_repo: ContentGitRepo):
         for file in list_files(hello_world_path):
             new_file = file.replace('HelloWorld', 'Test')
             if not file == new_file:
-                content_git_repo.run_command_git(f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}")
+                content_git_repo.run_command_git(
+                    f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
+                )
         content_repo.run_validations()
 
 
@@ -275,8 +276,11 @@ def rename_incident_field(content_repo: ContentGitRepo):
     with ChangeCWD(content_repo.content):
         hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
         curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
-        content_git_repo.run_command_git(f"git mv {curr_incident_field}, {hello_world_incidentfields_path / 'incidentfield-new.json'}")
-        content_repo.run_validations()
+
+    content_git_repo.run_command_git(
+        f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
+    )
+    content_repo.run_validations()
 
 
 content_git_repo = ContentGitRepo()

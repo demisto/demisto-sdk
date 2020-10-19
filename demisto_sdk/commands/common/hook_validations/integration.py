@@ -863,7 +863,7 @@ class IntegrationValidator(ContentEntityValidator):
             script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"), script.get('longRunning')]
         ):
             self.is_valid = False
-            print_error(f"{self.file_path}: Could not find any runnable command in the integration."
-                        f"Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`")
+            error, code = Errors.integration_not_runnable()
+            self.handle_error(error, code, file_path=self.file_path)
             return False
         return True

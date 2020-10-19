@@ -42,6 +42,7 @@ ERROR_CODE = {
     "beta_field_not_found": "IN111",
     "no_beta_in_display": "IN112",
     "duplicate_arg_in_file": "IN113",
+    "integration_not_runnable": "IN114",
     "duplicate_param": "IN114",
     "invalid_context_output": "IN115",
     "added_required_fields": "IN116",
@@ -1116,6 +1117,12 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     def wrong_filename(file_type):

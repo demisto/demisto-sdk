@@ -1,4 +1,5 @@
 # Changelog
+* No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.
 * Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.
 * Will use env var `DEMISTO_VERIFY_SSL` to determine if to use a secure connection for commands interacting with the Server when `--insecure` is not passed. If working with a local Server without a trusted certificate, you can set env var `DEMISTO_VERIFY_SSL=no` to avoid using `--insecure` on each command.
 * Unifier now adds a link to the integration documentation to the integration detailed description.

@@ -657,7 +657,7 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path):
+        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
             IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:

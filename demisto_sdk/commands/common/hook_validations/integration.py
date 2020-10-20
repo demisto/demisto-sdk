@@ -235,7 +235,7 @@ class IntegrationValidator(ContentEntityValidator):
             bool. Whether a reputation command hold a valid argument
         """
         commands = self.current_file.get('script', {}).get('commands', [])
-        if commands is None:  # If no commands, at least isFetch should be.
+        if commands is None:
             commands = []
         flag = True
         for command in commands:

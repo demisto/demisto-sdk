@@ -104,6 +104,12 @@ class ContentGitRepo:
             return stdout, stderr
 
     def run_validations(self):
+        """
+        Run all of the following validations:
+        * secrets
+        * lint -g --no-test
+        * validate -g --skip-pack-dependencies
+        """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
@@ -118,6 +124,9 @@ class ContentGitRepo:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
 
     def git_cleanup(self):
+        """
+        Resetting the branch to master and cleaning it.
+        """
         with ChangeCWD(self.content):
             self.run_command("git reset --hard origin/master")
             self.run_command("git clean -f -xd")
@@ -296,7 +305,7 @@ def rename_incident_field(content_repo: ContentGitRepo):
 content_git_repo = ContentGitRepo()
 
 
-@pytest.mark.parametrize('function', [
+@pytest.mark.parametrize("function", [
     init_pack,
     init_integration,
     modify_entity,
@@ -308,6 +317,21 @@ def test_workflow_by_sequence(function: Callable):
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:
         function: A test to run
+
+    Workflow:
+        The tests will use ContentGitRepo as a base content repository.
+        Each function will run a different workflow as user should use it.
+
+    Steps:
+        Create/Modify files:
+            The test will create new files or will modify them.
+        Run Demisto-SDK commands:
+            Will run any tested demisto-sdk functionality. as the init command and update-release-notes.
+        Run validations:
+            Will run all validation with expected the test to pass.
+            * secrets
+            * lint -g --no-test
+            * validate -g --skip-pack-dependencies
     """
     global content_git_repo
     function(content_git_repo)

@@ -48,7 +48,6 @@ class ContentGitRepo:
         self.content = tmpdir / 'content'
         # In circleCI, the dir is already there
         if os.path.isdir(circle_content_dir):
-            self.content = circle_content_dir
             self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
         # Local machine - search for content alias
         elif os.environ.get('CONTENT'):

@@ -38,17 +38,18 @@ def get_uuid() -> str:
 class ContentGitRepo:
     def __init__(self):
         """
-        Will [copy in CircleCI, else will clone] the content to a temp dir.
+        Will [copy in CircleCI and local machine else will clone] the content to a temp dir.
         """
         # Copy content
         self.branches = []
-        circle_content_dir = '~/project/content'
+        circle_content_dir = Path('~/project/content')
         self.tmpdir = tempfile.TemporaryDirectory()
         tmpdir = Path(self.tmpdir.name)
         self.content = tmpdir / 'content'
         # In circleCI, the dir is already there
         if os.path.isdir(circle_content_dir):
-            self.content = Path(circle_content_dir)
+            self.content = circle_content_dir
+            self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
         # Local machine - search for content alias
         elif os.environ.get('CONTENT'):
             curr_content = os.environ.get('CONTENT')
@@ -111,8 +112,8 @@ class ContentGitRepo:
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                # res = runner.invoke(main, "validate -g --skip-pack-dependencies")
-                # assert res.exit_code == 0
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies")
+                assert res.exit_code == 0
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
 
@@ -121,6 +122,34 @@ class ContentGitRepo:
             self.run_command("git reset --hard origin/master")
             self.run_command("git clean -f -xd")
             self.run_command("git checkout master")
+
+    def update_rn(self, notes: str = "New rns! Hooray!"):
+        """
+        Will find a single ReleaseNotes file from `git status` and will change
+            the placeholder with given notes.
+
+        Args:
+            notes: note to replace
+
+        Raises:
+            AssertionError if could not find release notes.
+        """
+        with ChangeCWD(self.content):
+            self.run_command("git add .")
+            stdout, stderr = self.run_command("git status")
+            lines = stdout.split("\n")
+            for line in lines:
+                if "ReleaseNotes" in line:
+                    rn_path = line.split()[-1]
+                    break
+            else:
+                raise IndexError(f"Could not find ReleaseNotes in the repo.\n stdout={stdout}\nstderr={stderr}")
+            # Replace release notes placeholder
+            with open(rn_path) as stream:
+                content = stream.read().replace("%%UPDATE_RN%%", notes)
+
+            with open(rn_path, 'w+') as stream:
+                stream.write(content)
 
 
 @pytest.fixture(autouse=True)
@@ -202,26 +231,14 @@ def modify_entity(content_repo: ContentGitRepo):
         yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
         content_git_repo.run_command("git add .")
     with ChangeCWD(content_repo.content):
-        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-        assert res.exit_code == 0
+        try:
+            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+            assert res.exit_code == 0
+        except AssertionError:
+            raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
         content_git_repo.run_command("git add .")
         # Get the newest rn file and modify it.
-        stdout, stderr = content_git_repo.run_command("git status")
-        lines = stdout.split("\n")
-        for line in lines:
-            if "ReleaseNotes" in line:
-                rn_path = line.split()[-1]
-                break
-        else:
-            raise IndexError(f"Could not find ReleaseNotes in the repo.\n stdout={stdout}\nstderr={stderr}")
-
-        # Replace release notes placeholder
-        with open(rn_path) as stream:
-            content = stream.read().replace("%%UPDATE_RN%%", "New rns! Hooray!")
-
-        with open(rn_path, 'w+') as stream:
-            stream.write(content)
-
+        content_repo.update_rn()
         content_repo.run_validations()
 
 
@@ -233,18 +250,25 @@ def all_files_renamed(content_repo: ContentGitRepo):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
-    with ChangeCWD(content_repo.content):
-        path_to_hello_world_pack = Path("Packs") / "HelloWorld" / "Integrations" / "HelloWorld"
-        hello_world_path = content_repo.content / path_to_hello_world_pack
+    path_to_hello_world_pack = Path("Packs") / "HelloWorld" / "Integrations" / "HelloWorld"
+    hello_world_path = content_repo.content / path_to_hello_world_pack
 
-        # rename all files in dir
-        for file in list_files(hello_world_path):
-            new_file = file.replace('HelloWorld', 'Test')
-            if not file == new_file:
-                content_git_repo.run_command(
-                    f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
-                )
-        content_repo.run_validations()
+    # rename all files in dir
+    for file in list_files(hello_world_path):
+        new_file = file.replace('HelloWorld', 'Test')
+        if not file == new_file:
+            content_git_repo.run_command(
+                f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
+            )
+    with ChangeCWD(content_repo.content):
+        runner = CliRunner(mix_stderr=False)
+        try:
+            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+            assert res.exit_code == 0
+        except AssertionError:
+            raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
+        content_repo.update_rn()
+    content_repo.run_validations()
 
 
 def rename_incident_field(content_repo: ContentGitRepo):
@@ -260,10 +284,13 @@ def rename_incident_field(content_repo: ContentGitRepo):
         hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
         curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
 
-    content_git_repo.run_command(
-        f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
-    )
-    content_repo.run_validations()
+        content_git_repo.run_command(
+            f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
+        )
+        runner = CliRunner(mix_stderr=False)
+        runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+        content_repo.update_rn()
+        content_repo.run_validations()
 
 
 content_git_repo = ContentGitRepo()

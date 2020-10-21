@@ -127,6 +127,8 @@ jobs:
               . .tox/py37/bin/activate
 
               cd content
+              python3 -c "import sys; print(sys.path)"
+              which python
               echo ""
               cd Tests
               ls

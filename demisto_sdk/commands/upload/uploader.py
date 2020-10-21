@@ -32,7 +32,8 @@ class Uploader:
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
-        self.client = demisto_client.configure(verify_ssl=not insecure)
+        verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        self.client = demisto_client.configure(verify_ssl=verify)
         self.status_code = 0
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
         self.failed_uploaded_files: List[Tuple[str, str]] = []

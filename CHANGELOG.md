@@ -1,4 +1,32 @@
 # Changelog
+* Fixed a bug in the **validate** command where the `--skip-pack-dependencies` flag did not work.
+* Fixed an issue in the **validate** command where validation would fail if supplied an integration with an empty `commands` key.
+* Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.
+* Will use env var `DEMISTO_VERIFY_SSL` to determine if to use a secure connection for commands interacting with the Server when `--insecure` is not passed. If working with a local Server without a trusted certificate, you can set env var `DEMISTO_VERIFY_SSL=no` to avoid using `--insecure` on each command.
+* Unifier now adds a link to the integration documentation to the integration detailed description.
+* Fixed an issue in the **secrets** command where ignored secrets were not skipped.
+
+# 1.2.5
+* Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.
+* Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
+* Speed up improvements for `validate` of README files.
+* Updated the **format** command to adhere to the defined content schema and sub-schemas, aligning its behavior with the **validate** command.
+* Added support for canvasContextConnections files in **format** command.
+
+# 1.2.4
+* Updated detailed description for community integrations.
+
+# 1.2.3
+* Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
+* Added the *displaypassword* field to the integration schema.
+* Added new code validations to `XSOAR-linter`.
+    * As warnings messages:
+        * `demisto.params()` should be used only inside main function.
+        * `demisto.args()` should be used only inside main function.
+        * Functions args should have type annotations.
+* Added `fromversion` field validation to test playbooks and scripts in **validate** command.
+
+# 1.2.2
 * Add support for warning msgs in the report and summary to **lint** command.
 * Fixed an issue where **json-to-outputs** determined bool values as int.
 * Fixed an issue where **update-release-notes** was crushing on `--all` flag.
@@ -29,6 +57,7 @@
 * Fixed an issue where **validate** did not recognize added files if they were modified locally.
 * Added a validation that checks the `fromversion` field exists and is set to 5.0.0 or above when working or comparing to a non-feature branch in **validate** command.
 * Added a validation that checks the certification field in the pack_metadata file is valid in **validate** command.
+* The **update-release-notes** command will now automatically add docker image update to the release notes.
 
 # 1.2.1
 * Added an additional linter `XSOAR-linter` to the **lint** command which custom validates py files. currently checks for:

@@ -8,9 +8,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -49,6 +50,8 @@ from demisto_sdk.commands.common.hook_validations.reputation import \
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import \
+    TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                find_type, get_api_module_ids,
@@ -98,8 +101,6 @@ class ValidateManager:
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DESCRIPTION,
-                                   FileType.TEST_PLAYBOOK,
-                                   FileType.TEST_SCRIPT,
                                    FileType.DOC_IMAGE)
 
         if is_external_repo:
@@ -300,21 +301,30 @@ class ValidateManager:
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
                                                  old_file_path=old_file_path, branch_name=self.branch_name)
 
-        click.secho(f'Validating scheme for {file_path}')
-        if not structure_validator.is_valid_file():
-            return False
+        # schema validation
+        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+            click.secho(f'Validating scheme for {file_path}')
+            if not structure_validator.is_valid_file():
+                return False
 
-        elif self.check_only_schema:
+        # Passed schema validation
+        # if only schema validation is required - stop check here
+        if self.check_only_schema:
             return True
 
+        # id_set validation
         if self.validate_in_id_set:
             click.echo(f"Validating id set registration for {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path):
                 return False
 
         # Note: these file are not ignored but there are no additional validators for connections
-        if file_type in {FileType.CONNECTION}:
+        if file_type == FileType.CONNECTION:
             return True
+
+        # test playbooks and test scripts are using the same validation.
+        elif file_type in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+            return self.validate_test_playbook(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.RELEASE_NOTES:
             if not self.skip_pack_rn_validation:
@@ -333,7 +343,7 @@ class ValidateManager:
         elif file_type == FileType.INTEGRATION:
             return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+        elif file_type == FileType.SCRIPT:
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.BETA_INTEGRATION:
@@ -343,7 +353,7 @@ class ValidateManager:
         elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
-        # incident fields and indicator fields are using the same scheme.
+        # incident fields and indicator fields are using the same validation.
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
 
@@ -423,6 +433,12 @@ class ValidateManager:
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
         return readme_validator.is_valid_file()
+
+    def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
+        test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
+                                                        ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors)
+        return test_playbook_validator.is_valid_file(validate_rn=False)
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
@@ -615,6 +631,17 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    @staticmethod
+    def should_raise_pack_version(pack: str) -> bool:
+        """
+        Args:
+            pack: The pack name.
+
+        Returns: False if pack is in IGNORED_PACK_NAMES else True.
+
+        """
+        return pack not in IGNORED_PACK_NAMES
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -630,14 +657,14 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path):
+        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
             IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                raise_version = True
+                raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
                 id_set_path=self.id_set_path))
@@ -768,21 +795,26 @@ class ValidateManager:
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
+    def add_origin(self, prev_ver):
+        # If git base not provided - check against origin/prev_ver unless using release branch
+        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
+            prev_ver = 'origin/' + prev_ver
+        return prev_ver
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
         Args:
             compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last releaese
+            prev_ver (str): Against which branch to run the comparision - master/last release
 
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        # If git base not provided - check against origin/prev_ver
-        if '/' not in prev_ver:
-            prev_ver = 'origin/' + prev_ver
+
+        prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')

@@ -18,7 +18,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - in main function , try except statement exists.
+            - in main function, try except statement exists.
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
 
@@ -104,7 +104,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
         When:
             - in main function , there is no return_error statement and in no other section in the code.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_b = astroid.extract_node("""
             def test_function():
@@ -133,7 +133,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
         When:
             - return_error statment exists but not in main function but in a different one.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_b = astroid.extract_node("""
             def test_function():
@@ -195,7 +195,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
         When:
             - return_error usage exists more than once in the code.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the messages of pylint
         """
         node_a, node_b = astroid.extract_node("""
             return_error()

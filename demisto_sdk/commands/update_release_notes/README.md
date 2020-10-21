@@ -19,9 +19,9 @@ Supported content entities:
 - Indicator Types
 
 ### Arguments
-* **-p, --pack <PACK_NAME>**
+* **-i, --input <PACK_PATH>**
 
-    The name of the pack you wish to generate release notes for.
+    The path of the content pack you wish to generate release notes for.
 
 * **-u, --update_type**
 
@@ -48,17 +48,17 @@ Supported content entities:
 
 ### Examples
 ```
-demisto-sdk update-release-notes -p HelloWorld -u minor
+demisto-sdk update-release-notes -i Packs/HelloWorld -u minor
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **minor** increment.
 <br/><br/>
 ```
-demisto-sdk update-release-notes -p HelloWorld -u major
+demisto-sdk update-release-notes -i Packs/HelloWorld -u major
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **major** increment.
 <br/><br/>
 ```
-demisto-sdk update-release-notes -p HelloWorld -u revision
+demisto-sdk update-release-notes -i Packs/HelloWorld -u revision
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **revision** increment.
 <br/><br/>
@@ -69,6 +69,6 @@ This will create a new markdown file in the `ReleaseNotes` folder for **all** ch
 <br/><br/>
 
 ```
-demisto-sdk update-release-notes -p HelloWorld -u revision --pre_release
+demisto-sdk update-release-notes -i Packs/HelloWorld -u revision --pre_release
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for the HellWorld pack and bump the `currentVersion` with a **revision** increment as well as append `pre_release` to the `currentVersion`.

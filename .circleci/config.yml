@@ -3,86 +3,77 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
-orbs:
-  node: circleci/node@4.0.0
 references:
     tag_filter: &tag_filter
       filters:
         tags:
           only: /^v\d+\.\d+\.\d+$/
 
-    reqs_print_var: &reqs_print_var
-      requires:
-        - print-env-vars
-
     reqs_tox: &reqs_tox
       requires:
-        - tox3-8
+        - tox3-7
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
+        - tox3-7
 
 jobs:
-  print-env-vars:
-      docker:
-        - image: python:3.8
-      steps:
-        - checkout
-        - run:
-            name: Print environment variables
-            command: |
-              echo "Parameters: FAKE_MASTER: $FAKE_MASTER"
-              echo "Parameters: CONTENT_BRANCH_NAME: $CONTENT_BRANCH_NAME"
   tox3-7:
+      # docker image circleci/python:3.8.3-buster-node also contains python 3.7
       docker:
-        - image: python:3.7
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
+        - restore_cache:
+            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
-            name: Tox build
+            # install npm modules so readme tests run with mdx verification
+            name: npm install
+            command: |
+              npm ci
+        - run:
+            name: Setup Tox
             command: |
               pip install tox
+        - run:
+            name: Tox build
+            command: |              
               tox -e py37 -v
-  tox3-8:
-      docker:
-        - image: python:3.8
-      steps:
-        - checkout
-        - run:
-            name: Tox build
-            command: |
-              pip install tox
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
-        - store_artifacts:
-            path: coverage_html_report
+        - save_cache:
+            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            paths:
+              - .tox/py37
         - persist_to_workspace:
             root: ~/project
             paths:
-              - coverage_html_report
-              - .coverage
               - .tox
-  precommit-checks:
+  tox3-8:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - attach_workspace:
-            at: ~/project
+        - restore_cache:
+            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
-            name: Pre-commit
+            # install npm modules so readme tests run with mdx verification
+            name: npm install
             command: |
-              . .tox/py38/bin/activate
-              pre-commit --version
-              pre-commit run -a
-              deactivate
-  coveralls-upload:
-      docker:
-        - image: python:3.8
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ~/project
+              npm ci
+        - run:
+            name: Setup Tox
+            command: |
+              pip install tox
+        - run:
+            name: Tox build
+            command: |              
+              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+        - save_cache:
+            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            paths:
+              - .tox/py38
+        - store_artifacts:
+            path: coverage_html_report        
         - run:
             name: Coveralls upload
             command: |
@@ -92,59 +83,57 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-  checkout-content:
+  precommit-checks:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
             at: ~/project
         - run:
+            name: Pre-commit
+            command: |
+              . .tox/py37/bin/activate
+              pre-commit --version
+              pre-commit run -a
+              deactivate
+  checkout-content:
+      docker:
+        - image: circleci/python:3.8.3-buster
+      steps:
+        - checkout
+        - run:
             name: Checkout the Content Repo
             command: |
-              . .tox/py38/bin/activate
-              git clone https://github.com/demisto/content.git
+              git clone --depth 1 https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
+              git --no-pager log -1
         - persist_to_workspace:
             root: ~/project
             paths:
               - content
   validate-files:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - node/install:
-            install-npm: false
         - attach_workspace:
             at: ~/project
         - run:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
-              npm install @mdx-js/mdx fs-extra commander
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true && -z "${CONTENT_BRANCH_NAME}" ]]; then
-                demisto-sdk validate -i Packs/dnstwist
-                exit 0
-              fi
+              npm ci
 
-              if [ -n "${CONTENT_BRANCH_NAME}" ]; then
-                git checkout ${CONTENT_BRANCH_NAME}
-              fi
-
-              if [[ $FAKE_MASTER = true ]]; then
-                export CIRCLE_BRANCH="master"
-              fi
-
-              python3 ./Tests/scripts/update_conf_json.py
-              ./Tests/scripts/validate.sh
+              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -153,17 +142,13 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py38/bin/activate
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                  echo "Skipping creating ID set on non master branch"
-                  exit 0
-              fi
+              . .tox/py37/bin/activate
 
               cd content
-              demisto-sdk create-id-set -o ./Tests/id_set.json
+              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - attach_workspace:
@@ -172,21 +157,17 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
-              if [[ $CIRCLE_BRANCH != master && $FAKE_MASTER != true ]]; then
-                echo "Skipping creating content artifacts on non master branch"
-                exit 0
-              fi
               cd content
               mkdir ./tmp
 
-              demisto-sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:
       docker:
-        - image: python:3.8
+        - image: circleci/python:3.8.3-buster
       steps:
         - checkout
         - run:
@@ -198,21 +179,13 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
-      - print-env-vars:
-          <<: *tag_filter
       - tox3-7:
           <<: *tag_filter
-          <<: *reqs_print_var
       - tox3-8:
           <<: *tag_filter
-          <<: *reqs_print_var
       - checkout-content:
           <<: *tag_filter
-          <<: *reqs_tox
       - precommit-checks:
-          <<: *tag_filter
-          <<: *reqs_tox
-      - coveralls-upload:
           <<: *tag_filter
           <<: *reqs_tox
       - validate-files:
@@ -227,9 +200,8 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7
+            - tox3-8
             - precommit-checks
-            - coveralls-upload
             - validate-files
             - create-id-set
             - create-content-artifacts

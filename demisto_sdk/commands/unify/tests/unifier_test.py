@@ -2,9 +2,11 @@ import base64
 import copy
 import json
 import os
+import re
 import shutil
 
 import pytest
+import requests
 import yaml
 import yamlordereddictloader
 from click.testing import CliRunner
@@ -151,10 +153,83 @@ def test_insert_description_to_yml():
         unifier.is_script_package = False
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
-        yml_unified, found_data_path = unifier.insert_description_to_yml({}, {})
+        integration_doc_link = '\n---\n[View Integration Documentation]' \
+                               '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
+        yml_unified, found_data_path = unifier.insert_description_to_yml(
+            {'commonfields': {'id': 'VulnDB'}}, {}
+        )
 
         assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
-        assert desc_data == yml_unified['detaileddescription']
+        assert (desc_data + integration_doc_link) == yml_unified['detaileddescription']
+
+
+def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
+    """
+        Given:
+            - Integration with empty detailed description and with non-empty README
+
+        When:
+            - Inserting detailed description to the unified integration YAML
+
+        Then:
+            - Verify the integration doc markdown link is inserted to the detailed description
+        """
+    readme = tmp_path / 'README.md'
+    readme.write_text('README')
+    detailed_desc = tmp_path / 'integration_description.md'
+    detailed_desc.write_text('')
+    unifier = Unifier(str(tmp_path))
+    yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
+    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)'\
+           == yml_unified['detaileddescription']
+
+
+def test_get_integration_doc_link_positive(tmp_path):
+    """
+    Given:
+        - Cortex XDR - IOC integration with README
+
+    When:
+        - Getting integration doc link
+
+    Then:
+        - Verify the expected integration doc markdown link is returned
+        - Verify the integration doc URL exists and reachable
+    """
+    readme = tmp_path / 'README.md'
+    readme.write_text('README')
+    unifier = Unifier(str(tmp_path))
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
+    assert integration_doc_link == \
+        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+    link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
+    try:
+        r = requests.get(link, verify=False, timeout=10)
+        r.raise_for_status()
+    except requests.HTTPError as ex:
+        raise Exception(f'Failed reaching to integration doc link {link} - {ex}')
+
+
+def test_get_integration_doc_link_negative(tmp_path):
+    """
+    Given:
+        - Case A: integration which does not have README in the integration dir
+        - Case B: integration with empty README in the integration dir
+
+    When:
+        - Getting integration doc link
+
+    Then:
+        - Verify an empty string is returned
+    """
+    unifier = Unifier(str(tmp_path))
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With No README'}})
+    assert integration_doc_link == ''
+
+    readme = tmp_path / 'README.md'
+    readme.write_text('')
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With Empty README'}})
+    assert integration_doc_link == ''
 
 
 def test_insert_image_to_yml():
@@ -271,16 +346,13 @@ def create_test_package(test_dir, package_name, base_yml, script_code, detailed_
 
 
 class TestMergeScriptPackageToYMLIntegration:
-    def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleIntegPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-SampleIntegPackage.yml')
-
-    def teardown(self):
-        if self.test_dir_path:
-            shutil.rmtree(self.test_dir_path)
 
     def test_unify_integration(self):
         """
@@ -432,16 +504,13 @@ final test: hi
 
 
 class TestMergeScriptPackageToYMLScript:
-    def setup(self):
-        self.test_dir_path = os.path.join('tests', 'test_files', 'Unifier', 'Testing')
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleScriptPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'script-SampleScriptPackage.yml')
-
-    def teardown(self):
-        if self.test_dir_path:
-            shutil.rmtree(self.test_dir_path)
 
     def test_unify_script(self):
         """
@@ -593,6 +662,23 @@ PACK_METADATA_XSOAR = json.dumps({
     "keywords": []
 })
 
+PACK_METADATA_COMMUNITY = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "community",
+    "currentVersion": "1.0.0",
+    "author": "Community Contributor",
+    "url": "",
+    "email": "",
+    "created": "2020-04-14T00:00:00Z",
+    "categories": [
+        "Endpoint"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
+
 PARTNER_UNIFY = {
     'script': {},
     'type': 'python',
@@ -603,18 +689,20 @@ PARTNER_UNIFY = {
 PARTNER_UNIFY_NO_EMAIL = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_NO_URL = PARTNER_UNIFY.copy()
 XSOAR_UNIFY = PARTNER_UNIFY.copy()
+COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
 PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
+COMMUNITY_DISPLAY_NAME = 'test (Community Contribution)'
 PARTNER_DETAILEDDESCRIPTION = '### This is a partner contributed integration' \
-    f'\nFor all questions and enhancement requests please contact the partner directly:' \
+                              f'\nFor all questions and enhancement requests please contact the partner directly:' \
                               f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
 PARTNER_DETAILEDDESCRIPTION_NO_EMAIL = '### This is a partner contributed integration' \
-    f'\nFor all questions and enhancement requests please contact the partner directly:' \
+                                       f'\nFor all questions and enhancement requests please contact the partner directly:' \
                                        f'\n**URL** - [{PARTNER_URL}]({PARTNER_URL})\n***\ntest details'
 PARTNER_DETAILEDDESCRIPTION_NO_URL = '### This is a partner contributed integration' \
-    f'\nFor all questions and enhancement requests please contact the partner directly:' \
+                                     f'\nFor all questions and enhancement requests please contact the partner directly:' \
                                      f'\n**Email** - [mailto](mailto:{PARTNER_EMAIL})\n***\ntest details'
 
 
@@ -734,3 +822,33 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     # Verifying the unified file data
     assert 'Partner' not in XSOAR_UNIFY["display"]
     assert 'partner' not in XSOAR_UNIFY["detaileddescription"]
+
+
+def test_unify_community_contributed(mocker, repo):
+    """
+    Given
+        - Community contribution.
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create unified file with community detailed description.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)
+    mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(COMMUNITY_UNIFY, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_COMMUNITY, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying unified process
+    assert 'Merging package:' in result.stdout
+    assert 'Created unified yml:' in result.stdout
+    # Verifying the unified file data
+    assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
+    assert '#### Integration Author:' in COMMUNITY_UNIFY["detaileddescription"]
+    assert 'No support or maintenance is provided by the author.' in COMMUNITY_UNIFY["detaileddescription"]

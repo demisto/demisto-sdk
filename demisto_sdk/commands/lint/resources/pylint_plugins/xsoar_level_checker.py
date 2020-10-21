@@ -1,7 +1,14 @@
+import os
+
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-xsoar_msg = {}  # type: ignore
+xsoar_msg = {
+    "W9014": (
+        "Function arguments are missing type annotations. Please add type annotations",
+        "missing-arg-type-annoation",
+        "Function arguments are missing type annotations. Please add type annotations",),
+}
 
 
 class XsoarChecker(BaseChecker):
@@ -12,9 +19,20 @@ class XsoarChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(XsoarChecker, self).__init__(linter)
-        self.list_of_function_names = set()
+
+    def visit_functiondef(self, node):
+        self._type_annotations_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
+
+    def _type_annotations_checker(self, node):
+        if not os.getenv('PY2'):
+            annotation = True
+            for ann, args in zip(node.args.annotations, node.args.args):
+                if not ann and args.name != 'self':
+                    annotation = False
+            if not annotation and node.name not in ['main', '__init__']:
+                self.add_message("missing-arg-type-annoation", node=node)
 
 
 def register(linter):

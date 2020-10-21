@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []  # type: list
-FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
+FOUND_FILES_AND_ERRORS: list = []
+FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
 
@@ -58,6 +58,7 @@ ERROR_CODE = {
     "invalid_deprecated_integration_display_name": "IN127",
     "invalid_deprecated_integration_description": "IN128",
     "removed_integration_parameters": "IN129",
+    "integration_not_runnable": "IN130",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -1116,6 +1117,12 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     def wrong_filename(file_type):

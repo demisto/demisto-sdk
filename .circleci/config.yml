@@ -38,7 +38,7 @@ jobs:
               pip install tox
         - run:
             name: Tox build
-            command: |              
+            command: |
               tox -e py37 -v
         - save_cache:
             key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
@@ -66,14 +66,14 @@ jobs:
               pip install tox
         - run:
             name: Tox build
-            command: |              
+            command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - save_cache:
             key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
               - .tox/py38
         - store_artifacts:
-            path: coverage_html_report        
+            path: coverage_html_report
         - run:
             name: Coveralls upload
             command: |
@@ -109,7 +109,6 @@ jobs:
               cd content
               git config diff.renameLimit 5000
               git --no-pager log -1
-              echo 'export PYTHONPATH=".:${PYTHONPATH}"' >> $BASH_ENV
         - persist_to_workspace:
             root: ~/project
             paths:
@@ -129,6 +128,7 @@ jobs:
 
               cd content
               npm ci
+              export PYTHONPATH=".:${PYTHONPATH}"
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh

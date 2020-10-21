@@ -129,7 +129,7 @@ jobs:
               cd content
               npm ci
 
-              CIRCLE_BRANCH="master" python3 ./scripts/update_conf_json.py
+              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
 
   create-id-set:

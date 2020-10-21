@@ -1,4 +1,5 @@
 # Changelog
+* No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.
 * Fixed a bug in the **validate** command where the `--skip-pack-dependencies` flag did not work.
 * Fixed an issue in the **validate** command where validation would fail if supplied an integration with an empty `commands` key.
 * Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.

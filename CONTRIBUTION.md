@@ -31,10 +31,7 @@ git clone https://github.com/demisto/demisto-sdk.git
 We will now setup a quick virtualenv in which we will install the `demisto-sdk` version you are currently working on.
 This will be used as your testing environment, you do not need to update it again or re-run in any way.
 
-1. Make sure you are running python version 3.8. If you are running using pyenv do the following:
-   * Run `pyenv versions` and make sure 3.8.0 is installed and selected.
-   * If you do not see the version please run `pyenv install 3.8.0`.
-   * If it is not selected please run `pyenv global 3.8.0`.
+1. Make sure you have python3 installed.
 
 2. Add executable permissions to our setup script by running `chmod a+x ~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
 

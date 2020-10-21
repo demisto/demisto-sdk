@@ -1,4 +1,5 @@
 import atexit
+import json
 import os
 import re
 import subprocess
@@ -47,14 +48,10 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True if env configured else Fale.
         """
-        if os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI'):
-            return all([
-                self.is_image_path_valid(),
-                self.is_mdx_file()
-            ])
-        else:
-            print_warning(f"Skipping README validation of {self.file_path}")
-            return True
+        return all([
+            self.is_image_path_valid(),
+            self.is_mdx_file()
+        ])
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
@@ -81,7 +78,7 @@ class ReadMeValidator(BaseValidator):
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
-        valid = self.are_modules_installed_for_verify(self.content_path)
+        valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI') or self.are_modules_installed_for_verify(self.content_path)
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -110,14 +107,18 @@ class ReadMeValidator(BaseValidator):
         else:
             # Check npm modules exsits
             packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
-            for pack in packs:
-                stdout, stderr, exit_code = run_command_os(f'npm ls {pack}', cwd=content_path)
-                if exit_code:
-                    missing_module.append(pack)
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(packs)}', cwd=content_path)
+            if exit_code:  # all are missinig
+                missing_module.extend(packs)
+            else:
+                deps = json.loads(stdout).get('dependencies', {})
+                for pack in packs:
+                    if pack not in deps:
+                        missing_module.append(pack)
         if missing_module:
             valid = False
-            print_warning(f"The npm modules: {missing_module} are not installed, Test Skipped, use "
-                          f"'npm install <module>' to install all required node dependencies")
+            print_warning(f"The npm modules: {missing_module} are not installed, Readme mdx validation skipped. Use "
+                          f"'npm install' to install all required node dependencies")
         return valid
 
     def is_html_doc(self) -> bool:

@@ -127,14 +127,10 @@ jobs:
               . .tox/py37/bin/activate
 
               cd content
-              echo $PWD
-              echo ""
-              ls
-              echo ""
               npm ci
 
-              CIRCLE_BRANCH="master" python3 Tests/scripts/update_conf_json.py
-              CIRCLE_BRANCH="master" Tests/scripts/validate.sh
+              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
         - image: circleci/python:3.8.3-buster

@@ -127,6 +127,11 @@ jobs:
               . .tox/py37/bin/activate
 
               cd content
+              echo ""
+              cd Tests
+              ls
+              echo ""
+              cd content
               npm ci
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py

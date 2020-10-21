@@ -127,17 +127,15 @@ jobs:
               . .tox/py37/bin/activate
 
               cd content
-              python3 -c "import sys; print(sys.path)"
-              which python
-              echo ""
-              cd Tests
-              ls
-              echo ""
-              cd content
               npm ci
 
-              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              cd Tests
+              CIRCLE_BRANCH="master" python3 ./scripts/update_conf_json.py
+
+              cd ..
+
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
+
   create-id-set:
       docker:
         - image: circleci/python:3.8.3-buster

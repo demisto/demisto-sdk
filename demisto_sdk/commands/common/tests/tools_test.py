@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PLAYBOOK_YML_REGEX,
+                                                   LAYOUTS_DIR, PACKS_DIR,
+                                                   PACKS_PACK_IGNORE_FILE_NAME,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOK_YML_REGEX,
+                                                   TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
@@ -19,9 +19,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_file, get_files_in_dir,
+                                               get_ignore_pack_skipped_tests,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
-                                               get_matching_regex,
                                                get_release_notes_file_path,
                                                get_ryaml,
                                                has_remote_configured,
@@ -29,7 +29,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
-from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
+from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+                                              INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
@@ -41,6 +42,9 @@ from demisto_sdk.tests.constants_test import (INDICATORFIELD_EXTRA_FIELDS,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH)
+from TestSuite.pack import Pack
+from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 
 
 class TestGenericFunctions:
@@ -91,6 +95,7 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (IGNORED_PNG, None),
         ('', None)
     ]
 
@@ -101,11 +106,11 @@ class TestGenericFunctions:
 
     def test_find_type_ignore_sub_categories(self):
         output = find_type(VALID_BETA_INTEGRATION_PATH)
-        assert output == FileType.BETA_INTEGRATION,\
+        assert output == FileType.BETA_INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.BETA_INTEGRATION}'
 
         output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
-        assert output == FileType.INTEGRATION,\
+        assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
     test_path_md = [
@@ -135,12 +140,31 @@ class TestGenericFunctions:
     def test_get_code_lang(self, data, entity, output):
         assert get_code_lang(data, entity) == output
 
+    def test_camel_to_snake(self):
+        snake = tools.camel_to_snake('CamelCase')
+
+        assert snake == 'camel_case'
+
 
 class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
+
+    def test_get_remote_file_content_sanity(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        assert hello_world_py
+
+    def test_get_remote_file_content(self):
+        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+                                               return_content=True)
+        hello_world_text = hello_world_py.decode()
+        assert isinstance(hello_world_py, bytes)
+        assert hello_world_py
+        assert 'main()' in hello_world_text
+        assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
         hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
@@ -199,18 +223,6 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
-
-
-class TestGetMatchingRegex:
-    INPUTS = [
-        ('Packs/XDR/Playbooks/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX],
-         PLAYBOOK_YML_REGEX),
-        ('Packs/XDR/NoMatch/XDR.yml', [PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX], False)
-    ]
-
-    @pytest.mark.parametrize("string_to_match, regexes, answer", INPUTS)
-    def test_get_matching_regex(self, string_to_match, regexes, answer):
-        assert get_matching_regex(string_to_match, regexes) == answer
 
 
 class TestServerVersionCompare:
@@ -415,3 +427,137 @@ def test_origin_content(mocker, git_value, response):
     mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
     test_remote = is_origin_content_repo()
     assert response == test_remote
+
+
+def test_get_ignore_pack_tests__no_pack():
+    """
+    Given
+    - Pack that doesn't exist
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    nonexistent_pack = 'NonexistentFakeTestPack'
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
+    """
+    Given
+    - Pack doesn't have .pack-ignore file
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    fake_pack_name = 'FakeTestPack'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    repo_path = Path(repo.path)
+    pack = Pack(repo_path / PACKS_DIR, fake_pack_name, repo)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # remove .pack-ignore if exists
+    if os.path.exists(pack_ignore_path):
+        os.remove(pack_ignore_path)
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are no skipped tests in .pack-ignore
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    fake_pack_name = 'FakeTestPack'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    repo_path = Path(repo.path)
+    pack = Pack(repo_path / PACKS_DIR, fake_pack_name, repo)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    open(pack_ignore_path, 'a').close()
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are skipped tests in .pack-ignore
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns a list with the skipped tests
+    """
+    fake_pack_name = 'FakeTestPack'
+    fake_test_name = 'FakeTestPlaybook'
+    expected_id = 'sample playbook'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    packs_path = Path(repo.path) / PACKS_DIR
+    pack = Pack(packs_path, fake_pack_name, repo)
+    test_playbook_path = packs_path / fake_pack_name / TEST_PLAYBOOKS_DIR
+    test_playbook = Playbook(test_playbook_path, fake_test_name, repo, is_test_playbook=True)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    with open(pack_ignore_path, 'a') as pack_ignore_f:
+        pack_ignore_f.write("[file:TestIntegration.yml]\nignore=IN126\n\n"
+                            f"[file:{test_playbook.name}]\nignore=auto-test")
+
+    # prepare mocks
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
+    mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 1
+    assert expected_id in ignore_test_set
+
+
+def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are skipped tests in .pack-ignore
+    - The tests are missing from the content pack
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns a list with the skipped tests
+    """
+    fake_pack_name = 'FakeTestPack'
+    fake_test_name = 'FakeTestPlaybook.yml'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    packs_path = Path(repo.path) / PACKS_DIR
+    pack = Pack(packs_path, fake_pack_name, repo)
+    test_playbook_path = packs_path / fake_pack_name / TEST_PLAYBOOKS_DIR
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    with open(pack_ignore_path, 'a') as pack_ignore_f:
+        pack_ignore_f.write("[file:TestIntegration.yml]\nignore=IN126\n\n"
+                            f"[file:{fake_test_name}]\nignore=auto-test")
+
+    # prepare mocks
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
+    mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0

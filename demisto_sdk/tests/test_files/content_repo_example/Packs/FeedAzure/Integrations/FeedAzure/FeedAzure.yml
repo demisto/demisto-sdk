@@ -5,7 +5,7 @@ commonfields:
 configuration:
 - display: Fetch indicators
   name: feed
-  defaultvalue: ""
+  defaultvalue: 'true'
   type: 8
   required: false
 - display: Indicator Reputation
@@ -161,6 +161,21 @@ configuration:
   name: polling_timeout
   required: false
   type: 0
+- additionalinfo: Supports CSV values.
+  display: Tags
+  name: feedTags
+  required: false
+  type: 0
+- additionalinfo: The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed
+  display: Traffic Light Protocol Color
+  name: tlp_color
+  options:
+  - RED
+  - AMBER
+  - GREEN
+  - WHITE
+  required: false
+  type: 15
 description: Azure.CloudIPs Feed Integration.
 display: Azure Feed
 name: AzureFeed
@@ -179,7 +194,7 @@ script:
     execution: false
     name: azure-get-indicators
     outputs:
-  dockerimage: demisto/python3:3.8.1.5734
+  dockerimage: demisto/python3:3.8.1.9324
   feed: true
   isfetch: false
   longRunning: false

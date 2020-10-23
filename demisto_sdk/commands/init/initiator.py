@@ -13,35 +13,23 @@ from typing import Dict, List, Union
 import click
 import yaml
 import yamlordereddictloader
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (AUTOMATION, CLASSIFIERS_DIR,
-                                                   CONNECTIONS_DIR,
-                                                   DASHBOARDS_DIR,
-                                                   DOC_FILES_DIR,
-                                                   ENTITY_TYPE_TO_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR,
-                                                   PACK_INITIAL_VERSION,
-                                                   PACK_SUPPORT_OPTIONS,
-                                                   PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPT, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, XSOAR_AUTHOR,
-                                                   XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.constants import (
+    AUTOMATION, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DOC_FILES_DIR, ENTITY_TYPE_TO_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION,
+    INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
+    PLAYBOOKS_DIR, REPORTS_DIR, SCRIPT, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
                                                get_child_files,
                                                get_common_server_path,
                                                get_content_path, print_error,
-                                               print_v)
+                                               print_v, print_warning)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
@@ -58,11 +46,12 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
            contribution (str|Nonetype): The path to a contribution zip file
            description (str): Description to attach to a converted contribution pack
+           author (str): Author to ascribe to a pack converted from a contribution zip
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
                  pack: bool = False, demisto_mock: bool = False, common_server: bool = False,
-                 contribution: Union[str] = None, description: str = ''):
+                 contribution: Union[str] = None, description: str = '', author: str = ''):
         self.output = output if output else ''
         self.id = id
 
@@ -74,6 +63,7 @@ class Initiator:
         self.configuration = Configuration()
         self.contribution = contribution
         self.description = description
+        self.author = author
         self.contrib_conversion_errs: List[str] = []
 
         # if no flag given automatically create a pack.
@@ -83,18 +73,29 @@ class Initiator:
         self.full_output_path = ''
 
         self.name = name
-        if name is not None and len(name) != 0:
-            if self.contribution:
-                self.name = self.format_pack_dir_name(name)
-            else:
-                while ' ' in name:
-                    name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name and not self.contribution:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
-        self.dir_name = name
+        if self.contribution:
+            self.dir_name = self.format_pack_dir_name(name)
+        else:
+            self.dir_name = name
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
+    HELLO_WORLD_INTEGRATION_FILES = {'HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
+                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
+                                     os.path.join('test_data', 'domain_reputation.json'),
+                                     os.path.join('test_data', 'get_alert.json'),
+                                     os.path.join('test_data', 'ip_reputation.json'),
+                                     os.path.join('test_data', 'scan_results.json'),
+                                     os.path.join('test_data', 'search_alerts.json'),
+                                     os.path.join('test_data', 'update_alert_status.json'),
+                                     os.path.join('test_data', 'domain_reputation.json')}
+    TEST_DATA_DIR = 'test_data'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
 
@@ -180,15 +181,22 @@ class Initiator:
                     metadata = json.loads(metadata_file.read())
                     # a name passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
-                    pack_name = self.name or self.format_pack_dir_name(metadata.get('name', 'ContributionPack'))
+                    pack_display_name = self.name or metadata.get('name', 'ContributionPack')
+                    # Strip 'Pack' suffix from pack display name if present
+                    pack_display_name = pack_display_name.strip()
+                    if pack_display_name.casefold().endswith('pack') > len(pack_display_name) > 4:
+                        stripped_pack_display_name = pack_display_name[:-4].strip()
+                        pack_display_name = stripped_pack_display_name or pack_display_name
+                    pack_name = self.dir_name or self.format_pack_dir_name(
+                        metadata.get('name', 'ContributionPack')
+                    )
                     # a description passed on the cmd line should take precedence over one pulled
                     # from contribution metadata
                     metadata_dict['description'] = self.description or metadata.get('description')
-                    metadata_dict['name'] = pack_name
-                    metadata_dict['author'] = metadata.get('author', '')
-                    metadata_dict['support'] = metadata.get('support', '')
-                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', '')
-                    metadata_dict['email'] = metadata.get('supportDetails', {}).get('email', '')
+                    metadata_dict['name'] = pack_display_name
+                    metadata_dict['author'] = self.author or metadata.get('author', '')
+                    metadata_dict['support'] = 'community'
+                    metadata_dict['url'] = metadata.get('supportDetails', {}).get('url', MARKETPLACE_LIVE_DISCUSSIONS)
                     metadata_dict['categories'] = metadata.get('categories') if metadata.get('categories') else []
                     metadata_dict['tags'] = metadata.get('tags') if metadata.get('tags') else []
                     metadata_dict['useCases'] = metadata.get('useCases') if metadata.get('useCases') else []
@@ -214,7 +222,16 @@ class Initiator:
                     dst_name = ENTITY_TYPE_TO_DIR.get(basename)
                     src_path = os.path.join(pack_dir, basename)
                     dst_path = os.path.join(pack_dir, dst_name)
-                    content_item_dir = shutil.move(src_path, dst_path)
+                    if os.path.exists(dst_path):
+                        # move src folder files to dst folder
+                        content_item_dir = dst_path
+                        for _, _, files in os.walk(src_path, topdown=False):
+                            for name in files:
+                                src_file_path = os.path.join(src_path, name)
+                                shutil.move(src_file_path, dst_path)
+                    else:
+                        # replace dst folder with src folder
+                        content_item_dir = shutil.move(src_path, dst_path)
                     if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
                         self.content_item_to_package_format(content_item_dir, del_unified=True)
             # create pack's base files
@@ -227,7 +244,10 @@ class Initiator:
             # remove metadata.json file
             os.remove(os.path.join(pack_dir, 'metadata.json'))
             click.echo(f'Executing \'format\' on the restructured contribution zip files at "{pack_dir}"')
-            format_manager(input=pack_dir)
+            from_version = '6.0.0'
+            format_manager(
+                input=pack_dir, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
+            )
         except Exception as e:
             click.echo(
                 f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
@@ -413,12 +433,15 @@ class Initiator:
             return pack_metadata
 
         pack_metadata['author'] = input("\nAuthor of the pack: ")
-        # get support details from the user
-        support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
-        while support_url and "http" not in support_url:
-            support_url = input("\nIncorrect input. Please enter full valid url: ")
-        pack_metadata['url'] = support_url
-        pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
+
+        if pack_metadata.get('support') != 'community':  # get support details from the user for non community packs
+            support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
+            while support_url and "http" not in support_url:
+                support_url = input("\nIncorrect input. Please enter full valid url: ")
+            pack_metadata['url'] = support_url
+            pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
+        else:  # community pack url should refer to the marketplace live discussions
+            pack_metadata['url'] = MARKETPLACE_LIVE_DISCUSSIONS
 
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]
@@ -478,10 +501,10 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
-                                                         self.HELLO_WORLD_INTEGRATION))
+        if not self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES):
+            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
+            copy_tree(str(hello_world_path), self.full_output_path)
 
-        copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_INTEGRATION:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
@@ -516,10 +539,10 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        hello_world_path = os.path.normpath(os.path.join(__file__, "..", "..", 'init', 'templates',
-                                                         self.HELLO_WORLD_SCRIPT))
+        if not self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES):
+            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_SCRIPT))
+            copy_tree(str(hello_world_path), self.full_output_path)
 
-        copy_tree(str(hello_world_path), self.full_output_path)
         if self.id != self.HELLO_WORLD_SCRIPT:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
@@ -564,13 +587,13 @@ class Initiator:
         """
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}.py"),
                   os.path.join(self.full_output_path, f"{self.dir_name}.py"))
-        os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
-                  os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
                   os.path.join(self.full_output_path, f"{self.dir_name}_test.py"))
         if self.is_integration:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
+            os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
+                      os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
 
     def create_new_directory(self, ) -> bool:
         """Creates a new directory for the integration/script/pack.
@@ -627,3 +650,28 @@ class Initiator:
                 shutil.copy(f'{self.configuration.env_dir}/Tests/demistomock/demistomock.py', self.full_output_path)
             except Exception as err:
                 print_v(f'Could not copy demistomock: {str(err)}')
+
+    def get_remote_templates(self, files_list):
+        """
+        Downloading the object related template-files and saving them in the output path.
+        Args:
+            files_list: List of files to download.
+        Returns:
+            bool. True if the files were downloaded and saved successfully, False otherwise.
+        """
+        if self.is_integration:
+            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
+            os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+        else:
+            path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')
+
+        for file in files_list:
+            try:
+                file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
+                with open(os.path.join(self.full_output_path, file), 'wb') as f:
+                    f.write(file_content)
+            except Exception:
+                print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")
+                return False
+
+        return True

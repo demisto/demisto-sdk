@@ -1,10 +1,13 @@
 import json
+import os
 from typing import Dict, List
 
 import click
-from demisto_sdk.commands.common.tools import (LOG_COLORS, _get_file_id,
+from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
+                                               get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               print_color)
+                                               get_yaml)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -30,9 +33,16 @@ class BaseUpdateYML(BaseUpdate):
     }
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False):
-        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate)
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 assume_yes: bool = False):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
 
     def _load_conf_file(self) -> Dict:
@@ -58,12 +68,14 @@ class BaseUpdateYML(BaseUpdate):
             Only relevant for new files.
         """
         if not self.old_file:
-            print('Updating YML ID to be the same as YML name')
+            if self.verbose:
+                click.echo('Updating YML ID to be the same as YML name')
             self.id_and_version_location['id'] = self.data['name']
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        print_color(f'Saving output YML file to {self.output_file} \n', LOG_COLORS.WHITE)
+        if self.source_file != self.output_file and self.verbose:
+            click.secho(f'Saving output YML file to {self.output_file} \n', fg='white')
         with open(self.output_file, 'w') as f:
             ryaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -90,11 +102,35 @@ class BaseUpdateYML(BaseUpdate):
         'No tests' under 'tests' key or not and format the file according to the answer
         """
         if not self.data.get('tests', ''):
-            should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks configured. '
-                                                    f'Do you want to configure it with "No tests"?')
-            if should_modify_yml_tests:
-                click.echo(f'Formatting {self.output_file} with "No tests"')
-                self.data['tests'] = ['No tests (auto formatted)']
+            # try to get the test playbook files from the TestPlaybooks dir in the pack
+            pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
+            test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
+            test_playbook_ids = []
+            try:
+                test_playbooks_files = os.listdir(test_playbook_dir_path)
+                if test_playbooks_files:
+                    for file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
+                        is_yml_file = file_path.endswith('.yml')
+                        # concat as we might not be in content repo
+                        tpb_file_path = os.path.join(test_playbook_dir_path, file_path)
+                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK:
+                            test_playbook_data = get_yaml(tpb_file_path)
+                            test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
+                                                                            content_entity='')
+                            test_playbook_ids.append(test_playbook_id)
+                    self.data['tests'] = test_playbook_ids
+            except FileNotFoundError:
+                pass
+            if not test_playbook_ids:
+                # In case no_interactive flag was given - modify the tests without confirmation
+                if self.assume_yes:
+                    should_modify_yml_tests = True
+                else:
+                    should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
+                                                            f'configured. Do you want to configure it with "No tests"?')
+                if should_modify_yml_tests:
+                    click.echo(f'Formatting {self.output_file} with "No tests"')
+                    self.data['tests'] = ['No tests (auto formatted)']
 
     def update_conf_json(self, file_type: str) -> None:
         """
@@ -118,9 +154,12 @@ class BaseUpdateYML(BaseUpdate):
                                                         test_playbooks)
         if not_registered_tests:
             not_registered_tests_string = '\n'.join(not_registered_tests)
-            should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
-                                                  f'{not_registered_tests_string}\n'
-                                                  f'Would you like to add them now?')
+            if self.assume_yes:
+                should_edit_conf_json = True
+            else:
+                should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
+                                                      f'{not_registered_tests_string}\n'
+                                                      f'Would you like to add them now?')
             if should_edit_conf_json:
                 conf_json_content['tests'].extend(self.get_test_playbooks_configuration(not_registered_tests,
                                                                                         content_item_id,

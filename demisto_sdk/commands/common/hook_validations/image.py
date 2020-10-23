@@ -3,12 +3,11 @@ import glob
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
-    INTEGRATION_REGXES, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    YML_INTEGRATION_REGEXES)
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import checked_type, get_yaml, os, re
+from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 
 class ImageValidator(BaseValidator):
@@ -20,22 +19,29 @@ class ImageValidator(BaseValidator):
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self._is_valid = True
-
-        if checked_type(file_path, INTEGRATION_REGXES) or re.match(IMAGE_REGEX, file_path, re.IGNORECASE):
+        self.file_path = ''
+        if file_path.endswith('.png'):
             self.file_path = file_path
+        # For integrations that are not in a package format, the image is within the yml
         else:
-            if checked_type(file_path, YML_INTEGRATION_REGEXES):
+            data_dictionary = get_yaml(file_path)
+            if not data_dictionary:
+                return
+            # For old integration in which image is inside the yml.
+            elif data_dictionary.get('image', ''):
+                self.file_path = file_path
+            # For new integrations -  Get the image from the folder.
+            else:
                 try:
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given()
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
-
-                    self.file_path = ''
 
     def is_valid(self):
         """Validate that the image exists and that it is in the permitted size limits."""

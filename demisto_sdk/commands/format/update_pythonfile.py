@@ -21,19 +21,27 @@ class PythonFileFormat(BaseUpdate):
             no_validate (bool): Whether the user specifies not to run validate after format.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = True):
-        super().__init__(input, output, path, from_version, no_validate)
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = True,
+                 verbose: bool = False,
+                 **kwargs):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose)
 
     @staticmethod
-    def format_py_using_autopep(py_file_path):
+    def format_py_using_autopep(py_file_path, verbose: bool = False):
         """Run autopep8 formatter on python file.
         Args:
             py_file_path (str): The python file path.
         Returns:
             bool. True if succeed to run autopep8 on file, False otherwise.
         """
-        print(f"\nRunning autopep8 on file: {py_file_path}\n")
+        if verbose:
+            print(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(["autopep8", "-i", "--max-line-length", AUTOPEP_LINE_LENGTH, py_file_path])
         except FileNotFoundError:
@@ -54,7 +62,7 @@ class PythonFileFormat(BaseUpdate):
             self.create_output_file()
             py_file_path = self.output_file
 
-        is_autopep_passed = self.format_py_using_autopep(py_file_path)
+        is_autopep_passed = self.format_py_using_autopep(py_file_path, self.verbose)
         if is_autopep_passed:
             return SUCCESS_RETURN_CODE
         return ERROR_RETURN_CODE

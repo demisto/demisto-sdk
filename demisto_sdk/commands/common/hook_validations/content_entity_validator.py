@@ -1,8 +1,11 @@
 import json
 import re
 from abc import abstractmethod
+from distutils.version import LooseVersion
 
 import yaml
+from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
+                                                   OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -17,19 +20,24 @@ class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
     CONF_PATH = "./Tests/conf.json"
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False):
-        # type: (StructureValidator, dict, bool, bool) -> None
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 suppress_print=False):
+        # type: (StructureValidator, dict, bool, bool, bool) -> None
+        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         suppress_print=suppress_print)
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
         self.file_path = structure_validator.file_path
         self.is_valid = structure_validator.is_valid
         self.skip_docker_check = skip_docker_check
+        self.prev_ver = structure_validator.prev_ver
+        self.branch_name = structure_validator.branch_name
 
     def is_valid_file(self, validate_rn=True):
         tests = [
-            self.is_valid_version()
+            self.is_valid_version(),
+            self.is_valid_fromversion()
         ]
         return all(tests)
 
@@ -131,7 +139,7 @@ class ContentEntityValidator(BaseValidator):
         conf_json_tests = self._load_conf_file()['tests']
         file_type = self.structure_validator.scheme_name
         if not isinstance(file_type, str):
-            file_type = file_type.value
+            file_type = file_type.value  # type: ignore
 
         content_item_id = _get_file_id(file_type, self.current_file)
 
@@ -183,4 +191,35 @@ class ContentEntityValidator(BaseValidator):
             error_message, error_code = Errors.no_test_playbook(self.file_path, file_type)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    def should_run_fromversion_validation(self):
+        # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
+        # also skip if the file in question is reputations.json
+        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+               for feature_branch_name in FEATURE_BRANCHES) or self.file_path.endswith('reputations.json'):
+            return False
+
+        return True
+
+    def is_valid_fromversion(self):
+        """Check if the file has a fromversion 5.0.0 or higher
+            This is not checked if checking on or against a feature branch.
+        """
+        if not self.should_run_fromversion_validation():
+            return True
+
+        if self.file_path.endswith('json'):
+            if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
+                error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
+                                                                                  OLDEST_SUPPORTED_VERSION)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+        elif self.file_path.endswith('.yml'):
+            if LooseVersion(self.current_file.get('fromversion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
+                error_message, error_code = Errors.no_minimal_fromversion_in_file('fromversion',
+                                                                                  OLDEST_SUPPORTED_VERSION)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
         return True

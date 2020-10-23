@@ -74,8 +74,8 @@ class TestSecrets:
         assert is_txt is True
 
     def test_search_potential_secrets__no_secrets_found(self):
-        secrets_found = self.validator.search_potential_secrets([self.TEST_YML_FILE])
-        assert not secrets_found
+        secret_to_location = self.validator.search_potential_secrets([self.TEST_YML_FILE])
+        assert not secret_to_location
 
     def test_search_potential_secrets__secrets_found(self):
         create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
@@ -100,7 +100,7 @@ print(some_dict.some_foo)
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {7: ['OIifdsnsjkgnj3254nkdfsjKNJD0345']}
 
     def test_ignore_entropy(self):
         """
@@ -136,7 +136,7 @@ some_dict = {
             ''')
 
         secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == ['fooo@someorg.com']
+        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {4: ['fooo@someorg.com']}
 
     def test_two_files_with_same_name(self):
         """
@@ -171,8 +171,8 @@ my_email = "fooo@someorg.com"
 
 ''')
         secrets_found = validator.search_potential_secrets([file1_path, file2_path], True)
-        assert secrets_found[os.path.join(dir1_path, file_name)] == ['fooo@someorg.com']
-        assert secrets_found[os.path.join(dir2_path, file_name)] == ['fooo@someorg.com']
+        assert secrets_found[os.path.join(dir1_path, file_name)] == {4: ['fooo@someorg.com']}
+        assert secrets_found[os.path.join(dir2_path, file_name)] == {4: ['fooo@someorg.com']}
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'
@@ -300,3 +300,46 @@ my_email = "fooo@someorg.com"
 
         secrets_output = self.validator.reformat_secrets_output([])
         assert secrets_output == ''
+
+    def test_get_all_diff_text_files(self, mocker):
+        mocker.patch('demisto_sdk.commands.secrets.secrets.run_command',
+                     return_value='m\tPacks/Integrations/integration/testing.py\n')
+        validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
+                                                                                  TestSecrets.WHITE_LIST_FILE_NAME))
+
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
+
+        validator.prev_ver = 'Testing_branch'
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
+
+    def test_remove_secrets_disabled_line(self):
+        """
+        Given
+            1. String with a line containing "disable-secrets-detection"
+            1. String with a lines containing "disable-secrets-detection-start" & "disable-secrets-detection-end"
+        When
+            Removing content that belongs to ignored lines
+        Then
+            Ensure secrets that are in these lines aren't in the output.
+        """
+        file_contents = '''
+        import
+        8.8.8.8 # disable-secrets-detection
+        end
+        '''
+        file_contents = self.validator.remove_secrets_disabled_line(file_contents)
+        assert "8.8.8.8" not in file_contents
+
+        file_contents1 = '''
+        import
+        8.8.8.8 # disable-secrets-detection-start
+        4.4.4.4
+        end # disable-secrets-detection-end
+        8.8.8.4
+        '''
+        file_contents1 = self.validator.remove_secrets_disabled_line(file_contents1)
+        assert "8.8.8.8" not in file_contents1
+        assert "4.4.4.4" not in file_contents1
+        assert "8.8.8.4" in file_contents1

@@ -13,7 +13,10 @@ from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.tests.constants_test import NOT_VALID_IMAGE_PATH
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
     LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
@@ -28,6 +31,10 @@ VALID_PACK_PATH = join(TEST_FILES_PATH, 'content_repo_example', 'Packs', 'FeedAz
 VALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks', 'Cortex_XDR_Incident_Handling.yml')
 INVALID_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
                                   'Cortex_XDR_Incident_Handling_invalid.yml')
+VALID_DEPRECATED_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                           'Valid_Deprecated_Playbook.yml')
+INVALID_DEPRECATED_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                             'Invalid_Deprecated_Playbook.yml')
 VALID_SCRIPT_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Scripts', 'EntryWidgetNumberHostsXDR',
                          'EntryWidgetNumberHostsXDR.yml')
 
@@ -57,7 +64,7 @@ class TestIncidentFieldValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack.create_incident_field("incident-field", INCIDENT_FIELD)
-        incident_field_path = pack.incident_field[0].path
+        incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
@@ -81,7 +88,7 @@ class TestIncidentFieldValidation:
         incident_field_copy = INCIDENT_FIELD.copy()
         incident_field_copy['system'] = True
         pack.create_incident_field("incident-field", incident_field_copy)
-        incident_field_path = pack.incident_field[0].path
+        incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path], catch_exceptions=False)
@@ -89,6 +96,92 @@ class TestIncidentFieldValidation:
         assert f"Validating {incident_field_path} as incidentfield" in result.stdout
         assert 'IF102' in result.stdout
         assert "The system key must be set to False" in result.stdout
+
+
+class TestDeprecatedIntegration:
+    def test_valid_deprecated_integration(self, mocker, repo):
+        """
+        Given
+        - Valid deprecated integration.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['deprecated'] = True
+        valid_integration_yml['display'] = '(Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated.'
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_deprecated_integration_display_name(self, mocker, repo):
+        """
+        Given
+        - invalid deprecated integration - The fields of deprecated are missing.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on - invalid_deprecated_integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml['deprecated'] = True
+        invalid_integration_yml['description'] = 'Deprecated.'
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'IN127' in result.stdout
+        assert 'Deprecated' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_deprecated_integration_description(self, mocker, repo):
+        """
+        Given
+        - invalid deprecated integration - The fields of deprecated are missing.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on - invalid_deprecated_integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml['deprecated'] = True
+        invalid_integration_yml['display'] = '(Deprecated)'
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'IN128' in result.stdout
+        assert 'Deprecated' in result.stdout
+        assert result.exit_code == 1
 
 
 class TestIntegrationValidation:
@@ -427,8 +520,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'Classifiers type must be classification' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -679,8 +771,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'Mappers type must be mapping-incoming or mapping-outgoing' in result.stdout
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 
@@ -792,7 +883,7 @@ class TestIndicatorFieldValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack.create_indicator_field("indicator-field", INDICATOR_FIELD)
-        indicator_field_path = pack.indicator_field[0].path
+        indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)
@@ -816,7 +907,7 @@ class TestIndicatorFieldValidation:
         indicator_field_copy = INDICATOR_FIELD.copy()
         indicator_field_copy['content'] = False
         pack.create_indicator_field("indicator-field", indicator_field_copy)
-        indicator_field_path = pack.indicator_field[0].path
+        indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', indicator_field_path], catch_exceptions=False)
@@ -887,7 +978,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        layout = pack._create_json_based(name='layout', prefix='', content=LAYOUT)
+        layout = pack._create_json_based(name='layout-name', prefix='', content=LAYOUT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -895,7 +986,7 @@ class TestLayoutValidation:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_layout(self, mocker, repo):
+    def test_invalid_layout__version(self, mocker, repo):
         """
         Given
         - an invalid layout (wrong version).
@@ -910,13 +1001,37 @@ class TestLayoutValidation:
         pack = repo.create_pack('PackName')
         layout_copy = LAYOUT.copy()
         layout_copy['version'] = 2
-        layout = pack._create_json_based(name='layout', prefix='', content=layout_copy)
+        layout = pack._create_json_based(name='layout-name', prefix='', content=layout_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
         assert f'Validating {layout.path} as layout' in result.stdout
         assert 'BA100' in result.stdout
         assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_layout__path(self, mocker, repo):
+        """
+        Given
+        - an invalid layout (wrong path).
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on - BA100 wrong version error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['version'] = 2
+        layout = pack._create_json_based(name='wrongpath', prefix='', content=layout_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'LO102' in result.stdout
+        assert 'layout file name should start with "layout-" prefix.' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_layoutscontainer(self, mocker, repo):
@@ -932,7 +1047,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
-        layout = pack._create_json_based(name='layoutscontainer', prefix='', content=LAYOUTS_CONTAINER)
+        layout = pack._create_json_based(name='layoutscontainer-test', prefix='', content=LAYOUTS_CONTAINER)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
@@ -940,7 +1055,7 @@ class TestLayoutValidation:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
-    def test_invalid_layoutscontainer(self, mocker, repo):
+    def test_invalid_layoutscontainer__version(self, mocker, repo):
         """
         Given
         - an invalid Layout_Container (wrong version).
@@ -962,6 +1077,28 @@ class TestLayoutValidation:
         assert f'Validating {layout.path} as layoutscontainer' in result.stdout
         assert 'BA100' in result.stdout
         assert 'The version for our files should always be -1, please update the file.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_layoutscontainer__path(self, mocker, repo):
+        """
+        Given
+        - an invalid Layout_Container (wrong path).
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on - LO103 wrong file path.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout = pack._create_json_based(name='wrongname', prefix='', content=LAYOUTS_CONTAINER)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
+        assert f'Validating {layout.path} as layoutscontainer' in result.stdout
+        assert 'LO103' in result.stdout
+        assert 'layoutscontainer file name should start with "layoutscontainer-" prefix.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_from_version_in_layoutscontaier(self, mocker, repo):
@@ -1049,6 +1186,45 @@ class TestPlaybookValidation:
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB103' in result.stdout
         assert 'The following tasks ids have no previous tasks: {\'5\'}' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestPlaybookValidateDeprecated:
+    def test_valid_deprecated_playbook(self, mocker, repo):
+        """
+        Given
+        - a valid Playbook Deprecated.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        assert f'Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_deprecated_playbook(self, mocker):
+        """
+        Given
+        - an invalid Playbook - there is no Deprecated. in the description.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on PB104 - deprecated tasks error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
+        assert 'PB104' in result.stdout
+        assert 'The playbook description has to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1163,7 +1339,8 @@ class TestScriptValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1187,10 +1364,62 @@ class TestScriptValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestScriptDeprecatedValidation:
+    def test_valid_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - a valid deprecated Script.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a deprecated script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['deprecated'] = True
+        valid_script_yml['comment'] = 'Deprecated.'
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - an invalid deprecated Script without Deprecated. in the description.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on SC101 wrong deprecated script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['deprecated'] = True
+        script = pack.create_script(yml=invalid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'SC101' in result.stdout
+        assert "Deprecated." in result.stdout
         assert result.exit_code == 1
 
 
@@ -1287,6 +1516,26 @@ class TestImageValidation:
         assert f'Validating {image_path} as image' in result.stdout
         assert 'IM106' in result.stdout
         assert 'This is the default image, please change to the integration image.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_image_should_not_be_validated(self, mocker, repo):
+        """
+        Given
+        - The image file which path does not end with _image.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate does not validates it as an image.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
+        assert 'The file type is not supported in validate command' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1483,3 +1732,113 @@ class TestValidationUsingGit:
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
         assert result.exit_code == 1
+
+    def test_validation_using_git_without_pack_dependencies(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate using git on it with --skip-pack-dependencies flag.
+
+        Then
+        - Ensure validate fails.
+        - Ensure pack dependencies check doesnt happen.
+        """
+        pack = repo.create_pack('FeedAzure')
+        integration = pack.create_integration(name='FeedAzure',
+                                              yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"))
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
+                                                                                           set(), set(), set()))
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes', '--skip-pack-dependencies'],
+                                   catch_exceptions=False)
+        assert 'Running validation on branch' in result.stdout
+        assert 'Running validation on modified files' in result.stdout
+        assert 'Running validation on newly added files' in result.stdout
+        assert 'Running validation on changed pack unique files' in result.stdout
+        assert 'Validating Packs/FeedAzure unique pack files' in result.stdout
+        assert 'Running pack dependencies validation on' not in result.stdout
+        assert result.exit_code == 1
+
+    def test_validation_using_git_with_pack_dependencies(self, mocker, repo):
+        """
+        Given
+        - An invalid repo.
+
+        When
+        - Running validate using git on it with --skip-pack-dependencies flag.
+
+        Then
+        - Ensure validate fails.
+        - Ensure pack dependencies check happens.
+        """
+        pack = repo.create_pack('FeedAzure')
+        integration = pack.create_integration(name='FeedAzure',
+                                              yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"))
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
+                                                                                           set(), set(), set()))
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes'], catch_exceptions=False)
+        assert 'Running pack dependencies validation on' in result.stdout
+        assert result.exit_code == 1
+
+    def test_validation_non_content_path(self):
+        """
+        Given
+        - non content pack path file, file not existing.
+
+        When
+        - Running demisto-sdk validate command.
+
+        Then
+        - Ensure an error is raised on the non found file
+        """
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', join('Users', 'MyPacks', 'VMware'), '--no-docker-checks',
+                                      '--no-conf-json', '--skip-pack-release-notes'], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert result.exception
+        assert "File Users/MyPacks/VMware was not found" in result.stdout  # check error str is in stdout
+
+    def test_validation_non_content_path_mocked_repo(self, mocker, repo):
+        """
+        Given
+        - non content pack path file, file existing.
+
+        When
+        - Running demisto-sdk validate command.
+        - mocking the 'get_modified_and_added_files' for a FileNotFoundError error
+
+        Then
+        - Ensure an error is raised on the non found file
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes'], catch_exceptions=False)
+
+        assert result.exit_code == 1
+        assert "You are not running" in result.stdout  # check error str is in stdout

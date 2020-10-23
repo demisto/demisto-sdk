@@ -18,7 +18,7 @@ class JSONBased:
         self.write_json({})
 
     def write_json(self, obj: dict):
-        self._file_path.write_text(json.dumps(obj))
+        self._file_path.write_text(json.dumps(obj), None)
 
     def get_path_from_pack(self):
         dir_parts = str(self._file_path).split('/')
@@ -31,3 +31,14 @@ class JSONBased:
                 add_directory = True
 
         return dir_from_packs
+
+    def read_json_as_text(self) -> str:
+        return self._file_path.read_text()
+
+    def read_json_as_dict(self) -> dict:
+        return json.loads(self._file_path.read_text())
+
+    def update(self, obj: dict):
+        file_content = self.read_json_as_dict()
+        file_content.update(obj)
+        self.write_json(file_content)

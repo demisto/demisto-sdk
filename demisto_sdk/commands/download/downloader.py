@@ -131,7 +131,8 @@ class Downloader:
         :return: True if fetched successfully, False otherwise
         """
         try:
-            self.client = demisto_client.configure(verify_ssl=not self.insecure)
+            verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+            self.client = demisto_client.configure(verify_ssl=verify)
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)
@@ -214,10 +215,9 @@ class Downloader:
         """
         output_pack_path = self.output_pack_path
         if not (os.path.isdir(output_pack_path) and
-                os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs' and
-                os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(output_pack_path)))) == 'content'):
+                os.path.basename(os.path.dirname(os.path.abspath(output_pack_path))) == 'Packs'):
             print_color(f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                        f" of format ~/.../content/Packs/$PACK_NAME", LOG_COLORS.RED)
+                        f" of format ~/.../Packs/$PACK_NAME", LOG_COLORS.RED)
             return False
         return True
 
@@ -307,7 +307,10 @@ class Downloader:
     def update_file_prefix(file_name: str) -> str:
         """
         Custom content scripts are prefixed with automation instead of script.
+        Removing the "playbook-" prefix from files name.
         """
+        if file_name.startswith('playbook-'):
+            return file_name[len('playbook-'):]
         if file_name.startswith('automation-'):
             return file_name.replace('automation-', 'script-')
         return file_name
@@ -494,7 +497,7 @@ class Downloader:
         temp_dir = mkdtemp()
 
         extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
-                              no_logging=not self.log_verbose, no_changelog=True, no_pipenv=True, no_readme=True,
+                              no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
                               no_auto_create_dir=True)
         extractor.extract_to_package_format()
 

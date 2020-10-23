@@ -5,8 +5,9 @@ import io
 import json
 import os
 import re
-from typing import Tuple
+from typing import Dict, Tuple
 
+import click
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -18,6 +19,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
+from inflection import dasherize, underscore
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -28,7 +30,16 @@ CONTRIBUTOR_DETAILED_DESC = '### {} Contributed Integration\n' \
                             'Support and maintenance for this integration are provided by the author. ' \
                             'Please use the following contact details:'
 
+CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### Community Contributed Integration\n ' \
+                                      '#### Integration Author: {}\n ' \
+                                      'No support or maintenance is provided by the author. Customers are encouraged ' \
+                                      'to engage with the user community for questions and guidance at the ' \
+                                      '[Cortex XSOAR Live Discussions](https://live.paloaltonetworks.com/' \
+                                      't5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions).'
+
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
+COMMUNITY_CONTRIBUTOR = 'community'
+INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
 class Unifier:
@@ -206,9 +217,19 @@ class Unifier:
         if yml_data.get('detaileddescription') and self.use_force is False:
             raise ValueError('Please move the detailed description from the yml to a description file (.md)'
                              f' in the package: {self.package_path}')
-        if desc_data:
-            yml_unified['detaileddescription'] = FoldedScalarString(desc_data.decode('utf-8'))
 
+        detailed_description = ''
+        if desc_data:
+            detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
+
+        integration_doc_link = self.get_integration_doc_link(yml_data)
+        if integration_doc_link:
+            if detailed_description:
+                detailed_description += '\n---\n' + integration_doc_link
+            else:
+                detailed_description += integration_doc_link
+        if detailed_description:
+            yml_unified['detaileddescription'] = detailed_description
         return yml_unified, found_desc_path
 
     def get_data(self, path, extension):
@@ -285,6 +306,7 @@ class Unifier:
     def get_script_or_integration_package_data(self):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
+
         if not yml_path:
             raise Exception(f'No yml files found in package path: {self.package_path}. '
                             'Is this really a package dir?')
@@ -353,12 +375,13 @@ class Unifier:
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):
-        script_code = script_code.replace("import demistomock as demisto", "")
-        script_code = script_code.replace("from CommonServerPython import *", "")
-        script_code = script_code.replace("from CommonServerUserPython import *", "")
+        # we use '[ \t]' and not \s as we don't want to match newline
+        script_code = re.sub(r'import demistomock as demisto[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerPython import \*[ \t]*(#.*)?', "", script_code)
+        script_code = re.sub(r'from CommonServerUserPython import \*[ \t]*(#.*)?', "", script_code)
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
-            script_code = script_code.replace("from __future__ import print_function", "")
+            script_code = re.sub(r'from __future__ import print_function[ \t]*(#.*)?', "", script_code)
         return script_code
 
     @staticmethod
@@ -396,26 +419,75 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml, contributor_type, contributor_email, contributor_url, author=''):
+    def add_contributors_support(self, unified_yml: Dict, contributor_type: str, contributor_email: str,
+                                 contributor_url: str, author: str = '') -> Dict:
         """Add contributor support to the unified file - text in the display name and detailed description.
 
         Args:
-            unified_yml: The unified yaml file.
+            unified_yml (dict): The unified yaml file.
             contributor_type (str): The contributor type - partner / developer / community
             contributor_email (str): The contributor email.
             contributor_url (str): The contributor url.
             author (str): The packs author.
 
         Returns:
-            The unified yaml file.
+            The unified yaml file (dict).
         """
         unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
-        contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
-        if contributor_email:
-            contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
-        if contributor_url:
-            contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
+        if contributor_type == COMMUNITY_CONTRIBUTOR:
+            contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
+        else:
+            contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
+            if contributor_email:
+                contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
+            if contributor_url:
+                contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml
+
+    def get_integration_doc_link(self, unified_yml: Dict) -> str:
+        """Generates the integration link to the integration documentation
+
+        Args:
+            unified_yml (Dict): The integration YAML dictionary object
+
+        Returns:
+            str: The integration doc markdown link to add to the detailed description (if reachable)
+        """
+        normalized_integration_id = self.normalize_integration_id(unified_yml['commonfields']['id'])
+        integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
+
+        readme_path = os.path.join(self.package_path, 'README.md')
+        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+            # verify README file exists and is not empty
+            return f'[View Integration Documentation]({integration_doc_link})'
+        else:
+            click.secho(
+                f'Did not find README in {self.package_path}, not adding integration doc link',
+                fg="bright_cyan"
+            )
+            return ''
+
+    @staticmethod
+    def normalize_integration_id(integration_id: str) -> str:
+        """Normalizes integration ID to an identifier to be used as the integration documentation ID
+
+        Examples
+            >>> normalize_integration_id('Cortex XDR - IOC')
+            cortex-xdr---ioc
+            >>> normalize_integration_id('Whois')
+            whois
+            >>> normalize_integration_id('SomeIntegration')
+            some-integration
+
+        Args:
+            integration_id (str): The integration ID to normalize
+
+        Returns:
+            str: The normalized identifier
+        """
+        dasherized_integration_id = dasherize(underscore(integration_id)).replace(' ', '-')
+        # remove all non-word characters (dash is ok)
+        return re.sub(r'[^\w-]', '', dasherized_integration_id)

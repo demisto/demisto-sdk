@@ -43,6 +43,7 @@ class Environment:
         self.CUSTOM_CONTENT_INTEGRATION_PATH = None
         self.CUSTOM_CONTENT_LAYOUT_PATH = None
         self.CUSTOM_CONTENT_PLAYBOOK_PATH = None
+        self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = None
         self.INTEGRATION_PACK_OBJECT = None
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
@@ -53,6 +54,7 @@ class Environment:
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = None
         self.LAYOUT_CUSTOM_CONTENT_OBJECT = None
         self.FAKE_CUSTOM_CONTENT_OBJECT = None
+        self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = None
         self.CUSTOM_CONTENT = None
         self.tmp_path = Path(tmp_path)
         self.setup()
@@ -77,6 +79,7 @@ class Environment:
         self.CUSTOM_CONTENT_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
         self.CUSTOM_CONTENT_LAYOUT_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/layout-details-TestLayout.json'
         self.CUSTOM_CONTENT_PLAYBOOK_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/playbook-DummyPlaybook.yml'
+        self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml'
 
         self.INTEGRATION_PACK_OBJECT = {'Test Integration': [
             {'name': 'Test Integration', 'id': 'Test Integration',
@@ -140,10 +143,15 @@ class Environment:
         self.FAKE_CUSTOM_CONTENT_OBJECT = {'id': 'DEMISTO', 'name': 'DEMISTO',
                                            'path': f'{self.CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json', 'entity': 'Layouts',
                                            'type': 'layout', 'file_ending': 'json'}
+        self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'SumoLogic', 'name': 'SumoLogic',
+                                                     'path': self.CUSTOM_CONTENT_JS_INTEGRATION_PATH,
+                                                     'entity': 'Integrations', 'type': 'integration',
+                                                     'file_ending': 'yml', 'code_lang': 'javascript'}
 
         self.CUSTOM_CONTENT = [
             self.INTEGRATION_CUSTOM_CONTENT_OBJECT, self.SCRIPT_CUSTOM_CONTENT_OBJECT,
-            self.PLAYBOOK_CUSTOM_CONTENT_OBJECT, self.LAYOUT_CUSTOM_CONTENT_OBJECT
+            self.PLAYBOOK_CUSTOM_CONTENT_OBJECT, self.LAYOUT_CUSTOM_CONTENT_OBJECT,
+            self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT
         ]
 
 
@@ -196,10 +204,12 @@ class TestHelperMethods:
         downloader = Downloader(output='', input='')
         assert downloader.get_extracted_file_detail(ending) == output
 
-    @pytest.mark.parametrize('name, output', [('automation-demisto', 'script-demisto'), ('wow', 'wow')])
+    @pytest.mark.parametrize('name, output', [('automation-demisto', 'script-demisto'), ('wow', 'wow'),
+                                              ("playbook-demisto", "demisto")])
     def test_update_file_prefix(self, name, output):
         downloader = Downloader(output='', input='')
         assert downloader.update_file_prefix(name) == output
+        assert not downloader.update_file_prefix(name).startswith("playbook-")
 
     @pytest.mark.parametrize('name', ['GSM', 'G S M', 'G_S_M', 'G-S-M', 'G S_M', 'G_S-M'])
     def test_create_dir_name(self, name):
@@ -396,7 +406,8 @@ class TestMergeExistingFile:
             downloader.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
             js_custom_content_object = {
                 'id': 'SumoLogic', 'name': 'SumoLogic',
-                'path': 'demisto_sdk/commands/download/tests/tests_data/integration-DummyJSIntegration.yml',
+                'path': 'demisto_sdk/commands/download/tests/tests_data/custom_content/integration-DummyJSIntegration'
+                        '.yml',
                 'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True,
                 'code_lang': 'javascript'
             }
@@ -608,12 +619,11 @@ class TestMergeNewFile:
         parameters = [
             {
                 'custom_content_object': env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md',
-                              'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/bn_image.png', 'odp/bn_description.md', 'odp/README.md']
             },
             {
                 'custom_content_object': env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md', 'odp/CHANGELOG.md']
+                'raw_files': ['odp/bn.py', 'odp/bn.yml', 'odp/README.md']
             }
         ]
         for param in parameters:

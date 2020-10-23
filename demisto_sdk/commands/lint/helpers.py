@@ -28,6 +28,7 @@ PYTHON2_REQ = ["flake8", "vulture"]
 # Define check exit code if failed
 EXIT_CODES = {
     "flake8": 0b1,
+    "XSOAR_linter": 0b1000000000,
     "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
@@ -42,10 +43,11 @@ EXIT_CODES = {
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
+WARNING = 0b100
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -71,9 +73,11 @@ def validate_env() -> None:
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+                            no_xsoar_linter: bool,
                             no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
+    no_xsoar_linter(bool): Whether to skip xsoar linter.
     no_bandit(bool): Whether to skip bandit.
     no_mypy(bool): Whether to skip mypy.
     no_vulture(bool): Whether to skip vulture
@@ -82,22 +86,27 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     docker_engine(bool): docker engine exists.
     """
     skipped_code = 0b0
-    if no_flake8:
-        skipped_code |= EXIT_CODES["flake8"]
-    if no_bandit:
-        skipped_code |= EXIT_CODES["bandit"]
-    if no_mypy or not docker_engine:
-        skipped_code |= EXIT_CODES["mypy"]
-    if no_vulture or not docker_engine:
-        skipped_code |= EXIT_CODES["vulture"]
-    if no_pylint or not docker_engine:
-        skipped_code |= EXIT_CODES["pylint"]
-    if no_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pytest"]
-    if no_pwsh_analyze or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_analyze"]
-    if no_pwsh_test or not docker_engine:
-        skipped_code |= EXIT_CODES["pwsh_test"]
+    # When the CI env var is not set - on local env - check if any linters should be skipped
+    # Otherwise - When the CI env var is set - Run all linters without skipping
+    if not os.environ.get('CI'):
+        if no_flake8:
+            skipped_code |= EXIT_CODES["flake8"]
+        if no_xsoar_linter:
+            skipped_code |= EXIT_CODES["XSOAR_linter"]
+        if no_bandit:
+            skipped_code |= EXIT_CODES["bandit"]
+        if no_mypy or not docker_engine:
+            skipped_code |= EXIT_CODES["mypy"]
+        if no_vulture or not docker_engine:
+            skipped_code |= EXIT_CODES["vulture"]
+        if no_pylint or not docker_engine:
+            skipped_code |= EXIT_CODES["pylint"]
+        if no_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pytest"]
+        if no_pwsh_analyze or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_analyze"]
+        if no_pwsh_test or not docker_engine:
+            skipped_code |= EXIT_CODES["pwsh_test"]
 
     return skipped_code
 
@@ -130,7 +139,10 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
         for module in modules:
-            modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            try:
+                modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            except FileNotFoundError:
+                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
@@ -252,7 +264,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         yield
     except Exception as e:
         logger.error(str(e))
-        pass
     finally:
         # If we want to change handling of files after finishing - do it here
         pass
@@ -374,3 +385,59 @@ def stream_docker_container_output(streamer: Generator) -> None:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         pass
+
+
+@contextmanager
+def pylint_plugin(dest: Path):
+    """
+    Function which links the given path with the content of pylint plugins folder in resources.
+    The main purpose is to link each pack with the pylint plugins.
+    Args:
+        dest: Pack path.
+    """
+    plugin_dirs = Path(__file__).parent / 'resources' / 'pylint_plugins'
+
+    try:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                os.link(file, dest / file.name)
+
+        yield
+    finally:
+        for file in plugin_dirs.iterdir():
+            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+                (dest / f'{file.name}').unlink()
+
+
+def split_warnings_errors(output: str):
+    """
+        Function which splits the given string into warning messages and error using W or E in the beginning of string
+        For error messages that do not start with E , they will be returned as other.
+        The output of a certain pack can both include:
+            - Fail msgs
+            - Fail msgs and warnings msgs
+            - Passed msgs
+            - Passed msgs and warnings msgs
+            - warning msgs
+        Args:
+            output(str): string which contains messages from linters.
+        return:
+            list of error messags, list of warnings messages, list of all undetected messages
+        """
+    output_lst = output.split('\n')
+    # Warnings and errors lists currently relevant for XSOAR Linter
+    warnings_list = []
+    error_list = []
+    # Others list is relevant for mypy and flake8.
+    other_msg_list = []
+    for msg in output_lst:
+        # 'W:' for python2 xsoar linter
+        # 'W[0-9]' for python3 xsoar linter
+        if (msg.startswith('W') and msg[1].isdigit()) or 'W:' in msg or 'W90' in msg:
+            warnings_list.append(msg)
+        elif (msg.startswith('E') and msg[1].isdigit()) or 'E:' in msg or 'E90' in msg:
+            error_list.append(msg)
+        else:
+            other_msg_list.append(msg)
+
+    return error_list, warnings_list, other_msg_list

@@ -1,0 +1,495 @@
+category: Utilities
+commonfields:
+  id: Swagger Petstore
+  version: -1
+configuration:
+- defaultvalue: petstore.swagger.io
+  display: Server URL (e.g. petstore.swagger.io)
+  name: url
+  required: true
+  type: 0
+- defaultvalue: ''
+  display: API Key
+  name: api_key
+  required: true
+  type: 4
+- defaultvalue: ''
+  display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+- defaultvalue: ''
+  display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+description: 'This is a sample server Petstore server.  You can find out more about     Swagger
+  at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For
+  this sample, you can use the api key `special-key` to test the authorization     filters.'
+display: Swagger Petstore
+name: Swagger Petstore
+script:
+  commands:
+  - arguments:
+    - description: ''
+      isArray: false
+      name: pet_id
+      required: false
+    - description: pet_category id
+      isArray: false
+      name: pet_category_id
+      required: false
+    - description: pet_category name
+      isArray: false
+      name: pet_category_name
+      required: false
+    - description: ''
+      isArray: false
+      name: pet_name
+      required: true
+    - description: ''
+      isArray: true
+      name: pet_photourls
+      required: true
+    - description: ''
+      isArray: true
+      name: pet_tags
+      required: false
+    - auto: PREDEFINED
+      description: pet status in the store
+      isArray: false
+      name: pet_status
+      predefined:
+      - available
+      - pending
+      - sold
+      required: false
+    description: Add a new pet to the store
+    name: testswagger-add-pet
+  - arguments:
+    - description: ''
+      isArray: false
+      name: user_id
+      required: false
+    - description: ''
+      isArray: false
+      name: user_username
+      required: false
+    - description: ''
+      isArray: false
+      name: user_firstname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_lastname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_email
+      required: false
+    - description: ''
+      isArray: false
+      name: user_password
+      required: false
+    - description: ''
+      isArray: false
+      name: user_phone
+      required: false
+    - description: User Status
+      isArray: false
+      name: user_userstatus
+      required: false
+    description: Create user
+    name: testswagger-create-user
+  - arguments:
+    - description: ''
+      isArray: false
+      name: user_id
+      required: false
+    - description: ''
+      isArray: false
+      name: user_username
+      required: false
+    - description: ''
+      isArray: false
+      name: user_firstname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_lastname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_email
+      required: false
+    - description: ''
+      isArray: false
+      name: user_password
+      required: false
+    - description: ''
+      isArray: false
+      name: user_phone
+      required: false
+    - description: User Status
+      isArray: false
+      name: user_userstatus
+      required: false
+    description: Creates list of users with given input array
+    name: testswagger-create-users-with-array-input
+  - arguments:
+    - description: ''
+      isArray: false
+      name: user_id
+      required: false
+    - description: ''
+      isArray: false
+      name: user_username
+      required: false
+    - description: ''
+      isArray: false
+      name: user_firstname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_lastname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_email
+      required: false
+    - description: ''
+      isArray: false
+      name: user_password
+      required: false
+    - description: ''
+      isArray: false
+      name: user_phone
+      required: false
+    - description: User Status
+      isArray: false
+      name: user_userstatus
+      required: false
+    description: Creates list of users with given input array
+    name: testswagger-create-users-with-list-input
+  - arguments:
+    - description: ID of the order that needs to be deleted
+      isArray: false
+      name: orderId
+      required: true
+    description: Delete purchase order by ID
+    name: testswagger-delete-order
+  - arguments:
+    - description: ''
+      isArray: false
+      name: api_key
+      required: false
+    - description: Pet id to delete
+      isArray: false
+      name: petId
+      required: true
+    description: Deletes a pet
+    name: testswagger-delete-pet
+  - arguments:
+    - description: The name that needs to be deleted
+      isArray: false
+      name: username
+      required: true
+    description: Delete user
+    name: testswagger-delete-user
+  - arguments:
+    - description: Status values that need to be considered for filter
+      isArray: true
+      name: status
+      required: true
+    description: Finds Pets by status
+    name: testswagger-find-pets-by-status
+  - arguments:
+    - description: Tags to filter by
+      isArray: true
+      name: tags
+      required: true
+    description: Finds Pets by tags
+    name: testswagger-find-pets-by-tags
+    outputs:
+    - contextPath: TestSwagger.Pet.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Pet.name
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Pet.tags.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Pet.tags.name
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Pet.status
+      description: pet status in the store
+      type: String
+  - description: Returns pet inventories by status
+    name: testswagger-get-inventory
+  - arguments:
+    - description: ID of pet that needs to be fetched
+      isArray: false
+      name: orderId
+      required: true
+    description: Find purchase order by ID
+    name: testswagger-get-order-by-id
+    outputs:
+    - contextPath: TestSwagger.Order.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.petId
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.quantity
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.shipDate
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Order.status
+      description: Order Status
+      type: String
+    - contextPath: TestSwagger.Order.complete
+      description: ''
+      type: Boolean
+  - arguments:
+    - description: ID of pet to return
+      isArray: false
+      name: petId
+      required: true
+    description: Find pet by ID
+    name: testswagger-get-pet-by-id
+    outputs:
+    - contextPath: TestSwagger.Pet.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Pet.name
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Pet.tags.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Pet.tags.name
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Pet.status
+      description: pet status in the store
+      type: String
+  - arguments:
+    - description: 'The name that needs to be fetched. Use user1 for testing. '
+      isArray: false
+      name: username
+      required: true
+    description: Get user by user name
+    name: testswagger-get-user-by-name
+    outputs:
+    - contextPath: TestSwagger.User.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.User.username
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.firstName
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.lastName
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.email
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.password
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.phone
+      description: ''
+      type: String
+    - contextPath: TestSwagger.User.userStatus
+      description: User Status
+      type: Number
+  - arguments:
+    - description: The user name for login
+      isArray: false
+      name: username
+      required: true
+    - description: The password for login in clear text
+      isArray: false
+      name: password
+      required: true
+    description: Logs user into the system
+    name: testswagger-login-user
+  - description: Logs out current logged in user session
+    name: testswagger-logout-user
+  - arguments:
+    - description: ''
+      isArray: false
+      name: order_id
+      required: false
+    - description: ''
+      isArray: false
+      name: order_petid
+      required: false
+    - description: ''
+      isArray: false
+      name: order_quantity
+      required: false
+    - description: ''
+      isArray: false
+      name: order_shipdate
+      required: false
+    - auto: PREDEFINED
+      description: Order Status
+      isArray: false
+      name: order_status
+      predefined:
+      - placed
+      - approved
+      - delivered
+      required: false
+    - description: ''
+      isArray: false
+      name: order_complete
+      required: false
+    description: Place an order for a pet
+    name: testswagger-place-order
+    outputs:
+    - contextPath: TestSwagger.Order.id
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.petId
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.quantity
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.Order.shipDate
+      description: ''
+      type: String
+    - contextPath: TestSwagger.Order.status
+      description: Order Status
+      type: String
+    - contextPath: TestSwagger.Order.complete
+      description: ''
+      type: Boolean
+  - arguments:
+    - description: ''
+      isArray: false
+      name: pet_id
+      required: false
+    - description: pet_category id
+      isArray: false
+      name: pet_category_id
+      required: false
+    - description: pet_category name
+      isArray: false
+      name: pet_category_name
+      required: false
+    - description: ''
+      isArray: false
+      name: pet_name
+      required: true
+    - description: ''
+      isArray: true
+      name: pet_photourls
+      required: true
+    - description: ''
+      isArray: true
+      name: pet_tags
+      required: false
+    - auto: PREDEFINED
+      description: pet status in the store
+      isArray: false
+      name: pet_status
+      predefined:
+      - available
+      - pending
+      - sold
+      required: false
+    description: Update an existing pet
+    name: testswagger-update-pet
+  - arguments:
+    - description: ID of pet that needs to be updated
+      isArray: false
+      name: petId
+      required: true
+    - description: Updated name of the pet
+      isArray: false
+      name: name
+      required: false
+    - description: Updated status of the pet
+      isArray: false
+      name: status
+      required: false
+    description: Updates a pet in the store with form data
+    name: testswagger-update-pet-with-form
+  - arguments:
+    - description: name that need to be updated
+      isArray: false
+      name: username
+      required: true
+    - description: ''
+      isArray: false
+      name: user_id
+      required: false
+    - description: ''
+      isArray: false
+      name: user_username
+      required: false
+    - description: ''
+      isArray: false
+      name: user_firstname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_lastname
+      required: false
+    - description: ''
+      isArray: false
+      name: user_email
+      required: false
+    - description: ''
+      isArray: false
+      name: user_password
+      required: false
+    - description: ''
+      isArray: false
+      name: user_phone
+      required: false
+    - description: User Status
+      isArray: false
+      name: user_userstatus
+      required: false
+    description: Updated user
+    name: testswagger-update-user
+  - arguments:
+    - description: ID of pet to update
+      isArray: false
+      name: petId
+      required: true
+    - description: Additional data to pass to server
+      isArray: false
+      name: additionalMetadata
+      required: false
+    - description: file to upload
+      isArray: false
+      name: file
+      required: false
+    description: uploads an image
+    name: testswagger-upload-file
+    outputs:
+    - contextPath: TestSwagger.ApiResponse.code
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.ApiResponse.type
+      description: ''
+      type: String
+    - contextPath: TestSwagger.ApiResponse.message
+      description: ''
+      type: String
+  dockerimage: demisto/python3:3.8.3.9324
+  isfetch: false
+  script: ''
+  subtype: python3
+  type: python

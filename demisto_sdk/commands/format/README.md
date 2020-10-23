@@ -27,6 +27,14 @@ When done formatting, the **validate** command will run, to let you know of thin
 
    When no validation on file is needed.
 
+* **-ud ,--update-docker**
+
+   Set if you want to update the docker image of the integration/script to the newest available tag.
+
+* **-y, --assume-yes**
+
+  Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively
+
 ### Examples
 ```
 demisto-sdk format

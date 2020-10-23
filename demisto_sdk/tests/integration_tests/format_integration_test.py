@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import PosixPath
 from typing import List
 
@@ -7,6 +8,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format import update_generic
@@ -123,6 +125,73 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
     yml_content = get_dict_from_file(saved_file_path)
     assert not yml_content[0].get('tests')
     os.remove(saved_file_path)
+
+
+@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
+def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath,
+                                                                     source_path: str,
+                                                                     destination_path: str,
+                                                                     formatter: BaseUpdateYML,
+                                                                     yml_title: str,
+                                                                     file_type: str):
+    """
+        Given
+        - A yml file (integration, playbook or script) with no 'tests' configured
+
+        When
+        - using the '-y' option
+
+        Then
+        -  Ensure no exception is raised
+        -  Ensure 'No tests' is added in the first time
+    """
+    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    runner = CliRunner()
+    # Running format in the first time
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-y'])
+    assert not result.exception
+    yml_content = get_dict_from_file(saved_file_path)
+    assert yml_content[0].get('tests') == ['No tests (auto formatted)']
+
+
+@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
+def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_path: PosixPath,
+                                                                          source_path: str,
+                                                                          destination_path: str,
+                                                                          formatter: BaseUpdateYML,
+                                                                          yml_title: str,
+                                                                          file_type: str):
+    """
+        Given
+        - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
+            in conf.json
+
+        When
+        - using the -y option
+
+        Then
+        -  Ensure no exception is raised
+        -  If file_type is playbook or a script: Ensure {"playbookID": <content item ID>} is added to conf.json
+            for each test playbook configured in the yml under 'tests' key
+        -  If file_type is integration: Ensure {"playbookID": <content item ID>, "integrations": yml_title} is
+            added to conf.json for each test playbook configured in the yml under 'tests' key
+    """
+    # Setting up conf.json
+    conf_json_path = str(tmp_path / 'conf.json')
+    with open(conf_json_path, 'w') as file:
+        json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
+    BaseUpdateYML.CONF_PATH = conf_json_path
+
+    test_playbooks = ['test1', 'test2']
+    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    runner = CliRunner()
+    # Running format in the first time
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-y'])
+    assert not result.exception
+    if file_type == 'playbook':
+        _verify_conf_json_modified(test_playbooks, '', conf_json_path)
+    else:
+        _verify_conf_json_modified(test_playbooks, yml_title, conf_json_path)
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
@@ -279,7 +348,7 @@ def test_format_on_valid_py(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=True)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=True)
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
@@ -304,7 +373,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
@@ -330,7 +399,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
@@ -357,9 +426,68 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
     assert '======= Updating file:' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
+
+
+def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
+    """
+    (This is the same test as the previous one only not using the '-v' argument)
+    Given
+    - Invalid python file - long dict.
+
+    When
+    - Running format
+
+    Then
+    - Ensure format passes and that the verbose is off
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration')
+    invalid_py = "{'test':'testing','test1':'testing1','test2':'testing2','test3':'testing3'," \
+                 "'test4':'testing4','test5':'testing5','test6':'testing6'}"
+    integration.code.write(invalid_py)
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
+
+    assert '======= Updating file:' in result.stdout
+    assert 'Running autopep8 on file' not in result.stdout
+    assert 'Success' in result.stdout
+    assert invalid_py != integration.code.read()
+
+
+def test_format_on_relative_path_playbook(mocker, repo):
+    """
+    Given
+    - playbook to validate on with a relative path
+
+    When
+    - Running format
+    - Running validate
+
+    Then
+    - Ensure format passes.
+    - Ensure validate passes.
+    """
+    pack = repo.create_pack('PackName')
+    playbook = pack.create_playbook('playbook')
+    playbook.create_default_playbook()
+    mocker.patch.object(update_generic, 'is_file_from_content_repo',
+                        return_value=(True, f'{playbook.path}/playbook.yml'))
+    mocker.patch.object(tools, 'is_external_repository', return_value=True)
+    success_reg = re.compile("Format Status .+?- Success\n")
+    with ChangeCWD(playbook.path):
+        runner = CliRunner(mix_stderr=False)
+        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
+        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
+                                        catch_exceptions=False)
+
+    assert '======= Updating file:' in result_format.stdout
+    assert success_reg.search(result_format.stdout)
+    assert 'The files are valid' in result_validate.stdout

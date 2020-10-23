@@ -60,28 +60,26 @@ Supported commands:
 4. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
 5. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/unify/README.md)
 6. [Split-yml](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split_yml/README.md)
-7. [Create](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_artifacts/README.md)
-8. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
-9. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
-10. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
-11. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
-12. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
-13. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
-14. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-15. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
-16. [Create-id-set](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/create_id_set/README.md)
-17. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+7. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+8. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
+9. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
+10. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
+11. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
+12. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
+13. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
+14. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
+15. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+16. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
 
 ---
 
-### How to run commands in your development environment
-In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
- ```
- source .tox/py37/bin/activate
- ```
-or this command to use python 3.8:
+### How to setup development environment?
 
-For detailed command usage press [here](demisto_sdk/commands/upload/README.md)
+Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk-dev` virtual environment.
+The development environment is connected to the branch you are currently using in the SDK repository.
+
+Simply activate it by running `workon demisto-sdk-dev`.
+The virtual environment can be deactivated at all times by running `deactivate`.
 
 ---
 

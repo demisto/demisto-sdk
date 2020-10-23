@@ -74,7 +74,7 @@ MAPPER = {
 DASHBOARD = {
     "id": "my-dashboard",
     "version": -1,
-    "fromVersion": "4.0.0",
+    "fromVersion": "5.0.0",
     "description": "",
     "period": {
         "byTo": "",
@@ -316,7 +316,7 @@ REPORT = {
     "id": "report",
     "name": "report",
     "description": "",
-    "fromVersion": "3.5.0",
+    "fromVersion": "5.0.0",
     "tags": [],
     "createdBy": "DBot",
     "type": "pdf",
@@ -484,7 +484,7 @@ REPUTATION = {
 WIDGET = {
     "id": "widget",
     "version": -1,
-    "fromVersion": "3.5.0",
+    "fromVersion": "5.0.0",
     "name": "widget",
     "dataType": "incidents",
     "widgetType": "bar",

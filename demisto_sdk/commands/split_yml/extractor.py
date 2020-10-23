@@ -18,6 +18,12 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 
+def get_pip_requirements(docker_image: str):
+    return subprocess.check_output(["docker", "run", "--rm", docker_image,
+                                    "pip", "freeze", "--disable-pip-version-check"],
+                                   universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+
+
 class Extractor:
     """Extractor is a class that's designed to split a yml file to it's components.
 
@@ -30,14 +36,13 @@ class Extractor:
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
         no_pipenv (boo): whether to create pipenv
-        no_changelog (bool): whether to extract changelog
         file_type (str): yml file type (integration/script)
         configuration (Configuration): Configuration object
     """
 
     def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
-                 base_name: str = '', no_readme: bool = False, no_pipenv: bool = False, no_changelog: bool = False,
+                 base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False):
         self.input = input
         self.output = output
@@ -47,7 +52,6 @@ class Extractor:
         self.base_name = base_name
         self.readme = not no_readme
         self.pipenv = not no_pipenv
-        self.changelog = not no_changelog
         self.logging = not no_logging
         if configuration is None:
             self.config = Configuration()
@@ -121,15 +125,7 @@ class Extractor:
                 # open an empty file
                 with open(readme, 'w'):
                     pass
-        # check if there is a changelog
-        if self.changelog:
-            yml_changelog = os.path.splitext(self.input)[0] + '_CHANGELOG.md'
-            changelog = output_path + '/CHANGELOG.md'
-            if os.path.exists(yml_changelog):
-                shutil.copy(yml_changelog, changelog)
-            else:
-                with open(changelog, 'wt', encoding='utf-8') as changelog_file:
-                    changelog_file.write("## [Unreleased]\n-\n")
+
         # Python code formatting and dev env setup
         if code_type == TYPE_PYTHON:
             self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
@@ -156,19 +152,19 @@ class Extractor:
                 self.print_logs("Copying pipenv files from: {}".format(pip_env_dir), log_color=LOG_COLORS.NATIVE)
                 shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
                 shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
+                env = os.environ.copy()
+                env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                 try:
-                    subprocess.call(["pipenv", "install", "--dev"], cwd=output_path)
+                    subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
                     self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
                                     LOG_COLORS.NATIVE)
-                    requirements = subprocess.check_output(["docker", "run", "--rm", docker,
-                                                            "pip", "freeze", "--disable-pip-version-check"],
-                                                           universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+                    requirements = get_pip_requirements(docker)
                     fp = tempfile.NamedTemporaryFile(delete=False)
                     fp.write(requirements.encode('utf-8'))
                     fp.close()
 
                     try:
-                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path)
+                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
 
                     except Exception:
                         self.print_logs("Failed installing requirements in pipenv.\n "
@@ -176,18 +172,18 @@ class Extractor:
 
                     os.unlink(fp.name)
                     self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path)
-                except FileNotFoundError:
+                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
+                except FileNotFoundError as err:
                     self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                                     "Make sure to install it with: pip3 install pipenv.\n"
-                                    "Then run in the package dir: pipenv install --dev", LOG_COLORS.YELLOW)
+                                    f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
                 arg_path = os.path.relpath(output_path)
                 self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
                 next_steps: str = "Next steps: \n" \
                                   "* Install additional py packages for unit testing (if needed): cd {};" \
                                   " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
                 next_steps += "* Create unit tests\n" \
-                              "* Check linting and unit tests by running: demisto-sdk lint -d {}\n".format(arg_path)
+                              "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
                 next_steps += "* When ready rm from git the source yml and add the new package:\n" \
                               "    git rm {}\n".format(self.input)
                 next_steps += "    git add {}\n".format(arg_path)
@@ -217,10 +213,10 @@ class Extractor:
         self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
-                code_file.write("import demistomock as demisto\n")
+                code_file.write("import demistomock as demisto  # noqa: F401\n")
             if common_server:
                 if lang_type == TYPE_PYTHON:
-                    code_file.write("from CommonServerPython import *\n")
+                    code_file.write("from CommonServerPython import *  # noqa: F401\n")
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
             code_file.write(script)

@@ -6,21 +6,24 @@ import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
                                                    PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME)
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   FileType)
 from demisto_sdk.commands.common.errors import (ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE)
-from demisto_sdk.commands.common.tools import get_pack_name, get_yaml
+from demisto_sdk.commands.common.tools import (find_type, get_pack_name,
+                                               get_yaml)
 
 
 class BaseValidator:
 
-    def __init__(self, ignored_errors=None, print_as_warnings=False):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
-        self.checked_files = set()
+        self.checked_files = set()  # type: ignore
+        self.suppress_print = suppress_print
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -76,10 +79,13 @@ class BaseValidator:
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
-        if should_print:
+        if should_print and not self.suppress_print:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
-                click.secho(suggested_fix + "\n", fg="bright_red")
+                if error_code == 'ST109':
+                    click.secho("Please add to the root of the yml a description.\n", fg="bright_red")
+                else:
+                    click.secho(suggested_fix + "\n", fg="bright_red")
 
             else:
                 click.secho(formatted_error, fg="bright_red")
@@ -94,11 +100,10 @@ class BaseValidator:
             self.checked_files.add(file_name)
 
     def check_deprecated(self, file_path):
-        file_name = os.path.basename(file_path)
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (file_name.startswith('playbook') and 'hidden' in yml_dict and
+                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
                      yml_dict['hidden'] is True):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 

@@ -13,7 +13,7 @@ mapping:
       sortvalues:
         type: seq
         sequence:
-        - include: sortvalue_schema
+          - type: str
   name:
     type: str
     required: true
@@ -30,7 +30,7 @@ mapping:
     'Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
     'Vulnerability Management', 'Case Management',
     'Forensics & Malware Analysis', 'IT Services', 'Data Enrichment & Threat Intelligence',
-     'Authentication', 'Database', 'Deception', 'Email Gateway']
+     'Authentication', 'Database', 'Deception', 'Email Gateway', 'Identity and Access Management']
     required: true
   fromversion:
     type: str
@@ -79,6 +79,12 @@ mapping:
         type: bool
       longRunningPort:
         type: bool
+      ismappable:
+        type: bool
+      isremotesyncin:
+        type: bool
+      isremotesyncout:
+        type: bool
       commands:
         type: seq
         sequence:
@@ -92,8 +98,6 @@ mapping:
         type: bool
       isFetchSamples:
         type: bool
-      sourcemoduleid:
-        type: str
   system:
     type: bool
   hidden:
@@ -108,10 +112,6 @@ mapping:
     - type: str
   scriptNotVisible:
     type: bool
-
-schema;commonfields_schema:
-
-schema;sortvalue_schema:
 
 # integration->configuration
 schema;configuration_schema:
@@ -137,6 +137,8 @@ schema;configuration_schema:
       sequence:
       - type: str
     additionalinfo:
+      type: str
+    displaypassword:
       type: str
 
 # integration->script->command

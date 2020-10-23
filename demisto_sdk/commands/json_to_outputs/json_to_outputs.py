@@ -142,11 +142,12 @@ def determine_type(val):
     if isinstance(val, str):
         return 'String'
 
-    if isinstance(val, (int, float)):
-        return 'Number'
-
+    # bool is an sub class of int, so the we should first check isinstance of bool and only afterwards int
     if isinstance(val, bool):
         return 'Boolean'
+
+    if isinstance(val, (int, float)):
+        return 'Number'
 
     return 'Unknown'
 
@@ -211,7 +212,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:
-            print("Dump your JSON here:")
+            print("Enter the command's output in JSON format.\n As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
             input_json = input_multiline()
 
         yaml_output = parse_json(input_json, command, prefix, verbose, interactive)

@@ -201,13 +201,16 @@ class Unifier:
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data(self.package_path, "*png")
-        image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
+        if image_data:
+            image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image') and self.use_force is False:
-            raise ValueError('Please move the image from the yml to an image file (.png)'
-                             f' in the package: {self.package_path}')
+            if yml_data.get('image') and self.use_force is False:
+                raise ValueError('Please move the image from the yml to an image file (.png)'
+                                 f' in the package: {self.package_path}')
 
-        yml_unified['image'] = image_data
+            yml_unified['image'] = image_data
+        else:
+            click.secho(f'Failed getting image data for {self.package_path}', fg="yellow")
 
         return yml_unified, found_img_path
 

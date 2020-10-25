@@ -253,6 +253,29 @@ def test_insert_image_to_yml():
         assert yml_unified == yml_unified_test
 
 
+def test_insert_image_to_yml_without_image(tmp_path):
+    """
+    Given:
+     - Integration without image png file
+
+    When:
+     - Inserting image to unified YAML
+
+    Then:
+     - Ensure the insertion does not crash
+     - Verify no image path is returned
+    """
+    integration_dir = tmp_path / 'Integrations'
+    integration_dir.mkdir()
+    integration_yml = integration_dir / 'SomeIntegration.yml'
+    integration_obj = {'id': 'SomeIntegration'}
+    yaml.dump(integration_obj, integration_yml.open('w'), default_flow_style=False)
+    unifier = Unifier(str(integration_dir))
+    yml_unified, found_img_path = unifier.insert_image_to_yml(integration_obj, integration_obj)
+    assert yml_unified == integration_obj
+    assert not found_img_path
+
+
 def test_check_api_module_imports():
     module_import, module_name = Unifier.check_api_module_imports(DUMMY_SCRIPT)
 

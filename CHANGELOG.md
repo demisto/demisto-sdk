@@ -1,4 +1,7 @@
 # Changelog
+* Fixed an issue in the **unify** command where it crashed on an integration without an image file.
+
+# 1.2.6
 * No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.
 * Fixed an issue in the **validate** command where the `--skip-pack-dependencies` would not skip id-set creation.
 * Fixed an issue in the **validate** command where validation would fail if supplied an integration with an empty `commands` key.

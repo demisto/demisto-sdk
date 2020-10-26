@@ -1,4 +1,5 @@
 # Changelog
+* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
 
 # 1.2.6

@@ -598,7 +598,7 @@ def test_update_docker_format(tmpdir, mocker):
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
 
 
-def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mocker, capsys):
+def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tmp_path):
     """Test that script and integration formatter update docker image tag
     """
 
@@ -614,35 +614,27 @@ def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mo
                                                                                          "previous": 'null',
                                                                                          "results": []},
                       status_code=200)
-    schema_dir = f'{GIT_ROOT}/demisto_sdk/commands/common/schemas'
-    test_files_dir = f'{GIT_ROOT}/demisto_sdk/tests/test_files/update-docker'
-    dest = str(tmpdir.join('docker-res.yml'))
+    integration_yml_file_1 = tmp_path / 'Integration1.yml'
+    integration_obj = {'script': {'dockerimage': 'error:1.0.0.1'}}
+    ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
+
+    format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
+    format_obj.update_docker_image()
+    with open(str(integration_yml_file_1)) as f:
+        data = yaml.safe_load(f)
+    assert data.get('script', {}).get('dockerimage') == 'error:1.0.0.1'
 
     # test example script file with invalid docker image : demisto/error
-    src_file = f'{test_files_dir}/TestIntegration.yml'
-    with open(src_file) as f:
-        data = yaml.safe_load(f)
-    org_docker = data['script']['dockerimage']
-    format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
-                                 update_docker=True)
-    assert format_obj.run_format() == 0
-    with open(dest) as f:
-        data = yaml.safe_load(f)
-    assert data['script']['dockerimage'] == org_docker
+    integration_yml_file_2 = tmp_path / 'Integration2.yml'
+    integration_obj = {'script': {'dockerimage': 'demisto/error:1.0.0.1'}}
+    ryaml.dump(integration_obj, integration_yml_file_2.open('w'))
 
-    # test integration file
-    src_file = f'{test_files_dir}/TestIntegration2.yml'
-    with open(src_file) as f:
+    format_obj = ScriptYMLFormat(str(integration_yml_file_2), update_docker=True)
+    format_obj.update_docker_image()
+    with open(str(integration_yml_file_2)) as f:
         data = yaml.safe_load(f)
-    origin_docker = data['script']['dockerimage']
-    format_obj = IntegrationYMLFormat(src_file, output=dest, path=f'{schema_dir}/integration.yml',
-                                      no_validate=True, update_docker=True)
-    assert format_obj.run_format() == 0
-    with open(dest) as f:
-        data = yaml.safe_load(f)
-    assert data['script']['dockerimage'] == origin_docker
-    captured = capsys.readouterr()
-    assert "Failed getting docker image latest tag" in captured.out
+    assert data.get('script', {}).get('dockerimage') == 'demisto/error:1.0.0.1'
+
 
 def test_recursive_extend_schema():
     """

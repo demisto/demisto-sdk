@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
+* Fixed an issue in the **format** command where unnecessary files were not skipped.
 * Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
 * Fixed an issue in the **validate** command where a warning about detailed description was given for unified or deprecated integrations.
 

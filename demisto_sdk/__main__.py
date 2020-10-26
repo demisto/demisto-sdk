@@ -941,7 +941,7 @@ def update_pack_releasenotes(**kwargs):
 )
 @click.option(
     "-i", "--input", help="Pack folder name to find dependencies. For example: Pack/HelloWorld", required=True,
-    type=click.Path(exists=True))
+    type=click.Path(exists=True, dir_okay=True))
 @click.option(
     "-idp", "--id-set-path", help="Path to id set json file.", required=False)
 @click.option(
@@ -952,8 +952,7 @@ def update_pack_releasenotes(**kwargs):
     hidden=True, required=False)
 def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
-    input_path: Path = kwargs["input"]
-    #
+    input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
         assert "Packs/" in input_path
         pack_name = str(input_path).replace("Packs/", "")

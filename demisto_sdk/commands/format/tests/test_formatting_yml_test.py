@@ -598,6 +598,51 @@ def test_update_docker_format(tmpdir, mocker):
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
 
 
+def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mocker):
+    """Test that script and integration formatter update docker image tag
+    """
+
+    auth_token = 'ABCDE12345'
+    mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
+
+    requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={'error': 'not found'},
+                      status_code=401)
+    requests_mock.get('https://registry-1.docker.io/v2/error/tags/list', json={'error': 'not found'},
+                      status_code=401)
+    requests_mock.get('https://hub.docker.com/v2/repositories/demisto/error/tags', json={"count": 0,
+                                                                                         "next": 'null',
+                                                                                         "previous": 'null',
+                                                                                         "results": []},
+                      status_code=200)
+    schema_dir = f'{GIT_ROOT}/demisto_sdk/commands/common/schemas'
+    test_files_dir = f'{GIT_ROOT}/demisto_sdk/tests/test_files/update-docker'
+    dest = str(tmpdir.join('docker-res.yml'))
+
+    # test example script file with invalid docker image : demisto/error
+    src_file = f'{test_files_dir}/TestIntegration.yml'
+    with open(src_file) as f:
+        data = yaml.safe_load(f)
+    org_docker = data['script']['dockerimage']
+    format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
+                                 update_docker=True)
+    assert format_obj.run_format() == 0
+    with open(dest) as f:
+        data = yaml.safe_load(f)
+    assert data['script']['dockerimage'] == org_docker
+
+    # test integration file
+    src_file = f'{test_files_dir}/TestIntegration2.yml'
+    with open(src_file) as f:
+        data = yaml.safe_load(f)
+    origin_docker = data['script']['dockerimage']
+    format_obj = IntegrationYMLFormat(src_file, output=dest, path=f'{schema_dir}/integration.yml',
+                                      no_validate=True, update_docker=True)
+    assert format_obj.run_format() == 0
+    with open(dest) as f:
+        data = yaml.safe_load(f)
+    assert data['script']['dockerimage'] == origin_docker
+
+
 def test_recursive_extend_schema():
     """
         Given

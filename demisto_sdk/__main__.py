@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
@@ -939,21 +940,27 @@ def update_pack_releasenotes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+    "-i", "--input", help="Pack folder name to find dependencies. For example: Pack/HelloWorld", required=True,
+    type=click.Path(exists=True))
 @click.option(
-    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+    "-idp", "--id-set-path", help="Path to id set json file.", required=False)
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
 @click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
-def find_dependencies_command(**kwargs):
-    pack_name = kwargs.get('pack_folder_name', '')
-    id_set_path = kwargs.get('id_set_path')
-    verbose = kwargs.get('verbose')
-    update_pack_metadata = not kwargs.get('no_update')
-
+def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
+    update_pack_metadata = not no_update
+    input_path: Path = kwargs["input"]
+    #
+    try:
+        assert "Packs/" in input_path
+        pack_name = str(input_path).replace("Packs/", "")
+        assert "/" not in pack_name
+    except AssertionError:
+        print_error("Input path is not a pack. For example: Pack/HelloWorld")
+        sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
                                            id_set_path=id_set_path,

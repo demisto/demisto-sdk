@@ -1,4 +1,7 @@
 # Changelog
+* Changed input parameters in **find-dependencies** command.
+   - Use ***-i, --input*** instead of ***-p, --path***.
+   - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
 
 # 1.2.6

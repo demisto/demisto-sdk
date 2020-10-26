@@ -56,11 +56,11 @@ def test_integration_find_dependencies__sanity(mocker, repo):
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                      '-p', os.path.basename(repo.packs[0].path),
+                                      '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
                                       '-v', os.path.join(repo.path, 'debug.md'),
                                       ])
-    assert 'Found dependencies result for FindDependencyPack pack:' in result.output
     assert "{}" in result.output
+    assert 'Found dependencies result for FindDependencyPack pack:' in result.output
     assert result.exit_code == 0
     assert result.stderr == ""
     assert os.path.isfile(os.path.join(repo.path, 'debug.md'))
@@ -98,8 +98,8 @@ def test_integration_find_dependencies__sanity_with_id_set(repo):
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                      '-p', os.path.basename(repo.packs[0].path),
-                                      '-i', repo.id_set.path,
+                                      '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
+                                      '-idp', repo.id_set.path,
                                       '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack pack:' in result.output
@@ -140,16 +140,15 @@ def test_integration_find_dependencies__not_a_pack(repo):
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                      '-p', 'NotValidPack',
-                                      '-i', repo.id_set.path,
+                                      '-i', 'Packs/NotValidPack',
+                                      '-idp', repo.id_set.path,
                                       '--no-update',
                                       ])
-    assert "Couldn't find any items for pack" in result.output
-    assert result.exit_code == 0
-    assert result.stderr == ""
+    assert "does not exist" in result.stderr
+    assert result.exit_code == 2
 
 
-def test_integration_find_dependencies__with_dependency(repo):
+def test_integration_find_dependencies_with_dependency(repo):
     """
     Given
     - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -196,8 +195,8 @@ def test_integration_find_dependencies__with_dependency(repo):
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                      '-p', os.path.basename(pack2.path),
-                                      '-i', repo.id_set.path,
+                                      '-i', 'Packs/' + os.path.basename(pack2.path),
+                                      '-idp', repo.id_set.path,
                                       '--no-update',
                                       ])
     assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output

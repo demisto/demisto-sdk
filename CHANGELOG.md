@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
 * Fixed an issue in the **format** command where unnecessary files were not skipped.
+* Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
 
 # 1.2.6
 * No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.

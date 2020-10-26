@@ -1,3 +1,4 @@
+coloredlogs
 deprecated
 mock
 pre-commit

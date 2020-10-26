@@ -15,6 +15,7 @@ from demisto_sdk.commands.format import update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
+from demisto_sdk.commands.lint.commands_builder import excluded_files
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
@@ -491,3 +492,55 @@ def test_format_on_relative_path_playbook(mocker, repo):
     assert '======= Updating file:' in result_format.stdout
     assert success_reg.search(result_format.stdout)
     assert 'The files are valid' in result_validate.stdout
+
+
+def test_format_integration_skipped_files(repo):
+    """
+    Given:
+        - Content pack with integration and doc files
+        - Integration dir includes file artifacts from running lint (e.g. conftest.py)
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format does not run files to be skipped
+    """
+    pack = repo.create_pack('PackName')
+    pack.create_integration('integration')
+    pack.create_doc_file()
+
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+
+    assert '======= Updating file:' in format_result.stdout
+    assert 'Success' in format_result.stdout
+    for excluded_file in excluded_files + ['pack_metadata.json']:
+        assert excluded_file not in format_result.stdout
+
+
+def test_format_commonserver_skipped_files(repo):
+    """
+    Given:
+        - Base content pack with CommonServerPython script
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format does not run files to be skipped
+    """
+    pack = repo.create_pack('Base')
+    pack.create_script('CommonServerPython')
+
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+
+    assert 'Success' in format_result.stdout
+    assert 'CommonServerPython.py' in format_result.stdout
+    commonserver_excluded_files = excluded_files[:]
+    commonserver_excluded_files.remove('CommonServerPython.py')
+    for excluded_file in commonserver_excluded_files:
+        assert excluded_file not in format_result.stdout

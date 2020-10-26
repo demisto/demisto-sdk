@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
@@ -347,3 +348,8 @@ class Pack:
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
         self.release_notes.append(rn)
         return rn
+
+    def create_doc_file(self, name: str = 'image') -> File:
+        doc_file_dir = self._pack_path / 'doc_files'
+        doc_file_dir.mkdir()
+        return File(doc_file_dir / f'{name}.png', self._repo.path)

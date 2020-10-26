@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
+* Fixed an issue in the **format** command where unnecessary files were not skipped.
 * Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
 
 # 1.2.6

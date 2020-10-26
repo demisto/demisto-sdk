@@ -57,7 +57,7 @@ class ScriptYMLFormat(BaseUpdateYML):
                 click.secho('Failed getting docker image latest tag', fg='yellow')
                 return
         except Exception as e:
-            click.secho(f'Failed getting docker image latest tag {e}', fg='yellow')
+            click.secho(f'Failed getting docker image latest tag. {e} - Invalid docker image', fg='yellow')
             return
         full_name = f'{image_name}:{latest_tag}'
         if full_name != dockerimage:

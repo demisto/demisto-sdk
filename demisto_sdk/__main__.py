@@ -940,7 +940,7 @@ def update_pack_releasenotes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="Pack folder name to find dependencies. For example: Pack/HelloWorld", required=True,
+    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
     type=click.Path(exists=True, dir_okay=True))
 @click.option(
     "-idp", "--id-set-path", help="Path to id set json file.", required=False)

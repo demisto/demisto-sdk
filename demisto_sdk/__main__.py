@@ -894,7 +894,7 @@ def update_pack_releasenotes(**kwargs):
         else:
             update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, modified_files_in_pack=set(),
                                       pre_release=pre_release, added_files=set(),
-                                      specific_version=specific_version, pack_metadata_only=True)
+                                      specific_version=specific_version, pack_metadata_only=True, text=text)
             update_pack_rn.execute_update()
         sys.exit(0)
 
@@ -924,7 +924,7 @@ def update_pack_releasenotes(**kwargs):
             else:
                 update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type,
                                           modified_files_in_pack=modified.union(old), pre_release=pre_release,
-                                          added_files=added, specific_version=specific_version)
+                                          added_files=added, specific_version=specific_version, text=text)
                 update_pack_rn.execute_update()
 
     if _pack and API_MODULES_PACK in _pack:

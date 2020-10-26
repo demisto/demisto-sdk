@@ -598,15 +598,15 @@ def test_update_docker_format(tmpdir, mocker):
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
 
 
-def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mocker):
+def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mocker, capsys):
     """Test that script and integration formatter update docker image tag
     """
 
     auth_token = 'ABCDE12345'
     mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
 
-    requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={'error': 'not found'},
-                      status_code=401)
+    requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={"detail": "Object not found"},
+                      status_code=404)
     requests_mock.get('https://registry-1.docker.io/v2/error/tags/list', json={'error': 'not found'},
                       status_code=401)
     requests_mock.get('https://hub.docker.com/v2/repositories/demisto/error/tags', json={"count": 0,
@@ -641,7 +641,8 @@ def test_update_docker_format_with_invalid_dockerimage(requests_mock, tmpdir, mo
     with open(dest) as f:
         data = yaml.safe_load(f)
     assert data['script']['dockerimage'] == origin_docker
-
+    captured = capsys.readouterr()
+    assert "Failed getting docker image latest tag" in captured.out
 
 def test_recursive_extend_schema():
     """

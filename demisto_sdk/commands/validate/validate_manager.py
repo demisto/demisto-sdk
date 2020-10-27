@@ -67,10 +67,12 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class ValidateManager:
-    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-                 print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None):
+    def __init__(
+        self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+        print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+        validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+    ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -86,6 +88,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
+        self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -831,6 +834,7 @@ class ValidateManager:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
+
                 all_changed_files_string = run_command(
                     'git diff --name-status upstream/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
@@ -847,11 +851,14 @@ class ValidateManager:
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
 
-                if not self.no_configuration_prints:
+                if not self.no_configuration_prints and not self.staged:
                     click.echo("Collecting all local changed files against the content master")
-
-                # only changes against prev_ver (without local changes)
-                all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
+                if self.staged:
+                    click.echo("Collecting staged files only")
+                    all_changed_files_string = run_command('git diff --name-status --staged master')
+                else:
+                    # only changes against prev_ver (without local changes)
+                    all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 

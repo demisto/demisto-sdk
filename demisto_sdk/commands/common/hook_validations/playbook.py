@@ -30,6 +30,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
                 self.are_tests_configured(),
                 self.is_valid_deprecated_playbook()
@@ -42,6 +43,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
                 self.are_tests_configured()
             ]
@@ -253,3 +255,14 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
+
+    def is_using_instance(self) -> bool:
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            scriptargs = task.get('scriptarguments', {})
+            if scriptargs and scriptargs.get('using', {}):
+                error_message, error_code = Errors.using_instance_in_playbook()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+        return True

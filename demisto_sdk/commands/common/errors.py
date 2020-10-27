@@ -109,6 +109,7 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
+    "using_instance_in_playbook": "PB106",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -713,6 +714,11 @@ class Errors:
     @error_code_decorator
     def playbook_cant_have_rolename():
         return "Playbook can not have a rolename."
+
+    @staticmethod
+    @error_code_decorator
+    def using_instance_in_playbook():
+        return "Playbook should not use specific instance."
 
     @staticmethod
     @error_code_decorator

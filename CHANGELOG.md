@@ -1,4 +1,5 @@
 # Changelog
+* Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 * Changed input parameters in **find-dependencies** command.
    - Use ***-i, --input*** instead of ***-p, --path***.
    - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.

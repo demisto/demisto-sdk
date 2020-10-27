@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
@@ -894,7 +895,7 @@ def update_pack_releasenotes(**kwargs):
         else:
             update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, modified_files_in_pack=set(),
                                       pre_release=pre_release, added_files=set(),
-                                      specific_version=specific_version, pack_metadata_only=True)
+                                      specific_version=specific_version, pack_metadata_only=True, text=text)
             update_pack_rn.execute_update()
         sys.exit(0)
 
@@ -924,7 +925,7 @@ def update_pack_releasenotes(**kwargs):
             else:
                 update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type,
                                           modified_files_in_pack=modified.union(old), pre_release=pre_release,
-                                          added_files=added, specific_version=specific_version)
+                                          added_files=added, specific_version=specific_version, text=text)
                 update_pack_rn.execute_update()
 
     if _pack and API_MODULES_PACK in _pack:
@@ -939,21 +940,26 @@ def update_pack_releasenotes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-p", "--pack_folder_name", help="Pack folder name to find dependencies.", required=True)
+    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
+    type=click.Path(exists=True, dir_okay=True))
 @click.option(
-    "-i", "--id_set_path", help="Path to id set json file.", required=False)
+    "-idp", "--id-set-path", help="Path to id set json file.", required=False)
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
 @click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
-def find_dependencies_command(**kwargs):
-    pack_name = kwargs.get('pack_folder_name', '')
-    id_set_path = kwargs.get('id_set_path')
-    verbose = kwargs.get('verbose')
-    update_pack_metadata = not kwargs.get('no_update')
-
+def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
+    update_pack_metadata = not no_update
+    input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
+    try:
+        assert "Packs/" in input_path
+        pack_name = str(input_path).replace("Packs/", "")
+        assert "/" not in pack_name
+    except AssertionError:
+        print_error("Input path is not a pack. For example: Pack/HelloWorld")
+        sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
                                            id_set_path=id_set_path,

@@ -999,8 +999,7 @@ class Errors:
     @error_code_decorator
     def invalid_package_structure(invalid_files):
         return 'You should update the following files to the package format, for further details please visit ' \
-               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
-               'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+               'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
     @staticmethod
     @error_code_decorator

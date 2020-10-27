@@ -677,17 +677,15 @@ class ValidateManager:
         Args:
             old_format_files(set): file names which are in the old format.
         """
-        invalid_files = []
+        handle_error = True
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(file_path)
-        if invalid_files:
-            error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+                error_message, error_code = Errors.invalid_package_structure(file_path)
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    handle_error = False
+        return handle_error
 
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
@@ -1064,6 +1062,7 @@ class ValidateManager:
     @staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
+        print(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
         if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False

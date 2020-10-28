@@ -7,7 +7,6 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
-import urllib3
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -74,13 +73,11 @@ from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 
-@pytest.mark.filterwarnings("ignore")
 class TestValidators:
     CREATED_DIRS = list()  # type: list[str]
 
     @classmethod
     def setup_class(cls):
-        urllib3.disable_warnings()
         for dir_to_create in DIR_LIST:
             if not os.path.exists(dir_to_create):
                 cls.CREATED_DIRS.append(dir_to_create)

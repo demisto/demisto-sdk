@@ -268,7 +268,7 @@ class PlaybookValidator(ContentEntityValidator):
             scriptargs = task.get('scriptarguments', {})
             if curr_task and scriptargs and curr_task.get('scriptName', '') == 'DeleteContext' \
                     and scriptargs.get('all', {}).get('simple', '') == 'yes':
-                error_message, error_code = Errors.playbook_can_have_deletecontext_all()
+                error_message, error_code = Errors.playbook_cant_have_deletecontext_all()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False

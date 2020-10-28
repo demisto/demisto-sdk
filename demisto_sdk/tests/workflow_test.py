@@ -186,12 +186,12 @@ def init_pack(content_repo: ContentGitRepo):
     Then: Validate lint, secrets and validate exit code is 0
     """
     with ChangeCWD(content_repo.content):
+        runner = CliRunner(mix_stderr=False)
+        res = runner.invoke(
+            main, "init --pack --name Sample",
+            input="\n".join(["y", "Sample", "description", "1", "1", "n"])
+        )
         try:
-            runner = CliRunner(mix_stderr=False)
-            res = runner.invoke(
-                main, "init --pack --name Sample",
-                input="\n".join(["y", "Sample", "description", "1", "1", "n"])
-            )
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}")
@@ -239,8 +239,8 @@ def modify_entity(content_repo: ContentGitRepo):
         yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
         content_repo.run_command("git add .")
     with ChangeCWD(content_repo.content):
+        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         try:
-            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
@@ -270,8 +270,8 @@ def all_files_renamed(content_repo: ContentGitRepo):
             )
     with ChangeCWD(content_repo.content):
         runner = CliRunner(mix_stderr=False)
+        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         try:
-            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")

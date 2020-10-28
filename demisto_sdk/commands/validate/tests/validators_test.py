@@ -831,12 +831,12 @@ class TestValidators:
                 - return a False as the files are invalid
                 - assert the handle_error function is called for each file
         """
-        temp = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
         old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml",
                             "demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert temp.call_count == 2
+        assert handle_error_mock.call_count == 2
 
     def test_filter_changed_files(self, mocker):
         """

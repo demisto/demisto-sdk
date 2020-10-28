@@ -109,7 +109,7 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
-    "playbook_can_have_deletecontext_all": "PB105",
+    "playbook_cant_have_deletecontext_all": "PB105",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",

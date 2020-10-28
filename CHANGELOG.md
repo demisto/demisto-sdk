@@ -1,8 +1,11 @@
 # Changelog
+* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
+
+
+# 1.2.7
 * Changed input parameters in **find-dependencies** command.
    - Use ***-i, --input*** instead of ***-p, --path***.
    - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.
-* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
 * Fixed an issue in the **format** command where unnecessary files were not skipped.
 * Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.

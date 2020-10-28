@@ -735,7 +735,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_can_have_deletecontext_all():
+    def playbook_cant_have_deletecontext_all():
         return 'Playbook can not have DeleteContext script with arg all set to yes.'
 
     @staticmethod

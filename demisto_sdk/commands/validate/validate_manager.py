@@ -1062,7 +1062,6 @@ class ValidateManager:
     @staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
-        print(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
         if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False

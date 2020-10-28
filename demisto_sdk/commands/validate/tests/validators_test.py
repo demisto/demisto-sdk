@@ -1014,23 +1014,31 @@ class TestValidators:
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
 
     def test_staged(self, mocker):
-        def run_command(arg):
+        def run_command_effect(arg):
             if arg == 'git diff --name-status --staged master':
-                pytest.exit(0)
-            else:
-                pytest.exit(1)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command)
+                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.py'
+            return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
+
+        def is_file_yml(arg):
+            assert arg == 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', side_effect=is_file_yml)
         validate_manager = ValidateManager(staged=True)
-        validate_manager.get_modified_and_added_files('..', 'master')
+        a = validate_manager.get_modified_and_added_files('..', 'master')
+        print(a)
 
     def test_not_staged(self, mocker):
-        def run_command(arg):
-            if 'staged' not in arg:
-                pytest.exit(0)
-            else:
-                pytest.exit(1)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command)
-        validate_manager = ValidateManager(staged=True)
+        def run_command_effect(arg):
+            assert 'staged' not in arg
+            return "M\tPacks/HelloWorld/Integrations/HelloWorld.py"
+
+        def is_file_yml(arg):
+            assert arg == 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', side_effect=is_file_yml)
+        validate_manager = ValidateManager(staged=False)
         validate_manager.get_modified_and_added_files('..', 'master')
 
 

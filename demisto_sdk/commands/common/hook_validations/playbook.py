@@ -277,6 +277,11 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     def is_using_instance(self) -> bool:
+        """
+        Check if there is an existing task that uses specific instance.
+        Returns:
+            True if using specific instance exists else False.
+        """
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
             scriptargs = task.get('scriptarguments', {})

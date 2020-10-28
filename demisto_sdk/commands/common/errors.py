@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
@@ -109,6 +109,7 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
+    "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
@@ -740,6 +741,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def playbook_cant_have_deletecontext_all():
+        return 'Playbook can not have DeleteContext script with arg all set to yes.'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_deprecated_playbook():
         return 'The playbook description has to start with "Deprecated."'
 
@@ -1004,9 +1010,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_package_structure(invalid_files):
-        return 'You should update the following files to the package format, for further details please visit ' \
-               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
-               'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+        return 'You should update the following file to the package format, for further details please visit ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
     @staticmethod
     @error_code_decorator

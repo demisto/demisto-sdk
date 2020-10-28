@@ -824,16 +824,19 @@ class TestValidators:
     def test_validate_no_old_format__without_toversion(self, mocker):
         """
             Given:
-                - an old format_file without toversion
+                - 2 old format_file without toversion
             When:
-                - running validate_no_old_format on the file
+                - running validate_no_old_format on the files
             Then:
-                - return a False as the file is invalid
+                - return a False as the files are invalid
+                - assert the handle_error function is called for each file
         """
-        mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
-        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml"}
+        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml",
+                            "demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
+        assert handle_error_mock.call_count == 2
 
     def test_filter_changed_files(self, mocker):
         """

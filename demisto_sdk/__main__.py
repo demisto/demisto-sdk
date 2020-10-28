@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_pack_name,
                                                pack_name_to_path, print_error,
-                                               print_warning, run_command)
+                                               print_warning)
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     ArtifactsManager, create_content_artifacts)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -290,24 +290,27 @@ def validate(config, **kwargs):
     file_path = kwargs['input']
 
     if kwargs['post_commit'] and kwargs['staged']:
-        raise ValueError('akakak')
+        print_error('Could not supply the staged flag with the post-commit flag')
+        sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
-        validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
-                                    only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                    skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
-                                    file_path=file_path,
-                                    validate_all=kwargs.get('validate_all'),
-                                    validate_id_set=kwargs['id_set'],
-                                    skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                    print_ignored_errors=kwargs['print_ignored_errors'],
-                                    is_external_repo=is_external_repo,
-                                    print_ignored_files=kwargs['print_ignored_files'],
-                                    no_docker_checks=kwargs['no_docker_checks'],
-                                    silence_init_prints=kwargs['silence_init_prints'],
-                                    skip_dependencies=kwargs['skip_pack_dependencies'],
-                                    id_set_path=kwargs.get('id_set_path'),
-                                    staged=kwargs['staged'])
+        validator = ValidateManager(
+            is_backward_check=not kwargs['no_backward_comp'],
+            only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+            skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
+            file_path=file_path,
+            validate_all=kwargs.get('validate_all'),
+            validate_id_set=kwargs['id_set'],
+            skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+            print_ignored_errors=kwargs['print_ignored_errors'],
+            is_external_repo=is_external_repo,
+            print_ignored_files=kwargs['print_ignored_files'],
+            no_docker_checks=kwargs['no_docker_checks'],
+            silence_init_prints=kwargs['silence_init_prints'],
+            skip_dependencies=kwargs['skip_pack_dependencies'],
+            id_set_path=kwargs.get('id_set_path'),
+            staged=kwargs['staged']
+        )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk validate` command in the content directory.\n"

@@ -5,6 +5,7 @@ from typing import Set, Union
 
 import click
 import yaml
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -288,11 +289,16 @@ class BaseUpdate:
                 print_color('Starting validating files structure', LOG_COLORS.GREEN)
             # validates only on files in content repo
             if self.relative_content_path:
+                file_type = find_type(self.output_file)
+
                 # validates on the output file generated from the format
                 structure_validator = StructureValidator(self.output_file,
-                                                         predefined_scheme=find_type(self.output_file))
+                                                         predefined_scheme=file_type)
                 validator = validator_type(structure_validator, suppress_print=not self.verbose)
-                if structure_validator.is_valid_file() and validator.is_valid_file(validate_rn=False):
+
+                # TODO: remove the connection condition if we implement a specific validator for connections.
+                if structure_validator.is_valid_file() and \
+                        (file_type == FileType.CONNECTION or validator.is_valid_file(validate_rn=False)):
                     if self.verbose:
                         click.secho('The files are valid', fg='green')
                     return SUCCESS_RETURN_CODE

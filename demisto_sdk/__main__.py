@@ -293,7 +293,7 @@ def validate(config, **kwargs):
         print_error('Could not supply the staged flag with the post-commit flag')
         sys.exit(1)
     try:
-        is_external_repo = tools.is_external_repository()
+        is_external_repo = tools.is_external_repository() if kwargs['use_git'] else False
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],

@@ -1,5 +1,6 @@
 # Changelog
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
+* Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 
 
 # 1.2.7

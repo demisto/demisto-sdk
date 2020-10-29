@@ -193,6 +193,27 @@ class TestPlaybookValidator:
                                     '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
                                     '3': {'type': 'condition'}}
                                 }
+
+    IS_INSTANCE_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                          "tasks": {
+                              '1': {'type': 'title', 'nexttasks': {'next': ['2']},
+                                    'scriptarguments': {'using': {'simple': 'tst.instance'}}},
+                              '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
+                              '3': {'type': 'condition'}}
+                          }
+
+    IS_INSTANCE_DOESNT_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                 "tasks": {
+                                     '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
+                                     '2': {'type': 'condition'},
+                                     '3': {'type': 'condition'}}
+                                 }
+
+    IS_USING_INSTANCE = [
+        (IS_INSTANCE_EXISTS, False),
+        (IS_INSTANCE_DOESNT_EXISTS, True),
+    ]
+
     IS_ROOT_CONNECTED_INPUTS = [
         (TASKS_NOT_EXIST, True),
         (NEXT_TASKS_NOT_EXIST_1, True),
@@ -254,3 +275,21 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_delete_context_all_in_playbook() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_USING_INSTANCE)
+    def test_is_using_instance(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook has a using specific instance.
+        - The playbook doestnt have using in it.
+
+        Then
+        - Ensure validation fails if it's a not test playbook
+        - Ensure that the validataion passes if no using usage.
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.is_using_instance() is expected_result

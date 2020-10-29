@@ -7,7 +7,6 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.tests.constants_test import CONNECTION_SCHEMA_PATH
 
 
 class ConnectionJSONFormat(BaseUpdateJSON):
@@ -29,7 +28,7 @@ class ConnectionJSONFormat(BaseUpdateJSON):
     def __init__(self,
                  input: str = '',
                  output: str = '',
-                 path: str = CONNECTION_SCHEMA_PATH,
+                 path: str = '',
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,

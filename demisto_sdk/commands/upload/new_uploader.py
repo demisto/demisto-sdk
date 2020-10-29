@@ -35,7 +35,7 @@ from tabulate import tabulate
 UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
                              FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
                              FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
-                             FileType.OLD_CLASSIFIER]
+                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT]
 
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
@@ -221,7 +221,7 @@ class Uploader:
         if dir_name in CONTENT_ENTITIES_DIRS:
             # upload json or yml files. Other files such as `.md`, `.png` should be ignored
             for file in glob.glob(f"{path}/*.yml"):
-                status_code = status_code or self.file_uploader(file)
+                status_code = self.file_uploader(file) or status_code
             for file in glob.glob(f"{path}/*.json"):
                 status_code = self.file_uploader(file) or status_code
         return status_code

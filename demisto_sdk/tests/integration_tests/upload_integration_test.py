@@ -1,9 +1,11 @@
 from os.path import join
 
+import click
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from packaging.version import parse
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -12,13 +14,18 @@ DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 @pytest.fixture
 def demisto_client(mocker):
     mocker.patch(
-        "demisto_sdk.commands.upload.uploader.demisto_client",
+        "demisto_sdk.commands.upload.new_uploader.demisto_client",
         return_valure="object"
     )
-    mocker.patch("demisto_sdk.commands.upload.new_uploader.click.secho")
+    mocker.patch("demisto_sdk.commands.upload.new_uploader.get_demisto_version", return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
+                 return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
+                 return_value=parse('6.0.0'))
+    mocker.patch("click.secho")
 
 
-def test_integration_upload_pack_positive(demisto_client, mocker):
+def test_integration_upload_pack_positive(demisto_client):
     """
     Given
     - Content pack named FeedAzure to upload.
@@ -30,42 +37,37 @@ def test_integration_upload_pack_positive(demisto_client, mocker):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
-    from click import secho
 
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
-    assert result.exit_code == 1
-    assert '\nSUCCESSFUL UPLOADS:' in secho.call_args_list[2][0][0]
-    assert """╒════════════════════════════════════════════╤═════════════╕
-│ NAME                                       │ TYPE        │
-╞════════════════════════════════════════════╪═════════════╡
-│ FeedAzure.yml                              │ Integration │
-├────────────────────────────────────────────┼─────────────┤
-│ FeedAzure_test.yml                         │ Playbook    │
-├────────────────────────────────────────────┼─────────────┤
-│ just_a_test_script.yml                     │ Script      │
-├────────────────────────────────────────────┼─────────────┤
-│ script-prefixed_automation.yml             │ Script      │
-├────────────────────────────────────────────┼─────────────┤
-│ playbook-FeedAzure_test_copy_no_prefix.yml │ Playbook    │
-├────────────────────────────────────────────┼─────────────┤
-│ FeedAzure_test.yml                         │ Playbook    │
-╘════════════════════════════════════════════╧═════════════╛
-""" in secho.call_args_list[3][0][0]
-    assert '\nFAILED UPLOADS:' in secho.call_args_list[4][0][0]
-    assert """╒═════════════════════════╤═══════════════╤════════════════════════════════════╕
-│ NAME                    │ TYPE          │ ERROR                              │
-╞═════════════════════════╪═══════════════╪════════════════════════════════════╡
-│ incidentfield-city.json │ IncidentField │ Got empty incident field list (52) │
-╘═════════════════════════╧═══════════════╧════════════════════════════════════╛
-""" in secho.call_args_list[5][0][0]
+    assert result.exit_code == 0
+    assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[3][0][0]
+    assert """╒════════════════════════════════════════════╤═══════════════╕
+│ NAME                                       │ TYPE          │
+╞════════════════════════════════════════════╪═══════════════╡
+│ FeedAzure.yml                              │ integration   │
+├────────────────────────────────────────────┼───────────────┤
+│ FeedAzure_test.yml                         │ playbook      │
+├────────────────────────────────────────────┼───────────────┤
+│ just_a_test_script.yml                     │ testscript    │
+├────────────────────────────────────────────┼───────────────┤
+│ script-prefixed_automation.yml             │ testscript    │
+├────────────────────────────────────────────┼───────────────┤
+│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │
+├────────────────────────────────────────────┼───────────────┤
+│ FeedAzure_test.yml                         │ testplaybook  │
+├────────────────────────────────────────────┼───────────────┤
+│ incidentfield-city.json                    │ incidentfield │
+╘════════════════════════════════════════════╧═══════════════╛
+""" in click.secho.call_args_list[4][0][0]
+
     assert not result.stderr
 
 
-def test_integration_upload_path_does_not_exist(demisto_client, mocker):
+def test_integration_upload_path_does_not_exist(demisto_client):
     """
     Given
     - Directory path which does not exist.
@@ -77,15 +79,13 @@ def test_integration_upload_path_does_not_exist(demisto_client, mocker):
     - Ensure upload fails.
     - Ensure failure upload message is printed.
     """
-    from click import secho
-
     invalid_dir_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
     assert result.exit_code == 1
-    assert f"Error: Given input path: {invalid_dir_path} does not exist" in secho.call_args_list[1][0][0]
+    assert f"Error: Given input path: {invalid_dir_path} does not exist" in click.secho.call_args_list[1][0][0]
     assert not result.stderr
 
 
@@ -101,17 +101,15 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
     - Ensure upload fails due to invalid path.
     - Ensure failure upload message is printed.
     """
-    from click import secho
-
     invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"
     invalid_scripts_dir.mkdir(parents=True)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"])
     assert result.exit_code == 1
     assert f"""
-Error: Given input path: {str(invalid_scripts_dir)} is not valid. Input path should point to one of the following:
+Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
   1. Pack
   2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts directory
   3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""" in\
-        secho.call_args_list[1][0][0]
+        click.secho.call_args_list[1][0][0]
     assert not result.stderr

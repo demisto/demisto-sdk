@@ -1028,12 +1028,8 @@ class TestValidators:
             assert arg == 'git diff --name-status --staged master'
             return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
 
-        def is_file_yml(arg):
-            assert arg == 'Packs/HelloWorld/Integrations/HelloWorld.yml'
-            return True
-
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', side_effect=is_file_yml)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
 

@@ -6,6 +6,7 @@
 * Fixed an issue in the **format** command where unnecessary files were not skipped.
 * Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
 * Fixed an issue in the **validate** command where a warning about detailed description was given for unified or deprecated integrations.
+* Added the **--staged** flag to **validate** command to run on staged files only.
 
 # 1.2.6
 * No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.

@@ -816,6 +816,14 @@ class ValidateManager:
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
+        if self.staged:
+            click.echo("Collecting staged files only")
+            all_changed_files_string = run_command('git diff --name-status --staged master')
+            modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
+                all_changed_files_string, prev_ver
+            )
+            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files))
+            return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver

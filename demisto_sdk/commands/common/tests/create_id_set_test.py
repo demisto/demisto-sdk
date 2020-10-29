@@ -1,10 +1,14 @@
+import os
+
 from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 
-def test_create_id_set_flow(repo):
+def test_create_id_set_flow(repo, mocker):
+    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     number_of_packs_to_create = 10
     repo.setup_content_repo(number_of_packs_to_create)
 

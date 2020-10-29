@@ -653,7 +653,7 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
-IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
+IGNORED_PACK_NAMES = ['Legacy', 'NonSupported', 'ApiModules']
 
 PACK_IGNORE_TEST_FLAG = 'auto-test'
 
@@ -728,7 +728,8 @@ TYPE_TO_EXTENSION = {
 TESTS_DIRECTORIES = [
     'testdata',
     'test_data',
-    'data_test'
+    'data_test',
+    'tests_data'
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -779,7 +780,7 @@ BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
 INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
-                          'Deception', 'Email Gateway']
+                          'Deception', 'Email Gateway', 'Identity and Access Management']
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,

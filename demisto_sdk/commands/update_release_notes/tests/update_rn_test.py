@@ -6,6 +6,7 @@ import unittest
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 
 
 class TestRNUpdate(unittest.TestCase):
@@ -458,6 +459,7 @@ class TestRNUpdate(unittest.TestCase):
 
 
 class TestRNUpdateUnit:
+    META_BACKUP = ""
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
 #### Incident Types
@@ -513,6 +515,21 @@ class TestRNUpdateUnit:
                     ('Packs/VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
                     ('Packs/CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
                     ]
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Tests below modify the file: 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json'
+        We back it up and restore when done.
+
+        """
+        self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
+        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', self.meta_backup)
+
+    def teardown(self):
+        if self.meta_backup:
+            shutil.copy(self.meta_backup, 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+        else:
+            raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
     @pytest.mark.parametrize('pack_name, path, expected_result', diff_package)
     def test_ident_changed_file_type(self, pack_name, path, expected_result, mocker):
@@ -746,6 +763,8 @@ class TestRNUpdateUnit:
         """
         import demisto_sdk.commands.update_release_notes.update_rn
         from demisto_sdk.commands.update_release_notes.update_rn import update_api_modules_dependents_rn
+        if os.path.exists(DEFAULT_ID_SET_PATH):
+            os.remove(DEFAULT_ID_SET_PATH)
         print_error_mock = mocker.patch.object(demisto_sdk.commands.update_release_notes.update_rn, "print_error")
         update_api_modules_dependents_rn(_pack='', pre_release='', update_type='', added='', modified='',
                                          id_set_path=None)

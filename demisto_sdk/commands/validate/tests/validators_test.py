@@ -824,16 +824,19 @@ class TestValidators:
     def test_validate_no_old_format__without_toversion(self, mocker):
         """
             Given:
-                - an old format_file without toversion
+                - 2 old format_file without toversion
             When:
-                - running validate_no_old_format on the file
+                - running validate_no_old_format on the files
             Then:
-                - return a False as the file is invalid
+                - return a False as the files are invalid
+                - assert the handle_error function is called for each file
         """
-        mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
-        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml"}
+        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml",
+                            "demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
+        assert handle_error_mock.call_count == 2
 
     def test_filter_changed_files(self, mocker):
         """
@@ -1024,4 +1027,51 @@ def test_content_release_identifier_exists():
     vm = ValidateManager()
     vm.branch_name = 'master'
     sha1 = vm.get_content_release_identifier()
-    assert sha1, 'GIT_SHA1 path in config.yml has been chaged. Fix the demisto-sdk or revert changes in content repo.'
+    assert sha1, 'GIT_SHA1 path in config.yml has been changed. Fix the demisto-sdk or revert changes in content repo.'
+
+
+@pytest.mark.parametrize('branch_name, prev_ver, expected', [
+    ('master', 'v4.5.0', 'origin/v4.5.0'),
+    ('master', 'master', 'origin/master'),
+    ('master', '20.13.0', 'origin/20.13.0'),
+    ('master', 'origin/master', 'origin/master'),
+    ('4.5.0', 'v4.5.0', 'origin/v4.5.0'),
+    ('4.5.0', 'master', 'origin/master'),
+    ('4.5.0', 'origin/master', 'origin/master'),
+    ('20.13.0', 'master', 'master'),
+    ('20.13.0', '20.13.0', '20.13.0'),
+    ('20.13.0', 'origin/master', 'origin/master'),
+    ('20.13.0', '64cac0b349187b861c4c717951a634de52caba03', '64cac0b349187b861c4c717951a634de52caba03')
+])
+def test_add_origin(branch_name, prev_ver, expected):
+    """
+    Given
+        - Prev_ver to test on.
+    When
+        - Run the add origin command.
+    Then
+        - validate add_origin runs as expected.
+    """
+    validate_manager = ValidateManager()
+    validate_manager.branch_name = branch_name
+    res = validate_manager.add_origin(prev_ver=prev_ver)
+    assert res == expected
+
+
+@pytest.mark.parametrize('pack_name, expected', [
+    ('NonSupported', False),
+    ('PackName1', True)
+])
+def test_should_raise_pack_version(pack_name, expected):
+    """
+    Given
+        - NonSupported Pack - Should return False as no need to bump the pack version.
+        - Regular pack - should result as True, the pack version should be raised
+    When
+        - Run should_raise_pack_version command.
+    Then
+        - validate should_raise_pack_version runs as expected.
+    """
+    validate_manager = ValidateManager()
+    res = validate_manager.should_raise_pack_version(pack_name)
+    assert res == expected

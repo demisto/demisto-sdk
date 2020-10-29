@@ -122,6 +122,26 @@ class TestPlaybookValidator:
                                                  {'1': {'type': 'condition',
                                                         'scriptName': 'testScript',
                                                         'nexttasks': {'#default#': [], 'yes': []}}}}
+    DELETECONTEXT_ALL_EXIST = {"id": "Intezer - scan host", "version": -1,
+                               "tasks":
+                               {'1': {'type': 'regular',
+                                      'task': {'scriptName': 'DeleteContext'},
+                                      'scriptarguments': {'all': {'simple': 'yes'}}}}}
+    DELETECONTEXT_WITHOUT_ALL = {"id": "Intezer - scan host", "version": -1,
+                                 "tasks":
+                                 {'1': {'type': 'regular',
+                                        'task': {'scriptName': 'DeleteContext'},
+                                        'scriptarguments': {'all': {'simple': 'no'}}}}}
+    DELETECONTEXT_DOESNT_EXIST = {"id": "Intezer - scan host", "version": -1,
+                                  "tasks":
+                                  {'1': {'type': 'regular',
+                                         'task': {'name': 'test'}}}}
+    IS_DELETECONTEXT = [
+        (DELETECONTEXT_ALL_EXIST, False),
+        (DELETECONTEXT_WITHOUT_ALL, True),
+        (DELETECONTEXT_DOESNT_EXIST, True)
+    ]
+
     IS_CONDITIONAL_INPUTS = [
         (CONDITION_NOT_EXIST_1, True),
         (CONDITION_EXIST_EMPTY_1, True),
@@ -218,3 +238,19 @@ class TestPlaybookValidator:
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
         assert validator.is_valid_playbook() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_DELETECONTEXT)
+    def test_is_delete_context_all_in_playbook(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook have deleteContext script use with all=yes
+
+        Then
+        -  Ensure that the validation fails when all=yes arg exists.
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.is_delete_context_all_in_playbook() is expected_result

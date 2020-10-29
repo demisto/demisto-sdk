@@ -8,9 +8,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -630,6 +631,17 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    @staticmethod
+    def should_raise_pack_version(pack: str) -> bool:
+        """
+        Args:
+            pack: The pack name.
+
+        Returns: False if pack is in IGNORED_PACK_NAMES else True.
+
+        """
+        return pack not in IGNORED_PACK_NAMES
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -645,14 +657,14 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path):
+        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
             IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                raise_version = True
+                raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
                 id_set_path=self.id_set_path))
@@ -665,17 +677,15 @@ class ValidateManager:
         Args:
             old_format_files(set): file names which are in the old format.
         """
-        invalid_files = []
+        handle_error = True
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(file_path)
-        if invalid_files:
-            error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+                error_message, error_code = Errors.invalid_package_structure(file_path)
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    handle_error = False
+        return handle_error
 
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
@@ -783,21 +793,26 @@ class ValidateManager:
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
+    def add_origin(self, prev_ver):
+        # If git base not provided - check against origin/prev_ver unless using release branch
+        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
+            prev_ver = 'origin/' + prev_ver
+        return prev_ver
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
         Args:
             compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last releaese
+            prev_ver (str): Against which branch to run the comparision - master/last release
 
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
             click.echo("Collecting all committed files")
-        # If git base not provided - check against origin/prev_ver
-        if '/' not in prev_ver:
-            prev_ver = 'origin/' + prev_ver
+
+        prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')

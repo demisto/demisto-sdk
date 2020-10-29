@@ -16,7 +16,7 @@ cert_partner_msg = {
     "W9009": (
         "Do not use return_outputs function. Please return CommandResults object instead.", "return-outputs-exists",
         "Do not use return_outputs function.",),
-    "W9016": ("Initialize of params was found outside of main function. Please use demisto.params() only inside main"
+    "W9016": ("Initialize of params was found outside of main function. Please use demisto.params() only inside main "
               "func",
               "init-params-outside-main",
               "Initialize of params was found outside of main function. Please initialize params only inside main func",),

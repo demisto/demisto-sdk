@@ -244,7 +244,10 @@ class Initiator:
             # remove metadata.json file
             os.remove(os.path.join(pack_dir, 'metadata.json'))
             click.echo(f'Executing \'format\' on the restructured contribution zip files at "{pack_dir}"')
-            format_manager(input=pack_dir)
+            from_version = '6.0.0'
+            format_manager(
+                input=pack_dir, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
+            )
         except Exception as e:
             click.echo(
                 f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',

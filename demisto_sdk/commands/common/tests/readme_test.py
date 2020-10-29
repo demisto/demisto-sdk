@@ -8,10 +8,12 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
+INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 
 README_INPUTS = [
     (VALID_MD, True),
     (INVALID_MD, False),
+    (INVALID2_MD, False),
 ]
 
 MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test you must run "npm install" ' \

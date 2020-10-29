@@ -17,13 +17,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR)
+                                                   WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import (get_child_directories,
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_child_directories,
                                                get_demisto_version,
                                                get_parent_directory_name,
                                                print_v)
@@ -31,9 +32,11 @@ from packaging.version import Version
 from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
-UPLOAD_SUPPORTED_ENTITIES = ['Integration', 'Script', 'Playbook', 'Widget', 'IncidentType', 'Classifier',
-                             'OldClassifier', 'Layout', 'LayoutsContainer', 'Dashboard', 'IncidentField',
-                             'ClassifierMapper']
+UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
+                             FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
+                             FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
+                             FileType.OLD_CLASSIFIER]
+
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
@@ -53,7 +56,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
 ]
 
 
-class NewUploader:
+class Uploader:
     """Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
         Attributes:
             path (str): The path of a pack / directory / file to upload.
@@ -98,7 +101,7 @@ class NewUploader:
                 not self.unuploaded_due_to_version:
             # if not uploaded any file
             click.secho(
-                f'\nError: Given input path: {self.path} is not valid. '
+                f'\nError: Given input path: {self.path} is not uploadable. '
                 f'Input path should point to one of the following:\n'
                 f'  1. Pack\n'
                 f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
@@ -124,44 +127,45 @@ class NewUploader:
         try:
             upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
         except ContentFactoryError:
-            file_name = path.split('/')[-1]
+            file_name = os.path.split(path)[-1]
             message = f"Cannot upload {path} as the file type is not supported for upload."
             if self.log_verbose:
-                click.secho(message)
+                click.secho(message, fg='bright_red')
             self.failed_uploaded_files.append((file_name, "Unknown", message))
             return 1
 
         file_name = upload_object.path.name  # type: ignore
-        entity_type = type(upload_object).__name__
+        entity_type = find_type(str(upload_object.path))
 
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-            if upload_object.from_version < self.demisto_version < upload_object.to_version:  # type: ignore
+            if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
-                    if entity_type in ['Integration', 'Script', 'Playbook']:
+                    if entity_type in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK,
+                                       FileType.TEST_PLAYBOOK]:
                         result = upload_object.upload(self.client, override=self.override)  # type: ignore
                     else:
                         result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:
                         print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
-                    self.successfully_uploaded_files.append((file_name, entity_type))
+                    self.successfully_uploaded_files.append((file_name, entity_type.value))
                     return 0
                 except Exception as err:
-                    message = parse_error_response(err, 'classifier', file_name, self.log_verbose)
-                    self.failed_uploaded_files.append((file_name, entity_type, message))
+                    message = parse_error_response(err, entity_type, file_name, self.log_verbose)
+                    self.failed_uploaded_files.append((file_name, entity_type.value, message))
                     return 1
             else:
                 if self.log_verbose:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
                                 f"XSOAR version is: {self.demisto_version} while the file's version is "
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
-                self.unuploaded_due_to_version.append((file_name, entity_type, self.demisto_version,
+                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
                                                        upload_object.from_version, upload_object.to_version))
                 return 1
         else:
             if self.log_verbose:
                 click.secho(
-                    f'\nError: Given input path: {path} is not valid. '
+                    f'\nError: Given input path: {path} is not uploadable. '
                     f'Input path should point to one of the following:\n'
                     f'  1. Pack\n'
                     f'  2. A content entity directory that is inside a pack. For example: an Integrations directory or '
@@ -170,7 +174,7 @@ class NewUploader:
                     f'For example a playbook: helloWorld.yml',
                     fg='bright_red'
                 )
-            self.failed_uploaded_files.append((file_name, entity_type, 'Unsuported file path/type'))
+            self.failed_uploaded_files.append((file_name, entity_type.value, 'Unsuported file path/type'))
             return 1
 
     def unified_entity_uploader(self, path) -> int:
@@ -195,7 +199,7 @@ class NewUploader:
                                                "(not including `_unified.yml`)"))
             return 1
         if not yml_files:
-            self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a .yml file"))
+            self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a `.yml` file"))
             return 1
         return self.file_uploader(yml_files[0])
 
@@ -211,7 +215,7 @@ class NewUploader:
         """
         status_code = 0
         dir_name = os.path.basename(path.rstrip('/'))
-        if dir_name in [INTEGRATIONS_DIR, SCRIPTS_DIR]:
+        if dir_name in UNIFIED_ENTITIES_DIR:
             for entity_folder in glob.glob(f"{path}/*/"):
                 status_code = self.unified_entity_uploader(entity_folder) or status_code
         if dir_name in CONTENT_ENTITIES_DIRS:

@@ -1413,12 +1413,12 @@ def unlock_entity(client: demisto_client, entity_type: FileType, entity_id: str)
         raise ValueError(f"Could not get the XSOAR configurations when trying to unlock {entity_id}, due to {str(e)}")
 
     server_config = ast.literal_eval(system_conf_response[0]).get('sysConf', {})
-    unlock_text = unlock_keys[entity_type]
-    unlocked_entities = server_config.get(unlock_text)
+    unlock_server_key = unlock_keys[entity_type]
+    unlocked_entities = server_config.get(unlock_server_key)
     if unlocked_entities:
-        server_config[unlock_text] = f'{unlocked_entities},{entity_id}'
+        server_config[unlock_server_key] = f'{unlocked_entities},{entity_id}'
     else:
-        server_config[unlock_text] = entity_id
+        server_config[unlock_server_key] = entity_id
 
     data = {
         'data': server_config,

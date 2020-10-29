@@ -10,13 +10,14 @@ from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS,
                                                    INTEGRATIONS_DIR, PACKS_DIR,
                                                    SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, find_type, get_child_directories, get_child_files, get_json,
-    get_parent_directory_name, is_path_of_classifier_directory,
-    is_path_of_dashboard_directory, is_path_of_incident_field_directory,
-    is_path_of_incident_type_directory, is_path_of_integration_directory,
-    is_path_of_layout_directory, is_path_of_playbook_directory,
-    is_path_of_script_directory, is_path_of_test_playbook_directory,
-    is_path_of_widget_directory, print_color, print_error, print_v, get_demisto_version)
+    LOG_COLORS, find_type, get_child_directories, get_child_files,
+    get_demisto_version, get_json, get_parent_directory_name,
+    is_path_of_classifier_directory, is_path_of_dashboard_directory,
+    is_path_of_incident_field_directory, is_path_of_incident_type_directory,
+    is_path_of_integration_directory, is_path_of_layout_directory,
+    is_path_of_playbook_directory, is_path_of_script_directory,
+    is_path_of_test_playbook_directory, is_path_of_widget_directory,
+    print_color, print_error, print_v)
 from demisto_sdk.commands.unify.unifier import Unifier
 from tabulate import tabulate
 

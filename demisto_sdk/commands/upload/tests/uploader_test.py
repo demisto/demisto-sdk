@@ -9,11 +9,12 @@ from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR)
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
 from demisto_sdk.commands.upload.new_uploader import (
-    NewUploader, parse_error_response, print_summary,
+    Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from packaging.version import parse
 
@@ -43,7 +44,7 @@ def demisto_client_configure(mocker):
 
 def test_upload_integration_positive(demisto_client_configure):
     integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
-    integration_pckg_uploader = NewUploader(input=integration_pckg_path, insecure=False, verbose=False)
+    integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
         assert integration_pckg_uploader.upload() == 0
 
@@ -62,11 +63,11 @@ def test_upload_script_positive(demisto_client_configure, mocker):
     """
     script_name = "DummyScriptUnified.yml"
     script_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_name}"
-    uploader = NewUploader(input=script_path, insecure=False, verbose=False)
+    uploader = Uploader(input=script_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(script_name, 'Script')] == uploader.successfully_uploaded_files
+    assert [(script_name, FileType.SCRIPT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_playbook_positive(demisto_client_configure, mocker):
@@ -83,11 +84,11 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     """
     playbook_name = "Cortex_XDR_Incident_Handling.yml"
     playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Playbooks/{playbook_name}"
-    uploader = NewUploader(input=playbook_path, insecure=False, verbose=False)
+    uploader = Uploader(input=playbook_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(playbook_name, 'Playbook')] == uploader.successfully_uploaded_files
+    assert [(playbook_name, FileType.PLAYBOOK.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_widget_positive(demisto_client_configure, mocker):
@@ -104,11 +105,11 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
     """
     widget_name = "widget-ActiveIncidentsByRole.json"
     widget_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/{widget_name}"
-    uploader = NewUploader(input=widget_path, insecure=False, verbose=False)
+    uploader = Uploader(input=widget_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(widget_name, 'Widget')] == uploader.successfully_uploaded_files
+    assert [(widget_name, FileType.WIDGET.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
@@ -125,11 +126,11 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
     """
     dashboard_name = "upload_test_dashboard.json"
     dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/{dashboard_name}"
-    uploader = NewUploader(input=dashboard_path, insecure=False, verbose=False)
+    uploader = Uploader(input=dashboard_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [('upload_test_dashboard.json', 'Dashboard')] == uploader.successfully_uploaded_files
+    assert [('upload_test_dashboard.json', FileType.DASHBOARD.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_layout_positive(demisto_client_configure, mocker):
@@ -146,11 +147,11 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
     """
     layout_name = "layout-details-test_bla-V2.json"
     layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
-    uploader = NewUploader(input=layout_path, insecure=False, verbose=False)
+    uploader = Uploader(input=layout_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(layout_name, 'Layout')] == uploader.successfully_uploaded_files
+    assert [(layout_name, FileType.LAYOUT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_positive(demisto_client_configure, mocker):
@@ -167,11 +168,11 @@ def test_upload_incident_type_positive(demisto_client_configure, mocker):
     """
     incident_type_name = "incidenttype-Hello_World_Alert.json"
     incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
-    uploader = NewUploader(input=incident_type_path, insecure=False, verbose=False)
+    uploader = Uploader(input=incident_type_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(incident_type_name, 'IncidentType')] == uploader.successfully_uploaded_files
+    assert [(incident_type_name, FileType.INCIDENT_TYPE.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_classifier_positive(demisto_client_configure, mocker):
@@ -188,11 +189,11 @@ def test_upload_classifier_positive(demisto_client_configure, mocker):
     """
     classifier_name = "classifier-aws_sns_test_classifier.json"
     classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/{classifier_name}"
-    uploader = NewUploader(input=classifier_path, insecure=False, verbose=False)
+    uploader = Uploader(input=classifier_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(classifier_name, 'OldClassifier')] == uploader.successfully_uploaded_files
+    assert [(classifier_name, FileType.OLD_CLASSIFIER.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_field_positive(demisto_client_configure, mocker):
@@ -209,11 +210,11 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     """
     incident_field_name = "XDR_Alert_Count.json"
     incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
-    uploader = NewUploader(input=incident_field_path, insecure=False, verbose=False)
+    uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
-    assert [(incident_field_name, 'IncidentField')] == uploader.successfully_uploaded_files
+    assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_an_integration_directory(demisto_client_configure, mocker):
@@ -230,13 +231,13 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
     """
     integration_dir_name = "UploadTest"
     integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
-    uploader = NewUploader(input=integration_path, insecure=False, verbose=False)
+    uploader = Uploader(input=integration_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     _, integration_yml_name = get_yml_paths_in_dir(integration_path)
     integration_yml_name = integration_yml_name.split('/')[-1]
 
-    assert [(integration_yml_name, 'Integration')] == uploader.successfully_uploaded_files
+    assert [(integration_yml_name, FileType.INTEGRATION.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_a_script_directory(demisto_client_configure, mocker):
@@ -253,13 +254,13 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
     """
     script_dir_name = "DummyScript"
     scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
-    uploader = NewUploader(input=scripts_path, insecure=False, verbose=False)
+    uploader = Uploader(input=scripts_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
     _, script_yml_name = get_yml_paths_in_dir(scripts_path)
     uploaded_file_name = script_yml_name.split('/')[-1]
 
-    assert [(uploaded_file_name, 'Script')] == uploader.successfully_uploaded_files
+    assert [(uploaded_file_name, FileType.SCRIPT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_fields_directory(demisto_client_configure, mocker):
@@ -278,7 +279,7 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
     mocker.patch("click.secho")
     dir_name = "IncidentFields"
     incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
-    uploader = NewUploader(input=incident_fields_path, insecure=False, verbose=False)
+    uploader = Uploader(input=incident_fields_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     assert uploader.upload() == 0
     assert len(uploader.successfully_uploaded_files) == 3
@@ -298,7 +299,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
-    uploader = NewUploader(input=pack_path, insecure=False, verbose=False)
+    uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
     expected_entities = ['DummyIntegration.yml', 'UploadTest.yml', 'DummyScriptUnified.yml',
@@ -315,7 +316,7 @@ def test_upload_pack(demisto_client_configure, mocker):
 
 def test_upload_invalid_path(demisto_client_configure):
     script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
-    script_dir_uploader = NewUploader(input=script_dir_path, insecure=False, verbose=False)
+    script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
 
 
@@ -331,7 +332,7 @@ def test_file_not_supported(demisto_client_configure, mocker):
         - Ensure uploaded failure message is printed as expected
     """
     file_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
-    uploader = NewUploader(input=file_path, insecure=False, verbose=False)
+    uploader = Uploader(input=file_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     status_code = uploader.upload()
     assert status_code == 1

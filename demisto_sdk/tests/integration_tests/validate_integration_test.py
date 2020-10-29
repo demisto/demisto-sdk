@@ -250,12 +250,12 @@ class TestIntegrationValidation:
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-p", pack_integration_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json"])
 
-        assert result.exit_code == 1
         assert f"Validating {pack_integration_path} as integration" in result.stdout
         assert "The docker image tag is not the latest numeric tag, please update it" in result.stdout
         assert "You can check for the most updated version of demisto/python3 here:" in result.stdout
+        assert result.exit_code == 1
         assert result.stderr == ""
 
     def test_negative__hidden_param(self):
@@ -278,7 +278,7 @@ class TestIntegrationValidation:
         assert "can't be hidden. Please remove this field" in result.stdout
         assert result.stderr == ""
 
-    def test_positive__hidden_param(self):
+    def test_positive_hidden_param(self):
         """
         Given
         - Integration with allowed hidden param: "longRunning".
@@ -357,9 +357,8 @@ class TestPackValidation:
         """
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_INVALID_PACK_PATH])
-        assert result.exit_code == 1
-        assert f'{AZURE_FEED_INVALID_PACK_PATH} was not found' in result.output
-        assert result.stderr == ""
+        assert 'does not exist' in result.stderr
+        assert result.exit_code == 2
 
 
 class TestClassifierValidation:
@@ -381,9 +380,9 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert result.exit_code == 0
         assert f"Validating {classifier.path} as classifier" in result.stdout
         assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
 
     def test_invalid_from_version_in_new_classifiers(self, mocker, repo):
         """
@@ -1813,9 +1812,9 @@ class TestValidationUsingGit:
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', join('Users', 'MyPacks', 'VMware'), '--no-docker-checks',
                                       '--no-conf-json', '--skip-pack-release-notes'], catch_exceptions=False)
-        assert result.exit_code == 1
+        assert result.exit_code == 2
         assert result.exception
-        assert "File Users/MyPacks/VMware was not found" in result.stdout  # check error str is in stdout
+        assert 'does not exist' in result.stderr  # check error str is in stdout
 
     def test_validation_non_content_path_mocked_repo(self, mocker, repo):
         """

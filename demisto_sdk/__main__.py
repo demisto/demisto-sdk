@@ -217,9 +217,10 @@ def unify(**kwargs):
 
 
 # ====================== validate ====================== #
-@main.command(name="validate",
-              short_help='Validate your content files. If no additional flags are given, will validated only '
-                         'committed files')
+@main.command(
+    short_help='Validate your content files. If no additional flags are given, will validated only '
+    'committed files'
+)
 @click.help_option(
     '-h', '--help'
 )
@@ -230,12 +231,10 @@ def unify(**kwargs):
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Validate the id_set file.')
 @click.option(
-    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+    "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
+    type=click.Path(resolve_path=True))
 @click.option(
-    '--post-commit',
-    is_flag=True,
-    help='Whether the validation should run only on the current branch\'s committed changed files. '
-         'This applies only when the -g flag is supplied.')
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
 @click.option(
     '--no-backward-comp', is_flag=True, show_default=True,
     help='Whether to check backward compatibility or not.')
@@ -248,14 +247,23 @@ def unify(**kwargs):
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
          'both committed and not committed. ')
 @click.option(
-    '-p', '--path', help='Path of file to validate specifically, outside of a git directory.', hidden=True
+    '--post-commit',
+    is_flag=True,
+    help='Whether the validation should run only on the current branch\'s committed changed files. '
+         'This applies only when the -g flag is supplied.'
+)
+@click.option(
+    '--staged',
+    is_flag=True,
+    help='Whether the validation should ignore unstaged files.'
+         'This applies only when the -g flag is supplied.'
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not'
 )
 @click.option(
-    '-i', '--input', help='The path of the content pack/file to validate specifically.'
+    '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
@@ -275,39 +283,39 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
-@click.option(
-    "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
-    type=click.Path(resolve_path=True))
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
 
-    file_path = kwargs['path'] or kwargs['input']
-    if file_path and not os.path.isfile(file_path) and not os.path.isdir(file_path):
-        print_error(f'File {file_path} was not found')
-        return 1
-    else:
-        try:
-            is_external_repo = tools.is_external_repository()
-            validator = ValidateManager(is_backward_check=not kwargs['no_backward_comp'],
-                                        only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
-                                        skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
-                                        file_path=file_path,
-                                        validate_all=kwargs.get('validate_all'),
-                                        validate_id_set=kwargs['id_set'],
-                                        skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
-                                        print_ignored_errors=kwargs['print_ignored_errors'],
-                                        is_external_repo=is_external_repo,
-                                        print_ignored_files=kwargs['print_ignored_files'],
-                                        no_docker_checks=kwargs['no_docker_checks'],
-                                        silence_init_prints=kwargs['silence_init_prints'],
-                                        skip_dependencies=kwargs['skip_pack_dependencies'],
-                                        id_set_path=kwargs.get('id_set_path'))
-            return validator.run_validation()
-        except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-            print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
-                        "Please run the command from content directory")
-            sys.exit(1)
+    file_path = kwargs['input']
+
+    if kwargs['post_commit'] and kwargs['staged']:
+        print_error('Could not supply the staged flag with the post-commit flag')
+        sys.exit(1)
+    try:
+        is_external_repo = tools.is_external_repository()
+        validator = ValidateManager(
+            is_backward_check=not kwargs['no_backward_comp'],
+            only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
+            skip_conf_json=kwargs['no_conf_json'], use_git=kwargs['use_git'],
+            file_path=file_path,
+            validate_all=kwargs.get('validate_all'),
+            validate_id_set=kwargs['id_set'],
+            skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
+            print_ignored_errors=kwargs['print_ignored_errors'],
+            is_external_repo=is_external_repo,
+            print_ignored_files=kwargs['print_ignored_files'],
+            no_docker_checks=kwargs['no_docker_checks'],
+            silence_init_prints=kwargs['silence_init_prints'],
+            skip_dependencies=kwargs['skip_pack_dependencies'],
+            id_set_path=kwargs.get('id_set_path'),
+            staged=kwargs['staged']
+        )
+        return validator.run_validation()
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+        print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
+                    "Please run the command from content directory")
+        sys.exit(1)
 
 
 # ====================== create-content-artifacts ====================== #

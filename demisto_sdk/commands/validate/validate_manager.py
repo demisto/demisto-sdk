@@ -861,12 +861,9 @@ class ValidateManager:
 
                 if not self.no_configuration_prints and not self.staged:
                     click.echo("Collecting all local changed files against the content master")
-                if self.staged:
-                    click.echo("Collecting staged files only")
-                    all_changed_files_string = run_command('git diff --name-status --staged master')
-                else:
-                    # only changes against prev_ver (without local changes)
-                    all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
+
+                # only changes against prev_ver (without local changes)
+                all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 

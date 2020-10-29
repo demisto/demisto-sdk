@@ -86,7 +86,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
     Then
         - Ensure the key is deleted from the connection file
     """
-    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_path = f'{tmpdir}canvas-context-connections.json'
     connection_file_content = {
         "canvasContextConnections": [
             {
@@ -117,7 +117,7 @@ def test_update_connection_updates_from_version(tmpdir):
     Then
         - Ensure fromVersion is updated accordingly
     """
-    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_path = f'{tmpdir}canvas-context-connections.json'
     connection_file_content = {
         "canvasContextConnections": [
             {

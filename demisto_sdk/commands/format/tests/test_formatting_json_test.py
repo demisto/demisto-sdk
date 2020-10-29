@@ -20,7 +20,7 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
-    DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
+    CONNECTION_SCHEMA_PATH, DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
     DESTINATION_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_DASHBOARD_COPY,
     DESTINATION_FORMAT_INCIDENTFIELD_COPY,
     DESTINATION_FORMAT_INCIDENTTYPE_COPY,
@@ -100,7 +100,11 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
     }
     with open(connection_file_path, 'w') as file:
         json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(input=connection_file_path, output=connection_file_path)
+    connection_formatter = ConnectionJSONFormat(
+        input=connection_file_path,
+        output=connection_file_path,
+        path=CONNECTION_SCHEMA_PATH,
+    )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:
         formatted_connection = json.load(file)
@@ -132,7 +136,9 @@ def test_update_connection_updates_from_version(tmpdir):
         json.dump(connection_file_content, file)
     connection_formatter = ConnectionJSONFormat(input=connection_file_path,
                                                 output=connection_file_path,
-                                                from_version='6.0.0')
+                                                from_version='6.0.0',
+                                                path=CONNECTION_SCHEMA_PATH,
+                                                )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:
         formatted_connection = json.load(file)

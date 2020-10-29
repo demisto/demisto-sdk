@@ -813,10 +813,12 @@ class ValidateManager:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
-            click.echo("Collecting all committed files")
+            if self.staged:
+                click.echo("Collecting staged files only")
+            else:
+                click.echo("Collecting all committed files")
         if self.staged:
-            click.echo("Collecting staged files only")
-            all_changed_files_string = run_command('git diff --name-status --staged master')
+            all_changed_files_string = run_command(f'git diff --name-status --staged {prev_ver}')
             modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
                 all_changed_files_string, prev_ver
             )

@@ -602,7 +602,7 @@ def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tm
     """Test that script and integration formatter update docker image tag
     """
 
-    auth_token = 'ABCDE12345'
+    auth_token = 'token'
     mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
 
     requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={"detail": "Object not found"},

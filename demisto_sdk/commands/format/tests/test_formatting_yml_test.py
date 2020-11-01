@@ -598,7 +598,8 @@ def test_update_docker_format(tmpdir, mocker):
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
 
 
-def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tmp_path):
+@pytest.mark.parametrize(argnames='docker_image', argvalues=['error:1.0.0.1', 'demisto/error:1.0.0.1'])
+def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tmp_path, docker_image, ):
     """
         Given
             - An yml file.
@@ -621,25 +622,14 @@ def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tm
                                                                                          "results": []},
                       status_code=200)
     integration_yml_file_1 = tmp_path / 'Integration1.yml'
-    integration_obj = {'script': {'dockerimage': 'error:1.0.0.1'}}
+    integration_obj = {'script': {'dockerimage': docker_image}}
     ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
 
     format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
     format_obj.update_docker_image()
     with open(str(integration_yml_file_1)) as f:
         data = yaml.safe_load(f)
-    assert data.get('script', {}).get('dockerimage') == 'error:1.0.0.1'
-
-    # test example script file with invalid docker image : demisto/error
-    integration_yml_file_2 = tmp_path / 'Integration2.yml'
-    integration_obj = {'script': {'dockerimage': 'demisto/error:1.0.0.1'}}
-    ryaml.dump(integration_obj, integration_yml_file_2.open('w'))
-
-    format_obj = ScriptYMLFormat(str(integration_yml_file_2), update_docker=True)
-    format_obj.update_docker_image()
-    with open(str(integration_yml_file_2)) as f:
-        data = yaml.safe_load(f)
-    assert data.get('script', {}).get('dockerimage') == 'demisto/error:1.0.0.1'
+    assert data.get('script', {}).get('dockerimage') == docker_image
 
 
 def test_recursive_extend_schema():

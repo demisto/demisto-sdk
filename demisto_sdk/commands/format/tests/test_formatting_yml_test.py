@@ -599,8 +599,14 @@ def test_update_docker_format(tmpdir, mocker):
 
 
 def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tmp_path):
-    """Test that script and integration formatter update docker image tag
     """
+        Given
+            - An yml file.
+        When
+            - Run format - update docker on the integration
+        Then
+            - Test that script and integration formatter update docker image tag, only if image tag exists
+        """
 
     auth_token = 'token'
     mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)

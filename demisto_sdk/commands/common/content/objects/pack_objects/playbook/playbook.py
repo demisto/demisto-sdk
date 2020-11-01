@@ -25,7 +25,7 @@ class Playbook(YAMLContentObject):
         try:
             return client.import_playbook(file=self.path)
         except Exception as e:
-            if 'Can not override system playbook yaml' in e.body and override:  # type: ignore
+            if ('Can not override system playbook yaml' in e.body or 'already exists' in e.body) and override:  # type: ignore
                 playbook_id = self.__getitem__('id')
                 unlock_entity(client, FileType.PLAYBOOK, playbook_id)
                 return client.import_playbook(file=self.path)

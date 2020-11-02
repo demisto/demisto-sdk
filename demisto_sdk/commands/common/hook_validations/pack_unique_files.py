@@ -288,12 +288,12 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_usecases = set()
         try:
-            with open(os.path.join(os.path.dirname(__file__), '..', 'approved_usecases.json')) as json_file:
-                approved_usecases = json.loads(json_file.read())
+            approved_usecases = tools.get_remote_file('Tests/Marketplace/approved_usecases.json') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
-                if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
+                if self._add_error(
+                        Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
                     return False
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
@@ -308,8 +308,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_tags = set()
         try:
-            with open(os.path.join(os.path.dirname(__file__), '..', 'approved_tags.json')) as json_file:
-                approved_tags = json.loads(json_file.read())
+            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:

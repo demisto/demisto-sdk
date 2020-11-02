@@ -167,8 +167,12 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack metadata validation
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
-        if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
-                                                                   self._is_valid_contributor_pack_support_details()]):
+        if self._is_pack_file_exists(self.pack_meta_file) and all([
+            self._is_pack_meta_file_structure_valid(),
+            self._is_valid_contributor_pack_support_details(),
+            self._is_approved_usecases(),
+            self._is_approved_tags()
+        ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
 
@@ -274,6 +278,46 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
+        return True
+
+    def _is_approved_usecases(self) -> bool:
+        """Checks whether the usecases in the pack metadata are approved
+
+        Return:
+             bool: True if the usecases are approved, otherwise False
+        """
+        non_approved_usecases = set()
+        try:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'approved_usecases.json')) as json_file:
+                approved_usecases = json.loads(json_file.read())
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
+            if non_approved_usecases:
+                if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
+                    return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
+                return False
+        return True
+
+    def _is_approved_tags(self) -> bool:
+        """Checks whether the tags in the pack metadata are approved
+
+        Return:
+             bool: True if the tags are approved, otherwise False
+        """
+        non_approved_tags = set()
+        try:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'approved_tags.json')) as json_file:
+                approved_tags = json.loads(json_file.read())
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
+            if non_approved_tags:
+                if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                    return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                return False
         return True
 
     # pack README.md validation

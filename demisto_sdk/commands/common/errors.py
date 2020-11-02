@@ -150,6 +150,8 @@ ERROR_CODE = {
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
+    "pack_metadata_non_approved_usecases": "PA119",
+    "pack_metadata_non_approved_tags": "PA120",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -933,6 +935,16 @@ class Errors:
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
 
     @staticmethod
     @error_code_decorator

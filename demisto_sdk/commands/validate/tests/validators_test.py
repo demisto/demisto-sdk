@@ -644,7 +644,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=old_format_files,
-                                                                      added_files=added_files) is True
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is True
 
     def test_validate_no_missing_release_notes__missing_rn_in_modified_files(self, repo, mocker):
         """
@@ -667,7 +668,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=set(),
-                                                                      added_files=added_files) is False
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is False
 
     def test_validate_no_missing_release_notes__missing_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
         """
@@ -705,7 +707,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=set(),
-                                                                      added_files=added_files) is False
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is False
 
     def test_validate_no_missing_release_notes__happy_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
         """
@@ -743,7 +746,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=set(),
-                                                                      added_files=added_files) is True
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is True
 
     def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(self, repo, mocker):
         """
@@ -766,7 +770,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
                                                                       old_format_files=old_format_files,
-                                                                      added_files=added_files) is False
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is False
 
     def test_validate_no_missing_release_notes__missing_rn_for_added_file_in_existing_pack(self, repo, mocker):
         """
@@ -784,7 +789,8 @@ class TestValidators:
         added_files = {incident_field1.get_path_from_pack()}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=set(), old_format_files=set(),
-                                                                      added_files=added_files) is False
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is False
 
     def test_validate_no_missing_release_notes__no_missing_rn_new_pack(self, repo, mocker):
         """
@@ -804,7 +810,8 @@ class TestValidators:
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=set(),
                                                                       old_format_files=set(),
-                                                                      added_files=added_files) is True
+                                                                      added_files=added_files,
+                                                                      changed_meta_files=set()) is True
 
     def test_validate_no_old_format__with_toversion(self):
         """

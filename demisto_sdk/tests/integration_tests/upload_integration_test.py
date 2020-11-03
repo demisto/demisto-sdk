@@ -45,24 +45,13 @@ def test_integration_upload_pack_positive(demisto_client):
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
     assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[3][0][0]
-    assert """╒════════════════════════════════════════════╤═══════════════╕
-│ NAME                                       │ TYPE          │
-╞════════════════════════════════════════════╪═══════════════╡
-│ FeedAzure.yml                              │ integration   │
-├────────────────────────────────────────────┼───────────────┤
-│ FeedAzure_test.yml                         │ playbook      │
-├────────────────────────────────────────────┼───────────────┤
-│ just_a_test_script.yml                     │ testscript    │
-├────────────────────────────────────────────┼───────────────┤
-│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │
-├────────────────────────────────────────────┼───────────────┤
-│ script-prefixed_automation.yml             │ testscript    │
-├────────────────────────────────────────────┼───────────────┤
-│ FeedAzure_test.yml                         │ testplaybook  │
-├────────────────────────────────────────────┼───────────────┤
-│ incidentfield-city.json                    │ incidentfield │
-╘════════════════════════════════════════════╧═══════════════╛
-""" in click.secho.call_args_list[4][0][0]
+    assert "│ FeedAzure.yml                              │ integration   │" in click.secho.call_args_list[4][0][0]
+    assert "│ FeedAzure_test.yml                         │ playbook      │" in click.secho.call_args_list[4][0][0]
+    assert "│ just_a_test_script.yml                     │ testscript    │" in click.secho.call_args_list[4][0][0]
+    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │" in click.secho.call_args_list[4][0][0]
+    assert "│ script-prefixed_automation.yml             │ testscript    │" in click.secho.call_args_list[4][0][0]
+    assert "│ FeedAzure_test.yml                         │ testplaybook  │" in click.secho.call_args_list[4][0][0]
+    assert "│ incidentfield-city.json                    │ incidentfield │" in click.secho.call_args_list[4][0][0]
 
     assert not result.stderr
 

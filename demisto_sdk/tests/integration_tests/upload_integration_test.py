@@ -44,7 +44,6 @@ def test_integration_upload_pack_positive(demisto_client):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
-    print(click.secho.call_args_list[4][0][0])
     assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[3][0][0]
     assert """╒════════════════════════════════════════════╤═══════════════╕
 │ NAME                                       │ TYPE          │
@@ -55,9 +54,9 @@ def test_integration_upload_pack_positive(demisto_client):
 ├────────────────────────────────────────────┼───────────────┤
 │ just_a_test_script.yml                     │ testscript    │
 ├────────────────────────────────────────────┼───────────────┤
-│ script-prefixed_automation.yml             │ testscript    │
-├────────────────────────────────────────────┼───────────────┤
 │ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │
+├────────────────────────────────────────────┼───────────────┤
+│ script-prefixed_automation.yml             │ testscript    │
 ├────────────────────────────────────────────┼───────────────┤
 │ FeedAzure_test.yml                         │ testplaybook  │
 ├────────────────────────────────────────────┼───────────────┤

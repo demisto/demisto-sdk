@@ -418,8 +418,8 @@ class ValidateManager:
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files,
-                                                                          old_format_files, added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
+                                                                          added_files, changed_meta_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -715,13 +715,14 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files):
+    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files, changed_meta_files):
         """Validate that there are no missing RN for changed files
 
         Args:
             modified_files (set): a set of modified files.
             old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
+            changed_meta_files (set): a set of modified metadata files.
 
         Returns:
             bool. True if no missing RN found, False otherwise
@@ -729,7 +730,7 @@ class ValidateManager:
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
-        changed_files = modified_files.union(old_format_files).union(added_files)
+        changed_files = modified_files.union(old_format_files).union(added_files).union(changed_meta_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,

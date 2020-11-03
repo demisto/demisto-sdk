@@ -89,15 +89,16 @@ class UpdateRN:
             changed_files = {}
             self.find_added_pack_files()
             is_docker_image_changed = False
-            for packfile in self.modified_files_in_pack:
-                file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == 'Integration':
-                    is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
-                changed_files[file_name] = {
-                    'type': file_type,
-                    'description': get_file_description(packfile, file_type),
-                    'is_new_file': True if packfile in self.added_files else False
-                }
+            if not self.pack_metadata_only:
+                for packfile in self.modified_files_in_pack:
+                    file_name, file_type = self.identify_changed_file_type(packfile)
+                    if 'yml' in packfile and file_type == 'Integration':
+                        is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
+                    changed_files[file_name] = {
+                        'type': file_type,
+                        'description': get_file_description(packfile, file_type),
+                        'is_new_file': True if packfile in self.added_files else False
+                    }
 
             rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
@@ -107,13 +108,18 @@ class UpdateRN:
                 if is_docker_image_changed:
                     self.update_markdown(rn_path, f'- Upgraded the Docker image to {docker_image_name}.')
                 if self.existing_rn_changed:
-                    print_color(f"Finished updating release notes for {self.pack}."
-                                f"\nNext Steps:\n - Please review the "
-                                f"created release notes found at {rn_path} and document any changes you "
-                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
-                                f"the new release notes to your branch.\nFor information regarding proper"
-                                f" format of the release notes, please refer to "
-                                f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                    if not self.pack_metadata_only:
+                        print_color(f"Finished updating release notes for {self.pack}."
+                                    f"\nNext Steps:\n - Please review the "
+                                    f"created release notes found at {rn_path} and document any changes you "
+                                    f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                                    f"the new release notes to your branch.\nFor information regarding proper"
+                                    f" format of the release notes, please refer to "
+                                    f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                    else:
+                        print_color(f"Finished updating release notes for {self.pack}."
+                                    f"\nNext Steps:\n - Commit "
+                                    f"the new release notes to your branch", LOG_COLORS.GREEN)
                 else:
                     print_color("No changes to pack files were detected from the previous time "
                                 "this command was run. The release notes have not been "

@@ -901,7 +901,7 @@ def update_pack_releasenotes(**kwargs):
             print_warning('No changes were detected. If changes were made, please commit the changes '
                           'and rerun the command')
         else:
-            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, modified_files_in_pack=set(),
+            update_pack_rn = UpdateRN(pack_path=_pack, update_type=update_type, modified_files_in_pack=changed_meta_files,
                                       pre_release=pre_release, added_files=set(),
                                       specific_version=specific_version, pack_metadata_only=True, text=text)
             update_pack_rn.execute_update()

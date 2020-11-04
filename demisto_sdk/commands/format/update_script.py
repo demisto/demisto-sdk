@@ -56,7 +56,7 @@ class ScriptYMLFormat(BaseUpdateYML):
         if full_name != dockerimage:
             print(f'Updating docker image to: {full_name}')
             script_obj['dockerimage'] = full_name
-            if (not from_version) or server_version_compare('5.0.0', from_version):
+            if (not from_version) or server_version_compare('5.0.0', from_version) > 0:
                 # if this is a script that supports 4.5 and earlier. Make sure dockerimage45 is set
                 if not script_obj.get('dockerimage45'):
                     print(f'Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support')

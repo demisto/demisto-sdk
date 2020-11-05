@@ -192,6 +192,43 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
     return details
 
 
+def filter_files_changes_on_pack(pack: str, modified_files=str(), added_files=str(), old_files=str(),
+                                 changed_meta_files=str()):
+    """
+    filter_files_changes_on_pack.
+
+    :param modified_files: list of modified files
+    :param added_files: list of new files
+    :param old_files: list of old files
+    :param changed_meta_files: list of changed on metadata files
+
+    :param pack: pack to filter
+
+    :return: tuple of updated lists: (pack_modified_files, pack_added_files, pack_old_files, pack_changed_meta_file)
+    """
+    pack_modified_files = set()
+    for modify in modified_files:
+        if get_pack_name(modify) == pack:
+            pack_modified_files.add(modify)
+
+    pack_added_files = set()
+    for added in added_files:
+        if get_pack_name(added) == pack:
+            pack_added_files.add(added)
+
+    pack_old_files = set()
+    for old in old_files:
+        if get_pack_name(old) == pack:
+            pack_old_files.add(old)
+
+    pack_changed_meta_file = set()
+    for meta in changed_meta_files:
+        if get_pack_name(meta) == pack:
+            pack_changed_meta_file.add(meta)
+
+    return pack_modified_files, pack_added_files, pack_old_files, pack_changed_meta_file
+
+
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
     Mark scripts/integrations that were removed and added as modifiied.
@@ -649,6 +686,23 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
                 packs.add(pack)
 
     return packs
+
+
+def filter_files_by_type(file_paths=None, skip_file_types=None):
+
+    if file_paths is None:
+        file_paths = set()
+    files = set()
+    for path in file_paths:
+        # renamed files are in a tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+
+        file_type = find_type(path)
+        if file_type not in skip_file_types and is_file_path_in_pack(path):
+            files.add(path)
+
+    return files
 
 
 def pack_name_to_path(pack_name):

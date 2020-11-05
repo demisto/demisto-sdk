@@ -823,7 +823,8 @@ class ValidateManager:
             modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
                 all_changed_files_string, prev_ver
             )
-            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files))
+            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files)).union(
+                self.get_packs(added_files_list)).union(self.get_packs(changed_meta_files))
             return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
@@ -887,7 +888,8 @@ class ValidateManager:
             added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
+        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
+            self.get_packs(added_files)).union(self.get_packs(changed_meta_files))
         return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):

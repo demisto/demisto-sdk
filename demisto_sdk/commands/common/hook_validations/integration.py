@@ -351,15 +351,15 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_beta(self):
         # type: () -> bool
         """Validate that that beta integration has correct beta attributes"""
-
+        valid_status = True
         if not all([self._is_display_contains_beta(), self._has_beta_param()]):
             self.is_valid = False
-            return False
-        if self.old_file:
+            valid_status = False
+        if not self.old_file:
             if not all([self._id_has_no_beta_substring(), self._name_has_no_beta_substring()]):
                 self.is_valid = False
-                return False
-        return True
+                valid_status = False
+        return valid_status
 
     def _id_has_no_beta_substring(self):
         # type: () -> bool

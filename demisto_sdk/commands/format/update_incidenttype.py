@@ -40,7 +40,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
         except Exception:
             return ERROR_RETURN_CODE, None
 
-    def format_file(self) -> Tuple[int, int, Optional[Dict]]:
+    def format_file(self) -> Tuple[int, int, Optional[Dict[str, str]]]:
         """Manager function for the incident type JSON updater."""
         format_res, content_entity_ids_to_update = self.run_format()
         if format_res:

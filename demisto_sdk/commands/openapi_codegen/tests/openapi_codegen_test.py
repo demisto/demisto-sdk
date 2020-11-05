@@ -178,7 +178,7 @@ class TestOpenAPICodeGen:
            - Ensure the headers are generated correctly
         """
         integration = self.init_integration()
-        command = [c for c in integration.configuration['commands'] if c['name'] == 'upload-file'][0]
+        command = [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
 
         expected_headers = [{'Content-Type': 'multipart/form-data'}]
 

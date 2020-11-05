@@ -1032,7 +1032,6 @@ class OpenAPIIntegration:
         params_string = base.replace(base_string, ', '.join(modified_params))
         return params_string
 
-    # @staticmethod
     def change_name_duplications(self, functions):
         """
         Find duplicates command names and update the names according to path

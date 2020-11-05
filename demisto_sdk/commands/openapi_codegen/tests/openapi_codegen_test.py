@@ -183,3 +183,21 @@ class TestOpenAPICodeGen:
         expected_headers = [{'Content-Type': 'multipart/form-data'}]
 
         assert expected_headers == command['headers']
+
+    def test_change_name_duplications(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+           - Generated commands from the configuration file (added command with same summary but different path)
+        When
+           - Generating functions name.
+        Then
+           - Ensure that the names of given functions generated correctly.
+        """
+
+        integration = self.init_integration()
+        assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
+        assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image-uploadimage'][0]

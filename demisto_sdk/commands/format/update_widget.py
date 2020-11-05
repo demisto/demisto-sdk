@@ -37,10 +37,10 @@ class WidgetJSONFormat(BaseUpdateJSON):
         except Exception:
             return ERROR_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int]:
+    def format_file(self) -> Tuple[int, int, None]:
         """Manager function for the widget JSON updater."""
-        format = self.run_format()
-        return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_RETURN_CODE, None
 
     def set_isPredefined(self):
         """

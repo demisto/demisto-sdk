@@ -42,13 +42,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
 
-    def format_file(self) -> Tuple[int, int]:
+    def format_file(self) -> Tuple[int, int, None]:
         """Manager function for the Layout JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE, None
         else:
-            return format, self.initiate_file_validator(LayoutValidator)
+            return format_res, self.initiate_file_validator(LayoutValidator), None
 
     def run_format(self) -> int:
         try:

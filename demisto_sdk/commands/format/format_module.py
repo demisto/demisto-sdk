@@ -95,7 +95,7 @@ def format_manager(input: str = None,
                         "Only file path can be a output path.  Please specify a correct output.")
 
     log_list = []
-    error_list = []
+    error_list: List[Tuple[int, int]] = []
     if files:
         content_entity_ids_to_update = {}
         format_excluded_file = excluded_files + ['pack_metadata.json']
@@ -122,8 +122,6 @@ def format_manager(input: str = None,
                     update_docker=update_docker,
                     assume_yes=assume_yes
                 )
-                if err_res:
-                    error_list.append("err_res")
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

@@ -38,10 +38,10 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         except Exception:
             return ERROR_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int]:
+    def format_file(self) -> Tuple[int, int, None]:
         """Manager function for the incident fields JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE, None
         else:
-            return format, self.initiate_file_validator(IncidentFieldValidator)
+            return format_res, self.initiate_file_validator(IncidentFieldValidator), None

@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_release_notes_file_path,
                                                get_ryaml,
                                                has_remote_configured,
-                                               is_origin_content_repo,
+                                               is_origin_content_repo, is_uuid,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
@@ -561,3 +561,29 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
     ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
     assert len(ignore_test_set) == 0
+
+
+@pytest.mark.parametrize('s, is_valid_uuid', [
+    ('', False),
+    ('ffc9fbb0-1a73-448c-89a8-fe979e0f0c3e', True),
+    ('somestring', False)
+])
+def test_is_uuid(s, is_valid_uuid):
+    """
+    Given:
+        - Case A: Empty string
+        - Case B: Valid UUID
+        - Case C: Invalid UUID
+
+    When:
+        - Checking if the string is a valid UUID
+
+    Then:
+        - Case A: False as it is an empty string
+        - Case B: True as it is a valid UUID
+        - Case C: False as it is a string which is not a valid UUID
+    """
+    if is_valid_uuid:
+        assert is_uuid(s)
+    else:
+        assert not is_uuid(s)

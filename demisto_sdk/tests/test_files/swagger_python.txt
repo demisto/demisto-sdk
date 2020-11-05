@@ -159,6 +159,28 @@ class Client(BaseClient):
         return response
 
 
+    def post_pet_upload_image_request(self, petId, additionalMetadata, file):
+        data = assign_params(additionalMetadata=additionalMetadata, file=file)
+
+        headers = self._headers
+        headers['Content-Type'] = 'multipart/form-data'
+
+        response = self._http_request('post', f'pet/{petId}/uploadImage', json_data=data, headers=headers)
+
+        return response
+
+
+    def post_pet_upload_image_uploadimage_request(self, petId, additionalMetadata, file):
+        data = assign_params(additionalMetadata=additionalMetadata, file=file)
+
+        headers = self._headers
+        headers['Content-Type'] = 'multipart/form-data'
+
+        response = self._http_request('post', f'pet/{petId}/uploadImage/{uploadimage}', json_data=data, headers=headers)
+
+        return response
+
+
     def update_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
         data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
 
@@ -186,17 +208,6 @@ class Client(BaseClient):
         headers = self._headers
 
         response = self._http_request('put', f'user/{username}', json_data=data, headers=headers)
-
-        return response
-
-
-    def upload_file_request(self, petId, additionalMetadata, file):
-        data = assign_params(additionalMetadata=additionalMetadata, file=file)
-
-        headers = self._headers
-        headers['Content-Type'] = 'multipart/form-data'
-
-        response = self._http_request('post', f'pet/{petId}/uploadImage', json_data=data, headers=headers)
 
         return response
 
@@ -460,6 +471,38 @@ def place_order_command(client, args):
     return command_results
 
 
+def post_pet_upload_image_command(client, args):
+    petId = args.get('petId', None)
+    additionalMetadata = str(args.get('additionalMetadata', ''))
+    file = str(args.get('file', ''))
+
+    response = client.post_pet_upload_image_request(petId, additionalMetadata, file)
+    command_results = CommandResults(
+        outputs_prefix='TestSwagger.ApiResponse',
+        outputs_key_field='',
+        outputs=response,
+        raw_response=response
+    )
+
+    return command_results
+
+
+def post_pet_upload_image_uploadimage_command(client, args):
+    petId = args.get('petId', None)
+    additionalMetadata = str(args.get('additionalMetadata', ''))
+    file = str(args.get('file', ''))
+
+    response = client.post_pet_upload_image_uploadimage_request(petId, additionalMetadata, file)
+    command_results = CommandResults(
+        outputs_prefix='TestSwagger.ApiResponse',
+        outputs_key_field='',
+        outputs=response,
+        raw_response=response
+    )
+
+    return command_results
+
+
 def update_pet_command(client, args):
     pet_id = args.get('pet_id', None)
     pet_category_id = args.get('pet_category_id', None)
@@ -519,22 +562,6 @@ def update_user_command(client, args):
     return command_results
 
 
-def upload_file_command(client, args):
-    petId = args.get('petId', None)
-    additionalMetadata = str(args.get('additionalMetadata', ''))
-    file = str(args.get('file', ''))
-
-    response = client.upload_file_request(petId, additionalMetadata, file)
-    command_results = CommandResults(
-        outputs_prefix='TestSwagger.ApiResponse',
-        outputs_key_field='',
-        outputs=response,
-        raw_response=response
-    )
-
-    return command_results
-
-
 def test_module(client):
     # Test functions here
     demisto.results('ok')
@@ -573,10 +600,11 @@ def main():
 			'testswagger-login-user': login_user_command,
 			'testswagger-logout-user': logout_user_command,
 			'testswagger-place-order': place_order_command,
+			'testswagger-post-pet-upload-image': post_pet_upload_image_command,
+			'testswagger-post-pet-upload-image-uploadimage': post_pet_upload_image_uploadimage_command,
 			'testswagger-update-pet': update_pet_command,
 			'testswagger-update-pet-with-form': update_pet_with_form_command,
 			'testswagger-update-user': update_user_command,
-			'testswagger-upload-file': upload_file_command,
         }
 
         if command == 'test-module':

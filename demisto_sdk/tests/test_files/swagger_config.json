@@ -908,6 +908,138 @@
             "unique_key": "id"
         },
         {
+            "name": "post-pet-upload-image",
+            "path": "pet/{petId}/uploadImage",
+            "method": "post",
+            "description": "uploads an image",
+            "arguments": [
+                {
+                    "name": "petId",
+                    "description": "ID of pet to update",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "additionalMetadata",
+                    "description": "Additional data to pass to server",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "file",
+                    "description": "file to upload",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "file",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "code",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "type",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "message",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "context_path": "ApiResponse",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "multipart/form-data"
+                }
+            ],
+            "unique_key": ""
+        },
+        {
+            "name": "post-pet-upload-image-uploadimage",
+            "path": "pet/{petId}/uploadImage/{uploadimage}",
+            "method": "post",
+            "description": "uploads an image",
+            "arguments": [
+                {
+                    "name": "petId",
+                    "description": "ID of pet to update",
+                    "required": true,
+                    "default": "",
+                    "in": "path",
+                    "ref": "",
+                    "type": "integer",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "additionalMetadata",
+                    "description": "Additional data to pass to server",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
+                    "name": "file",
+                    "description": "file to upload",
+                    "required": false,
+                    "default": "",
+                    "in": "formData",
+                    "ref": "",
+                    "type": "file",
+                    "options": null,
+                    "properties": {}
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "code",
+                    "description": "",
+                    "type": "Number"
+                },
+                {
+                    "name": "type",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "message",
+                    "description": "",
+                    "type": "String"
+                }
+            ],
+            "context_path": "ApiResponse",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "multipart/form-data"
+                }
+            ],
+            "unique_key": ""
+        },
+        {
             "name": "update-pet",
             "path": "pet",
             "method": "put",
@@ -1164,75 +1296,9 @@
             "root_object": "",
             "headers": [],
             "unique_key": ""
-        },
-        {
-            "name": "upload-file",
-            "path": "pet/{petId}/uploadImage",
-            "method": "post",
-            "description": "uploads an image",
-            "arguments": [
-                {
-                    "name": "petId",
-                    "description": "ID of pet to update",
-                    "required": true,
-                    "default": "",
-                    "in": "path",
-                    "ref": "",
-                    "type": "integer",
-                    "options": null,
-                    "properties": {}
-                },
-                {
-                    "name": "additionalMetadata",
-                    "description": "Additional data to pass to server",
-                    "required": false,
-                    "default": "",
-                    "in": "formData",
-                    "ref": "",
-                    "type": "string",
-                    "options": null,
-                    "properties": {}
-                },
-                {
-                    "name": "file",
-                    "description": "file to upload",
-                    "required": false,
-                    "default": "",
-                    "in": "formData",
-                    "ref": "",
-                    "type": "file",
-                    "options": null,
-                    "properties": {}
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "code",
-                    "description": "",
-                    "type": "Number"
-                },
-                {
-                    "name": "type",
-                    "description": "",
-                    "type": "String"
-                },
-                {
-                    "name": "message",
-                    "description": "",
-                    "type": "String"
-                }
-            ],
-            "context_path": "ApiResponse",
-            "root_object": "",
-            "headers": [
-                {
-                    "Content-Type": "multipart/form-data"
-                }
-            ],
-            "unique_key": ""
         }
     ],
     "code_type": "python",
     "code_subtype": "python3",
-    "docker_image": "demisto/python3:3.8.3.9324"
+    "docker_image": "demisto/python3:3.8.6.12176"
 }

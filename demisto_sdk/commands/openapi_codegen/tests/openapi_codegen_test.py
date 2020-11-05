@@ -60,7 +60,7 @@ class TestOpenAPICodeGen:
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
 
-        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
+        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         integration = self.init_integration()
         integration.generate_configuration()
@@ -87,7 +87,7 @@ class TestOpenAPICodeGen:
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
 
-        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
+        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
         integration = self.init_integration()
 
         with open(os.path.join(self.test_files_path, 'swagger_yaml.yml'), 'rb') as yaml_file:

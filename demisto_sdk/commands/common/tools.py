@@ -11,7 +11,8 @@ from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import (Any, Callable, Dict, List, Match, Optional, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -29,7 +30,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -1374,3 +1375,15 @@ def camel_to_snake(camel: str) -> str:
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)

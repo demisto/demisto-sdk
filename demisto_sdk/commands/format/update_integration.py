@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
@@ -124,10 +124,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
         if self.update_docker:
             ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.data.get(self.from_version_key))
 
-    def run_format(self) -> int:
+    def run_format(self) -> Tuple[int, Optional[Dict[str, str]]]:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            super().update_yml()
+            content_entity_ids_to_update = super().update_yml()
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
@@ -136,14 +136,14 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.set_feed_params_in_config()
             self.update_docker_image()
             self.save_yml_to_destination_file()
-            return SUCCESS_RETURN_CODE
+            return SUCCESS_RETURN_CODE, content_entity_ids_to_update
         except Exception:
-            return ERROR_RETURN_CODE
+            return ERROR_RETURN_CODE, None
 
-    def format_file(self) -> Tuple[int, int]:
+    def format_file(self) -> Tuple[int, int, Optional[Dict[str, str]]]:
         """Manager function for the integration YML updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res, content_entity_ids_to_update = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
         else:
-            return format, self.initiate_file_validator(IntegrationValidator)
+            return format_res, self.initiate_file_validator(IntegrationValidator), None

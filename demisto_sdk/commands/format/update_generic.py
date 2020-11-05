@@ -273,7 +273,7 @@ class BaseUpdate:
         if self.data.get('display'):
             self.data['display'] = self.data.get('display', '').replace('_copy', '').replace('_dev', '')
 
-    def initiate_file_validator(self, validator_type):
+    def initiate_file_validator(self, validator_type) -> int:
         """ Run schema validate and file validate of file
         Returns:
             int 0 in case of success

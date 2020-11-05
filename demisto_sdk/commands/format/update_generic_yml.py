@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml)
+                                               get_yaml, is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -63,14 +63,18 @@ class BaseUpdateYML(BaseUpdate):
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.data.get(path, self.data)
 
-    def update_id_to_equal_name(self):
+    def update_id_to_equal_name(self) -> Dict[str, str]:
         """Updates the id of the YML to be the same as it's name
             Only relevant for new files.
         """
+        updated_integration_id_dict = {}
         if not self.old_file:
             if self.verbose:
                 click.echo('Updating YML ID to be the same as YML name')
+            if is_uuid(self.id_and_version_location['id']):
+                updated_integration_id_dict[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
+        return updated_integration_id_dict
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
@@ -86,15 +90,16 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self):
+    def update_yml(self) -> Dict[str, str]:
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
-        self.update_id_to_equal_name()
+        content_entity_id_to_update = self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
+        return content_entity_id_to_update
 
     def update_tests(self) -> None:
         """

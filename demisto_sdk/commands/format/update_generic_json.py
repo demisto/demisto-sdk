@@ -1,9 +1,10 @@
 from distutils.version import LooseVersion
+from typing import Dict, Optional
 
 import click
 import ujson
 import yaml
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -79,12 +80,15 @@ class BaseUpdateJSON(BaseUpdate):
                     not schema_data.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
-    def update_id(self, field='name'):
+    def update_id(self, field='name') -> Optional[Dict[str, str]]:
         """Updates the id to be the same as the provided field ."""
-
+        updated_integration_id_dict = {}
         if self.verbose:
             click.echo('Updating ID')
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
-            return
+            return None
+        if is_uuid(self.data['id']):
+            updated_integration_id_dict[self.data['id']] = self.data[field]
         self.data['id'] = self.data[field]
+        return updated_integration_id_dict

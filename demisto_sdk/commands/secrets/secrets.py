@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, FileType, re)
+    PACKS_WHITELIST_FILE_NAME, UUID_REGEX, FileType, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -54,8 +54,6 @@ IPV6_REGEX = r'(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(
              r'(?:(?:[0-9A-Fa-f]{1,4}:){,6}[0-9A-Fa-f]{1,4})?::)'
 IPV4_REGEX = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
 DATES_REGEX = r'((\d{4}[/.-]\d{2}[/.-]\d{2})[T\s](\d{2}:?\d{2}:?\d{2}:?(\.\d{5,10})?([+-]\d{2}:?\d{2})?Z?)?)'
-# false positives
-UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 # find any substring
 WHILEIST_REGEX = r'\S*{}\S*'
 
@@ -292,7 +290,7 @@ class SecretsValidator(object):
         dates = re.findall(DATES_REGEX, line)
         if dates:
             false_positives += [date[0].lower() for date in dates]
-        # UUID REGEX
+        # UUID REGEX - for false positives
         uuids = re.findall(UUID_REGEX, line)
         if uuids:
             false_positives += uuids

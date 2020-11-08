@@ -544,3 +544,53 @@ def test_format_commonserver_skipped_files(repo):
     commonserver_excluded_files.remove('CommonServerPython.py')
     for excluded_file in commonserver_excluded_files:
         assert excluded_file not in format_result.stdout
+
+
+def test_format_incident_type_layout_id(repo):
+    """
+    Given:
+        - Content pack with incident type and layout
+        - Layout with ID which is a UUID string
+        - Incident type which is linked to the above layout
+
+    When:
+        - Running format on the content pack
+
+    Then:
+        - Verify layout ID is updated
+        - Verify the updated layout ID is also updated in the incident type
+    """
+    pack = repo.create_pack('PackName')
+    layout = pack.create_layoutcontainer(
+        name='layout',
+        content={
+            'id': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'name': 'IncidentLayout',
+            'group': 'incident',
+            'detailsV2': {"tabs": []}
+        }
+    )
+    incident_type = pack.create_incident_type(
+        name='incidentype',
+        content={
+            'layout': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'color': ''
+        }
+    )
+
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+
+    assert format_result.exit_code == 0
+    assert 'Success' in format_result.stdout
+    assert f'======= Updating file: {pack.path}' in format_result.stdout
+    assert f'======= Updating file: {layout.path}' in format_result.stdout
+    assert f'======= Updating file: {incident_type.path}' in format_result.stdout
+
+    with open(layout.path) as layout_file:
+        layout_content = json.loads(layout_file.read())
+        assert layout_content['name'] == layout_content['id']
+
+    with open(incident_type.path) as incident_type_file:
+        incident_type_content = json.loads(incident_type_file.read())
+        assert incident_type_content['layout'] == 'IncidentLayout'

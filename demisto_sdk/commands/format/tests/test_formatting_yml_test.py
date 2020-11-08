@@ -111,7 +111,7 @@ def test_proxy_ssl_descriptions(source_path, argument_name, argument_description
 INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
     (SOURCE_FORMAT_INTEGRATION_COPY, 'integration', 'url', [
         ('default', True),
-        ('isArray', True),
+        ('isArray', False),
         ('required', True)
     ]),
     (SOURCE_FORMAT_INTEGRATION_COPY, 'integration', 'email', [

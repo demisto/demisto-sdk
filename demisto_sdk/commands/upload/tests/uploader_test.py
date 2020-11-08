@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
-from demisto_sdk.commands.upload.new_uploader import (
+from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from packaging.version import parse
@@ -34,7 +34,7 @@ if not hasattr(inspect, '_orig_findsource'):
 @pytest.fixture
 def demisto_client_configure(mocker):
     mocker.patch.object(demisto_client, 'configure', return_value="object")
-    mocker.patch("demisto_sdk.commands.upload.new_uploader.get_demisto_version", return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=parse('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
                  return_value=parse('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",

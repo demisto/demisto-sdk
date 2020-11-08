@@ -48,7 +48,7 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
-from demisto_sdk.commands.upload.new_uploader import Uploader
+from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -485,7 +485,7 @@ def format_yml(**kwargs):
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
-@click.option("-o", "--override", help="Whether to upload a locked integration/script.", is_flag=True, hidden=True)
+@click.option("--override", help="Whether to upload a locked integration/script.", is_flag=True, hidden=True)
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()

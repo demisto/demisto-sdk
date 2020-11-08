@@ -14,10 +14,10 @@ DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 @pytest.fixture
 def demisto_client(mocker):
     mocker.patch(
-        "demisto_sdk.commands.upload.new_uploader.demisto_client",
+        "demisto_sdk.commands.upload.uploader.demisto_client",
         return_valure="object"
     )
-    mocker.patch("demisto_sdk.commands.upload.new_uploader.get_demisto_version", return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=parse('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
                  return_value=parse('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",

@@ -51,4 +51,4 @@ class DashboardJSONFormat(BaseUpdateJSON):
         if format_res:
             return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
         else:
-            return format_res, self.initiate_file_validator(DashboardValidator), None
+            return format_res, self.initiate_file_validator(DashboardValidator), content_entity_ids_to_update

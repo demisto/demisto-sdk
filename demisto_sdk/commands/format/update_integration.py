@@ -146,4 +146,4 @@ class IntegrationYMLFormat(BaseUpdateYML):
         if format_res:
             return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
         else:
-            return format_res, self.initiate_file_validator(IntegrationValidator), None
+            return format_res, self.initiate_file_validator(IntegrationValidator), content_entity_ids_to_update

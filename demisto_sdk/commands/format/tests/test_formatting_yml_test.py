@@ -609,6 +609,41 @@ class TestFormatting:
         assert data['script']['dockerimage'].endswith(f':{test_tag}')
         assert not data['script'].get('dockerimage45')
 
+    @pytest.mark.parametrize(argnames='docker_image', argvalues=['error:1.0.0.1', 'demisto/error:1.0.0.1'])
+    def test_update_docker_format_with_invalid_dockerimage(self, requests_mock, mocker, tmp_path, docker_image, ):
+        """
+            Given
+                - An integration yml file.
+            When
+                - Run format on the integration
+            Then
+                - Ensure format runs successfully
+                - Verify the docker image is not modified
+            """
+
+        auth_token = 'token'
+        mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
+
+        requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={"detail": "Object not found"},
+                          status_code=404)
+        requests_mock.get('https://registry-1.docker.io/v2/error/tags/list', json={'error': 'not found'},
+                          status_code=401)
+        requests_mock.get('https://hub.docker.com/v2/repositories/demisto/error/tags', json={"count": 0,
+                                                                                             "next": 'null',
+                                                                                             "previous": 'null',
+                                                                                             "results": []},
+                          status_code=200)
+        integration_yml_file_1 = tmp_path / 'Integration1.yml'
+        integration_obj = {'dockerimage': docker_image,
+                           'fromversion': '5.0.0'}
+        ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
+
+        format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
+        format_obj.update_docker_image()
+        with open(str(integration_yml_file_1)) as f:
+            data = yaml.safe_load(f)
+        assert data.get('dockerimage') == docker_image
+
     def test_recursive_extend_schema(self):
         """
             Given

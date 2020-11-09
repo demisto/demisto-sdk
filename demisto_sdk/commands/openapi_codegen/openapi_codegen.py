@@ -1045,7 +1045,7 @@ class OpenAPIIntegration:
                 path = func.get('path')
                 method = func.get('method')
                 # getting the last curly brackets is exists and keeping its value
-                function_path = re.sub(r'{([\w]*)\}$', r'\g<1>', path)
+                function_path = re.sub(r'{([\w]*)\}$', r'by/\g<1>', path)
                 # Remove the rest curly brackets from the path.
                 path_name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in function_path.split('/')])
                 name = func.get('name')

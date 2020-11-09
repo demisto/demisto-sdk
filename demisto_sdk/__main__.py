@@ -1,7 +1,6 @@
 # Site packages
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -59,28 +58,6 @@ class DemistoSDK:
 
     def __init__(self):
         self.configuration = None
-
-
-class RNInputValidation(click.ParamType):
-    name = 'update_type'
-
-    def validate_rn_input(self, value, param, ctx):
-        if value:
-            if re.match(r'(?i)(?<=|^)major(?= |$)', value):
-                update_type = 'major'
-            elif re.match(r'(?i)(?<=|^)minor(?= |$)', value):
-                update_type = 'minor'
-            elif re.match(r'(?i)(?<=|^)revision(?= |$)', value):
-                update_type = 'revision'
-            else:
-                self.fail(
-                    f'{value} is not a valid option. Please select: major, minor, revision',
-                    param,
-                    ctx,
-                )
-        else:
-            update_type = None
-        return update_type
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -837,7 +814,7 @@ def id_set_command(**kwargs):
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=RNInputValidation()
+    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version."

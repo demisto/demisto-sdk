@@ -1042,13 +1042,13 @@ class OpenAPIIntegration:
         duplicate_names = [n for n in duplicate_names if duplicate_names.count(n) > 1]
         if duplicate_names:
             for func in functions:
-                path = func.get('path')
-                method = func.get('method')
-                # getting the last curly brackets is exists and keeping its value
-                function_path = re.sub(r'{([\w]*)\}$', r'by/\g<1>', path)
-                # Remove the rest curly brackets from the path.
-                path_name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in function_path.split('/')])
                 name = func.get('name')
                 if name in duplicate_names:
+                    path = func.get('path')
+                    method = func.get('method')
+                    # getting the last curly brackets is exists and keeping its value
+                    function_path = re.sub(r'{([\w]*)\}$', r'by/\g<1>', path)
+                    # Remove the rest curly brackets from the path.
+                    path_name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in function_path.split('/')])
                     name = self.clean_function_name(path_name)
                     func['name'] = f'{method}_{name}'

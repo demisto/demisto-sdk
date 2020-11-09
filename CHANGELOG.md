@@ -10,6 +10,7 @@
 * Added the **--staged** flag to **validate** command to run on staged files only.
 
 
+
 # 1.2.7
 * Changed input parameters in **find-dependencies** command.
    - Use ***-i, --input*** instead of ***-p, --path***.

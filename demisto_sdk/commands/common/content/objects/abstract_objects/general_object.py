@@ -27,7 +27,6 @@ class GeneralObject(object):
     def path(self) -> Path:
         return self._path
 
-
     @abstractmethod
     def _unserialize(self):
         """Implementation for unserializing object - JSON/YAML/TEXT"""

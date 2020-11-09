@@ -1,6 +1,6 @@
-import demisto_client
 from typing import Union
 
+import demisto_client
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
@@ -13,6 +13,7 @@ class Layout(JSONContentObject):
 
     def upload(self, client: demisto_client):
         return client.import_layout(file=self.path)
+
 
 class LayoutsContainer(JSONContentObject):
     def __init__(self, path: Union[Path, str]):

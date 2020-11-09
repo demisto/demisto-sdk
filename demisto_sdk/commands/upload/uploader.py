@@ -64,7 +64,7 @@ class Uploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, override: bool = False):
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
         self.client = demisto_client.configure(verify_ssl=not insecure)
@@ -72,7 +72,6 @@ class Uploader:
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
-        self.override = override
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -142,7 +141,7 @@ class Uploader:
                 try:
                     if entity_type in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK,
                                        FileType.TEST_PLAYBOOK]:
-                        result = upload_object.upload(self.client, override=self.override)  # type: ignore
+                        result = upload_object.upload(self.client)  # type: ignore
                     else:
                         result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:

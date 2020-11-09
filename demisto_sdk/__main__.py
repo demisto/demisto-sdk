@@ -485,7 +485,6 @@ def format_yml(**kwargs):
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
-@click.option("--override", help="Whether to upload a locked integration/script.", is_flag=True, hidden=True)
 def upload(**kwargs):
     uploader = Uploader(**kwargs)
     return uploader.upload()

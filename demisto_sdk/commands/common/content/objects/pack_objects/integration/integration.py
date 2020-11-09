@@ -5,8 +5,7 @@ import demisto_client
 from demisto_sdk.commands.common.constants import INTEGRATION, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
-from demisto_sdk.commands.common.tools import (get_demisto_version,
-                                               unlock_entity)
+from demisto_sdk.commands.common.tools import get_demisto_version
 from packaging.version import parse
 from wcmatch.pathlib import Path
 
@@ -25,12 +24,11 @@ class Integration(YAMLContentUnifiedObject):
         patterns = [f"{self.path.stem}_description.md"]
         return next(self._path.parent.glob(patterns=patterns), None)
 
-    def upload(self, client: demisto_client = None, override: bool = False):
+    def upload(self, client: demisto_client = None):
         """
         Upload the integration to demisto_client
         Args:
             client: The demisto_client object of the desired XSOAR machine to upload to.
-            override: Whether to unlock the integration if it is a locked system integration.
 
         Returns:
             The result of the upload command from demisto_client
@@ -44,12 +42,4 @@ class Integration(YAMLContentUnifiedObject):
                     if (str(file)[-7:] == '_45.yml') == (get_demisto_version(client) < parse('4.6.0')):
                         # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
-                        try:
-                            return client.integration_upload(file=file)  # type: ignore
-                        except Exception as e:
-                            if 'Item is system' in e.body and override:  # type: ignore
-                                integration_id = self.__getitem__('commonfields').get('id')
-                                unlock_entity(client, FileType.INTEGRATION, integration_id)
-                                return client.integration_upload(file=file)  # type: ignore
-                            else:
-                                raise
+                        return client.integration_upload(file=file)  # type: ignore

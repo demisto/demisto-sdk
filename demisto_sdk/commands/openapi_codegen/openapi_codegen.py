@@ -4,7 +4,7 @@ import re
 import shutil
 import sys
 from distutils.util import strtobool
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List
 
 import autopep8
 import yaml
@@ -1032,7 +1032,7 @@ class OpenAPIIntegration:
         params_string = base.replace(base_string, ', '.join(modified_params))
         return params_string
 
-    def handle_duplicates(self, functions):
+    def handle_duplicates(self, functions: List):
         """
         Find duplicates command names and update the names according to path
         Args:

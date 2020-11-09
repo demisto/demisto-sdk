@@ -1,13 +1,13 @@
 # Changelog
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
+* The **format** command will now preserve the **isArray** argument in integration's reputation commands and will show a warning if it set to **false**.
 
 
 # v1.2.8
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 * Added the **--staged** flag to **validate** command to run on staged files only.
-* The **format** command will now preserve the **isArray** argument in integration's reputation cammands and will show a warning if it set to **false**.
 
 
 # 1.2.7

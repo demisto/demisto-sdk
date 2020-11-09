@@ -2,6 +2,7 @@
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 * Added the **--staged** flag to **validate** command to run on staged files only.
+* The **format** command will now preserve the *isArray* argument in integration ymls and will show a warning.
 
 
 # 1.2.7

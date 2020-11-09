@@ -603,11 +603,12 @@ def test_update_docker_format(tmpdir, mocker):
 def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tmp_path, docker_image, ):
     """
         Given
-            - An yml file.
+            - An integration yml file.
         When
-            - Run format - update docker on the integration
+            - Run format on the integration
         Then
-            - Test that script and integration formatter update docker image tag, only if image tag exists
+            - Ensure format runs successfully
+            - Verify the docker image is not modified
         """
 
     auth_token = 'token'

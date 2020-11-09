@@ -1,0 +1,361 @@
+import json
+import os
+import re
+import shutil
+import textwrap
+import traceback
+import zipfile
+from datetime import datetime
+from string import punctuation
+from typing import Dict, List, Union
+
+import click
+from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import (
+    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, MARKETPLACE_LIVE_DISCUSSIONS,
+    PACK_INITIAL_VERSION, SCRIPT, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
+                                               find_type,
+                                               get_child_directories,
+                                               get_child_files,
+                                               get_content_path)
+from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.split_yml.extractor import Extractor
+
+
+class ContributionConverter:
+    """ContributionConverter converts contribution zip files to valid pack formats
+
+    Class Variables:
+        DATE_FORMAT (str): The date format to use in the pack metadata
+
+    Instance Variables:
+        name (str): The name for the pack
+        configuration (Configuration): Configuration instance
+        contribution (str|Nonetype): The path to a contribution zip file
+        description (str): Description to attach to a converted contribution pack (in pack_metadata.json)
+        author (str): Author to ascribe to a pack converted from a contribution zip (in pack_metadata.json)
+        contrib_conversion_errs (List[str]): Messages of errors that occurred during a contribution conversion process
+        packs_dir_path (str): The path to the 'Packs' subdirectory of the local content repo
+        pack_dir_path (str): The path to the specific pack directory being created or updated, e.g. .../Packs/AbuseDB
+        dir_name (str): The directory name of a pack's containing folder
+        create_new (bool): True if creating a new pack (default), False if updating an existing pack
+    """
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+    def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
+                 create_new: bool = True, pack_dir_name: Union[str] = None, base_dir: Union[str] = None):
+        """Initializes a ContributionConverter instance
+
+        Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
+        'description' and 'author' will be those of the existing pack.
+
+        Args:
+            name (str, optional): The name of the pack. Defaults to ''.
+            contribution (Union[str], optional): The path to the contribution zipfile. Defaults to None.
+            description (str, optional): The description for the contribution. Defaults to ''.
+            author (str, optional): The author of the contribution. Defaults to ''.
+            create_new (bool, optional): Whether the contribution is intended as a new pack. When the contribution is
+                intended as an update to an existing pack, the value passed should be False. Defaults to True.
+            pack_dir_name (Union[str], optional): Explicitly pass the name of the pack directory. Only useful when
+                updating an existing pack and the pack's directory is not equivalent to the value returned from
+                running `self.format_pack_dir_name(name)`
+            base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
+                local content repo. If no value is passed, the `get_content_path()` function is used to determine
+                the path. Defaults to None.
+        """
+        self.configuration = Configuration()
+        self.contribution = contribution
+        self.description = description
+        self.author = author
+        self.contrib_conversion_errs: List[str] = []
+        self.create_new = create_new
+        base_dir = base_dir or get_content_path()
+        self.packs_dir_path = os.path.join(base_dir, 'Packs')
+        if not os.path.isdir(self.packs_dir_path):
+            os.makedirs(self.packs_dir_path)
+
+        self.name = name
+        self.dir_name = pack_dir_name or ContributionConverter.format_pack_dir_name(name)
+        if create_new:
+            # make sure that it doesn't conflict with an existing pack directory
+            self.dir_name = self.ensure_unique_pack_dir_name(self.dir_name)
+        self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
+        if not os.path.isdir(self.pack_dir_path):
+            os.makedirs(self.pack_dir_path)
+
+    @staticmethod
+    def format_pack_dir_name(name: str) -> str:
+        """Formats a (pack) name to a valid value
+
+        Specification:
+            A valid pack name does not contain any whitespace and may only contain alphanumeric, underscore, and
+            dash characters. The name must begin and end with an alphanumeric character. If it begins with an
+            alphabetical character, that character must be capitalized.
+
+        Behavior:
+            Individual words are titlecased, whitespace is stripped, and disallowed punctuation and space
+            characters are replaced with underscores.
+
+        Args:
+            name (str): The proposed pack name to convert to valid pack name format
+
+        Returns:
+            str: The reformatted pack name
+        """
+        temp = capital_case(name.strip().strip('-_'))
+        punctuation_to_replace = punctuation.replace('-', '').replace('_', '')
+        translation_dict = {x: '_' for x in punctuation_to_replace}
+        translation_table = str.maketrans(translation_dict)
+        temp = temp.translate(translation_table).strip('-_')
+        temp = re.sub(r'-+', '-', re.sub(r'_+', '_', temp))
+        comparator = capital_case(temp.replace('_', ' ').replace('-', ' '))
+        result = ''
+        i = j = 0
+        while i < len(temp):
+            temp_char = temp[i]
+            comp_char = comparator[j]
+            if temp_char.casefold() != comp_char.casefold():
+                while temp_char in {' ', '_', '-'}:
+                    result += f'{temp_char}'
+                    i += 1
+                    temp_char = temp[i]
+                while comp_char in {' '}:
+                    j += 1
+                    comp_char = comparator[j]
+            else:
+                result += comparator[j]
+                i += 1
+                j += 1
+        result = result.replace(' ', '')
+        result = re.sub(r'-+', '-', re.sub(r'_+', '_', result))
+        return result
+
+    def ensure_unique_pack_dir_name(self, pack_dir: str) -> str:
+        """When creating a brand new pack, ensures the name used for the pack directory is unique
+
+        If the proposed pack directory name already exists under the 'content/Packs' directory, then
+        a 'V2' is appended to the proposed name. If the proposed name already ends with a digit, the
+        digit is incremented. The adjusted pack directory name (if the name wasn't already unique)
+        is returned.
+
+        Args:
+            pack_dir (str): The proposed name of the pack directory
+
+        Returns:
+            str: A unique pack directory name
+        """
+        while os.path.exists(os.path.join(self.packs_dir_path, pack_dir)):
+            click.echo(
+                f'Modifying pack name because pack {pack_dir} already exists in the content repo',
+                color=LOG_COLORS.NATIVE
+            )
+            if len(pack_dir) >= 2 and pack_dir[-2].lower() == 'v' and pack_dir[-1].isdigit():
+                # increment by one
+                pack_dir = pack_dir[:-1] + str(int(pack_dir[-1]) + 1)
+            else:
+                pack_dir += 'V2'
+            click.echo(f'New pack name is "{pack_dir}"', color=LOG_COLORS.NATIVE)
+        return pack_dir
+
+    def unpack_contribution_to_dst_pack_directory(self) -> None:
+        """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
+        shutil.unpack_archive(filename=self.contribution, extract_dir=self.pack_dir_path)
+        # remove metadata.json file
+        os.remove(os.path.join(self.pack_dir_path, 'metadata.json'))
+
+    def convert_contribution_dir_to_pack_contents(self, unpacked_contribution_dir: str) -> None:
+        """Converts a directory and its contents unpacked from the contribution zip file to the appropriate structure
+
+        Example:
+            The pack directory after `unpack_contribution_to_dst_pack_directory` has been executed:
+
+            ExamplePack
+            ├── automation
+            │   └── automation-ExampleAutomation.yml
+            ├── integration
+            │   └── integration-ExampleIntegration.yml
+            ├── playbook
+            │   └── playbook-ExamplePlaybook.yml
+            ├── report
+            │   └── report-ExampleReport.json
+            └── reputation
+                └── reputation-ExampleReputation.json
+
+            The updated pack directory structure after `convert_contribution_dir_to_pack_contents` has been
+            executed, passing the path of .../ExamplePack/integration as the argument, would appear as so:
+
+            ExamplePack
+            ├── automation
+            │   └── automation-ExampleAutomation.yml
+            ├── Integrations
+            │   └── ExampleIntegration
+            │       ├── ExampleIntegration.py
+            │       ├── ExampleIntegration.yml
+            │       ├── ExampleIntegration_description.md
+            │       └── ExampleIntegration_image.png
+            ├── playbook
+            │   └── playbook-ExamplePlaybook.yml
+            ├── report
+            │   └── report-ExampleReport.json
+            └── reputation
+                └── reputation-ExampleReputation.json
+
+        Args:
+            unpacked_contribution_dir (str): The directory to convert
+        """
+        basename = os.path.basename(unpacked_contribution_dir)
+        if basename in ENTITY_TYPE_TO_DIR:
+            dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+            src_path = os.path.join(self.pack_dir_path, basename)
+            dst_path = os.path.join(self.pack_dir_path, dst_name)
+            if os.path.exists(dst_path):
+                # move src folder files to dst folder
+                content_item_dir = dst_path
+                for _, _, files in os.walk(src_path, topdown=False):
+                    for name in files:
+                        src_file_path = os.path.join(src_path, name)
+                        shutil.move(src_file_path, dst_path)
+            else:
+                # replace dst folder with src folder
+                content_item_dir = shutil.move(src_path, dst_path)
+            if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
+                self.content_item_to_package_format(content_item_dir, del_unified=True)
+
+    def format_converted_pack(self) -> None:
+        """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
+        click.echo(f'Executing \'format\' on the restructured contribution zip files at "{self.pack_dir_path}"')
+        from_version = '6.0.0'
+        format_manager(
+            input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
+        )
+
+    def convert_contribution_to_pack(self):
+        """Create a Pack in the content repo from the contents of a contribution zipfile"""
+        try:
+            with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                with zipped_contrib.open('metadata.json') as metadata_file:
+                    click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                    metadata = json.loads(metadata_file.read())
+                    self.create_metadata_file(metadata)
+            # unpack
+            self.unpack_contribution_to_dst_pack_directory()
+            # convert
+            unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
+            for unpacked_contribution_dir in unpacked_contribution_dirs:
+                self.convert_contribution_dir_to_pack_contents(unpacked_contribution_dir)
+            # create base files
+            if self.create_new:
+                self.create_pack_base_files()
+            # format
+            self.format_converted_pack()
+        except Exception as e:
+            click.echo(
+                f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',
+                color=LOG_COLORS.RED
+            )
+        finally:
+            if self.contrib_conversion_errs:
+                click.echo(
+                    'The following errors occurred while converting unified content YAMLs to package structure:'
+                )
+                click.echo(
+                    textwrap.indent('\n'.join(self.contrib_conversion_errs), '\t')
+                )
+
+    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
+        """
+        Iterate over the YAML files in a directory and create packages (a containing directory and
+        component files) from the YAMLs of integrations and scripts
+
+        Args:
+            content_item_dir (str): Path to the directory containing the content item YAML file(s)
+            del_unified (bool): Whether to delete the unified yaml the package was extracted from
+        """
+        child_files = get_child_files(content_item_dir)
+        content_item_file_path = ''
+        for child_file in child_files:
+            cf_name_lower = os.path.basename(child_file).lower()
+            if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
+                content_item_file_path = child_file
+                file_type = find_type(content_item_file_path)
+                file_type = file_type.value if file_type else file_type
+                try:
+                    extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                    extractor.extract_to_package_format()
+                except Exception as e:
+                    err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
+                              f'into its component parts.\nError: "{e}"'
+                    self.contrib_conversion_errs.append(err_msg)
+                if del_unified:
+                    os.remove(content_item_file_path)
+
+    def create_pack_base_files(self):
+        """
+        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        to be in the base directory of a pack
+        """
+        click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
+        fp = open(os.path.join(self.pack_dir_path, 'README.md'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.pack_dir_path, '.secrets-ignore'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.pack_dir_path, '.pack-ignore'), 'a')
+        fp.close()
+
+    def create_metadata_file(self, zipped_metadata: Dict) -> None:
+        """Create the pack_metadata.json file in the base directory of the pack
+
+        Args:
+            zipped_metadata (Dict): The metadata that came in the zipfile
+        """
+        metadata_dict = {}
+
+        # a description passed on the cmd line should take precedence over one pulled
+        # from contribution metadata
+        metadata_dict['description'] = self.description or zipped_metadata.get('description')
+        metadata_dict['name'] = self.name
+        metadata_dict['author'] = self.author or zipped_metadata.get('author', '')
+        metadata_dict['support'] = 'community'
+        metadata_dict['url'] = zipped_metadata.get('supportDetails', {}).get('url', MARKETPLACE_LIVE_DISCUSSIONS)
+        metadata_dict['categories'] = zipped_metadata.get('categories') if zipped_metadata.get('categories') else []
+        metadata_dict['tags'] = zipped_metadata.get('tags') if zipped_metadata.get('tags') else []
+        metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
+        metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
+        metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
+        metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
+        with open(metadata_path, 'w') as pack_metadata_file:
+            json.dump(metadata_dict, pack_metadata_file, indent=4)
+
+    @staticmethod
+    def create_pack_metadata(data: Dict = {}) -> Dict:
+        """Builds pack metadata JSON content.
+
+        Args:
+            data (dict): Dictionary keys and value to insert into the pack metadata.
+
+        Returns:
+            Dict. Pack metadata JSON content.
+        """
+        pack_metadata = {
+            'name': '## FILL MANDATORY FIELD ##',
+            'description': '## FILL MANDATORY FIELD ##',
+            'support': XSOAR_SUPPORT,
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': XSOAR_AUTHOR,
+            'url': XSOAR_SUPPORT_URL,
+            'email': '',
+            'created': datetime.utcnow().strftime(ContributionConverter.DATE_FORMAT),
+            'categories': [],
+            'tags': [],
+            'useCases': [],
+            'keywords': []
+        }
+
+        if data:
+            pack_metadata.update(data)
+
+        return pack_metadata

@@ -815,7 +815,7 @@ def id_set_command(**kwargs):
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major, minor, revision, maintenance, documentation'])
+    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version."

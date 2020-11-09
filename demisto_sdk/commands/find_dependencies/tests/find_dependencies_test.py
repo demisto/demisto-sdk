@@ -1,6 +1,7 @@
 import json
 import os
 
+import networkx as nx
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
@@ -1119,6 +1120,69 @@ def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_r
 
 
 class TestDependencyGraph:
+    @pytest.mark.parametrize('source_node, expected_nodes_in, expected_nodes_out',
+                             [('pack1', ['pack1', 'pack2', 'pack3'], ['pack4']),
+                              ('pack2', ['pack2', 'pack3'], ['pack4', 'pack1'])]
+                             )
+    def test_get_dependencies_subgraph_by_dfs(self, source_node, expected_nodes_in, expected_nodes_out):
+        """
+        Given
+            - A directional graph and a source node.
+        When
+            - Extracting it's DFS subgraph.
+        Then
+            - Assert all nodes that are reachable from the source are in the subgraph
+            - Assert all nodes that are not reachable from the source are not in the subgraph
+        """
+        graph = nx.DiGraph()
+        graph.add_node('pack1')
+        graph.add_node('pack2')
+        graph.add_node('pack3')
+        graph.add_node('pack4')
+        graph.add_edge('pack1', 'pack2')
+        graph.add_edge('pack2', 'pack3')
+        dfs_graph = PackDependencies.get_dependencies_subgraph_by_dfs(graph, source_node)
+        for i in expected_nodes_in:
+            assert i in dfs_graph.nodes()
+        for i in expected_nodes_out:
+            assert i not in dfs_graph.nodes()
+
+    def test_build_all_dependencies_graph(self, id_set, mocker):
+        """
+        Given
+            - A list of packs and their dependencies
+        When
+            - Creating the dependencies graph using build_all_dependencies_graph method
+        Then
+            - Assert all the dependencies are correct
+            - Assert all the mandatory dependencies are correct
+        """
+        def mock_find_pack_dependencies(pack_id, *_, **__):
+            dependencies = {'pack1': [('pack2', True), ('pack3', False)],
+                            'pack2': [('pack3', False), ('pack2', True)],
+                            'pack3': [],
+                            'pack4': [('pack6', False)]}
+            return dependencies[pack_id]
+        mocker.patch(
+            'demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies._find_pack_dependencies',
+            side_effect=mock_find_pack_dependencies
+        )
+        pack_ids = ['pack1', 'pack2', 'pack3', 'pack4']
+        dependency_graph = PackDependencies.build_all_dependencies_graph(pack_ids, {}, VerboseFile(''))
+
+        # Asserting Dependencies (mandatory and non-mandatory)
+        assert [n for n in dependency_graph.neighbors('pack1')] == ['pack2', 'pack3']
+        assert [n for n in dependency_graph.neighbors('pack2')] == ['pack3']
+        assert [n for n in dependency_graph.neighbors('pack3')] == []
+        assert [n for n in dependency_graph.neighbors('pack4')] == ['pack6']
+
+        # Asserting mandatory dependencies
+        nodes = dependency_graph.nodes(data=True)
+        assert nodes['pack1']['mandatory_for_packs'] == []
+        assert nodes['pack2']['mandatory_for_packs'] == ['pack1']
+        assert nodes['pack3']['mandatory_for_packs'] == []
+        assert nodes['pack4']['mandatory_for_packs'] == []
+
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,

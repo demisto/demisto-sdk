@@ -596,6 +596,7 @@ def test_update_docker_format(tmpdir, mocker):
     with open(dest) as f:
         data = yaml.safe_load(f)
     assert data['script']['dockerimage'].endswith(f':{test_tag}')
+    assert not data['script'].get('dockerimage45')
 
 
 @pytest.mark.parametrize(argnames='docker_image', argvalues=['error:1.0.0.1', 'demisto/error:1.0.0.1'])

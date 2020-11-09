@@ -67,10 +67,12 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class ValidateManager:
-    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-                 print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None):
+    def __init__(
+        self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+        print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+        validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+    ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -86,6 +88,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
+        self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -677,17 +680,15 @@ class ValidateManager:
         Args:
             old_format_files(set): file names which are in the old format.
         """
-        invalid_files = []
+        handle_error = True
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(file_path)
-        if invalid_files:
-            error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+                error_message, error_code = Errors.invalid_package_structure(file_path)
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    handle_error = False
+        return handle_error
 
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
@@ -812,7 +813,17 @@ class ValidateManager:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
-            click.echo("Collecting all committed files")
+            if self.staged:
+                click.echo("Collecting staged files only")
+            else:
+                click.echo("Collecting all committed files")
+        if self.staged:
+            all_changed_files_string = run_command(f'git diff --name-status --staged {prev_ver}')
+            modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
+                all_changed_files_string, prev_ver
+            )
+            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files))
+            return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
@@ -831,6 +842,7 @@ class ValidateManager:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
+
                 all_changed_files_string = run_command(
                     'git diff --name-status upstream/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
@@ -847,7 +859,7 @@ class ValidateManager:
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
 
-                if not self.no_configuration_prints:
+                if not self.no_configuration_prints and not self.staged:
                     click.echo("Collecting all local changed files against the content master")
 
                 # only changes against prev_ver (without local changes)

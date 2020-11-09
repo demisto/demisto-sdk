@@ -1,10 +1,23 @@
 # Changelog
+* Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
+* Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
+
+
+# v1.2.8
+* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
+* Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
+* Added the **--staged** flag to **validate** command to run on staged files only.
+
+
+# 1.2.7
 * Changed input parameters in **find-dependencies** command.
    - Use ***-i, --input*** instead of ***-p, --path***.
    - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.
 * Fixed an issue in the **unify** command where it crashed on an integration without an image file.
 * Fixed an issue in the **format** command where unnecessary files were not skipped.
 * Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
+* Fixed an issue in the **validate** command where a warning about detailed description was given for unified or deprecated integrations.
+* Improved the error returned by the **validate** command when running on files using the old format.
 
 # 1.2.6
 * No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.

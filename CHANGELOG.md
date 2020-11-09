@@ -1,7 +1,7 @@
 # Changelog
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
-
+* Fixed an issue in the **format** command where format failed when trying to update invalid Docker image.
 
 # v1.2.8
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.

@@ -9,6 +9,7 @@
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 * Added the **--staged** flag to **validate** command to run on staged files only.
+* Deleted the validation that checks if there is more than one rn file per pack in **validate**.
 
 
 # 1.2.7

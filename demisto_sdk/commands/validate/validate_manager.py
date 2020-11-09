@@ -417,7 +417,6 @@ class ValidateManager:
             validation_results.add(self.validate_no_old_format(old_format_files))
 
         if not self.skip_pack_rn_validation:
-            validation_results.add(self.validate_no_duplicated_release_notes(added_files))
             validation_results.add(self.validate_no_missing_release_notes(modified_files,
                                                                           old_format_files, added_files))
 

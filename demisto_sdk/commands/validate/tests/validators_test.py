@@ -463,22 +463,6 @@ class TestValidators:
         (INVALID_ADDED_RELEASE_NOTES, False)
     ]
 
-    @pytest.mark.parametrize('added_files, expected', VERIFY_NO_DUP_RN_INPUT)
-    def test_verify_no_dup_rn(self, added_files: set, expected: bool):
-        """
-            Given:
-                - A list of added files
-            When:
-                - verifying there are no other new release notes.
-            Then:
-                - return a validation response
-            Case 1: Release notes in different packs.
-            Case 2: Release notes where one is in the same pack
-        """
-        validate_manager = ValidateManager(skip_conf_json=True)
-        result = validate_manager.validate_no_duplicated_release_notes(added_files)
-        assert result is expected
-
     ARE_TEST_CONFIGURED_TEST_INPUT = [
         (VALID_INTEGRATION_TEST_PATH, 'integration', True),
         (INVALID_INTEGRATION_NO_TESTS, 'integration', False),

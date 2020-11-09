@@ -622,14 +622,15 @@ def test_update_docker_format_with_invalid_dockerimage(requests_mock, mocker, tm
                                                                                          "results": []},
                       status_code=200)
     integration_yml_file_1 = tmp_path / 'Integration1.yml'
-    integration_obj = {'script': {'dockerimage': docker_image}}
+    integration_obj = {'dockerimage': docker_image,
+                       'fromversion': '5.0.0'}
     ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
 
     format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
     format_obj.update_docker_image()
     with open(str(integration_yml_file_1)) as f:
         data = yaml.safe_load(f)
-    assert data.get('script', {}).get('dockerimage') == docker_image
+    assert data.get('dockerimage') == docker_image
 
 
 def test_recursive_extend_schema():

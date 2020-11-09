@@ -350,7 +350,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_beta(self):
         # type: () -> bool
-        """Validate that that beta integration has correct beta attributes"""
+        """Validate that beta integration has correct beta attributes"""
         valid_status = True
         if not all([self._is_display_contains_beta(), self._has_beta_param()]):
             self.is_valid = False

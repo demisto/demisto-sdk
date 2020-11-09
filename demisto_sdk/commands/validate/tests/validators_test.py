@@ -381,6 +381,40 @@ class TestValidators:
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
+    INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS = [
+        INVALID_DASHBOARD_PATH,
+        INVALID_INCIDENT_FIELD_PATH,
+        INVALID_INTEGRATION_ID_PATH,
+        INVALID_INTEGRATION_NO_TESTS,
+        INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
+        INVALID_LAYOUT_CONTAINER_PATH,
+        INVALID_LAYOUT_PATH,
+        INVALID_PLAYBOOK_CONDITION_1,
+        INVALID_PLAYBOOK_CONDITION_2,
+        INVALID_PLAYBOOK_ID_PATH,
+        INVALID_PLAYBOOK_PATH,
+        INVALID_PLAYBOOK_PATH_FROM_ROOT,
+        INVALID_REPUTATION_PATH,
+        INVALID_SCRIPT_PATH,
+        INVALID_WIDGET_PATH,
+    ]
+
+    @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
+    @patch.object(ImageValidator, 'is_valid', return_value=True)
+    def test_run_all_validations_on_file_failed(self, _, file_path):
+        """
+        Given
+        - A invalid file in packs or beta integration
+
+        When
+        - running run_all_validations_on_file on that file
+
+        Then
+        -  The file will be validated and failed
+        """
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
+        assert not validate_manager.run_validation_on_specific_files()
+
     def test_files_validator_validate_pack_unique_files(self):
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})

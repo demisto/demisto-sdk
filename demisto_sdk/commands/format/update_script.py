@@ -51,7 +51,14 @@ class ScriptYMLFormat(BaseUpdateYML):
             print_color('Skipping docker image update as default docker image is being used.', LOG_COLORS.YELLOW)
             return
         image_name = dockerimage.split(':')[0]
-        latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
+        try:
+            latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
+            if not latest_tag:
+                click.secho('Failed getting docker image latest tag', fg='yellow')
+                return
+        except Exception as e:
+            click.secho(f'Failed getting docker image latest tag. {e} - Invalid docker image', fg='yellow')
+            return
         full_name = f'{image_name}:{latest_tag}'
         if full_name != dockerimage:
             print(f'Updating docker image to: {full_name}')

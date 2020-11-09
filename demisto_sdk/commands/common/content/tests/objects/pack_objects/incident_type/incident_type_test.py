@@ -1,7 +1,8 @@
 from demisto_sdk.commands.common.constants import INCIDENT_TYPES_DIR, PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     IncidentType
-from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.content.objects_factory import \
+    path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'

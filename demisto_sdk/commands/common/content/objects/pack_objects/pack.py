@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
     Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
     ReleaseNote, Report, Script, SecretIgnore, Widget)
-from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-
+from demisto_sdk.commands.common.content.objects_factory import \
+    path_to_pack_object
 from wcmatch.pathlib import Path
 
 

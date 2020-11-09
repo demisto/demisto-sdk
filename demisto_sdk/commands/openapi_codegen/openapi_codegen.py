@@ -4,7 +4,7 @@ import re
 import shutil
 import sys
 from distutils.util import strtobool
-from typing import Any, Optional, Union, List
+from typing import Any, List, Optional, Union
 
 import autopep8
 import yaml

@@ -76,6 +76,7 @@ ERROR_CODE = {
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
     "docker_not_on_the_latest_tag": "DO106",
+    "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -514,6 +515,11 @@ class Errors:
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
                f' Please create or update to an updated versioned image\n'
+
+    @staticmethod
+    @error_code_decorator
+    def non_existing_docker(docker_image):
+        return f'{docker_image} - Could not find the docker image. Are you sure it exists on DockerHub?'
 
     @staticmethod
     @error_code_decorator

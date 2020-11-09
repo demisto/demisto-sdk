@@ -19,7 +19,7 @@ from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
-ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', ',', '(', ')', '`', ':', "'", '"', '[', ']']
+ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', '.', ',', '(', ')', '`', ':', "'", '"', '[', ']']
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
 OUTPUT_TYPES = {
@@ -110,7 +110,7 @@ class OpenAPIIntegration:
             except Exception as e:
                 print_error(f'Failed adding the command for the path {path}: {e}')
                 raise
-        self.change_name_duplications(self.functions)
+        self.handle_duplicates(self.functions)
         self.functions = sorted(self.functions, key=lambda x: x['name'])
         if not self.configuration:
             self.generate_configuration()
@@ -1008,7 +1008,7 @@ class OpenAPIIntegration:
 
         if snakeify:
             name = camel_to_snake(name)
-            name = name.replace('-', '_').replace('__', '_').replace('.', '').strip('_')
+            name = name.replace('-', '_').replace('__', '_').strip('_')
 
         return name
 
@@ -1032,7 +1032,7 @@ class OpenAPIIntegration:
         params_string = base.replace(base_string, ', '.join(modified_params))
         return params_string
 
-    def change_name_duplications(self, functions):
+    def handle_duplicates(self, functions):
         """
         Find duplicates command names and update the names according to path
         Args:
@@ -1042,13 +1042,13 @@ class OpenAPIIntegration:
         duplicate_names = [n for n in duplicate_names if duplicate_names.count(n) > 1]
         if duplicate_names:
             for func in functions:
-                name = func.get('name')
                 path = func.get('path')
                 method = func.get('method')
                 # getting the last curly brackets is exists and keeping its value
                 function_path = re.sub(r'{([\w]*)\}$', r'\g<1>', path)
                 # Remove the rest curly brackets from the path.
                 path_name = '_'.join([re.sub(r'{[^)]*\}', '', x) for x in function_path.split('/')])
+                name = func.get('name')
                 if name in duplicate_names:
                     name = self.clean_function_name(path_name)
                     func['name'] = f'{method}_{name}'

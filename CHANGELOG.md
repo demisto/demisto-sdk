@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
+* Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
 
 
 # v1.2.8

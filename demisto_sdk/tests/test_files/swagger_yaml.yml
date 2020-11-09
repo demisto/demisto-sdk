@@ -412,7 +412,7 @@ script:
       name: file
       required: false
     description: uploads an image
-    name: testswagger-post-pet-upload-image-uploadimage
+    name: testswagger-post-pet-upload-image-by-uploadimage
     outputs:
     - contextPath: TestSwagger.ApiResponse.code
       description: ''

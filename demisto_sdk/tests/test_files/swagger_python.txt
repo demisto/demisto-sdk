@@ -170,7 +170,7 @@ class Client(BaseClient):
         return response
 
 
-    def post_pet_upload_image_uploadimage_request(self, petId, additionalMetadata, file):
+    def post_pet_upload_image_by_uploadimage_request(self, petId, additionalMetadata, file):
         data = assign_params(additionalMetadata=additionalMetadata, file=file)
 
         headers = self._headers
@@ -487,12 +487,12 @@ def post_pet_upload_image_command(client, args):
     return command_results
 
 
-def post_pet_upload_image_uploadimage_command(client, args):
+def post_pet_upload_image_by_uploadimage_command(client, args):
     petId = args.get('petId', None)
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
 
-    response = client.post_pet_upload_image_uploadimage_request(petId, additionalMetadata, file)
+    response = client.post_pet_upload_image_by_uploadimage_request(petId, additionalMetadata, file)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.ApiResponse',
         outputs_key_field='',
@@ -601,7 +601,7 @@ def main():
 			'testswagger-logout-user': logout_user_command,
 			'testswagger-place-order': place_order_command,
 			'testswagger-post-pet-upload-image': post_pet_upload_image_command,
-			'testswagger-post-pet-upload-image-uploadimage': post_pet_upload_image_uploadimage_command,
+			'testswagger-post-pet-upload-image-by-uploadimage': post_pet_upload_image_by_uploadimage_command,
 			'testswagger-update-pet': update_pet_command,
 			'testswagger-update-pet-with-form': update_pet_with_form_command,
 			'testswagger-update-user': update_user_command,

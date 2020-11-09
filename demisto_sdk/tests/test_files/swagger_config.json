@@ -974,7 +974,7 @@
             "unique_key": ""
         },
         {
-            "name": "post-pet-upload-image-uploadimage",
+            "name": "post-pet-upload-image-by-uploadimage",
             "path": "pet/{petId}/uploadImage/{uploadimage}",
             "method": "post",
             "description": "uploads an image",

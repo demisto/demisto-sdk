@@ -200,4 +200,5 @@ class TestOpenAPICodeGen:
 
         integration = self.init_integration()
         assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
-        assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image-uploadimage'][0]
+        assert [c for c in integration.configuration['commands'] if c['name'] ==
+                'post-pet-upload-image-by-uploadimage'][0]

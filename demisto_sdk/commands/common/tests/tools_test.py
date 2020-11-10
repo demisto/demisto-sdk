@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_files_changes_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
                                                get_depth, get_dict_from_file,
@@ -123,6 +124,27 @@ class TestGenericFunctions:
         assert modified == []
         assert added == set()
         assert removed == [VALID_MD]
+
+    test_content_path_on_pack = [
+        ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
+    ]
+    @pytest.mark.parametrize('pack, path', test_content_path_on_pack)
+    def test_filter_files_changes_on_pack(self, pack, path):
+        """
+        Given
+        - Sets of modified_files, added_files, old_files, changed_meta_files and pack name.
+        When
+        - Want to filter the lists by specific pack.
+        Then:
+        - Ensure the lists are returned only with the files inside the specific pack.
+        """
+        modified, added, old, changed_meta_files = filter_files_changes_on_pack(pack=pack, modified_files=path,
+                                                                                added_files=path, old_files=path,
+                                                                                changed_meta_files=path)
+        assert modified == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+        assert added == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+        assert old == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+        assert changed_meta_files == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
 
     @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
     def test_get_depth(self, data, output):

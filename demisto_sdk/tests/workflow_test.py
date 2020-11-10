@@ -160,12 +160,17 @@ class ContentGitRepo:
                 stream.write(content)
 
 
+content_git_repo = None
+
+
 @pytest.fixture(autouse=True)
 def function_setup():
     """
     Cleaning the content repo before every function
     """
     global content_git_repo
+    if not content_git_repo:  # lazy initialization. So we don't initialize during test discovery
+        content_git_repo = ContentGitRepo()
     # Function setup
     content_git_repo.git_cleanup()
     content_git_repo.create_branch()
@@ -299,9 +304,6 @@ def rename_incident_field(content_repo: ContentGitRepo):
         runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         content_repo.update_rn()
         content_repo.run_validations()
-
-
-content_git_repo = ContentGitRepo()
 
 
 @pytest.mark.parametrize("function", [

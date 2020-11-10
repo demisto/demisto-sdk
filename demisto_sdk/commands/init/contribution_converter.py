@@ -12,8 +12,8 @@ from typing import Dict, List, Union
 import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, SCRIPT, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
+    PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
@@ -190,11 +190,7 @@ class ContributionConverter:
             ├── automation
             │   └── automation-ExampleAutomation.yml
             ├── Integrations
-            │   └── ExampleIntegration
-            │       ├── ExampleIntegration.py
-            │       ├── ExampleIntegration.yml
-            │       ├── ExampleIntegration_description.md
-            │       └── ExampleIntegration_image.png
+            │   └── integration-ExampleIntegration.yml
             ├── playbook
             │   └── playbook-ExamplePlaybook.yml
             ├── report
@@ -212,16 +208,13 @@ class ContributionConverter:
             dst_path = os.path.join(self.pack_dir_path, dst_name)
             if os.path.exists(dst_path):
                 # move src folder files to dst folder
-                content_item_dir = dst_path
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
                         src_file_path = os.path.join(src_path, name)
                         shutil.move(src_file_path, dst_path)
             else:
                 # replace dst folder with src folder
-                content_item_dir = shutil.move(src_path, dst_path)
-            if basename in {SCRIPT, AUTOMATION, INTEGRATION}:
-                self.content_item_to_package_format(content_item_dir, del_unified=True)
+                shutil.move(src_path, dst_path)
 
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
@@ -245,6 +238,11 @@ class ContributionConverter:
             unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(unpacked_contribution_dir)
+            # extract to package format
+            for pack_subdir in get_child_directories(self.pack_dir_path):
+                basename = os.path.basename(pack_subdir)
+                if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
+                    self.content_item_to_package_format(pack_subdir, del_unified=True)
             # create base files
             if self.create_new:
                 self.create_pack_base_files()
@@ -264,7 +262,8 @@ class ContributionConverter:
                     textwrap.indent('\n'.join(self.contrib_conversion_errs), '\t')
                 )
 
-    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True):
+    def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True,
+                                       file_dir_mapping: Union[Dict[str, str]] = None):
         """
         Iterate over the YAML files in a directory and create packages (a containing directory and
         component files) from the YAMLs of integrations and scripts
@@ -272,6 +271,12 @@ class ContributionConverter:
         Args:
             content_item_dir (str): Path to the directory containing the content item YAML file(s)
             del_unified (bool): Whether to delete the unified yaml the package was extracted from
+            file_dir_mapping (Union[Dict], optional): Can be used when updating an existing pack and
+                the package directory of a content item is not what would ordinarily be set by the
+                `demisto-sdk` `split-yml` command. Sample value would be,
+                `{'integration-AbuseIPDB.yml': 'AbuseDB'}` - the split-yml command would create a
+                containing directory of `AbuseIPDB` for the file `integration-AbuseIPDB.yml` and we
+                need the containing directory of the package to match what pre-exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
         content_item_file_path = ''
@@ -282,7 +287,14 @@ class ContributionConverter:
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
                 try:
-                    extractor = Extractor(input=content_item_file_path, file_type=file_type, output=content_item_dir)
+                    child_file_name = os.path.basename(child_file)
+                    if file_dir_mapping and child_file_name in file_dir_mapping.keys():
+                        base_name = file_dir_mapping.get(child_file_name)
+                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
+                                              output=content_item_dir, base_name=base_name)
+                    else:
+                        extractor = Extractor(input=content_item_file_path,
+                                              file_type=file_type, output=content_item_dir)
                     extractor.extract_to_package_format()
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \

@@ -128,6 +128,7 @@ class TestGenericFunctions:
     test_content_path_on_pack = [
         ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
     ]
+
     @pytest.mark.parametrize('pack, path', test_content_path_on_pack)
     def test_filter_files_changes_on_pack(self, pack, path):
         """

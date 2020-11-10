@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
+* Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.
 * Fixed an issue in the **format** command where format failed when trying to update invalid Docker image.
 * The **format** command will now preserve the **isArray** argument in integration's reputation commands and will show a warning if it set to **false**.
 
@@ -9,6 +10,7 @@
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
 * Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
 * Added the **--staged** flag to **validate** command to run on staged files only.
+
 
 
 # 1.2.7

@@ -519,7 +519,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def non_existing_docker(docker_image):
-        return f'{docker_image} - Could not find the docker image. Check if it exists in DockerHub.'
+        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
+               f'DockerHub: https://hub.docker.com/u/demisto/.'
 
     @staticmethod
     @error_code_decorator

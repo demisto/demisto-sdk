@@ -932,9 +932,10 @@ def update_pack_releasenotes(**kwargs):
                 print_warning(f'No changes were detected on {pack} pack. If changes were made, '
                               f'please commit the changes and rerun the command')
     else:
-        print_warning(f'No changes were detected. If changes were made, please commit the changes '
+        print_warning('No changes were detected. If changes were made, please commit the changes '
                       'and rerun the command')
     sys.exit(0)
+
 
 # ====================== find-dependencies ====================== #
 @main.command(name="find-dependencies",

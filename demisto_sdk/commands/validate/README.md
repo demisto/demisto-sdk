@@ -31,6 +31,8 @@ If the **--post-commit** flag is supplied: validation will run only on the curre
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
 * **--post-commit**
 Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
+* **--staged**
+Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
 * **-p, --path**
 Path of file to validate specifically.
 * **-a, --validate-all**

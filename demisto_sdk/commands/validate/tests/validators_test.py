@@ -7,7 +7,8 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
+from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -78,7 +79,6 @@ class TestValidators:
 
     @classmethod
     def setup_class(cls):
-        print("Setups class")
         for dir_to_create in DIR_LIST:
             if not os.path.exists(dir_to_create):
                 cls.CREATED_DIRS.append(dir_to_create)
@@ -87,7 +87,6 @@ class TestValidators:
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down class")
         os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
@@ -701,7 +700,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml_path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
@@ -739,7 +738,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml_path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md', 'Packs/ApiDependent/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
@@ -1017,6 +1016,54 @@ class TestValidators:
         mocker.patch.object(BaseValidator, 'handle_error', return_value="Modified existing release notes")
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
+
+    def test_staged(self, mocker):
+        """
+        Given
+            - staged = True flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate that only one git diff command runs and it's a staged command
+        """
+        def run_command_effect(arg):
+            assert arg == 'git diff --name-status --staged master'
+            return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=True)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
+
+    def test_not_staged(self, mocker):
+        """
+        Given
+            - staged = False flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate that not a git diff staged command runs
+        """
+        def run_command_effect(arg):
+            assert 'staged' not in arg
+            return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=False)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
 
 
 def test_content_release_identifier_exists():

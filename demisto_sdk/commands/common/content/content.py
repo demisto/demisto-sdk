@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.script.script impo
 from demisto_sdk.commands.common.content.objects.root_objects import (
     ContentDescriptor, Documentation)
 from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+    path_to_pack_object
 from git import InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
@@ -90,7 +90,7 @@ class Content:
         """
         objects_path = (self._path / dir_name).glob(patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
-            yield ContentObjectFactory.from_path(object_path)
+            yield path_to_pack_object(object_path)
 
     @property
     def packs(self) -> Dict[str, Pack]:

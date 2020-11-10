@@ -17,7 +17,7 @@
 	"fieldCalcScript": "",
 	"group": 0,
 	"hidden": false,
-	"id": "upload_type",
+	"id": "incidentfields_upload_type",
 	"isReadOnly": false,
 	"locked": false,
 	"mergeStrategy": "",

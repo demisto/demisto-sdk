@@ -139,11 +139,7 @@ class Uploader:
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
-                    if entity_type in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK,
-                                       FileType.TEST_PLAYBOOK]:
-                        result = upload_object.upload(self.client)  # type: ignore
-                    else:
-                        result = upload_object.upload(self.client)  # type: ignore
+                    result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:
                         print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')

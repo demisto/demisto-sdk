@@ -419,13 +419,13 @@ class TestValidators:
     def test_run_all_validations_on_file_white_modified_id(self, mocker):
         """
         Given
-        - file in packs thet id was modified
+        - Integration with a modified ID.
 
         When
-        - running run_all_validations_on_file on that file
+        - running 'run_all_validations_on_file' on that file.
 
         Then
-        -  The file will be validated and failed Because the id is not equal to the old file
+        -  The file will fail validation because its id changed.
         """
 
         validator = StructureValidator(file_path=VALID_INTEGRATION_ID_PATH)

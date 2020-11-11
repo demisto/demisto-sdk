@@ -41,13 +41,13 @@ from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
     INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
-    INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
+    INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
+    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
@@ -397,6 +397,7 @@ class TestValidators:
         INVALID_REPUTATION_PATH,
         INVALID_SCRIPT_PATH,
         INVALID_WIDGET_PATH,
+        INVALID_BETA_INTEGRATION
     ]
 
     @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
@@ -404,7 +405,7 @@ class TestValidators:
     def test_run_all_validations_on_file_failed(self, _, file_path):
         """
         Given
-        - A invalid file in packs or beta integration
+        - A invalid file in packs or invalid beta integration
 
         When
         - running run_all_validations_on_file on that file
@@ -413,6 +414,29 @@ class TestValidators:
         -  The file will be validated and failed
         """
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
+        assert not validate_manager.run_validation_on_specific_files()
+
+    def test_run_all_validations_on_file_white_modified_id(self, mocker):
+        """
+        Given
+        - file in packs thet id was modified
+
+        When
+        - running run_all_validations_on_file on that file
+
+        Then
+        -  The file will be validated and failed Because the id is not equal to the old file
+        """
+
+        validator = StructureValidator(file_path=VALID_INTEGRATION_ID_PATH)
+        old = validator.load_data_from_file()
+        old['commonfields']['id'] = 'old_id'
+
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
+
+        validate_manager = ValidateManager(file_path=VALID_INTEGRATION_ID_PATH, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
     def test_files_validator_validate_pack_unique_files(self):

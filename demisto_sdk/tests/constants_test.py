@@ -183,6 +183,7 @@ DEFAULT_IMAGE = f'{git_path()}/demisto_sdk/tests/test_files/default_image.png'
 VALID_PACK = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Packs/FeedAzure'
 VALID_PACK_RELATIVE_PATH = 'Packs/FeedAzure'
 VALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/valid-beta-integration.yml'
+INVALID_BETA_INTEGRATION = f'{git_path()}/demisto_sdk/tests/test_files/invalid-beta-integration.yml'
 
 INVALID_OUTPUT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files"
 CONF_JSON_MOCK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/conf.json'

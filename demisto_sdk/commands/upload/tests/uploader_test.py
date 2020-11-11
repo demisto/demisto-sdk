@@ -230,7 +230,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
 
 
-def test_upload_incident_type_correct_file_change(demisto_client_configure):
+def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """
     Given
         - An incident type named incidenttype-Hello_World_Alert to upload
@@ -241,11 +241,18 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure):
     Then
         - Ensure incident type is in the correct format for upload
     """
+
     def save_file(file):
         global DATA
         with open(file, 'r') as f:
             DATA = f.read()
         return
+
+    class demisto_client_mocker():
+        def import_incident_fields(self, file):
+            pass
+
+    mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker)
 
     incident_type_name = "incidenttype-Hello_World_Alert.json"
     incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
@@ -259,7 +266,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure):
     assert json.loads(DATA)[0] == incident_type_data
 
 
-def test_upload_incident_field_correct_file_change(demisto_client_configure):
+def test_upload_incident_field_correct_file_change(demisto_client_configure, mocker):
     """
     Given
         - An incident field named XDR_Alert_Count to upload
@@ -276,6 +283,11 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure):
             DATA = f.read()
         return
 
+    class demisto_client_mocker():
+        def import_incident_fields(self, file):
+            pass
+
+    mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker)
     incident_field_name = "XDR_Alert_Count.json"
     incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)

@@ -3,12 +3,12 @@ from pathlib import Path
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     Integration
 from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+    path_to_pack_object
 
 
 class TestNotUnifiedIntegration:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir["sample.yml"])
+        obj = path_to_pack_object(datadir["sample.yml"])
         assert isinstance(obj, Integration)
 
     def test_prefix(self, datadir):
@@ -30,7 +30,7 @@ class TestNotUnifiedIntegration:
 
 class TestUnifiedIntegration:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir["integration-sample.yml"])
+        obj = path_to_pack_object(datadir["integration-sample.yml"])
         assert isinstance(obj, Integration)
 
     def test_prefix(self, datadir):

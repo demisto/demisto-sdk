@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
@@ -55,9 +56,15 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
-        # run the java script mdx parse validator
-        _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {self.file_path}', cwd=self.content_path,
-                                                 env=os.environ)
+        with open(self.file_path, 'r') as f:
+            readme_content = f.read()
+        readme_content = self.fix_mdx(readme_content)
+        with tempfile.NamedTemporaryFile('w+t') as fp:
+            fp.write(readme_content)
+            fp.flush()
+            # run the javascript mdx parse validator
+            _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {fp.name}', cwd=self.content_path,
+                                                     env=os.environ)
         if is_not_valid:
             error_message, error_code = Errors.readme_error(stderr)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -69,6 +76,7 @@ class ReadMeValidator(BaseValidator):
             ReadMeValidator.start_mdx_server()
         with open(self.file_path, 'r') as f:
             readme_content = f.read()
+        readme_content = self.fix_mdx(readme_content)
         response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=10)
         if response.status_code != 200:
             error_message, error_code = Errors.readme_error(response.text)
@@ -87,6 +95,22 @@ class ReadMeValidator(BaseValidator):
             else:
                 return self.mdx_verify_server()
         return True
+
+    @staticmethod
+    def fix_mdx(txt: str) -> str:
+        # copied from: https://github.com/demisto/content-docs/blob/2402bd1ab1a71f5bf1a23e1028df6ce3b2729cbb/content-repo/mdx_utils.py#L11
+        # to use the same logic as we have in the content-docs build
+        replace_tuples = [
+            ('<br>(?!</br>)', '<br/>'),
+            ('<hr>(?!</hr>)', '<hr/>'),
+            ('<pre>', '<pre>{`'),
+            ('</pre>', '`}</pre>'),
+        ]
+        for old, new in replace_tuples:
+            txt = re.sub(old, new, txt, flags=re.IGNORECASE)
+        # remove html comments
+        txt = re.sub(r'<\!--.*?-->', '', txt, flags=re.DOTALL)
+        return txt
 
     @staticmethod
     @lru_cache(None)

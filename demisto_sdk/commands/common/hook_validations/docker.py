@@ -42,6 +42,10 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
+        if not self.docker_image_latest_tag:
+            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
 
     def is_docker_image_valid(self):
         # javascript code should not check docker
@@ -265,7 +269,6 @@ class DockerImageValidator(BaseValidator):
             tags = res.json().get('tags', [])
             if tags:
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
-
         return tag
 
     def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image):
@@ -279,11 +282,7 @@ class DockerImageValidator(BaseValidator):
             The last updated docker image tag
         """
         if yml_docker_image:
-            if yml_docker_image.startswith('devdemisto/'):
-                error_message, error_code = Errors.not_demisto_docker()
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-
-            elif not yml_docker_image.startswith('demisto/'):
+            if not yml_docker_image.startswith('demisto/'):
                 error_message, error_code = Errors.not_demisto_docker()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return ''

@@ -374,6 +374,56 @@ script:
       description: ''
       type: Boolean
   - arguments:
+    - description: ID of pet to update
+      isArray: false
+      name: petId
+      required: true
+    - description: Additional data to pass to server
+      isArray: false
+      name: additionalMetadata
+      required: false
+    - description: file to upload
+      isArray: false
+      name: file
+      required: false
+    description: uploads an image
+    name: testswagger-post-pet-upload-image
+    outputs:
+    - contextPath: TestSwagger.ApiResponse.code
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.ApiResponse.type
+      description: ''
+      type: String
+    - contextPath: TestSwagger.ApiResponse.message
+      description: ''
+      type: String
+  - arguments:
+    - description: ID of pet to update
+      isArray: false
+      name: petId
+      required: true
+    - description: Additional data to pass to server
+      isArray: false
+      name: additionalMetadata
+      required: false
+    - description: file to upload
+      isArray: false
+      name: file
+      required: false
+    description: uploads an image
+    name: testswagger-post-pet-upload-image-by-uploadimage
+    outputs:
+    - contextPath: TestSwagger.ApiResponse.code
+      description: ''
+      type: Number
+    - contextPath: TestSwagger.ApiResponse.type
+      description: ''
+      type: String
+    - contextPath: TestSwagger.ApiResponse.message
+      description: ''
+      type: String
+  - arguments:
     - description: ''
       isArray: false
       name: pet_id
@@ -463,32 +513,7 @@ script:
       required: false
     description: Updated user
     name: testswagger-update-user
-  - arguments:
-    - description: ID of pet to update
-      isArray: false
-      name: petId
-      required: true
-    - description: Additional data to pass to server
-      isArray: false
-      name: additionalMetadata
-      required: false
-    - description: file to upload
-      isArray: false
-      name: file
-      required: false
-    description: uploads an image
-    name: testswagger-upload-file
-    outputs:
-    - contextPath: TestSwagger.ApiResponse.code
-      description: ''
-      type: Number
-    - contextPath: TestSwagger.ApiResponse.type
-      description: ''
-      type: String
-    - contextPath: TestSwagger.ApiResponse.message
-      description: ''
-      type: String
-  dockerimage: demisto/python3:3.8.3.9324
+  dockerimage: demisto/python3:3.8.6.12176
   isfetch: false
   script: ''
   subtype: python3

@@ -1,7 +1,10 @@
 import json
+import os
 import re
 
 import pytest
+from _pytest.fixtures import FixtureRequest
+from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
@@ -25,6 +28,18 @@ name_reformatting_test_examples = [
 @pytest.fixture
 def contrib_converter():
     return ContributionConverter('')
+
+
+def create_contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
+    tmp_dir = _mk_tmp(request, tmp_path_factory)
+    return ContributionConverter(name=request.param, base_dir=str(tmp_dir))
+
+
+@pytest.fixture
+def contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
+    """Mocking tmp_path
+    """
+    return create_contribution_converter(request, tmp_path_factory)
 
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
@@ -191,10 +206,10 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
         expected_output_name (str): The value expected to be returned by passing 'input_name'
             to the 'format_pack_dir_name' method
 
-    Scenario: The demisto-sdk 'init' command is executed with the 'contribution' option
+    Scenario: Creating a new pack from a contribution zip file
 
     Given
-    - A pack name (taken from the contribution metadata or explicitly passed as a command option)
+    - A pack name
 
     When
     - The pack name is passed to the 'format_pack_dir_name' method
@@ -216,3 +231,91 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
             assert first_char.isupper(), 'The output\'s first character should be capitalized'
     assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
     assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
+
+
+@pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)
+class TestEnsureUniquePackDirName:
+    def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):
+        """Test the 'ensure_unique_pack_dir_name' method
+
+        Args:
+            contribution_converter (fixture): An instance of the ContributionConverter class
+
+        Scenario: Creating a new pack from a contribution zip file
+
+        Given
+        - A pack's directory name
+
+        When
+        - The pack's proposed directory name is passed to the 'ensure_unique_pack_dir_name' method
+        - There does not already exist a pack directory with the proposed name
+
+        Then
+        - Ensure the pack directory name returned by the method matches the expected output - should be unchanged
+        """
+        pack_name = 'TestPack'
+        crb_crvrt = contribution_converter
+        assert crb_crvrt.name == pack_name
+        assert crb_crvrt.dir_name == pack_name
+        print(f'crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}')
+        assert os.path.isdir(crb_crvrt.pack_dir_path)
+
+    def test_ensure_unique_pack_dir_name_with_conflict(self, contribution_converter):
+        """Test the 'ensure_unique_pack_dir_name' method
+
+        Args:
+            contribution_converter (fixture): An instance of the ContributionConverter class
+
+        Scenario: Creating a new pack from a contribution zip file
+
+        Given
+        - A pack's directory name
+
+        When
+        - The pack's proposed directory name is passed to the 'ensure_unique_pack_dir_name' method
+        - There already exists a pack directory with the proposed name
+
+        Then
+        - Ensure the pack directory name returned by the method matches the expected output, which is that a
+          version number should have been added
+        """
+        pack_name = 'TestPack'
+        crb_crvrt = contribution_converter
+        assert crb_crvrt.name == pack_name
+        assert crb_crvrt.dir_name == pack_name
+        assert os.path.isdir(crb_crvrt.pack_dir_path)
+        new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(pack_name)
+        assert new_pack_dir_name != pack_name
+        assert new_pack_dir_name == pack_name + 'V2'
+
+    def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
+        """Test the 'ensure_unique_pack_dir_name' method
+
+        Args:
+            contribution_converter (fixture): An instance of the ContributionConverter class
+
+        Scenario: Creating a new pack from a contribution zip file
+
+        Given
+        - A pack's directory name
+
+        When
+        - The pack's proposed directory name is passed to the 'ensure_unique_pack_dir_name' method
+        - There already exists a pack directory with the proposed name
+        - The proposed name ends with a version suffix, e.g. 'V2'
+
+        Then
+        - Ensure the pack directory name returned by the method matches the expected output, which is that the
+          version number should have been incremented
+        """
+        pack_name = 'TestPack'
+        crb_crvrt = contribution_converter
+        assert crb_crvrt.name == pack_name
+        assert crb_crvrt.dir_name == pack_name
+        assert os.path.isdir(crb_crvrt.pack_dir_path)
+        new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(pack_name)
+        assert new_pack_dir_name != pack_name
+        assert new_pack_dir_name == pack_name + 'V2'
+        os.makedirs(os.path.join(crb_crvrt.packs_dir_path, new_pack_dir_name))
+        incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(new_pack_dir_name)
+        assert incremented_new_pack_dir_name == pack_name + 'V3'

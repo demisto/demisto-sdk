@@ -12,9 +12,9 @@ from typing import Dict, List, Union
 import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL)
+    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
+    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR,
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -161,9 +161,15 @@ class ContributionConverter:
 
     def unpack_contribution_to_dst_pack_directory(self) -> None:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
-        shutil.unpack_archive(filename=self.contribution, extract_dir=self.pack_dir_path)
-        # remove metadata.json file
-        os.remove(os.path.join(self.pack_dir_path, 'metadata.json'))
+        if self.contribution:
+            shutil.unpack_archive(filename=self.contribution, extract_dir=self.pack_dir_path)
+            # remove metadata.json file
+            os.remove(os.path.join(self.pack_dir_path, 'metadata.json'))
+        else:
+            err_msg = ('Tried unpacking contribution to destination directory but the instance variable'
+                       ' "contribution" is "None" - Make sure "contribution" is set before trying to unpack'
+                       ' the contribution.')
+            raise TypeError(err_msg)
 
     def convert_contribution_dir_to_pack_contents(self, unpacked_contribution_dir: str) -> None:
         """Converts a directory and its contents unpacked from the contribution zip file to the appropriate structure
@@ -203,7 +209,7 @@ class ContributionConverter:
         """
         basename = os.path.basename(unpacked_contribution_dir)
         if basename in ENTITY_TYPE_TO_DIR:
-            dst_name = ENTITY_TYPE_TO_DIR.get(basename)
+            dst_name = ENTITY_TYPE_TO_DIR.get(basename, '')
             src_path = os.path.join(self.pack_dir_path, basename)
             dst_path = os.path.join(self.pack_dir_path, dst_name)
             if os.path.exists(dst_path):
@@ -289,7 +295,7 @@ class ContributionConverter:
                 try:
                     child_file_name = os.path.basename(child_file)
                     if file_dir_mapping and child_file_name in file_dir_mapping.keys():
-                        base_name = file_dir_mapping.get(child_file_name)
+                        base_name = file_dir_mapping.get(child_file_name, '')
                         extractor = Extractor(input=content_item_file_path, file_type=file_type,
                                               output=content_item_dir, base_name=base_name)
                     else:

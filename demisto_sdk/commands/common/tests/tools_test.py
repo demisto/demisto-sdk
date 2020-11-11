@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_files_by_type,
                                                filter_files_changes_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
@@ -146,6 +147,27 @@ class TestGenericFunctions:
         assert added == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
         assert old == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
         assert changed_meta_files == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+
+    for_test_filter_files_by_type = [
+        ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
+        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [], {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
+        (set(), [FileType.PLAYBOOK], set())
+    ]
+
+    @pytest.mark.parametrize('files, types, output', for_test_filter_files_by_type)
+    def test_filter_files_by_type(self, files, types, output, mocker):
+        """
+        Given
+        - Sets of content files and file types to skip.
+        When
+        - Want to filter the lists by file typs.
+        Then:
+        - Ensure the list returned Whiteout the files to skip.
+        """
+        mocker.patch('demisto_sdk.commands.common.tools.is_file_path_in_pack', return_value='True')
+        files = filter_files_by_type(files, types)
+
+        assert files == output
 
     @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
     def test_get_depth(self, data, output):

@@ -692,7 +692,15 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
 
 
 def filter_files_by_type(file_paths=None, skip_file_types=None):
+    """get set of files and return the set whiteout the types to skip
 
+    Args:
+        file_paths (set): set of content files
+        skip_file_types list[string]: list of file types to skip
+
+    Returns:
+        files (set): list of files whiteout the types to skip
+    """
     if file_paths is None:
         file_paths = set()
     files = set()

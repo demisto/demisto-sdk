@@ -62,6 +62,7 @@ class StructureValidator(BaseValidator):
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
         self.fromversion = fromversion
+        # If it is a newly added file or if it is a file outside the pack then we will not search for an old file
         if is_new_file or not is_file_path_in_pack(self.file_path):
             self.old_file = {}
         else:

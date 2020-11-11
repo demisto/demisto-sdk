@@ -405,7 +405,7 @@ class TestValidators:
     def test_run_all_validations_on_file_failed(self, _, file_path):
         """
         Given
-        - A invalid file in packs or invalid beta integration
+        - An invalid file inside packs or an invalid beta integration
 
         When
         - running run_all_validations_on_file on that file

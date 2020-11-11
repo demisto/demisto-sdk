@@ -1,6 +1,4 @@
-import json
 import os
-import re
 from collections import OrderedDict, deque
 from datetime import datetime
 from os import listdir
@@ -12,13 +10,9 @@ import yaml
 import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    INTEGRATION_CATEGORIES, LAYOUT, LAYOUTS_CONTAINER,
-    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
+    PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
-from mock import patch
-from TestSuite.contribution import Contribution
-from TestSuite.repo import Repo
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -31,18 +25,6 @@ PACK_TAGS = 'Tag1,Tag2'
 PACK_GITHUB_USERS = ''
 INTEGRATION_NAME = 'IntegrationName'
 SCRIPT_NAME = 'ScriptName'
-
-name_reformatting_test_examples = [
-    ('PACKYAYOK', 'PACKYAYOK'),
-    ('PackYayOK', 'PackYayOK'),
-    ('pack yay ok!', 'PackYayOk'),
-    ('PackYayOK', 'PackYayOK'),
-    ('-pack-yay-ok--', 'Pack-Yay-Ok'),
-    ('PackYayOK', 'PackYayOK'),
-    ('The quick brown fox, jumps over the lazy dog!', 'TheQuickBrownFox_JumpsOverTheLazyDog'),
-    ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog'),
-    ('ThE quIck`*+.brown fox, ;jumps ovER @@the lazy dog!', 'ThEQuIck_BrownFox_JumpsOvER_TheLazyDog')
-]
 
 
 @pytest.fixture
@@ -307,191 +289,6 @@ def test_yml_reformatting(tmp_path, initiator):
             'display': 'HelloWorld',
             'name': 'HelloWorld'
         })
-
-
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
-@patch('demisto_sdk.commands.init.initiator.get_content_path')
-def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, initiator):
-    '''Create a fake contribution zip file and test that it is converted to a Pack correctly
-
-    Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
-        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
-        initiator (fixture): Initializes an instance of the 'Initiator' class
-
-    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
-
-    Given
-    - A contribution zip file
-    - The zipfile contains a unified script file
-    - The zipfile contains a unified integration file
-    When
-    - Converting the zipfile to a valid Pack structure
-    Then
-    - Ensure script and integration are componentized and in valid directory structure
-    '''
-    # Create all Necessary Temporary directories
-    # create temp directory for the repo
-    repo_dir = tmp_path / 'content_repo'
-    repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
-    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
-    # that will be deleted after
-    target_dir = repo_dir / 'target_dir'
-    target_dir.mkdir()
-    # create temp directory in which the contribution zip will reside
-    contribution_zip_dir = tmp_path / 'contrib_zip'
-    contribution_zip_dir.mkdir()
-    # Create fake content repo and contribution zip
-    repo = Repo(repo_dir)
-    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
-    # contrib_zip.create_zip(contribution_zip_dir)
-    contrib_zip.create_zip(contribution_zip_dir)
-
-    # target_dir should have been deleted after creation of the zip file
-    assert not target_dir.exists()
-
-    initiator.contribution = contrib_zip.created_zip_filepath
-    initiator.init()
-
-    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
-    assert converted_pack_path.exists()
-
-    scripts_path = converted_pack_path / 'Scripts'
-    sample_script_path = scripts_path / 'SampleScript'
-    script_yml = sample_script_path / 'SampleScript.yml'
-    script_py = sample_script_path / 'SampleScript.py'
-
-    assert scripts_path.exists()
-    assert sample_script_path.exists()
-    assert script_yml.exists()
-    assert script_py.exists()
-
-    integrations_path = converted_pack_path / 'Integrations'
-    sample_integration_path = integrations_path / 'Sample'
-    integration_yml = sample_integration_path / 'Sample.yml'
-    integration_py = sample_integration_path / 'Sample.py'
-    integration_description = sample_integration_path / 'Sample_description.md'
-    integration_image = sample_integration_path / 'Sample_image.png'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image]
-    for integration_file in integration_files:
-        assert integration_file.exists()
-
-    layouts_path = converted_pack_path / 'Layouts'
-    sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
-    sample_layout = layouts_path / f'{LAYOUT}-fakelayout.json'
-
-    assert layouts_path.exists()
-    assert sample_layoutscontainer.exists()
-    assert sample_layout.exists()
-
-
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
-@patch('demisto_sdk.commands.init.initiator.get_content_path')
-def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
-    '''Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
-
-    Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
-        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
-
-    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
-
-    Given
-    - A contribution zip file
-    When
-    - The initiator class instance is instantiated with the 'name' argument of 'Test Pack'
-    - The initiator class instance is instantiated with the 'description' argument of 'test pack description here'
-    - The initiator class instance is instantiated with the 'author' argument of 'Octocat Smith'
-    Then
-    - Ensure pack with directory name of 'TestPack' is created
-    - Ensure that the pack's 'pack_metadata.json' file's 'name' field is 'Test Pack'
-    - Ensure that the pack's 'pack_metadata.json' file's 'description' field is 'test pack description here'
-    - Ensure that the pack's 'pack_metadata.json' file's 'author' field is 'Octocat Smith'
-    - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
-    '''
-    # Create all Necessary Temporary directories
-    # create temp directory for the repo
-    repo_dir = tmp_path / 'content_repo'
-    repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
-    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
-    # that will be deleted after
-    target_dir = repo_dir / 'target_dir'
-    target_dir.mkdir()
-    # create temp directory in which the contribution zip will reside
-    contribution_zip_dir = tmp_path / 'contrib_zip'
-    contribution_zip_dir.mkdir()
-    # Create fake content repo and contribution zip
-    repo = Repo(repo_dir)
-    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
-    # contrib_zip.create_zip(contribution_zip_dir)
-    contrib_zip.create_zip(contribution_zip_dir)
-
-    # target_dir should have been deleted after creation of the zip file
-    assert not target_dir.exists()
-
-    name = 'Test Pack'
-    contribution_path = contrib_zip.created_zip_filepath
-    description = 'test pack description here'
-    author = 'Octocat Smith'
-    initiator_inst = Initiator('', name=name, contribution=contribution_path, description=description, author=author)
-    initiator_inst.init()
-
-    converted_pack_path = repo_dir / 'Packs' / 'TestPack'
-    assert converted_pack_path.exists()
-
-    pack_metadata_path = converted_pack_path / 'pack_metadata.json'
-    assert pack_metadata_path.exists()
-    with open(pack_metadata_path, 'r') as pack_metadata:
-        metadata = json.load(pack_metadata)
-        assert metadata.get('name', '') == name
-        assert metadata.get('description', '') == description
-        assert metadata.get('author', '') == author
-        assert not metadata.get('email')
-
-
-@pytest.mark.parametrize('input_name,expected_output_name', name_reformatting_test_examples)
-def test_format_pack_dir_name(initiator, input_name, expected_output_name):
-    '''Test the 'format_pack_dir_name' method with various inputs
-
-    Args:
-        initiator (fixture): An instance of the Initiator class
-        input_name (str): A 'name' argument value to test
-        expected_output_name (str): The value expected to be returned by passing 'input_name'
-            to the 'format_pack_dir_name' method
-
-    Scenario: The demisto-sdk 'init' command is executed with the 'contribution' option
-
-    Given
-    - A pack name (taken from the contribution metadata or explicitly passed as a command option)
-
-    When
-    - The pack name is passed to the 'format_pack_dir_name' method
-
-    Then
-    - Ensure the reformatted pack name returned by the method matches the expected output
-    - Ensure the reformatted pack name returned by the method contains only valid characters
-        (alphanumeric, underscore, and dash with no whitespace)
-    '''
-    output_name = initiator.format_pack_dir_name(input_name)
-    assert output_name == expected_output_name
-    assert not re.search(r'\s',
-                         output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
-    err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
-    assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
-    if len(output_name) > 1:
-        first_char = output_name[0]
-        if first_char.isalpha():
-            assert first_char.isupper(), 'The output\'s first character should be capitalized'
-    assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
-    assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
 
 
 def test_get_remote_templates__valid(mocker, initiator):

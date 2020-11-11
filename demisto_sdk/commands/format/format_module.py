@@ -1,6 +1,7 @@
 import os
 from typing import Dict, List, Tuple
 
+import click
 from demisto_sdk.commands.common.git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -137,8 +138,13 @@ def format_manager(input: str = None,
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
                                  print_error))
         if content_entity_ids_to_update:
+            if verbose:
+                click.echo(f'Collected content entities IDs to update:\n{content_entity_ids_to_update}\n'
+                           f'Going over files to update these IDs in other files...')
             for file in files:
                 file_path = file.replace('\\', '/')
+                if verbose:
+                    click.echo(f'Processing file {file_path} to check for content entities IDs to update')
                 with open(file_path, 'r+') as f:
                     file_content = f.read()
                     for id_to_replace, updated_id in content_entity_ids_to_update.items():

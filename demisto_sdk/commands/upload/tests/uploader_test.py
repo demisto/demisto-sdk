@@ -3,6 +3,7 @@ import json
 from functools import wraps
 from unittest.mock import MagicMock, patch
 
+import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -42,7 +43,8 @@ def demisto_client_configure(mocker):
     mocker.patch("builtins.print")
 
 
-def test_upload_integration_positive(demisto_client_configure):
+def test_upload_integration_positive(demisto_client_configure, mocker):
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
     integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
@@ -61,6 +63,7 @@ def test_upload_script_positive(demisto_client_configure, mocker):
         - Ensure script is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     script_name = "DummyScriptUnified.yml"
     script_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_name}"
     uploader = Uploader(input=script_path, insecure=False, verbose=False)
@@ -82,6 +85,8 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
         - Ensure playbook is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+
     playbook_name = "Cortex_XDR_Incident_Handling.yml"
     playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Playbooks/{playbook_name}"
     uploader = Uploader(input=playbook_path, insecure=False, verbose=False)
@@ -103,6 +108,8 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
         - Ensure widget is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+
     widget_name = "widget-ActiveIncidentsByRole.json"
     widget_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/{widget_name}"
     uploader = Uploader(input=widget_path, insecure=False, verbose=False)
@@ -124,6 +131,8 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
         - Ensure dashboard is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+
     dashboard_name = "upload_test_dashboard.json"
     dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/{dashboard_name}"
     uploader = Uploader(input=dashboard_path, insecure=False, verbose=False)
@@ -145,6 +154,7 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
         - Ensure layout is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     layout_name = "layout-details-test_bla-V2.json"
     layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
     uploader = Uploader(input=layout_path, insecure=False, verbose=False)
@@ -166,6 +176,7 @@ def test_upload_incident_type_positive(demisto_client_configure, mocker):
         - Ensure incident type is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     incident_type_name = "incidenttype-Hello_World_Alert.json"
     incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
     uploader = Uploader(input=incident_type_path, insecure=False, verbose=False)
@@ -187,6 +198,7 @@ def test_upload_classifier_positive(demisto_client_configure, mocker):
         - Ensure classifier is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     classifier_name = "classifier-aws_sns_test_classifier.json"
     classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/{classifier_name}"
     uploader = Uploader(input=classifier_path, insecure=False, verbose=False)
@@ -208,6 +220,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
         - Ensure incident field is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     incident_field_name = "XDR_Alert_Count.json"
     incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
@@ -287,6 +300,7 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
         - Ensure integration is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     integration_dir_name = "UploadTest"
     integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
     uploader = Uploader(input=integration_path, insecure=False, verbose=False)
@@ -310,6 +324,7 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
         - Ensure script is uploaded successfully
         - Ensure success upload message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     script_dir_name = "DummyScript"
     scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
     uploader = Uploader(input=scripts_path, insecure=False, verbose=False)
@@ -334,6 +349,7 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
         - Ensure status code is as expected
         - Ensure amount of messages is as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     mocker.patch("click.secho")
     dir_name = "IncidentFields"
     incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
@@ -356,6 +372,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         - Ensure status code is as expected
         - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
@@ -372,7 +389,8 @@ def test_upload_pack(demisto_client_configure, mocker):
         assert entity in uploaded_objects
 
 
-def test_upload_invalid_path(demisto_client_configure):
+def test_upload_invalid_path(demisto_client_configure, mocker):
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
@@ -389,6 +407,7 @@ def test_file_not_supported(demisto_client_configure, mocker):
     Then
         - Ensure uploaded failure message is printed as expected
     """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
     file_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     uploader = Uploader(input=file_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')

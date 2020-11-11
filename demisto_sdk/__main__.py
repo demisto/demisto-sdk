@@ -649,7 +649,7 @@ def generate_test_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-n", "--name", help="The name of the directory and file you want to create")
+    "-n", "--name", help="The name of the directory and file you want to create", required=True)
 @click.option(
     "--id", help="The id used in the yml file of the integration or script"
 )
@@ -668,27 +668,6 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--common_server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
-@click.option(
-    '-c', '--contribution',
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
-    required=False,
-    help="The path to the zip file downloaded via the Marketplace contribution UI. "
-    "This will format the contents of the zip file to a pack format ready for contribution "
-    "in the content repository on your local machine. The command should be executed from the "
-    "content repository's base directory. When this option is passed, the only other options "
-    "that are considered are \"name\", \"description\" and \"author\" - all others are ignored.")
-@click.option(
-    '-d', '--description',
-    type=click.STRING,
-    default='',
-    help="The description to attach to the converted contribution pack. Used when the \"contribution\" "
-    "option is passed.")
-@click.option(
-    '--author',
-    type=click.STRING,
-    default='',
-    help="The author to attach to the converted contribution pack. Used when the \"contribution\" "
-    "option is passed.")
 def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()

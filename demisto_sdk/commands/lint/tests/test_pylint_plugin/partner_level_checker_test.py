@@ -61,7 +61,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
                 finally:
                     pass
         """)
-        assert node_b is not None
+        assert node_b
         with self.assertNoMessages():
             self.checker.visit_functiondef(node_b)
 

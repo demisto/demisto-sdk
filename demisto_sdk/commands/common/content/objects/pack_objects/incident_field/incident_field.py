@@ -1,3 +1,5 @@
+import json
+from tempfile import NamedTemporaryFile
 from typing import Union
 
 import demisto_client
@@ -20,4 +22,12 @@ class IncidentField(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return client.import_incident_fields(file=self.path)
+        if isinstance(self._as_dict, dict):
+            incident_fields_unified_data = {'incidentFields': [self._as_dict]}
+        else:
+            incident_fields_unified_data = {'incidentFields': self._as_dict}
+
+        with NamedTemporaryFile(suffix='.json') as incident_fields_unified_file:
+            incident_fields_unified_file.write(bytes(json.dumps(incident_fields_unified_data), 'utf-8'))
+            incident_fields_unified_file.seek(0)
+            return client.import_incident_fields(file=incident_fields_unified_file.name)

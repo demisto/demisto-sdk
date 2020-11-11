@@ -43,7 +43,7 @@ class PartnerChecker(BaseChecker):
         if node.name == 'main':
             try_except_exists = False
             for child in node.get_children():
-                if isinstance(child, astroid.TryExcept):
+                if isinstance(child, astroid.TryExcept) or isinstance(child, astroid.TryFinally):
                     try_except_exists = True
             if not try_except_exists:
                 self.add_message("try-except-main-doesnt-exists", node=node)

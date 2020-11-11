@@ -1,9 +1,8 @@
 import inspect
 import json
 from functools import wraps
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -17,6 +16,8 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from packaging.version import parse
+
+DATA = ''
 
 # Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
 if not hasattr(inspect, '_orig_findsource'):
@@ -33,7 +34,6 @@ if not hasattr(inspect, '_orig_findsource'):
 
 @pytest.fixture
 def demisto_client_configure(mocker):
-    mocker.patch.object(demisto_client, 'configure', return_value="object")
     mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=parse('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
                  return_value=parse('6.0.0'))
@@ -215,6 +215,64 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
+
+
+def test_upload_incident_type_correct_file_change(demisto_client_configure):
+    """
+    Given
+        - An incident type named incidenttype-Hello_World_Alert to upload
+
+    When
+        - Uploading incident type
+
+    Then
+        - Ensure incident type is in the correct format for upload
+    """
+    def save_file(file):
+        global DATA
+        with open(file, 'r') as f:
+            DATA = f.read()
+        return
+
+    incident_type_name = "incidenttype-Hello_World_Alert.json"
+    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
+    uploader = Uploader(input=incident_type_path, insecure=False, verbose=False)
+    uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
+    uploader.upload()
+
+    with open(incident_type_path) as json_file:
+        incident_type_data = json.load(json_file)
+
+    assert json.loads(DATA)[0] == incident_type_data
+
+
+def test_upload_incident_field_correct_file_change(demisto_client_configure):
+    """
+    Given
+        - An incident field named XDR_Alert_Count to upload
+
+    When
+        - Uploading incident field
+
+    Then
+        - Ensure incident field is in the correct format for upload
+    """
+    def save_file(file):
+        global DATA
+        with open(file, 'r') as f:
+            DATA = f.read()
+        return
+
+    incident_field_name = "XDR_Alert_Count.json"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
+    uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
+    uploader.upload()
+
+    with open(incident_field_path) as json_file:
+        incident_field_data = json.load(json_file)
+
+    assert json.loads(DATA)['incidentFields'][0] == incident_field_data
 
 
 def test_upload_an_integration_directory(demisto_client_configure, mocker):

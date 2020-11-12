@@ -230,14 +230,27 @@ class ContributionConverter:
             input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
         )
 
-    def convert_contribution_to_pack(self):
-        """Create a Pack in the content repo from the contents of a contribution zipfile"""
+    def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
+        """Create or updates a pack in the content repo from the contents of a contribution zipfile
+
+        Args:
+            files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
+                name as inside the the contribution zip to a dictionary containing the the associated source info
+                for that file, specifically the base name (the name used in naming the split component files) and
+                the name of the containing directory.
+        """
         try:
-            with zipfile.ZipFile(self.contribution) as zipped_contrib:
-                with zipped_contrib.open('metadata.json') as metadata_file:
-                    click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
-                    metadata = json.loads(metadata_file.read())
-                    self.create_metadata_file(metadata)
+            # only create pack_metadata.json and base pack files if creating a new pack
+            if self.create_new:
+                if self.contribution:
+                    # create pack metadata file
+                    with zipfile.ZipFile(self.contribution) as zipped_contrib:
+                        with zipped_contrib.open('metadata.json') as metadata_file:
+                            click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                            metadata = json.loads(metadata_file.read())
+                            self.create_metadata_file(metadata)
+                # create base files
+                self.create_pack_base_files()
             # unpack
             self.unpack_contribution_to_dst_pack_directory()
             # convert
@@ -248,10 +261,9 @@ class ContributionConverter:
             for pack_subdir in get_child_directories(self.pack_dir_path):
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
-                    self.content_item_to_package_format(pack_subdir, del_unified=True)
-            # create base files
-            if self.create_new:
-                self.create_pack_base_files()
+                    self.content_item_to_package_format(
+                        pack_subdir, del_unified=True, source_mapping=files_to_source_mapping
+                    )
             # format
             self.format_converted_pack()
         except Exception as e:

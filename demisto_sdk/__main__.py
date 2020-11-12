@@ -899,7 +899,7 @@ def update_pack_releasenotes(**kwargs):
 
             else:
                 print_warning(f'Either no cahnges were found in {pack} pack '
-                              f'or the changes found should not be documented in the release notes file'
+                              f'or the changes found should not be documented in the release notes file '
                               f'If relevant changes were made, please commit the changes and rerun the command')
     else:
         print_warning('No changes that require release notes were detected. If such changes were made, '

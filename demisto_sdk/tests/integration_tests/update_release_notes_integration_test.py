@@ -353,9 +353,9 @@ def test_update_release_on_matadata_change(demisto_client, mocker):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
 
     assert result.exit_code == 0
-    assert 'No changes were detected on FeedAzureValid pack. ' \
-           'or they are no changes which would belong in release notes. ' \
-           'If changes were made, please commit the changes and rerun the command' in result.stdout
+    assert 'Either no cahnges were found in FeedAzureValid pack or the changes found should not be documented in the ' \
+           'release notes file If relevant changes were made,' \
+           ' please commit the changes and rerun the command' in result.stdout
 
 
 def test_update_release_notes_all(demisto_client, mocker):
@@ -380,6 +380,6 @@ def test_update_release_notes_all(demisto_client, mocker):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
 
     assert result.exit_code == 0
-    assert 'No changes were detected on FeedAzureValid pack. ' \
-           'or they are no changes which would belong in release notes. ' \
-           'If changes were made, please commit the changes and rerun the command' in result.stdout
+    assert 'Either no cahnges were found in FeedAzureValid pack or the changes found should not be documented in the ' \
+           'release notes file If relevant changes were made,' \
+           ' please commit the changes and rerun the command' in result.stdout

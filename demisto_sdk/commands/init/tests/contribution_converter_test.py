@@ -53,7 +53,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
         get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
-    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
+    Scenario: Simulate converting a contribution zip file
 
     Given
     - A contribution zip file
@@ -137,7 +137,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
         get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
-    Scenario: Simulate executing the 'init' command with the 'contribution' option passed
+    Scenario: Simulate converting a contribution zip file
 
     Given
     - A contribution zip file

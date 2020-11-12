@@ -225,7 +225,7 @@ class ContributionConverter:
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
         click.echo(f'Executing \'format\' on the restructured contribution zip files at "{self.pack_dir_path}"')
-        from_version = '6.0.0'
+        from_version = '6.0.0' if self.create_new else ''
         format_manager(
             input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
         )

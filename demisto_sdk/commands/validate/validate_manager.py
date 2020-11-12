@@ -419,7 +419,7 @@ class ValidateManager:
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
             validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
-                                                                          added_files, changed_meta_files))
+                                                                          added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -655,8 +655,7 @@ class ValidateManager:
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files,
-                                                                                               changed_meta_packs)
+                                                                                               added_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
@@ -715,14 +714,13 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
-    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files, changed_meta_files):
+    def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files):
         """Validate that there are no missing RN for changed files
 
         Args:
             modified_files (set): a set of modified files.
             old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
-            changed_meta_files (set): a set of modified metadata files.
 
         Returns:
             bool. True if no missing RN found, False otherwise
@@ -730,7 +728,7 @@ class ValidateManager:
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
 
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
-        changed_files = modified_files.union(old_format_files).union(added_files).union(changed_meta_files)
+        changed_files = modified_files.union(old_format_files).union(added_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
                                                                   skip_file_types={FileType.RELEASE_NOTES,
                                                                                    FileType.README,
@@ -824,7 +822,7 @@ class ValidateManager:
                 all_changed_files_string, prev_ver
             )
             modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files)).union(
-                self.get_packs(added_files_list)).union(self.get_packs(changed_meta_files))
+                self.get_packs(added_files_list))
             return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
@@ -889,7 +887,7 @@ class ValidateManager:
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
         modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
-            self.get_packs(added_files)).union(self.get_packs(changed_meta_files))
+            self.get_packs(added_files))
         return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
@@ -1114,9 +1112,8 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files, changed_meta_packs):
-        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
-        # and packs where the meta file changed should have their version raised
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
@@ -1128,7 +1125,7 @@ class ValidateManager:
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                 FileType.TEST_SCRIPT}) - self.new_packs)
 
-        return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
+        return modified_packs_that_should_have_version_raised
 
     @staticmethod
     def get_packs(changed_files):

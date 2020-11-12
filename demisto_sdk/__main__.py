@@ -899,8 +899,8 @@ def update_pack_releasenotes(**kwargs):
 
             else:
                 print_warning(f'No changes were detected on {pack} pack. '
-                              f'or they are no changes which would belong in release notes '
-                              f'.If changes were made, please commit the changes and rerun the command')
+                              f'or they are no changes which would belong in release notes. '
+                              f'If changes were made, please commit the changes and rerun the command')
     else:
         print_warning('No changes were detected. If changes were made, please commit the changes '
                       'and rerun the command')

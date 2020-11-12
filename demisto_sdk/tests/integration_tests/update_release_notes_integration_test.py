@@ -352,5 +352,5 @@ def test_update_release_notes_all(demisto_client, mocker):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
 
     assert result.exit_code == 0
-    assert 'No changes were detected on FeedAzureValid pack. If changes were made, ' \
-           'please commit the changes and rerun the command' in result.stdout
+    assert 'No changes were detected on FeedAzureValid pack. or they are no changes which would belong in release notes. ' \
+           'If changes were made, please commit the changes and rerun the command' in result.stdout

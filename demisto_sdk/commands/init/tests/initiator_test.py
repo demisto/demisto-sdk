@@ -79,157 +79,188 @@ def test_get_object_id_custom_name(monkeypatch, initiator):
     assert given_id == initiator.id
 
 
-def test_create_metadata_non_filled_manually(initiator):
-    """Create a non filled manually pack metadata
+class TestCreateMetadata:
+    def test_create_metadata_non_filled_manually(self, initiator):
+        """Create a non filled manually pack metadata
 
-    Args:
-        initiator (fixture): Initializes an instance of the 'Initiator' class
+        Args:
+            initiator (fixture): Initializes an instance of the 'Initiator' class
 
-    Given
-    - a non filled manually pack metadata.
-    When
-    - Creating the pack metadata file.
-    Then
-    - Ensure pack metadata is created with the expected attributes.
-    """
-    pack_metadata = initiator.create_metadata(False)
-    assert pack_metadata == {
-        'name': '## FILL MANDATORY FIELD ##',
-        'description': '## FILL MANDATORY FIELD ##',
-        'support': XSOAR_SUPPORT,
-        'currentVersion': PACK_INITIAL_VERSION,
-        'author': XSOAR_AUTHOR,
-        'url': XSOAR_SUPPORT_URL,
-        'email': '',
-        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'categories': [],
-        'tags': [],
-        'useCases': [],
-        'keywords': []
-    }
+        Given
+        - a non filled manually pack metadata.
+        When
+        - Creating the pack metadata file.
+        Then
+        - Ensure pack metadata is created with the expected attributes.
+        """
+        pack_metadata = initiator.create_metadata(False)
+        assert pack_metadata == {
+            'name': '## FILL MANDATORY FIELD ##',
+            'description': '## FILL MANDATORY FIELD ##',
+            'support': XSOAR_SUPPORT,
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': XSOAR_AUTHOR,
+            'url': XSOAR_SUPPORT_URL,
+            'email': '',
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'categories': [],
+            'tags': [],
+            'useCases': [],
+            'keywords': []
+        }
 
+    def test_create_metadata_non_filled_manually_with_data(self, initiator):
+        """Create a non filled manually pack metadata updated with pre-existing data
 
-def test_create_metadata_partner(monkeypatch, initiator):
-    """Create a fake partner init inputs and test that it is converted to a metadata file correctly
+        Args:
+            initiator (fixture): Initializes an instance of the 'Initiator' class
 
-    Args:
-        monkeypatch (MagicMock): Patch of the user inputs
-        initiator (fixture): Initializes an instance of the 'Initiator' class
+        Given
+        - a non filled manually pack metadata.
+        - pre-existing data that should be included in the metadata
+        When
+        - Creating the pack metadata file.
+        Then
+        - Ensure pack metadata is created with the expected attributes.
+        """
+        name = 'Test Pack'
+        description = 'Test Pack description'
+        data = {'name': name, 'description': description}
+        pack_metadata = initiator.create_metadata(False, data)
+        assert pack_metadata == {
+            'name': name,
+            'description': description,
+            'support': XSOAR_SUPPORT,
+            'currentVersion': PACK_INITIAL_VERSION,
+            'author': XSOAR_AUTHOR,
+            'url': XSOAR_SUPPORT_URL,
+            'email': '',
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'categories': [],
+            'tags': [],
+            'useCases': [],
+            'keywords': []
+        }
 
-    Given
-    - init inputs of a partner supported packs.
-    When
-    - Creating the pack metadata file.
-    Then
-    - Ensure inputs are converted correctly to the pack metadata.
-    """
-    monkeypatch.setattr(
-        'builtins.input',
-        generate_multiple_inputs(
-            deque([
-                PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
-            ])
+    def test_create_metadata_partner(self, monkeypatch, initiator):
+        """Create a fake partner init inputs and test that it is converted to a metadata file correctly
+
+        Args:
+            monkeypatch (MagicMock): Patch of the user inputs
+            initiator (fixture): Initializes an instance of the 'Initiator' class
+
+        Given
+        - init inputs of a partner supported packs.
+        When
+        - Creating the pack metadata file.
+        Then
+        - Ensure inputs are converted correctly to the pack metadata.
+        """
+        monkeypatch.setattr(
+            'builtins.input',
+            generate_multiple_inputs(
+                deque([
+                    PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
+                    PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
+                ])
+            )
         )
-    )
-    pack_metadata = initiator.create_metadata(True)
-    assert pack_metadata == {
-        'author': PACK_AUTHOR,
-        'categories': [INTEGRATION_CATEGORIES[0]],
-        'currentVersion': '1.0.0',
-        'description': PACK_DESC,
-        'email': PACK_EMAIL,
-        'keywords': [],
-        'name': PACK_NAME,
-        'support': PACK_SUPPORT_OPTIONS[1],
-        'tags': ['Tag1', 'Tag2'],
-        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'url': PACK_URL,
-        'useCases': [],
-        'githubUser': []
-    }
+        pack_metadata = initiator.create_metadata(True)
+        assert pack_metadata == {
+            'author': PACK_AUTHOR,
+            'categories': [INTEGRATION_CATEGORIES[0]],
+            'currentVersion': '1.0.0',
+            'description': PACK_DESC,
+            'email': PACK_EMAIL,
+            'keywords': [],
+            'name': PACK_NAME,
+            'support': PACK_SUPPORT_OPTIONS[1],
+            'tags': ['Tag1', 'Tag2'],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'url': PACK_URL,
+            'useCases': [],
+            'githubUser': []
+        }
 
+    def test_create_metadata_partner_wrong_url(self, monkeypatch, initiator):
+        """Create a fake partner init inputs and test that it is converted to a metadata file correctly
 
-def test_create_metadata_partner_wrong_url(monkeypatch, initiator):
-    """Create a fake partner init inputs and test that it is converted to a metadata file correctly
+        Args:
+            monkeypatch (MagicMock): Patch of the user inputs
+            initiator (fixture): Initializes an instance of the 'Initiator' class
 
-    Args:
-        monkeypatch (MagicMock): Patch of the user inputs
-        initiator (fixture): Initializes an instance of the 'Initiator' class
-
-    Given
-    - init inputs of a partner supported packs with a non valid PACK_URL(gave a value which does not contain http).
-    When
-    - Creating the pack metadata file.
-    Then
-    - Ensure inputs are converted correctly to the pack metadata.
-    """
-    monkeypatch.setattr(
-        'builtins.input',
-        generate_multiple_inputs(
-            deque([
-                PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                'no_h[t][t]p', PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
-            ])
+        Given
+        - init inputs of a partner supported packs with a non valid PACK_URL(gave a value which does not contain http).
+        When
+        - Creating the pack metadata file.
+        Then
+        - Ensure inputs are converted correctly to the pack metadata.
+        """
+        monkeypatch.setattr(
+            'builtins.input',
+            generate_multiple_inputs(
+                deque([
+                    PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
+                    'no_h[t][t]p', PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
+                ])
+            )
         )
-    )
-    pack_metadata = initiator.create_metadata(True)
-    assert pack_metadata == {
-        'author': PACK_AUTHOR,
-        'categories': [INTEGRATION_CATEGORIES[0]],
-        'currentVersion': '1.0.0',
-        'description': PACK_DESC,
-        'email': PACK_EMAIL,
-        'keywords': [],
-        'name': PACK_NAME,
-        'support': PACK_SUPPORT_OPTIONS[1],
-        'tags': ['Tag1', 'Tag2'],
-        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'url': PACK_URL,
-        'useCases': [],
-        'githubUser': []
-    }
+        pack_metadata = initiator.create_metadata(True)
+        assert pack_metadata == {
+            'author': PACK_AUTHOR,
+            'categories': [INTEGRATION_CATEGORIES[0]],
+            'currentVersion': '1.0.0',
+            'description': PACK_DESC,
+            'email': PACK_EMAIL,
+            'keywords': [],
+            'name': PACK_NAME,
+            'support': PACK_SUPPORT_OPTIONS[1],
+            'tags': ['Tag1', 'Tag2'],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'url': PACK_URL,
+            'useCases': [],
+            'githubUser': []
+        }
 
+    def test_create_metadata_community(self, monkeypatch, initiator):
+        """Create a fake community init inputs and test that it is converted to a metadata file correctly
 
-def test_create_metadata_community(monkeypatch, initiator):
-    """Create a fake community init inputs and test that it is converted to a metadata file correctly
+        Args:
+            monkeypatch (MagicMock): Patch of the user inputs
+            initiator (fixture): Initializes an instance of the 'Initiator' class
 
-    Args:
-        monkeypatch (MagicMock): Patch of the user inputs
-        initiator (fixture): Initializes an instance of the 'Initiator' class
-
-    Given
-    - init inputs of a community supported packs.
-    When
-    - Creating the pack metadata file.
-    Then
-    - Ensure inputs are converted correctly to the pack metadata.
-    """
-    monkeypatch.setattr(
-        'builtins.input',
-        generate_multiple_inputs(
-            deque([
-                PACK_NAME, PACK_DESC, '4', '1', PACK_AUTHOR,
-                PACK_TAGS, PACK_GITHUB_USERS
-            ])
+        Given
+        - init inputs of a community supported packs.
+        When
+        - Creating the pack metadata file.
+        Then
+        - Ensure inputs are converted correctly to the pack metadata.
+        """
+        monkeypatch.setattr(
+            'builtins.input',
+            generate_multiple_inputs(
+                deque([
+                    PACK_NAME, PACK_DESC, '4', '1', PACK_AUTHOR,
+                    PACK_TAGS, PACK_GITHUB_USERS
+                ])
+            )
         )
-    )
-    pack_metadata = initiator.create_metadata(True)
-    assert pack_metadata == {
-        'author': PACK_AUTHOR,
-        'categories': [INTEGRATION_CATEGORIES[0]],
-        'currentVersion': '1.0.0',
-        'description': PACK_DESC,
-        'email': '',
-        'keywords': [],
-        'name': PACK_NAME,
-        'support': PACK_SUPPORT_OPTIONS[3],
-        'tags': ['Tag1', 'Tag2'],
-        'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
-        'url': MARKETPLACE_LIVE_DISCUSSIONS,
-        'useCases': [],
-        'githubUser': []
-    }
+        pack_metadata = initiator.create_metadata(True)
+        assert pack_metadata == {
+            'author': PACK_AUTHOR,
+            'categories': [INTEGRATION_CATEGORIES[0]],
+            'currentVersion': '1.0.0',
+            'description': PACK_DESC,
+            'email': '',
+            'keywords': [],
+            'name': PACK_NAME,
+            'support': PACK_SUPPORT_OPTIONS[3],
+            'tags': ['Tag1', 'Tag2'],
+            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
+            'url': MARKETPLACE_LIVE_DISCUSSIONS,
+            'useCases': [],
+            'githubUser': []
+        }
 
 
 def test_get_valid_user_input(monkeypatch, initiator):

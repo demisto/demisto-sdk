@@ -281,7 +281,7 @@ class ContributionConverter:
                 )
 
     def content_item_to_package_format(self, content_item_dir: str, del_unified: bool = True,
-                                       file_dir_mapping: Union[Dict[str, str]] = None):
+                                       source_mapping: Union[Dict[str, Dict[str, str]]] = None):
         """
         Iterate over the YAML files in a directory and create packages (a containing directory and
         component files) from the YAMLs of integrations and scripts
@@ -289,12 +289,13 @@ class ContributionConverter:
         Args:
             content_item_dir (str): Path to the directory containing the content item YAML file(s)
             del_unified (bool): Whether to delete the unified yaml the package was extracted from
-            file_dir_mapping (Union[Dict], optional): Can be used when updating an existing pack and
+            source_mapping (Union[Dict], optional): Can be used when updating an existing pack and
                 the package directory of a content item is not what would ordinarily be set by the
                 `demisto-sdk` `split-yml` command. Sample value would be,
-                `{'integration-AbuseIPDB.yml': 'AbuseDB'}` - the split-yml command would create a
-                containing directory of `AbuseIPDB` for the file `integration-AbuseIPDB.yml` and we
-                need the containing directory of the package to match what pre-exists in the repo.
+                `{'integration-AbuseIPDB.yml': {'containing_dir_name': 'AbuseDB', 'base_name': 'AbuseDB'}}`
+                - the split-yml command would create a containing directory of `AbuseIPDB` for the file
+                `integration-AbuseIPDB.yml` and we need the containing directory of the package to match
+                what already exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
         content_item_file_path = ''
@@ -306,10 +307,16 @@ class ContributionConverter:
                 file_type = file_type.value if file_type else file_type
                 try:
                     child_file_name = os.path.basename(child_file)
-                    if file_dir_mapping and child_file_name in file_dir_mapping.keys():
-                        base_name = file_dir_mapping.get(child_file_name, '')
+                    if source_mapping and child_file_name in source_mapping.keys():
+                        child_file_mapping = source_mapping.get(child_file_name, {})
+                        base_name = child_file_mapping.get('base_name', '')
+                        containing_dir_name = child_file_mapping.get('containing_dir_name', '')
+                        output_dir = os.path.join(
+                            self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, ''), containing_dir_name
+                        )
+                        os.makedirs(output_dir)
                         extractor = Extractor(input=content_item_file_path, file_type=file_type,
-                                              output=content_item_dir, base_name=base_name)
+                                              output=output_dir, base_name=base_name, no_auto_create_dir=True)
                     else:
                         extractor = Extractor(input=content_item_file_path,
                                               file_type=file_type, output=content_item_dir)

@@ -7,8 +7,8 @@
 * Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
 * Fixed an issue in the **validate** command where changing any entity ID was not validated.
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
-* Fixed the **update-release-notes** to not bump version for changes in the metadata file.
-* Fixed the **validate** command to not ask for bump version if the change is only in the metadata.
+* Fixed the **update-release-notes** command to ignore changes in the metadata file.
+* Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
 
 
 # v1.2.8

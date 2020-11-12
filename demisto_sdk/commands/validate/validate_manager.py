@@ -817,7 +817,7 @@ class ValidateManager:
             else:
                 click.echo("Collecting all committed files")
         if self.staged:
-            all_changed_files_string = run_command(f'git diff --name-status --staged {prev_ver}')
+            all_changed_files_string = run_command('git diff --name-status --staged')
             modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
                 all_changed_files_string, prev_ver
             )

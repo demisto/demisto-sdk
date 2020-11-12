@@ -38,6 +38,33 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node_b)
 
+    def test_try_except_finally_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - in main function, try-except-finally statement exists.
+        Then:
+            - Ensure that it does not raise any errors, Check that there is no error message.
+
+        """
+        node_b = astroid.extract_node("""
+            def test_function():
+                sys.exit(1)
+                return True
+            def main():
+                try:
+                    return True
+                except:
+                    return False
+                    return_error('error')
+                finally:
+                    pass
+        """)
+        assert node_b
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node_b)
+
     def test_try_except_doesnt_exists(self):
         """
         Given:

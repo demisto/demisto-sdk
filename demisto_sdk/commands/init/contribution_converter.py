@@ -311,12 +311,18 @@ class ContributionConverter:
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get('base_name', '')
                         containing_dir_name = child_file_mapping.get('containing_dir_name', '')
-                        output_dir = os.path.join(
-                            self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, ''), containing_dir_name
-                        )
-                        os.makedirs(output_dir)
-                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
-                                              output=output_dir, base_name=base_name, no_auto_create_dir=True)
+                        # for legacy unified yamls in the repo, their containing directory will be that of their
+                        # entity type directly instead of the typical package format. For those cases, we need the
+                        # extractor to auto create the containing directory. An example would be -
+                        # 'content/Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml'
+                        autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(file_type, '')
+                        output_dir = os.path.join(self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, ''))
+                        if not autocreate_dir:
+                            output_dir = os.path.join(output_dir, containing_dir_name)
+                        os.makedirs(output_dir, exist_ok=True)
+                        extractor = Extractor(input=content_item_file_path, file_type=file_type, output=output_dir,
+                                              base_name=base_name, no_auto_create_dir=(not autocreate_dir))
+
                     else:
                         extractor = Extractor(input=content_item_file_path,
                                               file_type=file_type, output=content_item_dir)

@@ -1086,7 +1086,7 @@ class TestValidators:
             - Validate that only one git diff command runs and it's a staged command
         """
         def run_command_effect(arg):
-            assert arg == 'git diff --name-status --staged master'
+            assert arg == 'git diff --name-status --staged'
             return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
 
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)

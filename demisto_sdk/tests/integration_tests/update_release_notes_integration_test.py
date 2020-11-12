@@ -330,16 +330,44 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.1' in result.stdout
 
 
-def test_update_release_notes_all(demisto_client, mocker):
+def test_update_release_on_matadata_change(demisto_client, mocker):
     """
     Given
-    - --all flag
+    - change only in metadata
 
     When
     - Running demisto-sdk update-release-notes command.
 
     Then
-    - Ensure release notes are detected.
+    - Ensure not find changes which would belong in release notes .
+    """
+    runner = CliRunner(mix_stderr=False)
+
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
+                        return_value=(set(), set(), set(), {'demisto_sdk/tests/test_files/1.pack_metadata.json'},
+                                      {'FeedAzureValid'}))
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
+
+    assert result.exit_code == 0
+    assert 'No changes were detected on FeedAzureValid pack. ' \
+           'or they are no changes which would belong in release notes. ' \
+           'If changes were made, please commit the changes and rerun the command' in result.stdout
+
+
+def test_update_release_notes_all(demisto_client, mocker):
+    """
+    Given
+    - --all flag But there are no changes
+
+    When
+    - Running demisto-sdk update-release-notes command.
+
+    Then
+    - Ensure not find changes which would belong in release notes .
     """
     runner = CliRunner(mix_stderr=False)
 
@@ -352,5 +380,6 @@ def test_update_release_notes_all(demisto_client, mocker):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
 
     assert result.exit_code == 0
-    assert 'No changes were detected on FeedAzureValid pack. or they are no changes which would belong in release notes. ' \
+    assert 'No changes were detected on FeedAzureValid pack. ' \
+           'or they are no changes which would belong in release notes. ' \
            'If changes were made, please commit the changes and rerun the command' in result.stdout

@@ -891,22 +891,16 @@ def update_pack_releasenotes(**kwargs):
                 filter_files_changes_on_pack(pack, modified, added, old, changed_meta_files)
 
             # default case:
-            if modified or added or old:
+            if pack_modified or pack_added or pack_old:
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text)
                 update_pack_rn.execute_update()
 
-            # case: changed_meta_files
-            elif changed_meta_files:
-                update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
-                                          modified_files_in_pack=pack_changed_meta_files, pre_release=pre_release,
-                                          added_files=set(), specific_version=specific_version, text=text,
-                                          pack_metadata_only=True)
-                update_pack_rn.execute_update()
             else:
-                print_warning(f'No changes were detected on {pack} pack. If changes were made, '
-                              f'please commit the changes and rerun the command')
+                print_warning(f'No changes were detected on {pack} pack. '
+                              f'or they are no changes which would belong in release notes '
+                              f'.If changes were made, please commit the changes and rerun the command')
     else:
         print_warning('No changes were detected. If changes were made, please commit the changes '
                       'and rerun the command')

@@ -195,41 +195,21 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
     return details
 
 
-def filter_files_changes_on_pack(pack: str, modified_files=str(), added_files=str(), old_files=str(),
-                                 changed_meta_files=str()):
+def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
     """
     filter_files_changes_on_pack.
 
-    :param modified_files: list of modified files
-    :param added_files: list of new files
-    :param old_files: list of old files
-    :param changed_meta_files: list of changed on metadata files
-
+    :param file_paths_list: list of content files
     :param pack: pack to filter
 
-    :return: tuple of updated lists: (pack_modified_files, pack_added_files, pack_old_files, pack_changed_meta_file)
+    :return: files_paths_on_pack: set of file paths contains only files located in the given pack
     """
-    pack_modified_files = set()
-    for modify in modified_files:
-        if get_pack_name(modify) == pack:
-            pack_modified_files.add(modify)
+    files_paths_on_pack = set()
+    for file in file_paths_list:
+        if get_pack_name(file) == pack:
+            files_paths_on_pack.add(file)
 
-    pack_added_files = set()
-    for added in added_files:
-        if get_pack_name(added) == pack:
-            pack_added_files.add(added)
-
-    pack_old_files = set()
-    for old in old_files:
-        if get_pack_name(old) == pack:
-            pack_old_files.add(old)
-
-    pack_changed_meta_file = set()
-    for meta in changed_meta_files:
-        if get_pack_name(meta) == pack:
-            pack_changed_meta_file.add(meta)
-
-    return pack_modified_files, pack_added_files, pack_old_files, pack_changed_meta_file
+    return files_paths_on_pack
 
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
@@ -691,28 +671,23 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
     return packs
 
 
-def filter_files_by_type(file_paths=None, skip_file_types=None):
+def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
     """get set of files and return the set whiteout the types to skip
 
     Args:
-        file_paths (set): set of content files
-        skip_file_types list[string]: list of file types to skip
+    - file_paths (set): set of content files.
+    - skip_file_types List[str]: list of file types to skip.
 
     Returns:
-        files (set): list of files whiteout the types to skip
+    files (set): list of files whiteout the types to skip
     """
     if file_paths is None:
         file_paths = set()
     files = set()
     for path in file_paths:
-        # renamed files are in a tuples - the second element is the new file name
-        if isinstance(path, tuple):
-            path = path[1]
-
         file_type = find_type(path)
         if file_type not in skip_file_types and is_file_path_in_pack(path):
             files.add(path)
-
     return files
 
 

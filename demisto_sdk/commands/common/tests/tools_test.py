@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_by_type,
-                                               filter_files_changes_on_pack,
+                                               filter_files_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
                                                get_depth, get_dict_from_file,
@@ -130,23 +130,18 @@ class TestGenericFunctions:
         ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
     ]
 
-    @pytest.mark.parametrize('pack, path', test_content_path_on_pack)
-    def test_filter_files_changes_on_pack(self, pack, path):
+    @pytest.mark.parametrize('pack, file_paths_list', test_content_path_on_pack)
+    def test_filter_files_on_pack(self, pack, file_paths_list):
         """
         Given
-        - Sets of modified_files, added_files, old_files, changed_meta_files and pack name.
+        - Set of files and pack name.
         When
-        - Want to filter the lists by specific pack.
+        - Want to filter the list by specific pack.
         Then:
-        - Ensure the lists are returned only with the files inside the specific pack.
+        - Ensure the set of file paths contains only files located in the given pack.
         """
-        modified, added, old, changed_meta_files = filter_files_changes_on_pack(pack=pack, modified_files=path,
-                                                                                added_files=path, old_files=path,
-                                                                                changed_meta_files=path)
-        assert modified == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
-        assert added == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
-        assert old == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
-        assert changed_meta_files == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+        files_paths = filter_files_on_pack(pack, file_paths_list)
+        assert files_paths == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
 
     for_test_filter_files_by_type = [
         ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),

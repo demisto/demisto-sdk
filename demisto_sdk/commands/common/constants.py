@@ -1004,5 +1004,4 @@ OLDEST_SUPPORTED_VERSION = '5.0.0'
 FEATURE_BRANCHES = ['v4.5.0']
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DESCRIPTION, FileType.CHANGELOG, FileType.IMAGE,
-                                FileType.DOC_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)

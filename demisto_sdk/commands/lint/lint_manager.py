@@ -297,7 +297,7 @@ class LintManager:
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"])
-                results.append(executor.submit(fn=linter.run_dev_packages,
+                results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
                                                no_mypy=no_mypy,

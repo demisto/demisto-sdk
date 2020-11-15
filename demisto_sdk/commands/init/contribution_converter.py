@@ -321,7 +321,8 @@ class ContributionConverter:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
                         extractor = Extractor(input=content_item_file_path, file_type=file_type, output=output_dir,
-                                              base_name=base_name, no_auto_create_dir=(not autocreate_dir))
+                                              no_readme=True, base_name=base_name,
+                                              no_auto_create_dir=(not autocreate_dir))
 
                     else:
                         extractor = Extractor(input=content_item_file_path,

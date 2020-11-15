@@ -1,4 +1,5 @@
 import argparse
+import ast
 import glob
 import io
 import json
@@ -15,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_client
 import git
 import requests
 import urllib3
@@ -30,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
     UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+from packaging.version import parse
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -1374,3 +1377,16 @@ def camel_to_snake(camel: str) -> str:
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake
+
+
+def get_demisto_version(demisto_client: demisto_client) -> str:
+    """
+    Args:
+        demisto_client: A configured demisto_client instance
+
+    Returns:
+        the server version of the Demisto instance.
+    """
+    resp = demisto_client.generic_request('/about', 'GET')
+    about_data = json.loads(resp[0].replace("'", '"'))
+    return parse(about_data.get('demistoVersion'))

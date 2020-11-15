@@ -288,7 +288,8 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_usecases = set()
         try:
-            approved_usecases = tools.get_remote_file('Tests/Marketplace/approved_usecases.json') or []
+            approved_usecases = tools.get_remote_file(
+                'Tests/Marketplace/approved_usecases.json').get('approved_list') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
@@ -308,7 +309,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_tags = set()
         try:
-            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json') or []
+            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json').get('approved_list') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:

@@ -9,7 +9,7 @@ from typing import Union
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
@@ -900,7 +900,7 @@ class PackDependencies:
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
 
         if not sum(pack_items.values(), []):
-            raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
+            print_warning(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
 
         return pack_items
 

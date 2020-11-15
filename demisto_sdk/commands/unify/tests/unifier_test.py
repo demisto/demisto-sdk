@@ -824,7 +824,7 @@ def test_unify_contributor_emails_list(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+        runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying the unified file data
     assert "**Email**: [support1@test.com]" in PARTNER_UNIFY["detaileddescription"]
     assert "**Email**: [support2@test.com]" in PARTNER_UNIFY["detaileddescription"]

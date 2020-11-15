@@ -11,7 +11,7 @@
 * Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
 * Fixed an issue in the **validate** command where changing any entity ID was not validated.
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
-  
+
 
 # v1.2.8
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.

@@ -4,6 +4,9 @@
 * Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.
 * Fixed an issue in the **format** command where format failed when trying to update invalid Docker image.
 * The **format** command will now preserve the **isArray** argument in integration's reputation commands and will show a warning if it set to **false**.
+* Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
+* Fixed an issue in the **validate** command where changing any entity ID was not validated.
+* Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
 
 
 # v1.2.8

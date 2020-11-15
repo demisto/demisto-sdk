@@ -1,4 +1,8 @@
 # Changelog
+* Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+
+
+# v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
 * Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.

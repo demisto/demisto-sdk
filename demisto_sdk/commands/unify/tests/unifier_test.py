@@ -636,6 +636,23 @@ PACK_METADATA_PARTNER = json.dumps({
     "useCases": [],
     "keywords": []
 })
+PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": PARTNER_URL,
+    "email": ["support1@test.com",
+              "support2@test.com"],
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
 PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
     "name": "test",
     "description": "test",
@@ -787,6 +804,30 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert '#### Integration Author:' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
     assert 'Email' not in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
     assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+
+
+def test_unify_contributor_emails_list(mocker, repo):
+    """
+    Given
+        - Partner contributed pack with email list and url in the support details.
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create unified file with partner support notes, email list show each email in it's own bullet.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_EMAIL_LIST)
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_PARTNER_EMAIL_LIST, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying the unified file data
+    assert "**Email**: [support1@test.com]" in PARTNER_UNIFY["detaileddescription"]
+    assert "**Email**: [support2@test.com]" in PARTNER_UNIFY["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):

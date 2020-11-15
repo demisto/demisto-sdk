@@ -353,8 +353,7 @@ def secrets(config, **kwargs):
         is_circle=kwargs['post_commit'],
         ignore_entropy=kwargs['ignore_entropy'],
         white_list_path=kwargs['whitelist'],
-        input_path=kwargs.get('input'),
-        prev_ver=kwargs.get('prev_ver')
+        input_path=kwargs.get('input')
     )
     return secrets_validator.run()
 

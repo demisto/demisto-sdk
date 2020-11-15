@@ -1,4 +1,8 @@
 # Changelog
+* For partner supported content packs, improved the support email formatting in the integration detailed description.
+
+
+# v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
 * Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.
@@ -7,7 +11,7 @@
 * Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
 * Fixed an issue in the **validate** command where changing any entity ID was not validated.
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
-* For partner supported content packs, improved the support email formatting in the integration detailed description.  
+  
 
 # v1.2.8
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.

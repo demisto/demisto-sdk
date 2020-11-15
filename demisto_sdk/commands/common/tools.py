@@ -685,6 +685,9 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
         file_paths = set()
     files = set()
     for path in file_paths:
+        # renamed files are in a tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
         file_type = find_type(path)
         if file_type not in skip_file_types and is_file_path_in_pack(path):
             files.add(path)

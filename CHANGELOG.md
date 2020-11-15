@@ -1,7 +1,7 @@
 # Changelog
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
 * Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
-
+* For partner supported content packs, improved the support email formatting in the integration detailed description.  
 
 # v1.2.8
 * Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.

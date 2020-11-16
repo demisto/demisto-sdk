@@ -1,6 +1,7 @@
 # Changelog
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+* Added *default value* and *predefined values* to argument description in **generate-docs** command.
 
 
 # v1.2.9

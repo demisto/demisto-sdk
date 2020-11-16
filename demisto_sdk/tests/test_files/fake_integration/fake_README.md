@@ -31,7 +31,7 @@ Create a new user in zoom account
 | first_name | First name of the new user | Required | 
 | last_name | Last name of the new user | Required | 
 | email | The email of the new user | Required | 
-| user_type | The type of the newly created user The optional values are ['Basic', 'Pro', 'Corporate']. The default value is Basic. | Optional | 
+| user_type | The type of the newly created user Possible values are: Basic, Pro, Corporate. Default is Basic. | Optional | 
 
 
 #### Context Output
@@ -65,10 +65,10 @@ Create a new zoom meeting (scheduled or instant)
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| type | The type of the meeting The optional values are ['Instant', 'Scheduled']. The default value is Instant. | Required | 
+| type | The type of the meeting Possible values are: Instant, Scheduled. Default is Instant. | Required | 
 | user | email address or id of user for meeting | Required | 
 | topic | The topic of the meeting | Required | 
-| auto-record-meeting | Record zoom meeting?  The optional values are ['yes', 'no']. The default value is no. | Optional | 
+| auto-record-meeting | Record zoom meeting?  Possible values are: yes, no. Default is no. | Optional | 
 | start-time | Meeting start time. When using a format like “yyyy-MM-dd’T'HH:mm:ss'Z’”, always use GMT time. When using a format like “yyyy-MM-dd’T'HH:mm:ss”, you should use local time and you will need to specify the time zone. Only used for scheduled meetings and recurring meetings with fixed time. | Optional | 
 | timezone | Timezone to format start_time. For example, “America/Los_Angeles”. For scheduled meetings only.  | Optional | 
 
@@ -139,9 +139,9 @@ List the existing users
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
-| status | Which status of users to list The optional values are ['active', 'inactive', 'pending']. The default value is active. | Optional | 
-| page-size | Number of users to return. Max 300. The default value is 30. | Optional | 
-| page-number | Which page of results to return The default value is 1. | Optional | 
+| status | Which status of users to list Possible values are: active, inactive, pending. Default is active. | Optional | 
+| page-size | Number of users to return. Max 300. Default is 30. | Optional | 
+| page-number | Which page of results to return Default is 1. | Optional | 
 
 
 #### Context Output
@@ -186,7 +186,7 @@ Delete a user from Zoom
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | user | The user ID or email to delete | Required | 
-| action | The action to take The optional values are ['disassociate', 'delete']. The default value is disassociate. | Optional | 
+| action | The action to take Possible values are: disassociate, delete. Default is disassociate. | Optional | 
 
 
 #### Context Output

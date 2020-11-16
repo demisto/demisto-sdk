@@ -248,10 +248,10 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
             if not arg.get('description'):
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
-            argument_description = f'{arg.get("description")} The optional values are {arg.get("predefined")}.' \
+            argument_description = f'{arg.get("description")} Possible values are: {", ".join(arg.get("predefined"))}.'\
                 if arg.get('predefined') else arg.get('description')
             if arg.get('defaultValue'):
-                argument_description = f'{argument_description} The default value is {arg.get("defaultValue")}.'
+                argument_description = f'{argument_description} Default is {arg.get("defaultValue")}.'
 
             required_status = 'Required' if arg.get('required') else 'Optional'
             section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(argument_description,

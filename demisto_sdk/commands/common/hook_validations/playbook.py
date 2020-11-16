@@ -1,10 +1,12 @@
 from typing import Dict
 
 import click
+
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, is_description_contains_escape_sequences
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, is_description_contains_escape_sequences)
 
 
 class PlaybookValidator(ContentEntityValidator):

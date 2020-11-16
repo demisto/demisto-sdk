@@ -5,7 +5,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import server_version_compare, is_description_contains_escape_sequences
+from demisto_sdk.commands.common.tools import (
+    is_description_contains_escape_sequences, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):

@@ -1,4 +1,5 @@
 import yaml
+
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,
@@ -18,9 +19,9 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error,
-                                               server_version_compare,
-                                               is_description_contains_escape_sequences)
+from demisto_sdk.commands.common.tools import (
+    is_description_contains_escape_sequences, print_error,
+    server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):

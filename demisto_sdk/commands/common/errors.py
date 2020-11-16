@@ -60,6 +60,7 @@ ERROR_CODE = {
     "invalid_deprecated_integration_description": "IN128",
     "removed_integration_parameters": "IN129",
     "integration_not_runnable": "IN130",
+    "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -411,6 +412,12 @@ class Errors:
         return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
                f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_get_mapping_fields_command():
+        return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
+               'field is set to true.'
 
     @staticmethod
     @error_code_decorator

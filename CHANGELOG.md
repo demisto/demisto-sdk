@@ -1,6 +1,8 @@
 # Changelog
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+* Added *default value* and *predefined values* to argument description in **generate-docs** command.
+* Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
 * For partner supported content packs, added support for a list of emails.
 * Added arg_to_array function to sdk-tools.
 
@@ -13,6 +15,8 @@
 * Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
 * Fixed an issue in the **validate** command where changing any entity ID was not validated.
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
+* Fixed the **update-release-notes** command to ignore changes in the metadata file.
+* Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
 
 
 # v1.2.8

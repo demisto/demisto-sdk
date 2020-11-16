@@ -60,8 +60,12 @@ ERROR_CODE = {
     "invalid_deprecated_integration_description": "IN128",
     "removed_integration_parameters": "IN129",
     "integration_not_runnable": "IN130",
+    "invalid_entity_description_no_escape_sequences": "IN131",
+    "invalid_command_description_no_escape_sequences": "IN132",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
+    "invalid_script_comment": "SC102",
+    "invalid_args_and_outputs_descriptions_script": "SC103",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -113,6 +117,8 @@ ERROR_CODE = {
     "invalid_deprecated_playbook": "PB104",
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
+    "invalid_playbook_description": "PB107",
+    "invalid_playbook_tasks_description": "PB108",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -446,6 +452,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_script_comment():
+        return 'The script comment can not contain Escape Sequences (\\n \\t \\r etc.).'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_args_and_outputs_descriptions_script(invalid_args_list, invalid_outputs_list):
+        error_msg = 'The args and outputs description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
+                    'please remove the escape sequences form'
+        if invalid_args_list:
+            error_msg += f' args description: {invalid_args_list}.'
+
+        if invalid_outputs_list:
+            error_msg += f' outputs description: {invalid_outputs_list}.'
+
+        return error_msg
+
+    @staticmethod
+    @error_code_decorator
     def dbot_invalid_output(command_name, missing_outputs, context_standard):
         return "The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. " \
                "Fix according to context standard {} ".format(command_name, missing_outputs,
@@ -730,6 +754,17 @@ class Errors:
     @error_code_decorator
     def using_instance_in_playbook():
         return "Playbook should not use specific instance."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_description():
+        return 'The playbook description can not contain Escape Sequences (\\n \\t \\r etc.).'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_tasks_description(invalid_tasks_list):
+        return f'The tasks description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
+               f'please remove the escape sequences form tasks description {invalid_tasks_list}'
 
     @staticmethod
     @error_code_decorator
@@ -1154,6 +1189,28 @@ class Errors:
     def integration_not_runnable():
         return "Could not find any runnable command in the integration." \
                "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_entity_description_no_escape_sequences():
+        return 'The entity description can not contain Escape Sequences (\\n \\t \\r etc.).'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_command_description_no_escape_sequences(invalid_commands_list, invalid_arguments_list,
+                                                        invalid_outputs_list):
+        error_msg = 'The command description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
+                    'please remove the escape sequences form'
+        if invalid_commands_list:
+            error_msg += f' commands description: {invalid_commands_list}.'
+
+        if invalid_arguments_list:
+            error_msg += f' args description: {invalid_arguments_list}.'
+
+        if invalid_outputs_list:
+            error_msg += f' outputs description: {invalid_outputs_list}.'
+
+        return error_msg
 
     @staticmethod
     def wrong_filename(file_type):

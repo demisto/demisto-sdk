@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType, ESCAPE_SEQUENCES)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -1390,3 +1390,10 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     resp = demisto_client.generic_request('/about', 'GET')
     about_data = json.loads(resp[0].replace("'", '"'))
     return parse(about_data.get('demistoVersion'))
+
+
+def is_description_contains_escape_sequences(description):
+    for char in ESCAPE_SEQUENCES:
+        if char in description:
+            return True
+    return False

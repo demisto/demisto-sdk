@@ -37,6 +37,8 @@ INVALID_DEPRECATED_PLAYBOOK_FILE_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXD
                                              'Invalid_Deprecated_Playbook.yml')
 VALID_SCRIPT_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Scripts', 'EntryWidgetNumberHostsXDR',
                          'EntryWidgetNumberHostsXDR.yml')
+INVALID_PLAYBOOK_DESCRIPTION_PATH = join(TEST_FILES_PATH, 'Packs', 'CortexXDR', 'Playbooks',
+                                         'Invalid_Playbook_Description.yml')
 
 CONF_JSON_MOCK = {
     "tests": [
@@ -181,6 +183,88 @@ class TestDeprecatedIntegration:
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN128' in result.stdout
         assert 'Deprecated' in result.stdout
+        assert result.exit_code == 1
+
+
+class TestIntegrationDescription:
+    def test_valid_description_integration(self, mocker, repo):
+        """
+        Given
+        - Valid description integration.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_integration_description(self, mocker, repo):
+        """
+        Given
+        - invalid description integration - The description contains Escape Sequences.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on - invalid_description_integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml['description'] = 'bla bla bla \\n bla bla'
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'IN131' in result.stdout
+        assert 'Escape Sequences' in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_commands_description(self, mocker, repo):
+        """
+        Given
+        - invalid description command - The command description and arg description contains Escape Sequences.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on - invalid_description_command.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml['script']['commands'][0]['description'] = 'bla bla bla \\n bla bla'
+        invalid_integration_yml['script']['commands'][0]['arguments'][0]['description'] = 'bla bla bla \\n bla bla'
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert 'IN132' in result.stdout
+        assert 'Escape Sequences' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1227,6 +1311,46 @@ class TestPlaybookValidateDeprecated:
         assert result.exit_code == 1
 
 
+class TestPlaybookValidateDescription:
+    def test_valid_playbook_description(self, mocker, repo):
+        """
+        Given
+        - a valid Playbook description.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate pass.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        assert f'Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_playbook_description(self, mocker, repo):
+        """
+        Given
+        - an invalid playbook and tasks description - the description contains Escape Sequences.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on PB107 and PB108 - invalid playbook description.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_DESCRIPTION_PATH], catch_exceptions=False)
+        assert f'Validating {INVALID_PLAYBOOK_DESCRIPTION_PATH} as playbook' in result.stdout
+        assert 'PB107' in result.stdout
+        assert 'PB108' in result.stdout
+        assert 'The playbook description can not contain Escape Sequences' in result.stdout
+        assert result.exit_code == 1
+
+
 class TestReportValidation:
     def test_valid_report(self, mocker, repo):
         """
@@ -1419,6 +1543,85 @@ class TestScriptDeprecatedValidation:
         assert f'Validating {script.yml_path} as script' in result.stdout
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout
+        assert result.exit_code == 1
+
+
+class TestScriptDescriptionValidation:
+    def test_valid_script_comment_and_descriptions(self, mocker, repo):
+        """
+        Given
+        - a valid comment script and descriptions.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate pass.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['comment'] = 'bla bla bla bla'
+        valid_script_yml['args'] = [{"name": "key", "description": "bla bla bla bla"}]
+        valid_script_yml['outputs'] = [{"contextPath": "key", "description": "bla bla bla bla"}]
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_script_comment(self, mocker, repo):
+        """
+        Given
+        - an invalid script comment - with escape sequences in the comment.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on SC102 - escape sequences in script comment.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['comment'] = 'bla bla \\n bla bla'
+        script = pack.create_script(yml=invalid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'SC102' in result.stdout
+        assert "Escape Sequences" in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_script_args_and_outputs_description(self, mocker, repo):
+        """
+        Given
+        - an invalid script args and outputs description - with escape sequences.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on SC103 - escape sequences in script args and output description.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml['comment'] = 'bla bla \\n bla bla'
+        invalid_script_yml['args'] = [{"name": "key", "description": "bla bla \\n bla bla"}]
+        invalid_script_yml['outputs'] = [{"contextPath": "key", "description": "bla bla \\n bla bla"}]
+        script = pack.create_script(yml=invalid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert 'SC102' in result.stdout
+        assert "escape sequences" in result.stdout
         assert result.exit_code == 1
 
 

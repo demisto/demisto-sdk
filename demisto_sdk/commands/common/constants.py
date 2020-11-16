@@ -1002,3 +1002,5 @@ MAX_FETCH = 'max_fetch'
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
 FEATURE_BRANCHES = ['v4.5.0']
+
+ESCAPE_SEQUENCES = ['\\n', '\\t', '\\r', '\\', '\\b', '\\f']

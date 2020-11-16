@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import server_version_compare
+from demisto_sdk.commands.common.tools import server_version_compare, is_description_contains_escape_sequences
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -62,7 +62,9 @@ class ScriptValidator(ContentEntityValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
-            self.is_valid_deprecated_script()
+            self.is_valid_deprecated_script(),
+            self.is_valid_comment(),
+            self.is_valid_args_and_outputs_descriptions()
         ])
         # check only on added files
         if not self.old_file:
@@ -218,4 +220,50 @@ class ScriptValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_deprecated_script()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
+        return is_valid
+
+    def is_valid_comment(self) -> bool:
+        """Check whether the script's comment contains Escape Sequences
+
+        Returns:
+            bool. True if script's comment is valid - not contains Escape Sequences, False otherwise.
+        """
+        is_valid = True
+        comment = self.current_file.get('comment', '')
+        if is_description_contains_escape_sequences(comment):
+            error_message, error_code = Errors.invalid_script_comment()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+        return is_valid
+
+    def is_valid_args_and_outputs_descriptions(self) -> bool:
+        """Check whether the script's args and outputs description contains Escape Sequences
+
+        Returns:
+            bool. True if script's args and outputs description is valid - not contains Escape Sequences,
+            False otherwise.
+        """
+        is_valid = True
+        invalid_args_list = []
+        invalid_outputs_list = []
+
+        args = self.current_file.get('args', '')
+        for arg in args:
+            arg_description = arg.get('description', '')
+            arg_name = arg.get('name', '')
+            if is_description_contains_escape_sequences(arg_description):
+                invalid_args_list.append(arg_name)
+
+        outputs = self.current_file.get('outputs', '')
+        for output in outputs:
+            outputs_description = output.get('description', '')
+            context_path = output.get('contextPath', '')
+            if is_description_contains_escape_sequences(outputs_description):
+                invalid_outputs_list.append(context_path)
+
+        if invalid_args_list or invalid_outputs_list:
+            error_message, error_code = Errors.invalid_args_and_outputs_descriptions_script(invalid_args_list,
+                                                                                            invalid_outputs_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
         return is_valid

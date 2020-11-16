@@ -4,7 +4,7 @@ import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS
+from demisto_sdk.commands.common.tools import LOG_COLORS, is_description_contains_escape_sequences
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -34,7 +34,9 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_valid_deprecated_playbook()
+                self.is_valid_deprecated_playbook(),
+                self.is_valid_playbook_description(),
+                self.is_valid_tasks_description()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -47,7 +49,9 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_using_instance(),
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured()
+                self.are_tests_configured(),
+                self.is_valid_playbook_description(),
+                self.is_valid_tasks_description()
             ]
             answers = all(modified_playbook_checks)
 
@@ -256,6 +260,44 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
+        return is_valid
+
+    def is_valid_playbook_description(self) -> bool:
+        """Check whether the playbook description contains Escape Sequences
+
+        Returns:
+            bool. True if the playbook description is valid - not contains Escape Sequences, False otherwise.
+        """
+        is_valid = True
+        description = self.current_file.get('description', '')
+        if is_description_contains_escape_sequences(description):
+            error_message, error_code = Errors.invalid_playbook_description()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+        return is_valid
+
+    def is_valid_tasks_description(self) -> bool:
+        """Check whether the playbook tasks description contains Escape Sequences
+
+        Returns:
+            bool. True if the playbook tasks description is valid - not contains Escape Sequences, False otherwise.
+        """
+        is_valid = True
+        invalid_tasks_list = []
+        tasks = self.current_file.get('tasks', {})
+
+        for id, task in tasks.items():
+            pb_id = task.get('id', '')
+            pb_task = task.get('task', {})
+            pb_description = pb_task.get('description', '')
+
+            if is_description_contains_escape_sequences(pb_description):
+                invalid_tasks_list.append(pb_id)
+
+        if invalid_tasks_list:
+            error_message, error_code = Errors.invalid_playbook_tasks_description(invalid_tasks_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
         return is_valid
 
     def is_delete_context_all_in_playbook(self) -> bool:

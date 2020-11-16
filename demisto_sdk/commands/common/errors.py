@@ -416,7 +416,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_get_mapping_fields_command():
-        return 'The command "get-mapping-fields" is missing from the yml file. Please add it.'
+        return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
+               'field is set to true.'
 
     @staticmethod
     @error_code_decorator

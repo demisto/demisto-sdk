@@ -235,7 +235,7 @@ class TestIntegrationDescription:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
-        assert 'IN131' in result.stdout
+        assert 'IN132' in result.stdout
         assert 'Escape Sequences' in result.stdout
         assert result.exit_code == 1
 
@@ -263,7 +263,7 @@ class TestIntegrationDescription:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
-        assert 'IN132' in result.stdout
+        assert 'IN133' in result.stdout
         assert 'Escape Sequences' in result.stdout
         assert result.exit_code == 1
 

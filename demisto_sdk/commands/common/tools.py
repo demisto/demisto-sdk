@@ -21,6 +21,7 @@ import git
 import requests
 import urllib3
 import yaml
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
@@ -1437,7 +1438,7 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
        Converts a string representation of lists to a python list
        Args:
               arg: string or list of string.
-              seperator: A string separator to separate the strings, the default is a comma.
+              separator: A string separator to separate the strings, the default is a comma.
        Returns:
              list, contains strings.
 
@@ -1446,7 +1447,7 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
         return []
     if isinstance(arg, list):
         return arg
-    if isinstance(arg, STRING_TYPES):
+    if isinstance(arg, str):
         if arg[0] == '[' and arg[-1] == ']':
             return json.loads(arg)
         return [s.strip() for s in arg.split(separator)]

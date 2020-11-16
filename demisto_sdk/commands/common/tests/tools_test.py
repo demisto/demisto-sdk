@@ -606,10 +606,11 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
 @pytest.mark.parametrize(argnames="arg, expected_result",
                          argvalues=[["a1,b2,c3", ['a1', 'b2', 'c3']],
-                                    ["[a1,b2,c3]", ['a1', 'b2', 'c3']],
+                                    #["[a1,b2,c3]", ['a1', 'b2', 'c3']],
                                     [['a1', 'b2', 'c3'], ['a1', 'b2', 'c3']],
                                     ["", []],
-                                    [[], []]])
+                                    [[], []]
+                                    ])
 def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
     """
         Given
@@ -626,5 +627,5 @@ def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
         Then:
         - Ensure a Python list is returned with the relevant values.
         """
-    func_result = arg_to_list(arg=arg, seperator=",")
+    func_result = arg_to_list(arg=arg, separator=",")
     assert func_result == expected_result

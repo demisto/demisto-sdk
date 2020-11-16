@@ -1180,3 +1180,67 @@ def test_should_raise_pack_version(pack_name, expected):
     validate_manager = ValidateManager()
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected
+
+
+def test_run_validation_using_git_on_only_metadata_changed(mocker):
+    """
+    Given
+        - metadata file that was changed.
+    When
+        - Run all tests on the file.
+    Then
+        - validate That no error returns.
+    """
+    mocker.patch.object(ValidateManager, 'setup_git_params')
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
+                        return_value=(set(), set(), set(), {'Packs/TestPack/pack_metadata.json'}, {'TestPack'}))
+
+    validate_manager = ValidateManager()
+    res = validate_manager.run_validation_using_git()
+    assert res
+
+
+def test_is_mapping_fields_command_exist(integration):
+    """
+        Given
+        - Integration yml file with get-mapping-fields command.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the True.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert validator.is_mapping_fields_command_exist()
+
+
+def test_mapping_fields_command_dont_exist(integration):
+    """
+        Given
+        - Integration yml file with no get-mapping-fields command and ismappable: True.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the False. The field ismappable exists, but the command no.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'not-get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert not validator.is_mapping_fields_command_exist()

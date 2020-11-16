@@ -97,7 +97,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_entity_description_no_escape_sequences(),
             self.is_valid_commands_description_no_escape_sequences(),
             self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description()
+            self.is_valid_deprecated_integration_description(),
+            self.is_mapping_fields_command_exist()
         ]
 
         if not skip_test_conf:
@@ -932,4 +933,20 @@ class IntegrationValidator(ContentEntityValidator):
             error, code = Errors.integration_not_runnable()
             self.handle_error(error, code, file_path=self.file_path)
             return False
+        return True
+
+    def is_mapping_fields_command_exist(self) -> bool:
+        """
+        Check if get-mapping-fields command exists in the YML if  the ismappble field is set to true
+        Returns:
+            True if get-mapping-fields commands exist in the yml, else False.
+        """
+        script = self.current_file.get('script', {})
+        if script.get('ismappable'):
+            command_names = {command['name'] for command in script.get('commands', [])}
+            if 'get-mapping-fields' not in command_names:
+                error, code = Errors.missing_get_mapping_fields_command()
+                if self.handle_error(error, code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
         return True

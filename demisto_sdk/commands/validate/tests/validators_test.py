@@ -43,13 +43,11 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
     INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_NO_IS_MAPPING_FIELD_COMMAND,
-    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
@@ -59,10 +57,9 @@ from demisto_sdk.tests.constants_test import (
     VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
     VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_IS_MAPPING_FIELDS,
-    VALID_INTEGRATION_TEST_PATH, VALID_JSON_FILE_FOR_UNIT_TESTING,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
+    VALID_JSON_FILE_FOR_UNIT_TESTING, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
@@ -562,27 +559,6 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
-
-    GET_MAPPING_FIELDS = [
-        (VALID_INTEGRATION_IS_MAPPING_FIELDS, 'integration', True),
-        (INVALID_INTEGRATION_NO_IS_MAPPING_FIELD_COMMAND, 'integration', False)
-    ]
-
-    @pytest.mark.parametrize('file_path, file_type, expected', GET_MAPPING_FIELDS)
-    def test_is_valid_ismappable_field(self, file_path: str, file_type: str, expected: bool):
-        """
-            Given
-            - Integration yml file
-
-            When
-            - Checking if get-mapping-fields command exists
-
-            Then
-            -  validator return the correct answer accordingly
-        """
-        structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
-        validator = IntegrationValidator(structure_validator)
-        assert validator.is_mapping_fields_command_exist() == expected
 
     def test_unified_files_ignored(self):
         """
@@ -1222,3 +1198,49 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()
     assert res
+
+
+def test_is_mapping_fields_command_exist(integration):
+    """
+        Given
+        - Integration yml file with get-mapping-fields command.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the True.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert validator.is_mapping_fields_command_exist()
+
+
+def test_mapping_fields_command_dont_exist(integration):
+    """
+        Given
+        - Integration yml file with no get-mapping-fields command and ismappable: True.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the False. The field ismappable exists, but the command no.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'not-get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert not validator.is_mapping_fields_command_exist()

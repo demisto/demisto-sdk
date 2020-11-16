@@ -195,6 +195,23 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
     return details
 
 
+def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
+    """
+    filter_files_changes_on_pack.
+
+    :param file_paths_list: list of content files
+    :param pack: pack to filter
+
+    :return: files_paths_on_pack: set of file paths contains only files located in the given pack
+    """
+    files_paths_on_pack = set()
+    for file in file_paths_list:
+        if get_pack_name(file) == pack:
+            files_paths_on_pack.add(file)
+
+    return files_paths_on_pack
+
+
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
     Mark scripts/integrations that were removed and added as modifiied.
@@ -652,6 +669,29 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
                 packs.add(pack)
 
     return packs
+
+
+def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
+    """get set of files and return the set whiteout the types to skip
+
+    Args:
+    - file_paths (set): set of content files.
+    - skip_file_types List[str]: list of file types to skip.
+
+    Returns:
+    files (set): list of files whiteout the types to skip
+    """
+    if file_paths is None:
+        file_paths = set()
+    files = set()
+    for path in file_paths:
+        # renamed files are in a tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+        file_type = find_type(path)
+        if file_type not in skip_file_types and is_file_path_in_pack(path):
+            files.add(path)
+    return files
 
 
 def pack_name_to_path(pack_name):

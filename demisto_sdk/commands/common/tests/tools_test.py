@@ -623,7 +623,7 @@ def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
 
         When
         - Convert given string to list of strings, for example at unify.add_contributors_support.
-        
+
         Then:
         - Ensure a Python list is returned with the relevant values.
         """

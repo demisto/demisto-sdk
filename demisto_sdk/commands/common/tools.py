@@ -21,7 +21,6 @@ import git
 import requests
 import urllib3
 import yaml
-
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,

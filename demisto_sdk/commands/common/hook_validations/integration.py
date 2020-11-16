@@ -1,5 +1,4 @@
 import yaml
-
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
                                                    FEED_REQUIRED_PARAMS,

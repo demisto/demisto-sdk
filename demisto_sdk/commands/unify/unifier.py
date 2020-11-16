@@ -443,11 +443,9 @@ class Unifier:
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
-                if isinstance(contributor_email, list):
+                contributor_email = contributor_email if isinstance(contributor_email, list) else [contributor_email]:
                     for email in contributor_email:
                         contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
-                else:
-                    contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
             if contributor_url:
                 contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description

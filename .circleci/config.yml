@@ -11,12 +11,12 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-7
+        - tox3-8
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - tox3-7
+        - tox3-8
 
 jobs:
   tox3-7:
@@ -44,10 +44,7 @@ jobs:
             key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
               - .tox/py37
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - .tox
+
   tox3-8:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -83,6 +80,10 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
+        - persist_to_workspace:
+            root: ~/project
+            paths:
+              - .tox
   precommit-checks:
       docker:
         - image: circleci/python:3.8.3-buster
@@ -93,7 +94,7 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
               pre-commit --version
               pre-commit run -a
               deactivate
@@ -120,12 +121,13 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
+        - restore_cache:
+            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py37/bin/activate
-
+              . .tox/py38/bin/activate
               cd content
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
@@ -143,7 +145,7 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
 
               cd content
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
@@ -158,7 +160,7 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py37/bin/activate
+              . .tox/py38/bin/activate
 
               cd content
               mkdir ./tmp

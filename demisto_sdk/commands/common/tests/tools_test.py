@@ -613,12 +613,18 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
     """
         Given
-        - arg - string or list of strings. For example: "a,b" -> ['a','b']
-        or "[a,b]" -> ['a','b']
+        - String or list of strings.
+        Case a: comma-separated string.
+        Case b: a string representing a list.
+        Case c: python list.
+        Case d: empty string.
+        Case e: empty list.
+
         When
-        - Convert given string to list of strings, for example at unify, add_contributors_support, when adding email.
+        - Convert given string to list of strings, for example at unify.add_contributors_support.
+        
         Then:
-        - returns a list with the skipped tests
+        - Ensure a Python list is returned with the relevant values.
         """
     func_result = arg_to_list(arg=arg)
     assert func_result == expected_result

@@ -1,6 +1,7 @@
 # Changelog
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+* Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command. 
 
 
 # v1.2.9

@@ -67,7 +67,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
     VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
     VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    WIDGET_TARGET, INVALID_INTEGRATION_NO_IS_MAPPING_FIELD_COMMAND, VALID_INTEGRATION_IS_MAPPING_FIELDS)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from mock import patch
@@ -559,6 +559,27 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    GET_MAPPING_FIELDS = [
+        (VALID_INTEGRATION_IS_MAPPING_FIELDS, 'integration', True),
+        (INVALID_INTEGRATION_NO_IS_MAPPING_FIELD_COMMAND, 'integration', False)
+    ]
+
+    @pytest.mark.parametrize('file_path, file_type, expected', GET_MAPPING_FIELDS)
+    def test_is_valid_ismappable_field(self, file_path: str, file_type: str, expected: bool):
+        """
+            Given
+            - Integration yml file
+
+            When
+            - Checking if get-mapping-fields command exists
+
+            Then
+            -  validator return the correct answer accordingly
+        """
+        structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
+        validator = IntegrationValidator(structure_validator)
+        assert validator.is_valid_ismappble_field() == expected
 
     def test_unified_files_ignored(self):
         """

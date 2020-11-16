@@ -94,7 +94,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description()
+            self.is_valid_deprecated_integration_description(),
+            self.is_valid_ismappble_field()
         ]
 
         if not skip_test_conf:
@@ -866,4 +867,24 @@ class IntegrationValidator(ContentEntityValidator):
             error, code = Errors.integration_not_runnable()
             self.handle_error(error, code, file_path=self.file_path)
             return False
+        return True
+
+    def is_valid_ismappble_field(self):
+        """
+        Check if get-mapping-fields command exists in the yml is {ismappble: True}
+        Returns:
+            True if get-mapping-fields commands exist in the yml, else False.
+
+        """
+        script = self.current_file.get('script', {})
+        command_names = []
+        if script.get('ismappable'):
+            commands = script.get('commands', [])
+            for command in commands:
+                command_names.append(command['name'])
+            if 'get-mapping-fields' not in command_names:
+                self.is_valid = False
+                error, code = Errors.missing_get_mapping_fields_command()
+                self.handle_error(error, code, file_path=self.file_path)
+                return False
         return True

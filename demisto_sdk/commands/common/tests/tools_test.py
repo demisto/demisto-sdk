@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_array,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                filter_files_by_type,
                                                filter_files_on_pack,
                                                filter_packagify_changes,
@@ -610,7 +610,7 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
                                     [['a1', 'b2', 'c3'], ['a1', 'b2', 'c3']],
                                     ["", []],
                                     [[], []]])
-def test_arg_to_array(arg: Union[List[str], str], expected_result: List[str]):
+def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
     """
         Given
         - arg - string or list of strings. For example: "a,b" -> ['a','b']
@@ -620,5 +620,5 @@ def test_arg_to_array(arg: Union[List[str], str], expected_result: List[str]):
         Then:
         - returns a list with the skipped tests
         """
-    func_result = arg_to_array(arg=arg)
+    func_result = arg_to_list(arg=arg)
     assert func_result == expected_result

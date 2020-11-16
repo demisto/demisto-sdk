@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    SCRIPTS_DIR,
                                                    TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               find_type, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
@@ -444,7 +445,7 @@ class Unifier:
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
-                email_list: List[str] = contributor_email if isinstance(contributor_email, list) else [contributor_email]
+                email_list: List[str] = arg_to_list(contributor_email)
                 for email in email_list:
                     contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
             if contributor_url:

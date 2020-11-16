@@ -1432,7 +1432,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     return parse(about_data.get('demistoVersion'))
 
 
-def arg_to_array(arg: Union[str, List[str]]) -> List[str]:
+def arg_to_list(arg: Union[str, List[str]]) -> List[str]:
     """
         Args:
             arg: string or list of string.

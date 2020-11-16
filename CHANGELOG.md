@@ -4,7 +4,7 @@
 * Added *default value* and *predefined values* to argument description in **generate-docs** command.
 * Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
 * For partner supported content packs, added support for a list of emails.
-* Added arg_to_array function to sdk-tools.
+* Added arg_to_list function to sdk-tools.
 
 # v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.

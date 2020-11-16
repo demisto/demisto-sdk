@@ -880,7 +880,7 @@ class IntegrationValidator(ContentEntityValidator):
             command_names = {command['name'] for command in script.get('commands', [])}
             if 'get-mapping-fields' not in command_names:
                 error, code = Errors.missing_get_mapping_fields_command()
-                self.handle_error(error, code, file_path=self.file_path)
-                self.is_valid = False
-                return False
+                if self.handle_error(error, code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
         return True

@@ -620,5 +620,5 @@ def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
         Then:
         - returns a list with the skipped tests
         """
-    func_result = arg_to_list(arg=arg)
+    func_result = arg_to_list(arg=arg, seperator=",")
     assert func_result == expected_result

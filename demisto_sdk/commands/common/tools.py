@@ -1432,22 +1432,22 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     return parse(about_data.get('demistoVersion'))
 
 
-def arg_to_list(arg: Union[str, List[str]]) -> List[str]:
+def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     """
-        Args:
-            arg: string or list of string.
+       Converts a string representation of lists to a python list
+       Args:
+              arg: string or list of string.
+              seperator: A string separator to separate the strings, the default is a comma.
+       Returns:
+             list, contains strings.
 
-        Returns:
-            list, contains strings.
-        """
-    if arg:
-        if isinstance(arg, list):
-            return arg
-        string_list = arg.split(',')
-        first = string_list[0]
-        last = string_list[-1]
-        if first[0] == '[':
-            string_list[0] = first[1:len(first)]
-            string_list[-1] = last[0:-1]
-        return string_list
-    return []
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, STRING_TYPES):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return [arg]

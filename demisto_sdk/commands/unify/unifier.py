@@ -445,7 +445,7 @@ class Unifier:
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
-                email_list: List[str] = arg_to_list(contributor_email)
+                email_list: List[str] = arg_to_list(contributor_email, ",")
                 for email in email_list:
                     contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
             if contributor_url:

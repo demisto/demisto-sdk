@@ -813,7 +813,7 @@ def test_unify_contributor_emails_list(mocker, repo):
     When
         - Running unify on it.
     Then
-        - Ensure unify create unified file with partner support notes, email list show each email in it's own bullet.
+        - Ensure unify create a unified file with partner support email list.
     """
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)

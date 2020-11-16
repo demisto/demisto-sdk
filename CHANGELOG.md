@@ -1,7 +1,7 @@
 # Changelog
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
-* For partner supported content packs, improved the support email formatting in the integration detailed description.
+* For partner supported content packs, added support for a list of emails.
 
 
 # v1.2.9

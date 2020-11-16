@@ -248,6 +248,9 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
             if not arg.get('description'):
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
+            if not arg.get('description').endswith('.'):
+                arg['description'] = f'{arg.get("description")}.'
+
             argument_description = f'{arg.get("description")} Possible values are: {", ".join(arg.get("predefined"))}.'\
                 if arg.get('predefined') else arg.get('description')
             if arg.get('defaultValue'):

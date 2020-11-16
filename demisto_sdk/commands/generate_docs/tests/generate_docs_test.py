@@ -505,6 +505,6 @@ class TestGenerateIntegrationDoc:
             os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
 
         # Test that the predefined values and default values are added to the README.
-        assert "The type of the newly created user Possible values are: Basic, Pro, Corporate. Default is Basic." \
+        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
                in open(fake_readme).read()
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()

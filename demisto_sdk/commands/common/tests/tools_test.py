@@ -606,7 +606,7 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
 @pytest.mark.parametrize(argnames="arg, expected_result",
                          argvalues=[["a1,b2,c3", ['a1', 'b2', 'c3']],
-                                    # ["[a1,b2,c3]", ['a1', 'b2', 'c3']],
+                                    ["[\"a1\",\"b2\",\"c3\"]", ["a1", "b2", "c3"]],
                                     [['a1', 'b2', 'c3'], ['a1', 'b2', 'c3']],
                                     ["", []],
                                     [[], []]

@@ -2,6 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
+from typing import Union, List
 
 import pytest
 from demisto_sdk.commands.common import tools
@@ -28,7 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                is_origin_content_repo,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare)
+                                               server_version_compare, arg_to_array)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -561,3 +562,23 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
     ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
     assert len(ignore_test_set) == 0
+
+
+@pytest.mark.parametrize(argnames="arg, expected_result",
+                         argvalues=[["a1,b2,c3", ['a1', 'b2', 'c3']],
+                                    ["[a1,b2,c3]", ['a1', 'b2', 'c3']],
+                                    [['a1', 'b2', 'c3'], ['a1', 'b2', 'c3']],
+                                    ["", []],
+                                    [[], []]])
+def test_arg_to_array(arg: Union[List[str], str], expected_result: List[str]):
+    """
+        Given
+        - arg - string or list of strings. For example: "a,b" -> ['a','b']
+        or "[a,b]" -> ['a','b']
+        When
+        - Convert given string to list of strings, for example at unify, add_contributors_support, when adding email.
+        Then:
+        - returns a list with the skipped tests
+        """
+    func_result = arg_to_array(arg=arg)
+    assert func_result == expected_result

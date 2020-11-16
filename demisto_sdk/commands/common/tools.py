@@ -1390,3 +1390,24 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     resp = demisto_client.generic_request('/about', 'GET')
     about_data = json.loads(resp[0].replace("'", '"'))
     return parse(about_data.get('demistoVersion'))
+
+
+def arg_to_array(arg: Union[str, List[str]]) -> List[str]:
+    """
+        Args:
+            arg: string or list of string.
+
+        Returns:
+            list, contains strings.
+        """
+    if arg:
+        if isinstance(arg, list):
+            return arg
+        string_list = arg.split(',')
+        first = string_list[0]
+        last = string_list[-1]
+        if first[0] == '[':
+            string_list[0] = first[1:len(first)]
+            string_list[-1] = last[0:-1]
+        return string_list
+    return []

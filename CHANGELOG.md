@@ -2,7 +2,7 @@
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
 * For partner supported content packs, added support for a list of emails.
-
+* Added arg_to_array function to sdk-tools.
 
 # v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.

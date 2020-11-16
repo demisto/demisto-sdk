@@ -1198,3 +1198,49 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()
     assert res
+
+
+def test_is_mapping_fields_command_exist(integration):
+    """
+        Given
+        - Integration yml file with get-mapping-fields command.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the True.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert validator.is_mapping_fields_command_exist()
+
+
+def test_mapping_fields_command_dont_exist(integration):
+    """
+        Given
+        - Integration yml file with no get-mapping-fields command and ismappable: True.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the False. The field ismappable exists, but the command no.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'not-get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert not validator.is_mapping_fields_command_exist()

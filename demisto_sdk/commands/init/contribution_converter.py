@@ -369,6 +369,7 @@ class ContributionConverter:
         metadata_dict['tags'] = zipped_metadata.get('tags') if zipped_metadata.get('tags') else []
         metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
         metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
+        metadata_dict['githubUser'] = zipped_metadata.get('githubUser') if zipped_metadata.get('githubUser') else []
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
         with open(metadata_path, 'w') as pack_metadata_file:
@@ -396,7 +397,8 @@ class ContributionConverter:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'githubUser': []
         }
 
         if data:

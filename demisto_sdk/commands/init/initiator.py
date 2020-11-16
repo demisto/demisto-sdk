@@ -213,7 +213,8 @@ class Initiator:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'githubUser': []
         }
 
         if data:

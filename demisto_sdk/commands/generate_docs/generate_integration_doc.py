@@ -245,14 +245,15 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
             '| --- | --- | --- |',
         ])
         for arg in arguments:
-            if not arg.get('description'):
+            description = arg.get('description')
+            if not description:
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
-            if not arg.get('description').endswith('.'):
-                arg['description'] = f'{arg.get("description")}.'
+            if not description.endswith('.'):
+                description = f'{description}.'
 
-            argument_description = f'{arg.get("description")} Possible values are: {", ".join(arg.get("predefined"))}.'\
-                if arg.get('predefined') else arg.get('description')
+            argument_description = f'{description} Possible values are: {", ".join(arg.get("predefined"))}.'\
+                if arg.get('predefined') else description
             if arg.get('defaultValue'):
                 argument_description = f'{argument_description} Default is {arg.get("defaultValue")}.'
 

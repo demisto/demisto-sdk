@@ -34,7 +34,7 @@ def test_integration_init_integration_positive(tmp_path):
     create_integration = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
-    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
+    inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
               pack_author, pack_url, pack_email, pack_tags, pack_reviewers, create_integration, integration_name,
               use_dir_name_as_id]
 
@@ -46,7 +46,7 @@ def test_integration_init_integration_positive(tmp_path):
     tmp_integration_path = tmp_pack_path / 'Integrations' / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [INIT_CMD, '-o', tmp_dir_path], input='\n'.join(inputs))
+    result = runner.invoke(main, [INIT_CMD, '-o', tmp_dir_path, '-n', pack_name], input='\n'.join(inputs))
 
     assert result.exit_code == 0
     assert f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout

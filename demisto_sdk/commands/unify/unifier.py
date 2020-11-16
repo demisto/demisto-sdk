@@ -5,7 +5,7 @@ import io
 import json
 import os
 import re
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple, Union
 
 import click
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
@@ -422,7 +422,8 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml: Dict, contributor_type: str, contributor_email: str,
+    def add_contributors_support(self, unified_yml: Dict, contributor_type: str,
+                                 contributor_email: Union[str, List[str]],
                                  contributor_url: str, author: str = '') -> Dict:
         """Add contributor support to the unified file - text in the display name and detailed description.
 
@@ -443,8 +444,8 @@ class Unifier:
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
-                contributor_email = contributor_email if isinstance(contributor_email, list) else [contributor_email]
-                for email in contributor_email:
+                email_list: List[str] = contributor_email if isinstance(contributor_email, list) else [contributor_email]
+                for email in email_list:
                     contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
             if contributor_url:
                 contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'

@@ -15,6 +15,9 @@ base_msg = {
               "Please remove all exit() statements from the code.",),
     "E9005": ("quit is found, Please remove all quit() statements from the code.", "quit-exists",
               "Please remove all quit statements from the code.",),
+    "E9006": ("Invalid CommonServerPython import was found. Please change the import to: "
+              "from CommonServerPython import *", "invalid-import-common-server-python",
+              "Please change the import to: from CommonServerPython import *")
 }
 
 
@@ -35,6 +38,9 @@ class CustomBaseChecker(BaseChecker):
         self._sleep_checker(node)
         self._quit_checker(node)
         self._exit_checker(node)
+
+    def visit_importfrom(self, node):
+        self._common_server_import(node)
 
     # Print statment for Python2 only.
     def visit_print(self, node):
@@ -79,6 +85,13 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.func.name == 'quit':
                 self.add_message("quit-exists", node=node)
+        except Exception:
+            pass
+
+    def _common_server_import(self, node):
+        try:
+            if node.modname == 'CommonServerPython' and not node.names[0][0] == '*':
+                self.add_message("invalid-import-common-server-python", node=node)
         except Exception:
             pass
 

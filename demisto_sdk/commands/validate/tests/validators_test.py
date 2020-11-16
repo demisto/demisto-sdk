@@ -582,7 +582,7 @@ class TestValidators:
         """
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
-        assert validator.is_valid_ismappble_field() == expected
+        assert validator.is_mapping_fields_command_exist() == expected
 
     def test_unified_files_ignored(self):
         """

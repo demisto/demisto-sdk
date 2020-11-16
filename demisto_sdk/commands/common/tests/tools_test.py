@@ -2,7 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
-from typing import Union, List
+from typing import List, Union
 
 import pytest
 from demisto_sdk.commands.common import tools
@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_array,
                                                filter_files_by_type,
                                                filter_files_on_pack,
                                                filter_packagify_changes,
@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                is_origin_content_repo,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare, arg_to_array)
+                                               server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,

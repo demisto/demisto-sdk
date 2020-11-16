@@ -653,6 +653,22 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
     "useCases": [],
     "keywords": []
 })
+PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": PARTNER_URL,
+    "email": "[support1@test.com, support2@test.com]",
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
 PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
     "name": "test",
     "description": "test",
@@ -806,7 +822,9 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
 
 
-def test_unify_contributor_emails_list(mocker, repo):
+@pytest.mark.parametrize(argnames="pack_metadata",
+                         argvalues=[PACK_METADATA_PARTNER_EMAIL_LIST, PACK_METADATA_STRINGS_EMAIL_LIST])
+def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     """
     Given
         - Partner contributed pack with email list and url in the support details.
@@ -817,10 +835,10 @@ def test_unify_contributor_emails_list(mocker, repo):
     """
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
-    pack.pack_metadata.write_json(PACK_METADATA_PARTNER_EMAIL_LIST)
+    pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY, ''))
-    mocker.patch.object(Unifier, 'get_data', return_value=(PACK_METADATA_PARTNER_EMAIL_LIST, pack.pack_metadata.path))
+    mocker.patch.object(Unifier, 'get_data', return_value=(pack_metadata, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)

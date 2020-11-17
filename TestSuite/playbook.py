@@ -43,11 +43,11 @@ class Playbook:
     def create_default_playbook(self):
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml:
-            self.build(yml=yaml.load(yml, Loader=yaml.FullLoader))
+            self.build(yml=yaml.safe_load(yml))
 
     def create_default_test_playbook(self):
         default_test_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml:
             self.build(
-                yml=yaml.load(yml, Loader=yaml.FullLoader),
+                yml=yaml.safe_load(yml)
             )

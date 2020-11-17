@@ -322,9 +322,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     assert prompt in result.output
     assert '======= Updating file: ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
-    with open(playbook_path, 'r') as f:
-        content = f.read()
-        yaml_content = yaml.load(content)
+    with open(playbook_path) as f:
+        yaml_content = yaml.safe_load(f)
         assert 'sourceplaybookid' not in yaml_content
 
     assert not result.exception

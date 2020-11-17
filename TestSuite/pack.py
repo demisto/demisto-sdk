@@ -141,7 +141,8 @@ class Pack:
             readme: str = '',
             description: str = '',
             changelog: str = '',
-            image: bytes = b'') -> Script:
+            image: bytes = b''
+    ) -> Script:
         if name is None:
             name = f'script{len(self.integrations)}'
         if yml is None:

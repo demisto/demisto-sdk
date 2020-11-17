@@ -373,7 +373,7 @@ class Initiator:
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = yaml.safe_load(f)
+            yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
         if integration:

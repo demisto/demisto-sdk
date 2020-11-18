@@ -123,9 +123,9 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -150,9 +150,9 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'IN127' in result.stdout
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
@@ -178,9 +178,9 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'IN128' in result.stdout
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
@@ -288,9 +288,9 @@ class TestIntegrationValidation:
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -314,9 +314,9 @@ class TestIntegrationValidation:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'IN119' in result.stdout
         assert 'This is a feed and has wrong fromversion.' in result.stdout
         assert result.exit_code == 1
@@ -1463,9 +1463,9 @@ class TestScriptValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1488,9 +1488,9 @@ class TestScriptValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
         assert result.exit_code == 1
@@ -1516,8 +1516,8 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1540,8 +1540,8 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout
         assert result.exit_code == 1
@@ -1776,10 +1776,10 @@ class TestAllFilesValidator:
         assert 'Validating all files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
         assert 'Validating Packs/PackName2 unique pack files' in result.stdout
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1820,10 +1820,10 @@ class TestAllFilesValidator:
         assert 'Validating all files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
         assert 'Validating Packs/PackName2 unique pack files' in result.stdout
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'IF101' in result.stdout
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout
@@ -1856,8 +1856,8 @@ class TestValidationUsingGit:
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=valid_script_yml)
 
-        modified_files = {integration.yml_path, incident_field.get_path_from_pack()}
-        added_files = {dashboard.get_path_from_pack(), script.yml_path}
+        modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
+        added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
                                                                                            set(), set(), set()))
@@ -1873,10 +1873,10 @@ class TestValidationUsingGit:
         assert 'Running validation on changed pack unique files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
         assert 'Validating Packs/PackName2 unique pack files' in result.stdout
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1908,8 +1908,8 @@ class TestValidationUsingGit:
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=invalid_script_yml)
 
-        modified_files = {integration.yml_path, incident_field.get_path_from_pack()}
-        added_files = {dashboard.get_path_from_pack(), script.yml_path}
+        modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
+        added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
                                                                                            set(), set(), set()))
@@ -1926,10 +1926,10 @@ class TestValidationUsingGit:
         assert 'Running validation on changed pack unique files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
         assert 'Validating Packs/PackName2 unique pack files' in result.stdout
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
-        assert f'Validating {script.yml_path} as script' in result.stdout
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'IF101' in result.stdout
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout

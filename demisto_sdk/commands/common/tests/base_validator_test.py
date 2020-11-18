@@ -186,7 +186,7 @@ def test_check_support_status_xsoar_file(repo, mocker):
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert 'integration.yml' not in base_validator.ignored_errors
 
@@ -212,7 +212,7 @@ def test_check_support_status_non_certified_partner_file(repo, mocker):
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['non-certified-partner']
 
@@ -238,7 +238,7 @@ def test_check_support_status_certified_partner_file(repo, mocker):
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert 'integration.yml' not in base_validator.ignored_errors
 
@@ -264,6 +264,6 @@ def test_check_support_status_community_file(repo, mocker):
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
-        base_validator.update_checked_flags_by_support_level(integration.yml_path)
+        base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']

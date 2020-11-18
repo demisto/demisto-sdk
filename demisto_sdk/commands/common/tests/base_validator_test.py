@@ -192,13 +192,13 @@ def test_check_support_status_xsoar_file(repo, mocker):
 def test_check_support_status_partner_file(repo, mocker):
     """
     Given
-    - An non-certified partner supported integration yml.
+    - An partner supported integration yml.
 
     When
     - Running check_support_status method.
 
     Then
-    - Ensure the resulting ignored errors list includes the non-certified-partner ignore-list.
+    - Ensure the resulting ignored errors list includes the partner ignore-list.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -211,7 +211,7 @@ def test_check_support_status_partner_file(repo, mocker):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
-        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['non-certified-partner']
+        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['partner']
 
 
 def test_check_support_status_community_file(repo, mocker):

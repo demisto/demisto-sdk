@@ -171,6 +171,7 @@
 * Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
 * Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
 * Fixed an issue where **validate** did not check for missing release notes in old format files.
+* Updated **download** command to support mappers.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

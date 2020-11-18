@@ -19,8 +19,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 from demisto_sdk.commands.common.tools import (
-    does_text_contain_escape_sequences, print_error,
-    server_version_compare)
+    does_text_contain_escape_sequences, print_error, server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):

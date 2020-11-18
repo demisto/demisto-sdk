@@ -206,9 +206,9 @@ class TestIntegrationDescription:
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -232,9 +232,9 @@ class TestIntegrationDescription:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'IN132' in result.stdout
         assert 'Escape Sequences' in result.stdout
         assert result.exit_code == 1
@@ -260,9 +260,9 @@ class TestIntegrationDescription:
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml_path, '--no-docker-checks'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml_path} as integration' in result.stdout
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
         assert 'IN133' in result.stdout
         assert 'IN134' in result.stdout
         assert 'Escape Sequences' in result.stdout
@@ -1568,8 +1568,8 @@ class TestScriptDescriptionValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1592,10 +1592,10 @@ class TestScriptDescriptionValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC102' in result.stdout
-        assert "Escape Sequences" in result.stdout
+        assert "escape sequences" in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_script_args_and_outputs_description(self, mocker, repo):
@@ -1619,8 +1619,8 @@ class TestScriptDescriptionValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml_path, '--no-docker-checks'], catch_exceptions=False)
-        assert f'Validating {script.yml_path} as script' in result.stdout
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC102' in result.stdout
         assert "escape sequences" in result.stdout
         assert result.exit_code == 1

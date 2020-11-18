@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', '
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
-    'non-certified-partner': ['CJ']
+    'partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {

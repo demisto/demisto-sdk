@@ -1433,8 +1433,8 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     return parse(about_data.get('demistoVersion'))
 
 
-def is_description_contains_escape_sequences(description):
+def does_text_contain_escape_sequences(text):
     for char in ESCAPE_SEQUENCES:
-        if char in description:
+        if char in text:
             return True
     return False

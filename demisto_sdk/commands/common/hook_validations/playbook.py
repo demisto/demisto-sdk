@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, is_description_contains_escape_sequences)
+    LOG_COLORS, does_text_contain_escape_sequences)
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -271,7 +271,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_valid = True
         description = self.current_file.get('description', '')
-        if is_description_contains_escape_sequences(description):
+        if does_text_contain_escape_sequences(description):
             error_message, error_code = Errors.invalid_playbook_description()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -291,9 +291,10 @@ class PlaybookValidator(ContentEntityValidator):
             pb_id = task.get('id', '')
             pb_task = task.get('task', {})
             pb_description = pb_task.get('description', '')
+            task_name = pb_task.get('name', '')
 
-            if is_description_contains_escape_sequences(pb_description):
-                invalid_tasks_list.append(pb_id)
+            if does_text_contain_escape_sequences(pb_description):
+                invalid_tasks_list.append(pb_id + ' - ' + task_name)
 
         if invalid_tasks_list:
             error_message, error_code = Errors.invalid_playbook_tasks_description(invalid_tasks_list)

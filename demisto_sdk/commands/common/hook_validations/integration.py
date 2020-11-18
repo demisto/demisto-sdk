@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 from demisto_sdk.commands.common.tools import (
-    is_description_contains_escape_sequences, print_error,
+    does_text_contain_escape_sequences, print_error,
     server_version_compare)
 
 
@@ -94,8 +94,10 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
-            self.is_valid_entity_description_no_escape_sequences(),
-            self.is_valid_commands_description_no_escape_sequences(),
+            self.is_valid_integration_description(),
+            self.is_valid_commands_description(),
+            self.is_valid_arguments_description(),
+            self.is_valid_outputs_description(),
             self.is_valid_deprecated_integration_display_name(),
             self.is_valid_deprecated_integration_description(),
             self.is_mapping_fields_command_exist()
@@ -834,7 +836,7 @@ class IntegrationValidator(ContentEntityValidator):
             return False
         return True
 
-    def is_valid_entity_description_no_escape_sequences(self) -> bool:
+    def is_valid_integration_description(self) -> bool:
         """Verifies integration description contains Escape Sequences
 
         Returns:
@@ -842,57 +844,94 @@ class IntegrationValidator(ContentEntityValidator):
         """
         is_valid = True
         entity_description = self.current_file.get('description', '')
-        if is_description_contains_escape_sequences(entity_description):
+        if does_text_contain_escape_sequences(entity_description):
             error_message, error_code = Errors.invalid_entity_description_no_escape_sequences()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
         return is_valid
 
-    def is_valid_commands_description_no_escape_sequences(self) -> bool:
-        """Verifies commands args and outputs description contains Escape Sequences
+    def is_valid_commands_description(self) -> bool:
+        """Verifies commands description contains Escape Sequences
 
         Returns:
-            bool. True if commands args and outputs description is valid - not contains Escape Sequences,
+            bool. True if commands description is valid - not contains Escape Sequences,
             False otherwise.
         """
         invalid_commands_list = []
-        invalid_arguments_list = []
-        invalid_outputs_list = []
-
         is_valid = True
         commands = self.current_file.get('script', {}).get('commands', [])
         for command in commands:
             command_description = command.get('description', '')
             command_name = command.get('name', '')
 
-            if is_description_contains_escape_sequences(command_description):
+            if does_text_contain_escape_sequences(command_description):
                 invalid_commands_list.append(command_name)
 
+        if invalid_commands_list:
+            error_message, error_code = Errors.invalid_command_description_no_escape_sequences(invalid_commands_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+        return is_valid
+
+    def is_valid_arguments_description(self) -> bool:
+        """Verifies args description contains Escape Sequences
+
+        Returns:
+            bool. True if args description is valid - not contains Escape Sequences,
+            False otherwise.
+        """
+        is_valid = True
+        invalid_arguments_list = []
+        commands = self.current_file.get('script', {}).get('commands', [])
+        for command in commands:
+            command_name = command.get('name', '')
             command_arguments = command.get('arguments', [])
             invalid_args = ''
+
             for arg in command_arguments:
                 arg_description = arg.get('description', '')
                 arg_name = arg.get('name', '')
-                if is_description_contains_escape_sequences(arg_description):
-                    invalid_args += 'arg: ' + arg_name + ', '
-            if invalid_args:
-                invalid_arguments_list.append(f'{invalid_args}in {command_name} command')
 
+                if does_text_contain_escape_sequences(arg_description):
+                    invalid_args += arg_name + ', '
+
+            if invalid_args:
+                invalid_arguments_list.append(f'{invalid_args[:-2]} in {command_name} command')
+
+        if invalid_arguments_list:
+            error_message, error_code = Errors.invalid_argument_description_no_escape_sequences(invalid_arguments_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+        return is_valid
+
+    def is_valid_outputs_description(self) -> bool:
+        """Verifies outputs description contains Escape Sequences
+
+        Returns:
+            bool. True if outputs description is valid - not contains Escape Sequences,
+            False otherwise.
+        """
+        is_valid = True
+        invalid_outputs_list = []
+        commands = self.current_file.get('script', {}).get('commands', [])
+        for command in commands:
+            command_name = command.get('name', '')
             command_outputs = command.get('outputs', [])
             invalid_outputs = ''
+
             if command_outputs:
                 for output in command_outputs:
                     output_description = output.get('description', '')
                     context_path = output.get('contextPath', '')
-                    if is_description_contains_escape_sequences(output_description):
-                        invalid_outputs += 'output: ' + context_path + ', '
-                if invalid_outputs:
-                    invalid_outputs_list.append(f'{invalid_outputs}in {command_name} command')
 
-        if invalid_commands_list or invalid_arguments_list or invalid_outputs_list:
-            error_message, error_code = Errors.invalid_command_description_no_escape_sequences(invalid_commands_list,
-                                                                                               invalid_arguments_list,
-                                                                                               invalid_outputs_list)
+                    if does_text_contain_escape_sequences(output_description):
+                        invalid_outputs += context_path + ', '
+
+                if invalid_outputs:
+                    invalid_outputs_list.append(f'{invalid_outputs[:-2]} in {command_name} command')
+
+        if invalid_outputs_list:
+            error_message, error_code = Errors.invalid_output_description_no_escape_sequences(invalid_outputs_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
         return is_valid

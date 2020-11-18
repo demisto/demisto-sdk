@@ -242,7 +242,7 @@ class TestIntegrationDescription:
     def test_invalid_commands_description(self, mocker, repo):
         """
         Given
-        - invalid description command - The command description and arg description contains Escape Sequences.
+        - invalid description command - The command description and args description contains Escape Sequences.
 
         When
         - Running validation on it.
@@ -264,6 +264,7 @@ class TestIntegrationDescription:
                                    catch_exceptions=False)
         assert f'Validating {integration.yml_path} as integration' in result.stdout
         assert 'IN133' in result.stdout
+        assert 'IN134' in result.stdout
         assert 'Escape Sequences' in result.stdout
         assert result.exit_code == 1
 

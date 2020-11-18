@@ -63,6 +63,8 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "invalid_entity_description_no_escape_sequences": "IN132",
     "invalid_command_description_no_escape_sequences": "IN133",
+    "invalid_argument_description_no_escape_sequences": "IN134",
+    "invalid_output_description_no_escape_sequences": "IN135",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_script_comment": "SC102",
@@ -460,18 +462,18 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_script_comment():
-        return 'The script comment can not contain Escape Sequences (\\n \\t \\r etc.).'
+        return "The script's 'comment' field cannot contain escape sequences (\\n \\t \\r etc.)."
 
     @staticmethod
     @error_code_decorator
     def invalid_args_and_outputs_descriptions_script(invalid_args_list, invalid_outputs_list):
-        error_msg = 'The args and outputs description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
-                    'please remove the escape sequences form'
+        error_msg = 'The arguments and outputs description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
+                    'please remove the escape sequences form:\n'
         if invalid_args_list:
-            error_msg += f' args description: {invalid_args_list}.'
+            error_msg += f'args description: {invalid_args_list}.\n'
 
         if invalid_outputs_list:
-            error_msg += f' outputs description: {invalid_outputs_list}.'
+            error_msg += f'outputs description: {invalid_outputs_list}.'
 
         return error_msg
 
@@ -1204,20 +1206,21 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_command_description_no_escape_sequences(invalid_commands_list, invalid_arguments_list,
-                                                        invalid_outputs_list):
-        error_msg = 'The command description can not contain Escape Sequences (\\n \\t \\r etc.), ' \
-                    'please remove the escape sequences form'
-        if invalid_commands_list:
-            error_msg += f' commands description: {invalid_commands_list}.'
+    def invalid_command_description_no_escape_sequences(invalid_commands_list):
+        return f'The command description can not contain Escape Sequences (\\n \\t \\r etc.), please remove the ' \
+               f'escape sequences form commands description: {invalid_commands_list}.'
 
-        if invalid_arguments_list:
-            error_msg += f' args description: {invalid_arguments_list}.'
+    @staticmethod
+    @error_code_decorator
+    def invalid_argument_description_no_escape_sequences(invalid_arguments_list):
+        return f'The argument description can not contain Escape Sequences (\\n \\t \\r etc.), please remove the ' \
+               f'escape sequences form args description: {invalid_arguments_list}.'
 
-        if invalid_outputs_list:
-            error_msg += f' outputs description: {invalid_outputs_list}.'
-
-        return error_msg
+    @staticmethod
+    @error_code_decorator
+    def invalid_output_description_no_escape_sequences(invalid_outputs_list):
+        return f'The output description can not contain Escape Sequences (\\n \\t \\r etc.), please remove the ' \
+               f'escape sequences form outputs description: {invalid_outputs_list}.'
 
     @staticmethod
     def wrong_filename(file_type):

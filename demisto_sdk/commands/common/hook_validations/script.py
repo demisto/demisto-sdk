@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
 from demisto_sdk.commands.common.tools import (
-    is_description_contains_escape_sequences, server_version_compare)
+    does_text_contain_escape_sequences, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -231,7 +231,7 @@ class ScriptValidator(ContentEntityValidator):
         """
         is_valid = True
         comment = self.current_file.get('comment', '')
-        if is_description_contains_escape_sequences(comment):
+        if does_text_contain_escape_sequences(comment):
             error_message, error_code = Errors.invalid_script_comment()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -252,14 +252,14 @@ class ScriptValidator(ContentEntityValidator):
         for arg in args:
             arg_description = arg.get('description', '')
             arg_name = arg.get('name', '')
-            if is_description_contains_escape_sequences(arg_description):
+            if does_text_contain_escape_sequences(arg_description):
                 invalid_args_list.append(arg_name)
 
         outputs = self.current_file.get('outputs', '')
         for output in outputs:
             outputs_description = output.get('description', '')
             context_path = output.get('contextPath', '')
-            if is_description_contains_escape_sequences(outputs_description):
+            if does_text_contain_escape_sequences(outputs_description):
                 invalid_outputs_list.append(context_path)
 
         if invalid_args_list or invalid_outputs_list:

@@ -428,7 +428,7 @@ class TestValidators:
         -  The file will fail validation because its id changed.
         """
 
-        validator = StructureValidator(file_path=VALID_INTEGRATION_ID_PATH)
+        validator = StructureValidator(file_path=VALID_INTEGRATION_ID_PATH, predefined_scheme='integration')
         old = validator.load_data_from_file()
         old['commonfields']['id'] = 'old_id'
 
@@ -437,7 +437,8 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
 
         validate_manager = ValidateManager(file_path=VALID_INTEGRATION_ID_PATH, skip_conf_json=True)
-        assert not validate_manager.run_validation_on_specific_files()
+        assert not validate_manager.run_validations_on_file(file_path=VALID_INTEGRATION_ID_PATH,
+                                                            pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self):
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -1086,8 +1087,11 @@ class TestValidators:
             - Validate that only one git diff command runs and it's a staged command
         """
         def run_command_effect(arg):
-            assert arg == 'git diff --name-status --staged'
-            return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
+            if arg == 'git diff --name-only --staged':
+                return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+            else:
+                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nA\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
 
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)

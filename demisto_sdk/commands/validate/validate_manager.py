@@ -803,6 +803,8 @@ class ValidateManager:
         return prev_ver
 
     def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
+        """The function gets sets of files which were changed in the current branch and filters
+        out only the files that were changed in the current commit"""
         all_changed_files = run_command(f'git diff --name-only --staged').split()
         formatted_changed_files = set()
 

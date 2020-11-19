@@ -4,7 +4,7 @@
 * Added *default value* and *predefined values* to argument description in **generate-docs** command.
 * Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
 * Fixed an issue where the *--staged* flag recognised added files as modified in the **validate** command.
-* Fixed an issue where a backwards comparability warning was raised for all added files in the **validate** command.
+* Fixed an issue where a backwards compatibility warning was raised for all added files in the **validate** command.
 
 
 # v1.2.9

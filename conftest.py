@@ -5,6 +5,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from TestSuite.integration import Integration
 from TestSuite.pack import Pack
+from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 
 # Helper Functions
@@ -29,6 +30,14 @@ def get_integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) 
     return integration
 
 
+def get_playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Playbook:
+    """Mocking tmp_path
+    """
+    playbook = get_pack(request, tmp_path_factory).create_playbook()
+    playbook.create_default_playbook()
+    return playbook
+
+
 # Fixtures
 
 
@@ -51,3 +60,10 @@ def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     """Mocking tmp_path
     """
     return get_repo(request, tmp_path_factory)
+
+
+@pytest.fixture
+def playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Playbook:
+    """Mocking tmp_path
+    """
+    return get_playbook(request, tmp_path_factory)

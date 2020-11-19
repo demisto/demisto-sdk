@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
+from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
@@ -26,6 +27,7 @@ from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
+from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
@@ -46,9 +48,9 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
+    'canvas-context-connections': ConnectionJSONFormat
 }
-UNFORMATTED_FILES = ['canvas-context-connections',
-                     'readme',
+UNFORMATTED_FILES = ['readme',
                      'releasenotes',
                      'description',
                      'changelog',
@@ -56,14 +58,20 @@ UNFORMATTED_FILES = ['canvas-context-connections',
                      'javascriptfile',
                      'powershellfile',
                      'betaintegration',
+                     'doc_image',
                      ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 
-def format_manager(input: str = None, output: str = None, from_version: str = '', no_validate: bool = False,
-                   verbose: bool = False, update_docker: bool = False):
+def format_manager(input: str = None,
+                   output: str = None,
+                   from_version: str = '',
+                   no_validate: bool = False,
+                   verbose: bool = False,
+                   update_docker: bool = False,
+                   assume_yes: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -73,6 +81,7 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
         no_validate (flag): Whether the user specifies not to run validate after format.
         verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
+        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -88,14 +97,28 @@ def format_manager(input: str = None, output: str = None, from_version: str = ''
     log_list = []
     error_list = []
     if files:
+        format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path)
+
+            current_excluded_files = format_excluded_file[:]
+            dirname = os.path.dirname(file_path)
+            if dirname.endswith('CommonServerPython'):
+                current_excluded_files.remove('CommonServerPython.py')
+            if os.path.basename(file_path) in current_excluded_files:
+                continue
+
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
-                info_res, err_res, skip_res = run_format_on_file(input=file_path, file_type=file_type,
-                                                                 from_version=from_version, output=output,
-                                                                 no_validate=no_validate, verbose=verbose, update_docker=update_docker)
+                info_res, err_res, skip_res = run_format_on_file(input=file_path,
+                                                                 file_type=file_type,
+                                                                 from_version=from_version,
+                                                                 output=output,
+                                                                 no_validate=no_validate,
+                                                                 verbose=verbose,
+                                                                 update_docker=update_docker,
+                                                                 assume_yes=assume_yes)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:

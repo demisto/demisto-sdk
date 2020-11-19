@@ -52,39 +52,37 @@ TYPE_CONVERSION_BY_FILE_NAME = {
 }
 
 
-class ContentObjectFactory:
-    @staticmethod
-    def from_path(path: Union[Path, str]) -> object:
-        """ Create content object by path, By the following steps:
-                1. Try determinist file name -> pack_metadata.json, .secrets-ignore, .pack-ignore, reputations.json
-                2. If 'Tools' in path -> Object is AgentTool.
-                3. If file start with 'doc-*' -> Object is Documentation.
-                4. Let find_type determine object type.
+def path_to_pack_object(path: Union[Path, str]) -> object:
+    """ Create content object by path, By the following steps:
+            1. Try determinist file name -> pack_metadata.json, .secrets-ignore, .pack-ignore, reputations.json
+            2. If 'Tools' in path -> Object is AgentTool.
+            3. If file start with 'doc-*' -> Object is Documentation.
+            4. Let find_type determine object type.
 
-        Args:
-            path: File path to determine object type.
+    Args:
+        path: File path to determine object type.
 
-        Returns:
-            object: Content object.
+    Returns:
+        object: Content object.
 
-        Raises:
-            ContentFactoryError: If not able to determine object type from file path.
-        """
-        path = Path(path)
-        # Determinist conversion by file name.
-        object_type = TYPE_CONVERSION_BY_FILE_NAME.get(path.name)
-        # Tools in path
-        if not object_type and 'Tools' in path.parts:
-            object_type = AgentTool
-        # File name start with doc-*
-        if not object_type and path.name.startswith('doc-'):
-            object_type = Documentation
-        # find_type handling
-        if not object_type:
-            file_type = find_type(str(path))
-            object_type = TYPE_CONVERSION_BY_FileType.get(file_type)
-        # Raise exception if not succeed
-        if not object_type:
-            raise ContentFactoryError(None, path, "Unable to get object type from path.")
+    Raises:
+        ContentFactoryError: If not able to determine object type from file path.
+    """
+    path = Path(path)
+    # Determinist conversion by file name.
+    object_type = TYPE_CONVERSION_BY_FILE_NAME.get(path.name)
+    # Tools in path
+    if not object_type and 'Tools' in path.parts:
+        object_type = AgentTool
+    # File name start with doc-*
+    if not object_type and path.name.startswith('doc-'):
+        object_type = Documentation
+    # find_type handling
+    if not object_type:
+        file_type = find_type(str(path))
+        object_type = TYPE_CONVERSION_BY_FileType.get(file_type)
+    # Raise exception if not succeed
+    if not object_type:
+        raise ContentFactoryError(None, path, "Unable to get object type from path.")
 
-        return object_type(path)
+    return object_type(path)

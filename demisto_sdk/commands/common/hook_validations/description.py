@@ -66,19 +66,22 @@ class DescriptionValidator(BaseValidator):
         is_description_in_package = False
         package_path = None
         md_file_path = None
+
+        data_dictionary = get_yaml(self.file_path)
+
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
                 path_without_extension = os.path.splitext(self.file_path)[0]
                 md_file_path = glob.glob(path_without_extension + '_description.md')[0]
             except IndexError:
-                error_message, error_code = Errors.no_description_file_warning()
-                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
+                if not (data_dictionary.get('deprecated') or is_unified_integration):
+                    error_message, error_code = Errors.no_description_file_warning()
+                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
             if md_file_path:
                 is_description_in_package = True
-
-        data_dictionary = get_yaml(self.file_path)
 
         if not data_dictionary:
             return is_description_in_package

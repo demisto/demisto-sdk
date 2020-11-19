@@ -8,9 +8,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, KNOWN_FILE_STATUSES, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -66,10 +67,12 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class ValidateManager:
-    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-                 print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None):
+    def __init__(
+        self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+        print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+        validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+    ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -85,6 +88,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
+        self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -414,8 +418,8 @@ class ValidateManager:
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files,
-                                                                          old_format_files, added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
+                                                                          added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -630,6 +634,17 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
+    @staticmethod
+    def should_raise_pack_version(pack: str) -> bool:
+        """
+        Args:
+            pack: The pack name.
+
+        Returns: False if pack is in IGNORED_PACK_NAMES else True.
+
+        """
+        return pack not in IGNORED_PACK_NAMES
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -640,19 +655,18 @@ class ValidateManager:
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files,
-                                                                                               changed_meta_packs)
+                                                                                               added_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path):
+        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
             IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
-                raise_version = True
+                raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(self.validate_pack_unique_files(
                 pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
                 id_set_path=self.id_set_path))
@@ -665,17 +679,15 @@ class ValidateManager:
         Args:
             old_format_files(set): file names which are in the old format.
         """
-        invalid_files = []
+        handle_error = True
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(file_path)
-        if invalid_files:
-            error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+                error_message, error_code = Errors.invalid_package_structure(file_path)
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    handle_error = False
+        return handle_error
 
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
@@ -783,21 +795,37 @@ class ValidateManager:
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
+    def add_origin(self, prev_ver):
+        # If git base not provided - check against origin/prev_ver unless using release branch
+        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
+            prev_ver = 'origin/' + prev_ver
+        return prev_ver
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
         Args:
             compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last releaese
+            prev_ver (str): Against which branch to run the comparision - master/last release
 
         Returns:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
-            click.echo("Collecting all committed files")
-        # If git base not provided - check against origin/prev_ver
-        if '/' not in prev_ver:
-            prev_ver = 'origin/' + prev_ver
+            if self.staged:
+                click.echo("Collecting staged files only")
+            else:
+                click.echo("Collecting all committed files")
+        if self.staged:
+            all_changed_files_string = run_command('git diff --name-status --staged')
+            modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
+                all_changed_files_string, prev_ver
+            )
+            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files)).union(
+                self.get_packs(added_files_list))
+            return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
+
+        prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
@@ -814,6 +842,7 @@ class ValidateManager:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
+
                 all_changed_files_string = run_command(
                     'git diff --name-status upstream/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
@@ -830,7 +859,7 @@ class ValidateManager:
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
 
-                if not self.no_configuration_prints:
+                if not self.no_configuration_prints and not self.staged:
                     click.echo("Collecting all local changed files against the content master")
 
                 # only changes against prev_ver (without local changes)
@@ -857,7 +886,8 @@ class ValidateManager:
             added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
+        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
+            self.get_packs(added_files))
         return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
@@ -1082,9 +1112,8 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files, changed_meta_packs):
-        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
-        # and packs where the meta file changed should have their version raised
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
@@ -1096,7 +1125,7 @@ class ValidateManager:
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                 FileType.TEST_SCRIPT}) - self.new_packs)
 
-        return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
+        return modified_packs_that_should_have_version_raised
 
     @staticmethod
     def get_packs(changed_files):

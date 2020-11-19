@@ -22,11 +22,11 @@ class PlaybookRunner:
         self.playbook_id = playbook_id
         self.should_wait = wait
         self.timeout = timeout
-
+        verify = (not insecure) if insecure else None  # we set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         # if url parameter is not provided, demisto_client will search the DEMISTO_BASE_URL env variable
         self.demisto_client = demisto_client.configure(
             base_url=url,
-            verify_ssl=not insecure)
+            verify_ssl=verify)
 
         self.base_link_to_workplan = self.get_base_link_to_workplan(url)
 

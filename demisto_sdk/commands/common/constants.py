@@ -653,7 +653,7 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
-IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
+IGNORED_PACK_NAMES = ['Legacy', 'NonSupported', 'ApiModules']
 
 PACK_IGNORE_TEST_FLAG = 'auto-test'
 
@@ -728,7 +728,8 @@ TYPE_TO_EXTENSION = {
 TESTS_DIRECTORIES = [
     'testdata',
     'test_data',
-    'data_test'
+    'data_test',
+    'tests_data'
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -779,7 +780,7 @@ BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
 INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
-                          'Deception', 'Email Gateway']
+                          'Deception', 'Email Gateway', 'Identity and Access Management']
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
@@ -825,7 +826,8 @@ DIR_TO_PREFIX = {
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
 
-DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests']
+DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests',
+                                 'defaultclassifier', 'defaultmapperin', 'defaultmapperout']
 
 DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 
@@ -1000,3 +1002,6 @@ MAX_FETCH = 'max_fetch'
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
 FEATURE_BRANCHES = ['v4.5.0']
+
+SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
+                                FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)

@@ -6,7 +6,7 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 ## Getting started
 
 1. [Clone demisto-sdk repository](#1-Clone-demisto-sdk-repository)
-2. [Install demisto-sdk as editable versions](#2-Install-demisto-sdk-as-editable-version)
+2. [Install demisto sdk dev environment](#2-Install-demisto-sdk-dev-environment)
 3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
 4. [DemistoContentPython Libary](#4-DemistoContentPython-Libary)
 5. [Develop new command](#5-Develop-new-command)
@@ -26,34 +26,28 @@ git clone https://github.com/demisto/demisto-sdk.git
 
 ---
 
-### 2. Install demisto sdk as editable version
-1. If you are using virtualenv for this process you can skip this step, uninstall current installed version of
-   `demisto-sdk`:
+### 2. Install demisto sdk dev environment
 
-   ```shell
-   pip3 uninstall demisto-sdk
-   ```
+We will now setup a quick virtualenv in which we will install the `demisto-sdk` version you are currently working on.
+This will be used as your testing environment, you do not need to update it again or re-run in any way.
 
-2. Inside root directory of `demisto-sdk` repository - Install PyPi package as [editable package](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
+1. Make sure you have python3 installed.
 
-   ```shell
-   pip3 install -e .
-   ```
+2. Add executable permissions to our setup script by running `chmod a+x ~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
 
-3. Validate that `demisto-sdk` installed path is correct by
+3. Run the script: `~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
+   * You might need to setup your SHELL env variable by running `export SHELL=/bin/zsh` or `export SHELL=/bin/bash`.
 
-   ```shell
-   pip3 show demisto-sdk  | grep Location
-   ```
+4. Restart your terminal.
 
+You have now setup the your `demisto-sdk-dev` env!
 
-   should be `demisto-sdk` repository in your local enviorment.
+To activate it simply run: `workon demisto-sdk-dev`
+   * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
+     If not, while your current working directory is the `demisto-sdk` root repo by runnning `cd ~/dev/demisto/demisto-sdk` and then run `pip3 install -e .`.
 
-4. Install dev-requirements -
-
-   ```shell
-   pip3 install -r <repo>/requirements-dev.txt
-   ```
+To deactivate the virtual environment and return simply run: `deactivate`.
+   * Note that your local `demisto-sdk` version should remain unchanged.
 
 ---
 
@@ -117,7 +111,7 @@ For more information read the following [guide](demisto_sdk/commands/common/cont
 
 ### 6. Running unit-tests using tox
 
-[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, We use it inorder to check unit-tests on python versions 3.7 and 3.8.
+[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, we use it in order to check unit-tests on Python versions 3.7 and 3.8.
 
 > If you have one interpreter in your local environment it will skip the missing interpreter and not failed - the 2 versions test will be performed in the CircleCI build.
 

@@ -379,7 +379,7 @@ def test_generate_commands_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -436,7 +436,7 @@ def test_generate_commands_with_permissions_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -503,3 +503,8 @@ class TestGenerateIntegrationDoc:
         generate_integration_doc(TEST_INTEGRATION_PATH)
         assert open(fake_readme).read() == open(
             os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+
+        # Test that the predefined values and default values are added to the README.
+        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
+               in open(fake_readme).read()
+        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()

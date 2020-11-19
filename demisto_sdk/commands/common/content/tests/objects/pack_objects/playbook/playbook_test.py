@@ -1,7 +1,7 @@
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import Playbook
 from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+    path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -10,7 +10,7 @@ PLAYBOOK = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / 'playboo
 
 
 def test_objects_factory():
-    obj = ContentObjectFactory.from_path(PLAYBOOK)
+    obj = path_to_pack_object(PLAYBOOK)
     assert isinstance(obj, Playbook)
 
 

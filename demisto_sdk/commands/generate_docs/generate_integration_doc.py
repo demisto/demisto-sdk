@@ -190,7 +190,7 @@ def generate_commands_section(
     errors = []  # type: list
     section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.'
     ]
     commands = filter(lambda cmd: not cmd.get('deprecated', False), yaml_data['script']['commands'])
@@ -245,11 +245,20 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
             '| --- | --- | --- |',
         ])
         for arg in arguments:
-            if not arg.get('description'):
+            description = arg.get('description')
+            if not description:
                 errors.append(
                     'Error! You are missing description in input {} of command {}'.format(arg['name'], cmd['name']))
+            if not description.endswith('.'):
+                description = f'{description}.'
+
+            argument_description = f'{description} Possible values are: {", ".join(arg.get("predefined"))}.'\
+                if arg.get('predefined') else description
+            if arg.get('defaultValue'):
+                argument_description = f'{argument_description} Default is {arg.get("defaultValue")}.'
+
             required_status = 'Required' if arg.get('required') else 'Optional'
-            section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(arg.get('description', ''),
+            section.append('| {} | {} | {} | '.format(arg['name'], string_escape_md(argument_description,
                                                                                     True, True), required_status))
         section.append('')
 

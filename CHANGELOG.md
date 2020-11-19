@@ -1,4 +1,60 @@
 # Changelog
+* Added validation for approved content pack usecases and tags.
+* Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+* Added *default value* and *predefined values* to argument description in **generate-docs** command.
+* Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
+
+
+# v1.2.9
+* Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
+* Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
+* Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.
+* Fixed an issue in the **format** command where format failed when trying to update invalid Docker image.
+* The **format** command will now preserve the **isArray** argument in integration's reputation commands and will show a warning if it set to **false**.
+* Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
+* Fixed an issue in the **validate** command where changing any entity ID was not validated.
+* Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
+* Fixed the **update-release-notes** command to ignore changes in the metadata file.
+* Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
+
+
+# v1.2.8
+* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
+* Fixed an issue in the **upload** command where it would try to upload content entities with unsupported versions.
+* Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
+* Added the **--staged** flag to **validate** command to run on staged files only.
+
+
+# 1.2.7
+* Changed input parameters in **find-dependencies** command.
+   - Use ***-i, --input*** instead of ***-p, --path***.
+   - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.
+* Fixed an issue in the **unify** command where it crashed on an integration without an image file.
+* Fixed an issue in the **format** command where unnecessary files were not skipped.
+* Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
+* Fixed an issue in the **validate** command where a warning about detailed description was given for unified or deprecated integrations.
+* Improved the error returned by the **validate** command when running on files using the old format.
+
+# 1.2.6
+* No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.
+* Fixed an issue in the **validate** command where the `--skip-pack-dependencies` would not skip id-set creation.
+* Fixed an issue in the **validate** command where validation would fail if supplied an integration with an empty `commands` key.
+* Fixed an issue in the **validate** command where validation would fail due to a required version bump for packs which are not versioned.
+* Will use env var `DEMISTO_VERIFY_SSL` to determine if to use a secure connection for commands interacting with the Server when `--insecure` is not passed. If working with a local Server without a trusted certificate, you can set env var `DEMISTO_VERIFY_SSL=no` to avoid using `--insecure` on each command.
+* Unifier now adds a link to the integration documentation to the integration detailed description.
+* Fixed an issue in the **secrets** command where ignored secrets were not skipped.
+
+# 1.2.5
+* Added support for special fields: *defaultclassifier*, *defaultmapperin*, *defaultmapperout* in **download** command.
+* Added -y option **format** command to assume "yes" as answer to all prompts and run non-interactively
+* Speed up improvements for `validate` of README files.
+* Updated the **format** command to adhere to the defined content schema and sub-schemas, aligning its behavior with the **validate** command.
+* Added support for canvasContextConnections files in **format** command.
+
+# 1.2.4
+* Updated detailed description for community integrations.
+
+# 1.2.3
 * Fixed an issue where running **validate** failed on playbook with task that adds tags to the evidence data.
 * Added the *displaypassword* field to the integration schema.
 * Added new code validations to `XSOAR-linter`.
@@ -115,6 +171,7 @@
 * Fixed an issue where **generate-docs** was inserting unnecessary escape characters.
 * Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
 * Fixed an issue where **validate** did not check for missing release notes in old format files.
+* Fixed an issue where **validate** command failed when no tests were given for a partner supported pack.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

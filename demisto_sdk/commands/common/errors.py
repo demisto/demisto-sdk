@@ -6,14 +6,15 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []  # type: list
-FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
+FOUND_FILES_AND_ERRORS: list = []
+FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
+                         'PB106']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
-    'non-certified-partner': ['CJ']
+    'partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -58,6 +59,8 @@ ERROR_CODE = {
     "invalid_deprecated_integration_display_name": "IN127",
     "invalid_deprecated_integration_description": "IN128",
     "removed_integration_parameters": "IN129",
+    "integration_not_runnable": "IN130",
+    "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -74,6 +77,7 @@ ERROR_CODE = {
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
     "docker_not_on_the_latest_tag": "DO106",
+    "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -108,6 +112,8 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
+    "playbook_cant_have_deletecontext_all": "PB105",
+    "using_instance_in_playbook": "PB106",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -146,6 +152,8 @@ ERROR_CODE = {
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
+    "pack_metadata_non_approved_usecases": "PA119",
+    "pack_metadata_non_approved_tags": "PA120",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -407,6 +415,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def missing_get_mapping_fields_command():
+        return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
+               'field is set to true.'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_integration_name():
         return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                "e.g: Kenna v2, Jira v2"
@@ -510,6 +524,12 @@ class Errors:
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
                f' Please create or update to an updated versioned image\n'
+
+    @staticmethod
+    @error_code_decorator
+    def non_existing_docker(docker_image):
+        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
+               f'DockerHub: https://hub.docker.com/u/demisto/.'
 
     @staticmethod
     @error_code_decorator
@@ -715,6 +735,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def using_instance_in_playbook():
+        return "Playbook should not use specific instance."
+
+    @staticmethod
+    @error_code_decorator
     def playbook_unreachable_condition(task_id, next_task_branch):
         return f'Playbook conditional task with id:{task_id} has task with unreachable ' \
                f'next task condition "{next_task_branch}". Please remove this task or add ' \
@@ -730,6 +755,11 @@ class Errors:
     @error_code_decorator
     def playbook_unconnected_tasks(orphan_tasks):
         return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_cant_have_deletecontext_all():
+        return 'Playbook can not have DeleteContext script with arg all set to yes.'
 
     @staticmethod
     @error_code_decorator
@@ -922,6 +952,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+
+    @staticmethod
+    @error_code_decorator
     def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
         return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
                f"Suggested change: {changed_value}"
@@ -997,9 +1037,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_package_structure(invalid_files):
-        return 'You should update the following files to the package format, for further details please visit ' \
-               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
-               'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+        return 'You should update the following file to the package format, for further details please visit ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
     @staticmethod
     @error_code_decorator
@@ -1116,6 +1155,12 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     def wrong_filename(file_type):

@@ -160,12 +160,13 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master', return_content=False):
+def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
         full_file_path (string):The full path of the file.
         tag (string): The branch name. default is 'master'
         return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print (bool): whether to suppress the warning message in case the file was not found.
     Returns:
         The file content in the required format.
 
@@ -179,9 +180,10 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
         res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
     except Exception as exc:
-        print_warning('Could not find the old entity file under "{}".\n'
-                      'please make sure that you did not break backward compatibility. '
-                      'Reason: {}'.format(github_path, exc))
+        if not suppress_print:
+            print_warning('Could not find the old entity file under "{}".\n'
+                          'please make sure that you did not break backward compatibility. '
+                          'Reason: {}'.format(github_path, exc))
         return {}
     if return_content:
         return res.content

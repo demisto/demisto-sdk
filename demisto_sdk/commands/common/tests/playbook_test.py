@@ -181,6 +181,10 @@ class TestPlaybookValidator:
         (NEXT_TASKS_VALID_EXIST_2, True),
     ]
 
+    def test_playbook_script_id(self, pack):
+        playbook = pack.create_playbook(yml={'script': "4e4a4f4ca-4444-12a3-123b-e12345678923"})
+        print("")
+
     @pytest.mark.parametrize("playbook_json, expected_result", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)

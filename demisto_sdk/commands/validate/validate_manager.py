@@ -451,7 +451,8 @@ class ValidateManager:
     def validate_playbook(self, structure_validator, pack_error_ignore_list):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
-        return playbook_validator.is_valid_playbook(validate_rn=False)
+        return playbook_validator.is_valid_playbook(validate_rn=False,
+                                                    skip_dependencies=self.skip_dependencies)
 
     def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -725,7 +726,7 @@ class ValidateManager:
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors).handle_error(
-                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                    error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
                     is_valid.add(True)
 
                 else:
@@ -865,7 +866,7 @@ class ValidateManager:
 
             # if the file is a code file - change path to the associated yml path to trigger release notes validation.
             if file_status.lower() != 'd' and \
-                find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
                     not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'

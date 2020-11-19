@@ -106,6 +106,7 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
+    "invalid_script_id": "PB105",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -717,6 +718,11 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_playbook():
         return 'The playbook description has to start with "Deprecated."'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_script_id(script_entry_to_check):
+        return f'The following script id is not valid {script_entry_to_check}'
 
     @staticmethod
     @error_code_decorator

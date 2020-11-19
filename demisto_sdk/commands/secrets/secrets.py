@@ -68,13 +68,14 @@ class SecretsValidator(object):
     def __init__(
             self,
             configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
-            input_path=''
+            input_path='', prev_ver=None
     ):
         self.input_paths = input_path.split(',') if input_path else None
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
+        self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -103,7 +104,8 @@ class SecretsValidator(object):
                                             ' remove the files asap and report it.\n'
 
                 secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://github.com/demisto/internal-content/tree/master/documentation/secrets'
+                                        'https://github.com/demisto/demisto-sdk/tree/master/demisto_sdk/' \
+                                        'commands/secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -122,8 +124,15 @@ class SecretsValidator(object):
         :param is_circle: boolean to check if being ran from circle
         :return: list: list of text files
         """
-        changed_files_string = run_command("git diff --name-status origin/master...{}".format(branch_name)) \
-            if is_circle else run_command("git diff --name-status --no-merges HEAD")
+        if is_circle:
+            if not self.prev_ver.startswith('origin'):
+                self.prev_ver = 'origin/' + self.prev_ver
+            print(f"Running secrets validation against {self.prev_ver}")
+
+            changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
+        else:
+            print("Running secrets validation on all changes")
+            changed_files_string = run_command("git diff --name-status --no-merges HEAD")
         return list(self.get_diff_text_files(changed_files_string))
 
     def get_diff_text_files(self, files_string):
@@ -179,9 +188,10 @@ class SecretsValidator(object):
             # Init vars for current loop
             file_name = os.path.basename(file_path)
             _, file_extension = os.path.splitext(file_path)
-            skip_secrets = {'skip_once': False, 'skip_multi': False}
             # get file contents
             file_contents = self.get_file_contents(file_path, file_extension)
+            # if detected disable-secrets comments, removes the line/s
+            file_contents = self.remove_secrets_disabled_line(file_contents)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
                 file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
@@ -193,11 +203,6 @@ class SecretsValidator(object):
                 secrets_white_list = secrets_white_list.union(temp_white_list)
             # Search by lines after strings with high entropy / IoCs regex as possibly suspicious
             for line_num, line in enumerate(file_contents.split('\n')):
-                # if detected disable-secrets comments, skip the line/s
-                skip_secrets = self.is_secrets_disabled(line, skip_secrets)
-                if skip_secrets['skip_once'] or skip_secrets['skip_multi']:
-                    skip_secrets['skip_once'] = False
-                    continue
                 # REGEX scanning for IOCs and false positive groups
                 regex_secrets, false_positives = self.regex_for_secrets(line)
                 for regex_secret in regex_secrets:
@@ -489,6 +494,25 @@ class SecretsValidator(object):
             else:
                 print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
                 return False
+
+    def remove_secrets_disabled_line(self, file_content: str) -> str:
+        """Removes lines that have "disable-secrets-detection" from file content
+
+        Arguments:
+            file_content (str): The content of the file to remove the "disable-secrets-detection" lines from
+
+        Returns:
+            str: The new file content with the "disable-secrets-detection" lines removed.
+        """
+        skip_secrets = {'skip_once': False, 'skip_multi': False}
+        new_file_content = ""
+        for line in file_content.split('\n'):
+            skip_secrets = self.is_secrets_disabled(line, skip_secrets)
+            if skip_secrets['skip_once'] or skip_secrets['skip_multi']:
+                skip_secrets['skip_once'] = False
+            else:
+                new_file_content += f'{line}\n'
+        return new_file_content
 
     def run(self):
         if self.find_secrets():

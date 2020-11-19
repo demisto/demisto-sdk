@@ -12,11 +12,11 @@ import click
 from dateutil import parser
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CREATED,
-    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
-    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
-    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
-    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
+    PACK_METADATA_CREATED, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
+    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
+    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
+    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
@@ -30,6 +30,7 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import \
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -166,8 +167,12 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack metadata validation
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
-        if self._is_pack_file_exists(self.pack_meta_file) and all([self._is_pack_meta_file_structure_valid(),
-                                                                   self._is_valid_contributor_pack_support_details()]):
+        if self._is_pack_file_exists(self.pack_meta_file) and all([
+            self._is_pack_meta_file_structure_valid(),
+            self._is_valid_contributor_pack_support_details(),
+            self._is_approved_usecases(),
+            self._is_approved_tags()
+        ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
 
@@ -247,6 +252,13 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
+            # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
+            certification = metadata.get(PACK_METADATA_CERTIFICATION)
+            if certification and certification not in ALLOWED_CERTIFICATION_VALUES:
+                if self._add_error(Errors.pack_metadata_certification_is_invalid(self.pack_meta_file),
+                                   self.pack_meta_file):
+                    return False
+
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
@@ -266,6 +278,46 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
+        return True
+
+    def _is_approved_usecases(self) -> bool:
+        """Checks whether the usecases in the pack metadata are approved
+
+        Return:
+             bool: True if the usecases are approved, otherwise False
+        """
+        non_approved_usecases = set()
+        try:
+            approved_usecases = tools.get_remote_file(
+                'Tests/Marketplace/approved_usecases.json').get('approved_list') or []
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
+            if non_approved_usecases:
+                if self._add_error(
+                        Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
+                    return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
+                return False
+        return True
+
+    def _is_approved_tags(self) -> bool:
+        """Checks whether the tags in the pack metadata are approved
+
+        Return:
+             bool: True if the tags are approved, otherwise False
+        """
+        non_approved_tags = set()
+        try:
+            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json').get('approved_list') or []
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
+            if non_approved_tags:
+                if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                    return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                return False
         return True
 
     # pack README.md validation

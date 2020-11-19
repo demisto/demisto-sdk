@@ -6,16 +6,22 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
-                                                   SCRIPTS_DIR, FileType)
+                                                   LAYOUTS_DIR, PACKS_DIR,
+                                                   PACKS_PACK_IGNORE_FILE_NAME,
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_files_by_type,
+                                               filter_files_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
-                                               get_depth, get_dict_from_file,
+                                               get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_file, get_files_in_dir,
+                                               get_ignore_pack_skipped_tests,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
                                                get_release_notes_file_path,
@@ -38,6 +44,9 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH)
+from TestSuite.pack import Pack
+from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 
 
 class TestGenericFunctions:
@@ -117,9 +126,43 @@ class TestGenericFunctions:
         assert added == set()
         assert removed == [VALID_MD]
 
-    @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
-    def test_get_depth(self, data, output):
-        assert get_depth(data) == output
+    test_content_path_on_pack = [
+        ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
+    ]
+
+    @pytest.mark.parametrize('pack, file_paths_list', test_content_path_on_pack)
+    def test_filter_files_on_pack(self, pack, file_paths_list):
+        """
+        Given
+        - Set of files and pack name.
+        When
+        - Want to filter the list by specific pack.
+        Then:
+        - Ensure the set of file paths contains only files located in the given pack.
+        """
+        files_paths = filter_files_on_pack(pack, file_paths_list)
+        assert files_paths == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+
+    for_test_filter_files_by_type = [
+        ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
+        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [], {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
+        (set(), [FileType.PLAYBOOK], set())
+    ]
+
+    @pytest.mark.parametrize('files, types, output', for_test_filter_files_by_type)
+    def test_filter_files_by_type(self, files, types, output, mocker):
+        """
+        Given
+        - Sets of content files and file types to skip.
+        When
+        - Want to filter the lists by file typs.
+        Then:
+        - Ensure the list returned Whiteout the files to skip.
+        """
+        mocker.patch('demisto_sdk.commands.common.tools.is_file_path_in_pack', return_value='True')
+        files = filter_files_by_type(files, types)
+
+        assert files == output
 
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):
@@ -420,3 +463,137 @@ def test_origin_content(mocker, git_value, response):
     mocker.patch('demisto_sdk.commands.common.tools.run_command', return_value=git_value)
     test_remote = is_origin_content_repo()
     assert response == test_remote
+
+
+def test_get_ignore_pack_tests__no_pack():
+    """
+    Given
+    - Pack that doesn't exist
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    nonexistent_pack = 'NonexistentFakeTestPack'
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
+    """
+    Given
+    - Pack doesn't have .pack-ignore file
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    fake_pack_name = 'FakeTestPack'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    repo_path = Path(repo.path)
+    pack = Pack(repo_path / PACKS_DIR, fake_pack_name, repo)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # remove .pack-ignore if exists
+    if os.path.exists(pack_ignore_path):
+        os.remove(pack_ignore_path)
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are no skipped tests in .pack-ignore
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns an empty set
+    """
+    fake_pack_name = 'FakeTestPack'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    repo_path = Path(repo.path)
+    pack = Pack(repo_path / PACKS_DIR, fake_pack_name, repo)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    open(pack_ignore_path, 'a').close()
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0
+
+
+def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are skipped tests in .pack-ignore
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns a list with the skipped tests
+    """
+    fake_pack_name = 'FakeTestPack'
+    fake_test_name = 'FakeTestPlaybook'
+    expected_id = 'sample playbook'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    packs_path = Path(repo.path) / PACKS_DIR
+    pack = Pack(packs_path, fake_pack_name, repo)
+    test_playbook_path = packs_path / fake_pack_name / TEST_PLAYBOOKS_DIR
+    test_playbook = Playbook(test_playbook_path, fake_test_name, repo, is_test_playbook=True)
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    with open(pack_ignore_path, 'a') as pack_ignore_f:
+        pack_ignore_f.write("[file:TestIntegration.yml]\nignore=IN126\n\n"
+                            f"[file:{test_playbook.name}]\nignore=auto-test")
+
+    # prepare mocks
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
+    mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 1
+    assert expected_id in ignore_test_set
+
+
+def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
+    """
+    Given
+    - Pack have .pack-ignore file
+    - There are skipped tests in .pack-ignore
+    - The tests are missing from the content pack
+    When
+    - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
+    Then:
+    - returns a list with the skipped tests
+    """
+    fake_pack_name = 'FakeTestPack'
+    fake_test_name = 'FakeTestPlaybook.yml'
+
+    # prepare repo
+    repo = Repo(tmpdir)
+    packs_path = Path(repo.path) / PACKS_DIR
+    pack = Pack(packs_path, fake_pack_name, repo)
+    test_playbook_path = packs_path / fake_pack_name / TEST_PLAYBOOKS_DIR
+    pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
+
+    # prepare .pack-ignore
+    with open(pack_ignore_path, 'a') as pack_ignore_f:
+        pack_ignore_f.write("[file:TestIntegration.yml]\nignore=IN126\n\n"
+                            f"[file:{fake_test_name}]\nignore=auto-test")
+
+    # prepare mocks
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
+    mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    assert len(ignore_test_set) == 0

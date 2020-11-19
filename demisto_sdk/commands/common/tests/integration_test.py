@@ -24,6 +24,8 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
+        structure.prev_ver = 'master'
+        structure.branch_name = ''
         return structure
 
 
@@ -54,6 +56,31 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
+
+    IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
+        ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, False),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}, {"name": "test2"}]}, True),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "old_param"}, {"name": "test2"}]}, True),
+    ]
+
+    @pytest.mark.parametrize("current_file, old_file, answer", IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS)
+    def test_is_removed_integration_parameters(self, current_file, old_file, answer):
+        """
+        Given
+        - integration configuration with different parameters
+
+        When
+        - running the validation is_removed_integration_parameters()
+
+        Then
+        - upon removal of parameters: it should set is_valid to False and return True
+        - upon non removal or addition of parameters: it should set is_valid to True and return False
+        """
+        structure = mock_structure("", current_file, old_file)
+        validator = IntegrationValidator(structure)
+        assert validator.is_removed_integration_parameters() is answer
+        assert validator.is_valid is not answer
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -132,7 +159,7 @@ class TestIntegrationValidator:
     def test_with_duplicate_params(self, print_error):
         """
         Given
-        - integration configuratiton contains duplicate parameter (called test)
+        - integration configuration contains duplicate parameter (called test)
 
         When
         - running the validation is_there_duplicate_params()
@@ -651,3 +678,51 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_pwsh() == res
+
+    def test_empty_commands(self):
+        """
+        Given: an integration with no commands
+
+        When: running validate on integration with no command.
+
+        Then: Validate it's valid.
+        """
+        current = {"script": {"commands": None}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_default_arguments() is True
+
+    @pytest.mark.parametrize('param', [
+        {'commands': ['something']},
+        {'isFetch': True},
+        {'longRunning': True},
+        {'feed': True}
+    ])
+    def test_is_there_a_runnable(self, param):
+        """
+        Given: one of any runnable integration
+
+        When: running validate on integration with at least one of commands, fetch, feed or long-running
+
+        Then: Validate it's valid.
+        """
+        current = {"script": param}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_there_a_runnable() is True
+
+    def test_is_there_a_runnable_negative(self):
+        """
+        Given: an integration with no runnable param
+
+        When: running validate on integration with no one of commands, fetch, feed or long-running
+
+        Then: Validate it's invalid.
+        """
+        current = {"script": {}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_there_a_runnable() is False

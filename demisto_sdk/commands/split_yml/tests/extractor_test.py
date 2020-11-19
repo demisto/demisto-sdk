@@ -121,6 +121,17 @@ def test_extract_to_package_format_py(pack, mocker, tmp_path):
         'demisto_sdk.commands.split_yml.extractor.get_pipenv_dir',
         return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
     )
+    mocker.patch(
+        'demisto_sdk.commands.split_yml.extractor.get_pip_requirements',
+        return_value="""certifi==2017.11.5
+chardet==3.0.4
+idna==2.6
+olefile==0.44
+PyYAML==3.12
+requests==2.18.4
+urllib3==1.22
+"""
+    )
     integration = pack.create_integration('Sample')
     integration.create_default_integration()
     out = tmp_path / 'TestIntegration'

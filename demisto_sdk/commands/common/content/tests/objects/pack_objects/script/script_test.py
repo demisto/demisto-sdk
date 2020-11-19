@@ -2,12 +2,12 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content.objects.pack_objects import Script
 from demisto_sdk.commands.common.content.objects_factory import \
-    ContentObjectFactory
+    path_to_pack_object
 
 
 class TestNotUnifiedScript:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir["FindSimilarIncidentsByText.yml"])
+        obj = path_to_pack_object(datadir["FindSimilarIncidentsByText.yml"])
         assert isinstance(obj, Script)
 
     def test_prefix(self, datadir):
@@ -28,7 +28,7 @@ class TestNotUnifiedScript:
 
 class TestUnifiedScript:
     def test_objects_factory(self, datadir):
-        obj = ContentObjectFactory.from_path(datadir["script-FindSimilarIncidentsByText.yml"])
+        obj = path_to_pack_object(datadir["script-FindSimilarIncidentsByText.yml"])
         assert isinstance(obj, Script)
 
     def test_prefix(self, datadir):

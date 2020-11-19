@@ -47,7 +47,9 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
+                self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
                 self.is_valid_deprecated_playbook()
             ]
@@ -60,7 +62,9 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
+                self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured()
             ]
             answers = all(modified_playbook_checks)
@@ -271,6 +275,40 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
+
+    def is_delete_context_all_in_playbook(self) -> bool:
+        """
+        Check if delete context all=yes exist in playbook.
+        Returns:
+            True if delete context exists else False.
+        """
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            curr_task = task.get('task', {})
+            scriptargs = task.get('scriptarguments', {})
+            if curr_task and scriptargs and curr_task.get('scriptName', '') == 'DeleteContext' \
+                    and scriptargs.get('all', {}).get('simple', '') == 'yes':
+                error_message, error_code = Errors.playbook_cant_have_deletecontext_all()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+        return True
+
+    def is_using_instance(self) -> bool:
+        """
+        Check if there is an existing task that uses specific instance.
+        Returns:
+            True if using specific instance exists else False.
+        """
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            scriptargs = task.get('scriptarguments', {})
+            if scriptargs and scriptargs.get('using', {}):
+                error_message, error_code = Errors.using_instance_in_playbook()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+        return True
 
     def is_script_id_valid(self, skip_dependencies):
         """Checks whether a script id is valid (i.e id exists in set_id)

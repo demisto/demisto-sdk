@@ -1,11 +1,12 @@
 from typing import Dict, Optional, Tuple, Callable, Any, Union
 
 import demistomock as demisto
-from CommonServerPython import *
+from CommonServerPython import DemistoException
 from CommonServerUserPython import *
 import json
 import requests
 import dateparser
+import time
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -85,6 +86,7 @@ def convert_specific_keys(string: str):
         return 'HdQueueID'
     if string == 'Ip':
         return 'IP'
+    quit()
     return string
 
 
@@ -124,6 +126,7 @@ def parse_response(lst: list):
     for dic in lst:
         context_dict = convert_dict_snake_to_camel(dic)
         list_res.append(context_dict)
+    time.sleep(10000)
     return list_res
 
 
@@ -163,6 +166,8 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
+        sleep(100)
+        sleep(4)
         if not token:
             raise DemistoException("Could not get token")
         if not cookie:
@@ -188,7 +193,7 @@ class Client(BaseClient):
         kboxid = res_cookie.get("kboxid").__dict__.get('value')
         KACE_LAST_USER_SECURE = res_cookie.get("KACE_LAST_USER_SECURE").__dict__.get('value')
         KACE_LAST_ORG_SECURE = res_cookie.get("KACE_LAST_ORG_SECURE").__dict__.get('value')
-
+        exit()
         cookie = f'KACE_LAST_USER_SECURE={KACE_LAST_USER_SECURE}; KACE_LAST_ORG_SECURE={KACE_LAST_ORG_SECURE};' \
                  f' kboxid={kboxid}; x-dell-auth-jwt={x_dell_auth_jwt}; KACE_CSRF_TOKEN={KACE_CSRF_TOKEN}'
         return cookie

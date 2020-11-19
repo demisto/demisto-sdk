@@ -1,11 +1,15 @@
+import json
 import os
 
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc)
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -375,7 +379,7 @@ def test_generate_commands_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -432,7 +436,7 @@ def test_generate_commands_with_permissions_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -441,6 +445,22 @@ def test_generate_commands_with_permissions_section():
         '#### Human Readable Output', '\n', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_script_doc(tmp_path, mocker):
+    d = tmp_path / "script_doc_out"
+    d.mkdir()
+    in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
+    id_set_file = os.path.join(FILES_PATH, 'docs_test', 'id_set.json')
+    with open(id_set_file, 'r') as f:
+        id_set = json.load(f)
+    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
+    generate_script_doc(in_script, '', str(d), verbose=True)
+    patched.assert_called()
+    readme = d / "README.md"
+    with open(readme) as f:
+        text = f.read()
+        assert 'Sample usage of this script can be found in the following playbooks and scripts' in text
 
 
 class TestAppendOrReplaceCommandInDocs:
@@ -483,3 +503,8 @@ class TestGenerateIntegrationDoc:
         generate_integration_doc(TEST_INTEGRATION_PATH)
         assert open(fake_readme).read() == open(
             os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+
+        # Test that the predefined values and default values are added to the README.
+        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
+               in open(fake_readme).read()
+        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()

@@ -55,30 +55,6 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         return super(IncidentTypeValidator, self)._is_valid_version()
 
-    def is_current_valid_from_version(self):
-        # type: () -> bool
-        """Check if the current file fromversion is valid.
-        Returns:
-            bool. Whether the current fromversion is valid or not.
-        """
-        is_valid = True
-
-        # if not a new file, will be checked here
-        # if has an old_file, will be checked in BC checks
-        if not self.old_file:
-            try:
-                from_version = self.current_file.get("fromVersion", "0.0.0")
-                if LooseVersion(from_version) < LooseVersion("5.0.0"):
-                    error_message, error_code = Errors.incident_field_or_type_from_version_5()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
-                        is_valid = False
-            except (AttributeError, ValueError):
-                error_message, error_code = Errors.invalid_incident_field_or_type_from_version()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-
-        return is_valid
-
     def is_id_equals_name(self):
         # type: () -> bool
         """Check whether the incident Type ID is equal to its name.

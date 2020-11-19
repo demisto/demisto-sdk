@@ -6,14 +6,15 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
 
-FOUND_FILES_AND_ERRORS = []  # type: list
-FOUND_FILES_AND_IGNORED_ERRORS = []  # type: list
+FOUND_FILES_AND_ERRORS: list = []
+FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'IF107', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
+                         'PB106']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
-    'non-certified-partner': ['CJ']
+    'partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -27,6 +28,7 @@ ERROR_CODE = {
     "file_name_include_spaces_error": "BA103",
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
+    "no_minimal_fromversion_in_file": "BA106",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -56,6 +58,9 @@ ERROR_CODE = {
     "parameter_missing_from_yml_not_community_contributor": "IN126",
     "invalid_deprecated_integration_display_name": "IN127",
     "invalid_deprecated_integration_description": "IN128",
+    "removed_integration_parameters": "IN129",
+    "integration_not_runnable": "IN130",
+    "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -72,6 +77,7 @@ ERROR_CODE = {
     "no_docker_tag": "DO104",
     "docker_not_formatted_correctly": "DO105",
     "docker_not_on_the_latest_tag": "DO106",
+    "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
     "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
@@ -106,7 +112,9 @@ ERROR_CODE = {
     "playbook_unhandled_condition": "PB102",
     "playbook_unconnected_tasks": "PB103",
     "invalid_deprecated_playbook": "PB104",
-    "invalid_script_id": "PB105",
+    "playbook_cant_have_deletecontext_all": "PB105",
+    "using_instance_in_playbook": "PB106",
+    "invalid_script_id": "PB107",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -144,6 +152,9 @@ ERROR_CODE = {
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
+    "pack_metadata_certification_is_invalid": "PA118",
+    "pack_metadata_non_approved_usecases": "PA119",
+    "pack_metadata_non_approved_tags": "PA120",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -237,6 +248,16 @@ class Errors:
         return "id_set.json file is invalid - delete it and re-run `validate`.\n" \
                "From content repository root run the following: `rm -rf Tests/id_set.json`\n" \
                "Then re-run the `validate` command."
+
+    @staticmethod
+    @error_code_decorator
+    def no_minimal_fromversion_in_file(fromversion, oldest_supported_version):
+        if fromversion == 'fromversion':
+            return f"{fromversion} field is invalid.\nAdd `{fromversion}: " \
+                   f"{oldest_supported_version}` to the file."
+        else:
+            return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
+                   f'to the file.'
 
     @staticmethod
     @error_code_decorator
@@ -343,6 +364,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def removed_integration_parameters(field):
+        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
     def not_used_display_name(field_name):
         return "The display details for {} will not be used " \
                "due to the type of the parameter".format(field_name)
@@ -387,6 +413,12 @@ class Errors:
         return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
                f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_get_mapping_fields_command():
+        return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
+               'field is set to true.'
 
     @staticmethod
     @error_code_decorator
@@ -493,6 +525,12 @@ class Errors:
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
                f' Please create or update to an updated versioned image\n'
+
+    @staticmethod
+    @error_code_decorator
+    def non_existing_docker(docker_image):
+        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
+               f'DockerHub: https://hub.docker.com/u/demisto/.'
 
     @staticmethod
     @error_code_decorator
@@ -698,6 +736,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def using_instance_in_playbook():
+        return "Playbook should not use specific instance."
+
+    @staticmethod
+    @error_code_decorator
     def playbook_unreachable_condition(task_id, next_task_branch):
         return f'Playbook conditional task with id:{task_id} has task with unreachable ' \
                f'next task condition "{next_task_branch}". Please remove this task or add ' \
@@ -713,6 +756,11 @@ class Errors:
     @error_code_decorator
     def playbook_unconnected_tasks(orphan_tasks):
         return f'The following tasks ids have no previous tasks: {orphan_tasks}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_cant_have_deletecontext_all():
+        return 'Playbook can not have DeleteContext script with arg all set to yes.'
 
     @staticmethod
     @error_code_decorator
@@ -795,11 +843,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incident_field_or_type_from_version_5():
-        return 'fromVersion must be at least 5.0.0'
-
-    @staticmethod
-    @error_code_decorator
     def invalid_incident_field_or_type_from_version():
         return '"fromVersion" has an invalid value.'
 
@@ -865,6 +908,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_certification_is_invalid(pack_meta_file):
+        return f'Pack metadata {pack_meta_file} - certification field should be \'certified\' or \'verified\'.'
+
+    @staticmethod
+    @error_code_decorator
     def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
         return f'{pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
 
@@ -907,6 +955,16 @@ class Errors:
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
 
     @staticmethod
     @error_code_decorator
@@ -985,9 +1043,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_package_structure(invalid_files):
-        return 'You should update the following files to the package format, for further details please visit ' \
-               'https://xsoar.pan.dev/docs/integrations/package-dir. ' \
-               'The files are:\n{}'.format('\n'.join(list(invalid_files)))
+        return 'You should update the following file to the package format, for further details please visit ' \
+               'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
     @staticmethod
     @error_code_decorator
@@ -1104,6 +1161,12 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     def wrong_filename(file_type):

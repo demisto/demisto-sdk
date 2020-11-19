@@ -12,7 +12,7 @@ description: Deprecated. This playbook is triggered by fetching a Palo Alto Netw
   to content from the Demisto server version 5.0.0.\nFor Demisto versions under 5.0.0,
   please follow the 'Palo Alto Networks Cortex XDR' documentation to upload the new
   fields manually.
-fromversion: 4.5.0
+fromversion: 5.0.0
 hidden: true
 starttaskid: "0"
 tasks:

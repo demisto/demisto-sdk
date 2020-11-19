@@ -21,9 +21,16 @@ class ScriptYMLFormat(BaseUpdateYML):
             output (str): the desired file name to save the updated version of the YML to.
     """
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '', no_validate: bool = False,
-                 update_docker: bool = False, verbose: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 update_docker: bool = False,
+                 verbose: bool = False,
+                 **kwargs):
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -44,12 +51,19 @@ class ScriptYMLFormat(BaseUpdateYML):
             print_color('Skipping docker image update as default docker image is being used.', LOG_COLORS.YELLOW)
             return
         image_name = dockerimage.split(':')[0]
-        latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
+        try:
+            latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
+            if not latest_tag:
+                click.secho('Failed getting docker image latest tag', fg='yellow')
+                return
+        except Exception as e:
+            click.secho(f'Failed getting docker image latest tag. {e} - Invalid docker image', fg='yellow')
+            return
         full_name = f'{image_name}:{latest_tag}'
         if full_name != dockerimage:
             print(f'Updating docker image to: {full_name}')
             script_obj['dockerimage'] = full_name
-            if (not from_version) or server_version_compare('5.0.0', from_version):
+            if (not from_version) or server_version_compare('5.0.0', from_version) > 0:
                 # if this is a script that supports 4.5 and earlier. Make sure dockerimage45 is set
                 if not script_obj.get('dockerimage45'):
                     print(f'Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support')

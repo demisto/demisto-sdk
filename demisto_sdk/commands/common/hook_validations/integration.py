@@ -50,6 +50,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         answers = [
             self.is_changed_context_path(),
+            self.is_removed_integration_parameters(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
             self.is_there_duplicate_args(),
@@ -85,6 +86,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_valid_fetch(),
+            self.is_there_a_runnable(),
             self.is_valid_display_name(),
             self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
@@ -92,7 +94,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description()
+            self.is_valid_deprecated_integration_description(),
+            self.is_mapping_fields_command_exist()
         ]
 
         if not skip_test_conf:
@@ -233,6 +236,8 @@ class IntegrationValidator(ContentEntityValidator):
             bool. Whether a reputation command hold a valid argument
         """
         commands = self.current_file.get('script', {}).get('commands', [])
+        if commands is None:
+            commands = []
         flag = True
         for command in commands:
             command_name = command.get('name')
@@ -346,16 +351,16 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_beta(self):
         # type: () -> bool
-        """Validate that that beta integration has correct beta attributes"""
-
+        """Validate that beta integration has correct beta attributes"""
+        valid_status = True
         if not all([self._is_display_contains_beta(), self._has_beta_param()]):
             self.is_valid = False
-            return False
-        if self.old_file:
+            valid_status = False
+        if not self.old_file:
             if not all([self._id_has_no_beta_substring(), self._name_has_no_beta_substring()]):
                 self.is_valid = False
-                return False
-        return True
+                valid_status = False
+        return valid_status
 
     def _id_has_no_beta_substring(self):
         # type: () -> bool
@@ -546,6 +551,23 @@ class IntegrationValidator(ContentEntityValidator):
                         return True
 
         return False
+
+    def is_removed_integration_parameters(self):
+        # type: () -> bool
+        """Check if integration parameters were removed."""
+        is_removed_parameter = False
+        current_configuration = self.current_file.get('configuration', [])
+        old_configuration = self.old_file.get('configuration', [])
+        current_param_names = {param.get('name') for param in current_configuration}
+        old_param_names = {param.get('name') for param in old_configuration}
+        if not old_param_names.issubset(current_param_names):
+            removed_parameters = old_param_names - current_param_names
+            error_message, error_code = Errors.removed_integration_parameters(repr(removed_parameters))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                is_removed_parameter = True
+
+        return is_removed_parameter
 
     @staticmethod
     def _get_field_to_required_dict(integration_json):
@@ -823,4 +845,42 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             if not description_validator.is_valid():
                 return False
+        return True
+
+    def is_there_a_runnable(self) -> bool:
+        """Verifies there's at least one runnable command.
+            at least one of:
+            command in commands section
+            isFetch
+            feed
+            long-running
+
+        Returns:
+            if there's at least one runnable in the yaml
+        """
+        script = self.current_file.get('script', {})
+
+        if not any([
+            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"), script.get('longRunning')]
+        ):
+            self.is_valid = False
+            error, code = Errors.integration_not_runnable()
+            self.handle_error(error, code, file_path=self.file_path)
+            return False
+        return True
+
+    def is_mapping_fields_command_exist(self) -> bool:
+        """
+        Check if get-mapping-fields command exists in the YML if  the ismappble field is set to true
+        Returns:
+            True if get-mapping-fields commands exist in the yml, else False.
+        """
+        script = self.current_file.get('script', {})
+        if script.get('ismappable'):
+            command_names = {command['name'] for command in script.get('commands', [])}
+            if 'get-mapping-fields' not in command_names:
+                error, code = Errors.missing_get_mapping_fields_command()
+                if self.handle_error(error, code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
         return True

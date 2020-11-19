@@ -1,6 +1,6 @@
 category: Messaging
 commonfields:
-  id: Telegram_Beta
+  id: Telegram
   version: -1
 configuration:
 - display: API Token
@@ -9,7 +9,7 @@ configuration:
   type: 4
 description: Telegram integration
 display: Telegram (Beta)
-name: Telegram_Beta
+name: Telegram
 script:
   commands:
   - arguments:
@@ -46,5 +46,6 @@ script:
   type: python
   subtype: python3
 beta: true
+fromversion: 5.0.0
 tests:
   - No tests

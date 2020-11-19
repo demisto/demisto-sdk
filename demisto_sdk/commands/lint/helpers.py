@@ -39,13 +39,11 @@ EXIT_CODES = {
     "image": 0b100000000,
 }
 
-
 # Execution exit codes
 SUCCESS = 0b0
 FAIL = 0b1
 RERUN = 0b10
 WARNING = 0b100
-
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
@@ -141,7 +139,10 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
         for module in modules:
-            modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            try:
+                modules_content[module] = (content_repo.working_dir / module).read_bytes()
+            except FileNotFoundError:
+                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
@@ -406,3 +407,37 @@ def pylint_plugin(dest: Path):
         for file in plugin_dirs.iterdir():
             if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
                 (dest / f'{file.name}').unlink()
+
+
+def split_warnings_errors(output: str):
+    """
+        Function which splits the given string into warning messages and error using W or E in the beginning of string
+        For error messages that do not start with E , they will be returned as other.
+        The output of a certain pack can both include:
+            - Fail msgs
+            - Fail msgs and warnings msgs
+            - Passed msgs
+            - Passed msgs and warnings msgs
+            - warning msgs
+        Args:
+            output(str): string which contains messages from linters.
+        return:
+            list of error messags, list of warnings messages, list of all undetected messages
+        """
+    output_lst = output.split('\n')
+    # Warnings and errors lists currently relevant for XSOAR Linter
+    warnings_list = []
+    error_list = []
+    # Others list is relevant for mypy and flake8.
+    other_msg_list = []
+    for msg in output_lst:
+        # 'W:' for python2 xsoar linter
+        # 'W[0-9]' for python3 xsoar linter
+        if (msg.startswith('W') and msg[1].isdigit()) or 'W:' in msg or 'W90' in msg:
+            warnings_list.append(msg)
+        elif (msg.startswith('E') and msg[1].isdigit()) or 'E:' in msg or 'E90' in msg:
+            error_list.append(msg)
+        else:
+            other_msg_list.append(msg)
+
+    return error_list, warnings_list, other_msg_list

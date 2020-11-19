@@ -1,4 +1,5 @@
-from typing import List, Tuple
+import json
+from typing import Tuple
 
 import click
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
@@ -27,9 +28,16 @@ class IntegrationYMLFormat(BaseUpdateYML):
         'proxy': 'Use system proxy settings'
     }
 
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
-                 no_validate: bool = False, verbose: bool = False, update_docker: bool = False):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 update_docker: bool = False,
+                 **kwargs):
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -54,32 +62,34 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
         for command in integration_commands:
             command_name = command.get('name', '')
-            current_command_default_argument_changed = False
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get('arguments', []):
-                    if argument.get('name', '') == command_name:
+                for argument in command.get('arguments', []):  # If there're arguments under the command
+                    name = argument.get('name')
+                    if name == command_name:
+                        is_array = argument.get('isArray', False)
+                        if not is_array:
+                            click.echo(
+                                f'isArray field in {name} command is set to False. Fix the command to support that function and set it to True.'
+                            )
                         argument.update({
                             'default': True,
-                            'isArray': True,
+                            'isArray': is_array,
                             'required': True
                         })
-                        current_command_default_argument_changed = True
                         break
-
-                if not current_command_default_argument_changed:
-                    argument_list = command.get('arguments', [])  # type: List
-                    argument_list.append(
-                        {
-                            'default': True,
-                            'description': '',
-                            'isArray': True,
-                            'name': command_name,
-                            'required': True,
-                            'secret': False
-                        }
-                    )
-
+                else:  # No arguments at all
+                    default_bang_args = {
+                        'default': True,
+                        'description': '',
+                        'isArray': True,
+                        'name': command_name,
+                        'required': True,
+                        'secret': False
+                    }
+                    click.echo(f'Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}')
+                    argument_list: list = command.get('arguments', [])
+                    argument_list.append(default_bang_args)
                     command['arguments'] = argument_list
 
     def set_fetch_params_in_config(self):

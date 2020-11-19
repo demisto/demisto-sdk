@@ -30,7 +30,7 @@ def test_build_xsoar_linter_py3_command(files):
     output = build_xsoar_linter_command(files, 3.8, "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -42,7 +42,7 @@ def test_build_xsoar_linter_py2_command(files):
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9001,E9002, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -103,7 +103,7 @@ def test_build_pylint_command(files):
     output = build_pylint_command(files)
     files = [str(file) for file in files]
     expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E -d duplicate-string-formatting-argument" \
+               "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output
 

@@ -60,7 +60,7 @@ class TestOpenAPICodeGen:
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
 
-        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
+        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         integration = self.init_integration()
         integration.generate_configuration()
@@ -87,7 +87,7 @@ class TestOpenAPICodeGen:
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
 
-        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.3.9324')
+        mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
         integration = self.init_integration()
 
         with open(os.path.join(self.test_files_path, 'swagger_yaml.yml'), 'rb') as yaml_file:
@@ -178,8 +178,27 @@ class TestOpenAPICodeGen:
            - Ensure the headers are generated correctly
         """
         integration = self.init_integration()
-        command = [c for c in integration.configuration['commands'] if c['name'] == 'upload-file'][0]
+        command = [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
 
         expected_headers = [{'Content-Type': 'multipart/form-data'}]
 
         assert expected_headers == command['headers']
+
+    def test_change_name_duplications(self):
+        """
+        Scenario: Generating an integration from a swagger file
+
+        Given
+           - A swagger file
+           - A generated integration configuration file
+           - Generated commands from the configuration file (added command with same summary but different path)
+        When
+           - Generating functions name.
+        Then
+           - Ensure that the names of given functions generated correctly.
+        """
+
+        integration = self.init_integration()
+        assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
+        assert [c for c in integration.configuration['commands'] if c['name'] ==
+                'post-pet-upload-image-by-uploadimage'][0]

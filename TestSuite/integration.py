@@ -5,7 +5,6 @@ from typing import Optional
 
 import yaml
 from demisto_sdk.commands.unify.unifier import Unifier
-from deprecated import deprecated
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -63,7 +62,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
-            yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+            yml = yaml.safe_load(yml_file)
         with open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb') as image_file:
             image = image_file.read()
         with open(suite_join_path(default_integration_dir, 'CHANGELOG.md')) as changelog_file:
@@ -83,56 +82,3 @@ class Integration:
             unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
             unifier.merge_script_package_to_yml()
             shutil.rmtree(self._tmpdir_integration_path)
-
-    # Deprecated methods
-
-    @deprecated(reason="use integration.code.write instead")
-    def write_code(self, code: str):
-        self.code.write(code)
-
-    @deprecated(reason="use integration.code.read instead")
-    def read_code(self):
-        return self.code.read()
-
-    @deprecated(reason="use integration.yml.write_dict instead")
-    def write_yml(self, yml: dict):
-        self.yml.write_dict(yml)
-
-    @deprecated(reason="use integration.image.write_bytes instead")
-    def write_image(self, image: bytes):
-        self.image.write_bytes(image)
-
-    @deprecated(reason="use integration.description.write instead")
-    def write_description(self, description: str):
-        self.description.write(description)
-
-    @deprecated(reason="use integration.readme.write instead")
-    def write_readme(self, readme: str):
-        self.readme.write(readme)
-
-    @deprecated(reason="use integration.readme.write instead")
-    def write_changelog(self, changelog: str):
-        self.readme.write(changelog)
-
-    @deprecated(reason="use integration.yml.update instead")
-    def update_yml(self, update_obj: dict):
-        yml_contents = yaml.load(self.yml.read())
-        yml_contents.update(update_obj)
-        self.yml.write(yml_contents)
-
-    @deprecated(reason="use integration.yml.update_description instead")
-    def update_description(self, description: str):
-        self.yml.update_description(description)
-
-    @property  # type: ignore
-    @deprecated(reason="use integration.code.rel_path instead")
-    def py_path(self):
-        return self.code.rel_path
-
-    @property  # type: ignore
-    @deprecated(reason="use integration.yml.rel_path instead")
-    def yml_path(self):
-        return self.yml.rel_path
-
-    def image_path(self):
-        return os.path.relpath(str(self._image_file), self._repo.path)

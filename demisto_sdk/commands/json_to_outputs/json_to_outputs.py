@@ -142,11 +142,12 @@ def determine_type(val):
     if isinstance(val, str):
         return 'String'
 
-    if isinstance(val, (int, float)):
-        return 'Number'
-
+    # bool is an sub class of int, so the we should first check isinstance of bool and only afterwards int
     if isinstance(val, bool):
         return 'Boolean'
+
+    if isinstance(val, (int, float)):
+        return 'Number'
 
     return 'Unknown'
 

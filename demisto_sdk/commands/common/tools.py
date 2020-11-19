@@ -1,4 +1,5 @@
 import argparse
+import ast
 import glob
 import io
 import json
@@ -6,6 +7,7 @@ import os
 import re
 import shlex
 import sys
+from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
@@ -14,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_client
 import git
 import requests
 import urllib3
@@ -23,11 +26,13 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+from packaging.version import parse
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -188,6 +193,23 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
     else:
         details = {}
     return details
+
+
+def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
+    """
+    filter_files_changes_on_pack.
+
+    :param file_paths_list: list of content files
+    :param pack: pack to filter
+
+    :return: files_paths_on_pack: set of file paths contains only files located in the given pack
+    """
+    files_paths_on_pack = set()
+    for file in file_paths_list:
+        if get_pack_name(file) == pack:
+            files_paths_on_pack.add(file)
+
+    return files_paths_on_pack
 
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
@@ -649,8 +671,82 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
     return packs
 
 
+def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
+    """get set of files and return the set whiteout the types to skip
+
+    Args:
+    - file_paths (set): set of content files.
+    - skip_file_types List[str]: list of file types to skip.
+
+    Returns:
+    files (set): list of files whiteout the types to skip
+    """
+    if file_paths is None:
+        file_paths = set()
+    files = set()
+    for path in file_paths:
+        # renamed files are in a tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+        file_type = find_type(path)
+        if file_type not in skip_file_types and is_file_path_in_pack(path):
+            files.add(path)
+    return files
+
+
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
+
+
+def get_pack_ignore_file_path(pack_name):
+    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+
+
+def get_ignore_pack_skipped_tests(pack_name: str) -> set:
+    """
+    Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
+
+    expected ignored tests structure in .pack-ignore:
+        [file:playbook-Not-To-Run-Directly.yml]
+        ignore=auto-test
+
+    Arguments:
+        pack name (str): name of the pack
+
+    Returns:
+        ignored_tests_set (set[str]): set of ignored test ids
+
+    """
+    ignored_tests_set = set()
+    if pack_name:
+        pack_ignore_path = get_pack_ignore_file_path(pack_name)
+
+        if os.path.isfile(pack_ignore_path):
+            try:
+                # read pack_ignore using ConfigParser
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
+
+                # go over every file in the config
+                for section in config.sections():
+                    if section.startswith("file:"):
+                        # given section is of type file
+                        file_name = section[5:]
+                        for key in config[section]:
+                            if key == 'ignore':
+                                # group ignore codes to a list
+                                ignore_list = str(config[section][key]).split(',')
+                                if PACK_IGNORE_TEST_FLAG in ignore_list:
+                                    # given file is to be ignored, try to get its id directly from yaml
+                                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
+                                    if os.path.isfile(path):
+                                        test_yaml = get_yaml(path)
+                                        if 'id' in test_yaml:
+                                            ignored_tests_set.add(test_yaml['id'])
+            except MissingSectionHeaderError:
+                pass
+
+    return ignored_tests_set
 
 
 def get_all_docker_images(script_obj) -> List[str]:
@@ -1067,19 +1163,6 @@ def retrieve_file_ending(file_path: str) -> str:
     return ''
 
 
-def get_depth(data: Any) -> int:
-    """
-    Returns the depth of a data object
-    :param data: The data
-    :return: The depth of the data object
-    """
-    if data and isinstance(data, dict):
-        return 1 + max(get_depth(data[key]) for key in data)
-    if data and isinstance(data, list):
-        return 1 + max(get_depth(element) for element in data)
-    return 0
-
-
 def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
@@ -1332,3 +1415,16 @@ def open_id_set_file(id_set_path):
         return id_set
     return id_set
 
+
+
+def get_demisto_version(demisto_client: demisto_client) -> str:
+    """
+    Args:
+        demisto_client: A configured demisto_client instance
+
+    Returns:
+        the server version of the Demisto instance.
+    """
+    resp = demisto_client.generic_request('/about', 'GET')
+    about_data = json.loads(resp[0].replace("'", '"'))
+    return parse(about_data.get('demistoVersion'))

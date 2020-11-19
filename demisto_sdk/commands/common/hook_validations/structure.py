@@ -17,7 +17,8 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
-                                               get_remote_file)
+                                               get_remote_file,
+                                               is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 from pykwalify.core import Core
@@ -45,7 +46,7 @@ class StructureValidator(BaseValidator):
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
-                 suppress_print: bool = False):
+                 suppress_print: bool = False, branch_name=''):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_valid = True
@@ -56,10 +57,13 @@ class StructureValidator(BaseValidator):
         if isinstance(self.scheme_name, str):
             self.scheme_name = FileType(self.scheme_name)
 
+        self.prev_ver = tag
+        self.branch_name = branch_name
         self.file_type = self.get_file_type()
         self.current_file = self.load_data_from_file()
         self.fromversion = fromversion
-        if is_new_file or predefined_scheme:
+        # If it is a newly added file or if it is a file outside the pack then we will not search for an old file
+        if is_new_file or not is_file_path_in_pack(self.file_path):
             self.old_file = {}
         else:
             self.old_file = get_remote_file(old_file_path if old_file_path else file_path, tag=tag)

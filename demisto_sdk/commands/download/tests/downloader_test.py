@@ -43,6 +43,7 @@ class Environment:
         self.CUSTOM_CONTENT_INTEGRATION_PATH = None
         self.CUSTOM_CONTENT_LAYOUT_PATH = None
         self.CUSTOM_CONTENT_PLAYBOOK_PATH = None
+        self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = None
         self.INTEGRATION_PACK_OBJECT = None
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
@@ -53,6 +54,7 @@ class Environment:
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = None
         self.LAYOUT_CUSTOM_CONTENT_OBJECT = None
         self.FAKE_CUSTOM_CONTENT_OBJECT = None
+        self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = None
         self.CUSTOM_CONTENT = None
         self.tmp_path = Path(tmp_path)
         self.setup()
@@ -77,6 +79,7 @@ class Environment:
         self.CUSTOM_CONTENT_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
         self.CUSTOM_CONTENT_LAYOUT_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/layout-details-TestLayout.json'
         self.CUSTOM_CONTENT_PLAYBOOK_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/playbook-DummyPlaybook.yml'
+        self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml'
 
         self.INTEGRATION_PACK_OBJECT = {'Test Integration': [
             {'name': 'Test Integration', 'id': 'Test Integration',
@@ -140,10 +143,15 @@ class Environment:
         self.FAKE_CUSTOM_CONTENT_OBJECT = {'id': 'DEMISTO', 'name': 'DEMISTO',
                                            'path': f'{self.CUSTOM_CONTENT_BASE_PATH}/DEMISTO.json', 'entity': 'Layouts',
                                            'type': 'layout', 'file_ending': 'json'}
+        self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'SumoLogic', 'name': 'SumoLogic',
+                                                     'path': self.CUSTOM_CONTENT_JS_INTEGRATION_PATH,
+                                                     'entity': 'Integrations', 'type': 'integration',
+                                                     'file_ending': 'yml', 'code_lang': 'javascript'}
 
         self.CUSTOM_CONTENT = [
             self.INTEGRATION_CUSTOM_CONTENT_OBJECT, self.SCRIPT_CUSTOM_CONTENT_OBJECT,
-            self.PLAYBOOK_CUSTOM_CONTENT_OBJECT, self.LAYOUT_CUSTOM_CONTENT_OBJECT
+            self.PLAYBOOK_CUSTOM_CONTENT_OBJECT, self.LAYOUT_CUSTOM_CONTENT_OBJECT,
+            self.JS_INTEGRATION_CUSTOM_CONTENT_OBJECT
         ]
 
 
@@ -248,7 +256,7 @@ class TestFlagHandlers:
             downloader.list_files = True
             answer = downloader.handle_list_files_flag()
             stdout, _ = capsys.readouterr()
-            list_files = [[cco['name'], cco['entity'][:-1]] for cco in env.CUSTOM_CONTENT]
+            list_files = [[cco['name'], cco['type']] for cco in env.CUSTOM_CONTENT]
             for file in list_files:
                 assert file[0] in stdout
                 assert file[1] in stdout
@@ -398,7 +406,8 @@ class TestMergeExistingFile:
             downloader.pack_content = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
             js_custom_content_object = {
                 'id': 'SumoLogic', 'name': 'SumoLogic',
-                'path': 'demisto_sdk/commands/download/tests/tests_data/integration-DummyJSIntegration.yml',
+                'path': 'demisto_sdk/commands/download/tests/tests_data/custom_content/integration-DummyJSIntegration'
+                        '.yml',
                 'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml', 'exist_in_pack': True,
                 'code_lang': 'javascript'
             }

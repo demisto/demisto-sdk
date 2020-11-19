@@ -73,14 +73,13 @@ Supported commands:
 
 ---
 
-### How to run commands in your development environment
-In the Demisto-SDK repository while on the git branch you want to activate and run this command to use python 3.7:
- ```
- source .tox/py37/bin/activate
- ```
-or this command to use python 3.8:
+### How to setup development environment?
 
-For detailed command usage press [here](demisto_sdk/commands/upload/README.md)
+Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk-dev` virtual environment.
+The development environment is connected to the branch you are currently using in the SDK repository.
+
+Simply activate it by running `workon demisto-sdk-dev`.
+The virtual environment can be deactivated at all times by running `deactivate`.
 
 ---
 

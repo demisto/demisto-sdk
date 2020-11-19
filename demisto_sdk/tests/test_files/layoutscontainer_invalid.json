@@ -4,7 +4,7 @@
     "name": "Incident Layout",
     "description": "test",
     "version": -2,
-    "fromVersion": "5.0.0",
+    "fromVersion": "4.0.0",
     "edit": {
         "tabs": [
             {

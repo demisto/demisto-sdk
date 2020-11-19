@@ -20,6 +20,8 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
+        structure.prev_ver = 'master'
+        structure.branch_name = ''
         return structure
 
 
@@ -120,6 +122,26 @@ class TestPlaybookValidator:
                                                  {'1': {'type': 'condition',
                                                         'scriptName': 'testScript',
                                                         'nexttasks': {'#default#': [], 'yes': []}}}}
+    DELETECONTEXT_ALL_EXIST = {"id": "Intezer - scan host", "version": -1,
+                               "tasks":
+                               {'1': {'type': 'regular',
+                                      'task': {'scriptName': 'DeleteContext'},
+                                      'scriptarguments': {'all': {'simple': 'yes'}}}}}
+    DELETECONTEXT_WITHOUT_ALL = {"id": "Intezer - scan host", "version": -1,
+                                 "tasks":
+                                 {'1': {'type': 'regular',
+                                        'task': {'scriptName': 'DeleteContext'},
+                                        'scriptarguments': {'all': {'simple': 'no'}}}}}
+    DELETECONTEXT_DOESNT_EXIST = {"id": "Intezer - scan host", "version": -1,
+                                  "tasks":
+                                  {'1': {'type': 'regular',
+                                         'task': {'name': 'test'}}}}
+    IS_DELETECONTEXT = [
+        (DELETECONTEXT_ALL_EXIST, False),
+        (DELETECONTEXT_WITHOUT_ALL, True),
+        (DELETECONTEXT_DOESNT_EXIST, True)
+    ]
+
     IS_CONDITIONAL_INPUTS = [
         (CONDITION_NOT_EXIST_1, True),
         (CONDITION_EXIST_EMPTY_1, True),
@@ -171,6 +193,27 @@ class TestPlaybookValidator:
                                     '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
                                     '3': {'type': 'condition'}}
                                 }
+
+    IS_INSTANCE_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                          "tasks": {
+                              '1': {'type': 'title', 'nexttasks': {'next': ['2']},
+                                    'scriptarguments': {'using': {'simple': 'tst.instance'}}},
+                              '2': {'type': 'condition', 'nexttasks': {'next': ['3']}},
+                              '3': {'type': 'condition'}}
+                          }
+
+    IS_INSTANCE_DOESNT_EXISTS = {"id": "Intezer - scan host", "version": -1, "starttaskid": "1",
+                                 "tasks": {
+                                     '1': {'type': 'title', 'nexttasks': {'next': ['2', '3']}},
+                                     '2': {'type': 'condition'},
+                                     '3': {'type': 'condition'}}
+                                 }
+
+    IS_USING_INSTANCE = [
+        (IS_INSTANCE_EXISTS, False),
+        (IS_INSTANCE_DOESNT_EXISTS, True),
+    ]
+
     IS_ROOT_CONNECTED_INPUTS = [
         (TASKS_NOT_EXIST, True),
         (NEXT_TASKS_NOT_EXIST_1, True),
@@ -220,3 +263,37 @@ class TestPlaybookValidator:
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
         assert validator.is_valid_playbook() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_DELETECONTEXT)
+    def test_is_delete_context_all_in_playbook(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook have deleteContext script use with all=yes
+
+        Then
+        -  Ensure that the validation fails when all=yes arg exists.
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.is_delete_context_all_in_playbook() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_USING_INSTANCE)
+    def test_is_using_instance(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook has a using specific instance.
+        - The playbook doestnt have using in it.
+
+        Then
+        - Ensure validation fails if it's a not test playbook
+        - Ensure that the validataion passes if no using usage.
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.is_using_instance() is expected_result

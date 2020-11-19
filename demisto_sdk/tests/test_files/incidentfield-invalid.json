@@ -35,5 +35,5 @@
 	"useAsKpi": false,
 	"validationRegex": "",
 	"version": 11,
-	"fromVersion": "5.0.0"
+	"fromVersion": "4.0.0"
 }

@@ -84,22 +84,23 @@ class FileType(Enum):
 
 
 ENTITY_TYPE_TO_DIR = {
-    INTEGRATION: INTEGRATIONS_DIR,
-    PLAYBOOK: PLAYBOOKS_DIR,
-    SCRIPT: SCRIPTS_DIR,
+    FileType.INTEGRATION.value: INTEGRATIONS_DIR,
+    FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
+    FileType.SCRIPT.value: SCRIPTS_DIR,
     AUTOMATION: SCRIPTS_DIR,
-    LAYOUT: LAYOUTS_DIR,
-    LAYOUTS_CONTAINER: LAYOUTS_DIR,
-    INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPE: INCIDENT_TYPES_DIR,
-    INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
-    CONNECTION: CONNECTIONS_DIR,
-    CLASSIFIER: CLASSIFIERS_DIR,
-    DASHBOARD: DASHBOARDS_DIR,
-    INDICATOR_TYPE: INDICATOR_TYPES_DIR,
-    REPORT: REPORTS_DIR,
-    WIDGET: WIDGETS_DIR,
-    BETA_INTEGRATION: INTEGRATIONS_DIR
+    FileType.LAYOUT.value: LAYOUTS_DIR,
+    FileType.LAYOUTS_CONTAINER.value: LAYOUTS_DIR,
+    FileType.INCIDENT_FIELD.value: INCIDENT_FIELDS_DIR,
+    FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
+    FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
+    FileType.CONNECTION.value: CONNECTIONS_DIR,
+    FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
+    FileType.DASHBOARD.value: DASHBOARDS_DIR,
+    FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
+    FileType.REPORT.value: REPORTS_DIR,
+    FileType.WIDGET.value: WIDGETS_DIR,
+    FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
+    FileType.MAPPER.value: CLASSIFIERS_DIR
 }
 
 
@@ -653,7 +654,9 @@ PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
-IGNORED_PACK_NAMES = ['Legacy', 'NonSupported']
+IGNORED_PACK_NAMES = ['Legacy', 'NonSupported', 'ApiModules']
+
+PACK_IGNORE_TEST_FLAG = 'auto-test'
 
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
 
@@ -726,7 +729,8 @@ TYPE_TO_EXTENSION = {
 TESTS_DIRECTORIES = [
     'testdata',
     'test_data',
-    'data_test'
+    'data_test',
+    'tests_data'
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -777,7 +781,7 @@ BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
 INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
-                          'Deception', 'Email Gateway']
+                          'Deception', 'Email Gateway', 'Identity and Access Management']
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
@@ -823,7 +827,8 @@ DIR_TO_PREFIX = {
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
 
-DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests']
+DELETED_YML_FIELDS_BY_DEMISTO = ['fromversion', 'toversion', 'alt_dockerimages', 'script.dockerimage45', 'tests',
+                                 'defaultclassifier', 'defaultmapperin', 'defaultmapperout']
 
 DELETED_JSON_FIELDS_BY_DEMISTO = ['fromVersion', 'toVersion']
 
@@ -924,14 +929,14 @@ FEED_REQUIRED_PARAMS = [
         'required': False,
         'type': 0
     },
-    # {
-    #     'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
-    #     'display': 'Traffic Light Protocol Color',
-    #     'name': 'tlp_color',
-    #     'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
-    #     'required': False,
-    #     'type': 15
-    # }
+    {
+        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
+        'display': 'Traffic Light Protocol Color',
+        'name': 'tlp_color',
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+        'required': False,
+        'type': 15
+    }
 ]
 
 FETCH_REQUIRED_PARAMS = [
@@ -994,3 +999,10 @@ VALIDATED_PACK_ITEM_TYPES = [
 FIRST_FETCH = 'first_fetch'
 
 MAX_FETCH = 'max_fetch'
+
+OLDEST_SUPPORTED_VERSION = '5.0.0'
+
+FEATURE_BRANCHES = ['v4.5.0']
+
+SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
+                                FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)

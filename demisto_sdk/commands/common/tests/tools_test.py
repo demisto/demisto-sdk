@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
-                                               get_depth, get_dict_from_file,
+                                               get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_file, get_files_in_dir,
@@ -163,10 +163,6 @@ class TestGenericFunctions:
         files = filter_files_by_type(files, types)
 
         assert files == output
-
-    @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
-    def test_get_depth(self, data, output):
-        assert get_depth(data) == output
 
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):

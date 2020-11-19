@@ -1163,19 +1163,6 @@ def retrieve_file_ending(file_path: str) -> str:
     return ''
 
 
-def get_depth(data: Any) -> int:
-    """
-    Returns the depth of a data object
-    :param data: The data
-    :return: The depth of the data object
-    """
-    if data and isinstance(data, dict):
-        return 1 + max(get_depth(data[key]) for key in data)
-    if data and isinstance(data, list):
-        return 1 + max(get_depth(element) for element in data)
-    return 0
-
-
 def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the

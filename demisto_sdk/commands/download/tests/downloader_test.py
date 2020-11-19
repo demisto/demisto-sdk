@@ -256,7 +256,7 @@ class TestFlagHandlers:
             downloader.list_files = True
             answer = downloader.handle_list_files_flag()
             stdout, _ = capsys.readouterr()
-            list_files = [[cco['name'], cco['entity'][:-1]] for cco in env.CUSTOM_CONTENT]
+            list_files = [[cco['name'], cco['type']] for cco in env.CUSTOM_CONTENT]
             for file in list_files:
                 assert file[0] in stdout
                 assert file[1] in stdout

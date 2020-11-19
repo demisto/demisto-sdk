@@ -185,10 +185,12 @@ ERROR_CODE = {
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
+    "invalid_incident_field_in_mapper": "MP105",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
     "invalid_file_path_layoutscontainer": "LO103",
+    "invalid_incident_field_in_layout": "LO104"
 }
 
 
@@ -1093,6 +1095,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_incident_field_in_layout(invalid_inc_fields_list):
+        return f'Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_to_version_in_new_classifiers():
         return 'toVersion field in new classifiers needs to be higher than 6.0.0'
 
@@ -1155,6 +1162,11 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_mapper(invalid_inc_fields_list):
+        return f'Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.'
 
     @staticmethod
     @error_code_decorator

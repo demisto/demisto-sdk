@@ -1430,3 +1430,13 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     resp = demisto_client.generic_request('/about', 'GET')
     about_data = json.loads(resp[0].replace("'", '"'))
     return parse(about_data.get('demistoVersion'))
+
+
+def open_id_set_file(id_set_path):
+    id_set = None
+    try:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    except IOError:
+        return id_set
+    return id_set

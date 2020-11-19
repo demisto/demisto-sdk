@@ -5,6 +5,10 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.tools import open_id_set_file
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
@@ -26,7 +30,8 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_from_version(),
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
-                    self.is_valid_file_path()
+                    self.is_valid_file_path(),
+                    self.is_valid_incident_field()
                     ])
 
     def is_valid_version(self) -> bool:
@@ -61,6 +66,39 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
     @abstractmethod
     def is_valid_file_path(self) -> bool:
         pass
+
+    def is_valid_incident_field(self) -> bool:
+        layout_incident_fields = []
+
+        layout = self.current_file.get('layout', {})
+        layout_sections = layout.get('sections', [])
+
+        for section in layout_sections:
+            for field in section.get('fields', []):
+                layout_incident_fields.append(field.get('fieldId', ''))
+
+        id_set_path = IDSetValidator.ID_SET_PATH
+        id_set = open_id_set_file(id_set_path)
+        if not id_set_path or not os.path.isfile(id_set_path):
+            id_set = IDSetCreator(print_logs=False).create_id_set()
+
+        content_incident_fields = []
+        content_all_incident_fields = id_set.get('IncidentFields')
+        for content_inc_field in content_all_incident_fields:
+            for inc_name, inc_field in content_inc_field.items():
+                content_incident_fields.append(inc_name)
+
+        built_in_fields_layout = ['incident_' + field.lower() for field in BUILT_IN_FIELDS]
+        invalid_inc_fields_list = []
+        for layout_inc_field in layout_incident_fields:
+            if layout_inc_field not in content_incident_fields and layout_inc_field not in built_in_fields_layout:
+                invalid_inc_fields_list.append(layout_inc_field)
+
+        if invalid_inc_fields_list:
+            error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
 
 class LayoutsContainerValidator(LayoutBaseValidator):

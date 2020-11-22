@@ -94,20 +94,20 @@ def test_integration_download_list_files(demisto_client):
     assert "The following files are available to be downloaded from Demisto instance:" in result.output
     assert "FILE NAME                          FILE TYPE" in result.output
     assert "---------------------------------  ------------" in result.output
-    assert "Handle Hello World Alert Test      TestPlaybook" in result.output
-    assert "CommonServerUserPython             Script" in result.output
-    assert "MSGraph_DeviceManagement_Test      TestPlaybook" in result.output
-    assert "CommonUserServer                   Script" in result.output
-    assert "DummyPlaybook                      Playbook" in result.output
-    assert "Test Integration                   Integration" in result.output
-    assert "TestScript                         Script" in result.output
-    assert "Symantec Data Loss Prevention      Integration" in result.output
-    assert "FormattingPerformance - Test       TestPlaybook" in result.output
-    assert "CommonServerUserPowerShell         Script" in result.output
-    assert "Microsoft Graph Device Management  Integration" in result.output
-    assert "FormattingPerformance              Script" in result.output
-    assert "Protectwise-Test                   TestPlaybook" in result.output
-    assert "guy                                Playbook" in result.output
+    assert "Handle Hello World Alert Test      playbook" in result.output
+    assert "CommonServerUserPython             script" in result.output
+    assert "MSGraph_DeviceManagement_Test      playbook" in result.output
+    assert "CommonUserServer                   script" in result.output
+    assert "DummyPlaybook                      playbook" in result.output
+    assert "Test Integration                   integration" in result.output
+    assert "TestScript                         script" in result.output
+    assert "Symantec Data Loss Prevention      betaintegration" in result.output
+    assert "FormattingPerformance - Test       playbook" in result.output
+    assert "CommonServerUserPowerShell         script" in result.output
+    assert "Microsoft Graph Device Management  integration" in result.output
+    assert "FormattingPerformance              script" in result.output
+    assert "Protectwise-Test                   playbook" in result.output
+    assert "guy                                playbook" in result.output
     assert result.exit_code == 0
     assert not result.stderr
     assert not result.exception

@@ -3,6 +3,8 @@
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
 * Added *default value* and *predefined values* to argument description in **generate-docs** command.
 * Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
+* Fixed an issue where the *--staged* flag recognised added files as modified in the **validate** command.
+* Fixed an issue where a backwards compatibility warning was raised for all added files in the **validate** command.
 
 
 # v1.2.9
@@ -172,6 +174,7 @@
 * Fixed an issue in the **update-release-notes** command where changes to the pack_metadata were not detected.
 * Fixed an issue where **validate** did not check for missing release notes in old format files.
 * Fixed an issue where **validate** command failed when no tests were given for a partner supported pack.
+* Updated the **download** command to support mappers.
 
 # 1.1.9
 * Fixed an issue where **update-release-notes** command failed on invalid file types.

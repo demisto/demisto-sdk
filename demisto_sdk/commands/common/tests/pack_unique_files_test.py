@@ -210,12 +210,21 @@ class TestPackUniqueFilesValidator:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
 
     def test_validate_readme_file(self, repo, mocker):
+        """
+                Given:
+                    - Pack with no README.md
+
+                When:
+                    - Validating a Pack than has no README.md file
+
+                Then:
+                    - Ensure that validation not fails, instead warning message is printed
+                """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         self.validator.pack_path = pack.path
         os.remove(pack.readme.path)
         mocker.patch.object(BaseValidator, 'handle_error')
-        # mocker.patch('BaseValidator.handle_error')
         self.validator.validate_readme_file()
         handle_error_called_count = BaseValidator.handle_error.call_count
         args_handle_error = BaseValidator.handle_error.call_args_list[0][1]

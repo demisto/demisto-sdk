@@ -1096,7 +1096,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
-        return f'Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.'
+        return f'Your layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.'
 
     @staticmethod
     @error_code_decorator

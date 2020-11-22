@@ -6,6 +6,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.common.tools import open_id_set_file
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+
 import os
 
 FROM_VERSION = '6.0.0'
@@ -125,9 +127,10 @@ class MapperValidator(ContentEntityValidator):
             for _, inc_field in content_inc_field.items():
                 content_incident_fields.append(inc_field.get('name', ''))
 
+        built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
         invalid_inc_fields_list = []
         for mapper_inc_field in mapper_incident_fields:
-            if mapper_inc_field not in content_incident_fields:
+            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in built_in_fields_layout:
                 invalid_inc_fields_list.append(mapper_inc_field)
 
         if invalid_inc_fields_list:

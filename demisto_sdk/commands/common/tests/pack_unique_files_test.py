@@ -135,6 +135,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
+
         def error_raising_function(argument):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
@@ -208,5 +209,16 @@ class TestPackUniqueFilesValidator:
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
 
-    # def test_validate_readme_file(self):
-
+    def test_validate_readme_file(self, repo, mocker):
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        self.validator.pack_path = pack.path
+        os.remove(pack.readme.path)
+        mocker.patch.object(BaseValidator, 'handle_error')
+        # mocker.patch('BaseValidator.handle_error')
+        self.validator.validate_readme_file()
+        handle_error_called_count = BaseValidator.handle_error.call_count
+        args_handle_error = BaseValidator.handle_error.call_args_list[0][1]
+        warning_val = args_handle_error.get('warning')
+        assert handle_error_called_count == 1
+        assert warning_val

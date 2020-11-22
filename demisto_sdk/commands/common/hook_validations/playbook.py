@@ -303,6 +303,8 @@ class PlaybookValidator(ContentEntityValidator):
         """Checks whether a script id is valid (i.e id exists in set_id)
         Args:
             skip_dependencies (bool):  whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
+
         Return:
             bool. if all scripts ids of this playbook are valid.
         """
@@ -313,21 +315,19 @@ class PlaybookValidator(ContentEntityValidator):
             is_valid = False
             return is_valid
 
-        all_scripts_from_id_set = id_set.get("scripts")
-        all_tasks_from_pb = self.current_file.get('tasks', {})
-        for id, task in all_tasks_from_pb.items():
-            pb_task = task.get('task', {})
-            pb_script = pb_task.get('script')
+        id_set_scripts = id_set.get("scripts")
+        pb_tasks = self.current_file.get('tasks', {})
+        for id, task_dict in pb_tasks.items():
+            pb_task = task_dict.get('task', {})
+            script_used_in_task = pb_task.get('script')
             pb_script_name = pb_task.get('scriptName')
-            script_entry_to_check = pb_script if not None else pb_script_name
+            script_entry_to_check = script_used_in_task if script_used_in_task else pb_script_name
             integration_script_flag = "|||"
 
-            if pb_script and integration_script_flag not in pb_script:
-                is_valid = any([pb_script in id_set_dict for id_set_dict in all_scripts_from_id_set])
+            if script_used_in_task and integration_script_flag not in script_used_in_task:
+                is_valid = self.check_script_id(script_used_in_task, id_set_scripts)
             elif pb_script_name and integration_script_flag not in pb_script_name:
-                is_valid = any(
-                    [pb_script_name == id_set_dict[key].get('name') for id_set_dict in all_scripts_from_id_set
-                     for key in id_set_dict])
+                is_valid = self.check_script_name(pb_script_name, id_set_scripts)
 
             if not is_valid:
                 error_message, error_code = Errors.invalid_script_id(script_entry_to_check)
@@ -335,11 +335,36 @@ class PlaybookValidator(ContentEntityValidator):
                     return is_valid
         return is_valid
 
+    def check_script_id(self, script_id_used_in_task, id_set_scripts):
+        """
+        Checks if script id exists in at least one of id_set's dicts
+        Args:
+            script_used_in_task (str):  script id from playbook
+            id_set_scripts (list): all scripts of id_set
+        Returns:
+            True if script_used_in_task exists in id_set
+        """
+        return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
+
+    def check_script_name(self, pb_script_name, id_set_scripts):
+        """
+        Checks if script name exists in at least one of id_set's dicts as value of the key 'name'
+        Args:
+            pb_script_name (str):  script name from playbook
+            id_set_scripts (list): all scripts of id_set
+        Returns:
+            True if pb_script_name exists in id_set
+        """
+        return any(
+            [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
+             for key in id_set_dict])
+
     def get_id_set_file(self, skip_dependencies):
         """
 
         Args:
-            skip_dependencies (bool):  whether should skip id set validation or not
+            skip_dependencies (bool): whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
 
         Returns:
             str: is_set file path

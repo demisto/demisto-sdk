@@ -265,7 +265,7 @@ class TestPlaybookValidator:
         - validating playbook
 
         Then
-        - In case script id or script name is does not exist in id_set , prints a warning.
+        - In case script id or script name don't exist in id_set , prints a warning.
         """
         playbook.yml.write_dict(playbook_json)
         repo.id_set.write_json(id_set_json)

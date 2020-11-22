@@ -770,7 +770,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_script_id(script_entry_to_check):
-        return f'The following script id is not valid {script_entry_to_check}'
+        return f'The following script id is not valid: {script_entry_to_check}'
 
     @staticmethod
     @error_code_decorator

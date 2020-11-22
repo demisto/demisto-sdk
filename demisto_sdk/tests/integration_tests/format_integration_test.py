@@ -511,7 +511,7 @@ def test_format_integration_skipped_files(repo):
     pack.create_doc_file()
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
     assert '======= Updating file:' in format_result.stdout
     assert 'Success' in format_result.stdout

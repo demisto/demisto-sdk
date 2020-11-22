@@ -66,7 +66,8 @@ class StructureValidator(BaseValidator):
         if is_new_file or not is_file_path_in_pack(self.file_path):
             self.old_file = {}
         else:
-            self.old_file = get_remote_file(old_file_path if old_file_path else file_path, tag=tag)
+            self.old_file = get_remote_file(old_file_path if old_file_path else file_path, tag=tag,
+                                            suppress_print=suppress_print)
         self.configuration = configuration
 
     def is_valid_file(self):

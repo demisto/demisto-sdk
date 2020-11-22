@@ -93,7 +93,8 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         invalid_inc_fields_list = []
         for layout_inc_field in layout_incident_fields:
             if layout_inc_field not in content_incident_fields and layout_inc_field not in built_in_fields_layout:
-                invalid_inc_fields_list.append(layout_inc_field)
+                invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
+                    else None
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)
@@ -177,7 +178,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             if layout_inc_field and layout_inc_field not in content_incident_fields and\
                     layout_inc_field not in content_indicator_fields and layout_inc_field not in built_in_fields_layout\
                     and layout_inc_field not in LAYOUT_BUILT_IN_FIELDS:
-                invalid_inc_fields_list.append(layout_inc_field)
+                invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
+                    else None
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)

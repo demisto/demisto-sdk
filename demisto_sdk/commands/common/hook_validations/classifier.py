@@ -161,7 +161,8 @@ class ClassifierValidator(ContentEntityValidator):
         invalid_inc_fields_list = []
         for mapper_inc_field in mapper_incident_fields:
             if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS:
-                invalid_inc_fields_list.append(mapper_inc_field)
+                invalid_inc_fields_list.append(mapper_inc_field) if mapper_inc_field not in invalid_inc_fields_list \
+                    else None
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)

@@ -69,7 +69,6 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     def is_valid_incident_field(self) -> bool:
-        print('kjfkuyf')
         layout_incident_fields = []
 
         layout = self.current_file.get('layout', {})

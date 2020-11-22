@@ -1048,7 +1048,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_readme_file_missing(file_name):
-        return f'{file_name} file does not exist, Consider adding one in the root of the pack'
+        return f'{file_name} file does not exist, consider adding one in the root of the pack'
 
     @staticmethod
     @error_code_decorator

@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Set, Union
+from typing import Dict, Set, Union
 
 import click
 import yaml
@@ -56,6 +56,7 @@ class BaseUpdate:
         self.no_validate = no_validate
         self.verbose = verbose
         self.assume_yes = assume_yes
+        self.updated_id_dict: Dict = {}
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')

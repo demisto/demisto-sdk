@@ -40,10 +40,10 @@ class MapperJSONFormat(BaseUpdateJSON):
         except Exception:
             return ERROR_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int, None]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the mapper JSON updater."""
         format_res = self.run_format()
-        return format_res, SKIP_RETURN_CODE, None
+        return format_res, SKIP_RETURN_CODE
 
     def set_mapping(self):
         """

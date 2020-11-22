@@ -26,10 +26,10 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
         super().update_json()
         return SUCCESS_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int, None]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the Classifier JSON updater."""
         format_res = self.run_format()
-        return format_res, SKIP_RETURN_CODE, None
+        return format_res, SKIP_RETURN_CODE
 
 
 class OldClassifierJSONFormat(BaseClassifierJSONFormat):

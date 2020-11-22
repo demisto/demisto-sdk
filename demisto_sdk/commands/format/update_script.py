@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
@@ -75,21 +75,21 @@ class ScriptYMLFormat(BaseUpdateYML):
         if self.update_docker:
             self.update_docker_image_in_script(self.data, self.data.get(self.from_version_key))
 
-    def run_format(self) -> Tuple[int, Optional[Dict]]:
+    def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            content_entity_id_to_update = super().update_yml()
+            super().update_yml()
             self.update_tests()
             self.update_docker_image()
             self.save_yml_to_destination_file()
-            return SUCCESS_RETURN_CODE, content_entity_id_to_update
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return ERROR_RETURN_CODE, None
+            return ERROR_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int, Optional[Dict]]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
-        format_res, content_entity_id_to_update = self.run_format()
+        format_res = self.run_format()
         if format_res:
-            return format_res, SKIP_RETURN_CODE, content_entity_id_to_update
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(ScriptValidator), content_entity_id_to_update
+            return format_res, self.initiate_file_validator(ScriptValidator)

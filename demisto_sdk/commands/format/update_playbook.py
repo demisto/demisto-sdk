@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import click
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -70,20 +70,20 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 else:
                     print_error('Version format is not valid')
 
-    def run_format(self) -> Tuple[int, Optional[Dict[str, str]]]:
+    def run_format(self) -> int:
         self.update_fromversion_by_user()
-        content_entity_ids_to_update = super().update_yml()
+        super().update_yml()
         self.add_description()
         self.save_yml_to_destination_file()
-        return SUCCESS_RETURN_CODE, content_entity_ids_to_update
+        return SUCCESS_RETURN_CODE
 
-    def format_file(self) -> Tuple[int, int, Optional[Dict[str, str]]]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the playbook YML updater."""
-        format_res, content_entity_ids_to_update = self.run_format()
+        format_res = self.run_format()
         if format_res:
-            return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(PlaybookValidator), content_entity_ids_to_update
+            return format_res, self.initiate_file_validator(PlaybookValidator)
 
 
 class PlaybookYMLFormat(BasePlaybookYMLFormat):
@@ -120,7 +120,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if task_name:
                     task['task']['name'] = task_name
 
-    def run_format(self) -> Tuple[int, Optional[Dict[str, str]]]:
+    def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.update_tests()
@@ -130,7 +130,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.update_playbook_task_name()
             return super().run_format()
         except Exception:
-            return ERROR_RETURN_CODE, None
+            return ERROR_RETURN_CODE
 
 
 class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
@@ -146,9 +146,9 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
             os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, 'playbook.yml'))
         super().__init__(*args, **kwargs)
 
-    def run_format(self) -> Tuple[int, Optional[Dict[str, str]]]:
+    def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             return super().run_format()
         except Exception:
-            return ERROR_RETURN_CODE, None
+            return ERROR_RETURN_CODE

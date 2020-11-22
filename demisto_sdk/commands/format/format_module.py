@@ -65,6 +65,8 @@ UNFORMATTED_FILES = ['readme',
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
+CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
+
 
 def format_manager(input: str = None,
                    output: str = None,
@@ -98,7 +100,6 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        content_entity_ids_to_update = {}
         format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
@@ -113,7 +114,7 @@ def format_manager(input: str = None,
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
-                info_res, err_res, skip_res, current_content_entity_ids_to_update = run_format_on_file(
+                info_res, err_res, skip_res = run_format_on_file(
                     input=file_path,
                     file_type=file_type,
                     from_version=from_version,
@@ -129,29 +130,15 @@ def format_manager(input: str = None,
                     log_list.extend([(info_res, print_success)])
                 if skip_res:
                     log_list.extend([(skip_res, print_warning)])
-                if current_content_entity_ids_to_update:
-                    content_entity_ids_to_update.update(current_content_entity_ids_to_update)
             elif file_type:
                 log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
                                   f"supported by format command"], print_warning))
             else:
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
                                  print_error))
-        if content_entity_ids_to_update:
-            if verbose:
-                click.echo(f'Collected content entities IDs to update:\n{content_entity_ids_to_update}\n'
-                           f'Going over files to update these IDs in other files...')
-            for file in files:
-                file_path = file.replace('\\', '/')
-                if verbose:
-                    click.echo(f'Processing file {file_path} to check for content entities IDs to update')
-                with open(file_path, 'r+') as f:
-                    file_content = f.read()
-                    for id_to_replace, updated_id in content_entity_ids_to_update.items():
-                        file_content = file_content.replace(id_to_replace, updated_id)
-                    f.seek(0)
-                    f.write(file_content)
-                    f.truncate()
+
+        update_content_entity_ids(files, verbose)
+
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
@@ -164,8 +151,32 @@ def format_manager(input: str = None,
     return 0
 
 
+def update_content_entity_ids(files: List[str], verbose: bool):
+    """Update the changed content entity ids in the files.
+    Args:
+        files (list): a list of files in which to update the content ids.
+        verbose (bool): whether to print
+
+    """
+    if CONTENT_ENTITY_IDS_TO_UPDATE:
+        if verbose:
+            click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
+                       f'Going over files to update these IDs in other files...')
+        for file in files:
+            file_path = file.replace('\\', '/')
+            if verbose:
+                click.echo(f'Processing file {file_path} to check for content entities IDs to update')
+            with open(file_path, 'r+') as f:
+                file_content = f.read()
+                for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
+                    file_content = file_content.replace(id_to_replace, updated_id)
+                f.seek(0)
+                f.write(file_content)
+                f.truncate()
+
+
 def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \
-        Tuple[List[str], List[str], List[str], Dict[str, str]]:
+        Tuple[List[str], List[str], List[str]]:
     """Run the relevent format of file type.
     Args:
         input (str): The input file path.
@@ -183,16 +194,16 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                          from_version=from_version,
                                                          **kwargs)
-    format_res, validate_res, content_entity_ids_to_update = UpdateObject.format_file()  # type: ignore
-    return logger(input, format_res, validate_res, content_entity_ids_to_update)
+    format_res, validate_res = UpdateObject.format_file()  # type: ignore
+    CONTENT_ENTITY_IDS_TO_UPDATE.update(UpdateObject.updated_id_dict)
+    return logger(input, format_res, validate_res)
 
 
 def logger(
         input: str,
         format_res: int,
         validate_res: int,
-        content_entity_ids_to_update: Dict[str, str]
-) -> Tuple[List[str], List[str], List[str], Dict[str, str]]:
+) -> Tuple[List[str], List[str], List[str]]:
     info_list = []
     error_list = []
     skipped_list = []
@@ -220,4 +231,4 @@ def logger(
     elif not format_res and not validate_res:
         info_list.append(f'Format Status   on file: {input} - Success')
         info_list.append(f'Validate Status on file: {input} - Success')
-    return info_list, error_list, skipped_list, content_entity_ids_to_update
+    return info_list, error_list, skipped_list

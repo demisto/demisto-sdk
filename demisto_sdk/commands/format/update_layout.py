@@ -1,7 +1,7 @@
 import os
 import re
 from abc import ABC
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import click
 import yaml
@@ -42,28 +42,27 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
 
-    def format_file(self) -> Tuple[int, int, Optional[Dict]]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
-        format_res, content_entity_ids_to_update = self.run_format()
+        format_res = self.run_format()
         if format_res:
-            return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(LayoutValidator), content_entity_ids_to_update
+            return format_res, self.initiate_file_validator(LayoutValidator)
 
-    def run_format(self) -> Tuple[int, Optional[Dict]]:
+    def run_format(self) -> int:
         try:
-            content_entity_ids_to_update: Optional[Dict] = {}
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             if self.is_container:
-                content_entity_ids_to_update = self.layoutscontainer__run_format()
+                self.layoutscontainer__run_format()
             else:
                 self.layout__run_format()
             self.update_json()
             self.set_description()
             self.save_json_to_destination_file()
-            return SUCCESS_RETURN_CODE, content_entity_ids_to_update
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return ERROR_RETURN_CODE, None
+            return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):
         """ Finds diff between keys in file and schema of file type
@@ -98,13 +97,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
             self.output_file = new_output_path
 
-    def layoutscontainer__run_format(self) -> Optional[Dict]:
+    def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
         self.set_fromVersion(from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
-        content_entity_ids_to_update = self.update_id(field='name')
-        return content_entity_ids_to_update
+        self.update_id(field='name')
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)

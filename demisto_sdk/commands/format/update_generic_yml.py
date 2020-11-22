@@ -63,7 +63,7 @@ class BaseUpdateYML(BaseUpdate):
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.data.get(path, self.data)
 
-    def update_id_to_equal_name(self) -> Dict[str, str]:
+    def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
             Only relevant for new files.
         """
@@ -74,7 +74,8 @@ class BaseUpdateYML(BaseUpdate):
             if is_uuid(self.id_and_version_location['id']):
                 updated_integration_id_dict[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
-        return updated_integration_id_dict
+        if updated_integration_id_dict:
+            self.updated_id_dict.update(updated_integration_id_dict)
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
@@ -90,16 +91,15 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self) -> Dict[str, str]:
+    def update_yml(self) -> None:
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(self.from_version)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
-        content_entity_id_to_update = self.update_id_to_equal_name()
+        self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
-        return content_entity_id_to_update
 
     def update_tests(self) -> None:
         """

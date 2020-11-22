@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import click
 from demisto_sdk.commands.common.hook_validations.dashboard import \
@@ -28,16 +28,16 @@ class DashboardJSONFormat(BaseUpdateJSON):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose)
 
-    def run_format(self) -> Tuple[int, Optional[Dict]]:
+    def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().update_json()
             self.default_description()
-            content_entity_ids_to_update = self.update_id()
+            self.update_id()
             self.save_json_to_destination_file()
-            return SUCCESS_RETURN_CODE, content_entity_ids_to_update
+            return SUCCESS_RETURN_CODE
         except Exception:
-            return ERROR_RETURN_CODE, None
+            return ERROR_RETURN_CODE
 
     def default_description(self):
         if not self.data.get("description", ""):
@@ -45,10 +45,10 @@ class DashboardJSONFormat(BaseUpdateJSON):
         if not self.data.get("isPredefined", ""):
             self.data["isPredefined"] = True
 
-    def format_file(self) -> Tuple[int, int, Optional[Dict[str, str]]]:
+    def format_file(self) -> Tuple[int, int]:
         """Manager function for the Dashboard JSON updater."""
-        format_res, content_entity_ids_to_update = self.run_format()
+        format_res = self.run_format()
         if format_res:
-            return format_res, SKIP_RETURN_CODE, content_entity_ids_to_update
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(DashboardValidator), content_entity_ids_to_update
+            return format_res, self.initiate_file_validator(DashboardValidator)

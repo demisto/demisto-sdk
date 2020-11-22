@@ -218,7 +218,7 @@ class TestFormatting:
             format_obj = ScriptYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
         else:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
-        assert format_obj.run_format()[0] == 0
+        assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)
         assert data['fromversion'] == '5.5.0'
@@ -545,7 +545,7 @@ class TestFormatting:
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
-        res = formatter.run_format()[0]
+        res = formatter.run_format()
         assert res == 0
         assert formatter.data.get('fromversion') == '5.0.0'
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
@@ -590,7 +590,7 @@ class TestFormatting:
             'dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
         format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
                                      update_docker=True)
-        assert format_obj.run_format()[0] == 0
+        assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)
         assert data['dockerimage'].endswith(f':{test_tag}')
@@ -600,7 +600,7 @@ class TestFormatting:
         src_file = f'{test_files_dir}/Slack.yml'
         format_obj = IntegrationYMLFormat(src_file, output=dest, path=f'{schema_dir}/integration.yml', no_validate=True,
                                           update_docker=True)
-        assert format_obj.run_format()[0] == 0
+        assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)
         assert data['script']['dockerimage'].endswith(f':{test_tag}')

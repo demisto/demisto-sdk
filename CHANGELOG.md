@@ -8,7 +8,6 @@
 * Fixed an issue where **validate** command failed when no tests were given for a partner supported pack.
 * Updated the **download** command to support mappers.
 * Fixed an issue where the ***format*** command added a duplicate parameter.
-* Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
 * For partner supported content packs, added support for a list of emails.
 
 # v1.2.9

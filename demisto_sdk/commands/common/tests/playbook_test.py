@@ -55,9 +55,9 @@ class TestPlaybookValidator:
     CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
                                      {'1':
-                                       {'type': 'condition',
-                                        'conditions': [{'label': 'yes'}],
-                                        'nexttasks': {'#default#': ['2']}}}
+                                          {'type': 'condition',
+                                           'conditions': [{'label': 'yes'}],
+                                           'nexttasks': {'#default#': ['2']}}}
                                  }
     CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
@@ -78,14 +78,14 @@ class TestPlaybookValidator:
                                        'nexttasks': {'yes': ['3']}}}}
     CONDITION_EXIST_FULL_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                      "tasks":
-                                     {'1': {'type': 'condition',
-                                            'conditions': [{'label': 'YES'}],
-                                            'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
+                                         {'1': {'type': 'condition',
+                                                'conditions': [{'label': 'YES'}],
+                                                'nexttasks': {'#default#': ['2'], 'yes': ['3']}}}}
     CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS = {"id": "Intezer - scan host", "version": -1,
                                             "tasks":
-                                            {'1': {'type': 'condition',
-                                                   'message': {},
-                                                   'nexttasks': {}}}}
+                                                {'1': {'type': 'condition',
+                                                       'message': {},
+                                                       'nexttasks': {}}}}
     CONDITIONAL_ASK_EXISTS_NO_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                           "tasks":
                                               {'1': {'type': 'condition',
@@ -105,13 +105,13 @@ class TestPlaybookValidator:
                                             }
     CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF = {"id": "Intezer - scan host", "version": -1,
                                                      "tasks":
-                                                     {'1': {'type': 'condition',
-                                                            'message': {'replyOptions': ['yes']},
-                                                            'nexttasks': {'YES': ['1']}}}}
+                                                         {'1': {'type': 'condition',
+                                                                'message': {'replyOptions': ['yes']},
+                                                                'nexttasks': {'YES': ['1']}}}}
     CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
-                                                "tasks":
-                                                {'1': {'type': 'condition',
-                                                       'scriptName': 'testScript'}}}
+                                          "tasks":
+                                              {'1': {'type': 'condition',
+                                                     'scriptName': 'testScript'}}}
     CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                             "tasks":
                                                 {'1': {'type': 'condition',
@@ -124,18 +124,18 @@ class TestPlaybookValidator:
                                                         'nexttasks': {'#default#': [], 'yes': []}}}}
     DELETECONTEXT_ALL_EXIST = {"id": "Intezer - scan host", "version": -1,
                                "tasks":
-                               {'1': {'type': 'regular',
-                                      'task': {'scriptName': 'DeleteContext'},
-                                      'scriptarguments': {'all': {'simple': 'yes'}}}}}
+                                   {'1': {'type': 'regular',
+                                          'task': {'scriptName': 'DeleteContext'},
+                                          'scriptarguments': {'all': {'simple': 'yes'}}}}}
     DELETECONTEXT_WITHOUT_ALL = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
-                                 {'1': {'type': 'regular',
-                                        'task': {'scriptName': 'DeleteContext'},
-                                        'scriptarguments': {'all': {'simple': 'no'}}}}}
+                                     {'1': {'type': 'regular',
+                                            'task': {'scriptName': 'DeleteContext'},
+                                            'scriptarguments': {'all': {'simple': 'no'}}}}}
     DELETECONTEXT_DOESNT_EXIST = {"id": "Intezer - scan host", "version": -1,
                                   "tasks":
-                                  {'1': {'type': 'regular',
-                                         'task': {'name': 'test'}}}}
+                                      {'1': {'type': 'regular',
+                                             'task': {'name': 'test'}}}}
     IS_DELETECONTEXT = [
         (DELETECONTEXT_ALL_EXIST, False),
         (DELETECONTEXT_WITHOUT_ALL, True),
@@ -224,9 +224,55 @@ class TestPlaybookValidator:
         (NEXT_TASKS_VALID_EXIST_2, True),
     ]
 
-    def test_playbook_script_id(self, pack):
-        playbook = pack.create_playbook(yml={'script': "4e4a4f4ca-4444-12a3-123b-e12345678923"})
-        print("")
+    PLAYBOOK_JSON_VALID_SCRIPT_ID = {
+        "tasks": {"0": {"task": {"script": "scriptId1"}},
+                  "1": {"task": {"script": "scriptId2"}}}}
+    ID_SET_VALID_SCRIPT_ID = {"scripts": [{"scriptId1": {"name": "name"}}, {"scriptId2": {"name": "name"}}]}
+
+    PLAYBOOK_JSON_INVALID_SCRIPT_ID = {
+        "tasks": {"0": {"task": {"script": "scriptId1"}},
+                  "1": {"task": {"script": "scriptId2"}}}}
+    ID_SET_INVALID_SCRIPT_ID = {"scripts": [{"scriptId2": {"name": "name"}}]}
+
+    PLAYBOOK_JSON_VALID_SCRIPT_NAME = {
+        "tasks": {"0": {"task": {"scriptName": "scriptName1"}},
+                  "1": {"task": {"scriptName": "scriptName2"}}}}
+    ID_SET_VALID_SCRIPT_NAME = {
+        "scripts": [{"scriptId1": {"name": "scriptName1"}}, {"scriptId2": {"name": "scriptName2"}}]}
+
+    PLAYBOOK_JSON_INVALID_SCRIPT_NAME = {
+        "tasks": {"0": {"task": {"scriptName": "scriptName1"}},
+                  "1": {"task": {"scriptName": "scriptName2"}}}}
+    ID_SET_INVALID_SCRIPT_NAME = {
+        "scripts": [{"scriptId1": {"name": "scriptName3"}}, {"scriptId2": {"name": "scriptName1"}}]}
+
+    IS_SCRIPT_ID_VALID = [
+        (PLAYBOOK_JSON_VALID_SCRIPT_ID, ID_SET_VALID_SCRIPT_ID, True),
+        (PLAYBOOK_JSON_INVALID_SCRIPT_ID, ID_SET_INVALID_SCRIPT_ID, False),
+        (PLAYBOOK_JSON_VALID_SCRIPT_NAME, ID_SET_VALID_SCRIPT_NAME, True),
+        (PLAYBOOK_JSON_INVALID_SCRIPT_NAME, ID_SET_INVALID_SCRIPT_NAME, False),
+    ]
+
+    @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
+    def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
+        """
+
+        Given
+        - A playbook with scrips ids or script names
+        - An id_set file.
+
+        When
+        - validating playbook
+
+        Then
+        - In case script id or script name is does not exist in id_set , prints a warning.
+        """
+        playbook.yml.write_dict(playbook_json)
+        repo.id_set.write_json(id_set_json)
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        mocker.patch.object(validator, 'get_id_set_file', return_value=id_set_json)
+        assert validator.is_script_id_valid() == expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, playbook_json, expected_result):

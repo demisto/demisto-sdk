@@ -10,17 +10,6 @@ from demisto_sdk.commands.common.tools import LOG_COLORS, open_id_set_file, prin
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
-def get_id_set_file(skip_dependencies):
-    id_set = None
-    id_set_path = IDSetValidator.ID_SET_PATH
-    if not id_set_path or not os.path.isfile(id_set_path):
-        if not skip_dependencies:
-            id_set = IDSetCreator(print_logs=False).create_id_set()
-    else:
-        id_set = open_id_set_file(id_set_path)
-    return id_set
-
-
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
@@ -310,14 +299,15 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
-    def is_script_id_valid(self, skip_dependencies):
+    def is_script_id_valid(self, skip_dependencies=False):
         """Checks whether a script id is valid (i.e id exists in set_id)
-
+        Args:
+            skip_dependencies (bool):  whether should skip id set validation or not
         Return:
             bool. if all scripts ids of this playbook are valid.
         """
         is_valid = True
-        id_set = get_id_set_file(skip_dependencies)
+        id_set = self.get_id_set_file(skip_dependencies)
         if not id_set:
             print_warning("Playbook script id validation cannot run, could not read id_set.json")
             is_valid = False
@@ -344,3 +334,21 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return is_valid
         return is_valid
+
+    def get_id_set_file(self, skip_dependencies):
+        """
+
+        Args:
+            skip_dependencies (bool):  whether should skip id set validation or not
+
+        Returns:
+            str: is_set file path
+        """
+        id_set = None
+        id_set_path = IDSetValidator.ID_SET_PATH
+        if not id_set_path or not os.path.isfile(id_set_path):
+            if not skip_dependencies:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
+        return id_set

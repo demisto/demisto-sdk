@@ -293,7 +293,7 @@ class BaseUpdate:
 
                 # validates on the output file generated from the format
                 structure_validator = StructureValidator(self.output_file,
-                                                         predefined_scheme=file_type)
+                                                         predefined_scheme=file_type, suppress_print=not self.verbose)
                 validator = validator_type(structure_validator, suppress_print=not self.verbose)
 
                 # TODO: remove the connection condition if we implement a specific validator for connections.

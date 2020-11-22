@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', '
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
-    'non-certified-partner': ['CJ']
+    'partner': ['CJ']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -60,6 +60,7 @@ ERROR_CODE = {
     "invalid_deprecated_integration_description": "IN128",
     "removed_integration_parameters": "IN129",
     "integration_not_runnable": "IN130",
+    "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "dbot_invalid_output": "DB100",
@@ -151,6 +152,8 @@ ERROR_CODE = {
     "invalid_package_dependencies": "PA116",
     "pack_readme_file_missing": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
+    "pack_metadata_non_approved_usecases": "PA119",
+    "pack_metadata_non_approved_tags": "PA120",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -409,6 +412,12 @@ class Errors:
         return f'Feed Integration was detected A required ' \
                f'parameter "{name}" is missing or malformed in the YAML file.\n' \
                f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_get_mapping_fields_command():
+        return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
+               'field is set to true.'
 
     @staticmethod
     @error_code_decorator
@@ -940,6 +949,16 @@ class Errors:
                f"pack_metadata.json or in case release notes are required run:\n" \
                f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
                f"generate them according to the new standard."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
 
     @staticmethod
     @error_code_decorator

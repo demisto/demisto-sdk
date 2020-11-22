@@ -3,8 +3,7 @@ import json
 import os
 
 import click
-from demisto_sdk.commands.common.constants import (PACK_METADATA_CERTIFICATION,
-                                                   PACK_METADATA_SUPPORT,
+from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
@@ -120,14 +119,9 @@ class BaseValidator:
             metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_json = self.get_metadata_file_content(metadata_path)
             support = metadata_json.get(PACK_METADATA_SUPPORT)
-            certification = metadata_json.get(PACK_METADATA_CERTIFICATION)
 
-            if support == 'partner':
-                if certification is not None and certification != 'certified':
-                    self.add_flag_to_ignore_list(file_path, 'non-certified-partner')
-
-            elif support == 'community':
-                self.add_flag_to_ignore_list(file_path, 'community')
+            if support in ('partner', 'community'):
+                self.add_flag_to_ignore_list(file_path, support)
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):

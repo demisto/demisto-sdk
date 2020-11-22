@@ -13,9 +13,11 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_files_by_type,
+                                               filter_files_on_pack,
                                                filter_packagify_changes,
                                                find_type, get_code_lang,
-                                               get_depth, get_dict_from_file,
+                                               get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_file, get_files_in_dir,
@@ -124,9 +126,43 @@ class TestGenericFunctions:
         assert added == set()
         assert removed == [VALID_MD]
 
-    @pytest.mark.parametrize('data, output', [({'a': {'b': {'c': 3}}}, 3), ('a', 0), ([1, 2], 1)])
-    def test_get_depth(self, data, output):
-        assert get_depth(data) == output
+    test_content_path_on_pack = [
+        ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
+    ]
+
+    @pytest.mark.parametrize('pack, file_paths_list', test_content_path_on_pack)
+    def test_filter_files_on_pack(self, pack, file_paths_list):
+        """
+        Given
+        - Set of files and pack name.
+        When
+        - Want to filter the list by specific pack.
+        Then:
+        - Ensure the set of file paths contains only files located in the given pack.
+        """
+        files_paths = filter_files_on_pack(pack, file_paths_list)
+        assert files_paths == {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py'}
+
+    for_test_filter_files_by_type = [
+        ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
+        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [], {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
+        (set(), [FileType.PLAYBOOK], set())
+    ]
+
+    @pytest.mark.parametrize('files, types, output', for_test_filter_files_by_type)
+    def test_filter_files_by_type(self, files, types, output, mocker):
+        """
+        Given
+        - Sets of content files and file types to skip.
+        When
+        - Want to filter the lists by file typs.
+        Then:
+        - Ensure the list returned Whiteout the files to skip.
+        """
+        mocker.patch('demisto_sdk.commands.common.tools.is_file_path_in_pack', return_value='True')
+        files = filter_files_by_type(files, types)
+
+        assert files == output
 
     @pytest.mark.parametrize('path, output', [('demisto.json', 'json'), ('wow', '')])
     def test_retrieve_file_ending(self, path, output):

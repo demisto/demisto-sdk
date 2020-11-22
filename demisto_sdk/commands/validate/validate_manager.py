@@ -302,7 +302,8 @@ class ValidateManager:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
-                                                 old_file_path=old_file_path, branch_name=self.branch_name)
+                                                 old_file_path=old_file_path, branch_name=self.branch_name,
+                                                 is_new_file=not is_modified)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
@@ -418,8 +419,8 @@ class ValidateManager:
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files,
-                                                                          old_format_files, added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
+                                                                          added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -655,8 +656,7 @@ class ValidateManager:
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files,
-                                                                                               changed_meta_packs)
+                                                                                               added_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
@@ -802,6 +802,23 @@ class ValidateManager:
             prev_ver = 'origin/' + prev_ver
         return prev_ver
 
+    def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
+        """The function gets sets of files which were changed in the current branch and filters
+        out only the files that were changed in the current commit"""
+        all_changed_files = run_command(f'git diff --name-only --staged').split()
+        formatted_changed_files = set()
+
+        for file in all_changed_files:
+            if find_type(file) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
+                file = os.path.splitext(file)[0] + '.yml'
+            formatted_changed_files.add(file)
+
+        modified_files = modified_files.intersection(formatted_changed_files)
+        added_files = added_files.intersection(formatted_changed_files)
+        old_format_files = old_format_files.intersection(formatted_changed_files)
+        changed_meta_files = changed_meta_files.intersection(formatted_changed_files)
+        return modified_files, added_files, old_format_files, changed_meta_files
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
@@ -817,13 +834,6 @@ class ValidateManager:
                 click.echo("Collecting staged files only")
             else:
                 click.echo("Collecting all committed files")
-        if self.staged:
-            all_changed_files_string = run_command('git diff --name-status --staged')
-            modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
-                all_changed_files_string, prev_ver
-            )
-            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files))
-            return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
@@ -886,7 +896,12 @@ class ValidateManager:
             added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
+        if self.staged:
+            modified_files, added_files, old_format_files, changed_meta_files =  \
+                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
+
+        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
+            self.get_packs(added_files))
         return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
@@ -1111,9 +1126,8 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files, changed_meta_packs):
-        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
-        # and packs where the meta file changed should have their version raised
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
@@ -1125,7 +1139,7 @@ class ValidateManager:
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                 FileType.TEST_SCRIPT}) - self.new_packs)
 
-        return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
+        return modified_packs_that_should_have_version_raised
 
     @staticmethod
     def get_packs(changed_files):

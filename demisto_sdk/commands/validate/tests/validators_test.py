@@ -416,7 +416,7 @@ class TestValidators:
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
-    def test_run_all_validations_on_file_white_modified_id(self, mocker):
+    def test_run_all_validations_on_file_with_modified_id(self, mocker, integration):
         """
         Given
         - Integration with a modified ID.
@@ -427,8 +427,7 @@ class TestValidators:
         Then
         -  The file will fail validation because its id changed.
         """
-
-        validator = StructureValidator(file_path=VALID_INTEGRATION_ID_PATH)
+        validator = StructureValidator(file_path=integration.yml.path, predefined_scheme='integration')
         old = validator.load_data_from_file()
         old['commonfields']['id'] = 'old_id'
 
@@ -436,8 +435,9 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
 
-        validate_manager = ValidateManager(file_path=VALID_INTEGRATION_ID_PATH, skip_conf_json=True)
-        assert not validate_manager.run_validation_on_specific_files()
+        validate_manager = ValidateManager(skip_conf_json=True)
+        assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
+                                                            pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self):
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -1083,11 +1083,17 @@ class TestValidators:
         When
             - Run the validate command.
         Then
-            - Validate that only one git diff command runs and it's a staged command
+            - Validate checks for the staged files using git diff.
+            - get_modified_and_added_files returns a list of only staged files.
         """
         def run_command_effect(arg):
-            assert arg == 'git diff --name-status --staged'
-            return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml'
+            # if the call is to check the staged files only - return the HelloWorld integration.
+            if arg == 'git diff --name-only --staged':
+                return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+            # else return all the files that were changed from master and their status in comparison to the master.
+            else:
+                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
 
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
@@ -1180,3 +1186,67 @@ def test_should_raise_pack_version(pack_name, expected):
     validate_manager = ValidateManager()
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected
+
+
+def test_run_validation_using_git_on_only_metadata_changed(mocker):
+    """
+    Given
+        - metadata file that was changed.
+    When
+        - Run all tests on the file.
+    Then
+        - validate That no error returns.
+    """
+    mocker.patch.object(ValidateManager, 'setup_git_params')
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
+                        return_value=(set(), set(), set(), {'Packs/TestPack/pack_metadata.json'}, {'TestPack'}))
+
+    validate_manager = ValidateManager()
+    res = validate_manager.run_validation_using_git()
+    assert res
+
+
+def test_is_mapping_fields_command_exist(integration):
+    """
+        Given
+        - Integration yml file with get-mapping-fields command.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the True.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert validator.is_mapping_fields_command_exist()
+
+
+def test_mapping_fields_command_dont_exist(integration):
+    """
+        Given
+        - Integration yml file with no get-mapping-fields command and ismappable: True.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the False. The field ismappable exists, but the command no.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'not-get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert not validator.is_mapping_fields_command_exist()

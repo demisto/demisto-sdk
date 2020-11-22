@@ -268,3 +268,43 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_c)
+
+
+class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of commonServerPython import checker .
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_valid_common_server_python_import(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - valid import of commonServerPython exists in the code.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        node_a = astroid.extract_node("""from CommonServerPython import *""")
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(node_a)
+
+    def test_invalid_common_server_python_import(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Invalid import of commonServerPython exists in the code.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a = astroid.extract_node("""from CommonServerPython import DemistoException""")
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='invalid-import-common-server-python',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_importfrom(node_a)

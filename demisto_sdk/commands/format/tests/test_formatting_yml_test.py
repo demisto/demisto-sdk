@@ -252,8 +252,7 @@ class TestFormatting:
         assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path, 'r') as f:
-            content = f.read()
-            yaml_content = yaml.load(content)
+            yaml_content = yaml.safe_load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
 
@@ -438,8 +437,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            content = f.read()
-            yaml_content = yaml.load(content)
+            yaml_content = yaml.safe_load(f)
             params = yaml_content['configuration']
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -473,8 +471,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            content = f.read()
-            yaml_content = yaml.load(content)
+            yaml_content = yaml.safe_load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':

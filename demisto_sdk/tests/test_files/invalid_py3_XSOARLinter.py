@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Tuple, Callable, Any, Union
 
 import demistomock as demisto
-from CommonServerPython import *
+from CommonServerPython import DemistoException
 from CommonServerUserPython import *
 import json
 import requests

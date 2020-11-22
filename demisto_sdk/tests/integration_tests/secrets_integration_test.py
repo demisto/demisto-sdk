@@ -254,9 +254,9 @@ def test_secrets_for_file_name_with_space_in_it(mocker, repo):
     mock_git(mocker)
     pack = repo.create_pack('pack')
     integration = pack.create_integration('with space')
-    integration.write_code('email@not.whitlisted\n')
+    integration.code.write('email@not.whitlisted\n')
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.py_path, '-wl', repo.secrets.path])
+        result = CliRunner().invoke(main, [SECRETS_CMD, '--input', integration.code.rel_path, '-wl', repo.secrets.path])
     assert 1 == result.exit_code
     assert 'Secrets were found in the following files' in result.stdout

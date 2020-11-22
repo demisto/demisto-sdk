@@ -2,6 +2,12 @@
 * Added validation for approved content pack usecases and tags.
 * Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
 * Added *default value* and *predefined values* to argument description in **generate-docs** command.
+* Added a new validation that checks if *get-mapping-fields* command exists if the integration schema has *{ismappable: true}* in **validate** command.
+* Fixed an issue where the *--staged* flag recognised added files as modified in the **validate** command.
+* Fixed an issue where a backwards compatibility warning was raised for all added files in the **validate** command.
+* Fixed an issue where **validate** command failed when no tests were given for a partner supported pack.
+* Updated the **download** command to support mappers.
+* Fixed an issue where the ***format*** command added a duplicate parameter.
 * Added a new validation that checks if *get-mapping-fields* command exists if the intgeration schema has *{ismappable: true}* in **validate** command.
 * For partner supported content packs, added support for a list of emails.
 

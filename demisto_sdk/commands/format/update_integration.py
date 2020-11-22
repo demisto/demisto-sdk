@@ -117,7 +117,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
             for counter, param in enumerate(params):
-                if 'defaultvalue' in param:
+                if 'defaultvalue' in param and param.get('name') != 'feed':
                     params[counter].pop('defaultvalue')
             for param in FEED_REQUIRED_PARAMS:
                 if param not in params:

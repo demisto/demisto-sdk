@@ -643,8 +643,7 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
     "currentVersion": "1.0.1",
     "author": "bar",
     "url": PARTNER_URL,
-    "email": ["support1@test.com",
-              "support2@test.com"],
+    "email": "support1@test.com,support2@test.com",
     "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"

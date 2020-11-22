@@ -207,3 +207,6 @@ class TestPackUniqueFilesValidator:
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+
+    # def test_validate_readme_file(self):
+

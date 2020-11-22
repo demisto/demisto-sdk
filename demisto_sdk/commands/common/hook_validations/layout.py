@@ -7,8 +7,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.common.tools import open_id_set_file
+from demisto_sdk.commands.common.tools import open_id_set_file, LAYOUT_CONTAINER_FIELDS
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
@@ -68,6 +69,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     def is_valid_incident_field(self) -> bool:
+        print('kjfkuyf')
         layout_incident_fields = []
 
         layout = self.current_file.get('layout', {})
@@ -130,6 +132,56 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         output_basename = os.path.basename(self.file_path)
         if not output_basename.startswith('layoutscontainer-'):
             error_message, error_code = Errors.invalid_file_path_layoutscontainer(output_basename)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_valid_incident_field(self) -> bool:
+        layout_container_items = []
+        for layout_container_field in LAYOUT_CONTAINER_FIELDS:
+            if self.current_file.get(layout_container_field):
+                layout_container_items.append(layout_container_field)
+
+        layout_incident_fields = []
+        for layout_container_item in layout_container_items:
+            layout = self.current_file.get(layout_container_item, {})
+            layout_tabs = layout.get('tabs', [])
+
+            for layout_tab in layout_tabs:
+                layout_sections = layout_tab.get('sections', [])
+
+                for section in layout_sections:
+                    if section and section.get('items'):
+                        for item in section.get('items', []):
+                            layout_incident_fields.append(item.get('fieldId', ''))
+
+        id_set_path = IDSetValidator.ID_SET_PATH
+        id_set = open_id_set_file(id_set_path)
+        if not id_set_path or not os.path.isfile(id_set_path):
+            id_set = IDSetCreator(print_logs=False).create_id_set()
+
+        content_incident_fields = []
+        content_all_incident_fields = id_set.get('IncidentFields')
+        for content_inc_field in content_all_incident_fields:
+            for inc_name, inc_field in content_inc_field.items():
+                content_incident_fields.append(inc_name.replace('incident_', ''))
+
+        content_indicator_fields = []
+        content_all_indicator_fields = id_set.get('IndicatorFields')
+        for content_ind_field in content_all_indicator_fields:
+            for ind_name, ind_field in content_ind_field.items():
+                content_indicator_fields.append(ind_name.replace('indicator_', ''))
+
+        built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
+        invalid_inc_fields_list = []
+        for layout_inc_field in layout_incident_fields:
+            if layout_inc_field and layout_inc_field not in content_incident_fields and\
+                    layout_inc_field not in content_indicator_fields and layout_inc_field not in built_in_fields_layout\
+                    and layout_inc_field not in LAYOUT_BUILT_IN_FIELDS:
+                invalid_inc_fields_list.append(layout_inc_field)
+
+        if invalid_inc_fields_list:
+            error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

@@ -2,6 +2,7 @@ import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
+from packaging import version
 from typing import Optional
 
 import click
@@ -482,6 +483,9 @@ class ValidateManager:
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
         if is_modified and self.is_backward_check:
+            current_file = integration_validator.current_file
+            if current_file["deprecated"] == "yes" or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
+                return integration_validator.is_backward_compatible()
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:

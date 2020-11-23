@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT)
+                                                   XSOAR_SUPPORT, API_MODULES_PACK)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -231,3 +231,22 @@ class TestPackUniqueFilesValidator:
         warning_val = args_handle_error.get('warning')
         assert handle_error_called_count == 1
         assert warning_val
+
+    def test_validate_pack_no_readme(self, mocker, repo):
+        """
+                        Given:
+                            - Pack with no README.md
+
+                        When:
+                            - Validating a Pack than has no README.md file
+
+                        Then:
+                            - Ensure that validation not fails, instead warning message is printed
+                        """
+        pack_name = f'PackName.{API_MODULES_PACK}'
+        pack = repo.create_pack(pack_name)
+        os.remove(pack.readme.path)
+        fake_validator = PackUniqueFilesValidator(pack=pack_name, pack_path=pack.path)
+        mocker.patch.object(BaseValidator, 'handle_error')
+        fake_validator.validate_pack_unique_files()
+        assert BaseValidator.handle_error.call_count == 1

@@ -54,10 +54,9 @@ class TestPlaybookValidator:
                                  }
     CONDITION_EXIST_PARTIAL_2 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":
-                                     {'1':
-                                          {'type': 'condition',
-                                           'conditions': [{'label': 'yes'}],
-                                           'nexttasks': {'#default#': ['2']}}}
+                                     {'1': {'type': 'condition',
+                                            'conditions': [{'label': 'yes'}],
+                                            'nexttasks': {'#default#': ['2']}}}
                                  }
     CONDITION_EXIST_PARTIAL_3 = {"id": "Intezer - scan host", "version": -1,
                                  "tasks":

@@ -1419,7 +1419,6 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-
 def get_demisto_version(demisto_client: demisto_client) -> str:
     """
     Args:

@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, open_id_set_file, print_warning
+from demisto_sdk.commands.common.tools import (LOG_COLORS, open_id_set_file,
+                                               print_warning)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 

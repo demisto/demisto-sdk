@@ -1135,7 +1135,8 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
-    def test_run_all_validations_on_file_failed(self, file_path):
+    @patch.object(ImageValidator, 'is_valid', return_value=True)
+    def test_run_all_validations_on_deprecated_invalid_file(self, _, file_path):
         """
         Given
         - An invalid deprecated file inside a pack.

@@ -504,7 +504,8 @@ class TestGenerateIntegrationDoc:
         When
             - Running generate_integration_doc command on the integration.
         Then
-            - Validate that the generating setup was created correctly, specifically that the numbers in the lines are not being reset after a list item that contains a table.
+            - Validate that the generating setup was created correctly, specifically that the numbers in the
+            lines are not being reset after a list item that contains a table.
             - Test that the predefined values and default values are added to the README.
     """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
@@ -519,14 +520,17 @@ class TestGenerateIntegrationDoc:
 
 
 def test_generate_table_section_numbered_section():
+    """
         Given
             - A table that should be part of a numbered section (like the setup section of integration README).
         When
             - Running the generate_table_section command.
         Then
             - Validate that the generated table has \t at the beginning of each line.
-        """
+    """
+
     from demisto_sdk.commands.generate_docs.common import generate_table_section
+
     expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
                         '    | python2 | demisto/python2 |', '']
 

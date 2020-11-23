@@ -11,6 +11,7 @@
 * For partner supported content packs, added support for a list of emails.
 * Removed validation of README files from the ***validate*** command.
 * Fixed an issue where the ***validate*** command required release notes for ApiModules pack.
+* Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
 
 # v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.

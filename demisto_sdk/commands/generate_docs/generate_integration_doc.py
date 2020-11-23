@@ -163,7 +163,7 @@ def generate_setup_section(yaml_data: dict):
              'Description': string_escape_md(conf.get('display', '')),
              'Required': conf.get('required', '')})
 
-    section.extend(generate_table_section(access_data, '', horizontal_rule=False))
+    section.extend(generate_table_section(access_data, '', horizontal_rule=False, numbered_section=True))
     section.append('4. Click **Test** to validate the URLs, token, and connection.')
 
     return section

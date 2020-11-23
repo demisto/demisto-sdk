@@ -498,18 +498,6 @@ class TestGenerateIntegrationDoc:
         cls.rm_readme()
 
     def test_generate_integration_doc(self):
-        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
-        # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
-
-        # Test that the predefined values and default values are added to the README.
-        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
-               in open(fake_readme).read()
-        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
-
-    def test_generate_numbered_section_with_table(self, pack):
         """
         Given
             - generate_table_section command
@@ -519,6 +507,7 @@ class TestGenerateIntegrationDoc:
         Then
             - Validate that the generating setup was created correctly, the numbers in the list are not being reset,
              after a list item that contains a table
+            - Test that the predefined values and default values are added to the README.
     """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
@@ -526,20 +515,9 @@ class TestGenerateIntegrationDoc:
         assert open(fake_readme).read() == open(
             os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
 
-        table = """
-1. Navigate to **Settings** > **Integrations** > **Servers & Services**.
-2. Search for Zoom.
-3. Click **Add instance** to create and configure a new integration instance.
-
-    | **Parameter** | **Description** | **Required** |
-    | --- | --- | --- |
-    | apiKey |  | True |
-    | apiSecret |  | True |
-    | proxy | Use system proxy settings | False |
-
-4. Click **Test** to validate the URLs, token, and connection."""
-
-        assert table in open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
+               in open(fake_readme).read()
+        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
 
 
 def test_generate_table_section_numbered_section():

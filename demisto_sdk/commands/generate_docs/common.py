@@ -96,7 +96,8 @@ def generate_list_section(title, data='', horizontal_rule=False, empty_message='
     return section
 
 
-def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True, numbered_section=False):
+def generate_table_section(data: list, title: str, empty_message: str = '', text: str = '',
+                           horizontal_rule: bool = True, numbered_section: bool = False):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
@@ -104,6 +105,7 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     :param empty_message: message to print when there is no data.
     :param text: message to print after table header.
     :param horizontal_rule: add horizontal rule after title.
+    :param numbered_section: is the table part of numbered sections.
     :return: array of strings contains the table in markdown format.
     """
     section = []

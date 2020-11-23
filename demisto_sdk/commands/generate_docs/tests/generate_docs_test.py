@@ -500,13 +500,11 @@ class TestGenerateIntegrationDoc:
     def test_generate_integration_doc(self):
         """
         Given
-            - generate_table_section command
-            - integration
+            - YML file representing an integration.
         When
-            - running generate_integration_doc command on the integration, generating setup section
+            - Running generate_integration_doc command on the integration.
         Then
-            - Validate that the generating setup was created correctly, the numbers in the list are not being reset,
-             after a list item that contains a table
+            - Validate that the generating setup was created correctly, specifically that the numbers in the lines are not being reset after a list item that contains a table.
             - Test that the predefined values and default values are added to the README.
     """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
@@ -521,7 +519,6 @@ class TestGenerateIntegrationDoc:
 
 
 def test_generate_table_section_numbered_section():
-    """Unit test
         Given
             - A table that should be part of a numbered section (like the setup section of integration README).
         When

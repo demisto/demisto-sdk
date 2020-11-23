@@ -9,7 +9,7 @@
 * Updated the **download** command to support mappers.
 * Fixed an issue where the ***format*** command added a duplicate parameter.
 * For partner supported content packs, added support for a list of emails.
-* Fixed an issue where the ***validate*** command failed when pack has no README file.
+* Removed validation of README files from the ***validate*** command.
 
 # v1.2.9
 * Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.

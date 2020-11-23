@@ -31,17 +31,16 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if classifier is valid, else False.
         """
-        # if not self.new_classifier_version:
-
-        # return all([
-        #     super().is_valid_file(validate_rn),
-        #     self.is_valid_version(),
-        #     self.is_valid_from_version(),
-        #     self.is_valid_to_version(),
-        #     self.is_to_version_higher_from_version(),
-        #     self.is_valid_type(),
-        #     self.is_valid_incident_field()
-        # ])
+        if not self.new_classifier_version:
+            return all([
+                super().is_valid_file(validate_rn),
+                self.is_valid_version(),
+                self.is_valid_from_version(),
+                self.is_valid_to_version(),
+                self.is_to_version_higher_from_version(),
+                self.is_valid_type(),
+                self.is_valid_incident_field()
+            ])
 
         return all([
             super().is_valid_file(validate_rn),

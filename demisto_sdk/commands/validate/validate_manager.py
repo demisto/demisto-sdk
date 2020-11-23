@@ -152,6 +152,7 @@ class ValidateManager:
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
+            click.echo('\nDDDDD: validate on specific files')
             is_valid = self.run_validation_on_specific_files()
         else:
             # default validate to -g --post-commit
@@ -482,10 +483,16 @@ class ValidateManager:
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
-        if is_modified and self.is_backward_check:
-            current_file = integration_validator.current_file
-            if current_file["deprecated"] or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
+
+        current_file = integration_validator.current_file
+        if current_file["deprecated"] or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
+            if is_modified and self.is_backward_check:
                 return integration_validator.is_backward_compatible()
+            click.echo(f"File is either deprecated or has 'toversion' < 4.5.0. Skipping:"
+                       f" {structure_validator.file_path}")
+            return True
+
+        if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:

@@ -1146,6 +1146,7 @@ class TestValidators:
         Then
         - Only Backwards compatibility will be checked and validation will pass.
         """
+
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

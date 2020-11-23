@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
-
+from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
 TO_VERSION_FOR_OLD_CLASSIFIER = '5.9.9'
@@ -31,16 +31,7 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if classifier is valid, else False.
         """
-        if self.new_classifier_version:
-            return all([
-                super().is_valid_file(validate_rn),
-                self.is_valid_version(),
-                self.is_valid_from_version(),
-                self.is_valid_to_version(),
-                self.is_to_version_higher_from_version(),
-                self.is_valid_type()
-            ])
-        else:
+        if not self.new_classifier_version:
             return all([
                 super().is_valid_file(validate_rn),
                 self.is_valid_version(),
@@ -50,6 +41,15 @@ class ClassifierValidator(ContentEntityValidator):
                 self.is_valid_type(),
                 self.is_valid_incident_field()
             ])
+
+        return all([
+            super().is_valid_file(validate_rn),
+            self.is_valid_version(),
+            self.is_valid_from_version(),
+            self.is_valid_to_version(),
+            self.is_to_version_higher_from_version(),
+            self.is_valid_type()
+        ])
 
     def is_valid_version(self):
         """Checks if version field is valid. uses default method.
@@ -160,7 +160,8 @@ class ClassifierValidator(ContentEntityValidator):
 
         invalid_inc_fields_list = []
         for mapper_inc_field in mapper_incident_fields:
-            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS:
+            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS \
+                    and mapper_inc_field not in LAYOUT_BUILT_IN_FIELDS:
                 invalid_inc_fields_list.append(mapper_inc_field) if mapper_inc_field not in invalid_inc_fields_list \
                     else None
 

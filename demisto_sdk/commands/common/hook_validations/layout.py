@@ -89,10 +89,18 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             for inc_name, inc_field in content_inc_field.items():
                 content_incident_fields.append(inc_name)
 
+        content_indicator_fields = []
+        content_all_indicator_fields = id_set.get('IndicatorFields')
+        for content_ind_field in content_all_indicator_fields:
+            for ind_name, ind_field in content_ind_field.items():
+                content_indicator_fields.append(ind_name)
+
         built_in_fields_layout = ['incident_' + field.lower() for field in BUILT_IN_FIELDS]
         invalid_inc_fields_list = []
         for layout_inc_field in layout_incident_fields:
-            if layout_inc_field not in content_incident_fields and layout_inc_field not in built_in_fields_layout:
+            if layout_inc_field and layout_inc_field not in content_incident_fields and \
+                    layout_inc_field not in content_indicator_fields and layout_inc_field not in built_in_fields_layout \
+                    and layout_inc_field not in LAYOUT_BUILT_IN_FIELDS:
                 invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
                     else None
 

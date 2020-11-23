@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
 
 import os
 
@@ -129,7 +130,8 @@ class MapperValidator(ContentEntityValidator):
 
         invalid_inc_fields_list = []
         for mapper_inc_field in mapper_incident_fields:
-            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS:
+            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS \
+                    and mapper_inc_field not in LAYOUT_BUILT_IN_FIELDS:
                 invalid_inc_fields_list.append(mapper_inc_field) if mapper_inc_field not in invalid_inc_fields_list \
                     else None
 

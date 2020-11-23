@@ -1421,6 +1421,27 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     return parse(about_data.get('demistoVersion'))
 
 
+def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
+    """
+       Converts a string representation of lists to a python list
+       Args:
+              arg: string or list of string.
+              separator: A string separator to separate the strings, the default is a comma.
+       Returns:
+             list, contains strings.
+
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, str):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return [arg]
+
+
 def open_id_set_file(id_set_path):
     id_set = None
     try:

@@ -5,8 +5,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   PACK_METADATA_SUPPORT,
+from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,

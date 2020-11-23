@@ -468,7 +468,6 @@ def test_format_on_relative_path_playbook(mocker, repo):
     Given
     - playbook to validate on with a relative path
 
-
     When
     - Running format
     - Running validate

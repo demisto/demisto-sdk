@@ -504,8 +504,7 @@ class TestGenerateIntegrationDoc:
         When
             - Running generate_integration_doc command on the integration.
         Then
-            - Validate that the generating setup was created correctly, specifically that the numbers in the
-            lines are not being reset after a list item that contains a table.
+            - Validate that the integration README was created correctly, specifically that line numbers are not being reset after a table.
             - Test that the predefined values and default values are added to the README.
     """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')

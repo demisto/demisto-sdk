@@ -545,12 +545,11 @@ class TestGenerateIntegrationDoc:
 def test_generate_table_section_numbered_section():
     """Unit test
         Given
-            - generate_table_section command
-            - table, that part of numbered section.
+            - A table that should be part of a numbered section (like the setup section of integration README).
         When
-            - generating setup section of integration
+            - Running the generate_table_section command.
         Then
-            - Validate that the table has \t at all lines.
+            - Validate that the generated table has \t at the beginning of each line.
         """
     from demisto_sdk.commands.generate_docs.common import generate_table_section
     expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',

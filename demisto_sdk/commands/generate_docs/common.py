@@ -96,7 +96,7 @@ def generate_list_section(title, data='', horizontal_rule=False, empty_message='
     return section
 
 
-def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True):
+def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True, numbered_section=False):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
@@ -117,14 +117,14 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
         section.extend([empty_message, ''])
         return section
 
-    section.extend([text, '|', '|'])
+    section.extend([text, '    |', '    |']) if numbered_section else section.extend([text, '|', '|'])
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f' **{key}** |'
         section[header_index + 1] += ' --- |'
 
     for item in data:
-        tmp_item = '|'
+        tmp_item = '    |' if numbered_section else '|'
         for key in item:
             tmp_item += f" {string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True)} |"
         section.append(tmp_item)

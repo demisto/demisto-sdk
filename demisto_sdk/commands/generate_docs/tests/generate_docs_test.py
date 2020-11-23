@@ -510,6 +510,16 @@ class TestGenerateIntegrationDoc:
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
 
     def test_generate_numbered_section_with_table(self, pack):
+        """
+        Given
+            - generate_table_section command
+            - integration
+        When
+            - running generate_integration_doc command on the integration, generating setup section
+        Then
+            - Validate that the generating setup was created correctly, the numbers in the list are not being reset,
+             after a list item that contains a table
+    """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
@@ -530,3 +540,22 @@ class TestGenerateIntegrationDoc:
 4. Click **Test** to validate the URLs, token, and connection."""
 
         assert table in open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+
+
+def test_generate_table_section_numbered_section():
+    """Unit test
+        Given
+            - generate_table_section command
+            - table, that part of numbered section.
+        When
+            - generating setup section of integration
+        Then
+            - Validate that the table has \t at all lines.
+        """
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
+    expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
+                        '    | python2 | demisto/python2 |', '']
+
+    section = generate_table_section(data=[{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
+                                     title='', horizontal_rule=False, numbered_section=True)
+    assert section == expected_section

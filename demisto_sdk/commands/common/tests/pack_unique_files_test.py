@@ -5,11 +5,12 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT, API_MODULES_PACK)
+                                                   XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -208,45 +209,3 @@ class TestPackUniqueFilesValidator:
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
-
-    def test_validate_readme_file(self, repo, mocker):
-        """
-                Given:
-                    - Pack with no README.md
-
-                When:
-                    - Validating a Pack than has no README.md file
-
-                Then:
-                    - Ensure that validation not fails, instead warning message is printed
-                """
-        pack_name = 'PackName'
-        pack = repo.create_pack(pack_name)
-        self.validator.pack_path = pack.path
-        os.remove(pack.readme.path)
-        mocker.patch.object(BaseValidator, 'handle_error')
-        self.validator.validate_readme_file()
-        handle_error_called_count = BaseValidator.handle_error.call_count
-        args_handle_error = BaseValidator.handle_error.call_args_list[0][1]
-        warning_val = args_handle_error.get('warning')
-        assert handle_error_called_count == 1
-        assert warning_val
-
-    def test_validate_pack_no_readme(self, mocker, repo):
-        """
-                        Given:
-                            - Pack with no README.md
-
-                        When:
-                            - Validating a Pack than has no README.md file
-
-                        Then:
-                            - Ensure that validation not fails, instead warning message is printed
-                        """
-        pack_name = f'PackName.{API_MODULES_PACK}'
-        pack = repo.create_pack(pack_name)
-        os.remove(pack.readme.path)
-        fake_validator = PackUniqueFilesValidator(pack=pack_name, pack_path=pack.path)
-        mocker.patch.object(BaseValidator, 'handle_error')
-        fake_validator.validate_pack_unique_files()
-        assert BaseValidator.handle_error.call_count == 1

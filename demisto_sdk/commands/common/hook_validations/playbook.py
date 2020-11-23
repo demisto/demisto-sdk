@@ -18,7 +18,8 @@ class PlaybookValidator(ContentEntityValidator):
         """Check whether the playbook is valid or not.
 
          Args:
-            skip_dependencies: whether dependencies should be skipped
+            skip_dependencies: whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
             is_new_playbook (bool): whether the playbook is new or modified
             validate_rn (bool):  whether we need to validate release notes or not
 
@@ -30,7 +31,6 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         if is_new_playbook:
             new_playbook_checks = [
-                self.is_script_id_valid(skip_dependencies),
                 super().is_valid_file(validate_rn),
                 self.is_valid_version(),
                 self.is_id_equals_name(),
@@ -40,21 +40,22 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_valid_deprecated_playbook()
+                self.is_valid_deprecated_playbook(),
+                self.is_script_id_valid(skip_dependencies),
             ]
             answers = all(new_playbook_checks)
         else:
             # for new playbooks - run all playbook checks.
             # for modified playbooks - id may not be equal to name.
             modified_playbook_checks = [
-                self.is_script_id_valid(skip_dependencies),
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
                 self.is_using_instance(),
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured()
+                self.are_tests_configured(),
+                self.is_script_id_valid(skip_dependencies),
             ]
             answers = all(modified_playbook_checks)
 

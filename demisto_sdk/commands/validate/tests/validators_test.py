@@ -1130,8 +1130,7 @@ class TestValidators:
         assert modified_packs == {'HelloWorld'}
 
     DEPRECATED_FILE_PATHS = [
-        DEPRECATED_INTEGRATION_YML,
-        SMALL_TOVERSION_INTEGRATION_YML
+        DEPRECATED_INTEGRATION_YML
     ]
 
     @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)

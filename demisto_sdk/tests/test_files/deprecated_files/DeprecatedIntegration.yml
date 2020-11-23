@@ -1,1391 +1,610 @@
-category: Endpoint
 commonfields:
-  id: DeprecatedIntegration
+  id: PagerDuty v2
   version: -2
+name: PagerDuty v2
+display: PagerDuty v2 (Deprecated)
+category: Messaging
 deprecated: true
+image: data:image/png;base64,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
+description: Deprecated. Alert and notify users using PagerDuty
 configuration:
-- display: Fetch incidents
-  name: isFetch
-  required: false
-  type: 8
-- display: Incident type
-  name: incidentType
-  required: false
-  type: 13
-- display: Server URL (copy URL from XDR - click ? to see more info.)
-  name: url
-  required: true
-  type: 0
-- display: API Key ID
-  name: apikey_id
-  required: true
-  type: 4
 - display: API Key
-  name: apikey
-  required: true
+  name: APIKey
+  defaultvalue: ""
   type: 4
-- display: Trust any certificate (not secure)
-  name: insecure
-  required: false
-  type: 8
-- display: Use system proxy settings
-  name: proxy
-  required: false
-  type: 8
-- defaultvalue: 3 days
-  display: First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)
-  name: fetch_time
-  required: false
+  required: true
+- display: Service Key (for triggering events only)
+  name: ServiceKey
+  defaultvalue: ""
   type: 0
-description: Cortex XDR is the world's first detection and response app that natively
-  integrates network, endpoint and cloud data to stop sophisticated attacks.
-display: Palo Alto Networks Cortex XDR - Investigation and Response
-name: DeprecatedIntegration
+  required: false
 script:
-  commands:
-  - arguments:
-    - default: false
-      description: Time format 2019-12-31T23:59:00.
-      isArray: false
-      name: lte_creation_time
-      required: false
-      secret: false
-    - default: false
-      description: Returned incidents that were created on or after the specified
-        date/time, in the format 2019-12-31T23:59:00.
-      isArray: false
-      name: gte_creation_time
-      required: false
-      secret: false
-    - default: false
-      description: Filters returned incidents that were created on or before the specified
-        date/time, in the format 2019-12-31T23:59:00.
-      isArray: false
-      name: lte_modification_time
-      required: false
-      secret: false
-    - default: false
-      description: Filters returned incidents that were modified on or after the specified
-        date/time, in the format 2019-12-31T23:59:00.
-      isArray: false
-      name: gte_modification_time
-      required: false
-      secret: false
-    - default: false
-      description: An array or CSV string of incident IDs.
-      isArray: true
-      name: incident_id_list
-      required: false
-      secret: false
-    - default: false
-      description: Filters returned incidents that were created on or after the specified
-        date/time range, for example, 1 month, 2 days, 1 hour, and so on.
-      isArray: false
-      name: since_creation_time
-      required: false
-      secret: false
-    - default: false
-      description: Filters returned incidents that were modified on or after the specified
-        date/time range, for example, 1 month, 2 days, 1 hour, and so on.
-      isArray: false
-      name: since_modification_time
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Sorts returned incidents by the date/time that the incident was
-        last modified ("asc" - ascending, "desc" - descending).
-      isArray: false
-      name: sort_by_modification_time
-      predefined:
-      - asc
-      - desc
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Sorts returned incidents by the date/time that the incident was
-        created ("asc" - ascending, "desc" - descending).
-      isArray: false
-      name: sort_by_creation_time
-      predefined:
-      - asc
-      - desc
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '0'
-      description: Page number (for pagination). The default is 0 (the first page).
-      isArray: false
-      name: page
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '100'
-      description: Maximum number of incidents to return per page. The default and
-        maximum is 100.
-      isArray: false
-      name: limit
-      required: false
-      secret: false
-    deprecated: false
-    description: |-
-      Returns a list of incidents, which you can filter by a list of incident IDs (max. 100), the time the incident was last modified, and the time the incident was created.
-      If you pass multiple filtering arguments, they will be concatenated using the AND condition. The OR condition is not supported.
-    execution: false
-    name: xdr-get-incidents
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Incident.incident_id
-      description: Unique ID assigned to each returned incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.manual_severity
-      description: Incident severity assigned by the user. This does not affect the
-        calculated severity. Can be "low", "medium", "high"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.manual_description
-      description: Incident description provided by the user.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.assigned_user_mail
-      description: Email address of the assigned user.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.high_severity_alert_count
-      description: Number of alerts with the severity HIGH.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.host_count
-      description: Number of hosts involved in the incident.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.xdr_url
-      description: A link to the incident view on XDR.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.assigned_user_pretty_name
-      description: Full name of the user assigned to the incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alert_count
-      description: Total number of alerts in the incident.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.med_severity_alert_count
-      description: Number of alerts with the severity MEDIUM.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.user_count
-      description: Number of users involved in the incident.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.severity
-      description: |
-        Calculated severity of the incident
-        "low","medium","high"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.low_severity_alert_count
-      description: Number of alerts with the severity LOW.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.status
-      description: |
-        Current status of the incident. Can be "new","under_investigation","resolved_threat_handled","resolved_known_issue","resolved_duplicate","resolved_false_positive", or "resolved_other".
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.description
-      description: Dynamic calculated description of the incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.resolve_comment
-      description: Comments entered by the user when the incident was resolved.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.notes
-      description: Comments entered by the user regarding the incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.creation_time
-      description: Date and time the incident was created on XDR.
-      type: date
-    - contextPath: PaloAltoNetworksXDR.Incident.detection_time
-      description: Date and time that the first alert occurred in the incident.
-      type: date
-    - contextPath: PaloAltoNetworksXDR.Incident.modification_time
-      description: Date and time that the incident was last modified.
-      type: date
-  - arguments:
-    - default: false
-      description: The ID of the incident for which to get additional data.
-      isArray: false
-      name: incident_id
-      required: true
-      secret: false
-    - default: false
-      defaultValue: '1000'
-      description: Maximum number of alerts to return. Default is 1,000.
-      isArray: false
-      name: alerts_limit
-      required: false
-      secret: false
-    deprecated: false
-    description: Returns additional data for the specified incident, for example,
-      related alerts, file artifacts, network artifacts, and so on.
-    execution: false
-    name: xdr-get-incident-extra-data
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Incident.incident_id
-      description: Unique ID assigned to each returned incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.creation_time
-      description: Date and time the incident was created on XDR.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Incident.modification_time
-      description: Date and time that the incident was last modified.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Incident.detection_time
-      description: Date and time that the first alert occurred in the incident.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Incident.status
-      description: |-
-        Current status of the incident:
-        "new","under_investigation","resolved_threat_handled","resolved_known_issue","resolved_duplicate","resolved_false_positive","resolved_other"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.severity
-      description: Calculated severity of the incident "low","medium","high"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.description
-      description: Dynamic calculated description of the incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.assigned_user_mail
-      description: Email address of the assigned user.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.assigned_user_pretty_name
-      description: Full name of the user assigned to the incident.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alert_count
-      description: Total number of alerts in the incident.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.low_severity_alert_count
-      description: Number of alerts with the severity LOW.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.med_severity_alert_count
-      description: Number of alerts with the severity MEDIUM.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.high_severity_alert_count
-      description: Number of alerts with the severity HIGH.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.user_count
-      description: Number of users involved in the incident.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.host_count
-      description: Number of hosts involved in the incident
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.notes
-      description: Comments entered by the user regarding the incident.
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Incident.resolve_comment
-      description: Comments entered by the user when the incident was resolved.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.manual_severity
-      description: Incident severity assigned by the user. This does not affect the
-        calculated severity low medium high
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.manual_description
-      description: Incident description provided by the user.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.xdr_url
-      description: A link to the incident view on XDR.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.starred
-      description: Incident starred
-      type: Boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.alert_id
-      description: Unique ID for each alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.detection_timestamp
-      description: Date and time that the alert occurred.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.source
-      description: Source of the alert. The product/vendor this alert came from.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.severity
-      description: Severity of the alert.,"low","medium","high"""
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.name
-      description: Calculated name of the alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.category
-      description: Category of the alert, for example, Spyware Detected via Anti-Spyware
-        profile.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.description
-      description: Textual description of the alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.host_ip
-      description: Host IP involved in the alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.host_name
-      description: Host name involved in the alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.user_name
-      description: User name involved with the alert.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.event_type
-      description: Event type "Process Execution","Network Event","File Event","Registry
-        Event","Injection Event","Load Image Event","Windows Event Log"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action
-      description: The action that triggered the alert. "REPORTED", "BLOCKED", "POST_DETECTED",
-        "SCANNED", "DOWNLOAD", "PROMPT_ALLOW", "PROMPT_BLOCK", "DETECTED", "BLOCKED_1",
-        "BLOCKED_2", "BLOCKED_3", "BLOCKED_5", "BLOCKED_6", "BLOCKED_7", "BLOCKED_8",
-        "BLOCKED_9", "BLOCKED_10", "BLOCKED_11", "BLOCKED_13", "BLOCKED_14", "BLOCKED_15",
-        "BLOCKED_16", "BLOCKED_17", "BLOCKED_24", "BLOCKED_25", "DETECTED_0", "DETECTED_4",
-        "DETECTED_18", "DETECTED_19", "DETECTED_20", "DETECTED_21", "DETECTED_22",
-        "DETECTED_23"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_pretty
-      description: The action that triggered the alert "Detected (Reported)" "Prevented
-        (Blocked)" "Detected (Post Detected)" "Detected (Scanned)" "Detected (Download)"
-        "Detected (Prompt Allow)" "Prevented (Prompt Block)" "Detected" "Prevented
-        (Denied The Session)" "Prevented (Dropped The Session)" "Prevented (Dropped
-        The Session And Sent a TCP Reset)" "Prevented (Blocked The URL)" "Prevented
-        (Blocked The IP)" "Prevented (Dropped The Packet)" "Prevented (Dropped All
-        Packets)" "Prevented (Terminated The Session And Sent a TCP Reset To Both
-        Sides Of The Connection)" "Prevented (Terminated The Session And Sent a TCP
-        Reset To The Client)" "Prevented (Terminated The Session And Sent a TCP Reset
-        To The Server)" "Prevented (Continue)" "Prevented (Block-Override)" "Prevented
-        (Override-Lockout)" "Prevented (Override)" "Prevented (Random-Drop)" "Prevented
-        (Silently Dropped The Session With An ICMP Unreachable Message To The Host
-        Or Application)" "Prevented (Block)" "Detected (Allowed The Session)" "Detected
-        (Raised An Alert)" "Detected (Syncookie Sent)" "Detected (Forward)" "Detected
-        (Wildfire Upload Success)" "Detected (Wildfire Upload Failure)" "Detected
-        (Wildfire Upload Skip)" "Detected (Sinkhole)"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.actor_process_image_name
-      description: Image name
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.actor_process_command_line
-      description: Command line
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.actor_process_signature_status
-      description: Signature status "Signed" "Invalid Signature" "Unsigned" "Revoked"
-        "Signature Fail" "N/A" "Weak Hash"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.actor_process_signature_vendor
-      description: Singature vendor name
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.causality_actor_process_image_name
-      description: Image name
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.causality_actor_process_command_line
-      description: Command line
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.causality_actor_process_signature_status
-      description: Signature status "Signed" "Invalid Signature" "Unsigned" "Revoked"
-        "Signature Fail" "N/A" "Weak Hash"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.causality_actor_process_signature_vendor
-      description: Signature vendor
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.causality_actor_causality_id
-      description: Causality id
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_process_image_name
-      description: Image name
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_process_image_command_line
-      description: Command line
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_process_image_sha256
-      description: Image SHA256
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_process_signature_status
-      description: Signature status "Signed" "Invalid Signature" "Unsigned" "Revoked"
-        "Signature Fail" "N/A" "Weak Hash"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_process_signature_vendor
-      description: Signature vendor name
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_file_path
-      description: File path
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_file_md5
-      description: File MD5
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_file_sha256
-      description: File SHA256
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_registry_data
-      description: Registry data
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_registry_full_key
-      description: Registry full key
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_local_ip
-      description: Local IP
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_local_port
-      description: Local port
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_remote_ip
-      description: Remote IP
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_remote_port
-      description: Remote port
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.action_external_hostname
-      description: External hostname
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.fw_app_id
-      description: Firewall app id
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.is_whitelisted
-      description: Is whitelisted "Yes" "No"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.alerts.starred
-      description: Alert starred
-      type: Boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.type
-      description: Network artifact type "IP"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.network_remote_port
-      description: The remote port related to the artifact.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.alert_count
-      description: Number of alerts related to the artifact.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.network_remote_ip
-      description: The remote IP related to the artifact.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.is_manual
-      description: Whether the artifact was created by the user (manually).
-      type: boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.network_domain
-      description: The domain related to the artifact.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.type
-      description: The artifact type. "META", "GID", "CID", "HASH", "IP", "DOMAIN",
-        "REGISTRY", "HOSTNAME"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.network_artifacts.network_country
-      description: The country related to the artifact
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.file_signature_status
-      description: Digital signature status of the file. "SIGNATURE_UNAVAILABLE" "SIGNATURE_SIGNED"
-        "SIGNATURE_INVALID" "SIGNATURE_UNSIGNED" "SIGNATURE_WEAK_HASH"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.is_process
-      description: Whether the file artifact is related to a process execution.
-      type: boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.file_name
-      description: Name of the file.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.file_wildfire_verdict
-      description: The file verdict, calculated by Wildfire. "BENIGN" "MALWARE" "GRAYWARE"
-        "PHISING" "UNKNOWN"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.alert_count
-      description: Number of alerts related to the artifact.
-      type: number
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.is_malicious
-      description: Whether the artifact is malicious, decided by the Wildfire verdic
-      type: boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.is_manual
-      description: Whether the artifact was created by the user (manually).
-      type: boolean
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.type
-      description: The artifact type "META" "GID" "CID" "HASH" "IP" "DOMAIN" "REGISTRY"
-        "HOSTNAME"
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.file_sha256
-      description: SHA-256 hash of the file
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Incident.file_artifacts.file_signature_vendor_name
-      description: File signature vendor name
-      type: String
-  - arguments:
-    - default: false
-      description: XDR incident ID. You can get the incident ID from the output of
-        the 'xdr-get-incidents' command or the 'xdr-get-incident-extra-details' command.
-      isArray: false
-      name: incident_id
-      required: true
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Severity to assign to the incident (LOW, MEDIUM, or HIGH).
-      isArray: false
-      name: manual_severity
-      predefined:
-      - HIGH
-      - MEDIUM
-      - LOW
-      required: false
-      secret: false
-    - default: false
-      description: Email address of the user to assigned to the incident.
-      isArray: false
-      name: assigned_user_mail
-      required: false
-      secret: false
-    - default: false
-      description: Full name of the user assigned to the incident.
-      isArray: false
-      name: assigned_user_pretty_name
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Status of the incident (NEW, UNDER_INVESTIGATION, RESOLVED_THREAT_HANDLED,
-        RESOLVED_KNOWN_ISSUE, RESOLVED_DUPLICATE, RESOLVED_FALSE_POSITIVE, RESOLVED_OTHER).
-      isArray: false
-      name: status
-      predefined:
-      - NEW
-      - UNDER_INVESTIGATION
-      - RESOLVED_THREAT_HANDLED
-      - RESOLVED_KNOWN_ISSUE
-      - RESOLVED_DUPLICATE
-      - RESOLVED_FALSE_POSITIVE
-      - RESOLVED_OTHER
-      required: false
-      secret: false
-    - default: false
-      description: Comment explaining why the incident was resolved. This should be
-        set when the incident is resolved.
-      isArray: false
-      name: resolve_comment
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: If true, will remove all assigned users from the incident.
-      isArray: false
-      name: unassign_user
-      predefined:
-      - 'true'
-      required: false
-      secret: false
-    deprecated: false
-    description: Updates one or more fields of a specified incident. Missing fields
-      will be ignored. To remove the assignment for an incident, pass a null value
-      in assignee email argument.
-    execution: false
-    name: xdr-update-incident
-  - arguments:
-    - default: false
-      description: String value that defines the product.
-      isArray: false
-      name: product
-      required: true
-      secret: false
-    - default: false
-      description: String value that defines the product.
-      isArray: false
-      name: vendor
-      required: true
-      secret: false
-    - default: false
-      description: String value for the source IP address
-      isArray: false
-      name: local_ip
-      required: false
-      secret: false
-    - default: false
-      description: Integer value for the source port.
-      isArray: false
-      name: local_port
-      required: true
-      secret: false
-    - default: false
-      description: |-
-        String value of the destination IP
-        address.
-      isArray: false
-      name: remote_ip
-      required: true
-      secret: false
-    - default: false
-      description: |-
-        Integer value for the destination
-        port.
-      isArray: false
-      name: remote_port
-      required: true
-      secret: false
-    - default: false
-      description: Integer value representing the epoch of the time the alert occurred
-        in milliseconds or String value of date format 2019-10-23T10:00:00. If not
-        set then the event time will be defined as now.
-      isArray: false
-      name: event_timestampt
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: |-
-        String value of alert severity:
-        Informational, Low, Medium, High, or Unknown
-      isArray: false
-      name: severity
-      predefined:
-      - Informational
-      - Low
-      - Medium
-      - High
-      - Unknown
-      required: false
-      secret: false
-    - default: false
-      description: String defining the alert name
-      isArray: false
-      name: alert_name
-      required: true
-      secret: false
-    - default: false
-      description: String defining the alert description
-      isArray: false
-      name: alert_description
-      required: false
-      secret: false
-    deprecated: false
-    description: |-
-      Upload alert from external alert sources in Cortex XDR format. Cortex XDR displays alerts that are parsed
-      successfully in related incidents and views. You can send 600 alerts per minute. Each request can contain a
-      maximum of 60 alerts.
-    execution: false
-    name: xdr-insert-parsed-alert
-  - arguments:
-    - default: false
-      description: List of alerts in CEF format.
-      isArray: true
-      name: cef_alerts
-      required: true
-      secret: false
-    deprecated: false
-    description: Upload alerts in CEF format from external alert sources. After you
-      map CEF alert fields to Cortex XDR fields, Cortex XDR displays the alerts in
-      related incidents and views. You can send 600 requests per minute. Each request
-      can contain a maximum of 60 alerts.
-    execution: false
-    name: xdr-insert-cef-alerts
-  - arguments:
-    - default: false
-      description: The endpoint ID (string) to isolate. You can retrieve the string from the xdr-get-endpoints
-        command.
-      isArray: false
-      name: endpoint_id
-      required: true
-      secret: false
-    deprecated: false
-    description: Isolates the specified endpoint.
-    execution: true
-    name: xdr-isolate-endpoint
-  - arguments:
-    - default: false
-      description: The endpoint ID (string) for which to reverse the isolation. You can retrieve it from the xdr-get-endpoints
-        command.
-      isArray: false
-      name: endpoint_id
-      required: true
-      secret: false
-    deprecated: false
-    description: Reverses the isolation of an endpoint.
-    execution: true
-    name: xdr-unisolate-endpoint
-  - arguments:
-    - default: false
-      description: A comma-separated list of endpoint IDs.
-      isArray: true
-      name: endpoint_id_list
-      required: false
-      secret: false
-    - default: false
-      description: "A comma-separated list of distribution package names or installation package names. \nExample: dist_name1,dist_name2"
-      isArray: true
-      name: dist_name
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        A comma-separated list of IP addresses.
-        Example: 8.8.8.8,1.1.1.1
-      isArray: true
-      name: ip_list
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        The group name to which the agent belongs.
-        Example: group_name1,group_name2
-      isArray: true
-      name: group_name
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: 'The endpoint platform. Can be "windows", "linux", "macos", or "android". '
-      isArray: true
-      name: platform
-      predefined:
-      - windows
-      - linux
-      - macos
-      - android
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        A comma-separated list of alias names.
-        Examples: alias_name1,alias_name2
-      isArray: true
-      name: alias_name
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: |-
-        "Specifies whether the endpoint was isolated or unisolated. Can be "isolated" or "unisolated".
-      isArray: false
-      name: isolate
-      predefined:
-      - isolated
-      - unisolated
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        Hostname
-        Example: hostname1,hostname2
-      isArray: true
-      name: hostname
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        All the agents that were first seen after {first_seen_gte}.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: first_seen_gte
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        All the agents that were first seen before {first_seen_lte}.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: first_seen_lte
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        All the agents that were last seen before {last_seen_gte}.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: last_seen_gte
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        All the agents that were last seen before {last_seen_lte}.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: last_seen_lte
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '0'
-      description: Page number (for pagination). The default is 0 (the first page).
-      isArray: false
-      name: page
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '30'
-      description: Maximum number of endpoints to return per page. The default and
-        maximum is 30.
-      isArray: false
-      name: limit
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Specifies whether to sort endpoints by the first time or last time they were seen. Can be "first_seen" or "last_seen".
-      isArray: false
-      name: sort_by
-      predefined:
-      - first_seen
-      - last_seen
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      defaultValue: asc
-      description: The order by which to sort results. Can be "asc" (ascending) or "desc" ( descending). Default set to
-        asc.
-      isArray: false
-      name: sort_order
-      predefined:
-      - asc
-      - desc
-      required: false
-      secret: false
-    deprecated: false
-    description: Gets a list of endpoints, according to the passed filters. Filtering by multiple fields will
-      be concatenated using AND condition (OR is not supported). Maximum result set
-      size is 100. Offset is the zero-based number of endpoint from the start of the
-      result set (start by counting from 0).
-    execution: false
-    name: xdr-get-endpoints
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Endpoint.endpoint_id
-      description: The endpoint ID.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.endpoint_name
-      description: The endpoint name.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.endpoint_type
-      description: 'The endpoint type.'
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.endpoint_status
-      description: The status of the endpoint'
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.os_type
-      description: 'The endpoint OS type.'
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.ip
-      description: A list of IP addresses.
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Endpoint.users
-      description: A list of users.
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Endpoint.domain
-      description: The endpoint domain.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.alias
-      description: The endpoint's aliases.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.first_seen
-      description: First seen date/time in Epoch (milliseconds).
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.Endpoint.last_seen
-      description: Last seen date/time in Epoch (milliseconds).
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Endpoint.content_version
-      description: Content version.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.installation_package
-      description: Installation package.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.active_directory
-      description: Active directory.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.install_date
-      description: Install date in Epoch (milliseconds).
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.Endpoint.endpoint_version
-      description: Endpoint version.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.is_isolated
-      description: 'Whether the endpoint is isolated.'
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Endpoint.group_name
-      description: The name of the group to which the endpoint belongs.
-      type: String
-  - deprecated: false
-    description: Gets a list of all the agent versions to use for creating a distribution
-      list.
-    execution: false
-    name: xdr-get-distribution-versions
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.DistributionVersions.windows
-      description: A list of Windows agent versions.
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.DistributionVersions.linux
-      description: A list of Linux agent versions.
-      type: Unknown
-    - contextPath: PaloAltoNetworksXDR.DistributionVersions.macos
-      description: A list of Mac agent versions.
-      type: Unknown
-  - arguments:
-    - default: false
-      description: A string representing the name of the installation package.
-      isArray: false
-      name: name
-      required: true
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: "String, valid values are:\n• windows \n• linux\n• macos \n• android"
-      isArray: false
-      name: platform
-      predefined:
-      - windows
-      - linux
-      - macos
-      - android
-      required: true
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: |-
-        A string representing the type of package to create.
-        standalone - An installation for a new agent
-        upgrade - An upgrade of an agent from ESM
-      isArray: false
-      name: package_type
-      predefined:
-      - standalone
-      - upgrade
-      required: true
-      secret: false
-    - default: false
-      description: agent_version returned from xdr-get-distribution-versions. Not
-        required for Android platfom
-      isArray: false
-      name: agent_version
-      required: true
-      secret: false
-    - default: false
-      description: Information about the package.
-      isArray: false
-      name: description
-      required: false
-      secret: false
-    deprecated: false
-    description: Creates an installation package. This is an asynchronous call that returns
-      the distribution ID. This does not mean that the creation succeeded. To confirm
-      that the package has been created, check the status of the distribution by running
-      the Get Distribution Status API.
-    execution: false
-    name: xdr-create-distribution
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Distribution.id
-      description: The installation package ID.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.name
-      description: The name of the installation package.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.platform
-      description: The installation OS.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.agent_version
-      description: Agent version.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.description
-      description: Information about the package.
-      type: String
-  - arguments:
-    - default: false
-      description: |-
-        The ID of the installation package.
-        Copy the distribution_id from the "id" field on Endpoints > Agent Installation page.
-      isArray: false
-      name: distribution_id
-      required: true
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: |-
-        The installation package type. Valid
-        values are:
-        • upgrade
-        • sh - For Linux
-        • rpm - For Linux
-        • deb - For Linux
-        • pkg - For Mac
-        • x86 - For Windows
-        • x64 - For Windows
-      isArray: false
-      name: package_type
-      predefined:
-      - upgrade
-      - sh
-      - rpm
-      - deb
-      - pkg
-      - x86
-      - x64
-      required: true
-      secret: false
-    deprecated: false
-    description: Gets the distribution URL for downloading the installation package.
-    execution: false
-    name: xdr-get-distribution-url
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Distribution.id
-      description: Distribution ID.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.url
-      description: URL for downloading the installation package.
-      type: String
-  - arguments:
-    - default: false
-      description: A comma-separated list of distribution IDs to get the status of.
-      isArray: true
-      name: distribution_ids
-      required: true
-      secret: false
-    deprecated: false
-    description: Gets the status of the installation package.
-    execution: false
-    name: xdr-get-create-distribution-status
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.Distribution.id
-      description: Distribution ID.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.Distribution.status
-      description: The status of installation package.
-      type: String
-  - arguments:
-    - default: false
-      description: User’s email address.
-      isArray: false
-      name: email
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: The audit log type.
-      isArray: false
-      name: type
-      predefined:
-      - REMOTE_TERMINAL
-      - RULES
-      - AUTH
-      - RESPONSE
-      - INCIDENT_MANAGEMENT
-      - ENDPOINT_MANAGEMENT
-      - ALERT_WHITELIST
-      - PUBLIC_API
-      - DISTRIBUTIONS
-      - STARRED_INCIDENTS
-      - POLICY_PROFILES
-      - DEVICE_CONTROL_PROFILE
-      - HOST_FIREWALL_PROFILE
-      - POLICY_RULES
-      - PROTECTION_POLICY
-      - DEVICE_CONTROL_TEMP_EXCEPTIONS
-      - DEVICE_CONTROL_GLOBAL_EXCEPTIONS
-      - GLOBAL_EXCEPTIONS
-      - MSSP
-      - REPORTING
-      - DASHBOARD
-      - BROKER_VM
-      required: false
-      secret: false
-    - default: false
-      description: The audit log subtype.
-      isArray: false
-      name: sub_type
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Result type
-      isArray: false
-      name: result
-      predefined:
-      - SUCCESS
-      - FAIL
-      - PARTIAL
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        Return logs for which the timestamp is after 'log_time_after'.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: timestamp_gte
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        Return logs for which the timestamp is before the 'log_time_after'.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: timestamp_lte
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '0'
-      description: Page number (for pagination). The default is 0 (the first page).
-      isArray: false
-      name: page
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '30'
-      description: Maximum number of audit logs to return per page. The default and
-        maximum is 30.
-      isArray: false
-      name: limit
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: Specifies the field by which to sort the results. By default the sort
-        is defined as creation-time and DESC. Can be "type", "sub_type", "result", or "timestamp".
-      isArray: false
-      name: sort_by
-      predefined:
-      - type
-      - sub_type
-      - result
-      - timestamp
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      defaultValue: desc
-      description: 'The sort order. Can be "asc" (ascending) or "desc" (descending). Default set to "desc". '
-      isArray: false
-      name: sort_order
-      predefined:
-      - asc
-      - desc
-      required: false
-      secret: false
-    deprecated: false
-    description: Gets management logs. You can filter by multiple fields, which will be concatenated
-      using AND condition (OR is not supported). Maximum result set size is 100. Offset
-      is the zero-based number of management logs from the start of the result set
-      (start by counting from 0).
-    execution: false
-    name: xdr-get-audit-management-logs
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_ID
-      description: Audit log ID.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_OWNER_NAME
-      description: Audit owner name.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_OWNER_EMAIL
-      description: Audit owner email address.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_ASSET_JSON
-      description: Asset JSON.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_ASSET_NAMES
-      description: Audit asset names.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_HOSTNAME
-      description: Host name.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_RESULT
-      description: Audit result.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_REASON
-      description: Audit reason.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_DESCRIPTION
-      description: Description of the audit.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_ENTITY
-      description: Audit entity (e.g., AUTH, DISTRIBUTIONS).
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_ENTITY_SUBTYPE
-      description: Entity subtype (e.g., Login, Create).
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_CASE_ID
-      description: Audit case ID.
-      type: Number
-    - contextPath: PaloAltoNetworksXDR.AuditManagementLogs.AUDIT_INSERT_TIME
-      description: Log's insert time.
-      type: Date
-  - arguments:
-    - default: false
-      description: A comma-separated list of endpoint IDs.
-      isArray: true
-      name: endpoint_ids
-      required: false
-      secret: false
-    - default: false
-      description: A comma-separated list of endpoint names.
-      isArray: true
-      name: endpoint_names
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: The report type. Can be "Installation", "Policy", "Action", "Agent Service", "Agent Modules", or "Agent Status".
-      isArray: true
-      name: type
-      predefined:
-      - Installation
-      - Policy
-      - Action
-      - Agent Service
-      - Agent Modules
-      - Agent Status
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: The report subtype.
-      isArray: true
-      name: sub_type
-      predefined:
-      - Install
-      - Uninstall
-      - Upgrade
-      - Local Configuration
-      - Content Update
-      - Policy Update
-      - Process Exception
-      - Hash Exception
-      - Scan
-      - File Retrieval
-      - File Scan
-      - Terminate Process
-      - Isolate
-      - Cancel Isolation
-      - Payload Execution
-      - Quarantine
-      - Restore
-      - Stop
-      - Start
-      - Module Initialization
-      - Local Analysis Model
-      - Local Analysis Feature Extraction
-      - Fully Protected
-      - OS Incompatible
-      - Software Incompatible
-      - Kernel Driver Initialization
-      - Kernel Extension Initialization
-      - Proxy Communication
-      - Quota Exceeded
-      - Minimal Content
-      - Reboot Eequired
-      - Missing Disc Access
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: The result type. Can be "Success" or "Fail". If not passed, returns all event reports.
-      isArray: true
-      name: result
-      predefined:
-      - Success
-      - Fail
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        Return logs that their timestamp is greater than 'log_time_after'.
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: timestamp_gte
-      required: false
-      secret: false
-    - default: false
-      description: |-
-        Return logs for which the timestamp is before the 'timestamp_lte'.
+  feed: True
+  script: |
+    ''' IMPORTS '''
+    import os
+    import json
+    import requests
+    import datetime
 
-        Supported values:
-        1579039377301 (time in milliseconds)
-        "3 days" (relative date)
-        "2019-10-21T23:45:00" (date)
-      isArray: false
-      name: timestamp_lte
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '0'
-      description: Page number (for pagination). The default is 0 (the first page).
-      isArray: false
-      name: page
-      required: false
-      secret: false
-    - default: false
-      defaultValue: '30'
-      description: The maximum number of reports to return. Default and maximum is 30.
-      isArray: false
-      name: limit
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      description: The field by which to sort results. Can be "type", "category", "trapsversion",
-        "timestamp", or "domain").
-      isArray: false
-      name: sort_by
-      predefined:
-      - type
-      - category
-      - trapsversion
-      - timestamp
-      - domain
-      required: false
-      secret: false
-    - auto: PREDEFINED
-      default: false
-      defaultValue: asc
-      description: 'The sort order. Can be "asc" (ascending) or "desc" (descending). Default is "asc". '
-      isArray: false
-      name: sort_order
-      predefined:
-      - asc
-      - desc
-      required: false
-      secret: false
-    deprecated: false
-    description: Gets agent event reports. You can filter by multiple fields, which will be concatenated
-      using AND condition (OR is not supported). Maximum result set size is 100. Offset
-      is the zero-based number of reports from the start of the result set (start
-      by counting from 0).
-    execution: false
-    name: xdr-get-audit-agent-reports
-    outputs:
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.ENDPOINTID
-      description: Endpoint ID.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.ENDPOINTNAME
-      description: Endpoint name.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.DOMAIN
-      description: Agent domain.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.TRAPSVERSION
-      description: Traps version.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.RECEIVEDTIME
-      description: Received time in Epoch time.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.TIMESTAMP
-      description: Timestamp in Epoch time.
-      type: Date
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.CATEGORY
-      description: Report category (e.g., Audit).
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.TYPE
-      description: Report type (e.g., Action, Policy).
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.SUBTYPE
-      description: Report subtype (e.g., Fully Protected,Policy Update,Cancel Isolation).
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.RESULT
-      description: Report result.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.REASON
-      description: Report reason.
-      type: String
-    - contextPath: PaloAltoNetworksXDR.AuditAgentReports.DESCRIPTION
-      description: Agent report description.
-      type: String
-  dockerimage: demisto/python3:3.7.4.977
-  isfetch: true
-  longRunning: false
-  longRunningPort: false
-  runonce: false
-  script: '-'
-  subtype: python3
+    ''' GLOBAL VARS '''
+    # Pagerduty API works only with secured communication.
+    USE_SSL = True
+
+    API_KEY = demisto.params()['APIKey']
+    SERVICE_KEY = demisto.params()['ServiceKey']
+
+    SERVER_URL = "https://api.pagerduty.com/"
+
+    DEFAULT_HEADERS = {
+                          'Authorization': 'Token token=' + API_KEY,
+                          'Accept': 'application/vnd.pagerduty+json;version=2'
+                      }
+
+    '''SUFFIX ENDPOINTS'''
+    GET_SCHEDULES_SUFFIX = "schedules/"
+    CREATE_INCIDENT_SUFFIX = "incidents"
+    ON_CALL_BY_SCHEDULE_SUFFIX = "schedules/{0}/users"
+    ON_CALLS_USERS_SUFFIX = "oncalls?include%5B%5D=users"
+    USERS_NOTIFICATION_RULE = "users/{0}/notification_rules"
+    GET_INCIDENTS_SUFFIX = "incidents?include%5B%5D=assignees"
+    USERS_CONTACT_METHODS_SUFFIX = "users/{0}/contact_methods"
+
+    '''CONTACT_METHOD_TYPES'''
+    SMS_CONTACT_TYPE = "sms_contact_method"
+    EMAIL_CONTACT_TYPE = "email_contact_method"
+    PHONE_CONTACT_TYPE = "phone_contact_method"
+    PUSH_CONTACT_TYPE = "push_notification_contact_method"
+
+    CONTACT_METHODS_TO_HUMAN_READABLE = {
+        '': 'Unknown',
+        SMS_CONTACT_TYPE: 'SMS',
+        PUSH_CONTACT_TYPE: 'Push',
+        EMAIL_CONTACT_TYPE: 'Email',
+        PHONE_CONTACT_TYPE: 'Phone'
+    }
+
+    '''TABLE NAMES'''
+    SCHEDULES = "All Schedules"
+    TRIGGER_EVENT = 'Trigger Event'
+    USERS_ON_CALL = 'Users On Call'
+    CONTACT_METHODS = "Contact Methods"
+    USERS_ON_CALL_NOW = 'Users On Call Now'
+    NOTIFICATION_RULES = "User notification rules"
+
+    '''TABLE HEADERS'''
+    CONTACT_METHODS_HEADERS = ['ID', 'Type', 'Address']
+    NOTIFICATION_RULES_HEADERS = ["ID", "Type", "Urgency", "Notification timeout(minutes)"]
+    SCHEDULES_HEADERS = ["ID", "Name", "Today", "Time Zone", "Escalation Policy", "Escalation Policy ID"]
+    USERS_ON_CALL_NOW_HEADERS = ["ID", "Email", "Name", "Role", "Color", "User Url", "Avatar Url", "Time Zone"]
+    INCIDENTS_HEADERS = ["ID", "Incident Number", "Created On", "Status", "Html Url", "Service ID", "Service Name", "Service Html Url", "Assigned To User",
+                         "Escalation Policy", "Escalation Policy ID", "Trigger Details Html Url", "Trigger Type", "Last Status Change On", "Last Status Change By",
+                         "Number Of Escalations", "Resolved By User", "Assigned To", "Summary"]
+
+    ''' HELPER FUNCTIONS '''
+    def http_request(method, url_suffix, params_dict):
+        url = SERVER_URL + url_suffix
+
+        LOG('running %s request with url=%s\theaders=%s\nparams=%s' % (method, url, DEFAULT_HEADERS, json.dumps(params_dict)))
+
+        try:
+            res = requests.request(method,
+                                   url,
+                                   verify=USE_SSL,
+                                   params=params_dict,
+                                   headers=DEFAULT_HEADERS,
+                                  )
+            res.raise_for_status()
+
+            return res.json()
+
+        except Exception, e:
+            LOG(e)
+            raise(e)
+
+
+    def test_module():
+        try:
+            get_on_call_now_users_command()
+        except Exception, e:
+            raise Exception(e.message)
+
+        demisto.results("ok")
+
+    def extract_on_call_user_data(users):
+        """Extact data about user from a given schedule."""
+        outputs = []
+        contexts = []
+        for i, user in enumerate(users):
+            output = {}
+            context = {}
+
+            output['ID'] = user.get('id')
+            output['Name'] = user.get('name')
+            output['Role'] = user.get('role')
+            output['Color'] = user.get('color')
+            output['Email'] = user.get('email')
+            output['User Url'] = user.get('html_url')
+            output['Time Zone'] = user.get('time_zone')
+            output['Avatar Url'] = user.get('avatar_url')
+
+            context['ID'] = output['ID']
+            context['Role'] = output['Role']
+            context['Email'] = output['Email']
+            context['Username'] = output['Name']
+            context['DisplayName'] = output['Name']
+
+            outputs.append(output)
+            contexts.append(context)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(USERS_ON_CALL, outputs, USERS_ON_CALL_NOW_HEADERS),
+            'EntryContext': {
+                'PagerDutyUser(val.ID==obj.ID)': contexts
+            }
+        }
+
+    def extract_on_call_now_user_data(oncalls, table_name):
+        """Extract the user data from the oncalls json."""
+        outputs = []
+        contexts = []
+        for i in xrange(len(oncalls)):
+            output = {}
+            context = {}
+
+            data = oncalls[i]
+            user = data.get('user')
+
+            output['ID'] = user.get('id')
+            output['Name'] = user.get('name')
+            output['Role'] = user.get('role')
+            output['Color'] = user.get('color')
+            output['Email'] = user.get('email')
+            output['User Url'] = user.get('html_url')
+            output['Time Zone'] = user.get('time_zone')
+            output['Avatar Url'] = user.get('avatar_url')
+
+            context['ID'] = output['ID']
+            context['Role'] = output['Role']
+            context['Email'] = output['Email']
+            context['Username'] = output['Name']
+            context['DisplayName'] = output['Name']
+
+            escal_level = data.get('escalation_level', 1)
+            outputs.insert(escal_level - 1, output)
+            contexts.insert(escal_level - 1, context)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(table_name, outputs, USERS_ON_CALL_NOW_HEADERS),
+            'EntryContext': {
+                'PagerDutyUser(val.ID==obj.ID)': contexts
+            }
+        }
+
+    def extract_incidents_data(incidents):
+        """Extact data about incidents."""
+        outputs = []
+        for i, incident in enumerate(incidents):
+            output = {}
+
+            output['ID'] = incident.get('id')
+            output['Status'] = incident.get('status')
+            output['Html Url'] = incident.get('html_url')
+            output['Created On'] = incident.get('created_at')
+            output['Incident Number'] = incident.get('incident_number')
+
+            output['Service ID'] = incident.get('service', {}).get('id')
+            output['Service Name'] = incident.get('service', {}).get('summary')
+            output['Service Html Url'] = incident.get('service', {}).get('html_url')
+
+
+            if len(incident.get('assignments', [])) > 0:
+                output['Assigned To User'] = incident['assignments'][0].get('assignee', {}).get('name')
+            else:
+                output['Assigned To User'] = '-'
+
+            output['Escalation Policy ID'] = incident.get('escalation_policy', {}).get('id')
+            output['Escalation Policy'] = incident.get('escalation_policy', {}).get('summary')
+
+            output['Trigger Type'] = incident.get('first_trigger_log_entry', {}).get('summary')
+            output['Trigger Details Html Url'] = incident.get('first_trigger_log_entry', {}).get('html_url')
+
+            output['Last Status Change On'] = incident.get('last_status_change_at')
+            output['Last Status Change By'] = incident.get('last_status_change_by', {}).get('summary')
+
+            output['Number Of Escalations'] = incident.get('number_of_escalations')
+            if output['Status'] == "resolved":
+                output['Resolved By User'] = output.get('Last Status Change By')
+            else:
+                output['Resolved By User'] = '-'
+
+            output['Assigned To'] = output['Assigned To User'] ###### This field is a duplicate, not sure why it's needed, should I delete?
+            output['Summary'] = incident.get('summary')
+
+            outputs.append(output)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(USERS_ON_CALL, outputs, INCIDENTS_HEADERS),
+            'EntryContext': {
+                'PagerDuty.Incidents(val.id==obj.id)': incidents
+            }
+        }
+
+    def extract_all_schedules_data(schedules):
+        """Extract the data about all the schedules."""
+        outputs = []
+        contexts = []
+        for i in range(len(schedules)):
+            output = {}
+            context = {}
+            data = schedules[i]
+
+            output['ID'] = data.get('id')
+            output['Name'] = data.get('name')
+            output['Time Zone'] = data.get('time_zone')
+            output['Today'] = datetime.datetime.today().strftime('%Y-%m-%d')
+            escalation_policies = data.get('escalation_policies', [])
+            if len(escalation_policies) > 0:
+                output['Escalation Policy ID'] = escalation_policies[0].get('id')
+                output['Escalation Policy'] = escalation_policies[0].get('summary')
+
+                context['escalation_policies'] = [{}, ]
+                context['escalation_policies'][0]['name'] = output['Escalation Policy']
+                context['escalation_policies'][0]['id'] = output['Escalation Policy ID']
+            else:
+                output['Escalation Policy'] = "-"
+                output['Escalation Policy ID'] = "-"
+
+            context['id'] = output['ID']
+            context['name'] = output['Name']
+            context['today'] = output['Today']
+            context['time_zone'] = output['Time Zone']
+
+            outputs.append(output)
+            contexts.append(context)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(SCHEDULES, outputs, SCHEDULES_HEADERS),
+            'EntryContext': {
+                'PagerDuty.Schedules(val.id==obj.id)': contexts,
+            }
+        }
+
+    def create_new_incident(author, title, description='No description'):
+        """Create a new incident in the PagerDuty instance."""
+        url = SERVER_URL + CREATE_INCIDENT_SUFFIX
+        headers = DEFAULT_HEADERS.copy()
+        headers['From'] = author
+        headers['Content-Type'] = "application/json"
+
+        payload = {
+                      "incident": {
+                            "type": "incident",
+                            "title": title,
+                            "service": {
+                                "id": SERVICE_KEY,
+                                "type": "service_reference"
+                            },
+                            "body": {
+                                "type": "incident_body",
+                                "details": description
+                            }
+                      }
+                  }
+
+        res = requests.post(url, headers=headers, data=json.dumps(payload), verify=USE_SSL)
+        res.raise_for_status()
+        return res.json()
+
+    def extract_new_event_data(response):
+        """Extract the data from the response of creating a new command."""
+        output = {}
+        output['Status'] = response.get('incident', {}).get('status')
+        output['Incident Key'] = response.get('incident', {}).get('incident_key')
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': output,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(TRIGGER_EVENT, output),
+            'EntryContext': {
+                'PagerDuty.Event(val.id==obj.id)': output
+            }
+        }
+
+    def extract_users_contact_methods(user_contact_methods):
+        """Extract all the contact methods of a given user."""
+        outputs = []
+        contexts = []
+        contact_methods = user_contact_methods.get('contact_methods')
+        for contact_method in contact_methods:
+            output = {}
+
+            output['ID'] = contact_method.get('id')
+            output['Type'] = CONTACT_METHODS_TO_HUMAN_READABLE[contact_method.get('type', '')]
+
+            country_code = str(contact_method.get("country_code" ,""))
+            address = contact_method.get('address', "")
+            output['Address'] = country_code + address
+
+            outputs.append(output)
+            contexts.append(contact_method)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(CONTACT_METHODS, outputs, CONTACT_METHODS_HEADERS),
+            'EntryContext': {
+                'PagerDuty.Contact_methods(val.id==obj.id)': contexts,
+            }
+        }
+
+    def extract_users_notification_role(user_notication_role):
+        """Extract the notification role of a given user."""
+        outputs = []
+        notification_rules = user_notication_role.get('notification_rules')
+        for notification_rule in notification_rules:
+            output = {}
+
+            output['ID'] = notification_rule.get('id')
+            output['Type'] = notification_rule.get('type', '')
+            output['Urgency'] = notification_rule.get('urgency')
+            output['Notification timeout(minutes)'] = notification_rule.get('start_delay_in_minutes')
+
+            outputs.append(output)
+
+        return {
+            'Type': entryTypes['note'],
+            'Contents': outputs,
+            'ContentsFormat': formats['json'],
+            'ReadableContentsFormat': formats['markdown'],
+            'HumanReadable': tableToMarkdown(NOTIFICATION_RULES, outputs, NOTIFICATION_RULES_HEADERS),
+            'EntryContext': {
+                'PagerDuty.Notification_rules(val.id==obj.id)': notification_rules,
+            }
+        }
+
+    '''COMMANDS'''
+
+    def get_incidents_command(since=None, until=None, status=None, sortBy=None):
+        """Get incidents command."""
+        param_dict = {}
+        if since is not None:
+            param_dict["since"] = since
+        if until is not None:
+            param_dict["until"] = until
+        if status is not None:
+            param_dict["status"] = status
+        if sortBy is not None:
+            param_dict["sortBy"] = sortBy
+
+        res = http_request('GET', GET_INCIDENTS_SUFFIX, param_dict)
+        return extract_incidents_data(res.get("incidents",[]))
+
+    def submit_event_command(author, title, description=None):
+        """Create new event."""
+        if SERVICE_KEY is None:
+            raise Exception("You must enter a ServiceKey at the integration parmaters to process this action.")
+
+        res = create_new_incident(author, title, description)
+        return extract_new_event_data(res)
+
+    def get_all_schedules_command():
+        """Get all the schedules."""
+        res = http_request('GET', GET_SCHEDULES_SUFFIX, {})
+        schedules = res.get('schedules', [])
+        return extract_all_schedules_data(schedules)
+
+    def get_on_call_users_command(scheduleID, since=None, until=None):
+        """Get the list of user on call in a from scheduleID"""
+        param_dict = {}
+        if since is not None:
+            param_dict["since"] = since
+        if until is not None:
+            param_dict["until"] = until
+
+        url = ON_CALL_BY_SCHEDULE_SUFFIX.format(scheduleID)
+        users_on_call = http_request('GET', url, param_dict)
+        return extract_on_call_user_data(users_on_call.get('users', []))
+
+    def get_on_call_now_users_command():
+        """Get the list of users that are on call now."""
+        users_on_call_now = http_request('GET', ON_CALLS_USERS_SUFFIX, {})
+        oncalls = users_on_call_now.get('oncalls', {})
+        return extract_on_call_now_user_data(oncalls, USERS_ON_CALL_NOW)
+
+    def get_users_contact_methods_command(UserID):
+        "Get the contact methods of a given user."
+        user_contact_methods = http_request('GET', USERS_CONTACT_METHODS_SUFFIX.format(UserID), {})
+        return extract_users_contact_methods(user_contact_methods)
+
+    def get_users_notification_command(UserID):
+        "Get the notification rule of a given user"
+        user_notication_role = http_request('GET', USERS_NOTIFICATION_RULE.format(UserID), {})
+        return extract_users_notification_role(user_notication_role)
+
+    ''' EXECUTION CODE '''
+
+    LOG('command is %s' % (demisto.command(), ))
+
+    try:
+        if demisto.command() == 'test-module':
+            test_module()
+        elif demisto.command() == 'PagerDutyIncidents':
+            demisto.results(get_incidents_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutySubmitEvent':
+            demisto.results(submit_event_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutyGetUsersOnCall':
+            demisto.results(get_on_call_users_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutyGetAllSchedules':
+            demisto.results(get_all_schedules_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutyGetUsersOnCallNow':
+            demisto.results(get_on_call_now_users_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutyGetContactMethods':
+            demisto.results(get_users_contact_methods_command(**demisto.args()))
+        elif demisto.command() == 'PagerDutyGetUsersNotification':
+            demisto.results(get_users_notification_command(**demisto.args()))
+
+
+    except Exception, e:
+        LOG(e.message)
+        LOG.print_log()
+        raise
   type: python
-fromversion: 4.1.0
+  commands:
+  - name: PagerDutyGetAllSchedules
+    arguments:
+    - name: query
+      description: Show only the schedules whose name matches the query
+    - name: requesterID
+      description: The user id of the user making the request. This will be used to
+        generate the calendar private urls. This is only needed if you are using token
+        based authentication.
+    outputs:
+    - contextPath: PagerDuty.Schedules
+      description: schedules
+      type: string
+    description: Receive all schedules from PagerDuty
+  - name: PagerDutyGetUsersOnCall
+    arguments:
+    - name: scheduleID
+      required: true
+      default: true
+      description: (default and mandatory) The unique identifier of the schdule
+    - name: since
+      description: The start of the date range Using ISO 8601 Representation. E.g.
+        !PagerDutyGetUsersOnCall since=2011-05-06T17:00Z
+    - name: until
+      description: The end of the date range
+    outputs:
+    - contextPath: PagerDutyUser.id
+      description: User's ID
+      type: string
+    - contextPath: PagerDutyUser.Emails
+      description: Email of user
+      type: string
+    - contextPath: PagerDutyUser.Username
+      description: Username of person
+      type: string
+    - contextPath: PagerDutyUser.DisplayName
+      description: Display name of person
+      type: string
+    - contextPath: PagerDutyUser.Role
+      description: Display role of person
+      type: string
+    description: Returns the names and details of on call users at a certain time
+      or by specific schedule
+  - name: PagerDutyGetUsersOnCallNow
+    arguments:
+    - name: query
+      description: show only the names matching the query
+    outputs:
+    - contextPath: PagerDutyUser.ID
+      description: User's ID
+      type: string
+    - contextPath: PagerDutyUser.Email
+      description: Email of user
+      type: string
+    - contextPath: PagerDutyUser.Username
+      description: Username of person
+      type: string
+    - contextPath: PagerDutyUser.DisplayName
+      description: Display name of person
+      type: string
+    - contextPath: PagerDutyUser.Role
+      description: Role of person
+      type: string
+    description: Returns the names and details of current on call personnel
+  - name: PagerDutyIncidents
+    arguments:
+    - name: status
+      auto: PREDEFINED
+      predefined:
+      - triggered
+      - acknowledged
+      - resolved
+      description: Returns only the incidents currently in the passed status(es).
+        Valid status options are triggered,acknowledged, and resolved
+    - name: since
+      description: Beginning date and time. Using ISO 8601 Representation. E.g. PagerDutyIncidents
+        since=2011-05-06T17:00Z
+    - name: sortBy
+      description: 'Used to specify both the field you wish to sort the results on,
+        as well as the direction (ascending/descending) of the results.See more https://developer.pagerduty.com/documentation/rest/incidents/list '
+    - name: until
+      description: Last date and time.  Using ISO 8601 Representation. E.g. PagerDutyIncidents
+        until=2016-05-06T13:00Z
+    outputs:
+    - contextPath: PagerDuty.Incidents
+      description: All incidents
+    description: Shows incidents in PagerDuty
+  - name: PagerDutySubmitEvent
+    arguments:
+    - name: author
+      required: true
+      description: The email address of a valid user associated with the account making
+        the request.
+    - name: title
+      required: true
+      description: The name of the incident you create
+    - name: description
+      description: A short description of the problem
+    outputs:
+    - contextPath: PagerDuty.Event
+      description: Event data
+    description: Creates a new event/incident in PagerDuty
+  - name: PagerDutyGetContactMethods
+    arguments:
+    - name: UserID
+      required: true
+      description: 'ID of the wanted user '
+    outputs:
+    - contextPath: PagerDuty.Contact_methods.address
+      description: The address of the user
+      type: string
+    - contextPath: PagerDuty.Contact_methods.id
+      description: ID of the contact method
+      type: string
+    - contextPath: PagerDuty.Contact_methods.type
+      description: The type of the current contact method
+      type: string
+    description: Get the contact methods of a given user
+  - name: PagerDutyGetUsersNotification
+    arguments:
+    - name: UserID
+      required: true
+      description: ID of the wanted user
+    outputs:
+    - contextPath: PagerDuty.Notification_rules.PagerDuty.Notification_rules.start_delay_in_minutes
+      description: The delay time for notifying the user
+      type: string
+    - contextPath: PagerDuty.Notification_rules.PagerDuty.Notification_rules.urgency
+      description: The urgency of the notification
+      type: string
+    - contextPath: PagerDuty.Notification_rules.id
+      description: The id of the notification rule
+      type: string
+    description: Get the users notification rules
+  runonce: false
+hidden: false
+tests:
+  - PagerDuty Test

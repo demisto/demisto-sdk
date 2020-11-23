@@ -10,10 +10,10 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106']
+                         'PB106', 'IN109', 'IN110']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -150,7 +150,6 @@ ERROR_CODE = {
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
-    "pack_readme_file_missing": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
@@ -1044,11 +1043,6 @@ class Errors:
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
         return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
-
-    @staticmethod
-    @error_code_decorator
-    def pack_readme_file_missing(file_name):
-        return f'{file_name} file does not exist, create one in the root of the pack'
 
     @staticmethod
     @error_code_decorator

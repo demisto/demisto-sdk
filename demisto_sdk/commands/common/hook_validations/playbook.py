@@ -341,7 +341,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         Checks if script id exists in at least one of id_set's dicts
         Args:
-            script_used_in_task (str):  script id from playbook
+            script_id_used_in_task (str):  script id from playbook
             id_set_scripts (list): all scripts of id_set
         Returns:
             True if script_used_in_task exists in id_set

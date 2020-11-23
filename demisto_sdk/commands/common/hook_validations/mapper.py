@@ -35,8 +35,8 @@ class MapperValidator(ContentEntityValidator):
             self.is_valid_from_version(),
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
-            self.is_valid_type()
-            # self.is_valid_incident_field()
+            self.is_valid_type(),
+            self.is_valid_incident_field()
         ])
 
     def is_valid_version(self):

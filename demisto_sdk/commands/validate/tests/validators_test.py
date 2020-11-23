@@ -1129,6 +1129,26 @@ class TestValidators:
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}
 
+    DEPRECATED_FILE_PATHS = [
+        DEPRECATED_INTEGRATION_YML,
+        SMALL_TOVERSION_INTEGRATION_YML
+    ]
+
+    @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
+    def test_run_all_validations_on_file_failed(self, file_path):
+        """
+        Given
+        - An invalid deprecated file inside a pack.
+
+        When
+        - running run_all_validations_on_file on that file.
+
+        Then
+        - Only Backwards compatibility will be checked and validation will pass.
+        """
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
+        assert validate_manager.run_validation_on_specific_files()
+
 
 def test_content_release_identifier_exists():
     """

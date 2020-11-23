@@ -484,7 +484,7 @@ class ValidateManager:
                                                      skip_docker_check=self.skip_docker_checks)
         if is_modified and self.is_backward_check:
             current_file = integration_validator.current_file
-            if current_file["deprecated"] == "yes" or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
+            if current_file["deprecated"] or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
                 return integration_validator.is_backward_compatible()
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
@@ -497,7 +497,7 @@ class ValidateManager:
                                            skip_docker_check=self.skip_docker_checks)
         if is_modified and self.is_backward_check:
             current_file = script_validator.current_file
-            if current_file["deprecated"] == "yes" or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
+            if current_file["deprecated"] or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
                 return script_validator.is_backward_compatible()
             return all([script_validator.is_valid_file(validate_rn=False),
                         script_validator.is_backward_compatible()])

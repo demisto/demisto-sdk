@@ -900,7 +900,10 @@ class PackDependencies:
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
 
         if not sum(pack_items.values(), []):
-            print_warning(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
+            print_warning(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+                          f"1 - The spelling is correct.\n"
+                          f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
+                          f"Tests/id_set.json` and rerun the command.")
 
         return pack_items
 

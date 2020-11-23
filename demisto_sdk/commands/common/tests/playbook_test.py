@@ -294,7 +294,7 @@ class TestPlaybookValidator:
 
     @pytest.mark.parametrize("playbook_path, expected_result", [(INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, True),
                                                                 (INVALID_PLAYBOOK_UNHANDLED_CONDITION, False)])
-    def test_skipping_test_playbooks(self, playbook_path, expected_result):
+    def test_skipping_test_playbooks(self, mocker, playbook_path, expected_result):
         """
             Given
             - A playbook
@@ -308,6 +308,7 @@ class TestPlaybookValidator:
         """
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
+        mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
         assert validator.is_valid_playbook() is expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_DELETECONTEXT)

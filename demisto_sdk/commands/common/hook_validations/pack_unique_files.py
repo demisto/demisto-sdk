@@ -320,20 +320,10 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
-    # pack README.md validation
-    def validate_readme_file(self):
-        """Validate everything related to README.md file"""
-        if not os.path.isfile(self._get_pack_file_path(self.readme_file)):
-            if self._add_error(Errors.pack_readme_file_missing(self.readme_file), self.readme_file):
-                return False
-
-        return True
-
     def validate_pack_unique_files(self):
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
-        self.validate_readme_file()
         # We don't want to check the metadata file for this pack
         if API_MODULES_PACK not in self.pack:
             self.validate_pack_meta_file()

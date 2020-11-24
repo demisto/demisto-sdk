@@ -534,6 +534,7 @@ class TestClassifierValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'is_valid_incident_field', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -649,6 +650,7 @@ class TestMapperValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'is_valid_incident_field', return_value=True)
         pack = repo.create_pack('PackName')
         mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):

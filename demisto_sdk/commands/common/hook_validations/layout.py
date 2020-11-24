@@ -2,14 +2,15 @@ import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 
+from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.common.tools import open_id_set_file, LAYOUT_CONTAINER_FIELDS
+from demisto_sdk.commands.common.tools import (LAYOUT_CONTAINER_FIELDS,
+                                               open_id_set_file)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
-from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
@@ -248,4 +249,3 @@ class LayoutValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
-

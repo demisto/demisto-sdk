@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
+* Updated the **upload** command to support mappers. 
 
 # v1.2.10
 * Added validation for approved content pack use-cases and tags.

@@ -158,10 +158,16 @@ class ClassifierValidator(ContentEntityValidator):
             for _, inc_field in content_inc_field.items():
                 content_incident_fields.append(inc_field.get('name', ''))
 
+        content_indicator_fields = []
+        content_all_indicator_fields = id_set.get('IndicatorFields')
+        for content_ind_field in content_all_indicator_fields:
+            for _, ind_field in content_ind_field.items():
+                content_indicator_fields.append(ind_field.get('name', ''))
+
+        all_valid_fields = content_indicator_fields + content_incident_fields + LAYOUT_BUILT_IN_FIELDS + BUILT_IN_FIELDS
         invalid_inc_fields_list = []
         for mapper_inc_field in mapper_incident_fields:
-            if mapper_inc_field not in content_incident_fields and mapper_inc_field not in BUILT_IN_FIELDS \
-                    and mapper_inc_field not in LAYOUT_BUILT_IN_FIELDS:
+            if mapper_inc_field not in all_valid_fields:
                 invalid_inc_fields_list.append(mapper_inc_field) if mapper_inc_field not in invalid_inc_fields_list \
                     else None
 

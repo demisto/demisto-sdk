@@ -143,11 +143,12 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 content_indicator_fields.append(ind_name.replace('indicator_', ''))
 
         built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
+        all_fields_in_content = \
+            content_incident_fields + content_indicator_fields + LAYOUT_BUILT_IN_FIELDS + built_in_fields_layout
+
         invalid_inc_fields_list = []
         for layout_inc_field in layout_incident_fields:
-            if layout_inc_field and layout_inc_field not in content_incident_fields and\
-                    layout_inc_field not in content_indicator_fields and layout_inc_field not in built_in_fields_layout\
-                    and layout_inc_field not in LAYOUT_BUILT_IN_FIELDS:
+            if layout_inc_field and layout_inc_field not in all_fields_in_content:
                 invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
                     else None
 
@@ -231,11 +232,12 @@ class LayoutValidator(LayoutBaseValidator):
                 content_indicator_fields.append(ind_name.replace('indicator_', ''))
 
         built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
+        all_fields_in_content = \
+            content_incident_fields + content_indicator_fields + LAYOUT_BUILT_IN_FIELDS + built_in_fields_layout
+
         invalid_inc_fields_list = []
         for layout_inc_field in layout_incident_fields:
-            if layout_inc_field and layout_inc_field not in content_incident_fields and \
-                    layout_inc_field not in content_indicator_fields and layout_inc_field not in built_in_fields_layout \
-                    and layout_inc_field not in LAYOUT_BUILT_IN_FIELDS:
+            if layout_inc_field and layout_inc_field not in all_fields_in_content:
                 invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
                     else None
 

@@ -31,8 +31,8 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_from_version(),
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
-                    self.is_valid_file_path()
-                    # self.is_valid_incident_field()
+                    self.is_valid_file_path(),
+                    self.is_valid_incident_field()
                     ])
 
     def is_valid_version(self) -> bool:
@@ -126,9 +126,10 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                             layout_incident_fields.append(item.get('fieldId', ''))
 
         id_set_path = IDSetValidator.ID_SET_PATH
-        id_set = open_id_set_file(id_set_path)
-        if not id_set_path or not os.path.isfile(id_set_path):
+        if not os.path.isfile(id_set_path):
             id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
 
         content_incident_fields = []
         content_all_incident_fields = id_set.get('IncidentFields')
@@ -215,9 +216,10 @@ class LayoutValidator(LayoutBaseValidator):
                         layout_incident_fields.append(inc_field.replace('incident_', '').replace('indicator_', ''))
 
         id_set_path = IDSetValidator.ID_SET_PATH
-        id_set = open_id_set_file(id_set_path)
-        if not id_set_path or not os.path.isfile(id_set_path):
+        if not os.path.isfile(id_set_path):
             id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
 
         content_incident_fields = []
         content_all_incident_fields = id_set.get('IncidentFields')

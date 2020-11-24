@@ -1009,4 +1009,4 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
 
 LAYOUT_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'closenotes', 'closereason',
                           'frompong', 'detectedips', 'detectedhosts', 'incident_attachment', 'incident_labels',
-                          'modified', 'expiration', 'timestamp', 'shortdesc', 'short_description', 'description', 'Tags']
+                          'modified', 'expiration', 'timestamp', 'shortdesc', 'short_description', 'description', 'Tags', 'blocked']

@@ -741,6 +741,9 @@ class ValidateManager:
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 set(map(lambda integration: integration.get('pack'), integrations)))
 
+            # APIModules pack is without a version and should not have RN
+            packs_that_should_have_new_rn.remove(API_MODULES_PACK)
+
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs
 

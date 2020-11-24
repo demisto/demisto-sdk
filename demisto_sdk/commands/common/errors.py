@@ -768,8 +768,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_script_id(script_entry_to_check):
-        return f'The following script id is not valid: {script_entry_to_check}'
+    def invalid_script_id(script_entry_to_check, pb_task):
+        return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right script id is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator

@@ -1,28 +1,23 @@
-import os
 from typing import Dict
 
 import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, open_id_set_file,
-                                               print_warning)
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.tools import LOG_COLORS
 
 
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True,
-                          skip_dependencies: bool = False) -> bool:
+    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
-            skip_dependencies: whether should skip id set validation or not
             this will also determine whether a new id_set can be created by validate.
             is_new_playbook (bool): whether the playbook is new or modified
             validate_rn (bool):  whether we need to validate release notes or not
+            id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
             bool. Whether the playbook is valid or not
@@ -42,7 +37,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
                 self.is_valid_deprecated_playbook(),
-                self.is_script_id_valid(skip_dependencies),
+                self.is_script_id_valid(id_set_file),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -56,7 +51,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_script_id_valid(skip_dependencies),
+                self.is_script_id_valid(id_set_file),
             ]
             answers = all(modified_playbook_checks)
 
@@ -301,30 +296,29 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
-    def is_script_id_valid(self, skip_dependencies=False):
+    def is_script_id_valid(self, id_set_file):
         """Checks whether a script id is valid (i.e id exists in set_id)
         Args:
-            skip_dependencies (bool):  whether should skip id set validation or not
+            id_set_file (dict): id_set.json file
             this will also determine whether a new id_set can be created by validate.
 
         Return:
             bool. if all scripts ids of this playbook are valid.
         """
         is_valid = True
-        id_set = self.get_id_set_file(skip_dependencies)
-        if not id_set:
-            print_warning("Playbook script id validation cannot run, could not read id_set.json")
-            is_valid = False
+
+        if not id_set_file:
+            click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
             return is_valid
 
-        id_set_scripts = id_set.get("scripts")
+        id_set_scripts = id_set_file.get("scripts")
         pb_tasks = self.current_file.get('tasks', {})
         for id, task_dict in pb_tasks.items():
             pb_task = task_dict.get('task', {})
             script_used_in_task = pb_task.get('script')
             pb_script_name = pb_task.get('scriptName')
             script_entry_to_check = script_used_in_task if script_used_in_task else pb_script_name
-            integration_script_flag = "|||"
+            integration_script_flag = "|||"  # skipping all builtin integration scripts
 
             if script_used_in_task and integration_script_flag not in script_used_in_task:
                 is_valid = self.check_script_id(script_used_in_task, id_set_scripts)
@@ -332,7 +326,7 @@ class PlaybookValidator(ContentEntityValidator):
                 is_valid = self.check_script_name(pb_script_name, id_set_scripts)
 
             if not is_valid:
-                error_message, error_code = Errors.invalid_script_id(script_entry_to_check)
+                error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return is_valid
         return is_valid
@@ -360,22 +354,3 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
-
-    def get_id_set_file(self, skip_dependencies):
-        """
-
-        Args:
-            skip_dependencies (bool): whether should skip id set validation or not
-            this will also determine whether a new id_set can be created by validate.
-
-        Returns:
-            str: is_set file path
-        """
-        id_set = None
-        id_set_path = IDSetValidator.ID_SET_PATH
-        if not id_set_path or not os.path.isfile(id_set_path):
-            if not skip_dependencies:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
-        else:
-            id_set = open_id_set_file(id_set_path)
-        return id_set

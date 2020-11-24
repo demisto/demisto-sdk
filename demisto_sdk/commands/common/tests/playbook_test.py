@@ -270,8 +270,7 @@ class TestPlaybookValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        mocker.patch.object(validator, 'get_id_set_file', return_value=id_set_json)
-        assert validator.is_script_id_valid() == expected_result
+        assert validator.is_script_id_valid(id_set_json) == expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, playbook_json, expected_result):

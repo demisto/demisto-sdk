@@ -292,7 +292,7 @@ def validate(config, **kwargs):
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         print_error(e)
-        print_error("You may not be running `demisto-sdk validate` command in the content directory.\n"
+        print_error("\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
                     "Please run the command from content directory")
         sys.exit(1)
 

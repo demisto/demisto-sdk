@@ -39,7 +39,7 @@ class ClassifierValidator(ContentEntityValidator):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_from_version(),
                 self.is_valid_type(),
-                self.is_valid_incident_field()
+                self.is_incident_field_exist()
             ])
 
         return all([
@@ -136,7 +136,7 @@ class ClassifierValidator(ContentEntityValidator):
                 return False
         return True
 
-    def is_valid_incident_field(self) -> bool:
+    def is_incident_field_exist(self) -> bool:
         mapper_incident_fields = []
 
         mapper = self.current_file.get('mapping', {})

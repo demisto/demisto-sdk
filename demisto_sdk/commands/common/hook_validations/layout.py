@@ -32,7 +32,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
-                    self.is_valid_incident_field()
+                    self.is_incident_field_exist()
                     ])
 
     def is_valid_version(self) -> bool:
@@ -69,7 +69,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     @abstractmethod
-    def is_valid_incident_field(self) -> bool:
+    def is_incident_field_exist(self) -> bool:
         pass
 
 
@@ -106,7 +106,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_valid_incident_field(self) -> bool:
+    def is_incident_field_exist(self) -> bool:
         layout_container_items = []
         for layout_container_field in LAYOUT_CONTAINER_FIELDS:
             if self.current_file.get(layout_container_field):
@@ -195,7 +195,7 @@ class LayoutValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_valid_incident_field(self) -> bool:
+    def is_incident_field_exist(self) -> bool:
         layout_incident_fields = []
 
         layout = self.current_file.get('layout', {})

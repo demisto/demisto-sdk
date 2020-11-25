@@ -62,7 +62,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               run_command)
+                                               run_command, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -531,12 +531,12 @@ class ValidateManager:
     def validate_layout(self, structure_validator, pack_error_ignore_list):
         layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
         layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -555,7 +555,7 @@ class ValidateManager:
     def validate_mapper(self, structure_validator, pack_error_ignore_list):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
-        return mapper_validator.is_valid_mapper(validate_rn=False)
+        return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
         if file_type == FileType.CLASSIFIER:
@@ -567,7 +567,7 @@ class ValidateManager:
         classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False)
+        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
         widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -1155,3 +1155,22 @@ class ValidateManager:
                 packs.add(pack)
 
         return packs
+
+    @staticmethod
+    def get_id_set_file(skip_dependencies, id_set_path):
+        """
+        Args:
+            skip_dependencies (bool): whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
+            id_set_path (str): id_set.json path file
+        Returns:
+            str: is_set file path
+        """
+        id_set = None
+        if not os.path.isfile(id_set_path):
+            if not skip_dependencies:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
+        return id_set
+

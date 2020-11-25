@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
+import click
 
 from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
@@ -21,7 +22,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         self.from_version = self.current_file.get('fromVersion')
         self.to_version = self.current_file.get('toVersion')
 
-    def is_valid_layout(self, validate_rn=True) -> bool:
+    def is_valid_layout(self, validate_rn=True, id_set_file=None) -> bool:
         """Check whether the layout is valid or not.
 
         Returns:
@@ -33,7 +34,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
-                    self.is_incident_field_exist()
+                    self.is_incident_field_exist(id_set_file)
                     ])
 
     def is_valid_version(self) -> bool:
@@ -70,7 +71,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     @abstractmethod
-    def is_incident_field_exist(self) -> bool:
+    def is_incident_field_exist(self, id_set_file) -> bool:
         pass
 
 
@@ -107,7 +108,13 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self) -> bool:
+    def is_incident_field_exist(self, id_set_file) -> bool:
+        is_valid = True
+
+        if not id_set_file:
+            click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
+            return is_valid
+
         layout_container_items = []
         for layout_container_field in LAYOUT_CONTAINER_FIELDS:
             if self.current_file.get(layout_container_field):
@@ -126,20 +133,14 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                         for item in section.get('items', []):
                             layout_incident_fields.append(item.get('fieldId', ''))
 
-        id_set_path = IDSetValidator.ID_SET_PATH
-        if not os.path.isfile(id_set_path):
-            id_set = IDSetCreator(print_logs=False).create_id_set()
-        else:
-            id_set = open_id_set_file(id_set_path)
-
         content_incident_fields = []
-        content_all_incident_fields = id_set.get('IncidentFields')
+        content_all_incident_fields = id_set_file.get('IncidentFields')
         for content_inc_field in content_all_incident_fields:
             for inc_name, inc_field in content_inc_field.items():
                 content_incident_fields.append(inc_name.replace('incident_', ''))
 
         content_indicator_fields = []
-        content_all_indicator_fields = id_set.get('IndicatorFields')
+        content_all_indicator_fields = id_set_file.get('IndicatorFields')
         for content_ind_field in content_all_indicator_fields:
             for ind_name, ind_field in content_ind_field.items():
                 content_indicator_fields.append(ind_name.replace('indicator_', ''))
@@ -196,7 +197,13 @@ class LayoutValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self) -> bool:
+    def is_incident_field_exist(self, id_set_file) -> bool:
+        is_valid = True
+
+        if not id_set_file:
+            click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
+            return is_valid
+
         layout_incident_fields = []
 
         layout = self.current_file.get('layout', {})
@@ -216,20 +223,14 @@ class LayoutValidator(LayoutBaseValidator):
                         inc_field = item.get('fieldId', '')
                         layout_incident_fields.append(inc_field.replace('incident_', '').replace('indicator_', ''))
 
-        id_set_path = IDSetValidator.ID_SET_PATH
-        if not os.path.isfile(id_set_path):
-            id_set = IDSetCreator(print_logs=False).create_id_set()
-        else:
-            id_set = open_id_set_file(id_set_path)
-
         content_incident_fields = []
-        content_all_incident_fields = id_set.get('IncidentFields')
+        content_all_incident_fields = id_set_file.get('IncidentFields')
         for content_inc_field in content_all_incident_fields:
             for inc_name, inc_field in content_inc_field.items():
                 content_incident_fields.append(inc_name.replace('incident_', ''))
 
         content_indicator_fields = []
-        content_all_indicator_fields = id_set.get('IndicatorFields')
+        content_all_indicator_fields = id_set_file.get('IndicatorFields')
         for content_ind_field in content_all_indicator_fields:
             for ind_name, ind_field in content_ind_field.items():
                 content_indicator_fields.append(ind_name.replace('indicator_', ''))

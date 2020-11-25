@@ -3,6 +3,7 @@ import re
 from typing import Tuple
 
 import click
+from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import print_error
@@ -53,6 +54,13 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
 
         if not self.data.get('fromversion', ''):
+
+            if self.assume_yes:
+                if self.verbose:
+                    print(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
+                self.data['fromversion'] = OLDEST_SUPPORTED_VERSION
+                return
+
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
                         fg='red')
             user_answer = input()

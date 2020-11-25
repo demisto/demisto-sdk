@@ -1,13 +1,13 @@
 import pytest
-from demisto_sdk.commands.common.hook_validations.layout import \
-    LayoutsContainerValidator, LayoutValidator
+from mock import patch
+
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -23,7 +23,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 class TestLayoutValidator:
 
     LAYOUT_WITH_VALID_INCIDENT_FIELD = {
-            "layout": {"tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]}
+        "layout": {"tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]}
     }
 
     LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD = {
@@ -42,7 +42,7 @@ class TestLayoutValidator:
     ]
 
     @pytest.mark.parametrize("layout_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_is_incident_field_exist(self, repo, layout_json, id_set_json, expected_result):
+    def test_layout_is_incident_field_exist_in_content(self, repo, layout_json, id_set_json, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -63,7 +63,7 @@ class TestLayoutValidator:
     ]
 
     @pytest.mark.parametrize("mapper_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_is_incident_field_exist(self, repo, mapper_json, id_set_json, expected_result):
+    def test_layout_container_is_incident_field_exist_in_content(self, repo, mapper_json, id_set_json, expected_result):
         """
         Given
         - A mapper with incident fields

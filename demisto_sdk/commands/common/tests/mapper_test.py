@@ -1,13 +1,12 @@
 import pytest
-from demisto_sdk.commands.common.hook_validations.mapper import \
-    MapperValidator
+from mock import patch
+
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -22,9 +21,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 class TestMapperValidator:
 
-    MAPPER_WITH_VALID_INCIDENT_FIELD = {
-            "mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}
-    }
+    MAPPER_WITH_VALID_INCIDENT_FIELD = {"mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}}
 
     ID_SET_WITH_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "Incident Field"}}],
                                   "IndicatorFields": [{"name": {"name": "Incident Field"}}]}

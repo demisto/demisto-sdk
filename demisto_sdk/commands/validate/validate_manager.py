@@ -3,8 +3,8 @@ import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional
-import click
 
+import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -1167,7 +1167,7 @@ class ValidateManager:
         Returns:
             str: is_set file path
         """
-        id_set = None
+        id_set = {}
         if not os.path.isfile(id_set_path):
             if not skip_dependencies:
                 id_set = IDSetCreator(print_logs=False).create_id_set()

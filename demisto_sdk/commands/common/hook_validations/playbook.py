@@ -315,15 +315,17 @@ class PlaybookValidator(ContentEntityValidator):
         pb_tasks = self.current_file.get('tasks', {})
         for id, task_dict in pb_tasks.items():
             pb_task = task_dict.get('task', {})
-            script_used_in_task = pb_task.get('script')
-            pb_script_name = pb_task.get('scriptName')
-            script_entry_to_check = script_used_in_task if script_used_in_task else pb_script_name
+            script_id_used_in_task = pb_task.get('script')
+            task_script_name = pb_task.get('scriptName')
+            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name  # i.e
+            # script id or script name
             integration_script_flag = "|||"  # skipping all builtin integration scripts
 
-            if script_used_in_task and integration_script_flag not in script_used_in_task:
-                is_valid = self.check_script_id(script_used_in_task, id_set_scripts)
-            elif pb_script_name and integration_script_flag not in pb_script_name:
-                is_valid = self.check_script_name(pb_script_name, id_set_scripts)
+            is_script_id_should_be_checked = script_id_used_in_task and integration_script_flag not in script_id_used_in_task
+            if is_script_id_should_be_checked:
+                is_valid = self.check_script_id(script_id_used_in_task, id_set_scripts)
+            elif task_script_name and integration_script_flag not in task_script_name:
+                is_valid = self.check_script_name(task_script_name, id_set_scripts)
 
             if not is_valid:
                 error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)

@@ -1,6 +1,9 @@
 # Changelog
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
 * Updated the **upload** command to support mappers.
+* Fixed an issue where exceptions were no printed in the **format** while the *--verbose* flag is set.
+* Fixed an issue where *--assume-yes* flag did not work in the **format** command when running on a playbook without a `fromversion` field.
+* Fixed an issue where the **format** command would fail in case `conf.json` file was not found instead of skipping the update.
 
 # v1.2.10
 * Added validation for approved content pack use-cases and tags.

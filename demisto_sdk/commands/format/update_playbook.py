@@ -57,8 +57,12 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
             if self.assume_yes:
                 if self.verbose:
-                    print(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
-                self.data['fromversion'] = OLDEST_SUPPORTED_VERSION
+                    if self.from_version:
+                        print(f"Adding `fromversion: {self.from_version}`")
+
+                    else:
+                        print(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
+                self.data['fromversion'] = self.from_version if self.from_version else OLDEST_SUPPORTED_VERSION
                 return
 
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
@@ -67,6 +71,11 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             if user_answer in ['n', 'N', 'no', 'No']:
                 print_error('Moving forward without updating fromversion tag')
                 return
+
+            if self.from_version:
+                if self.verbose:
+                    print(f"Adding `fromversion: {self.from_version}`")
+                self.data['fromversion'] = self.from_version
 
             is_input_version_valid = False
             while not is_input_version_valid:

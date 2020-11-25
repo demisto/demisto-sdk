@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml)
+                                               get_yaml, print_warning)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -145,7 +145,12 @@ class BaseUpdateYML(BaseUpdate):
         no_test_playbooks_explicitly = any(test for test in test_playbooks if 'no test' in test.lower())
         if no_test_playbooks_explicitly:
             return
-        conf_json_content = self._load_conf_file()
+        try:
+            conf_json_content = self._load_conf_file()
+        except FileNotFoundError:
+            if self.verbose:
+                print_warning(f'Unable to find {self.CONF_PATH} - skipping update.')
+            return
         conf_json_test_configuration = conf_json_content['tests']
         content_item_id = _get_file_id(file_type, self.data)
         not_registered_tests = get_not_registered_tests(conf_json_test_configuration,

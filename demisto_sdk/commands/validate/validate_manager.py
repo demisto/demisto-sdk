@@ -3,7 +3,6 @@ import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional
-
 import click
 
 from demisto_sdk.commands.common import tools
@@ -1175,4 +1174,3 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
         return id_set
-

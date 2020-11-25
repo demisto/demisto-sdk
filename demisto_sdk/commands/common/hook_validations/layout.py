@@ -1,7 +1,6 @@
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
-
 import click
 
 from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS

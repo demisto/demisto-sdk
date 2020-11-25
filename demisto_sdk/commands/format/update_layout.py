@@ -61,7 +61,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as e:
+            if self.verbose:
+                print_error(e)
             return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):

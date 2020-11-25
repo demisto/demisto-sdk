@@ -255,7 +255,7 @@ class BaseUpdate:
     def is_old_file(path: str) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
-            data = get_remote_file(path)
+            data = get_remote_file(path, suppress_print=True)
             if not data:
                 return {}
             else:

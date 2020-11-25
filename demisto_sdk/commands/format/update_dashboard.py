@@ -3,6 +3,7 @@ from typing import Tuple
 import click
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -36,7 +37,9 @@ class DashboardJSONFormat(BaseUpdateJSON):
             self.update_id()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as e:
+            if self.verbose:
+                print_error(e)
             return ERROR_RETURN_CODE
 
     def default_description(self):

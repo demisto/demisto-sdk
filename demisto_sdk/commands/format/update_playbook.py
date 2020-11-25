@@ -129,7 +129,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.update_playbook_task_name()
             super().run_format()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as e:
+            if self.verbose:
+                print_error(e)
             return ERROR_RETURN_CODE
 
 
@@ -151,5 +153,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             super().run_format()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as e:
+            if self.verbose:
+                print_error(e)
             return ERROR_RETURN_CODE

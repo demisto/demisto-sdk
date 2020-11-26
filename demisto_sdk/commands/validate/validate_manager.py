@@ -822,8 +822,6 @@ class ValidateManager:
         renamed_files = content_object.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
                                                      staged_only=self.staged)
 
-        print(self.filter_to_relevant_files(renamed_files)[0])
-
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)

@@ -204,6 +204,11 @@ class Content:
                   in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}
 
+        committed_added = {Path(os.path.join(item.a_path)) for item in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('A')}
+
+        staged = staged - committed_added
+
         if staged_only:
             return staged - renamed
 
@@ -223,9 +228,13 @@ class Content:
         if committed_only:
             return committed
 
-        staged = {Path(os.path.join(item.a_path)) for item
-                  in content_repo.head.commit.diff(
+        staged = {Path(os.path.join(item.a_path)) for item in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
+
+        committed_added_locally_modified = {Path(os.path.join(item.a_path)) for item in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}.intersection(committed)
+
+        staged = staged.union(committed_added_locally_modified)
 
         if staged_only:
             return staged

@@ -234,6 +234,11 @@ class Linter:
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
                     except (FileNotFoundError, IOError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
+            elif not self._facts["python_version"]:
+                # get python version from yml
+                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                self._facts["python_version"] = pynum
+                logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
@@ -294,17 +299,17 @@ class Linter:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
                                                          lint_files=self._facts["lint_files"])
                 elif lint_check == "XSOAR_linter" and not no_xsoar_linter:
-                    exit_code, output = self._run_xsoar_linter(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
-                elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
-                    exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
+                elif lint_check == "mypy" and not no_mypy:
+                    exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-                elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
+                elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
 
@@ -328,7 +333,7 @@ class Linter:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
                                                          lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
                     error, warning, other = split_warnings_errors(output)

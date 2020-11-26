@@ -41,11 +41,13 @@ class ContributionConverter:
         pack_dir_path (str): The path to the specific pack directory being created or updated, e.g. .../Packs/AbuseDB
         dir_name (str): The directory name of a pack's containing folder
         create_new (bool): True if creating a new pack (default), False if updating an existing pack
+        gh_user (str): The github username of the person contributing the pack
     """
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
-                 create_new: bool = True, pack_dir_name: Union[str] = None, base_dir: Union[str] = None):
+                 gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
+                 base_dir: Union[str] = None):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -56,6 +58,7 @@ class ContributionConverter:
             contribution (Union[str], optional): The path to the contribution zipfile. Defaults to None.
             description (str, optional): The description for the contribution. Defaults to ''.
             author (str, optional): The author of the contribution. Defaults to ''.
+            gh_user (str, optional): The github username of the person contributing. Defaults to ''.
             create_new (bool, optional): Whether the contribution is intended as a new pack. When the contribution is
                 intended as an update to an existing pack, the value passed should be False. Defaults to True.
             pack_dir_name (Union[str], optional): Explicitly pass the name of the pack directory. Only useful when
@@ -69,6 +72,7 @@ class ContributionConverter:
         self.contribution = contribution
         self.description = description
         self.author = author
+        self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
         base_dir = base_dir or get_content_path()
@@ -369,6 +373,7 @@ class ContributionConverter:
         metadata_dict['tags'] = zipped_metadata.get('tags') if zipped_metadata.get('tags') else []
         metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
         metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
+        metadata_dict['githubUser'] = [self.gh_user] if self.gh_user else []
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
         with open(metadata_path, 'w') as pack_metadata_file:

@@ -1844,4 +1844,4 @@ class TestValidationUsingGit:
                                           '--skip-pack-release-notes'], catch_exceptions=False)
 
         assert result.exit_code == 1
-        assert "You are not running" in result.stdout  # check error str is in stdout
+        assert "You may not be running" in result.stdout  # check error str is in stdout

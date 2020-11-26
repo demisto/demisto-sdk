@@ -1451,3 +1451,19 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
             return json.loads(arg)
         return [s.strip() for s in arg.split(separator)]
     return [arg]
+
+
+def is_v2_file(current_file, check_in_display=False):
+    """Check if the specific integration of script is a v2
+    Returns:
+        bool. Whether the file is a v2 file
+    """
+    # integrations should be checked via display field, other entities should check name field
+    if check_in_display:
+        name = current_file.get('display', '')
+    else:
+        name = current_file.get('name', '')
+    suffix = str(name[-2:].lower())
+    if suffix != "v2":
+        return False
+    return True

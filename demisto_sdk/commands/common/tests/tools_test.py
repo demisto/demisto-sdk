@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_ryaml,
                                                has_remote_configured,
                                                is_origin_content_repo,
+                                               is_v2_file,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
@@ -625,3 +626,36 @@ def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
         """
     func_result = arg_to_list(arg=arg, separator=",")
     assert func_result == expected_result
+
+
+V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
+V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2", "id": "integrationname V2"}
+NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
+NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
+NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
+V2_NAME_INPUTS = [
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
+    (NOT_V2_VIA_NAME, False),
+    (NOT_V2_VIA_DISPLAY, True)
+]
+
+
+@pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
+def test_is_v2_file_via_name(current, answer):
+    assert is_v2_file(current) is answer
+
+
+V2_DISPLAY_INPUTS = [
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY, False),
+    (NOT_V2_VIA_NAME, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
+]
+
+
+@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
+def test_is_v2_file_via_display(current, answer):
+    assert is_v2_file(current, check_in_display=True) is answer

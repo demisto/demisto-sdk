@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, Optional, Union
+import os
+from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (DOCUMENTATION,
                                                    DOCUMENTATION_DIR,
@@ -127,3 +128,129 @@ class Content:
             descriptor_object = ContentDescriptor(path)
 
         return descriptor_object
+
+    def modified_packs(self, prev_ver='master', committed_only=False, staged_only=False) -> Dict[str, Pack]:
+        content_repo: Repo = self.git()
+
+        # staging all local changes
+        content_repo.git.add('.')
+
+        committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
+                         for item in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('M')}
+
+        committed: Dict = {path.name: Pack(path) for path in committed_set}
+
+        if committed_only:
+            return committed
+
+        staged_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2])) for item
+                      in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}
+
+        staged: Dict = {path.name: Pack(path) for path in staged_set}
+
+        if staged_only:
+            return staged
+
+        staged.update(committed)
+
+        return staged
+
+    def added_packs(self, prev_ver='master', committed_only=False, staged_only=False) -> Dict[str, Pack]:
+        content_repo: Repo = self.git()
+
+        # staging all local changes
+        content_repo.git.add('.')
+
+        committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
+                         for item in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('A')}
+
+        committed: Dict = {path.name: Pack(path) for path in committed_set}
+
+        if committed_only:
+            return committed
+
+        staged_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2])) for item
+                      in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
+
+        staged: Dict = {path.name: Pack(path) for path in staged_set}
+
+        if staged_only:
+            return staged
+
+        staged.update(committed)
+
+        return staged
+
+    def modified_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Path]:
+        prev_ver = prev_ver.replace('origin/', '')
+        content_repo: Repo = self.git()
+
+        # staging all local changes
+        content_repo.git.add('.')
+        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
+
+        committed = {Path(os.path.join(item.a_path)) for item
+                     in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('M')}
+
+        if committed_only:
+            return committed - renamed
+
+        staged = {Path(os.path.join(item.a_path)) for item
+                  in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}
+
+        if staged_only:
+            return staged - renamed
+
+        return staged.union(committed) - renamed
+
+    def added_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Path]:
+        prev_ver = prev_ver.replace('origin/', '')
+        content_repo: Repo = self.git()
+
+        # staging all local changes
+        content_repo.git.add('.')
+
+        committed = {Path(os.path.join(item.a_path)) for item
+                     in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('A')}
+
+        if committed_only:
+            return committed
+
+        staged = {Path(os.path.join(item.a_path)) for item
+                  in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
+
+        if staged_only:
+            return staged
+
+        return staged.union(committed)
+
+    def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Tuple[Path, Path]]:
+        prev_ver = prev_ver.replace('origin/', '')
+        content_repo: Repo = self.git()
+
+        # staging all local changes
+        content_repo.git.add('.')
+
+        committed = {(Path(item.a_path), Path(item.b_path)) for item
+                     in content_repo.remote().refs[prev_ver].commit.diff(
+            content_repo.active_branch).iter_change_type('R')}
+
+        if committed_only:
+            return committed
+
+        staged = {(Path(item.a_path), Path(item.b_path))for item
+                  in content_repo.head.commit.diff(
+            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('R')}
+
+        if staged_only:
+            return staged
+
+        return staged.union(committed)

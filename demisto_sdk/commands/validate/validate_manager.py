@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional
 
@@ -12,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
     TESTS_DIRECTORIES, FileType)
+from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -397,13 +399,8 @@ class ValidateManager:
         """
         self.setup_git_params()
 
-        click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
-                    fg="bright_cyan")
-        if not self.no_configuration_prints:
-            click.echo(f"Validating against {self.prev_ver}")
-
-        modified_files, added_files, old_format_files, changed_meta_files, _ = \
-            self.get_modified_and_added_files(self.compare_type, self.prev_ver)
+        modified_files, added_files, changed_meta_files, old_format_files = \
+            self.get_new_modified_and_added_files()
 
         validation_results = set()
 
@@ -798,6 +795,97 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
+
+        self.git_config_prints()
+
+    def git_config_prints(self):
+        click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
+                    fg="bright_cyan")
+        if not self.no_configuration_prints:
+            click.echo(f"Validating against {self.prev_ver}")
+
+            if self.is_circle:
+                click.echo("Running only on committed files")
+
+            elif self.staged:
+                click.echo("Running only on staged files")
+
+            else:
+                click.echo("Running on committed and staged files")
+
+    def get_new_modified_and_added_files(self):
+        content_object = Content.from_cwd()
+        modified_files = content_object.modified_files(prev_ver=self.prev_ver,
+                                                       committed_only=self.is_circle, staged_only=self.staged)
+        added_files = content_object.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                 staged_only=self.staged)
+        renamed_files = content_object.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                     staged_only=self.staged)
+
+        print(self.filter_to_relevant_files(renamed_files)[0])
+
+        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
+        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
+        filtered_modified = filtered_modified.union(filtered_renamed)
+        filtered_added, _ = self.filter_to_relevant_files(added_files)
+
+        changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
+
+        return filtered_modified, filtered_added, changed_meta, old_format_files
+
+    def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
+        changed_metadata_files = set()
+        for path in modified_files.union(renamed_files):
+            file_path = str(path[1]) if isinstance(path, tuple) else str(path)
+
+            if file_path.endswith(PACKS_PACK_META_FILE_NAME):
+                changed_metadata_files.add(file_path)
+
+        for path in added_files:
+            if str(path).endswith(PACKS_PACK_META_FILE_NAME):
+                self.new_packs.add(get_pack_name(str(path)))
+
+        return changed_metadata_files
+
+    def filter_to_relevant_files(self, file_set):
+        filtered_set = set()
+        old_format_files = set()
+        for path in file_set:
+            old_path = None
+            if isinstance(path, tuple):
+                file_path = str(path[1])
+                old_path = str(path[0])
+
+            else:
+                file_path = str(path)
+
+            try:
+                file_type = find_type(file_path)
+                if not file_type:
+                    self.ignored_files.add(file_path)
+                    continue
+
+                if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE]:
+                    file_path = file_path.replace('.py', '.yml').replace('.pws', '.yml')
+
+                    if old_path:
+                        old_path = old_path.replace('.py', '.yml').replace('.pws', ',yml')
+
+                if self._is_py_script_or_integration(file_path):
+                    old_format_files.add(file_path)
+
+                if old_path:
+                    filtered_set.add((old_path, file_path))
+
+                else:
+                    filtered_set.add(file_path)
+
+            # handle a case where a file was deleted locally though recognised as added against master.
+            except FileNotFoundError:
+                if file_path not in self.ignored_files:
+                    self.ignored_files.add(file_path)
+
+        return filtered_set, old_format_files
 
     def add_origin(self, prev_ver):
         # If git base not provided - check against origin/prev_ver unless using release branch

@@ -30,8 +30,8 @@ class MapperJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            self.set_fromVersion(VERSION_6_0_0)
             self.update_json()
+            self.set_fromVersion(VERSION_6_0_0)
             self.set_description()
             self.set_mapping()
             self.save_json_to_destination_file()

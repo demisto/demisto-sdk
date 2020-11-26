@@ -44,10 +44,10 @@ class TestLayoutValidator:
     def test_layout_is_incident_field_exist_in_content(self, repo, layout_json, id_set_json, expected_result):
         """
         Given
-        - A mapper with incident fields
+        - A layout with incident fields
         - An id_set file.
         When
-        - validating mapper
+        - validating layout
         Then
         - validating that incident fields exist in id_set.
         """
@@ -65,10 +65,10 @@ class TestLayoutValidator:
     def test_layout_container_is_incident_field_exist_in_content(self, repo, mapper_json, id_set_json, expected_result):
         """
         Given
-        - A mapper with incident fields
+        - A layout container with incident fields
         - An id_set file.
         When
-        - validating mapper
+        - validating layout container
         Then
         - validating that incident fields exist in id_set.
         """

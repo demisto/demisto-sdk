@@ -134,40 +134,27 @@ class ClassifierValidator(ContentEntityValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file) -> bool:
-        is_valid = True
-
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
+            return True
 
-        mapper_incident_fields = []
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
 
+        content_incident_fields = []
+        for item in ['IncidentFields', 'IndicatorFields']:
+            content_all_item_fields = id_set_file.get(item)
+            for content_item_field in content_all_item_fields:
+                for _, inc_field in content_item_field.items():
+                    content_incident_fields.append(inc_field.get('name', ''))
+
+        invalid_inc_fields_list = []
         mapper = self.current_file.get('mapping', {})
-
         for key, value in mapper.items():
             incident_fields = value.get('internalMapping', {})
 
             for inc_name, inc_info in incident_fields.items():
-                mapper_incident_fields.append(inc_name)
-
-        content_incident_fields = []
-        content_all_incident_fields = id_set_file.get('IncidentFields')
-        for content_inc_field in content_all_incident_fields:
-            for _, inc_field in content_inc_field.items():
-                content_incident_fields.append(inc_field.get('name', ''))
-
-        content_indicator_fields = []
-        content_all_indicator_fields = id_set_file.get('IndicatorFields')
-        for content_ind_field in content_all_indicator_fields:
-            for _, ind_field in content_ind_field.items():
-                content_indicator_fields.append(ind_field.get('name', ''))
-
-        all_valid_fields = content_indicator_fields + content_incident_fields + LAYOUT_BUILT_IN_FIELDS + BUILT_IN_FIELDS
-        invalid_inc_fields_list = []
-        for mapper_inc_field in mapper_incident_fields:
-            if mapper_inc_field not in all_valid_fields:
-                invalid_inc_fields_list.append(mapper_inc_field) if mapper_inc_field not in invalid_inc_fields_list \
-                    else None
+                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
+                    invalid_inc_fields_list.append(inc_name)
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)

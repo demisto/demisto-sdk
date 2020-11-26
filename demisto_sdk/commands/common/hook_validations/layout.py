@@ -128,29 +128,21 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 for section in layout_sections:
                     if section and section.get('items'):
                         for item in section.get('items', []):
-                            layout_incident_fields.append(item.get('fieldId', ''))
+                            layout_incident_fields.append(item.get('fieldId', '').replace('incident_', ''))
 
         content_incident_fields = []
-        content_all_incident_fields = id_set_file.get('IncidentFields')
-        for content_inc_field in content_all_incident_fields:
-            for inc_name, inc_field in content_inc_field.items():
-                content_incident_fields.append(inc_name.replace('incident_', ''))
+        for item in ['IncidentFields', 'IndicatorFields']:
+            content_all_items_fields = id_set_file.get(item)
+            for content_item_field in content_all_items_fields:
+                for item_name, item_field in content_item_field.items():
+                    content_incident_fields.append(item_name.replace('incident_', '').replace('indicator_', ''))
 
-        content_indicator_fields = []
-        content_all_indicator_fields = id_set_file.get('IndicatorFields')
-        for content_ind_field in content_all_indicator_fields:
-            for ind_name, ind_field in content_ind_field.items():
-                content_indicator_fields.append(ind_name.replace('indicator_', ''))
-
-        built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
-        all_fields_in_content = \
-            content_incident_fields + content_indicator_fields + LAYOUT_BUILT_IN_FIELDS + built_in_fields_layout
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
 
         invalid_inc_fields_list = []
-        for layout_inc_field in layout_incident_fields:
-            if layout_inc_field and layout_inc_field not in all_fields_in_content:
-                invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
-                    else None
+        for inc_field in layout_incident_fields:
+            if inc_field and inc_field.lower() not in built_in_fields and inc_field not in content_incident_fields:
+                invalid_inc_fields_list.append(inc_field) if inc_field not in invalid_inc_fields_list else None
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)
@@ -195,11 +187,9 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file) -> bool:
-        is_valid = True
-
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
+            return True
 
         layout_incident_fields = []
 
@@ -221,26 +211,18 @@ class LayoutValidator(LayoutBaseValidator):
                         layout_incident_fields.append(inc_field.replace('incident_', '').replace('indicator_', ''))
 
         content_incident_fields = []
-        content_all_incident_fields = id_set_file.get('IncidentFields')
-        for content_inc_field in content_all_incident_fields:
-            for inc_name, inc_field in content_inc_field.items():
-                content_incident_fields.append(inc_name.replace('incident_', ''))
+        for item in ['IncidentFields', 'IndicatorFields']:
+            content_all_items_fields = id_set_file.get(item)
+            for content_item_field in content_all_items_fields:
+                for item_name, item_field in content_item_field.items():
+                    content_incident_fields.append(item_name.replace('incident_', '').replace('indicator_', ''))
 
-        content_indicator_fields = []
-        content_all_indicator_fields = id_set_file.get('IndicatorFields')
-        for content_ind_field in content_all_indicator_fields:
-            for ind_name, ind_field in content_ind_field.items():
-                content_indicator_fields.append(ind_name.replace('indicator_', ''))
-
-        built_in_fields_layout = [field.lower() for field in BUILT_IN_FIELDS]
-        all_fields_in_content = \
-            content_incident_fields + content_indicator_fields + LAYOUT_BUILT_IN_FIELDS + built_in_fields_layout
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
 
         invalid_inc_fields_list = []
-        for layout_inc_field in layout_incident_fields:
-            if layout_inc_field and layout_inc_field not in all_fields_in_content:
-                invalid_inc_fields_list.append(layout_inc_field) if layout_inc_field not in invalid_inc_fields_list \
-                    else None
+        for inc_field in layout_incident_fields:
+            if inc_field and inc_field.lower() not in built_in_fields and inc_field not in content_incident_fields:
+                invalid_inc_fields_list.append(inc_field) if inc_field not in invalid_inc_fields_list else None
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_inc_fields_list)

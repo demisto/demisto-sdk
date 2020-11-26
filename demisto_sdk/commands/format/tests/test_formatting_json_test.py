@@ -718,7 +718,8 @@ class TestFormattingReport:
         MapperJSONFormat,
         LayoutBaseFormat,
         ReportJSONFormat,
-        WidgetJSONFormat
+        WidgetJSONFormat,
+        ConnectionJSONFormat
     ]
 
     @pytest.mark.parametrize(argnames='format_object', argvalues=FORMAT_OBJECT)
@@ -726,6 +727,7 @@ class TestFormattingReport:
         formatter = format_object(verbose=True, input="my_file_path")
         mocker.patch.object(BaseUpdateJSON, 'update_json', side_effect=self.exception_raise)
         mocker.patch.object(BaseUpdateJSON, 'set_fromVersion', side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, 'remove_unnecessary_keys', side_effect=self.exception_raise)
         mocker.patch.object(LayoutBaseFormat, 'set_layout_key', side_effect=self.exception_raise)
 
         formatter.run_format()

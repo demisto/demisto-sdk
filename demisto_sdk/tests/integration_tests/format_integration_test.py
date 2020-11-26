@@ -569,7 +569,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes'])
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == OLDEST_SUPPORTED_VERSION
 
@@ -598,7 +598,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '--from-version',
-                                         '6.0.0'])
+                                         '6.0.0', '-v'])
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
 
@@ -627,7 +627,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--from-version',
-                                         '6.0.0'], input='y')
+                                         '6.0.0', '-v'], input='y')
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
 
@@ -655,7 +655,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path)], input='y\n5.5.0')
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
 
@@ -684,7 +684,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual_two_trie
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path)], input='y\n5.5\n5.5.0')
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5\n5.5.0')
     assert 'Version format is not valid' in format_result.stdout
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '5.5.0'

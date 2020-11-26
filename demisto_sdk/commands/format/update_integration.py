@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -141,9 +140,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_docker_image()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception as e:
+        except Exception as err:
             if self.verbose:
-                print_error(e)
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

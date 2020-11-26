@@ -61,9 +61,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception as e:
+        except Exception as err:
             if self.verbose:
-                print_error(e)
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):

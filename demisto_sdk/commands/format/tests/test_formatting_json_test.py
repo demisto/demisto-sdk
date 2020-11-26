@@ -704,7 +704,7 @@ class TestFormattingReport:
         assert report_formatter.data.get('orientation') == 'landscape'
 
     @staticmethod
-    def exception_raise():
+    def exception_raise(placeholder=None):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -725,6 +725,8 @@ class TestFormattingReport:
     def test_json_run_format_exception_handling(self, format_object, mocker, capsys):
         formatter = format_object(verbose=True, input="my_file_path")
         mocker.patch.object(BaseUpdateJSON, 'update_json', side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, 'set_fromVersion', side_effect=self.exception_raise)
+        mocker.patch.object(LayoutBaseFormat, 'set_layout_key', side_effect=self.exception_raise)
 
         formatter.run_format()
         stdout, _ = capsys.readouterr()

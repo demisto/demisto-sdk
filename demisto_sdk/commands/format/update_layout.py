@@ -53,11 +53,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            self.update_json()
             if self.is_container:
                 self.layoutscontainer__run_format()
             else:
                 self.layout__run_format()
+            self.update_json()
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE

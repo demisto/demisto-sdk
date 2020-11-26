@@ -731,7 +731,6 @@ class Linter:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
             if 'Connection broken: IncompleteRead' not in str(err):
                 raise
-            pass
 
         # Run container
         exit_code = SUCCESS

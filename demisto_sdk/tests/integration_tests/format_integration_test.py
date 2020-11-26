@@ -584,7 +584,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
 
     Then:
         - Ensure format runs successfully
-        - Ensure format adds fromversion with the oldest supported version to the playbook.
+        - Ensure format adds fromversion with the given from-version.
     """
     pack = repo.create_pack('Temp')
     playbook = pack.create_playbook('my_temp_playbook')
@@ -601,3 +601,60 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
                                          '6.0.0'])
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
+
+
+def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack with from-version flag
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the given from-version.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--from-version',
+                                         '6.0.0'], input='y')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
+
+
+def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the oldest supported version to the playbook.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path)], input='y\n5.5.0')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'

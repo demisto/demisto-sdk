@@ -76,6 +76,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 if self.verbose:
                     print(f"Adding `fromversion: {self.from_version}`")
                 self.data['fromversion'] = self.from_version
+                return
 
             is_input_version_valid = False
             while not is_input_version_valid:

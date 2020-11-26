@@ -714,7 +714,7 @@ class Linter:
             pass
         except requests.exceptions.ChunkedEncodingError as err:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
-            if 'Connection broken: IncompleteRead' not in str(err):
+            if 'Connection broken' not in str(err):
                 raise
 
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:

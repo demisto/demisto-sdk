@@ -706,6 +706,17 @@ class Linter:
 
         return test_image_name, errors
 
+    def _docker_remove_container(self, container_name: str):
+        try:
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        except requests.exceptions.ChunkedEncodingError as err:
+            # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
+            if 'Connection broken: IncompleteRead' not in str(err):
+                raise
+
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
@@ -721,28 +732,19 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pylint"
         # Check if previous run left container a live if it do, we remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
-        except requests.exceptions.ChunkedEncodingError as err:
-            # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
-            if 'Connection broken: IncompleteRead' not in str(err):
-                raise
+        self._docker_remove_container(container_name)
 
         # Run container
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=[
-                                                                   build_pylint_command(self._facts["lint_files"])],
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=[
+                                                                                                       build_pylint_command(self._facts["lint_files"])],
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -800,25 +802,20 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        self._docker_remove_container(container_name)
         # Collect tests
         exit_code = SUCCESS
         output = ''
         test_json = {}
         try:
             # Running pytest container
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=[
-                                                                   build_pytest_command(test_xml=test_xml, json=True)],
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=[
+                                                                                                       build_pytest_command(test_xml=test_xml, json=True)],
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -959,23 +956,18 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pwsh-test"
         # Check if previous run left container a live if it do, we remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        self._docker_remove_container(container_name)
 
         # Run container
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=build_pwsh_test_command(),
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=build_pwsh_test_command(),
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")

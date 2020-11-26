@@ -263,7 +263,8 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
                     added_modules.append(cur_path)
         yield
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f'add_tmp_lint_files unexpected exception: {str(e)}')
+        raise
     finally:
         # If we want to change handling of files after finishing - do it here
         pass

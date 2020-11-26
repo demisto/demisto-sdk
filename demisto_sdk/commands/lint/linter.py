@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import traceback
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -123,30 +124,34 @@ class Linter:
         # If not python pack - skip pack
         if skip:
             return self._pkg_lint_status
+        try:
+            # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
+            with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
+                                    pack_path=self._pack_abs_dir,
+                                    lint_files=self._facts["lint_files"],
+                                    modules=modules,
+                                    pack_type=self._pkg_lint_status["pack_type"]):
+                # Run lint check on host - flake8, bandit, mypy
+                if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                    self._run_lint_in_host(no_flake8=no_flake8,
+                                           no_bandit=no_bandit,
+                                           no_mypy=no_mypy,
+                                           no_vulture=no_vulture,
+                                           no_xsoar_linter=no_xsoar_linter)
 
-        # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
-                                pack_path=self._pack_abs_dir,
-                                lint_files=self._facts["lint_files"],
-                                modules=modules,
-                                pack_type=self._pkg_lint_status["pack_type"]):
-            # Run lint check on host - flake8, bandit, mypy
-            if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                self._run_lint_in_host(no_flake8=no_flake8,
-                                       no_bandit=no_bandit,
-                                       no_mypy=no_mypy,
-                                       no_vulture=no_vulture,
-                                       no_xsoar_linter=no_xsoar_linter)
-
-            # Run lint and test check on pack docker image
-            if self._facts["docker_engine"]:
-                self._run_lint_on_docker_image(no_pylint=no_pylint,
-                                               no_test=no_test,
-                                               no_pwsh_analyze=no_pwsh_analyze,
-                                               no_pwsh_test=no_pwsh_test,
-                                               keep_container=keep_container,
-                                               test_xml=test_xml)
-
+                # Run lint and test check on pack docker image
+                if self._facts["docker_engine"]:
+                    self._run_lint_on_docker_image(no_pylint=no_pylint,
+                                                   no_test=no_test,
+                                                   no_pwsh_analyze=no_pwsh_analyze,
+                                                   no_pwsh_test=no_pwsh_test,
+                                                   keep_container=keep_container,
+                                                   test_xml=test_xml)
+        except Exception as ex:
+            err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
+            logger.error(f"{err}. Traceback: {traceback.format_exc()}")
+            self._pkg_lint_status["errors"].append(err)
+            self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
     def _gather_facts(self, modules: dict) -> bool:
@@ -721,6 +726,11 @@ class Linter:
             container_obj = self._docker_client.containers.get(container_name)
             container_obj.remove(force=True)
         except docker.errors.NotFound:
+            pass
+        except requests.exceptions.ChunkedEncodingError as err:
+            # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
+            if 'Connection broken: IncompleteRead' not in str(err):
+                raise
             pass
 
         # Run container

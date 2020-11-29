@@ -186,6 +186,7 @@ class Extractor:
                               "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
                 next_steps += "* When ready rm from git the source yml and add the new package:\n" \
                               "    git rm {}\n".format(self.input)
+                next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
                 next_steps += "    git add {}\n".format(arg_path)
                 self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
         return 0

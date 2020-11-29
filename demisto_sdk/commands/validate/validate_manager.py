@@ -1223,11 +1223,14 @@ class ValidateManager:
 
         if is_deprecated or toversion_is_old:
             click.echo(f"File {file_path} is either deprecated or has 'toversion' < 4.5.0.")
+
             is_valid_as_deprecated = True
             if hasattr(validator, "is_valid_as_deprecated"):
                 is_valid_as_deprecated = validator.is_valid_as_deprecated()
+
             if is_modified and is_backward_check:
                 return all([is_valid_as_deprecated, validator.is_backward_compatible()])
+
             click.echo(f"Skipping validation for: {file_path}")
             return is_valid_as_deprecated
         return None

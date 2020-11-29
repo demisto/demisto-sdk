@@ -1172,7 +1172,6 @@ class TestValidators:
         Then
         - No check will be preformed and validation will pass.
         """
-
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validations_on_file(file_path=file_path, pack_error_ignore_list=[],
                                                         is_modified=False)

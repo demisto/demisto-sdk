@@ -115,11 +115,14 @@ class Extractor:
             yaml_obj['fromversion'] = "5.5.0"
         with open(yaml_out, 'w') as yf:
             ryaml.dump(yaml_obj, yf)
-        # check if there is a README
+        # check if there is a README and if found, set found_readme to True
+        found_readme = False
         if self.readme:
             yml_readme = os.path.splitext(self.input)[0] + '_README.md'
             readme = output_path + '/README.md'
             if os.path.exists(yml_readme):
+                found_readme = True
+                self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
                 shutil.copy(yml_readme, readme)
             else:
                 # open an empty file
@@ -184,9 +187,10 @@ class Extractor:
                                   " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
                 next_steps += "* Create unit tests\n" \
                               "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
-                next_steps += "* When ready rm from git the source yml and add the new package:\n" \
+                next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
                               "    git rm {}\n".format(self.input)
-                next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
+                if found_readme:
+                    next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
                 next_steps += "    git add {}\n".format(arg_path)
                 self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
         return 0

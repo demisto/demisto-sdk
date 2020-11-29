@@ -1,6 +1,6 @@
 commonfields:
   id: DummyScript
-  version: -1
+  version: -2
 name: DummyScript
 deprecated: true
 script: ''
@@ -15,6 +15,6 @@ dockerimage45: demisto/python3:3.7.2.286
 dockerimage: demisto/python3:3.7.3.286
 runas: DBotWeakRole
 fromversion: 5.0.0
-comment: Entry widget that returns the number of hosts in a Cortex XDR incident.
+comment: Deprecated. Entry widget that returns the number of hosts in a Cortex XDR incident.
 tests:
 - No test - no need to test widget

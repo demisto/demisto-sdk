@@ -72,6 +72,10 @@ class ScriptValidator(ContentEntityValidator):
             ])
         return is_script_valid
 
+    def is_valid_as_deprecated(self):
+        """Check if the script is valid as a deprecated script."""
+        return self.is_valid_deprecated_script()
+
     @classmethod
     def _get_arg_to_required_dict(cls, script_json):
         """Get a dictionary arg name to its required status.

@@ -290,8 +290,9 @@ def validate(config, **kwargs):
             staged=kwargs['staged']
         )
         return validator.run_validation()
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
+        print_error(e)
+        print_error("\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
                     "Please run the command from content directory")
         sys.exit(1)
 
@@ -307,7 +308,7 @@ def validate(config, **kwargs):
                '4. content_all - Contains all from content_new and content_test.')
 @click.help_option('-h', '--help')
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
-              type=click.Path(file_okay=False, resolve_path=True))
+              type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
 @click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')

@@ -17,8 +17,7 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error,
+from demisto_sdk.commands.common.tools import (is_v2_file, print_error,
                                                server_version_compare)
 
 
@@ -767,7 +766,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file):
+        if not is_v2_file(self.current_file, check_in_display=True):
             return True
         else:
             display_name = self.current_file.get('display')

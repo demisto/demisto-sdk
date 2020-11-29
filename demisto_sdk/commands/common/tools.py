@@ -1408,6 +1408,17 @@ def camel_to_snake(camel: str) -> str:
     return snake
 
 
+def open_id_set_file(id_set_path):
+    id_set = None
+    try:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    except IOError:
+        print_warning("Could not open id_set file")
+    finally:
+        return id_set
+
+
 def get_demisto_version(demisto_client: demisto_client) -> str:
     """
     Args:
@@ -1442,12 +1453,17 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def open_id_set_file(id_set_path):
-    id_set = None
-    try:
-        with open(id_set_path, 'r') as id_set_file:
-            id_set = json.load(id_set_file)
-    except IOError:
-        print_warning("Could not open id_set file")
-    finally:
-        return id_set
+def is_v2_file(current_file, check_in_display=False):
+    """Check if the specific integration of script is a v2
+    Returns:
+        bool. Whether the file is a v2 file
+    """
+    # integrations should be checked via display field, other entities should check name field
+    if check_in_display:
+        name = current_file.get('display', '')
+    else:
+        name = current_file.get('name', '')
+    suffix = str(name[-2:].lower())
+    if suffix != "v2":
+        return False
+    return True

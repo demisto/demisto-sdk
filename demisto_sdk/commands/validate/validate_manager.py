@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -68,10 +67,10 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 class ValidateManager:
     def __init__(
-        self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-        print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-        validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+            self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+            print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+            validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -476,7 +475,8 @@ class ValidateManager:
     def validate_playbook(self, structure_validator, pack_error_ignore_list):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
-        return playbook_validator.is_valid_playbook(validate_rn=False)
+        return playbook_validator.is_valid_playbook(validate_rn=False,
+                                                    id_set_file=self.id_set_file)
 
     def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -661,9 +661,6 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
-            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
@@ -738,12 +735,8 @@ class ValidateManager:
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
-            if not os.path.isfile(self.id_set_path):
-                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-            with open(self.id_set_path, 'r') as conf_file:
-                id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 set(map(lambda integration: integration.get('pack'), integrations)))
 
@@ -901,7 +894,7 @@ class ValidateManager:
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
         if self.staged:
-            modified_files, added_files, old_format_files, changed_meta_files =  \
+            modified_files, added_files, old_format_files, changed_meta_files = \
                 self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
 
         modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
@@ -941,7 +934,7 @@ class ValidateManager:
                 # if the file is a code file - change path to
                 # the associated yml path to trigger release notes validation.
                 if file_status.lower() != 'd' and \
-                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                        find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
                         not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                     # naming convention - code file and yml file in packages must have same name.
                     file_path = os.path.splitext(file_path)[0] + '.yml'
@@ -1160,10 +1153,12 @@ class ValidateManager:
     @staticmethod
     def get_id_set_file(skip_dependencies, id_set_path):
         """
+
         Args:
             skip_dependencies (bool): whether should skip id set validation or not
             this will also determine whether a new id_set can be created by validate.
             id_set_path (str): id_set.json path file
+
         Returns:
             str: is_set file path
         """

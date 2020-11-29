@@ -110,7 +110,6 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -123,9 +122,11 @@ class TestValidators:
         -  Ensure it accepts the 'beta' key as valid
         """
         try:
+            mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
             structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
+            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
@@ -366,8 +367,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_file(self, _, file_path):
+    def test_run_all_validations_on_file(self, mocker, file_path):
         """
         Given
         - A file in packs or beta integration
@@ -378,6 +378,8 @@ class TestValidators:
         Then
         -  The file will be validated
         """
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

@@ -485,15 +485,16 @@ class ValidateManager:
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
 
-        current_file = integration_validator.current_file
-        if current_file["deprecated"] or version.parse(current_file["toversion"]) < version.parse("4.5.0"):
-            if is_modified and self.is_backward_check:
-                return integration_validator.is_backward_compatible()
-            click.echo(f"File is either deprecated or has 'toversion' < 4.5.0. Skipping:"
-                       f" {structure_validator.file_path}")
-            return True
-
         if is_modified and self.is_backward_check:
+            current_file = integration_validator.current_file
+            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+            toversion_is_old = "toversion" in current_file and \
+                               version.parse(current_file["toversion"]) < version.parse("4.5.0")
+            if is_deprecated or toversion_is_old:
+                click.echo(f"File is either deprecated or has 'toversion' < 4.5.0. "
+                           f"\n\tOnly checking backwards compatibility for: {structure_validator.file_path}")
+                return integration_validator.is_backward_compatible()
+
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:

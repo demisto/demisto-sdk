@@ -114,6 +114,7 @@ ERROR_CODE = {
     "invalid_deprecated_playbook": "PB104",
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
+    "invalid_script_id": "PB107",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -764,6 +765,15 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_playbook():
         return 'The playbook description has to start with "Deprecated."'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_script_id(script_entry_to_check, pb_task):
+        return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right script id is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator

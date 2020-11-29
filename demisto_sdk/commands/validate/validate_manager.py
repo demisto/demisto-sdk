@@ -9,10 +9,9 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
-    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES, PACKS_DIR,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
@@ -73,7 +72,8 @@ class ValidateManager:
         self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
         print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
         validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
+        no_auto_stage=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -91,6 +91,7 @@ class ValidateManager:
         self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
         self.staged = staged
+        self.no_auto_stage = no_auto_stage
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -400,7 +401,7 @@ class ValidateManager:
         self.setup_git_params()
 
         modified_files, added_files, changed_meta_files, old_format_files = \
-            self.get_new_modified_and_added_files()
+            self.get_changed_files_from_git()
 
         validation_results = set()
 
@@ -813,14 +814,15 @@ class ValidateManager:
             else:
                 click.echo("Running on committed and staged files")
 
-    def get_new_modified_and_added_files(self):
+    def get_changed_files_from_git(self):
         content_object = Content.from_cwd()
         modified_files = content_object.modified_files(prev_ver=self.prev_ver,
-                                                       committed_only=self.is_circle, staged_only=self.staged)
+                                                       committed_only=self.is_circle, staged_only=self.staged,
+                                                       no_auto_stage=self.no_auto_stage)
         added_files = content_object.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                 staged_only=self.staged)
+                                                 staged_only=self.staged, no_auto_stage=self.no_auto_stage)
         renamed_files = content_object.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                     staged_only=self.staged)
+                                                     staged_only=self.staged, no_auto_stage=self.no_auto_stage)
 
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
@@ -884,233 +886,6 @@ class ValidateManager:
                     self.ignored_files.add(file_path)
 
         return filtered_set, old_format_files
-
-    def add_origin(self, prev_ver):
-        # If git base not provided - check against origin/prev_ver unless using release branch
-        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
-            prev_ver = 'origin/' + prev_ver
-        return prev_ver
-
-    def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
-        """The function gets sets of files which were changed in the current branch and filters
-        out only the files that were changed in the current commit"""
-        all_changed_files = run_command(f'git diff --name-only --staged').split()
-        formatted_changed_files = set()
-
-        for file in all_changed_files:
-            if find_type(file) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
-                file = os.path.splitext(file)[0] + '.yml'
-            formatted_changed_files.add(file)
-
-        modified_files = modified_files.intersection(formatted_changed_files)
-        added_files = added_files.intersection(formatted_changed_files)
-        old_format_files = old_format_files.intersection(formatted_changed_files)
-        changed_meta_files = changed_meta_files.intersection(formatted_changed_files)
-        return modified_files, added_files, old_format_files, changed_meta_files
-
-    def get_modified_and_added_files(self, compare_type, prev_ver):
-        """Get the modified and added files from a specific branch
-
-        Args:
-            compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last release
-
-        Returns:
-            tuple. 3 sets representing modified files, added files and files of old format who have changed.
-        """
-        if not self.no_configuration_prints:
-            if self.staged:
-                click.echo("Collecting staged files only")
-            else:
-                click.echo("Collecting all committed files")
-
-        prev_ver = self.add_origin(prev_ver)
-        # all committed changes of the current branch vs the prev_ver
-        all_committed_files_string = run_command(
-            f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
-
-        modified_files, added_files, _, old_format_files, changed_meta_files = \
-            self.filter_changed_files(all_committed_files_string, prev_ver,
-                                      print_ignored_files=self.print_ignored_files)
-
-        if not self.is_circle:
-            remote_configured = has_remote_configured()
-            is_origin_demisto = is_origin_content_repo()
-            if remote_configured and not is_origin_demisto:
-                if not self.no_configuration_prints:
-                    click.echo("Collecting all local changed files from fork against the content master")
-
-                # only changes against prev_ver (without local changes)
-
-                all_changed_files_string = run_command(
-                    'git diff --name-status upstream/master...HEAD')
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
-
-                # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
-
-            else:
-                if (not is_origin_demisto and not remote_configured) and not self.no_configuration_prints:
-                    error_message, error_code = Errors.changes_may_fail_validation()
-                    self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
-                                      drop_line=True)
-
-                if not self.no_configuration_prints and not self.staged:
-                    click.echo("Collecting all local changed files against the content master")
-
-                # only changes against prev_ver (without local changes)
-                all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
-
-                # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
-
-            old_format_files = old_format_files.union(nc_old_format_files)
-            modified_files = modified_files.union(
-                modified_files_from_tag.intersection(nc_modified_files))
-
-            added_files = added_files.union(
-                added_files_from_tag.intersection(nc_added_files))
-
-            changed_meta_files = changed_meta_files.union(
-                changed_meta_files_from_tag.intersection(nc_changed_meta_files))
-
-            modified_files = modified_files - set(nc_deleted_files)
-            added_files = added_files - set(nc_deleted_files)
-            changed_meta_files = changed_meta_files - set(nc_deleted_files)
-
-        if self.staged:
-            modified_files, added_files, old_format_files, changed_meta_files =  \
-                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
-
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
-            self.get_packs(added_files))
-        return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
-
-    def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
-        """Get lists of the modified files in your branch according to the files string.
-
-        Args:
-            files_string (string): String that was calculated by git using `git diff` command.
-            tag (string): String of git tag used to update modified files.
-            print_ignored_files (bool): should print ignored files.
-
-        Returns:
-            Tuple of sets.
-        """
-        all_files = files_string.split('\n')
-        deleted_files = set()
-        added_files_list = set()
-        modified_files_list = set()
-        old_format_files = set()
-        changed_meta_files = set()
-        for f in all_files:
-            file_data = list(filter(None, f.split('\t')))
-
-            if not file_data:
-                continue
-
-            file_status = file_data[0]
-            file_path = file_data[1]
-
-            if file_status.lower().startswith('r'):
-                file_status = 'r'
-                file_path = file_data[2]
-            try:
-                # if the file is a code file - change path to
-                # the associated yml path to trigger release notes validation.
-                if file_status.lower() != 'd' and \
-                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
-                        not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
-                    # naming convention - code file and yml file in packages must have same name.
-                    file_path = os.path.splitext(file_path)[0] + '.yml'
-
-                # ignore changes in JS files and unit test files.
-                elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
-                    if file_path not in self.ignored_files:
-                        self.ignored_files.add(file_path)
-                        if print_ignored_files:
-                            click.secho('Ignoring file path: {} - code file'.format(file_path), fg="yellow")
-                    continue
-
-                # ignore changes in TESTS_DIRECTORIES files.
-                elif any(test_dir in file_path for test_dir in TESTS_DIRECTORIES):
-                    if file_path not in self.ignored_files:
-                        self.ignored_files.add(file_path)
-                        if print_ignored_files:
-                            click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
-                    continue
-
-                # identify deleted files
-                if file_status.lower() == 'd' and not file_path.startswith('.'):
-                    deleted_files.add(file_path)
-
-                # ignore directories
-                elif not os.path.isfile(file_path):
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {} - directory'.format(file_path), fg="yellow")
-                    continue
-
-                # changes in old scripts and integrations - unified python scripts/integrations
-                elif file_status.lower() in ['m', 'a', 'r'] and find_type(file_path) in [FileType.INTEGRATION,
-                                                                                         FileType.SCRIPT] and \
-                        self._is_py_script_or_integration(file_path):
-                    old_format_files.add(file_path)
-                # identify modified files
-                elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):
-                    modified_files_list.add(file_path)
-                # identify added files
-                elif file_status.lower() == 'a' and find_type(file_path) and not file_path.startswith('.'):
-                    added_files_list.add(file_path)
-                # identify renamed files
-                elif file_status.lower().startswith('r') and find_type(file_path):
-                    # if a code file changed, take the associated yml file.
-                    if find_type(file_data[2]) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
-                        modified_files_list.add(file_path)
-
-                    else:
-                        # file_data[1] = old name, file_data[2] = new name
-                        modified_files_list.add((file_data[1], file_data[2]))
-                elif file_status.lower() not in KNOWN_FILE_STATUSES:
-                    click.secho('{} file status is an unknown one, please check. File status was: {}'
-                                .format(file_path, file_status), fg="bright_red")
-                # handle meta data file changes
-                elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
-                    if file_status.lower() == 'a':
-                        self.new_packs.add(get_pack_name(file_path))
-                    elif file_status.lower() == 'm':
-                        changed_meta_files.add(file_path)
-                else:
-                    # pipefile and pipelock files should not enter to ignore_files
-                    if 'Pipfile' not in file_path:
-                        if file_path not in self.ignored_files:
-                            self.ignored_files.add(file_path)
-                            if print_ignored_files:
-                                click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
-                        else:
-                            if print_ignored_files:
-                                click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
-
-            # handle a case where a file was deleted locally though recognised as added against master.
-            except FileNotFoundError:
-                if file_path not in self.ignored_files:
-                    self.ignored_files.add(file_path)
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {} - File not found'.format(file_path), fg="yellow")
-
-        modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
-            modified_files_list,
-            added_files_list,
-            deleted_files,
-            tag)
-
-        return modified_files_list, added_files_list, deleted_files, old_format_files, changed_meta_files
 
     """ ######################################## Validate Tools ############################################### """
 

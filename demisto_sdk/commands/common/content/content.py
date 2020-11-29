@@ -185,12 +185,14 @@ class Content:
 
         return staged
 
-    def modified_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Path]:
+    def modified_files(self, prev_ver='master', committed_only=False, staged_only=False,
+                       no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
         # staging all local changes
-        content_repo.git.add('.')
+        if not no_auto_stage:
+            content_repo.git.add('.')
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
         committed = {Path(os.path.join(item.a_path)) for item
@@ -214,12 +216,13 @@ class Content:
 
         return staged.union(committed) - renamed
 
-    def added_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Path]:
+    def added_files(self, prev_ver='master', committed_only=False, staged_only=False, no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
         # staging all local changes
-        content_repo.git.add('.')
+        if not no_auto_stage:
+            content_repo.git.add('.')
 
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
@@ -241,12 +244,14 @@ class Content:
 
         return staged.union(committed)
 
-    def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False) -> Set[Tuple[Path, Path]]:
+    def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False,
+                      no_auto_stage=False) -> Set[Tuple[Path, Path]]:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
         # staging all local changes
-        content_repo.git.add('.')
+        if not no_auto_stage:
+            content_repo.git.add('.')
 
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(

@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+from demisto_sdk.commands.common.git_tools import get_packs
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
@@ -244,6 +245,9 @@ def unify(**kwargs):
     '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
+    '--no-auto-stage', is_flag=True, help='Do not auto-stage un-tracked files.'
+)
+@click.option(
     '--skip-pack-release-notes', is_flag=True,
     help='Skip validation of pack release notes.')
 @click.option(
@@ -287,7 +291,8 @@ def validate(config, **kwargs):
             silence_init_prints=kwargs['silence_init_prints'],
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
-            staged=kwargs['staged']
+            staged=kwargs['staged'],
+            no_auto_stage=kwargs['no_auto_stage']
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
@@ -828,8 +833,9 @@ def update_pack_releasenotes(**kwargs):
     try:
         validate_manager = ValidateManager(skip_pack_rn_validation=True)
         validate_manager.setup_git_params()
-        modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
-            '...', 'origin/master')
+        modified, added, old, changed_meta_files = validate_manager.get_changed_files_from_git()
+        _packs = get_packs(modified).union(get_packs(old)).union(
+            get_packs(added))
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")

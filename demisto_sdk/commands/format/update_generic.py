@@ -253,10 +253,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str, verbose: bool = True) -> dict:
+    def is_old_file(path: str, verbose: bool = False) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
-            data = get_remote_file(path, suppress_print=verbose)
+            data = get_remote_file(path, suppress_print=not verbose)
             if not data:
                 return {}
             else:

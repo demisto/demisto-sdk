@@ -139,13 +139,7 @@ class ClassifierValidator(ContentEntityValidator):
             return True
 
         built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
-
-        content_incident_fields = []
-        for item in ['IncidentFields', 'IndicatorFields']:
-            content_all_item_fields = id_set_file.get(item)
-            for content_item_field in content_all_item_fields:
-                for _, inc_field in content_item_field.items():
-                    content_incident_fields.append(inc_field.get('name', ''))
+        content_incident_fields = get_specific_fields_from_id_set(id_set_file, ['IncidentFields', 'IndicatorFields'])
 
         invalid_inc_fields_list = []
         mapper = self.current_file.get('mapping', {})
@@ -161,3 +155,13 @@ class ClassifierValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+
+def get_specific_fields_from_id_set(id_set_file, specific_fields: list) -> list:
+    fields_list = []
+    for item in specific_fields:
+        all_item_fields = id_set_file.get(item)
+        for item_field in all_item_fields:
+            for _, field_info in item_field.items():
+                fields_list.append(field_info.get('name', ''))
+    return fields_list

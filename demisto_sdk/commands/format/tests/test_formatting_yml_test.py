@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.tools import LOG_COLORS
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -693,3 +694,33 @@ class TestFormatting:
         mocker.patch('click.echo')
         BaseUpdate.recursive_extend_schema(schema, schema)
         click.echo.assert_called_once_with('Could not find sub-schema for input_schema', LOG_COLORS.YELLOW)
+
+    @staticmethod
+    def exception_raise():
+        raise ValueError("MY ERROR")
+
+    FORMAT_OBJECT = [
+        PlaybookYMLFormat,
+        IntegrationYMLFormat,
+        TestPlaybookYMLFormat,
+        ScriptYMLFormat
+    ]
+
+    @pytest.mark.parametrize(argnames='format_object', argvalues=FORMAT_OBJECT)
+    def test_yml_run_format_exception_handling(self, format_object, mocker, capsys):
+        """
+        Given
+            - A YML object formatter
+        When
+            - Run run_format command and and exception is raised.
+        Then
+            - Ensure the error is printed.
+        """
+        formatter = format_object(verbose=True, input="my_file_path")
+        mocker.patch.object(BaseUpdateYML, 'update_yml', side_effect=self.exception_raise)
+        mocker.patch.object(PlaybookYMLFormat, 'update_tests', side_effect=self.exception_raise)
+        mocker.patch.object(TestPlaybookYMLFormat, 'update_fromversion_by_user', side_effect=self.exception_raise)
+
+        formatter.run_format()
+        stdout, _ = capsys.readouterr()
+        assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout

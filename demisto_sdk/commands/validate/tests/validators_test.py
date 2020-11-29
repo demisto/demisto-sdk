@@ -5,10 +5,8 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import pytest
-from mock import patch
-
 import demisto_sdk.commands.validate.validate_manager
+import pytest
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
@@ -75,6 +73,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
+from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 

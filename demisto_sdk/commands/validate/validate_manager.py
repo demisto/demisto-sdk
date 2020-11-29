@@ -4,8 +4,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional
 
 import click
-from packaging import version
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -65,6 +63,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                is_origin_content_repo,
                                                open_id_set_file, run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from packaging import version
 
 
 class ValidateManager:

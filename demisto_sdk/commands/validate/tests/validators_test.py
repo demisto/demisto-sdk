@@ -67,7 +67,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
     VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
     VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET, DEPRECATED_INTEGRATION_YML, SMALL_TOVERSION_INTEGRATION_YML)
+    WIDGET_TARGET, DEPRECATED_INTEGRATION_YML, SMALL_TOVERSION_INTEGRATION_YML,
+    DEPRECATED_SCRIPT_YML, SMALL_TOVERSION_SCRIPT_YML, SMALL_TOVERSION_PLAYBOOK_YML)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from mock import patch
@@ -1132,25 +1133,46 @@ class TestValidators:
         assert modified_packs == {'HelloWorld'}
 
     DEPRECATED_FILE_PATHS = [
-        DEPRECATED_INTEGRATION_YML
+        DEPRECATED_INTEGRATION_YML,
+        SMALL_TOVERSION_INTEGRATION_YML,
+        DEPRECATED_SCRIPT_YML,
+        SMALL_TOVERSION_SCRIPT_YML,
+        SMALL_TOVERSION_PLAYBOOK_YML
     ]
 
     @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_deprecated_invalid_file(self, _, file_path):
+    def test_run_validations_on_deprecated_invalid_bc_modified_file(self, file_path):
         """
         Given
-        - An invalid deprecated file inside a pack.
+        - An invalid, deprecated, backwards compatible, modified file.
 
         When
-        - running run_all_validations_on_file on that file.
+        - running run_validations_on_file on that file.
 
         Then
         - Only Backwards compatibility will be checked and validation will pass.
         """
 
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
-        assert validate_manager.run_validation_on_specific_files()
+        assert validate_manager.run_validations_on_file(file_path=file_path, pack_error_ignore_list=[],
+                                                        is_modified=True)
+
+    @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
+    def test_run_validations_on_deprecated_invalid_bc_not_modified_file(self, file_path):
+        """
+        Given
+        - An invalid, deprecated, backwards compatible, unmodified file.
+
+        When
+        - running run_validations_on_file on that file.
+
+        Then
+        - No check will be preformed and validation will pass.
+        """
+
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
+        assert validate_manager.run_validations_on_file(file_path=file_path, pack_error_ignore_list=[],
+                                                        is_modified=False)
 
 
 def test_content_release_identifier_exists():

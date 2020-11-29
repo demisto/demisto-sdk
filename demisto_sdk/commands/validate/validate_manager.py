@@ -477,6 +477,15 @@ class ValidateManager:
     def validate_playbook(self, structure_validator, pack_error_ignore_list):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
+
+        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+                                                               current_file=playbook_validator.current_file,
+                                                               is_modified=True,
+                                                               is_backward_check=False,
+                                                               validator=playbook_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         return playbook_validator.is_valid_playbook(validate_rn=False,
                                                     id_set_file=self.id_set_file)
 
@@ -485,16 +494,15 @@ class ValidateManager:
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
 
-        if is_modified and self.is_backward_check:
-            current_file = integration_validator.current_file
-            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
-            toversion_is_old = "toversion" in current_file and \
-                               version.parse(current_file["toversion"]) < version.parse("4.5.0")
-            if is_deprecated or toversion_is_old:
-                click.echo(f"File is either deprecated or has 'toversion' < 4.5.0. "
-                           f"\n\tOnly checking backwards compatibility for: {structure_validator.file_path}")
-                return integration_validator.is_backward_compatible()
+        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+                                                               current_file=integration_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=integration_validator)
+        if deprecated_result is not None:
+            return deprecated_result
 
+        if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:
@@ -504,6 +512,15 @@ class ValidateManager:
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks)
+
+        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+                                                               current_file=script_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=script_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         if is_modified and self.is_backward_check:
             return all([script_validator.is_valid_file(validate_rn=False),
                         script_validator.is_backward_compatible()])
@@ -1181,3 +1198,34 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
         return id_set
+
+    @staticmethod
+    def check_and_validate_deprecated(file_path, current_file, is_modified, is_backward_check, validator):
+        """If file is deprecated, validate it. Return None otherwise.
+
+        Files with 'deprecated: true' or 'toversion < 4.5.0' fields are considered deprecated.
+
+        Args:
+            file_path: (str) file path to validate.
+            current_file: (dict) file in json format to validate.
+            is_modified: (boolean) for whether the file was modified.
+            is_backward_check: (boolean) for whether to preform backwards compatibility validation.
+            validator: (ContentEntityValidator) validator object to run backwards compatibility validation from.
+
+        Returns:
+            True if current_file is deprecated and valid.
+            False if current_file is deprecated and invalid.
+            None if current_file is not deprecated.
+        """
+        is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+        toversion_is_old = "toversion" in current_file and \
+                           version.parse(current_file["toversion"]) < version.parse("4.5.0")
+
+        if is_deprecated or toversion_is_old:
+            click.echo(f"File {file_path} is either deprecated or has 'toversion' < 4.5.0.")
+            if is_modified and is_backward_check:
+                click.echo(f"Only checking backwards compatibility for: {file_path}")
+                return validator.is_backward_compatible()
+            click.echo(f"Skipping validation for: {file_path}")
+            return True
+        return None

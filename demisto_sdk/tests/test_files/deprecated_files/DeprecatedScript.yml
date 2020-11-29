@@ -2,6 +2,7 @@ commonfields:
   id: DummyScript
   version: -1
 name: DummyScript
+deprecated: true
 script: ''
 type: python
 tags:

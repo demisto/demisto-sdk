@@ -2,6 +2,7 @@ commonfields:
   id: DummyScript
   version: -1
 name: DummyScript
+toversion: 4.4.4
 script: ''
 type: python
 tags:

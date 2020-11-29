@@ -13,6 +13,7 @@ description: "This playbook is triggered by fetching a Palo Alto Networks Cortex
   please follow the 'Palo Alto Networks Cortex XDR' documentation to upload the new
   fields manually."
 fromversion: 4.5.0
+toversion: 4.4.4
 starttaskid: "0"
 tasks:
   "0":

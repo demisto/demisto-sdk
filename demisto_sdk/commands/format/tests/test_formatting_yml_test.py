@@ -708,6 +708,14 @@ class TestFormatting:
 
     @pytest.mark.parametrize(argnames='format_object', argvalues=FORMAT_OBJECT)
     def test_yml_run_format_exception_handling(self, format_object, mocker, capsys):
+        """
+        Given
+            - A YML object formatter
+        When
+            - Run run_format command and and exception is raised.
+        Then
+            - Ensure the error is printed.
+        """
         formatter = format_object(verbose=True, input="my_file_path")
         mocker.patch.object(BaseUpdateYML, 'update_yml', side_effect=self.exception_raise)
         mocker.patch.object(PlaybookYMLFormat, 'update_tests', side_effect=self.exception_raise)

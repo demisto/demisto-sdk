@@ -1408,6 +1408,17 @@ def camel_to_snake(camel: str) -> str:
     return snake
 
 
+def open_id_set_file(id_set_path):
+    id_set = None
+    try:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    except IOError:
+        print_warning("Could not open id_set file")
+    finally:
+        return id_set
+
+
 def get_demisto_version(demisto_client: demisto_client) -> str:
     """
     Args:

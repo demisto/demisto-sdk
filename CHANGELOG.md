@@ -2,6 +2,7 @@
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
 * Updated the **upload** command to support mappers.
 * Fixed an issue where integration with v2 were recognised by the `name` field instead of the `display` field in the **validate** command.
+* Added a playbook validation to check if a task script exists in the id set in the **validate** command.
 
 # 1.2.10
 * Added validation for approved content pack use-cases and tags.

@@ -1,10 +1,11 @@
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
-from packaging import version
 from typing import Optional
 
 import click
+from packaging import version
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (

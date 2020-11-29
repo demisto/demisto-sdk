@@ -5,8 +5,10 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import demisto_sdk.commands.validate.validate_manager
 import pytest
+from mock import patch
+
+import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
@@ -38,8 +40,9 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
-    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DEPRECATED_INTEGRATION_YML,
+    DEPRECATED_SCRIPT_YML, DIR_LIST, IGNORED_PNG, INCIDENT_FIELD_TARGET,
+    INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
     INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
@@ -53,7 +56,9 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
+    SMALL_TOVERSION_INTEGRATION_YML, SMALL_TOVERSION_PLAYBOOK_YML,
+    SMALL_TOVERSION_SCRIPT_YML, VALID_BETA_INTEGRATION,
     VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
     VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
@@ -67,11 +72,9 @@ from demisto_sdk.tests.constants_test import (
     VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
     VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
     VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET, DEPRECATED_INTEGRATION_YML, SMALL_TOVERSION_INTEGRATION_YML,
-    DEPRECATED_SCRIPT_YML, SMALL_TOVERSION_SCRIPT_YML, SMALL_TOVERSION_PLAYBOOK_YML)
+    WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 

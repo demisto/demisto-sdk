@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import \
+    PlaybookValidator
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -1162,6 +1164,7 @@ class TestPlaybookValidation:
         - Ensure validate passes and identifies the file as a playbook.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {VALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
@@ -1201,6 +1204,7 @@ class TestPlaybookValidateDeprecated:
         - Ensure validate passes and identifies the file as a playbook deprecated.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
@@ -1840,4 +1844,4 @@ class TestValidationUsingGit:
                                           '--skip-pack-release-notes'], catch_exceptions=False)
 
         assert result.exit_code == 1
-        assert "You are not running" in result.stdout  # check error str is in stdout
+        assert "You may not be running" in result.stdout  # check error str is in stdout

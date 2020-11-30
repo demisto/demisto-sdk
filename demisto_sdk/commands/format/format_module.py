@@ -194,6 +194,7 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
         else:
             info_list.append(f'Format Status   on file: {input} - Success')
             error_list.append(f'Validate Status on file: {input} - Failed')
+            error_list.append(f'Please run "demisto-sdk validate -i {input}" for more information.')
     elif not format_res and not validate_res:
         info_list.append(f'Format Status   on file: {input} - Success')
         info_list.append(f'Validate Status on file: {input} - Success')

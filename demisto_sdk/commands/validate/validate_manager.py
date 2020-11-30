@@ -106,6 +106,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
+        self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
                 click.echo('Running in a private repository')
@@ -844,13 +845,12 @@ class ValidateManager:
         if not self.is_circle:
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
-            is_external_repo = tools.is_external_repository()
 
             repo = 'upstream'
-            if is_external_repo:
+            if self.is_external_repo:
                 repo = 'origin'
 
-            if (remote_configured and not is_origin_demisto) or is_external_repo:
+            if (remote_configured and not is_origin_demisto) or self.is_external_repo:
                 if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files from fork against the content master")
 

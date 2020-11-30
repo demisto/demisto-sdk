@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files, get_code_lang,
-                                               get_depth, get_dict_from_file,
+                                               get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir, get_json,
@@ -189,7 +189,7 @@ class Downloader:
         """
         if self.list_files:
             self.all_custom_content_objects = self.get_custom_content_objects()
-            list_files = [[cco['name'], cco['entity'][:-1]] for cco in self.all_custom_content_objects
+            list_files = [[cco['name'], cco['type']] for cco in self.all_custom_content_objects
                           if cco.get('name')]
             print_color('\nThe following files are available to be downloaded from Demisto instance:\n',
                         LOG_COLORS.NATIVE)
@@ -691,9 +691,8 @@ class Downloader:
             file_data: dict = get_json(file_path_to_write)
             if pack_obj_data:
                 merge(file_data, preserved_data)
-            json_depth: int = get_depth(file_data)
             with open(file_path_to_write, 'w') as jf:
-                json.dump(obj=file_data, fp=jf, indent=json_depth)
+                json.dump(obj=file_data, fp=jf, indent=4)
 
     @staticmethod
     def get_extracted_file_detail(file_ending: str) -> str:

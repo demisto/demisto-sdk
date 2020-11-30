@@ -27,6 +27,7 @@ from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
+from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
@@ -57,6 +58,7 @@ UNFORMATTED_FILES = ['readme',
                      'javascriptfile',
                      'powershellfile',
                      'betaintegration',
+                     'doc_image',
                      ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
@@ -95,9 +97,18 @@ def format_manager(input: str = None,
     log_list = []
     error_list = []
     if files:
+        format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path)
+
+            current_excluded_files = format_excluded_file[:]
+            dirname = os.path.dirname(file_path)
+            if dirname.endswith('CommonServerPython'):
+                current_excluded_files.remove('CommonServerPython.py')
+            if os.path.basename(file_path) in current_excluded_files:
+                continue
+
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
                 info_res, err_res, skip_res = run_format_on_file(input=file_path,
@@ -183,6 +194,7 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
         else:
             info_list.append(f'Format Status   on file: {input} - Success')
             error_list.append(f'Validate Status on file: {input} - Failed')
+            error_list.append(f'For more information run: `demisto-sdk validate -i {input}`')
     elif not format_res and not validate_res:
         info_list.append(f'Format Status   on file: {input} - Success')
         info_list.append(f'Validate Status on file: {input} - Success')

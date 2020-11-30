@@ -13,7 +13,8 @@ files = [
         'Print is found, Please remove all prints from the code.']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',
-        'Sleep is found, Please remove all sleep statements from the code.']),
+        'Sleep is found, Please remove all sleep statements from the code.',
+        'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
       'Main function wasnt found in the file, Please add main()',

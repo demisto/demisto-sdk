@@ -5,7 +5,7 @@ import io
 import json
 import os
 import re
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple, Union
 
 import click
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    SCRIPTS_DIR,
                                                    TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_yaml,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               find_type, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
@@ -201,13 +202,16 @@ class Unifier:
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data(self.package_path, "*png")
-        image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
+        if image_data:
+            image_data = self.image_prefix + base64.b64encode(image_data).decode('utf-8')
 
-        if yml_data.get('image') and self.use_force is False:
-            raise ValueError('Please move the image from the yml to an image file (.png)'
-                             f' in the package: {self.package_path}')
+            if yml_data.get('image') and self.use_force is False:
+                raise ValueError('Please move the image from the yml to an image file (.png)'
+                                 f' in the package: {self.package_path}')
 
-        yml_unified['image'] = image_data
+            yml_unified['image'] = image_data
+        else:
+            click.secho(f'Failed getting image data for {self.package_path}', fg="yellow")
 
         return yml_unified, found_img_path
 
@@ -419,7 +423,8 @@ class Unifier:
             return support_field, json_pack_metadata
         return None, None
 
-    def add_contributors_support(self, unified_yml: Dict, contributor_type: str, contributor_email: str,
+    def add_contributors_support(self, unified_yml: Dict, contributor_type: str,
+                                 contributor_email: Union[str, List[str]],
                                  contributor_url: str, author: str = '') -> Dict:
         """Add contributor support to the unified file - text in the display name and detailed description.
 
@@ -440,7 +445,9 @@ class Unifier:
         else:
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
-                contributor_description += f'\n- **Email**: [{contributor_email}](mailto:{contributor_email})'
+                email_list: List[str] = arg_to_list(contributor_email, ",")
+                for email in email_list:
+                    contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
             if contributor_url:
                 contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
         unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description

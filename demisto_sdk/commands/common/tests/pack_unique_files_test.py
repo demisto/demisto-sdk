@@ -1,10 +1,15 @@
 import json
 import os
 
+import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
+from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
+                                                   PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES,
+                                                   PACKS_README_FILE_NAME,
+                                                   XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -130,9 +135,76 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
+
         def error_raising_function(argument):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
         mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
         assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
+
+    @pytest.mark.parametrize('usecases, is_valid', [
+        ([], True),
+        (['Phishing', 'Malware'], True),
+        (['NonApprovedUsecase', 'Case Management'], False)
+    ])
+    def test_is_approved_usecases(self, repo, usecases, is_valid):
+        """
+        Given:
+            - Case A: Pack without usecases
+            - Case B: Pack with approved usecases (Phishing and Malware)
+            - Case C: Pack with non-approved usecase (NonApprovedUsecase) and approved usecase (Case Management)
+
+        When:
+            - Validating approved usecases
+
+        Then:
+            - Case A: Ensure validation passes as there are no usecases to verify
+            - Case B: Ensure validation passes as both usecases are approved
+            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedUsecase)
+                      Verify expected error is printed
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: usecases,
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: []
+        })
+        self.validator.pack_path = pack.path
+        assert self.validator._is_approved_usecases() == is_valid
+        if not is_valid:
+            assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('tags, is_valid', [
+        ([], True),
+        (['Machine Learning', 'Spam'], True),
+        (['NonApprovedTag', 'GDPR'], False)
+    ])
+    def test_is_approved_tags(self, repo, tags, is_valid):
+        """
+        Given:
+            - Case A: Pack without tags
+            - Case B: Pack with approved tags (Machine Learning and Spam)
+            - Case C: Pack with non-approved usecase (NonApprovedTag) and approved usecase (GDPR)
+
+        When:
+            - Validating approved usecases
+
+        Then:
+            - Case A: Ensure validation passes as there are no usecases to verify
+            - Case B: Ensure validation passes as both usecases are approved
+            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedTag)
+                      Verify expected error is printed
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags
+        })
+        self.validator.pack_path = pack.path
+        assert self.validator._is_approved_tags() == is_valid
+        if not is_valid:
+            assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()

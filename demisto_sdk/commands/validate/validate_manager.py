@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -62,15 +61,17 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               run_command)
+                                               open_id_set_file, run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
 class ValidateManager:
-    def __init__(self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-                 print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-                 validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-                 silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None):
+    def __init__(
+            self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+            print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+            validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+    ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
@@ -86,6 +87,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.compare_type = '...'
+        self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -93,6 +95,7 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
+        self.id_set_file = self.get_id_set_file(self.skip_dependencies, self.id_set_path)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -299,7 +302,8 @@ class ValidateManager:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
-                                                 old_file_path=old_file_path, branch_name=self.branch_name)
+                                                 old_file_path=old_file_path, branch_name=self.branch_name,
+                                                 is_new_file=not is_modified)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
@@ -415,8 +419,8 @@ class ValidateManager:
 
         if not self.skip_pack_rn_validation:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
-            validation_results.add(self.validate_no_missing_release_notes(modified_files,
-                                                                          old_format_files, added_files))
+            validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
+                                                                          added_files))
 
         if self.changes_in_schema:
             self.check_only_schema = True
@@ -471,7 +475,8 @@ class ValidateManager:
     def validate_playbook(self, structure_validator, pack_error_ignore_list):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
-        return playbook_validator.is_valid_playbook(validate_rn=False)
+        return playbook_validator.is_valid_playbook(validate_rn=False,
+                                                    id_set_file=self.id_set_file)
 
     def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -652,13 +657,9 @@ class ValidateManager:
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files,
-                                                                                               changed_meta_packs)
+                                                                                               added_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
-
-        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
-            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
 
         for pack in changed_packs:
             raise_version = False
@@ -677,17 +678,15 @@ class ValidateManager:
         Args:
             old_format_files(set): file names which are in the old format.
         """
-        invalid_files = []
+        handle_error = True
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
-                invalid_files.append(file_path)
-        if invalid_files:
-            error_message, error_code = Errors.invalid_package_structure(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+                error_message, error_code = Errors.invalid_package_structure(file_path)
+                if self.handle_error(error_message, error_code, file_path=file_path):
+                    handle_error = False
+        return handle_error
 
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
@@ -736,14 +735,13 @@ class ValidateManager:
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
-            if not os.path.isfile(self.id_set_path):
-                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-            with open(self.id_set_path, 'r') as conf_file:
-                id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 set(map(lambda integration: integration.get('pack'), integrations)))
+
+            # APIModules pack is without a version and should not have RN
+            packs_that_should_have_new_rn.remove(API_MODULES_PACK)
 
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs
@@ -801,6 +799,23 @@ class ValidateManager:
             prev_ver = 'origin/' + prev_ver
         return prev_ver
 
+    def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
+        """The function gets sets of files which were changed in the current branch and filters
+        out only the files that were changed in the current commit"""
+        all_changed_files = run_command(f'git diff --name-only --staged').split()
+        formatted_changed_files = set()
+
+        for file in all_changed_files:
+            if find_type(file) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
+                file = os.path.splitext(file)[0] + '.yml'
+            formatted_changed_files.add(file)
+
+        modified_files = modified_files.intersection(formatted_changed_files)
+        added_files = added_files.intersection(formatted_changed_files)
+        old_format_files = old_format_files.intersection(formatted_changed_files)
+        changed_meta_files = changed_meta_files.intersection(formatted_changed_files)
+        return modified_files, added_files, old_format_files, changed_meta_files
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
@@ -812,7 +827,10 @@ class ValidateManager:
             tuple. 3 sets representing modified files, added files and files of old format who have changed.
         """
         if not self.no_configuration_prints:
-            click.echo("Collecting all committed files")
+            if self.staged:
+                click.echo("Collecting staged files only")
+            else:
+                click.echo("Collecting all committed files")
 
         prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
@@ -837,6 +855,7 @@ class ValidateManager:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
+
                 all_changed_files_string = run_command(
                     f'git diff --name-status {repo}/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
@@ -853,7 +872,7 @@ class ValidateManager:
                     self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
                                       drop_line=True)
 
-                if not self.no_configuration_prints:
+                if not self.no_configuration_prints and not self.staged:
                     click.echo("Collecting all local changed files against the content master")
 
                 # only changes against prev_ver (without local changes)
@@ -880,7 +899,12 @@ class ValidateManager:
             added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files))
+        if self.staged:
+            modified_files, added_files, old_format_files, changed_meta_files = \
+                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
+
+        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
+            self.get_packs(added_files))
         return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
 
     def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
@@ -916,7 +940,7 @@ class ValidateManager:
                 # if the file is a code file - change path to
                 # the associated yml path to trigger release notes validation.
                 if file_status.lower() != 'd' and \
-                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                        find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
                         not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                     # naming convention - code file and yml file in packages must have same name.
                     file_path = os.path.splitext(file_path)[0] + '.yml'
@@ -1105,9 +1129,8 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files, changed_meta_packs):
-        # modified packs (where the change is not test-playbook, test-script, readme or release notes)
-        # and packs where the meta file changed should have their version raised
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
@@ -1119,7 +1142,7 @@ class ValidateManager:
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                 FileType.TEST_SCRIPT}) - self.new_packs)
 
-        return changed_meta_packs.union(modified_packs_that_should_have_version_raised)
+        return modified_packs_that_should_have_version_raised
 
     @staticmethod
     def get_packs(changed_files):
@@ -1132,3 +1155,23 @@ class ValidateManager:
                 packs.add(pack)
 
         return packs
+
+    @staticmethod
+    def get_id_set_file(skip_dependencies, id_set_path):
+        """
+
+        Args:
+            skip_dependencies (bool): whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
+            id_set_path (str): id_set.json path file
+
+        Returns:
+            str: is_set file path
+        """
+        id_set = {}
+        if not os.path.isfile(id_set_path):
+            if not skip_dependencies:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
+        return id_set

@@ -7,7 +7,8 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
+from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -40,13 +41,13 @@ from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
     INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_DASHBOARD_PATH, INVALID_IGNORED_UNIFIED_INTEGRATION,
-    INVALID_INCIDENT_FIELD_PATH, INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_NO_TESTS, INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
-    INVALID_MULTI_LINE_1_CHANGELOG_PATH, INVALID_MULTI_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_1_CHANGELOG_PATH, INVALID_ONE_LINE_2_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+    INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
+    INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
+    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
@@ -78,7 +79,6 @@ class TestValidators:
 
     @classmethod
     def setup_class(cls):
-        print("Setups class")
         for dir_to_create in DIR_LIST:
             if not os.path.exists(dir_to_create):
                 cls.CREATED_DIRS.append(dir_to_create)
@@ -87,7 +87,6 @@ class TestValidators:
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down class")
         os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
@@ -111,7 +110,6 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -124,9 +122,11 @@ class TestValidators:
         -  Ensure it accepts the 'beta' key as valid
         """
         try:
+            mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
             structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
+            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
@@ -367,8 +367,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_file(self, _, file_path):
+    def test_run_all_validations_on_file(self, mocker, file_path):
         """
         Given
         - A file in packs or beta integration
@@ -379,8 +378,68 @@ class TestValidators:
         Then
         -  The file will be validated
         """
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
+
+    INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS = [
+        INVALID_DASHBOARD_PATH,
+        INVALID_INCIDENT_FIELD_PATH,
+        INVALID_INTEGRATION_ID_PATH,
+        INVALID_INTEGRATION_NO_TESTS,
+        INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
+        INVALID_LAYOUT_CONTAINER_PATH,
+        INVALID_LAYOUT_PATH,
+        INVALID_PLAYBOOK_CONDITION_1,
+        INVALID_PLAYBOOK_CONDITION_2,
+        INVALID_PLAYBOOK_ID_PATH,
+        INVALID_PLAYBOOK_PATH,
+        INVALID_PLAYBOOK_PATH_FROM_ROOT,
+        INVALID_REPUTATION_PATH,
+        INVALID_SCRIPT_PATH,
+        INVALID_WIDGET_PATH,
+        INVALID_BETA_INTEGRATION
+    ]
+
+    @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
+    @patch.object(ImageValidator, 'is_valid', return_value=True)
+    def test_run_all_validations_on_file_failed(self, _, file_path):
+        """
+        Given
+        - An invalid file inside a pack
+
+        When
+        - running run_all_validations_on_file on that file
+
+        Then
+        -  The file will be validated and failed
+        """
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
+        assert not validate_manager.run_validation_on_specific_files()
+
+    def test_run_all_validations_on_file_with_modified_id(self, mocker, integration):
+        """
+        Given
+        - Integration with a modified ID.
+
+        When
+        - running 'run_all_validations_on_file' on that file.
+
+        Then
+        -  The file will fail validation because its id changed.
+        """
+        validator = StructureValidator(file_path=integration.yml.path, predefined_scheme='integration')
+        old = validator.load_data_from_file()
+        old['commonfields']['id'] = 'old_id'
+
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
+
+        validate_manager = ValidateManager(skip_conf_json=True)
+        assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
+                                                            pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self):
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -701,7 +760,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml_path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
@@ -739,7 +798,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml_path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md', 'Packs/ApiDependent/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
@@ -824,16 +883,19 @@ class TestValidators:
     def test_validate_no_old_format__without_toversion(self, mocker):
         """
             Given:
-                - an old format_file without toversion
+                - 2 old format_file without toversion
             When:
-                - running validate_no_old_format on the file
+                - running validate_no_old_format on the files
             Then:
-                - return a False as the file is invalid
+                - return a False as the files are invalid
+                - assert the handle_error function is called for each file
         """
-        mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
+        handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
-        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml"}
+        old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml",
+                            "demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
+        assert handle_error_mock.call_count == 2
 
     def test_filter_changed_files(self, mocker):
         """
@@ -1015,6 +1077,60 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
 
+    def test_staged(self, mocker):
+        """
+        Given
+            - staged = True flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate checks for the staged files using git diff.
+            - get_modified_and_added_files returns a list of only staged files.
+        """
+        def run_command_effect(arg):
+            # if the call is to check the staged files only - return the HelloWorld integration.
+            if arg == 'git diff --name-only --staged':
+                return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+            # else return all the files that were changed from master and their status in comparison to the master.
+            else:
+                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=True)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
+
+    def test_not_staged(self, mocker):
+        """
+        Given
+            - staged = False flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate that not a git diff staged command runs
+        """
+        def run_command_effect(arg):
+            assert 'staged' not in arg
+            return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=False)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
+
 
 def test_content_release_identifier_exists():
     """
@@ -1072,3 +1188,67 @@ def test_should_raise_pack_version(pack_name, expected):
     validate_manager = ValidateManager()
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected
+
+
+def test_run_validation_using_git_on_only_metadata_changed(mocker):
+    """
+    Given
+        - metadata file that was changed.
+    When
+        - Run all tests on the file.
+    Then
+        - validate That no error returns.
+    """
+    mocker.patch.object(ValidateManager, 'setup_git_params')
+    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
+                        return_value=(set(), set(), set(), {'Packs/TestPack/pack_metadata.json'}, {'TestPack'}))
+
+    validate_manager = ValidateManager()
+    res = validate_manager.run_validation_using_git()
+    assert res
+
+
+def test_is_mapping_fields_command_exist(integration):
+    """
+        Given
+        - Integration yml file with get-mapping-fields command.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the True.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert validator.is_mapping_fields_command_exist()
+
+
+def test_mapping_fields_command_dont_exist(integration):
+    """
+        Given
+        - Integration yml file with no get-mapping-fields command and ismappable: True.
+
+        When
+        - Checking if get-mapping-fields command exists.
+
+        Then
+        -  validator returns the False. The field ismappable exists, but the command no.
+    """
+    integration.yml.write_dict({'script': {
+        'commands': [{
+            'name': 'not-get-mapping-fields'
+        }],
+        'ismappable': True
+    }})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+    validator = IntegrationValidator(structure_validator)
+
+    assert not validator.is_mapping_fields_command_exist()

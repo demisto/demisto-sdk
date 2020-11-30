@@ -1,4 +1,62 @@
 # Changelog
+
+# 1.2.11
+* Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
+* Updated the **upload** command to support mappers.
+* Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
+* Added support for vulture and mypy linting when running without docker.
+* Fixed an issue where exceptions were no printed in the **format** while the *--verbose* flag is set.
+* Fixed an issue where *--assume-yes* flag did not work in the **format** command when running on a playbook without a `fromversion` field.
+* Fixed an issue where the **format** command would fail in case `conf.json` file was not found instead of skipping the update.
+* Fixed an issue where integration with v2 were recognised by the `name` field instead of the `display` field in the **validate** command.
+* Added a playbook validation to check if a task script exists in the id set in the **validate** command.
+* Added new integration category `File Integrity Management` in the **validate** command.
+
+# 1.2.10
+* Added validation for approved content pack use-cases and tags.
+* Added new code validations for *CommonServerPython* import to `XSOAR-linter`.
+* Added *default value* and *predefined values* to argument description in **generate-docs** command.
+* Added a new validation that checks if *get-mapping-fields* command exists if the integration schema has *{ismappable: true}* in **validate** command.
+* Fixed an issue where the *--staged* flag recognised added files as modified in the **validate** command.
+* Fixed an issue where a backwards compatibility warning was raised for all added files in the **validate** command.
+* Fixed an issue where **validate** command failed when no tests were given for a partner supported pack.
+* Updated the **download** command to support mappers.
+* Fixed an issue where the ***format*** command added a duplicate parameter.
+* For partner supported content packs, added support for a list of emails.
+* Removed validation of README files from the ***validate*** command.
+* Fixed an issue where the ***validate*** command required release notes for ApiModules pack.
+
+# 1.2.9
+* Fixed an issue in the **openapi_codegen** command where it created duplicate functions name from the swagger file.
+* Fixed an issue in the **update-release-notes** command where the *update type* argument was not verified.
+* Fixed an issue in the **validate** command where no error was raised in case a non-existing docker image was presented.
+* Fixed an issue in the **format** command where format failed when trying to update invalid Docker image.
+* The **format** command will now preserve the **isArray** argument in integration's reputation commands and will show a warning if it set to **false**.
+* Fixed an issue in the **lint** command where *finally* clause was not supported in main function.
+* Fixed an issue in the **validate** command where changing any entity ID was not validated.
+* Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
+* Fixed the **update-release-notes** command to ignore changes in the metadata file.
+* Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
+
+
+# 1.2.8
+* Added a new validation that checks in playbooks for the usage of `DeleteContext` in **validate** command.
+* Fixed an issue in the **upload** command where it would try to upload content entities with unsupported versions.
+* Added a new validation that checks in playbooks for the usage of specific instance in **validate** command.
+* Added the **--staged** flag to **validate** command to run on staged files only.
+
+
+# 1.2.7
+* Changed input parameters in **find-dependencies** command.
+   - Use ***-i, --input*** instead of ***-p, --path***.
+   - Use ***-idp, --id-set-path*** instead of ***-i, --id-set-path***.
+* Fixed an issue in the **unify** command where it crashed on an integration without an image file.
+* Fixed an issue in the **format** command where unnecessary files were not skipped.
+* Fixed an issue in the **update-release-notes** command where the *text* argument was not respected in all cases.
+* Fixed an issue in the **validate** command where a warning about detailed description was given for unified or deprecated integrations.
+* Improved the error returned by the **validate** command when running on files using the old format.
+
+# 1.2.6
 * No longer require setting `DEMISTO_README_VALIDATION` env var to enable README mdx validation. Validation will now run automatically if all necessary node modules are available.
 * Fixed an issue in the **validate** command where the `--skip-pack-dependencies` would not skip id-set creation.
 * Fixed an issue in the **validate** command where validation would fail if supplied an integration with an empty `commands` key.
@@ -183,11 +241,11 @@
 * Added a prompt to the `demisto-sdk update-release-notes` command to prompt users to commit changes before running the release notes command.
 * Added support to `layoutscontainer` in **validate** command.
 
-#### 1.1.5
+# 1.1.5
 * Fixed an issue in **find-dependencies** command.
 * **lint** command now verifies flake8 on CommonServerPython script.
 
-#### 1.1.4
+# 1.1.4
 * Fixed an issue with the default output file name of the **unify** command when using "." as an output path.
 * **Unify** command now adds contributor details to the display name and description.
 * **Format** command now adds *isFetch* and *incidenttype* fields to integration yml.
@@ -199,7 +257,7 @@
 * Improved pack dependencies detection.
 * Fixed an issue where test playbooks were mishandled in **validate** command.
 
-#### 1.1.3
+# 1.1.3
 * Added a validation for invalid id fields in indicators types files in **validate** command.
 * Added default behavior for **update-release-notes** command.
 * Fixed an error where README files were failing release notes validation.
@@ -209,7 +267,7 @@
 * **Validate** now supports scripts under the *TestPlaybooks* directory.
 * Fixed an issue where **validate** did not support powershell files.
 
-#### 1.1.2
+# 1.1.2
 * Added a validation for invalid playbookID fields in incidents types files in **validate** command.
 * Added a code formatter for python files.
 * Fixed an issue where new and old classifiers where mixed on validate command.
@@ -225,11 +283,11 @@
 * Fixed an issue where **validate** command did not fail when docker image was not on the latest numeric tag.
 * Fixed an issue where beta integrations were not validated correctly in **validate** command.
 
-#### 1.1.1
+# 1.1.1
 * fixed and issue where file types were not recognized correctly in **validate** command.
 * Added better outputs for validate command.
 
-#### 1.1.0
+# 1.1.0
 * Fixed an issue where changes to only non-validated files would fail validation.
 * Fixed an issue in **validate** command where moved files were failing validation for new packs.
 * Fixed an issue in **validate** command where added files were failing validation due to wrong file type detection.
@@ -240,20 +298,20 @@
 * Improved errors outputs in **validate** command.
 * Added support for linting an entire pack.
 
-#### 1.0.9
+# 1.0.9
 * Fixed a bug where misleading error was presented when pack name was not found.
 * **Update-release-notes** now detects added files for packs with versions.
 * Readme files are now ignored by **update-release-notes** and validation of release notes.
 * Empty release notes no longer cause an uncaught error during validation.
 
-#### 1.0.8
+# 1.0.8
 * Changed the output format of demisto-sdk secrets.
 * Added a validation that checkbox items are not required in integrations.
 * Added pack release notes generation and validation.
 * Improved pack metadata validation.
 * Fixed an issue in **validate** where renamed files caused an error
 
-#### 1.0.4
+# 1.0.4
 * Fix the **format** command to update the `id` field to be equal to `details` field in indicator-type files, and to `name` field in incident-type & dashboard files.
 * Fixed a bug in the **validate** command for layout files that had `sortValues` fields.
 * Fixed a bug in the **format** command where `playbookName` field was not always present in the file.
@@ -264,7 +322,7 @@
 * Improved image validation in YAML files.
 * Removed validation for else path in playbook condition tasks.
 
-#### 1.0.3
+# 1.0.3
 * Fixed a bug in the **format** command where comments were being removed from YAML files.
 * Added output fields: _file_path_ and _kind_ for layouts in the id-set.json created by **create-id-set** command.
 * Fixed a bug in the **create-id-set** command Who returns Duplicate for Layouts with a different kind.
@@ -275,7 +333,7 @@
 * Fixed a bug in **generate-docs** command in which integration dependencies were not detected when generating documentation for a playbook.
 
 
-#### 1.0.1
+# 1.0.1
 * Fixed a bug in the **unify** command when output path was provided empty.
 * Improved error message for integration with no tests configured.
 * Improved the error message returned from the **validate** command when an integration is missing or contains malformed fetch incidents related parameters.
@@ -286,7 +344,7 @@
 * Changed Docker image validation to fail only on non-valid ones.
 * Removed backward compatibility validation when Docker image is updated.
 
-#### 1.0.0
+# 1.0.0
 * Improved the *upload* command to support the upload of all the content entities within a pack.
 * The *upload* command now supports the improved pack file structure.
 * Added an interactive option to format integrations, scripts and playbooks with No TestPlaybooks configured.
@@ -306,7 +364,7 @@
 * Bug fixes in generate-docs command given playbook as input.
 * Fixed an issue with lint command in which flake8 was not running on unit test files.
 
-#### 0.5.2
+# 0.5.2
 * Added *-c, --command* option in *generate-docs* to generate a specific command from an integration.
 * Fixed an issue when getting README/CHANGELOG files from git and loading them.
 * Removed release notes validation for new content.
@@ -318,11 +376,11 @@
 * demisto-sdk lint - new packages used to accelerate execution time.
 * demisto-sdk secrets - command now respects the generic whitelist, and not only the pack secrets.
 
-#### 0.5.0
+# 0.5.0
 [PyPI History][1]
 
 [1]: https://pypi.org/project/demisto-sdk/#history
-### 0.4.9
+# 0.4.9
 * Fixed an issue in *generate-docs* where Playbooks and Scripts documentation failed.
 * Added a graceful error message when executing the *run" command with a misspelled command.
 * Added more informative errors upon failures of the *upload* command.
@@ -334,21 +392,21 @@
 * Fixed an issue in loading playbooks with '=' character.
 * Fixed an issue in *validate* failed on deleted README files.
 
-### 0.4.8
+# 0.4.8
 * Added the *max* field to the Playbook schema, allowing to define it in tasks loop.
 * Fixed an issue in *validate* where Condition branches checks were case sensitive.
 
-### 0.4.7
+# 0.4.7
 * Added the *slareminder* field to the Playbook schema.
 * Added the *common_server*, *demisto_mock* arguments to the *init* command.
 * Fixed an issue in *generate-docs* where the general section was not being generated correctly.
 * Fixed an issue in *validate* where Incident type validation failed.
 
-### 0.4.6
+# 0.4.6
 * Fixed an issue where the *validate* command did not identify CHANGELOG in packs.
 * Added a new command, *id-set* to create the id set - the content dependency tree by file IDs.
 
-### 0.4.5
+# 0.4.5
 * generate-docs command:
     * Added the *use_cases*, *permissions*, *command_permissions* and *limitations*.
     * Added the *--insecure* argument to support running the script and integration command in Demisto.
@@ -362,7 +420,7 @@
 * README files which are html files will now be skipped in the *validate* command.
 * Added support for env var: *DEMISTO_README_VALIDATOR*. When not set the readme validation will not run.
 
-### 0.4.4
+# 0.4.4
 * Added a validator for IncidentTypes (incidenttype-*.json).
 * Fixed an issue where the -p flag in the *validate* command was not working.
 * Added a validator for README.md files.
@@ -375,11 +433,11 @@
 * Added the *insecure* argument in *run-playbook*.
 * Standardise the *-i --input*, *-o --output* to demisto-sdk commands.
 
-### 0.4.3
+# 0.4.3
 * Fixed an issue where the incident and indicator field BC check failed.
 * Support for linting and unit testing PowerShell integrations.
 
-### 0.4.2
+# 0.4.2
 * Fixed an issue where validate failed on Windows.
 * Added a validator to verify all branches are handled in conditional task in a playbook.
 * Added a warning message when not running the latest sdk version.
@@ -393,12 +451,12 @@
 * Added more indicative message for errors in yaml files.
 * Disabled pykwalify info log prints.
 
-### 0.3.10
+# 0.3.10
 * Added a BC check for incident fields - changing from version is not allowed.
 * Fixed an issue in create-content-artifacts where scripts in Packs in TestPlaybooks dir were copied with a wrong prefix.
 
 
-### 0.3.9
+# 0.3.9
 * Added a validation that incident field can not be required.
 * Added validation for fetch incident parameters.
 * Added validation for feed integration parameters.
@@ -412,27 +470,27 @@
 * Added a new hook for naming of v2 integrations and scripts.
 
 
-### 0.3.8
+# 0.3.8
 * Fixed an issue where *create-content-artifact* was not loading the data in the yml correctly.
 * Fixed an issue where *unify* broke long lines in script section causing syntax errors
 
 
-### 0.3.7
+# 0.3.7
 * Added *generate-docs* command to generate documentation file for integration, playbook or script.
 * Fixed an issue where *unify* created a malformed integration yml.
 * Fixed an issue where demisto-sdk **init** creates unit-test file with invalid import.
 
 
-### 0.3.6
+# 0.3.6
 * Fixed an issue where demisto-sdk **validate** failed on modified scripts without error message.
 
 
-### 0.3.5
+# 0.3.5
 * Fixed an issue with docker tag validation for integrations.
 * Restructured repo source code.
 
 
-### 0.3.4
+# 0.3.4
 * Saved failing unit tests as a file.
 * Fixed an issue where "_test" file for scripts/integrations created using **init** would import the "HelloWorld" templates.
 * Fixed an issue in demisto-sdk **validate** - was failing on backward compatiblity check
@@ -444,7 +502,7 @@
 * Added --outfile to **lint** to allow saving failed packages to a file.
 
 
-### 0.3.3
+# 0.3.3
 * Added backwards compatibility break error message.
 * Added schema for incident types.
 * Added **additionalinfo** field to as an available field for integration configuration.
@@ -452,16 +510,16 @@
 * Fixed an issue where error would appear if name parameter is not set in **init**.
 
 
-### 0.3.2
+# 0.3.2
 * Fixed the handling of classifier files in **validate**.
 
 
-### 0.3.1
+# 0.3.1
 * Fixed the handling of newly created reputation files in **validate**.
 * Added an option to perform **validate** on a specific file.
 
 
-### 0.3.0
+# 0.3.0
 * Added support for multi-package **lint** both with parallel and without.
 * Added all parameter in **lint** to run on all packages and packs in content repository.
 * Added **format** for:
@@ -482,35 +540,35 @@
 * Adding **init** command.
 * Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
-### 0.2.6
+# 0.2.6
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
-### 0.2.5
+# 0.2.5
 
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
-### 0.2.4
+# 0.2.4
 
 * Adding image validation to Beta_Integration and Packs in **validate**.
 
-### 0.2.3
+# 0.2.3
 
 * Adding Beta_Integration to the structure validation process.
 * Fixing bug where **validate** did checks on TestPlaybooks.
 * Added requirements parameter to **lint**.
 
-### 0.2.2
+# 0.2.2
 
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
 
-### 0.2.1
+# 0.2.1
 
 * **Validate** now checks that the id and name fields are identical in yml files.
 * Fixed a bug where sdk did not return any exit code.
 
-### 0.2.0
+# 0.2.0
 
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
@@ -518,24 +576,24 @@
 * Fixed a bug where **validate** and **secrets** did not return exit code 1 on failure.
 * **Validate** now runs on newly added scripts.
 
-### 0.1.8
+# 0.1.8
 
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.
 
-### 0.1.2
+# 0.1.2
 * Restructuring validation to support content packs.
 * Added secrets validation.
 * Added content bundle creation.
 * Added lint and unit test run.
 
-### 0.1.1
+# 0.1.1
 
 * Added new logic to the unifier.
 * Added detailed README.
 * Some small adjustments and fixes.
 
-### 0.1.0
+# 0.1.0
 
 Capabilities:
 * **Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.

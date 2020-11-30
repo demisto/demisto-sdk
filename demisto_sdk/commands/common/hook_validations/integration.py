@@ -17,8 +17,7 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error,
+from demisto_sdk.commands.common.tools import (is_v2_file, print_error,
                                                server_version_compare)
 
 
@@ -94,7 +93,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description()
+            self.is_valid_deprecated_integration_description(),
+            self.is_mapping_fields_command_exist()
         ]
 
         if not skip_test_conf:
@@ -350,16 +350,16 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_beta(self):
         # type: () -> bool
-        """Validate that that beta integration has correct beta attributes"""
-
+        """Validate that beta integration has correct beta attributes"""
+        valid_status = True
         if not all([self._is_display_contains_beta(), self._has_beta_param()]):
             self.is_valid = False
-            return False
-        if self.old_file:
+            valid_status = False
+        if not self.old_file:
             if not all([self._id_has_no_beta_substring(), self._name_has_no_beta_substring()]):
                 self.is_valid = False
-                return False
-        return True
+                valid_status = False
+        return valid_status
 
     def _id_has_no_beta_substring(self):
         # type: () -> bool
@@ -766,7 +766,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file):
+        if not is_v2_file(self.current_file, check_in_display=True):
             return True
         else:
             display_name = self.current_file.get('display')
@@ -866,4 +866,20 @@ class IntegrationValidator(ContentEntityValidator):
             error, code = Errors.integration_not_runnable()
             self.handle_error(error, code, file_path=self.file_path)
             return False
+        return True
+
+    def is_mapping_fields_command_exist(self) -> bool:
+        """
+        Check if get-mapping-fields command exists in the YML if  the ismappble field is set to true
+        Returns:
+            True if get-mapping-fields commands exist in the yml, else False.
+        """
+        script = self.current_file.get('script', {})
+        if script.get('ismappable'):
+            command_names = {command['name'] for command in script.get('commands', [])}
+            if 'get-mapping-fields' not in command_names:
+                error, code = Errors.missing_get_mapping_fields_command()
+                if self.handle_error(error, code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
         return True

@@ -96,7 +96,8 @@ def generate_list_section(title, data='', horizontal_rule=False, empty_message='
     return section
 
 
-def generate_table_section(data, title, empty_message='', text='', horizontal_rule=True):
+def generate_table_section(data: list, title: str, empty_message: str = '', text: str = '',
+                           horizontal_rule: bool = True, numbered_section: bool = False):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
@@ -104,6 +105,7 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
     :param empty_message: message to print when there is no data.
     :param text: message to print after table header.
     :param horizontal_rule: add horizontal rule after title.
+    :param numbered_section: is the table part of numbered sections.
     :return: array of strings contains the table in markdown format.
     """
     section = []
@@ -117,14 +119,14 @@ def generate_table_section(data, title, empty_message='', text='', horizontal_ru
         section.extend([empty_message, ''])
         return section
 
-    section.extend([text, '|', '|'])
+    section.extend([text, '    |', '    |']) if numbered_section else section.extend([text, '|', '|'])
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f' **{key}** |'
         section[header_index + 1] += ' --- |'
 
     for item in data:
-        tmp_item = '|'
+        tmp_item = '    |' if numbered_section else '|'
         for key in item:
             tmp_item += f" {string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True)} |"
         section.append(tmp_item)

@@ -2,12 +2,14 @@ import glob
 import json
 import os
 import sys
+from copy import deepcopy
 from distutils.version import LooseVersion
+from typing import Union
 
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
@@ -33,7 +35,7 @@ class VerboseFile:
         self.fd = None
 
 
-def parse_for_pack_metadata(dependency_graph, graph_root):
+def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -60,7 +62,7 @@ def parse_for_pack_metadata(dependency_graph, graph_root):
     return first_level_dependencies, all_level_dependencies
 
 
-def find_pack_path(pack_folder_name):
+def find_pack_path(pack_folder_name: str) -> list:
     """
     Find pack path matching from content repo root directory.
 
@@ -77,7 +79,7 @@ def find_pack_path(pack_folder_name):
     return found_path_results
 
 
-def find_pack_display_name(pack_folder_name):
+def find_pack_display_name(pack_folder_name: str) -> str:
     """
     Returns pack display name from pack_metadata.json file.
 
@@ -103,7 +105,7 @@ def find_pack_display_name(pack_folder_name):
     return pack_display_name
 
 
-def update_pack_metadata_with_dependencies(pack_folder_name, first_level_dependencies):
+def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_dependencies: dict) -> None:
     """
     Updates pack metadata with found parsed dependencies results.
 
@@ -137,7 +139,7 @@ class PackDependencies:
     """
 
     @staticmethod
-    def _search_for_pack_items(pack_id, items_list):
+    def _search_for_pack_items(pack_id: str, items_list: list) -> list:
         """
         Filtering of content items that belong to specific pack.
 
@@ -151,7 +153,9 @@ class PackDependencies:
         return list(filter(lambda s: next(iter(s.values())).get('pack') == pack_id, items_list))
 
     @staticmethod
-    def _search_packs_by_items_names(items_names, items_list, exclude_ignored_dependencies=True):
+    def _search_packs_by_items_names(items_names: Union[str, list],
+                                     items_list: list,
+                                     exclude_ignored_dependencies: bool = True) -> set:
         """
         Searches for implemented script/integration/playbook.
 
@@ -179,7 +183,9 @@ class PackDependencies:
         return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
-    def _search_packs_by_items_names_or_ids(items_names, items_list, exclude_ignored_dependencies=True):
+    def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
+                                            items_list: list,
+                                            exclude_ignored_dependencies: bool = True) -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -210,7 +216,9 @@ class PackDependencies:
         return packs
 
     @staticmethod
-    def _search_packs_by_integration_command(command, id_set, exclude_ignored_dependencies=True):
+    def _search_packs_by_integration_command(command: str,
+                                             id_set: dict,
+                                             exclude_ignored_dependencies: bool = True) -> set:
         """
         Filters packs by implementing integration commands.
 
@@ -234,7 +242,7 @@ class PackDependencies:
         return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}
 
     @staticmethod
-    def _detect_generic_commands_dependencies(pack_ids):
+    def _detect_generic_commands_dependencies(pack_ids: set) -> list:
         """
         Detects whether dependency is mandatory or not. In case two packs implements the same command,
         mandatory is set to False.
@@ -249,7 +257,7 @@ class PackDependencies:
         return [(p, False) if len(pack_ids) > 1 else (p, True) for p in pack_ids]
 
     @staticmethod
-    def _label_as_mandatory(pack_ids):
+    def _label_as_mandatory(pack_ids: set) -> list:
         """
         Sets pack as mandatory.
 
@@ -263,7 +271,7 @@ class PackDependencies:
         return [(p, True) for p in pack_ids]
 
     @staticmethod
-    def _label_as_optional(pack_ids):
+    def _label_as_optional(pack_ids: set) -> list:
         """
         Sets pack as optional.
 
@@ -277,7 +285,10 @@ class PackDependencies:
         return [(p, False) for p in pack_ids]
 
     @staticmethod
-    def _collect_scripts_dependencies(pack_scripts, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_scripts_dependencies(pack_scripts: list,
+                                      id_set: dict,
+                                      verbose_file: VerboseFile,
+                                      exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects script pack dependencies.
 
@@ -332,8 +343,10 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _differentiate_playbook_implementing_objects(implementing_objects, skippable_tasks, id_set_section,
-                                                     exclude_ignored_dependencies=True):
+    def _differentiate_playbook_implementing_objects(implementing_objects: list,
+                                                     skippable_tasks: set,
+                                                     id_set_section: list,
+                                                     exclude_ignored_dependencies: bool = True) -> set:
         """
         Differentiate implementing objects by skippable.
 
@@ -366,7 +379,8 @@ class PackDependencies:
         return dependencies
 
     @staticmethod
-    def _collect_playbooks_dependencies(pack_playbooks, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose_file: VerboseFile,
+                                        exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects playbook pack dependencies.
 
@@ -451,7 +465,10 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_layouts_dependencies(pack_layouts, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_layouts_dependencies(pack_layouts: list,
+                                      id_set: dict,
+                                      verbose_file: VerboseFile,
+                                      exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects layouts pack dependencies.
 
@@ -503,8 +520,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_fields_dependencies(pack_incidents_fields, id_set, verbose_file,
-                                               exclude_ignored_dependencies=True):
+    def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose_file: VerboseFile,
+                                               exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in incidents fields dependencies.
 
@@ -554,8 +571,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_indicators_types_dependencies(pack_indicators_types, id_set, verbose_file,
-                                               exclude_ignored_dependencies=True):
+    def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose_file: VerboseFile,
+                                               exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in indicators types dependencies.
 
@@ -605,13 +622,15 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_integrations_dependencies(pack_integrations, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose_file: VerboseFile,
+                                           exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects integrations dependencies.
         Args:
             pack_integrations (list): collection of pack integrations data.
             id_set (dict): id set json.
             verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -621,7 +640,7 @@ class PackDependencies:
 
         for integration in pack_integrations:
             integration_data = next(iter(integration.values()))
-            integration_dependencies = set()
+            integration_dependencies: set = set()
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers = PackDependencies._search_packs_by_items_names_or_ids(
@@ -668,8 +687,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_types_dependencies(pack_incidents_types, id_set, verbose_file,
-                                              exclude_ignored_dependencies=True):
+    def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose_file: VerboseFile,
+                                              exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in incidents types dependencies.
 
@@ -719,7 +738,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_classifiers_dependencies(pack_classifiers, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose_file: VerboseFile,
+                                          exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in classifiers dependencies.
 
@@ -760,7 +780,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_mappers_dependencies(pack_mappers, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose_file: VerboseFile,
+                                      exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in mappers dependencies.
 
@@ -810,7 +831,8 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_widget_dependencies(pack_widgets, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose_file: VerboseFile,
+                                     exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects widget dependencies.
 
@@ -851,7 +873,7 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_pack_items(pack_id, id_set):
+    def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
 
@@ -874,14 +896,20 @@ class PackDependencies:
         pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
         pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
         pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
+        pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
+        pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
 
         if not sum(pack_items.values(), []):
-            raise ValueError(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
+            print_warning(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+                          f"1 - The spelling is correct.\n"
+                          f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
+                          f"Tests/id_set.json` and rerun the command.")
 
         return pack_items
 
     @staticmethod
-    def _find_pack_dependencies(pack_id, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def _find_pack_dependencies(pack_id: str, id_set: dict, verbose_file: VerboseFile,
+                                exclude_ignored_dependencies: bool = True) -> set:
         """
         Searches for specific pack dependencies.
 
@@ -967,7 +995,59 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_dependency_graph(pack_id, id_set, verbose_file, exclude_ignored_dependencies=True):
+    def build_all_dependencies_graph(pack_ids: list,
+                                     id_set: dict,
+                                     verbose_file: VerboseFile,
+                                     exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
+        """
+        Builds all level of dependencies and returns dependency graph for all packs
+
+        Args:
+            pack_ids (list): pack ids, currently pack folder names is in use.
+            id_set (dict): id set json.
+            verbose_file (VerboseFile): path to dependency explanations file.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            DiGraph: all dependencies of given packs.
+        """
+        dependency_graph = nx.DiGraph()
+        for pack in pack_ids:
+            dependency_graph.add_node(pack, mandatory_for_packs=[])
+        for pack in pack_ids:
+            dependencies = PackDependencies._find_pack_dependencies(
+                pack, id_set, verbose_file=verbose_file, exclude_ignored_dependencies=exclude_ignored_dependencies)
+            for dependency_name, is_mandatory in dependencies:
+                if dependency_name == pack:
+                    continue
+                if dependency_name not in dependency_graph:
+                    dependency_graph.add_node(dependency_name, mandatory_for_packs=[])
+                dependency_graph.add_edge(pack, dependency_name)
+                if is_mandatory:
+                    dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
+        return dependency_graph
+
+    @staticmethod
+    def get_dependencies_subgraph_by_dfs(dependencies_graph: nx.DiGraph, source_pack: str) -> nx.DiGraph:
+        """
+        Generates a copy of the graph using DFS that starts with source_pack as source
+        Args:
+            dependencies_graph (DiGraph): A graph that represents the dependencies of all packs
+            source_pack (str): The name of the pack that should be considered as source for the DFS algorithm
+
+        Returns:
+            DiGraph: The DFS sub graph with source_pack as source
+        """
+        dfs_edges = list(nx.edge_dfs(dependencies_graph, source_pack))
+        subgraph_from_edges = dependencies_graph.edge_subgraph(dfs_edges)
+        # We need to copy the graph so that we can modify it's content without any modifications to the original graph
+        return deepcopy(subgraph_from_edges)
+
+    @staticmethod
+    def build_dependency_graph(pack_id: str,
+                               id_set: dict,
+                               verbose_file: VerboseFile,
+                               exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
 
@@ -1003,8 +1083,9 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name, id_set_path='', exclude_ignored_dependencies=True, update_pack_metadata=True,
-                          silent_mode=False, debug_file_path=''):
+    def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
+                          update_pack_metadata: bool = True,
+                          silent_mode: bool = False, debug_file_path: str = '') -> dict:
         """
         Main function for dependencies search and pack metadata update.
 

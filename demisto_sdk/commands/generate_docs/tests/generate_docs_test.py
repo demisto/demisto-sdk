@@ -379,7 +379,7 @@ def test_generate_commands_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -436,7 +436,7 @@ def test_generate_commands_with_permissions_section():
 
     expected_section = [
         '## Commands',
-        'You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
         '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
         'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
@@ -498,8 +498,41 @@ class TestGenerateIntegrationDoc:
         cls.rm_readme()
 
     def test_generate_integration_doc(self):
+        """
+        Given
+            - YML file representing an integration.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly, specifically that line numbers are not being reset after a table.
+            - Test that the predefined values and default values are added to the README.
+    """
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
         assert open(fake_readme).read() == open(
             os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+
+        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
+               in open(fake_readme).read()
+        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+
+
+def test_generate_table_section_numbered_section():
+    """
+        Given
+            - A table that should be part of a numbered section (like the setup section of integration README).
+        When
+            - Running the generate_table_section command.
+        Then
+            - Validate that the generated table has \t at the beginning of each line.
+    """
+
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
+
+    expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
+                        '    | python2 | demisto/python2 |', '']
+
+    section = generate_table_section(data=[{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
+                                     title='', horizontal_rule=False, numbered_section=True)
+    assert section == expected_section

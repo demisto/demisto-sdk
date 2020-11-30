@@ -1,4 +1,5 @@
 import argparse
+import ast
 import glob
 import io
 import json
@@ -15,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import demisto_client
 import git
 import requests
 import urllib3
@@ -30,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
     UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+from packaging.version import parse
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -157,12 +160,13 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master', return_content=False):
+def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
         full_file_path (string):The full path of the file.
         tag (string): The branch name. default is 'master'
         return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print (bool): whether to suppress the warning message in case the file was not found.
     Returns:
         The file content in the required format.
 
@@ -176,9 +180,10 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
         res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
     except Exception as exc:
-        print_warning('Could not find the old entity file under "{}".\n'
-                      'please make sure that you did not break backward compatibility. '
-                      'Reason: {}'.format(github_path, exc))
+        if not suppress_print:
+            print_warning('Could not find the old entity file under "{}".\n'
+                          'please make sure that you did not break backward compatibility. '
+                          'Reason: {}'.format(github_path, exc))
         return {}
     if return_content:
         return res.content
@@ -190,6 +195,23 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
     else:
         details = {}
     return details
+
+
+def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
+    """
+    filter_files_changes_on_pack.
+
+    :param file_paths_list: list of content files
+    :param pack: pack to filter
+
+    :return: files_paths_on_pack: set of file paths contains only files located in the given pack
+    """
+    files_paths_on_pack = set()
+    for file in file_paths_list:
+        if get_pack_name(file) == pack:
+            files_paths_on_pack.add(file)
+
+    return files_paths_on_pack
 
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
@@ -649,6 +671,29 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
                 packs.add(pack)
 
     return packs
+
+
+def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
+    """get set of files and return the set whiteout the types to skip
+
+    Args:
+    - file_paths (set): set of content files.
+    - skip_file_types List[str]: list of file types to skip.
+
+    Returns:
+    files (set): list of files whiteout the types to skip
+    """
+    if file_paths is None:
+        file_paths = set()
+    files = set()
+    for path in file_paths:
+        # renamed files are in a tuples - the second element is the new file name
+        if isinstance(path, tuple):
+            path = path[1]
+        file_type = find_type(path)
+        if file_type not in skip_file_types and is_file_path_in_pack(path):
+            files.add(path)
+    return files
 
 
 def pack_name_to_path(pack_name):
@@ -1120,19 +1165,6 @@ def retrieve_file_ending(file_path: str) -> str:
     return ''
 
 
-def get_depth(data: Any) -> int:
-    """
-    Returns the depth of a data object
-    :param data: The data
-    :return: The depth of the data object
-    """
-    if data and isinstance(data, dict):
-        return 1 + max(get_depth(data[key]) for key in data)
-    if data and isinstance(data, list):
-        return 1 + max(get_depth(element) for element in data)
-    return 0
-
-
 def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
@@ -1374,3 +1406,64 @@ def camel_to_snake(camel: str) -> str:
     camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
     snake = camel_to_snake_pattern.sub('_', camel).lower()
     return snake
+
+
+def open_id_set_file(id_set_path):
+    id_set = None
+    try:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    except IOError:
+        print_warning("Could not open id_set file")
+    finally:
+        return id_set
+
+
+def get_demisto_version(demisto_client: demisto_client) -> str:
+    """
+    Args:
+        demisto_client: A configured demisto_client instance
+
+    Returns:
+        the server version of the Demisto instance.
+    """
+    resp = demisto_client.generic_request('/about', 'GET')
+    about_data = json.loads(resp[0].replace("'", '"'))
+    return parse(about_data.get('demistoVersion'))
+
+
+def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
+    """
+       Converts a string representation of lists to a python list
+       Args:
+              arg: string or list of string.
+              separator: A string separator to separate the strings, the default is a comma.
+       Returns:
+             list, contains strings.
+
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, str):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return [arg]
+
+
+def is_v2_file(current_file, check_in_display=False):
+    """Check if the specific integration of script is a v2
+    Returns:
+        bool. Whether the file is a v2 file
+    """
+    # integrations should be checked via display field, other entities should check name field
+    if check_in_display:
+        name = current_file.get('display', '')
+    else:
+        name = current_file.get('name', '')
+    suffix = str(name[-2:].lower())
+    if suffix != "v2":
+        return False
+    return True

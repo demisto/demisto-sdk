@@ -133,7 +133,10 @@ class LintManager:
         docker_client: docker.DockerClient = docker.from_env()
         try:
             docker_client.ping()
-        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
+            if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
+                # when running lint in content we fail if docker isn't available for some reason
+                raise ValueError("Docker engine not available and we are in content CI env. Can not run lint!!") from ex
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
@@ -297,7 +300,7 @@ class LintManager:
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"])
-                results.append(executor.submit(fn=linter.run_dev_packages,
+                results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
                                                no_mypy=no_mypy,

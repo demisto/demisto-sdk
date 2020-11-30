@@ -10,12 +10,14 @@ from demisto_sdk.commands.common.tools import LOG_COLORS
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True) -> bool:
+    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
+            this will also determine whether a new id_set can be created by validate.
             is_new_playbook (bool): whether the playbook is new or modified
             validate_rn (bool):  whether we need to validate release notes or not
+            id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
             bool. Whether the playbook is valid or not
@@ -30,9 +32,12 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
+                self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_valid_deprecated_playbook()
+                self.is_valid_deprecated_playbook(),
+                self.is_script_id_valid(id_set_file),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -42,8 +47,11 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
+                self.is_using_instance(),
                 self.is_condition_branches_handled(),
-                self.are_tests_configured()
+                self.is_delete_context_all_in_playbook(),
+                self.are_tests_configured(),
+                self.is_script_id_valid(id_set_file),
             ]
             answers = all(modified_playbook_checks)
 
@@ -253,3 +261,98 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
+
+    def is_delete_context_all_in_playbook(self) -> bool:
+        """
+        Check if delete context all=yes exist in playbook.
+        Returns:
+            True if delete context exists else False.
+        """
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            curr_task = task.get('task', {})
+            scriptargs = task.get('scriptarguments', {})
+            if curr_task and scriptargs and curr_task.get('scriptName', '') == 'DeleteContext' \
+                    and scriptargs.get('all', {}).get('simple', '') == 'yes':
+                error_message, error_code = Errors.playbook_cant_have_deletecontext_all()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+        return True
+
+    def is_using_instance(self) -> bool:
+        """
+        Check if there is an existing task that uses specific instance.
+        Returns:
+            True if using specific instance exists else False.
+        """
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            scriptargs = task.get('scriptarguments', {})
+            if scriptargs and scriptargs.get('using', {}):
+                error_message, error_code = Errors.using_instance_in_playbook()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
+        return True
+
+    def is_script_id_valid(self, id_set_file):
+        """Checks whether a script id is valid (i.e id exists in set_id)
+        Args:
+            id_set_file (dict): id_set.json file
+            this will also determine whether a new id_set can be created by validate.
+
+        Return:
+            bool. if all scripts ids of this playbook are valid.
+        """
+        is_valid = True
+
+        if not id_set_file:
+            click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
+            return is_valid
+
+        id_set_scripts = id_set_file.get("scripts")
+        pb_tasks = self.current_file.get('tasks', {})
+        for id, task_dict in pb_tasks.items():
+            pb_task = task_dict.get('task', {})
+            script_id_used_in_task = pb_task.get('script')
+            task_script_name = pb_task.get('scriptName')
+            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name  # i.e
+            # script id or script name
+            integration_script_flag = "|||"  # skipping all builtin integration scripts
+
+            is_script_id_should_be_checked = script_id_used_in_task and integration_script_flag not in script_id_used_in_task
+            if is_script_id_should_be_checked:
+                is_valid = self.check_script_id(script_id_used_in_task, id_set_scripts)
+            elif task_script_name and integration_script_flag not in task_script_name:
+                is_valid = self.check_script_name(task_script_name, id_set_scripts)
+
+            if not is_valid:
+                error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return is_valid
+        return is_valid
+
+    def check_script_id(self, script_id_used_in_task, id_set_scripts):
+        """
+        Checks if script id exists in at least one of id_set's dicts
+        Args:
+            script_id_used_in_task (str):  script id from playbook
+            id_set_scripts (list): all scripts of id_set
+        Returns:
+            True if script_used_in_task exists in id_set
+        """
+        return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
+
+    def check_script_name(self, pb_script_name, id_set_scripts):
+        """
+        Checks if script name exists in at least one of id_set's dicts as value of the key 'name'
+        Args:
+            pb_script_name (str):  script name from playbook
+            id_set_scripts (list): all scripts of id_set
+        Returns:
+            True if pb_script_name exists in id_set
+        """
+        return any(
+            [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
+             for key in id_set_dict])

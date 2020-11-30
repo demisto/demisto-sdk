@@ -61,7 +61,7 @@ class ContentGitRepo:
         # pulling if not pulled
         self.run_command("git pull")
 
-    def __exit__(self):
+    def __del__(self):
         """
         Cleanup of the class.
         """
@@ -117,7 +117,7 @@ class ContentGitRepo:
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies")
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
                 assert res.exit_code == 0
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
@@ -160,12 +160,17 @@ class ContentGitRepo:
                 stream.write(content)
 
 
+content_git_repo = None
+
+
 @pytest.fixture(autouse=True)
 def function_setup():
     """
     Cleaning the content repo before every function
     """
     global content_git_repo
+    if not content_git_repo:  # lazy initialization. So we don't initialize during test discovery
+        content_git_repo = ContentGitRepo()
     # Function setup
     content_git_repo.git_cleanup()
     content_git_repo.create_branch()
@@ -186,12 +191,12 @@ def init_pack(content_repo: ContentGitRepo):
     Then: Validate lint, secrets and validate exit code is 0
     """
     with ChangeCWD(content_repo.content):
+        runner = CliRunner(mix_stderr=False)
+        res = runner.invoke(
+            main, "init --pack --name Sample",
+            input="\n".join(["y", "Sample", "description", "1", "1", "n"])
+        )
         try:
-            runner = CliRunner(mix_stderr=False)
-            res = runner.invoke(
-                main, "init --pack --name Sample",
-                input="\n".join(["y", "Sample", "description", "1", "1", "n"])
-            )
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}")
@@ -212,7 +217,7 @@ def init_integration(content_repo: ContentGitRepo):
     with ChangeCWD(hello_world_path):
         res = runner.invoke(main, "init --integration -n Sample", input='y')
         assert res.exit_code == 0
-        content_git_repo.run_command("git add .")
+        content_repo.run_command("git add .")
 
     with ChangeCWD(content_repo.content):
         try:
@@ -237,14 +242,14 @@ def modify_entity(content_repo: ContentGitRepo):
         script = yaml.safe_load(open("./HelloWorldScript.yml"))
         script['args'][0]["description"] = "new description"
         yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
-        content_git_repo.run_command("git add .")
+        content_repo.run_command("git add .")
     with ChangeCWD(content_repo.content):
+        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         try:
-            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
-        content_git_repo.run_command("git add .")
+        content_repo.run_command("git add .")
         # Get the newest rn file and modify it.
         content_repo.update_rn()
         content_repo.run_validations()
@@ -265,13 +270,13 @@ def all_files_renamed(content_repo: ContentGitRepo):
     for file in list_files(hello_world_path):
         new_file = file.replace('HelloWorld', 'Test')
         if not file == new_file:
-            content_git_repo.run_command(
+            content_repo.run_command(
                 f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
             )
     with ChangeCWD(content_repo.content):
         runner = CliRunner(mix_stderr=False)
+        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         try:
-            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
             assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
@@ -292,16 +297,13 @@ def rename_incident_field(content_repo: ContentGitRepo):
         hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
         curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
 
-        content_git_repo.run_command(
+        content_repo.run_command(
             f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
         )
         runner = CliRunner(mix_stderr=False)
         runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
         content_repo.update_rn()
         content_repo.run_validations()
-
-
-content_git_repo = ContentGitRepo()
 
 
 @pytest.mark.parametrize("function", [

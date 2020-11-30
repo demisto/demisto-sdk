@@ -84,22 +84,23 @@ class FileType(Enum):
 
 
 ENTITY_TYPE_TO_DIR = {
-    INTEGRATION: INTEGRATIONS_DIR,
-    PLAYBOOK: PLAYBOOKS_DIR,
-    SCRIPT: SCRIPTS_DIR,
+    FileType.INTEGRATION.value: INTEGRATIONS_DIR,
+    FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
+    FileType.SCRIPT.value: SCRIPTS_DIR,
     AUTOMATION: SCRIPTS_DIR,
-    LAYOUT: LAYOUTS_DIR,
-    LAYOUTS_CONTAINER: LAYOUTS_DIR,
-    INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPE: INCIDENT_TYPES_DIR,
-    INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
-    CONNECTION: CONNECTIONS_DIR,
-    CLASSIFIER: CLASSIFIERS_DIR,
-    DASHBOARD: DASHBOARDS_DIR,
-    INDICATOR_TYPE: INDICATOR_TYPES_DIR,
-    REPORT: REPORTS_DIR,
-    WIDGET: WIDGETS_DIR,
-    BETA_INTEGRATION: INTEGRATIONS_DIR
+    FileType.LAYOUT.value: LAYOUTS_DIR,
+    FileType.LAYOUTS_CONTAINER.value: LAYOUTS_DIR,
+    FileType.INCIDENT_FIELD.value: INCIDENT_FIELDS_DIR,
+    FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
+    FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
+    FileType.CONNECTION.value: CONNECTIONS_DIR,
+    FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
+    FileType.DASHBOARD.value: DASHBOARDS_DIR,
+    FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
+    FileType.REPORT.value: REPORTS_DIR,
+    FileType.WIDGET.value: WIDGETS_DIR,
+    FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
+    FileType.MAPPER.value: CLASSIFIERS_DIR
 }
 
 
@@ -780,7 +781,7 @@ BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
 INTEGRATION_CATEGORIES = ['Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
                           'Vulnerability Management', 'Case Management', 'Forensics & Malware Analysis',
                           'IT Services', 'Data Enrichment & Threat Intelligence', 'Authentication', 'Database',
-                          'Deception', 'Email Gateway', 'Identity and Access Management']
+                          'Deception', 'Email Gateway', 'Identity and Access Management', 'File Integrity Management']
 SCHEMA_TO_REGEX = {
     'integration': YML_INTEGRATION_REGEXES,
     'playbook': YML_ALL_PLAYBOOKS_REGEX,
@@ -1002,3 +1003,6 @@ MAX_FETCH = 'max_fetch'
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
 FEATURE_BRANCHES = ['v4.5.0']
+
+SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
+                                FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)

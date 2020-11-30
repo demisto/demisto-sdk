@@ -253,6 +253,29 @@ def test_insert_image_to_yml():
         assert yml_unified == yml_unified_test
 
 
+def test_insert_image_to_yml_without_image(tmp_path):
+    """
+    Given:
+     - Integration without image png file
+
+    When:
+     - Inserting image to unified YAML
+
+    Then:
+     - Ensure the insertion does not crash
+     - Verify no image path is returned
+    """
+    integration_dir = tmp_path / 'Integrations'
+    integration_dir.mkdir()
+    integration_yml = integration_dir / 'SomeIntegration.yml'
+    integration_obj = {'id': 'SomeIntegration'}
+    yaml.dump(integration_obj, integration_yml.open('w'), default_flow_style=False)
+    unifier = Unifier(str(integration_dir))
+    yml_unified, found_img_path = unifier.insert_image_to_yml(integration_obj, integration_obj)
+    assert yml_unified == integration_obj
+    assert not found_img_path
+
+
 def test_check_api_module_imports():
     module_import, module_name = Unifier.check_api_module_imports(DUMMY_SCRIPT)
 
@@ -613,6 +636,38 @@ PACK_METADATA_PARTNER = json.dumps({
     "useCases": [],
     "keywords": []
 })
+PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": PARTNER_URL,
+    "email": "support1@test.com,support2@test.com",
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
+PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps({
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "url": PARTNER_URL,
+    "email": "['support1@test.com', 'support2@test.com']",
+    "created": "2020-03-12T08:00:00Z",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+})
 PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
     "name": "test",
     "description": "test",
@@ -764,6 +819,32 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     assert '#### Integration Author:' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
     assert 'Email' not in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
     assert 'URL' in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
+
+
+@pytest.mark.parametrize(argnames="pack_metadata",
+                         argvalues=[PACK_METADATA_PARTNER_EMAIL_LIST, PACK_METADATA_STRINGS_EMAIL_LIST])
+def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
+    """
+    Given
+        - Partner contributed pack with email list and url in the support details.
+    When
+        - Running unify on it.
+    Then
+        - Ensure unify create a unified file with partner support email list.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    pack.pack_metadata.write_json(pack_metadata)
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY, ''))
+    mocker.patch.object(Unifier, 'get_data', return_value=(pack_metadata, pack.pack_metadata.path))
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
+    # Verifying the unified file data
+    assert "**Email**: [support1@test.com]" in PARTNER_UNIFY["detaileddescription"]
+    assert "**Email**: [support2@test.com]" in PARTNER_UNIFY["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):

@@ -10,8 +10,13 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.format.update_incidentfields import \
+    IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
     IncidentTypesJSONFormat
+from demisto_sdk.commands.format.update_indicatorfields import \
+    IndicatorFieldJSONFormat
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
@@ -20,7 +25,7 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
     CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
-    DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
+    CONNECTION_SCHEMA_PATH, DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
     DESTINATION_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_DASHBOARD_COPY,
     DESTINATION_FORMAT_INCIDENTFIELD_COPY,
     DESTINATION_FORMAT_INCIDENTTYPE_COPY,
@@ -86,7 +91,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
     Then
         - Ensure the key is deleted from the connection file
     """
-    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_path = f'{tmpdir}canvas-context-connections.json'
     connection_file_content = {
         "canvasContextConnections": [
             {
@@ -100,7 +105,11 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
     }
     with open(connection_file_path, 'w') as file:
         json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(input=connection_file_path, output=connection_file_path)
+    connection_formatter = ConnectionJSONFormat(
+        input=connection_file_path,
+        output=connection_file_path,
+        path=CONNECTION_SCHEMA_PATH,
+    )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:
         formatted_connection = json.load(file)
@@ -117,7 +126,7 @@ def test_update_connection_updates_from_version(tmpdir):
     Then
         - Ensure fromVersion is updated accordingly
     """
-    connection_file_path = f'{tmpdir}connection.json'
+    connection_file_path = f'{tmpdir}canvas-context-connections.json'
     connection_file_content = {
         "canvasContextConnections": [
             {
@@ -132,7 +141,9 @@ def test_update_connection_updates_from_version(tmpdir):
         json.dump(connection_file_content, file)
     connection_formatter = ConnectionJSONFormat(input=connection_file_path,
                                                 output=connection_file_path,
-                                                from_version='6.0.0')
+                                                from_version='6.0.0',
+                                                path=CONNECTION_SCHEMA_PATH,
+                                                )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:
         formatted_connection = json.load(file)
@@ -691,3 +702,42 @@ class TestFormattingReport:
         """
         report_formatter.set_orientation()
         assert report_formatter.data.get('orientation') == 'landscape'
+
+    @staticmethod
+    def exception_raise(placeholder=None):
+        raise ValueError("MY ERROR")
+
+    FORMAT_OBJECT = [
+        ClassifierJSONFormat,
+        OldClassifierJSONFormat,
+        DashboardJSONFormat,
+        IncidentFieldJSONFormat,
+        IncidentTypesJSONFormat,
+        IndicatorFieldJSONFormat,
+        IndicatorTypeJSONFormat,
+        MapperJSONFormat,
+        LayoutBaseFormat,
+        ReportJSONFormat,
+        WidgetJSONFormat,
+        ConnectionJSONFormat
+    ]
+
+    @pytest.mark.parametrize(argnames='format_object', argvalues=FORMAT_OBJECT)
+    def test_json_run_format_exception_handling(self, format_object, mocker, capsys):
+        """
+        Given
+            - A JSON object formatter
+        When
+            - Run run_format command and and exception is raised.
+        Then
+            - Ensure the error is printed.
+        """
+        formatter = format_object(verbose=True, input="my_file_path")
+        mocker.patch.object(BaseUpdateJSON, 'update_json', side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, 'set_fromVersion', side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, 'remove_unnecessary_keys', side_effect=self.exception_raise)
+        mocker.patch.object(LayoutBaseFormat, 'set_layout_key', side_effect=self.exception_raise)
+
+        formatter.run_format()
+        stdout, _ = capsys.readouterr()
+        assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout

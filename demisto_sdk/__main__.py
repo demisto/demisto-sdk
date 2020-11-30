@@ -171,15 +171,16 @@ def extract_code(config, **kwargs):
 
 
 # ====================== unify ====================== #
-@main.command(name="unify",
-              short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
-                         'this should be used on a single integration/script and not a pack '
-                         'not multiple scripts/integrations')
+@main.command(
+    name="unify",
+    short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
+    'this should be used on a single integration/script and not a pack '
+    'not multiple scripts/integrations')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The path to the files to unify", required=True
+    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
@@ -190,6 +191,8 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
+    # Input is of type Path.
+    kwargs['input'] = str(kwargs['input'])
     unifier = Unifier(**kwargs)
     unifier.merge_script_package_to_yml()
     return 0
@@ -295,8 +298,9 @@ def validate(config, **kwargs):
             no_auto_stage=kwargs['no_auto_stage']
         )
         return validator.run_validation()
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk validate` command in the content directory.\n"
+    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
+        print_error(e)
+        print_error("\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
                     "Please run the command from content directory")
         sys.exit(1)
 

@@ -1,6 +1,12 @@
 # Changelog
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
 * Updated the **upload** command to support mappers.
+* Fixed an issue where exceptions were no printed in the **format** while the *--verbose* flag is set.
+* Fixed an issue where *--assume-yes* flag did not work in the **format** command when running on a playbook without a `fromversion` field.
+* Fixed an issue where the **format** command would fail in case `conf.json` file was not found instead of skipping the update.
+* Fixed an issue where integration with v2 were recognised by the `name` field instead of the `display` field in the **validate** command.
+* Added a playbook validation to check if a task script exists in the id set in the **validate** command.
+* Added new integration category `File Integrity Management` in the **validate** command.
 
 # 1.2.10
 * Added validation for approved content pack use-cases and tags.

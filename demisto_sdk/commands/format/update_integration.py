@@ -140,7 +140,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_docker_image()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

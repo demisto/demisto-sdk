@@ -1,6 +1,5 @@
 # Changelog
 
-
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.
 * Updated the **upload** command to support mappers.

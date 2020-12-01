@@ -832,7 +832,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose_file: VerboseFile,
-                                     exclude_ignored_dependencies: bool = True) -> set:
+                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets") -> set:
         """
         Collects widget dependencies.
 
@@ -847,7 +847,7 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Widgets')
+        verbose_file.write(f'\n### {header}')
 
         for widget in pack_widgets:
             widget_data = next(iter(widget.values()))
@@ -871,6 +871,47 @@ class PackDependencies:
             dependencies_packs.update(widget_dependencies)
 
         return dependencies_packs
+
+    # @staticmethod
+    # def _collect_dashboards_dependencies(pack_dashboards: list, id_set: dict, verbose_file: VerboseFile,
+    #                                      exclude_ignored_dependencies: bool = True) -> set:
+    #     """
+    #     Collects dashboards dependencies.
+    #
+    #     Args:
+    #         pack_dashboards (list): collection of pack dashboards data.
+    #         id_set (dict): id set json.
+    #         verbose_file (VerboseFile): path to dependency explanations file.
+    #         exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+    #
+    #     Returns:
+    #         set: dependencies data that includes pack id and whether is mandatory or not.
+    #
+    #     """
+    #     dependencies_packs = set()
+    #     verbose_file.write('\n### Dashboards')
+    #
+    #     for dashboard in pack_dashboards:
+    #         dashboard_data = next(iter(dashboard.values()))
+    #         dashboard_dependencies = set()
+    #
+    #         related_scripts = dashboard_data.get('scripts', [])
+    #         packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+    #             related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+    #
+    #         if packs_found_from_scripts:
+    #             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
+    #             dashboard_dependencies.update(pack_dependencies_data)
+    #
+    #         if dashboard_dependencies:
+    #             # do not trim spaces from the end of the string, they are required for the MD structure.
+    #             verbose_file.write(
+    #                 f'{os.path.basename(dashboard_data.get("file_path", ""))} depends on: '
+    #                 f'{dashboard_dependencies}  '
+    #             )
+    #         dependencies_packs.update(dashboard_dependencies)
+    #
+    #     return dependencies_packs
 
     @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
@@ -985,11 +1026,26 @@ class PackDependencies:
             verbose_file,
             exclude_ignored_dependencies
         )
+        dashboards_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['dashboards'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Dashboards'
+        )
+        reports_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['reports'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Reports'
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies |
             incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies
+            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies |
+            dashboards_dependencies | reports_dependencies
         )
 
         return pack_dependencies

@@ -797,6 +797,76 @@ def get_widget_data(path):
     return {id_: data}
 
 
+def get_dashboard_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    brandname = json_data.get('brandName', '')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    layouts = json_data.get('layout', {})
+    dashboard_scripts = []
+    if layouts:
+        for layout in layouts:
+            widget_json = layout.get('widget')
+            if widget_json.get('dataType') == 'scripts':
+                dashboard_scripts.append(widget_json.get('query'))
+
+    if brandname:  # for classifiers
+        data['name'] = brandname
+    data['file_path'] = path
+    if name:  # for the rest
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if dashboard_scripts:
+        data['scripts'] = dashboard_scripts
+
+    return {id_: data}
+
+
+def get_report_data(path):
+    data = OrderedDict()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    brandname = json_data.get('brandName', '')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    layouts = json_data.get('dashboard', {}).get('layout')
+    report_scripts = []
+    if layouts:
+        for layout in layouts:
+            widget_json = layout.get('widget')
+            if widget_json.get('dataType') == 'scripts':
+                report_scripts.append(widget_json.get('query'))
+
+    if brandname:  # for classifiers
+        data['name'] = brandname
+    data['file_path'] = path
+    if name:  # for the rest
+        data['name'] = name
+    if toversion:
+        data['toversion'] = toversion
+    if fromversion:
+        data['fromversion'] = fromversion
+    if pack:
+        data['pack'] = pack
+    if report_scripts:
+        data['scripts'] = report_scripts
+
+    return {id_: data}
+
+
 def get_general_data(path):
     data = OrderedDict()
     json_data = get_json(path)
@@ -1069,10 +1139,12 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
             if mtime >= target_time:
-                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
-                            f" modify time: {mtime_dt} "
-                            "doesn't require a refresh. Will use current id set. "
-                            "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.", LOG_COLORS.GREEN)
+                print_color(
+                    f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
+                    f" modify time: {mtime_dt} "
+                    "doesn't require a refresh. Will use current id set. "
+                    "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.",
+                    LOG_COLORS.GREEN)
                 with open(id_set_path, mode="r") as f:
                     return json.load(f)
             else:
@@ -1173,7 +1245,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.DASHBOARD,),
-                                        data_extraction_func=get_general_data,
+                                        data_extraction_func=get_dashboard_data,
                                         ),
                                 get_general_paths(DASHBOARDS_DIR)):
                 dashboards_list.extend(arr)
@@ -1252,7 +1324,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.REPORT,),
-                                        data_extraction_func=get_general_data,
+                                        data_extraction_func=get_report_data,
                                         ),
                                 get_general_paths(REPORTS_DIR)):
                 reports_list.extend(arr)

@@ -872,47 +872,6 @@ class PackDependencies:
 
         return dependencies_packs
 
-    # @staticmethod
-    # def _collect_dashboards_dependencies(pack_dashboards: list, id_set: dict, verbose_file: VerboseFile,
-    #                                      exclude_ignored_dependencies: bool = True) -> set:
-    #     """
-    #     Collects dashboards dependencies.
-    #
-    #     Args:
-    #         pack_dashboards (list): collection of pack dashboards data.
-    #         id_set (dict): id set json.
-    #         verbose_file (VerboseFile): path to dependency explanations file.
-    #         exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-    #
-    #     Returns:
-    #         set: dependencies data that includes pack id and whether is mandatory or not.
-    #
-    #     """
-    #     dependencies_packs = set()
-    #     verbose_file.write('\n### Dashboards')
-    #
-    #     for dashboard in pack_dashboards:
-    #         dashboard_data = next(iter(dashboard.values()))
-    #         dashboard_dependencies = set()
-    #
-    #         related_scripts = dashboard_data.get('scripts', [])
-    #         packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
-    #             related_scripts, id_set['scripts'], exclude_ignored_dependencies)
-    #
-    #         if packs_found_from_scripts:
-    #             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
-    #             dashboard_dependencies.update(pack_dependencies_data)
-    #
-    #         if dashboard_dependencies:
-    #             # do not trim spaces from the end of the string, they are required for the MD structure.
-    #             verbose_file.write(
-    #                 f'{os.path.basename(dashboard_data.get("file_path", ""))} depends on: '
-    #                 f'{dashboard_dependencies}  '
-    #             )
-    #         dependencies_packs.update(dashboard_dependencies)
-    #
-    #     return dependencies_packs
-
     @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
@@ -1042,10 +1001,10 @@ class PackDependencies:
         )
 
         pack_dependencies = (
-            scripts_dependencies | playbooks_dependencies | layouts_dependencies |
-            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies |
-            dashboards_dependencies | reports_dependencies
+                scripts_dependencies | playbooks_dependencies | layouts_dependencies |
+                incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
+                incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies |
+                dashboards_dependencies | reports_dependencies
         )
 
         return pack_dependencies

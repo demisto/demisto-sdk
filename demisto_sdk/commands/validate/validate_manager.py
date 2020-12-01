@@ -106,6 +106,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
+        self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
                 click.echo('Running in a private repository')
@@ -844,19 +845,24 @@ class ValidateManager:
         if not self.is_circle:
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
-            if remote_configured and not is_origin_demisto:
+
+            repo = 'upstream'
+            if self.is_external_repo:
+                repo = 'origin'
+
+            if (remote_configured and not is_origin_demisto) or self.is_external_repo:
                 if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
 
                 all_changed_files_string = run_command(
-                    'git diff --name-status upstream/master...HEAD')
+                    f'git diff --name-status {repo}/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
                 # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+                outer_changes_files_string = run_command(f'git diff --name-status --no-merges {repo}/master...HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 

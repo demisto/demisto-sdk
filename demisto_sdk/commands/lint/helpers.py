@@ -95,9 +95,9 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
             skipped_code |= EXIT_CODES["XSOAR_linter"]
         if no_bandit:
             skipped_code |= EXIT_CODES["bandit"]
-        if no_mypy or not docker_engine:
+        if no_mypy:
             skipped_code |= EXIT_CODES["mypy"]
-        if no_vulture or not docker_engine:
+        if no_vulture:
             skipped_code |= EXIT_CODES["vulture"]
         if no_pylint or not docker_engine:
             skipped_code |= EXIT_CODES["pylint"]
@@ -263,7 +263,8 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
                     added_modules.append(cur_path)
         yield
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f'add_tmp_lint_files unexpected exception: {str(e)}')
+        raise
     finally:
         # If we want to change handling of files after finishing - do it here
         pass

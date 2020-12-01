@@ -1001,10 +1001,10 @@ class PackDependencies:
         )
 
         pack_dependencies = (
-                scripts_dependencies | playbooks_dependencies | layouts_dependencies |
-                incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-                incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies |
-                dashboards_dependencies | reports_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies
         )
 
         return pack_dependencies

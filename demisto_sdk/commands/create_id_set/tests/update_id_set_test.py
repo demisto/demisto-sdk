@@ -11,14 +11,14 @@ import pytest
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    find_duplicates, get_classifier_data, get_fields_by_script_argument,
-    get_general_data, get_incident_fields_by_playbook_input,
-    get_incident_type_data, get_indicator_type_data, get_layout_data,
-    get_layoutscontainer_data, get_mapper_data, get_playbook_data,
-    get_script_data, get_values_for_keys_recursively, get_widget_data,
-    has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_script,
-    re_create_id_set)
+    find_duplicates, get_classifier_data, get_dashboard_data,
+    get_fields_by_script_argument, get_general_data,
+    get_incident_fields_by_playbook_input, get_incident_type_data,
+    get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
+    get_mapper_data, get_playbook_data, get_report_data, get_script_data,
+    get_values_for_keys_recursively, get_widget_data, has_duplicate,
+    merge_id_sets, process_general_items, process_incident_fields,
+    process_integration, process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -313,7 +313,6 @@ class TestIntegrations:
         ]
 
         for returned, constant in test_pairs:
-
             assert IsEqualFunctions.is_lists_equal(list(returned.keys()), list(constant.keys()))
 
             const_data = constant.get('Dummy Integration')
@@ -919,6 +918,100 @@ class TestWidget:
 
         res = get_widget_data(test_file)
         result = res.get('dummy_widget')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' not in result.keys()
+
+
+class TestDashboard:
+    @staticmethod
+    def test_process_dashboard__with_script():
+        """
+        Given
+            - A dashboard file called dashboard-with-scripts.json
+
+        When
+            - parsing dashboard files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'dashboard-with-scripts.json')
+
+        res = get_dashboard_data(test_file)
+        result = res.get('dummy_dashboard')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' in result.keys()
+        assert 'dummy_script' in result['scripts']
+
+    @staticmethod
+    def test_process_dashboard__no_script():
+        """
+        Given
+            - A dashboard file called dashboard-no-scripts.json
+
+        When
+            - parsing dashboard files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'dashboard-no-scripts.json')
+
+        res = get_dashboard_data(test_file)
+        result = res.get('dummy_dashboard')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' not in result.keys()
+
+
+class TestReport:
+    @staticmethod
+    def test_process_report__with_script():
+        """
+        Given
+            - A report file called report-with-scripts.json
+
+        When
+            - parsing report files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'report-with-scripts.json')
+
+        res = get_report_data(test_file)
+        result = res.get('dummy_report')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'scripts' in result.keys()
+        assert 'dummy_script' in result['scripts']
+
+    @staticmethod
+    def test_process_report__no_script():
+        """
+        Given
+            - A report file called report-no-scripts.json
+
+        When
+            - parsing report files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'report-no-scripts.json')
+
+        res = get_report_data(test_file)
+        result = res.get('dummy_report')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()

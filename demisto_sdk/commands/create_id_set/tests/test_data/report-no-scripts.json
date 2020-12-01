@@ -1,0 +1,50 @@
+{
+    "id": "dummy_report",
+    "modified": "2020-09-23T07:54:57.783240299Z",
+    "startDate": "0001-01-01T00:00:00Z",
+    "timezoneOffset": 0,
+    "cronView": false,
+    "scheduled": false,
+    "name": "dummy_report",
+    "type": "pdf",
+    "system": false,
+    "locked": false,
+    "orientation": "portrait",
+    "paperSize": "A4",
+    "runOnce": false,
+    "latestReportTime": "0001-01-01T00:00:00Z",
+    "latestScheduledReportTime": "0001-01-01T00:00:00Z",
+    "nextScheduledTime": "0001-01-01T00:00:00Z",
+    "sensitive": false,
+    "disableHeader": false,
+    "dashboard": {
+        "id": "dummy_report",
+        "version": 0,
+        "modified": "0001-01-01T00:00:00Z",
+        "fromDate": "0001-01-01T00:00:00Z",
+        "toDate": "0001-01-01T00:00:00Z",
+        "fromDateLicense": "0001-01-01T00:00:00Z",
+        "name": "dummy_report",
+        "layout": [
+            {
+                "id": "dummy_report",
+                "forceRange": false,
+                "widget": {
+                    "id": "dummy_report",
+                    "version": 1,
+                    "modified": "2020-09-09T14:02:27.423018192Z",
+                    "name": "dummy_widget",
+                    "dataType": "indicators",
+                    "widgetType": "pie",
+                    "isPredefined": false,
+                    "params": null,
+                    "size": 0
+                }
+            }
+        ]
+    },
+    "fromVersion": "6.0.0",
+    "tags": [
+    ],
+    "createdBy": ""
+}

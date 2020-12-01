@@ -1,3 +1,4 @@
+import copy
 import glob
 import itertools
 import json
@@ -7,6 +8,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Optional, Tuple
@@ -1043,6 +1045,91 @@ def get_general_paths(path):
     return files
 
 
+class IDSetType(Enum):
+    PLAYBOOK = 'playbooks'
+    INTEGRATION = 'integrations'
+    SCRIPT = 'scripts'
+    TEST_PLAYBOOK = 'TestPlaybooks'
+    WIDGET = 'Widgets'
+    CLASSIFIER = 'Classifiers'
+    MAPPER = 'Mappers'
+    REPORT = 'Reports'
+    DASHBOARD = 'Dashboards'
+    INCIDENT_FIELD = 'IncidentFields'
+    INCIDENT_TYPE = 'IncidentTypes'
+    INDICATOR_FIELD = 'IndicatorFields'
+    INDICATOR_TYPE = 'IndicatorTypes'
+    LAYOUTS = 'Layouts'
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
+class IDSet:
+    def __init__(self, id_set_dict=None):
+        self._id_set_dict = id_set_dict if id_set_dict else {}
+
+    def get_dict(self):
+        return self._id_set_dict
+
+    def get_list(self, item_type):
+        return self._id_set_dict.get(item_type, [])
+
+    def add_to_list(self, object_type: IDSetType, obj):
+        if not IDSetType.has_value(object_type):
+            raise ValueError(f'Invalid IDSetType {object_type}')
+
+        self._id_set_dict.setdefault(object_type, []).append(obj)
+
+
+def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
+    """
+    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    """
+    with open(first_id_set_path, mode='r') as f1:
+        first_id_set = json.load(f1)
+
+    with open(second_id_set_path, mode='r') as f2:
+        second_id_set = json.load(f2)
+
+    unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
+
+    if unified_id_set:
+        with open(output_id_set_path, mode='w', encoding='utf-8') as f:
+            json.dump(unified_id_set.get_dict(), f, indent=4)
+
+    return unified_id_set, duplicates
+
+
+def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs: bool = True):
+    """
+    Merged two id_set dictionaries into single id_set. Returns the unified id_set dict.
+    """
+    duplicates = []
+    united_id_set = IDSet(copy.deepcopy(first_id_set_dict))
+
+    first_id_set = IDSet(first_id_set_dict)
+    second_id_set = IDSet(second_id_set_dict)
+
+    for object_type, object_list in second_id_set.get_dict().items():
+        subset = first_id_set.get_list(object_type)
+
+        for obj in object_list:
+            obj_id = list(obj.keys())[0]
+            is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
+                                         external_object=obj)
+            if is_duplicate:
+                duplicates.append(obj_id)
+            else:
+                united_id_set.add_to_list(object_type, obj)
+
+    if duplicates:
+        return None, duplicates
+
+    return united_id_set, []
+
+
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
@@ -1352,11 +1439,24 @@ def find_duplicates(id_set, print_logs):
     return lists_to_return
 
 
-def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
-    duplicates = [duplicate for duplicate in id_set if duplicate.get(id_to_check)]
+def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None):
+    """
+    Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
-    if len(duplicates) < 2:
+    Pass `external_object` to check if it exists in `id_set_subset_list`.
+    Otherwise the function will check if `id_set_subset_list` contains 2 or more items with the id of `id_to_check`
+
+    """
+    duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
+
+    if external_object and len(duplicates) == 0:
         return False
+
+    if not external_object and len(duplicates) == 1:
+        return False
+
+    if external_object:
+        duplicates.append(external_object)
 
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]

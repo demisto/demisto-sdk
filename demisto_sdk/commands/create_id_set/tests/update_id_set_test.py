@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 import sys
@@ -15,8 +16,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_incident_type_data, get_indicator_type_data, get_layout_data,
     get_layoutscontainer_data, get_mapper_data, get_playbook_data,
     get_script_data, get_values_for_keys_recursively, get_widget_data,
-    has_duplicate, process_general_items, process_incident_fields,
-    process_integration, process_script, re_create_id_set)
+    has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -146,39 +148,75 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    @pytest.mark.parametrize('id_set, id_to_check, result', MOCKED_DATA)
-    def test_had_duplicates(id_set, id_to_check, result):
-        assert result == has_duplicate(id_set, id_to_check)
-
-    ID_SET = [
-        {'Access': {'typeID': 'Access', 'kind': 'edit', 'path': 'Layouts/layout-edit-Access.json'}},
-        {'Access': {'typeID': 'Access', 'fromversion': '4.1.0', 'kind': 'details', 'path': 'layout-Access.json'}},
-        {'urlRep': {'typeID': 'urlRep', 'kind': 'Details', 'path': 'Layouts/layout-Details-url.json'}},
-        {'urlRep': {'typeID': 'urlRep', 'fromversion': '5.0.0', 'kind': 'Details',
-                    'path': 'layout-Details-url_5.4.9.json'}}
-    ]
-
-    INPUT_TEST_HAS_DUPLICATE = [
-        ('Access', False),
-        ('urlRep', True)
-    ]
-
-    @staticmethod
-    @pytest.mark.parametrize('list_input, list_output', INPUT_TEST_HAS_DUPLICATE)
-    def test_has_duplicate(list_input, list_output):
+    def test_has_duplicate():
         """
         Given
-            - A list of dictionaries with layout data called ID_SET & layout_id
+            - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
+            They are considered duplicates because they have the same name (typeID), their versions override, and they
+            are the same kind (details)
 
         When
             - checking for duplicate
 
         Then
-            - Ensure return true for duplicate layout
-            - Ensure return false for layout with different kind
+            - Ensure duplicates found
         """
-        result = has_duplicate(TestDuplicates.ID_SET, list_input, 'Layouts', False)
-        assert list_output == result
+        id_set = {
+            'Layouts': []
+        }
+        id_set['Layouts'].append({
+            'urlRep': {
+                'typeID': 'urlRep',
+                'fromVersion': '5.0.0',
+                'kind': 'Details',
+                'path': 'Layouts/layout-details-urlrep.json'
+            }
+        })
+
+        id_set['Layouts'].append({
+            'urlRep': {
+                'typeID': 'urlRep',
+                'kind': 'Details',
+                'path': 'Layouts/layout-details-urlrep2.json'
+            }
+        })
+
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
+        assert has_duplicates is True
+
+    @staticmethod
+    def test_has_no_duplicate():
+        """
+        Given
+            - id_set.json with two non duplicate layouts. They have different kind
+
+        When
+            - checking for duplicate
+
+        Then
+            - Ensure duplicates not found
+        """
+        id_set = {
+            'Layouts': []
+        }
+        id_set['Layouts'].append({
+            'urlRep': {
+                'typeID': 'urlRep',
+                'kind': 'Details',
+                'path': 'Layouts/layout-details-urlrep.json'
+            }
+        })
+
+        id_set['Layouts'].append({
+            'urlRep': {
+                'typeID': 'urlRep',
+                'kind': 'edit',
+                'path': 'Layouts/layout-edit-urlrep.json'
+            }
+        })
+
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
+        assert has_duplicates is False
 
 
 class TestIntegrations:
@@ -1260,3 +1298,143 @@ class TestFlow(unittest.TestCase):
             assert any('dup-check-dashbaord' in i for i in dup_data)
             assert any('layout-dup-check-id' in i for i in dup_data)
             assert any('incident_account_field_dup_check' in i for i in dup_data)
+
+
+def test_merge_id_sets(tmp_path):
+    """
+    Given
+    - two id_set files
+    - id_sets don't contain duplicate items
+
+    When
+    - merged
+
+    Then
+    - ensure the output id_set contains items from both id_sets
+    - ensure no duplicates found
+    """
+    tmp_dir = tmp_path / "somedir"
+    tmp_dir.mkdir()
+
+    first_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+
+                }
+            }
+        ],
+        'integrations': [
+            {
+                'integration_foo1': {
+
+                }
+            }
+        ]
+    }
+
+    second_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo2': {
+
+                }
+            }
+        ],
+        'integrations': [
+            {
+                'integration_foo2': {
+
+                }
+            }
+        ]
+    }
+
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
+
+    assert output_id_set.get_dict() == {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+
+                }
+            },
+            {
+                'playbook_foo2': {
+
+                }
+            }
+        ],
+        'integrations': [
+            {
+                'integration_foo1': {
+
+                }
+            },
+            {
+                'integration_foo2': {
+
+                }
+            }
+        ]
+    }
+
+    assert not duplicates
+
+
+def test_merged_id_sets_with_duplicates(caplog):
+    """
+    Given
+    - first_id_set.json
+    - second_id_set.json
+    - they both has the same script ScriptFoo
+
+    When
+    - merged
+
+    Then
+    - ensure output id_set contains items from both id_sets
+    - ensure merge fails
+    - ensure duplicate ScriptFoo found
+
+    """
+    caplog.set_level(logging.DEBUG)
+
+    first_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'ScriptFoo': {
+                    'name': 'ScriptFoo'
+                }
+            }
+        ]
+    }
+
+    second_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo2': {
+                    'name': 'playbook_foo2'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'ScriptFoo': {
+                    'name': 'ScriptFoo'
+                }
+            }
+        ]
+    }
+
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
+
+    assert output_id_set is None
+    assert duplicates == ['ScriptFoo']

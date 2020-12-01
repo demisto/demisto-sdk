@@ -48,7 +48,9 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
 
@@ -71,7 +73,9 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def set_keyTypeMap(self):

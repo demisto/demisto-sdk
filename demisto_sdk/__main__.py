@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     ArtifactsManager, create_content_artifacts)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -170,15 +171,16 @@ def extract_code(config, **kwargs):
 
 
 # ====================== unify ====================== #
-@main.command(name="unify",
-              short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
-                         'this should be used on a single integration/script and not a pack '
-                         'not multiple scripts/integrations')
+@main.command(
+    name="unify",
+    short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
+    'this should be used on a single integration/script and not a pack '
+    'not multiple scripts/integrations')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The path to the files to unify", required=True
+    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
@@ -189,6 +191,8 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
+    # Input is of type Path.
+    kwargs['input'] = str(kwargs['input'])
     unifier = Unifier(**kwargs)
     unifier.merge_script_package_to_yml()
     return 0
@@ -781,6 +785,33 @@ def generate_doc(**kwargs):
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
+
+
+@main.command(name='merge-id-sets',
+              hidden=True,
+              short_help='Merge two id_sets')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i1', '--id-set1', help='First id_set.json file path', required=True
+)
+@click.option(
+    '-i2', '--id-set2', help='Second id_set.json file path', required=True
+)
+@click.option(
+    '-o', '--output', help='File path of the united id_set', required=True
+)
+def merge_id_sets_command(**kwargs):
+    first = kwargs['id_set1']
+    second = kwargs['id_set2']
+    output = kwargs['output']
+
+    merge_id_sets_from_files(
+        first_id_set_path=first,
+        second_id_set_path=second,
+        output_id_set_path=output
+    )
 
 
 # ====================== update-release-notes =================== #

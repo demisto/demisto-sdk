@@ -246,7 +246,6 @@ class TestIntegrationValidation:
         assert 'IN102' in result.stdout
         assert result.exit_code == 1
 
-
     def test_invalid_integration(self, mocker, repo):
         """
         Given

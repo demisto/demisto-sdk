@@ -819,12 +819,12 @@ def parse_dashboard_report_data(layouts, data, json_data, path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    report_scripts = set()
+    report_scripts = []
     if layouts:
         for layout in layouts:
             widget_json = layout.get('widget')
             if widget_json.get('dataType') == 'scripts':
-                report_scripts.add(widget_json.get('query'))
+                report_scripts.append(widget_json.get('query'))
 
     data['file_path'] = path
     if name:  # for the rest

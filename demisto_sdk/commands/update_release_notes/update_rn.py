@@ -46,13 +46,13 @@ class UpdateRN:
         self.existing_rn_changed = False
         self.text = text
         self.pack_metadata_only = pack_metadata_only
-        self.current_master_version = self.curr_master_version()
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         except TypeError:
             print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
                         f"the pack path is correct.")
             sys.exit(1)
+        self.master_version = self.get_master_version()
 
     @staticmethod
     def check_for_release_notes_valid_file_path(file_path):
@@ -130,7 +130,7 @@ class UpdateRN:
 
         return True
 
-    def curr_master_version(self):
+    def get_master_version(self):
         master_current_version = '0.0.0'
         master_metadata = run_command(
             f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
@@ -152,16 +152,14 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            if self.current_master_version != '0.0.0':
-                sys.exit(0)
-            if LooseVersion(self.current_master_version) == LooseVersion(new_version):
+            if LooseVersion(self.master_version) == LooseVersion(new_version):
                 return True
-            elif LooseVersion(self.current_master_version) > LooseVersion(new_version):
+            elif LooseVersion(self.master_version) > LooseVersion(new_version):
                 return True
                 # print_error("The master branch is currently ahead of your pack's version. "
                 #             "Please pull from master and re-run the command.")
                 # sys.exit(0)
-            elif LooseVersion(self.current_master_version) < LooseVersion(new_version):
+            elif LooseVersion(self.master_version) < LooseVersion(new_version):
                 return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
@@ -277,7 +275,7 @@ class UpdateRN:
             data_dictionary['currentVersion'] = specific_version
             return specific_version, data_dictionary
         elif self.update_type == 'major':
-            version = self.current_master_version.split('.')
+            version = self.master_version.split('.')
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -286,7 +284,7 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         elif self.update_type == 'minor':
-            version = self.current_master_version.split('.')
+            version = self.master_version.split('.')
             version[1] = str(int(version[1]) + 1)
             if int(version[1]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -296,7 +294,7 @@ class UpdateRN:
             new_version = '.'.join(version)
         # We validate the input via click
         elif self.update_type in ['revision', 'maintenance', 'documentation']:
-            version = self.current_master_version.split('.')
+            version = self.master_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "

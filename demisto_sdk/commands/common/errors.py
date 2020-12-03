@@ -1100,7 +1100,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
-        return f'Your layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.'
+        return f'The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.' \
+            "Please make sure:\n" \
+            "1 - The right incident field is set and the spelling is correct.\n" \
+            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+            " rerun the command."
 
     @staticmethod
     @error_code_decorator

@@ -1467,3 +1467,16 @@ def is_v2_file(current_file, check_in_display=False):
     if suffix != "v2":
         return False
     return True
+
+
+def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
+    fields_list = []
+    for item in ['IncidentFields', 'IndicatorFields']:
+        all_item_fields = id_set_file.get(item)
+        for item_field in all_item_fields:
+            for field, field_info in item_field.items():
+                if entity_type == 'mapper' or entity_type == 'old classifier':
+                    fields_list.append(field_info.get('name', ''))
+                elif entity_type == 'layout':
+                    fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
+    return fields_list

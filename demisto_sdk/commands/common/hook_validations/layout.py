@@ -3,11 +3,13 @@ from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 
 import click
-from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import \
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import LAYOUT_CONTAINER_FIELDS
+from demisto_sdk.commands.common.tools import (
+    LAYOUT_CONTAINER_FIELDS, get_all_incident_and_indicator_fields_from_id_set)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
@@ -130,14 +132,9 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                         for item in section.get('items', []):
                             layout_incident_fields.append(item.get('fieldId', '').replace('incident_', ''))
 
-        content_incident_fields = []
-        for item in ['IncidentFields', 'IndicatorFields']:
-            content_all_items_fields = id_set_file.get(item)
-            for content_item_field in content_all_items_fields:
-                for item_name, item_field in content_item_field.items():
-                    content_incident_fields.append(item_name.replace('incident_', '').replace('indicator_', ''))
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'layout')
 
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
         invalid_inc_fields_list = []
         for inc_field in layout_incident_fields:
@@ -210,14 +207,9 @@ class LayoutValidator(LayoutBaseValidator):
                         inc_field = item.get('fieldId', '')
                         layout_incident_fields.append(inc_field.replace('incident_', '').replace('indicator_', ''))
 
-        content_incident_fields = []
-        for item in ['IncidentFields', 'IndicatorFields']:
-            content_all_items_fields = id_set_file.get(item)
-            for content_item_field in content_all_items_fields:
-                for item_name, item_field in content_item_field.items():
-                    content_incident_fields.append(item_name.replace('incident_', '').replace('indicator_', ''))
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'layout')
 
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
         invalid_inc_fields_list = []
         for inc_field in layout_incident_fields:

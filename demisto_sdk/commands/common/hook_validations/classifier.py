@@ -1,10 +1,13 @@
 from distutils.version import LooseVersion
 
 import click
-from demisto_sdk.commands.common.constants import LAYOUT_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import \
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import \
+    get_all_incident_and_indicator_fields_from_id_set
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
@@ -134,12 +137,17 @@ class ClassifierValidator(ContentEntityValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file) -> bool:
+        """Checks if classifier incident fields is exist in content repo, this validation is only for old classifiers.
+
+        Returns:
+            bool. True if incident fields is valid - exist in content repo, else False.
+        """
         if not id_set_file:
-            click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
+            click.secho("Skipping classifier incident field validation. Could not read id_set.json.", fg="yellow")
             return True
 
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_BUILT_IN_FIELDS
-        content_incident_fields = get_specific_fields_from_id_set(id_set_file, ['IncidentFields', 'IndicatorFields'])
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'old classifier')
 
         invalid_inc_fields_list = []
         mapper = self.current_file.get('mapping', {})
@@ -155,13 +163,3 @@ class ClassifierValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
-
-
-def get_specific_fields_from_id_set(id_set_file, specific_fields: list) -> list:
-    fields_list = []
-    for item in specific_fields:
-        all_item_fields = id_set_file.get(item)
-        for item_field in all_item_fields:
-            for _, field_info in item_field.items():
-                fields_list.append(field_info.get('name', ''))
-    return fields_list

@@ -1,6 +1,6 @@
 import os
 from os.path import isfile
-from shutil import copyfile, rmtree
+from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
@@ -72,7 +72,7 @@ class TestStructureValidator:
                 os.remove(target)
         for directory in cls.CREATED_DIRS:
             if os.path.exists(directory):
-                rmtree(directory)
+                os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),

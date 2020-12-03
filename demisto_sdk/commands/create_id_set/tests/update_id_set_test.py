@@ -925,8 +925,48 @@ class TestWidget:
 
 
 class TestDashboard:
+    DASHBOARD_WITH_SCRIPT = {
+        "id": "dummy_dashboard",
+        "layout": [
+            {
+                "widget": {
+                    "category": "",
+                    "dataType": "scripts",
+                    "fromServerVersion": "",
+                    "id": "dummy_widget",
+                    "name": "dummy_dashboard",
+                    "query": "dummy_script",
+                    "toServerVersion": "",
+                },
+            }
+        ],
+        "name": "dummy_dashboard",
+        "fromVersion": "6.0.0",
+    }
+
+    DASHBOARD_NO_SCRIPT = {
+
+        "id": "dummy_dashboard",
+        "layout": [
+            {
+                "widget": {
+                    "category": "",
+                    "dataType": "indicators",
+                    "fromServerVersion": "",
+                    "id": "dummy_widget",
+                    "name": "dummy_dashboard",
+                    "packID": "",
+                    "toServerVersion": "",
+                    "widgetType": "table"
+                },
+            }
+        ],
+        "name": "dummy_dashboard",
+        "fromVersion": "6.0.0",
+    }
+
     @staticmethod
-    def test_process_dashboard__with_script():
+    def test_process_dashboard__with_script(repo):
         """
         Given
             - A dashboard file called dashboard-with-scripts.json
@@ -937,8 +977,12 @@ class TestDashboard:
         Then
             - parsing all the data from file successfully
         """
+        pack = repo.create_pack("Pack1")
+        dashboard = pack.create_dashboard('dummy_dashboard')
+        dashboard.update(TestDashboard.DASHBOARD_WITH_SCRIPT)
+
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                 'test_data', 'dashboard-with-scripts.json')
+                                 'test_data', dashboard.path)
 
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
@@ -949,7 +993,7 @@ class TestDashboard:
         assert 'dummy_script' in result['scripts']
 
     @staticmethod
-    def test_process_dashboard__no_script():
+    def test_process_dashboard__no_script(repo):
         """
         Given
             - A dashboard file called dashboard-no-scripts.json
@@ -960,8 +1004,12 @@ class TestDashboard:
         Then
             - parsing all the data from file successfully
         """
+        pack = repo.create_pack("Pack1")
+        dashboard = pack.create_dashboard('dummy_dashboard')
+        dashboard.update(TestDashboard.DASHBOARD_NO_SCRIPT)
+
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                 'test_data', 'dashboard-no-scripts.json')
+                                 'test_data', dashboard.path)
 
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
@@ -972,8 +1020,54 @@ class TestDashboard:
 
 
 class TestReport:
+    REPORT_WITH_SCRIPT = {
+        "id": "dummy_report",
+        "modified": "2020-09-23T07:54:57.783240299Z",
+        "startDate": "0001-01-01T00:00:00Z",
+        "name": "dummy_report",
+        "dashboard": {
+            "id": "dummy_report",
+            "version": 0,
+            "name": "dummy_report",
+            "layout": [
+                {
+                    "id": "dummy_report",
+                    "widget": {
+                        "id": "dummy_report",
+                        "version": 1,
+                        "modified": "2020-09-09T14:02:27.423018192Z",
+                        "name": "dummy_widget",
+                        "dataType": "scripts",
+                        "query": "dummy_script",
+                    }
+                }
+            ]
+        },
+        "fromVersion": "6.0.0",
+    }
+
+    REPORT_NO_SCRIPT = {
+        "id": "dummy_report",
+        "name": "dummy_report",
+        "dashboard": {
+            "id": "dummy_report",
+            "name": "dummy_report",
+            "layout": [
+                {
+                    "id": "dummy_report",
+                    "widget": {
+                        "id": "dummy_report",
+                        "name": "dummy_widget",
+                        "dataType": "indicators",
+                    }
+                }
+            ]
+        },
+        "fromVersion": "6.0.0",
+    }
+
     @staticmethod
-    def test_process_report__with_script():
+    def test_process_report__with_script(repo):
         """
         Given
             - A report file called report-with-scripts.json
@@ -984,8 +1078,11 @@ class TestReport:
         Then
             - parsing all the data from file successfully
         """
+        pack = repo.create_pack("Pack1")
+        report = pack.create_report('dummy_report')
+        report.update(TestReport.REPORT_WITH_SCRIPT)
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                 'test_data', 'report-with-scripts.json')
+                                 'test_data', report.path)
 
         res = get_report_data(test_file)
         result = res.get('dummy_report')
@@ -996,7 +1093,7 @@ class TestReport:
         assert 'dummy_script' in result['scripts']
 
     @staticmethod
-    def test_process_report__no_script():
+    def test_process_report__no_script(repo):
         """
         Given
             - A report file called report-no-scripts.json
@@ -1007,8 +1104,11 @@ class TestReport:
         Then
             - parsing all the data from file successfully
         """
+        pack = repo.create_pack("Pack1")
+        report = pack.create_report('dummy_report')
+        report.update(TestReport.REPORT_NO_SCRIPT)
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                 'test_data', 'report-no-scripts.json')
+                                 'test_data', report.path)
 
         res = get_report_data(test_file)
         result = res.get('dummy_report')

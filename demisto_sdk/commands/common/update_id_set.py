@@ -815,7 +815,6 @@ def get_report_data(path):
 
 def parse_dashboard_report_data(layouts, data, json_data, path):
     id_ = json_data.get('id')
-    brandname = json_data.get('brandName', '')
     name = json_data.get('name', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
@@ -827,8 +826,6 @@ def parse_dashboard_report_data(layouts, data, json_data, path):
             if widget_json.get('dataType') == 'scripts':
                 report_scripts.append(widget_json.get('query'))
 
-    if brandname:  # for classifiers
-        data['name'] = brandname
     data['file_path'] = path
     if name:  # for the rest
         data['name'] = name

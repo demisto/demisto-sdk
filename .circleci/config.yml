@@ -44,6 +44,7 @@ jobs:
             key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
               - .tox/py37
+      no_output_timeout: 1h
 
   tox3-8:
       docker:
@@ -84,6 +85,8 @@ jobs:
             root: ~/project
             paths:
               - .tox
+      no_output_timeout: 1h
+
   precommit-checks:
       docker:
         - image: circleci/python:3.8.3-buster

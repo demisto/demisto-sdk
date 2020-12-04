@@ -71,16 +71,19 @@ def build_bandit_command(files: List[Path]) -> str:
     """
     command = "python3 -m bandit"
     # Only reporting on the high severity issues
-    command += " -lll"
+    command += " -ll"
     # report only issues of a given confidence level HIGH
     command += " -iii"
+    # skip the following tests: Pickle usage, Use of insecure hash func, Audit url open,
+    # Using xml.etree.ElementTree.fromstring,  Using xml.dom.minidom.parseString
+    command += " -s B301,B303,B310,B314,B318"
     # Aggregate output by filename
     command += " -a file"
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # only show output in the case of an error
     command += " -q"
-    # Generating path pattrens - path1,path2,path3,..
+    # Generating path patterns - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
 

@@ -1,4 +1,5 @@
 # Changelog
+* Bandit now reports also on medium severity issues.
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
 

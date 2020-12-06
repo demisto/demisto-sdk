@@ -16,7 +16,7 @@ references:
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - tox3-8
+        - tox3-8-no-tests
 
 jobs:
   tox3-7:

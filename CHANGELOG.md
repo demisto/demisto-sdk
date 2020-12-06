@@ -1,7 +1,7 @@
 # Changelog
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
-* Added the *--skip-id-set-creation* flag to **validate** command to skip id_set creation.
+* Added the *--skip-id-set-creation* flag to **validate** command in order to skip id_set creation.
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

@@ -11,7 +11,7 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-8
+        - tox3-8-no-tests
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -65,10 +65,6 @@ jobs:
             name: Tox build
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
-        - save_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            paths:
-              - .tox/py38
         - store_artifacts:
             path: coverage_html_report
         - run:
@@ -80,10 +76,36 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - .tox
+
+  tox3-8-no-tests:
+    docker:
+      - image: circleci/python:3.8.3-buster-node
+    steps:
+      - checkout
+      - restore_cache:
+          key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+      - run:
+          # install npm modules so readme tests run with mdx verification
+          name: npm install
+          command: |
+            npm ci
+      - run:
+          name: Setup Tox
+          command: |
+            pip install tox
+      - run:
+          name: Tox build
+          command: |
+            tox -e py38 --notest
+      - save_cache:
+          key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          paths:
+            - .tox/py38
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .tox
+
   precommit-checks:
       docker:
         - image: circleci/python:3.8.3-buster
@@ -183,6 +205,8 @@ workflows:
       - tox3-7:
           <<: *tag_filter
       - tox3-8:
+          <<: *tag_filter
+      - tox3-8-no-tests:
           <<: *tag_filter
       - checkout-content:
           <<: *tag_filter

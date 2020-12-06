@@ -70,7 +70,7 @@ def build_bandit_command(files: List[Path]) -> str:
         str: bandit command
     """
     command = "python3 -m bandit"
-    # Only reporting on the high-severity issues
+    # Only reporting on the high severity issues
     command += " -lll"
     # report only issues of a given confidence level HIGH
     command += " -iii"

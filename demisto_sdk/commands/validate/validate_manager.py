@@ -70,8 +70,8 @@ class ValidateManager:
             self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False
+            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+            # ,skip_id_set_creation=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,7 +87,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation
+        #self.skip_id_set_creation = skip_id_set_creation
         self.compare_type = '...'
         self.staged = staged
 
@@ -97,7 +97,7 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+        self.id_set_file = self.get_id_set_file(self.skip_dependencies, self.id_set_path)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False

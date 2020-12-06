@@ -8,9 +8,9 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
-    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    TESTS_DIRECTORIES, FileType)
+    KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -1198,11 +1198,10 @@ class ValidateManager:
             id_set = open_id_set_file(id_set_path)
         return id_set
 
-    @staticmethod
-    def check_and_validate_deprecated(file_path, current_file, is_modified, is_backward_check, validator):
+    def check_and_validate_deprecated(self, file_path, current_file, is_modified, is_backward_check, validator):
         """If file is deprecated, validate it. Return None otherwise.
 
-        Files with 'deprecated: true' or 'toversion < 4.5.0' fields are considered deprecated.
+        Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
 
         Args:
             file_path: (str) file path to validate.
@@ -1216,12 +1215,17 @@ class ValidateManager:
             False if current_file is deprecated and invalid.
             None if current_file is not deprecated.
         """
-        is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+        file_type = find_type(file_path)
+        if file_type == FileType.PLAYBOOK:
+            is_deprecated = "hidden" in current_file and current_file["hidden"]
+        else:
+            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file["toversion"]) < version.parse("4.5.0")
+                           version.parse(current_file["toversion"]) < version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
-            click.echo(f"File {file_path} is either deprecated or has 'toversion' < 4.5.0.")
+            click.echo(f"Validating deprecated file: {file_path}")
 
             is_valid_as_deprecated = True
             if hasattr(validator, "is_valid_as_deprecated"):
@@ -1230,6 +1234,9 @@ class ValidateManager:
             if is_modified and is_backward_check:
                 return all([is_valid_as_deprecated, validator.is_backward_compatible()])
 
-            click.echo(f"Skipping validation for: {file_path}")
+            self.ignored_files.add(file_path)
+            if self.print_ignored_files:
+                click.echo(f"Skipping validation for: {file_path}")
+
             return is_valid_as_deprecated
         return None

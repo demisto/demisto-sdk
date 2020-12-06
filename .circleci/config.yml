@@ -153,6 +153,7 @@ jobs:
               cd content
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
+              demisto-sdk -v
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
@@ -170,6 +171,7 @@ jobs:
               . .tox/py38/bin/activate
 
               cd content
+              demisto-sdk -v
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
@@ -185,6 +187,7 @@ jobs:
               . .tox/py38/bin/activate
 
               cd content
+              demisto-sdk -v
               mkdir ./tmp
 
               CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp

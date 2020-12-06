@@ -185,6 +185,62 @@ class TestDeprecatedIntegration:
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_bc_deprecated_integration(self, mocker, repo):
+        """
+        Given
+        - invalid but backwards compatible deprecated integration with valid deprecated fields.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['deprecated'] = True
+        valid_integration_yml['display'] = '(Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_integration(self, mocker, repo):
+        """
+        Given
+        - invalid but backwards compatible integration with toversion < OLDEST_SUPPORTED_VERSION
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['toversion'] = '4.4.4'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
 
 class TestIntegrationValidation:
     def test_valid_integration(self, mocker, repo):
@@ -1230,6 +1286,57 @@ class TestPlaybookValidateDeprecated:
         assert 'The playbook description has to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_bc_deprecated_playbook(self, mocker, repo):
+        """
+        Given
+        - an invalid, backwards compatible Playbook Deprecated. All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['hidden'] = True
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', playbook.yml.rel_path], catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_playbook(self, mocker, repo):
+        """
+        Given
+        - an invalid, backwards compatible deprecated playbook with toversion < OLDEST_SUPPORTED_VERSION.
+        - All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['toversion'] = '4.4.4'
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', playbook.yml.rel_path], catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
 
 class TestReportValidation:
     def test_valid_report(self, mocker, repo):
@@ -1424,6 +1531,59 @@ class TestScriptDeprecatedValidation:
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout
         assert result.exit_code == 1
+
+    def test_invalid_bc_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - an invalid but backwards compatible deprecated Script. All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a deprecated script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['deprecated'] = True
+        valid_script_yml['commonfields']['version'] = -2
+        valid_script_yml['comment'] = 'Deprecated.'
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_script(self, mocker, repo):
+        """
+        Given
+        - An invalid but backwards compatible Script with field toversion < OLDEST_SUPPORTED_VERSION.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['toversion'] = '4.4.4'
+        valid_script_yml['commonfields']['version'] = -2
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
 
 
 class TestWidgetValidation:

@@ -38,9 +38,8 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DEPRECATED_INTEGRATION_YML,
-    DEPRECATED_SCRIPT_YML, DIR_LIST, IGNORED_PNG, INCIDENT_FIELD_TARGET,
-    INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
+    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
     INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
     INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
     INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
@@ -54,9 +53,7 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
-    SMALL_TOVERSION_INTEGRATION_YML, SMALL_TOVERSION_PLAYBOOK_YML,
-    SMALL_TOVERSION_SCRIPT_YML, VALID_BETA_INTEGRATION,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
     VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
     VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
@@ -1133,47 +1130,6 @@ class TestValidators:
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}
-
-    DEPRECATED_FILE_PATHS = [
-        DEPRECATED_INTEGRATION_YML,
-        SMALL_TOVERSION_INTEGRATION_YML,
-        DEPRECATED_SCRIPT_YML,
-        SMALL_TOVERSION_SCRIPT_YML,
-        SMALL_TOVERSION_PLAYBOOK_YML
-    ]
-
-    @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
-    def test_run_validations_on_deprecated_invalid_bc_modified_file(self, file_path):
-        """
-        Given
-        - An invalid, deprecated, backwards compatible, modified file.
-
-        When
-        - running run_validations_on_file on that file.
-
-        Then
-        - Only Backwards compatibility will be checked and validation will pass.
-        """
-
-        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
-        assert validate_manager.run_validations_on_file(file_path=file_path, pack_error_ignore_list=[],
-                                                        is_modified=True)
-
-    @pytest.mark.parametrize('file_path', DEPRECATED_FILE_PATHS)
-    def test_run_validations_on_deprecated_invalid_bc_not_modified_file(self, file_path):
-        """
-        Given
-        - An invalid, deprecated, backwards compatible, unmodified file.
-
-        When
-        - running run_validations_on_file on that file.
-
-        Then
-        - No check will be preformed and validation will pass.
-        """
-        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
-        assert validate_manager.run_validations_on_file(file_path=file_path, pack_error_ignore_list=[],
-                                                        is_modified=False)
 
 
 def test_content_release_identifier_exists():

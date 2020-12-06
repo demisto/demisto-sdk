@@ -121,13 +121,6 @@ INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
 INCIDENTTYPE_PATH = "IncidentTypes"
-DEPRECATED_INTEGRATION_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/deprecated_files/DeprecatedIntegration.yml"
-SMALL_TOVERSION_INTEGRATION_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-                                  f"deprecated_files/SmallToversionIntegration.yml"
-DEPRECATED_SCRIPT_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/deprecated_files/DeprecatedScript.yml"
-SMALL_TOVERSION_SCRIPT_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/deprecated_files/SmallToversionScript.yml"
-DEPRECATED_PLAYBOOK_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/deprecated_files/DeprecatedPlaybook.yml"
-SMALL_TOVERSION_PLAYBOOK_YML = f"{GIT_ROOT}/demisto_sdk/tests/test_files/deprecated_files/SmallToversionPlaybook.yml"
 
 SOURCE_FORMAT_INDICATORFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_indicatorfield-copy.json"
 DESTINATION_FORMAT_INDICATORFIELD_COPY = "IndicatorFields/incidentfield-copy.json"

@@ -40,7 +40,7 @@ jobs:
             name: Tox build
             command: |
               tox -e py37 -v
-            no_output_timeout: 3h
+            no_output_timeout: 1h
         - save_cache:
             key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:
@@ -66,7 +66,7 @@ jobs:
             name: Tox build
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
-            no_output_timeout: 3h
+            no_output_timeout: 1h
         - save_cache:
             key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
             paths:

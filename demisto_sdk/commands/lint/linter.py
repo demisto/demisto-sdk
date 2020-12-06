@@ -702,7 +702,7 @@ class Linter:
                 test_image_name = docker_image_final[0].short_id
                 break
             except Exception as e:
-                logger.info(f"{log_prompt} - errors occurred when building image in dir {e}")
+                logger.exception(f"{log_prompt} - errors occurred when building image in dir {e}")
                 if trial >= build_tries:
                     errors = str(e)
                 else:

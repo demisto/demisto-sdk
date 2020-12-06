@@ -70,8 +70,8 @@ class ValidateManager:
             self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
-            # ,skip_id_set_creation=False
+            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
+            skip_id_set_creation=False
     ):
         # General configuration
         self.skip_docker_checks = False

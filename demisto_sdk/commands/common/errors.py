@@ -953,7 +953,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_support_type(pack_meta_file):
-        return 'Support field should be one of the following: xsoar, partner or community.'
+        return 'Support field should be one of the following: xsoar, partner, developer or community.'
 
     @staticmethod
     @error_code_decorator

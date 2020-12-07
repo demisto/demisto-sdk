@@ -800,15 +800,15 @@ def get_widget_data(path):
 
 
 def get_dashboard_data(path):
-    dashboard_to_json = get_json(path)
-    layouts = dashboard_to_json.get('layout', {})
-    return parse_dashboard_or_report_data(layouts, dashboard_to_json, path)
+    dashboard_data = get_json(path)
+    layouts = dashboard_data.get('layout', {})
+    return parse_dashboard_or_report_data(layouts, dashboard_data, path)
 
 
 def get_report_data(path):
-    report_to_json = get_json(path)
-    layouts = report_to_json.get('dashboard', {}).get('layout')
-    return parse_dashboard_or_report_data(layouts, report_to_json, path)
+    report_data = get_json(path)
+    layouts = report_data.get('dashboard', {}).get('layout')
+    return parse_dashboard_or_report_data(layouts, report_data, path)
 
 
 def parse_dashboard_or_report_data(all_layouts, data_file_json, path):

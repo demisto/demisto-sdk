@@ -338,6 +338,17 @@ class TestScriptValidator:
         (V2_WRONG_DISPLAY, False),
     ]
 
+    IS_SKIPPING_DOCKER_CHECK = [("Packs/ApiModules", False, True),
+                                ("Packs/ApiModules", False, True),
+                                ("Packs/Pack1", True, True)]
+
+    @pytest.mark.parametrize("file_path, skip_docker_check, answer", IS_SKIPPING_DOCKER_CHECK)
+    def test_is_docker_image_valid(self, file_path, skip_docker_check, answer):
+        validator = get_validator()
+        validator.file_path = file_path
+        validator.skip_docker_check = skip_docker_check
+        assert validator.is_docker_image_valid() is answer
+
     @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
     def test_is_valid_name(self, current, answer):
         validator = get_validator()

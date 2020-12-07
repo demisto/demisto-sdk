@@ -341,6 +341,41 @@ class TestIntegrationValidation:
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
+    def test_changed_integration_param_to_required(self, mocker, repo):
+        """
+        Given
+        - an invalid Integration - an integration parameter changed to be required
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on wrong required value
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+
+        pack = repo.create_pack("Pack1")
+        new_integration = pack.create_integration()
+        new_integration.create_default_integration()
+        new_integration.yml.update(
+            {"configuration": [{'defaultvalue': '', 'display': 'test', 'name': 'test', 'required': True, 'type': 8}]})
+        old_integration = pack.create_integration()
+        old_integration.create_default_integration()
+        old_integration.yml.update(
+            {"configuration": [{'defaultvalue': '', 'display': 'test', 'name': 'test', 'required': False, 'type': 8}]})
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', new_integration.yml.rel_path, '--no-docker-checks',
+                                          '--no-conf-json',
+                                          '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+
+        assert 'The required field of the test parameter should be False' in result.stdout
+        assert 'IN102' in result.stdout
+        assert result.exit_code == 1
+
     def test_invalid_integration(self, mocker, repo):
         """
         Given
@@ -1354,7 +1389,8 @@ class TestPlaybookValidateDeprecated:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH],
+                               catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
         assert 'The playbook description has to start with "Deprecated."' in result.stdout
@@ -1648,7 +1684,8 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1672,7 +1709,8 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout

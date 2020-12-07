@@ -22,7 +22,8 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             errors.append('Error! You are missing description for the playbook')
         doc = [description]
 
-        if from_version := playbook.get('fromversion'):
+        from_version = playbook.get('fromversion')
+        if from_version:
             doc.append(f'Supported Cortex XSOAR versions: {from_version} and later.\n')
 
         doc.extend(['', '## Dependencies',

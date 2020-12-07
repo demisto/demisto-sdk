@@ -60,7 +60,8 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
 
         doc.append(description + '\n')
 
-        if from_version := script.get('fromversion'):
+        from_version = script.get('fromversion')
+        if from_version:
             doc.append(f'Supported Cortex XSOAR versions: {from_version} and later.\n')
 
         doc.extend(generate_table_section(secript_info, 'Script Data'))

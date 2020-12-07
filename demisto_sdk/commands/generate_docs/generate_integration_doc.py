@@ -111,7 +111,9 @@ def generate_integration_doc(
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
             docs.extend(['This integration was integrated and tested with version xx of {}.'.format(yml_data['name'])])
-            if from_version := yml_data.get('fromversion'):
+
+            from_version = yml_data.get('fromversion')
+            if from_version:
                 docs.append(f'Supported Cortex XSOAR versions: {from_version} and later.\n')
 
             # Integration use cases

@@ -228,7 +228,8 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-8
+            - tox3-7-unit-tests
+            - tox3-8-unit-tests
             - precommit-checks
             - validate-files
             - create-id-set

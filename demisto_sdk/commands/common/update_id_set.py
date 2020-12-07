@@ -800,34 +800,33 @@ def get_widget_data(path):
 
 
 def get_dashboard_data(path):
-    data = OrderedDict()
-    json_data = get_json(path)
-    layouts = json_data.get('layout', {})
-    return parse_dashboard_report_data(layouts, data, json_data, path)
+    dashboard_to_json = get_json(path)
+    layouts = dashboard_to_json.get('layout', {})
+    return parse_dashboard_or_report_data(layouts, dashboard_to_json, path)
 
 
 def get_report_data(path):
+    report_to_json = get_json(path)
+    layouts = report_to_json.get('dashboard', {}).get('layout')
+    return parse_dashboard_or_report_data(layouts, report_to_json, path)
+
+
+def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
     data = OrderedDict()
-    json_data = get_json(path)
-    layouts = json_data.get('dashboard', {}).get('layout')
-    return parse_dashboard_report_data(layouts, data, json_data, path)
-
-
-def parse_dashboard_report_data(layouts, data, json_data, path):
-    id_ = json_data.get('id')
-    name = json_data.get('name', '')
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
+    id_ = data_file_json.get('id')
+    name = data_file_json.get('name', '')
+    fromversion = data_file_json.get('fromVersion')
+    toversion = data_file_json.get('toVersion')
     pack = get_pack_name(path)
     report_scripts = set()
-    if layouts:
-        for layout in layouts:
-            widget_json = layout.get('widget')
-            if widget_json.get('dataType') == 'scripts':
-                report_scripts.add(widget_json.get('query'))
+    if all_layouts:
+        for layout in all_layouts:
+            widget_data = layout.get('widget')
+            if widget_data.get('dataType') == 'scripts':
+                report_scripts.add(widget_data.get('query'))
 
     data['file_path'] = path
-    if name:  # for the rest
+    if name:
         data['name'] = name
     if toversion:
         data['toversion'] = toversion

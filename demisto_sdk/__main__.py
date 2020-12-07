@@ -265,6 +265,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
+@click.option(
+    '--skip-id-set-creation', is_flag=True,
+    help='Skip validation of pack dependencies.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -291,7 +294,8 @@ def validate(config, **kwargs):
             silence_init_prints=kwargs['silence_init_prints'],
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
-            staged=kwargs['staged']
+            staged=kwargs['staged'],
+            skip_id_set_creation=kwargs.get('skip_id_set_creation')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -839,6 +843,9 @@ def merge_id_sets_command(**kwargs):
     '--text', help="Text to add to all of the release notes files",
 )
 @click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
+)
+@click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 @click.option(
@@ -852,6 +859,7 @@ def update_pack_releasenotes(**kwargs):
     text = kwargs.get('text')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
+    prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -860,10 +868,10 @@ def update_pack_releasenotes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
         validate_manager.setup_git_params()
         modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
-            '...', 'origin/master')
+            '...', prev_ver)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")

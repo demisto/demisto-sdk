@@ -238,5 +238,5 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
         assert self.validator._is_valid_support_type() == is_valid
         if not is_valid:
-            assert 'Support field should be one of the following: xsoar, partner or community.' in \
+            assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
                    self.validator.get_errors()

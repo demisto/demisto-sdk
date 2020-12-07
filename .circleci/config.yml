@@ -143,8 +143,6 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - restore_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             name: Test validate files and yaml
             when: always

@@ -2,7 +2,7 @@
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
 * Added support for *prev-ver* flag in **update-release-notes** command.
-
+* Improved retry support when building docker images for linting.
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

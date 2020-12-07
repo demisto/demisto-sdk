@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import platform
+import time
 import traceback
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
@@ -685,25 +686,28 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
-        for trial in range(2):
-            dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+        dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+        dockerfile = template.render(image=test_image_name,
+                                     copy_pack=True)
+        with open(file=dockerfile_path, mode="+x") as file:
+            file.write(str(dockerfile))
+        # we only do retries in CI env where docker build is sometimes flacky
+        build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1
+        for trial in range(build_tries):
             try:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                dockerfile = template.render(image=test_image_name,
-                                             copy_pack=True)
-                with open(file=dockerfile_path, mode="+x") as file:
-                    file.write(str(dockerfile))
-
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,
                                                                       forcerm=True)
                 test_image_name = docker_image_final[0].short_id
                 break
-            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
-                    exceptions.TemplateError) as e:
-                logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
-                if trial == 2:
+            except Exception as e:
+                logger.exception(f"{log_prompt} - errors occurred when building image in dir {e}")
+                if trial >= build_tries:
                     errors = str(e)
+                else:
+                    logger.info(f"{log_prompt} - sleeping 2 seconds and will retry build after")
+                    time.sleep(2)
         if dockerfile_path.exists():
             dockerfile_path.unlink()
 

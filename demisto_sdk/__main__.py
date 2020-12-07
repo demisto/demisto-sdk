@@ -265,6 +265,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
+@click.option(
+    '--skip-id-set-creation', is_flag=True,
+    help='Skip validation of pack dependencies.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -291,7 +294,8 @@ def validate(config, **kwargs):
             silence_init_prints=kwargs['silence_init_prints'],
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
-            staged=kwargs['staged']
+            staged=kwargs['staged'],
+            skip_id_set_creation=kwargs.get('skip_id_set_creation')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

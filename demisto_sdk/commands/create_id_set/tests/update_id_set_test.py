@@ -47,7 +47,7 @@ class TestIDSetCreator:
         id_set_creator.create_id_set()
         assert os.path.exists(self.file_path)
 
-    def test_create_id_set_on_specific_pack(self):
+    def test_create_id_set_on_specific_pack_output(self):
         id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
 
         id_set_creator.create_id_set()
@@ -75,6 +75,29 @@ class TestIDSetCreator:
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
         assert 'Mappers' in id_set.keys()
+
+    def test_create_id_set_on_specific_pack(self, repo):
+        pack1 = repo.create_pack('pack1')
+        pack1.create_integration(yml={'commonfields': {'id': 'integration1'}, 'name': 'integration1'},
+                                 name='integration1')
+
+        id_set_creator = IDSetCreator(self.file_path, pack1.path)
+
+        id_set_creator.create_id_set()
+
+        with open(self.file_path, 'r') as id_set_file:
+            private_id_set = json.load(id_set_file)
+        assert private_id_set['integrations'][0].get('integration1').get('name') == 'integration1'
+
+    def test_create_id_set_on_specific_empty_pack(self, repo):
+        id_set_creator = IDSetCreator(self.file_path, 'Packs/TestPack/pack_metadata.json')
+
+        id_set_creator.create_id_set()
+
+        with open(self.file_path, 'r') as id_set_file:
+            private_id_set = json.load(id_set_file)
+        for _, entity_value in private_id_set.items():
+            assert len(entity_value) == 0
 
 
 class TestDuplicates:

@@ -31,6 +31,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
+SUPPORT_TYPES = ['partner', 'community', 'xsoar']
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -171,7 +172,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
-            self._is_approved_tags()
+            self._is_approved_tags(),
+            self._is_valid_support_type()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -273,6 +275,25 @@ class PackUniqueFilesValidator(BaseValidator):
                 if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
                     if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
                         return False
+
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
+                return False
+
+        return True
+
+    def _is_valid_support_type(self) -> bool:
+        """Checks whether the support type is valid in the pack metadata.
+
+        Returns:
+            bool: True if the support type is valid, otherwise False
+
+        """
+        try:
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
+                self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
+                return False
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):

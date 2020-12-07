@@ -208,3 +208,24 @@ class TestPackUniqueFilesValidator:
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('type, is_valid', [
+        ('community', True),
+        ('partner', True),
+        ('xsoar', True),
+        ('someName', False),
+        ('test', False)
+    ])
+    def test_is_valid_support_type(self, repo, type, is_valid):
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: type
+        })
+
+        self.validator.pack_path = pack.path
+        assert self.validator._is_valid_support_type() == is_valid
+        if not is_valid:
+            assert 'Support field should be one of the following: `xsoar`, `partner` or `community`.' in \
+                   self.validator.get_errors()

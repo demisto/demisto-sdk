@@ -97,7 +97,7 @@ class UpdateRN:
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
                     'is_new_file': True if packfile in self.added_files else False,
-                    'fromversion': get_from_version(packfile)
+                    'fromversion': get_from_version_at_update_rn(packfile)
                 }
 
             rn_string = self.build_rn_template(changed_files)
@@ -345,7 +345,7 @@ class UpdateRN:
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
-            from_version = data.get('fromversion')
+            from_version = data.get('fromversion', '')
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
@@ -419,7 +419,7 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=None):
+    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
         if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
                      'Indicator Fields'):
             rn_desc = f'- **{content_name}**\n'
@@ -563,3 +563,18 @@ def check_docker_image_changed(added_or_modified_yml):
                 # changed.
                 return True, diff_line.split()[-1]
         return False, ''
+
+
+def get_from_version_at_update_rn(path):
+    """
+    Args:
+        path: path to yml file, if exists
+
+    Returns: - '' if no such yml file,
+             - fromversion if there fromversion in the yml file
+
+    """
+    if not os.path.isfile(path):
+        print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
+        return ''
+    return get_from_version(path)

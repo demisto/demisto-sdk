@@ -981,3 +981,23 @@ class TestRNUpdateUnit:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
+
+
+def test_get_from_version_at_update_rn(integration):
+    """
+        Given
+            - integration
+            - get_from_version_at_update_rn command
+        When
+            - Updating release notes for integration, trying to get fromversion
+        Then
+            - Successfully receiving fromversion if yml file path right,
+            - receiving '' if yml path wrong
+        """
+    from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
+
+    integration.yml.write_dict({'fromversion': '5.0.0'})
+    fromversion = get_from_version_at_update_rn(integration.yml.path)
+    assert fromversion == '5.0.0'
+    fromversion = get_from_version_at_update_rn('fake_path.yml')
+    assert fromversion == ''

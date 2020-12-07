@@ -153,7 +153,6 @@ class Linter:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
             self._pkg_lint_status["errors"].append(err)
-            self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
     def _gather_facts(self, modules: dict) -> bool:
@@ -689,8 +688,14 @@ class Linter:
         dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
         dockerfile = template.render(image=test_image_name,
                                      copy_pack=True)
-        with open(file=dockerfile_path, mode="+x") as file:
-            file.write(str(dockerfile))
+
+        try:
+            with open(file=dockerfile_path, mode="+x") as file:
+                file.write(str(dockerfile))
+        except FileExistsError as e:
+            logger.critical(f"{log_prompt} - Build errors occurred {e}")
+            errors = str(e)
+
         # we only do retries in CI env where docker build is sometimes flacky
         build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1
         for trial in range(build_tries):

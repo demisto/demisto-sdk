@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
-    def test_build_rn_template_integration(self):
+    def test_build_rn_template_integration(self, mocker):
         """
             Given:
                 - a dict of changed items
@@ -38,6 +38,8 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='VulnDB')
+
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {

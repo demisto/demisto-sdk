@@ -313,20 +313,30 @@ def test_get_input_data_complex():
 
 
 def test_generate_playbook(playbook):
+    """Unit test
+    Given
+        - generate_playbook_doc command
+        - playbook
+    When
+        - running the command generate_playbook_doc on playbook in order to generate documentation.
+    Then
+        - Validate That from-version added to the documentation.
+    """
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
 
-    playbook.create_default_playbook()
-    playbook.yml.write_dict({'fromversion': '5.0.0'})
+    try:
+        playbook.yml.write_dict({'fromversion': '5.0.0'})
 
-    generate_playbook_doc(input=playbook.yml.path)
+        generate_playbook_doc(input=playbook.yml.path)
 
-    playbook_filename = os.path.basename(playbook.yml.path).replace('.yml', '')
-    readme = playbook.path + '/' + playbook_filename + '_README.md'
-    with open(readme) as f:
-        text = f.read()
-        assert 'Supported Cortex XSOAR versions: 5.0.0 and later.' in text
-
+        playbook_filename = os.path.basename(playbook.yml.path).replace('.yml', '')
+        readme = playbook.path + '/' + playbook_filename + '_README.md'
+        with open(readme) as f:
+            text = f.read()
+            assert 'Supported Cortex XSOAR versions: 5.0.0 and later.' in text
+    finally:
+        os.remove(readme)
 
 # script tests
 

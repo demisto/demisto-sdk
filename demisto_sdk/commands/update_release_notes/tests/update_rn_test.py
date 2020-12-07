@@ -457,6 +457,52 @@ class TestRNUpdate(unittest.TestCase):
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
 
+    def test_add_fromversion_to_new_file(self):
+        """Unit test
+            Given
+                - build_rn_desc command
+                - pack
+            When
+                - running the command build_rn_desc on pack in order to generate rn description.
+            Then
+                - Validate That from-version added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=True, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+
+    def test_build_rn_template_with_fromversion(self):
+        """Unit test
+            Given
+                - build_rn_template command
+                - pack
+            When
+                - running the command build_rn_template on pack in order to generate rn description.
+            Then
+                - Validate That from-version added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        changed_items = {
+            'Hello World Integration': {'type': 'Integration', 'description': "", 'is_new_file': True,
+                                        'fromversion': '5.0.0'},
+            'Hello World Playbook': {'type': 'Playbook', 'description': '', 'is_new_file': True,
+                                     'fromversion': '5.5.0'},
+            "Hello World Script": {'type': 'Script', 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+        }
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_template(changed_items=changed_items)
+        assert '(Available from Cortex XSOAR 5.0.0).' in desc
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+        assert '(Available from Cortex XSOAR 6.0.0).' in desc
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""

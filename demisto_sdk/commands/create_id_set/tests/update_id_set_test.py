@@ -90,7 +90,9 @@ class TestIDSetCreator:
         assert private_id_set['integrations'][0].get('integration1').get('name') == 'integration1'
 
     def test_create_id_set_on_specific_empty_pack(self, repo):
-        id_set_creator = IDSetCreator(self.file_path, 'Packs/TestPack/pack_metadata.json')
+        pack = repo.create_pack()
+
+        id_set_creator = IDSetCreator(self.file_path, pack.path)
 
         id_set_creator.create_id_set()
 

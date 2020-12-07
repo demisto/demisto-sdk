@@ -226,10 +226,7 @@ class TestPackUniqueFilesValidator:
             - Running _is_valid_support_type.
 
         Then:
-            - Case A: Ensure validation passes as there are no usecases to verify
-            - Case B: Ensure validation passes as both usecases are approved
-            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedTag)
-                      Verify expected error is printed
+            - Ensure True when the support types are valid, else False with the right error message.
         """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)

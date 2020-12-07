@@ -36,8 +36,9 @@ This command is used in order to run integration or script commands of a remote 
     The path to save the debug file at, if not specified the debug file will be printed to the terminal
 
 ### Examples
+Note that `!` is not mandatory, as we add it if needed.
 ```
-demisto-sdk run -q '!ip ip="8.8.8.8"'
+demisto-sdk run -q 'ip ip="8.8.8.8"'
 ```
 This will run the query `!ip ip="8.8.8.8"` on the playground of the Cortex XSOAR instance and print the output.
 <br/><br/>

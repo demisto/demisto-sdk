@@ -399,7 +399,10 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
-
+        if self.branch_name == 'master':
+            click.secho("You are trying to run validate on master branch.\nIn order to validate your chagnes please "
+                        "create a new branch.\nIf you want to run validate on all the repository please use the `-a` flag. ", fg='bright_red')
+            return False
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:

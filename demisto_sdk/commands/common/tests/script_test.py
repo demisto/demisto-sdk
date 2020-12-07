@@ -339,7 +339,7 @@ class TestScriptValidator:
     ]
 
     IS_SKIPPING_DOCKER_CHECK = [("Packs/ApiModules", False, True),
-                                ("Packs/ApiModules", False, True),
+                                ("Packs/ApiModules", True, True),
                                 ("Packs/Pack1", True, True)]
 
     @pytest.mark.parametrize("file_path, skip_docker_check, answer", IS_SKIPPING_DOCKER_CHECK)

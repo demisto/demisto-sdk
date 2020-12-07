@@ -875,10 +875,10 @@ def update_pack_releasenotes(**kwargs):
                     "Please run `cd content` from your terminal and run the command again")
         sys.exit(1)
 
-    packs_existing_rn = set()
+    packs_existing_rn = {}
     for file_path in added:
         if 'ReleaseNotes' in file_path:
-            packs_existing_rn.add(get_pack_name(file_path))
+            packs_existing_rn[get_pack_name(file_path)] = file_path
 
     filterd_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
     filterd_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -899,7 +899,11 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     if _packs:
         for pack in _packs:
-            if pack in packs_existing_rn and update_type is not None:
+            if pack in packs_existing_rn and update_type is None:
+                with open(packs_existing_rn[pack], 'r') as f:
+                    full_text = f.read()
+                os.unlink(packs_existing_rn[pack])
+            elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-i {pack}` without specifying the update_type.")
@@ -913,7 +917,8 @@ def update_pack_releasenotes(**kwargs):
             if pack_modified or pack_added or pack_old:
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
-                                          added_files=pack_added, specific_version=specific_version, text=text)
+                                          added_files=pack_added, specific_version=specific_version, text=text,
+                                          full_text=full_text)
                 update_pack_rn.execute_update()
 
             else:

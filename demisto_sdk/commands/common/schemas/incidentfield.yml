@@ -1,5 +1,4 @@
 type: map
-allowempty: True
 mapping:
   fromVersion:
     type: str
@@ -81,3 +80,16 @@ mapping:
     type: bool
   unsearchable:
     type: bool
+  extractIndicatorTypesIDs:
+    type: any
+  isExtractingSpecificIndicatorTypes:
+    type: bool
+  itemVersion:
+    type: str
+  propagationLabels:
+    type: any
+  fromServerVersion:
+    type: str
+  toServerVersion:
+    type: str
+

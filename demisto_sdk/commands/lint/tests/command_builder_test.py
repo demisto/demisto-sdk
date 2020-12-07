@@ -64,7 +64,7 @@ def test_build_bandit_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
     output = build_bandit_command(files)
     files = [str(file) for file in files]
-    expected = f"python3 -m bandit -lll -iii -a file --exclude=CommonServerPython.py,demistomock.py," \
+    expected = f"python3 -m bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py," \
                f"conftest.py,venv -q -r {','.join(files)}"
     assert expected == output

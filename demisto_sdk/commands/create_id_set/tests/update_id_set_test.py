@@ -77,9 +77,17 @@ class TestIDSetCreator:
         assert 'Mappers' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
+        packs = repo.packs
+
         pack1 = repo.create_pack('pack1')
         pack1.create_integration(yml={'commonfields': {'id': 'integration1'}, 'name': 'integration1'},
                                  name='integration1')
+        packs.append(pack1)
+
+        pack2 = repo.create_pack('pack2')
+        pack2.create_integration(yml={'commonfields': {'id': 'integration2'}, 'name': 'integration2'},
+                                 name='integration2')
+        packs.append(pack2)
 
         id_set_creator = IDSetCreator(self.file_path, pack1.path)
 
@@ -87,7 +95,10 @@ class TestIDSetCreator:
 
         with open(self.file_path, 'r') as id_set_file:
             private_id_set = json.load(id_set_file)
-        assert private_id_set['integrations'][0].get('integration1').get('name') == 'integration1'
+
+        assert len(private_id_set['integrations']) == 1
+        assert private_id_set['integrations'][0].get('integration1', {}).get('name', '') == 'integration1'
+        assert private_id_set['integrations'][0].get('integration2', {}).get('name', '') == ''
 
     def test_create_id_set_on_specific_empty_pack(self, repo):
         pack = repo.create_pack()

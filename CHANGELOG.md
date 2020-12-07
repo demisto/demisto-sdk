@@ -3,7 +3,7 @@
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
 * Improved retry support when building docker images for linting.
-* Added validation for support types in pack_metadata file.
+* Added validation for support types in the pack metadata file.
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 
 # 1.2.11

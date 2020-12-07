@@ -214,9 +214,23 @@ class TestPackUniqueFilesValidator:
         ('partner', True),
         ('xsoar', True),
         ('someName', False),
-        ('test', False)
+        ('test', False),
+        ('developer', True)
     ])
     def test_is_valid_support_type(self, repo, type, is_valid):
+        """
+        Given:
+            - Pack with support type in the metadata file.
+
+        When:
+            - Running _is_valid_support_type.
+
+        Then:
+            - Case A: Ensure validation passes as there are no usecases to verify
+            - Case B: Ensure validation passes as both usecases are approved
+            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedTag)
+                      Verify expected error is printed
+        """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -227,5 +241,5 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
         assert self.validator._is_valid_support_type() == is_valid
         if not is_valid:
-            assert 'Support field should be one of the following: `xsoar`, `partner` or `community`.' in \
+            assert 'Support field should be one of the following: xsoar, partner or community.' in \
                    self.validator.get_errors()

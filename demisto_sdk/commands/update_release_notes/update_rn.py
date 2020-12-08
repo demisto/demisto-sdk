@@ -117,12 +117,14 @@ class UpdateRN:
                                 f"the new release notes to your branch.\nFor information regarding proper"
                                 f" format of the release notes, please refer to "
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                    return True
                 else:
                     print_color("No changes to pack files were detected from the previous time "
                                 "this command was run. The release notes have not been "
                                 "changed.", LOG_COLORS.GREEN)
             else:
                 print_warning("No changes which would belong in release notes were detected.")
+        return False
 
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""

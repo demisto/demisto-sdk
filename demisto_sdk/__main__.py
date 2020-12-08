@@ -903,7 +903,6 @@ def update_pack_releasenotes(**kwargs):
             if pack in packs_existing_rn and update_type is None:
                 with open(packs_existing_rn[pack], 'r') as f:
                     full_text = f.read()
-                os.unlink(packs_existing_rn[pack])
             elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
@@ -920,7 +919,10 @@ def update_pack_releasenotes(**kwargs):
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text,
                                           full_text=full_text)
-                update_pack_rn.execute_update()
+                updated = update_pack_rn.execute_update()
+                # if new release notes were created and if previous release notes existed, remove previous
+                if updated and full_text:
+                    os.unlink(packs_existing_rn[pack])
 
             else:
                 print_warning(f'Either no cahnges were found in {pack} pack '

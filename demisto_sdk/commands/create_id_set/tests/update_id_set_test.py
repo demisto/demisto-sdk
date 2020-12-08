@@ -48,6 +48,18 @@ class TestIDSetCreator:
         assert os.path.exists(self.file_path)
 
     def test_create_id_set_on_specific_pack_output(self):
+        """
+        Given
+        - input - specific pack to create from it ID set
+        - output - path to return the created ID set
+
+        When
+        - create ID set on this pack
+
+        Then
+        - ensure that the created ID set is in the path of the output
+
+        """
         id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
 
         id_set_creator.create_id_set()
@@ -77,6 +89,19 @@ class TestIDSetCreator:
         assert 'Mappers' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
+        """
+        Given
+        - two packs with integrations to create an ID set from them
+
+        When
+        - create ID set on pack1
+
+        Then
+        - ensure there is only one integration in the ID set integrations list - integration1
+        - ensure output id_set contains pack1 - integration1
+        - ensure output id_set does not contain the pack2 - integration2
+
+        """
         packs = repo.packs
 
         pack1 = repo.create_pack('pack1')
@@ -101,6 +126,18 @@ class TestIDSetCreator:
         assert private_id_set['integrations'][0].get('integration2', {}).get('name', '') == ''
 
     def test_create_id_set_on_specific_empty_pack(self, repo):
+        """
+        Given
+        - an empty pack to create from it ID set
+
+        When
+        - create ID set on this pack
+
+        Then
+        - ensure that an ID set is created and no error is returned
+        - ensure output id_set is empty
+
+        """
         pack = repo.create_pack()
 
         id_set_creator = IDSetCreator(self.file_path, pack.path)

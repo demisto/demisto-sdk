@@ -6,6 +6,8 @@
 * Improved retry support when building docker images for linting.
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
+* Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
+
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

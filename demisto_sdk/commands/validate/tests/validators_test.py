@@ -897,6 +897,20 @@ class TestValidators:
         assert not validate_manager.validate_no_old_format(old_format_files)
         assert handle_error_mock.call_count == 2
 
+    def test_validate_no_old_format_deprecated_content(self, repo):
+        """
+            Given:
+                - an old format_file with deprecated: true
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return a True as the file is valid
+        """
+        validate_manager = ValidateManager()
+        old_format_files = {"demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/"
+                            "script-SampleScriptDeprecated.yml"}
+        assert validate_manager.validate_no_old_format(old_format_files)
+
     def test_filter_changed_files(self, mocker):
         """
             Given:

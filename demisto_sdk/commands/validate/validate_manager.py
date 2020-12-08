@@ -685,7 +685,9 @@ class ValidateManager:
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
-            if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
+            # we only fail on old format if no toversion (meaning it is latest)
+            if 'toversion' not in yaml_data and 'deprecated' not in yaml_data or \
+                    ('deprecated' in yaml_data and yaml_data['deprecated'] is False):
                 error_message, error_code = Errors.invalid_package_structure(file_path)
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False

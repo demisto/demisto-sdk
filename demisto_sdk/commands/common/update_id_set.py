@@ -360,7 +360,6 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
 
 
 def get_playbook_data(file_path: str) -> dict:
-    playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     graph = build_tasks_graph(data_dictionary)
 
@@ -385,13 +384,8 @@ def get_playbook_data(file_path: str) -> dict:
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
-    playbook_data['name'] = name
-    playbook_data['file_path'] = file_path
-    if toversion:
-        playbook_data['toversion'] = toversion
-    if fromversion:
-        playbook_data['fromversion'] = fromversion
-
+    playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
+                                              from_version=fromversion, pack=pack)
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -402,8 +396,6 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['tests'] = tests
     if deprecated:
         playbook_data['deprecated'] = deprecated
-    if pack:
-        playbook_data['pack'] = pack
     if skippable_tasks:
         playbook_data['skippable_tasks'] = skippable_tasks
     if dependent_incident_fields:
@@ -414,7 +406,6 @@ def get_playbook_data(file_path: str) -> dict:
 
 
 def get_script_data(file_path, script_code=None):
-    script_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     if script_code is None:
@@ -430,12 +421,8 @@ def get_script_data(file_path, script_code=None):
     script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
     pack = get_pack_name(file_path)
 
-    script_data['name'] = name
-    script_data['file_path'] = file_path
-    if toversion:
-        script_data['toversion'] = toversion
-    if fromversion:
-        script_data['fromversion'] = fromversion
+    script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
+                                            pack=pack)
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -446,8 +433,6 @@ def get_script_data(file_path, script_code=None):
         script_data['command_to_integration'] = command_to_integration
     if tests:
         script_data['tests'] = tests
-    if pack:
-        script_data['pack'] = pack
 
     return {id_: script_data}
 
@@ -511,7 +496,6 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
 
 
 def get_layout_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     layout = json_data.get('layout', {})
@@ -526,19 +510,12 @@ def get_layout_data(path):
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
 
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
         data['typeID'] = type_
     if type_name:
         data['typename'] = type_name
         incident_indicator_types_dependency.add(type_name)
-    data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
     if kind:
         data['kind'] = kind
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
@@ -576,7 +553,6 @@ def get_layoutscontainer_data(path):
 
 
 def get_incident_field_data(path, incidents_types_list):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -606,15 +582,8 @@ def get_incident_field_data(path, incidents_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
@@ -624,7 +593,6 @@ def get_incident_field_data(path, incidents_types_list):
 
 
 def get_indicator_type_data(path, all_integrations):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -651,15 +619,7 @@ def get_indicator_type_data(path, all_integrations):
         if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if associated_integrations:
         data['integrations'] = list(associated_integrations)
     if all_scripts:
@@ -669,7 +629,6 @@ def get_indicator_type_data(path, all_integrations):
 
 
 def get_incident_type_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -680,15 +639,7 @@ def get_incident_type_data(path):
     pre_processing_script = json_data.get('preProcessingScript')
     pack = get_pack_name(path)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if pre_processing_script and pre_processing_script != '':
@@ -698,7 +649,6 @@ def get_incident_type_data(path):
 
 
 def get_classifier_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -715,23 +665,28 @@ def get_classifier_data(path):
     for key, value in key_type_map.items():
         incidents_types.add(value)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
 
     return {id_: data}
 
 
-def get_mapper_data(path):
+def create_common_entity_data(path, name, to_version, from_version, pack):
     data = OrderedDict()
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if to_version:
+        data['toversion'] = to_version
+    if from_version:
+        data['fromversion'] = from_version
+    if pack:
+        data['pack'] = pack
+    return data
+
+
+def get_mapper_data(path):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -751,16 +706,7 @@ def get_mapper_data(path):
         incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
-
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
@@ -770,7 +716,6 @@ def get_mapper_data(path):
 
 
 def get_widget_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -784,15 +729,7 @@ def get_widget_data(path):
     if json_data.get('dataType') == 'scripts':
         scripts = json_data.get('query')
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if scripts:
         data['scripts'] = [scripts]
 
@@ -812,56 +749,37 @@ def get_report_data(path):
 
 
 def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
-    data = OrderedDict()
     id_ = data_file_json.get('id')
     name = data_file_json.get('name', '')
     fromversion = data_file_json.get('fromVersion')
     toversion = data_file_json.get('toVersion')
     pack = get_pack_name(path)
-    report_scripts = set()
+    scripts = set()
     if all_layouts:
         for layout in all_layouts:
             widget_data = layout.get('widget')
             if widget_data.get('dataType') == 'scripts':
-                report_scripts.add(widget_data.get('query'))
+                scripts.add(widget_data.get('query'))
 
-    data['file_path'] = path
-    if name:
-        data['name'] = name
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
-    if report_scripts:
-        data['scripts'] = list(report_scripts)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if scripts:
+        data['scripts'] = list(scripts)
 
     return {id_: data}
 
 
 def get_general_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
-
     id_ = json_data.get('id')
     brandname = json_data.get('brandName', '')
     name = json_data.get('name', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if brandname:  # for classifiers
         data['name'] = brandname
-    data['file_path'] = path
-    if name:  # for the rest
-        data['name'] = name
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
-
     return {id_: data}
 
 

@@ -98,23 +98,23 @@ class TestIDSetCreator:
 
         Then
         - ensure there is only one integration in the ID set integrations list - integration1
-        - ensure output id_set contains pack1 - integration1
-        - ensure output id_set does not contain the pack2 - integration2
+        - ensure output id_set contains pack_to_create_id_set_on - integration1
+        - ensure output id_set does not contain the pack_to_not_create_id_set_on - integration2
 
         """
         packs = repo.packs
 
-        pack1 = repo.create_pack('pack1')
-        pack1.create_integration(yml={'commonfields': {'id': 'integration1'}, 'name': 'integration1'},
-                                 name='integration1')
-        packs.append(pack1)
+        pack_to_create_id_set_on = repo.create_pack('pack1')
+        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'integration1'},
+                                                         'name': 'integration1'}, name='integration1')
+        packs.append(pack_to_create_id_set_on)
 
-        pack2 = repo.create_pack('pack2')
-        pack2.create_integration(yml={'commonfields': {'id': 'integration2'}, 'name': 'integration2'},
-                                 name='integration2')
-        packs.append(pack2)
+        pack_to_not_create_id_set_on = repo.create_pack('pack2')
+        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id': 'integration2'},
+                                                             'name': 'integration2'}, name='integration2')
+        packs.append(pack_to_not_create_id_set_on)
 
-        id_set_creator = IDSetCreator(self.file_path, pack1.path)
+        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
 
         id_set_creator.create_id_set()
 

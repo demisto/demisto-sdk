@@ -133,6 +133,9 @@ class UpdateRN:
         return True
 
     def get_master_version(self):
+        """
+        Get the current version from origin/master if available, otherwise return '0.0.0'
+        """
         master_current_version = '0.0.0'
         master_metadata = run_command(
             f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
@@ -140,7 +143,8 @@ class UpdateRN:
             master_metadata_json = json.loads(master_metadata)
             master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
         else:
-            print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata}")
+            print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata} \n "
+                        f"The updated version will be taken from local metadata file")
         return master_current_version
 
     def is_bump_required(self):
@@ -154,13 +158,8 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            if LooseVersion(self.master_version) == LooseVersion(new_version):
+            if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 return True
-            elif LooseVersion(self.master_version) > LooseVersion(new_version):
-                return True
-                # print_error("The master branch is currently ahead of your pack's version. "
-                #             "Please pull from master and re-run the command.")
-                # sys.exit(0)
             elif LooseVersion(self.master_version) < LooseVersion(new_version):
                 return False
         except RuntimeError:
@@ -271,13 +270,15 @@ class UpdateRN:
             raise ValueError("Received no update type when one was expected.")
         new_version = ''  # This will never happen since we pre-validate the argument
         data_dictionary = self.get_pack_metadata()
+        current_version = self.master_version if self.master_version != '0.0.0' else self.get_pack_metadata().get(
+            'currentVersion', '99.99.99')
         if specific_version:
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                         f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
             data_dictionary['currentVersion'] = specific_version
             return specific_version, data_dictionary
         elif self.update_type == 'major':
-            version = self.master_version.split('.')
+            version = current_version.split('.')
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -286,7 +287,7 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         elif self.update_type == 'minor':
-            version = self.master_version.split('.')
+            version = current_version.split('.')
             version[1] = str(int(version[1]) + 1)
             if int(version[1]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -296,7 +297,7 @@ class UpdateRN:
             new_version = '.'.join(version)
         # We validate the input via click
         elif self.update_type in ['revision', 'maintenance', 'documentation']:
-            version = self.master_version.split('.')
+            version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "

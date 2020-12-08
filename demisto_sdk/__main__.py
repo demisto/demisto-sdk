@@ -858,6 +858,7 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
+    full_text = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")

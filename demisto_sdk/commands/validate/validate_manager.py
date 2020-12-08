@@ -399,10 +399,6 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
-        if self.branch_name == 'master':
-            click.secho("You are trying to run validate on master branch.\nIn order to validate your chagnes please "
-                        "create a new branch.\nIf you want to run validate on all the repository please use the `-a` flag. ", fg='bright_red')
-            return False
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:
@@ -788,7 +784,9 @@ class ValidateManager:
             # on a non-master branch - we use '...' comparison range to check changes from origin/master.
             # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
             self.compare_type = '...'
-
+        elif self.branch_name == 'master':
+            self.compare_type == '..'
+            self.prev_ver = 'HEAD~1'
         else:
             self.skip_pack_rn_validation = True
             # on master branch - we use '..' comparison range to check changes from the last release branch.

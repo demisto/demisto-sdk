@@ -42,6 +42,10 @@ Supported content entities:
 
     Indicates that this update is for a pre-release version. The `currentVersion` will change to reflect the pre-release version number.
 
+* **--prev-ver**
+
+    Previous branch or SHA1 commit to run checks against.
+
 * **-v, --version <DESIRED_VERSION>**
 
     Bump to a specific version. Cannot be used with `-u, --update_type` flags.

@@ -11,12 +11,12 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - prepare-tox3-8
+        - prepare-tox3-7
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - prepare-tox3-8
+        - prepare-tox3-7
 
 jobs:
   tox3-7-unit-tests:
@@ -77,13 +77,13 @@ jobs:
                 echo "Skipping coveralls"
               fi
 
-  prepare-tox3-8:
+  prepare-tox3-7:
     docker:
       - image: circleci/python:3.8.3-buster-node
     steps:
       - checkout
       - restore_cache:
-          key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
       - run:
           # install npm modules so readme tests run with mdx verification
           name: npm install
@@ -96,11 +96,11 @@ jobs:
       - run:
           name: Tox build
           command: |
-            tox -e py38 --notest
+            tox -e py37 --notest
       - save_cache:
-          key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
           paths:
-            - .tox/py38
+            - .tox/py37
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -108,7 +108,7 @@ jobs:
 
   precommit-checks:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -116,13 +116,13 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
               pre-commit --version
               pre-commit run -a
               deactivate
   checkout-content:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - run:
@@ -147,7 +147,7 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
               cd content
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
@@ -157,7 +157,7 @@ jobs:
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -166,14 +166,14 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
               demisto-sdk -v
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -182,7 +182,7 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
               demisto-sdk -v
@@ -209,7 +209,7 @@ workflows:
           <<: *tag_filter
       - tox3-8-unit-tests:
           <<: *tag_filter
-      - prepare-tox3-8:
+      - prepare-tox3-7:
           <<: *tag_filter
       - checkout-content:
           <<: *tag_filter

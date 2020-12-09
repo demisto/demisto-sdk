@@ -111,3 +111,51 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_functiondef(node_a)
             self.checker.visit_functiondef(node_b)
+
+    def test_not_implemented_error_doesnt_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Two given function, One does not have type annotations and the other does.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
+        """
+        node = astroid.extract_node("""
+            def main() -> bool:
+                if True:
+                    return True
+                if b:
+                    return False
+                else:
+                    return False
+        """)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='not-implemented-error-doesnt-exist',
+                    node=node,
+                ),
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_not_implemented_error_exists(self):
+        """
+        Given:
+        When:
+        Then:
+        """
+        node = astroid.extract_node("""
+            def main() -> bool:
+                try:
+                    if True:
+                        return True
+                    if b:
+                        return False
+                    else:
+                        raise NotImplementedError("this command wasnt implemented")
+                except Exception:
+                    pass
+        """)
+        assert node is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

@@ -1,5 +1,6 @@
 import os
 
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -8,6 +9,12 @@ xsoar_msg = {
         "Function arguments are missing type annotations. Please add type annotations",
         "missing-arg-type-annoation",
         "Function arguments are missing type annotations. Please add type annotations",),
+    "W9018": (
+        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
+        "exception",
+        "not-implemented-error-doesnt-exist",
+        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
+        "exception",),
 }
 
 
@@ -22,6 +29,7 @@ class XsoarChecker(BaseChecker):
 
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
+        self._not_implemented_error_in_main(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -33,6 +41,31 @@ class XsoarChecker(BaseChecker):
                     annotation = False
             if not annotation and node.name not in ['main', '__init__']:
                 self.add_message("missing-arg-type-annoation", node=node)
+
+    def _not_implemented_error_in_main(self, node):
+        if node.name == 'main':
+            not_implemented_error_exist = False
+            for child in self._inner_search_return_error(node):
+                if isinstance(child, astroid.If):
+                    else_cluse = child.orelse
+                    for line in else_cluse:
+                        if isinstance(line, astroid.Raise) and line.exc.func.name:
+                            not_implemented_error_exist = True
+            if not not_implemented_error_exist:
+                self.add_message("not-implemented-error-doesnt-exist", node=node)
+
+    def _inner_search_return_error(self, node):
+        try:
+            for subnode in list(node.get_children()):
+                yield subnode
+                for sub in self._inner_search_return_error(subnode):
+                    yield sub
+
+        except AttributeError:
+            yield node
+
+        except TypeError:
+            yield node
 
 
 def register(linter):

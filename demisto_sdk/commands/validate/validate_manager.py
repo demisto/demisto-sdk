@@ -4,6 +4,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional
 
 import click
+import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -62,6 +63,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
                                                open_id_set_file, run_command)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -96,8 +98,10 @@ class ValidateManager:
         self.file_path = file_path
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
+            if is_external_repo:
+                id_set_path = './id_set.json'
         self.id_set_path = id_set_path
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path, is_external_repo)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -1159,21 +1163,57 @@ class ValidateManager:
         return packs
 
     @staticmethod
-    def get_id_set_file(skip_id_set_creation, id_set_path):
+    def get_id_set_file(skip_id_set_creation, id_set_path, is_external_repo=False):
         """
 
         Args:
             skip_dependencies (bool): whether should skip id set validation or not
             this will also determine whether a new id_set can be created by validate.
             id_set_path (str): id_set.json path file
+            is_external_repo (bool): Whether validate is run from an external repo. If true, merge the created id_set with content id_set and private repos id_set
 
         Returns:
             str: is_set file path
         """
         id_set = {}
         if not os.path.isfile(id_set_path):
-            if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
-        else:
-            id_set = open_id_set_file(id_set_path)
+            if skip_id_set_creation:
+                return id_set
+            IDSetCreator(output=id_set_path, print_logs=False).create_id_set()
+        if is_external_repo:
+            # if we're in a private repo we need to merge the local id_set with the public content id_set in case the
+            # private packs are using public entities and also merge with the private_id_set in case the pack is using
+            # entities from other private packs
+            output_folder = os.path.dirname(id_set_path)
+            created_files = ValidateManager.download_id_sets(output_folder, content_id_set=True, private_id_set=True)
+            merged_id_set_path = os.path.join(output_folder, 'merged_id_set.json')
+            if not os.path.exists(merged_id_set_path) and len(created_files) > 0:
+                merge_id_sets_from_files(id_set_path, created_files[0], merged_id_set_path)
+                if len(created_files) == 2:
+                    merge_id_sets_from_files(merged_id_set_path, created_files[1], merged_id_set_path)
+            id_set_path = merged_id_set_path
+        id_set = open_id_set_file(id_set_path)
         return id_set
+
+    @staticmethod
+    def download_id_sets(output_folder: str, content_id_set: bool, private_id_set: bool) -> list:
+        """
+        Downloads latest id sets from GCP and merges them into
+        Args:
+            output_folder: The directory path in which to save the id sets
+            content_id_set: Whether to download the content id_set
+            private_id_set: Whether to download the private id_set
+        Returns:
+            a list of the id_sets downloaded
+        """
+        created_files = []
+        content_id_set_path = os.path.join(output_folder, 'content_id_set.json')
+        if not os.path.exists(content_id_set_path) and content_id_set:
+            try:
+                click.secho("Downloading content id_set.json")
+                res = requests.get('https://storage.googleapis.com/marketplace-dist/content/id_set.json')
+                open(content_id_set_path, 'wb+').write(res.content)
+                created_files.append(content_id_set_path)
+            except Exception:
+                click.secho("Could not download content id_set.json", fg='red')
+        return created_files

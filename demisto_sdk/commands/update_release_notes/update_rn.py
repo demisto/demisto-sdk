@@ -7,7 +7,6 @@ import json
 import os
 import sys
 from distutils.version import LooseVersion
-from pathlib import PurePosixPath, PureWindowsPath
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (
@@ -19,10 +18,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_json,
                                                get_latest_release_notes_text,
-                                               get_pack_name, get_yaml,
-                                               pack_name_to_path, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+                                               get_pack_name, get_remote_file,
+                                               get_yaml, pack_name_to_path,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 
 class UpdateRN:
@@ -139,11 +138,10 @@ class UpdateRN:
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
         master_current_version = '0.0.0'
-        master_metadata = run_command(
-            f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
-        if len(master_metadata) > 0:
-            master_metadata_json = json.loads(master_metadata)
-            master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
+        master_metadata = get_remote_file(self.metadata_path)
+        # run_command(f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
+        if master_metadata:
+            master_current_version = master_metadata.get('currentVersion', '0.0.0')
         else:
             print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata} \n "
                         f"The updated version will be taken from local metadata file")

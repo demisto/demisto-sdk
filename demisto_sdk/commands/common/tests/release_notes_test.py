@@ -267,7 +267,6 @@ def test_are_release_notes_complete_renamed_file(mocker):
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-    mocker.patch.object(ReleaseNotesValidator)
     validator = get_validator(release_notes, renamed_file)
     validator.suppress_print = False
     assert validator.are_release_notes_complete()

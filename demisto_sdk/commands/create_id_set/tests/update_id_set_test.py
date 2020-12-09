@@ -106,12 +106,12 @@ class TestIDSetCreator:
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
         pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'name':
-                                                    'integration to create id set'}, name='integration1')
+                                                         'integration to create id set'}, name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
         pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'name':
-                                                        'integration to not create id set'}, name='integration2')
+                                                             'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
         id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)

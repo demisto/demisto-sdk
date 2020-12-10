@@ -20,8 +20,8 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
-from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-    ArtifactsManager, create_content_artifacts)
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+    ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -330,9 +330,36 @@ def validate(config, **kwargs):
 @click.option('--cpus',
               help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
                    'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
-def create_arifacts(**kwargs) -> int:
+@click.option('-bn', '--bucket_name', help='Storage bucket name')
+@click.option('-sa', '--service_account',
+              help=('Path to gcloud service account, is for circleCI usage. '
+                    'For local development use your personal account and '
+                    'authenticate using Google Cloud SDK by running: '
+                    '`gcloud auth application-default login` and leave this parameter blank. '
+                    'For more information go to: '
+                    'https://googleapis.dev/python/google-api-core/latest/auth.html'))
+@click.option('-isp', '--id_set_path', help='The full path of id_set.json')
+@click.option('-p', '--pack_names',
+              help=("Packs to create artifacts for. Optional values are: `all` or "
+                    "csv list of packs. "
+                    "Default is set to `all`"),
+              default="All")
+@click.option('-cbn', '--ci_build_number',
+              help='CircleCi build number (will be used as hash revision at index file)')
+@click.option('-op', '--override_all_packs', help='Override all existing packs in cloud storage',
+              is_flag=True)
+@click.option('-k', '--key_string', help='Base64 encoded signature key used for signing packs.')
+@click.option('-sb', '--storage_base_path', help='Storage base path of the directory to upload to.')
+@click.option('-rt', '--remove_test_playbooks', is_flag=True,
+              help='Should remove test playbooks from content packs or not.')
+@click.option('-bu', '--bucket_upload', help='is bucket upload build?', is_flag=True)
+@click.option('-pb', '--private_bucket_name', help="Private storage bucket name")
+@click.option('-c', '--circle_branch', help='CircleCi branch of current build')
+@click.option('-f', '--force_upload', help='Is force upload build?', is_flag=True)
+@click.option('-o', '--output_files', help='Whether to output the files.', is_flag=True)
+def create_artifacts(**kwargs) -> int:
     artifacts_conf = ArtifactsManager(**kwargs)
-    return create_content_artifacts(artifacts_conf)
+    return artifacts_conf.create_content_artifacts()
 
 
 # ====================== secrets ====================== #

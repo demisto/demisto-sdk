@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.commands.create_artifacts.marketplace_services import (
+    GCPConfig, init_storage_client)
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
@@ -48,55 +50,95 @@ EX_FAIL = 1
 
 
 class ArtifactsManager:
-    def __init__(self, artifacts_path: str, content_version: str, suffix: str, zip: bool, packs: bool,
-                 cpus: int):
+    def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
+                 cpus: int, bucket_name: str, service_account: str, id_set_path: str, pack_names: str,
+                 ci_build_number: str, override_all_packs: bool, key_string: str, storage_base_path: str,
+                 remove_test_playbooks: bool, bucket_upload: bool, private_bucket_name: str, circle_branch: str,
+                 force_upload: bool, output_files: bool):
         """ Content artifacts configuration
 
         Args:
             artifacts_path: existing destination directory for creating artifacts.
-            content_version: release content varsion.
+            zip: True for zip all content artifacts to 3 different zip files in same structure else False.
             packs: create only content_packs artifacts if True.
+            content_version: release content version.
             suffix: suffix to add all file we creates.
-            zip: True for zip all content artifacts to 3 diffrent zip files in same structure else False.
-            cpus: Availble cpus in the computer.
+            cpus: available cpus in the computer.
+            bucket_name: storage bucket name.
+            service_account: path to gcloud service account.
+            id_set_path: the full path of id_set.json.
+            pack_names: Packs to create artifacts for.
+            ci_build_number: CircleCi build number.
+            override_all_packs: Override all existing packs in cloud storage.
+            key_string: Base64 encoded signature key used for signing packs.
+            storage_base_path: Storage base path of the directory to upload to.
+            remove_test_playbooks: Should remove test playbooks from content packs or not.
+            bucket_upload: is bucket upload build?
+            private_bucket_name: private storage bucket name.
+            circle_branch: CircleCi branch of current build.
+            force_upload: is force upload build.
+            output_files: Whether to output the files.
         """
-        self.suffix = suffix
-        self.content_version = content_version
+        # options arguments
+        self.artifacts_path = Path(artifacts_path)
         self.zip_artifacts = zip
         self.only_content_packs = packs
-        self.artifacts_path = Path(artifacts_path)
+        self.content_version = content_version
+        self.suffix = suffix
+        self.cpus = cpus
+        self.bucket_name = bucket_name
+        self.service_account = service_account
+        self.id_set_path = id_set_path
+        self.pack_names = pack_names
+        self.ci_build_number = ci_build_number
+        self.override_all_packs = override_all_packs
+        self.key_string = key_string
+        self.storage_base_path = storage_base_path
+        self.remove_test_playbooks = remove_test_playbooks
+        self.bucket_upload = bucket_upload
+        self.private_bucket_name = private_bucket_name
+        self.circle_branch = circle_branch
+        self.force_upload = force_upload
+        self.output_files = output_files
+
+        # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
         self.content_all_path = self.artifacts_path / 'all_content'
-        self.cpus = cpus
-        self.execution_start = time.time()
+
+        # inits
+        if service_account:
+            self.storage_client = init_storage_client(service_account)
+            self.storage_bucket = self.storage_client.bucket(self.bucket_name)
+        if storage_base_path:
+            GCPConfig.STORAGE_BASE_PATH = storage_base_path
         self.content = Content.from_cwd()
+        self.execution_start = time.time()
         self.exit_code = EX_SUCCESS
 
+    def create_content_artifacts(self) -> int:
+        global logger
+        logger = logging_setup(3)
 
-def create_content_artifacts(artifact_manager: ArtifactsManager) -> int:
-    global logger
-    logger = logging_setup(3)
+        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
+            futures: List[ProcessFuture] = []
+            # content/Packs
+            futures.extend(dump_packs(self, pool))
+            # content/TestPlaybooks
+            futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+            # content/content-descriptor.json
+            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+            # content/Documentation/doc-*.json
+            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+            # Wait for all futures to be finished
+            wait_futures_complete(futures, self)
+            # Add suffix
+            suffix_handler(self)
 
-    with ArtifactsDirsHandler(artifact_manager), ProcessPoolHandler(artifact_manager) as pool:
-        futures: List[ProcessFuture] = []
-        # content/Packs
-        futures.extend(dump_packs(artifact_manager, pool))
-        # content/TestPlaybooks
-        futures.append(pool.schedule(dump_tests_conditionally, args=(artifact_manager,)))
-        # content/content-descriptor.json
-        futures.append(pool.schedule(dump_content_descriptor, args=(artifact_manager,)))
-        # content/Documentation/doc-*.json
-        futures.append(pool.schedule(dump_content_documentations, args=(artifact_manager,)))
-        # Wait for all futures to be finished
-        wait_futures_complete(futures, artifact_manager)
-        # Add suffix
-        suffix_handler(artifact_manager)
+        logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
-    logger.info(f"\nExecution time: {time.time() - artifact_manager.execution_start} seconds")
-
-    return artifact_manager.exit_code
+        return self.exit_code
 
 
 @contextmanager
@@ -550,6 +592,7 @@ def suffix_handler(artifact_manager: ArtifactsManager):
                 file_real_stem = ".".join(file_name_split[:-1])
                 suffix = file_name_split[-1]
                 file.rename(file.with_name(f'{file_real_stem}{artifact_manager.suffix}.{suffix}'))
+
 
 ###########
 # Helpers #

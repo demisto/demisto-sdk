@@ -346,13 +346,13 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -476,11 +476,12 @@ class ValidateManager:
 
         return True
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
 
-        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
                                                                current_file=playbook_validator.current_file,
                                                                is_modified=True,
                                                                is_backward_check=False,
@@ -491,12 +492,13 @@ class ValidateManager:
         return playbook_validator.is_valid_playbook(validate_rn=False,
                                                     id_set_file=self.id_set_file)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
 
-        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
                                                                current_file=integration_validator.current_file,
                                                                is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
@@ -510,12 +512,13 @@ class ValidateManager:
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks)
 
-        deprecated_result = self.check_and_validate_deprecated(file_path=structure_validator.file_path,
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
                                                                current_file=script_validator.current_file,
                                                                is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
@@ -1206,12 +1209,14 @@ class ValidateManager:
             id_set = open_id_set_file(id_set_path)
         return id_set
 
-    def check_and_validate_deprecated(self, file_path, current_file, is_modified, is_backward_check, validator):
+    def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
+                                      validator):
         """If file is deprecated, validate it. Return None otherwise.
 
         Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
 
         Args:
+            file_type: (FileType) Type of file to validate.
             file_path: (str) file path to validate.
             current_file: (dict) file in json format to validate.
             is_modified: (boolean) for whether the file was modified.
@@ -1223,14 +1228,14 @@ class ValidateManager:
             False if current_file is deprecated and invalid.
             None if current_file is not deprecated.
         """
-        file_type = find_type(file_path)
         if file_type == FileType.PLAYBOOK:
             is_deprecated = "hidden" in current_file and current_file["hidden"]
         else:
             is_deprecated = "deprecated" in current_file and current_file["deprecated"]
 
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file["toversion"]) < version.parse(OLDEST_SUPPORTED_VERSION)
+                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
             click.echo(f"Validating deprecated file: {file_path}")

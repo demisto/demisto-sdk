@@ -61,8 +61,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
-            self.is_valid_pwsh(),
-            self.is_valid_deprecated_script()
+            self.is_valid_pwsh()
         ])
         # check only on added files
         if not self.old_file:
@@ -71,10 +70,6 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid_name()
             ])
         return is_script_valid
-
-    def is_valid_as_deprecated(self):
-        """Check if the script is valid as a deprecated script."""
-        return self.is_valid_deprecated_script()
 
     @classmethod
     def _get_arg_to_required_dict(cls, script_json):
@@ -213,7 +208,7 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_deprecated_script(self) -> bool:
+    def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')

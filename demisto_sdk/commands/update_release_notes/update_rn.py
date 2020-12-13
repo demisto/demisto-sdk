@@ -138,12 +138,14 @@ class UpdateRN:
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
         master_current_version = '0.0.0'
-        master_metadata = get_remote_file(self.metadata_path)
-        if master_metadata:
-            master_current_version = master_metadata.get('currentVersion', '0.0.0')
-        else:
+        try:
+            master_metadata = get_remote_file(self.metadata_path)
+        except Exception:
             print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata} \n "
                         f"The updated version will be taken from local metadata file")
+            pass
+        if master_metadata:
+            master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
 
     def is_bump_required(self):

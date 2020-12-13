@@ -907,7 +907,7 @@ def update_pack_releasenotes(**kwargs):
                     with open(packs_existing_rn[pack], 'r') as f:
                         prev_rn_text = f.read()
                 except Exception as e:
-                    print_error(f'Failed to load prev rn file content: {e}')
+                    print_error(f'Failed to load the previous release notes file content: {e}')
             elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "

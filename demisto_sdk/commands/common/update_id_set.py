@@ -963,10 +963,17 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     return playbook, script
 
 
-def get_integrations_paths():
-    path_list = [
-        ['Packs', '*', 'Integrations', '*']
-    ]
+def get_integrations_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'Integrations', '*']
+        ]
+
+    else:
+        path_list = [
+            ['Packs', '*', 'Integrations', '*']
+        ]
+
     integration_files = list()
     for path in path_list:
         integration_files.extend(glob.glob(os.path.join(*path)))
@@ -974,23 +981,36 @@ def get_integrations_paths():
     return integration_files
 
 
-def get_playbooks_paths():
-    path_list = [
-        ['Packs', '*', 'Playbooks', '*.yml']
-    ]
+def get_playbooks_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'Playbooks', '*.yml']
+        ]
 
-    playbook_files = list()
+    else:
+        path_list = [
+            ['Packs', '*', 'Playbooks', '*.yml']
+        ]
+
+    playbook_files = list(pack_to_create)
     for path in path_list:
         playbook_files.extend(glob.glob(os.path.join(*path)))
 
     return playbook_files
 
 
-def get_general_paths(path):
-    path_list = [
-        [path, '*'],
-        ['Packs', '*', path, '*']
-    ]
+def get_general_paths(path, pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*']
+        ]
+
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
@@ -1086,13 +1106,14 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_to_create: list = None,  # noqa: C901
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     """Re create the id set
 
     Args:
         id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
             Defaults to DEFAULT_ID_SET_PATH.
+        pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
 
     Returns: id set object
@@ -1164,7 +1185,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_integration,
                                         print_logs=print_logs
                                         ),
-                                get_integrations_paths()):
+                                get_integrations_paths(pack_to_create)):
                 integration_list.extend(arr)
 
         progress_bar.update(1)
@@ -1176,7 +1197,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.PLAYBOOK,),
                                         data_extraction_func=get_playbook_data,
                                         ),
-                                get_playbooks_paths()):
+                                get_playbooks_paths(pack_to_create)):
                 playbooks_list.extend(arr)
 
         progress_bar.update(1)
@@ -1186,7 +1207,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_script,
                                         print_logs=print_logs
                                         ),
-                                get_general_paths(SCRIPTS_DIR)):
+                                get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 scripts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1196,7 +1217,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for pair in pool.map(partial(process_test_playbook_path,
                                          print_logs=print_logs
                                          ),
-                                 get_general_paths(TEST_PLAYBOOKS_DIR)):
+                                 get_general_paths(TEST_PLAYBOOKS_DIR, pack_to_create)):
                 if pair[0]:
                     testplaybooks_list.append(pair[0])
                 if pair[1]:
@@ -1211,7 +1232,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
                                         data_extraction_func=get_classifier_data,
                                         ),
-                                get_general_paths(CLASSIFIERS_DIR)):
+                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 classifiers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1223,7 +1244,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.DASHBOARD,),
                                         data_extraction_func=get_dashboard_data,
                                         ),
-                                get_general_paths(DASHBOARDS_DIR)):
+                                get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 dashboards_list.extend(arr)
 
         progress_bar.update(1)
@@ -1235,7 +1256,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.INCIDENT_TYPE,),
                                         data_extraction_func=get_incident_type_data,
                                         ),
-                                get_general_paths(INCIDENT_TYPES_DIR)):
+                                get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 incident_type_list.extend(arr)
 
         progress_bar.update(1)
@@ -1247,7 +1268,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         print_logs=print_logs,
                                         incidents_types_list=incident_type_list
                                         ),
-                                get_general_paths(INCIDENT_FIELDS_DIR)):
+                                get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 incident_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1259,7 +1280,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.INDICATOR_FIELD,),
                                         data_extraction_func=get_general_data,
                                         ),
-                                get_general_paths(INDICATOR_FIELDS_DIR)):
+                                get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 indicator_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1271,7 +1292,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         print_logs=print_logs,
                                         all_integrations=integration_list
                                         ),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+                                get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1283,14 +1304,14 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.LAYOUT,),
                                         data_extraction_func=get_layout_data,
                                         ),
-                                get_general_paths(LAYOUTS_DIR)):
+                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUTS_CONTAINER,),
                                         data_extraction_func=get_layoutscontainer_data,
                                         ),
-                                get_general_paths(LAYOUTS_DIR)):
+                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1302,7 +1323,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.REPORT,),
                                         data_extraction_func=get_report_data,
                                         ),
-                                get_general_paths(REPORTS_DIR)):
+                                get_general_paths(REPORTS_DIR, pack_to_create)):
                 reports_list.extend(arr)
 
         progress_bar.update(1)
@@ -1314,7 +1335,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.WIDGET,),
                                         data_extraction_func=get_widget_data,
                                         ),
-                                get_general_paths(WIDGETS_DIR)):
+                                get_general_paths(WIDGETS_DIR, pack_to_create)):
                 widgets_list.extend(arr)
 
         progress_bar.update(1)
@@ -1326,7 +1347,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.MAPPER,),
                                         data_extraction_func=get_mapper_data,
                                         ),
-                                get_general_paths(MAPPERS_DIR)):
+                                get_general_paths(MAPPERS_DIR, pack_to_create)):
                 mappers_list.extend(arr)
 
         progress_bar.update(1)

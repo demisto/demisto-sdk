@@ -36,7 +36,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_valid_deprecated_playbook(),
+                self.is_valid_as_deprecated(),
                 self.is_script_id_valid(id_set_file),
             ]
             answers = all(new_playbook_checks)
@@ -251,7 +251,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return tasks_bucket.issubset(next_tasks_bucket)
 
-    def is_valid_deprecated_playbook(self) -> bool:
+    def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_hidden = self.current_file.get('hidden', False)
         description = self.current_file.get('description', '')

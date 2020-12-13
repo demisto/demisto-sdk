@@ -457,7 +457,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
 
-    def test_ build_rn_desc_new_file(self):
+    def test_build_rn_desc_new_file(self):
         """
             Given
                 - A new file

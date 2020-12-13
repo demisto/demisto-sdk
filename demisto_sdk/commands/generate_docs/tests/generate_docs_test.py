@@ -313,7 +313,7 @@ def test_get_input_data_complex():
 
 
 def test_generate_playbook(playbook):
-    Given
+    """Given
         - A playbook path
     When
         - running the command generate_playbook_doc in order to generate documentation.

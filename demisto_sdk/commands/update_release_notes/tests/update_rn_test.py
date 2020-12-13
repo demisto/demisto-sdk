@@ -475,6 +475,24 @@ class TestRNUpdate(unittest.TestCase):
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
+    def test_build_rn_desc_new_file(self):
+        """
+            Given
+                - A new file
+            When
+                - Running the command build_rn_desc on a file in order to generate rn description.
+            Then
+                - Validate That from-version added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=False, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' not in desc
+
     def test_build_rn_template_with_fromversion(self):
         """
             Given

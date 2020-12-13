@@ -312,7 +312,7 @@ def test_get_input_data_complex():
     assert _value == 'File.Name'
 
 
-def test_generate_playbook(playbook):
+def test_generate_playbook(playbook, tmp_path):
     """Given
         - A playbook path
     When
@@ -323,18 +323,15 @@ def test_generate_playbook(playbook):
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
 
-    try:
-        playbook.yml.write_dict({'fromversion': '5.0.0'})
+    playbook.yml.write_dict({'fromversion': '5.0.0'})
 
-        generate_playbook_doc(input=playbook.yml.path)
+    generate_playbook_doc(input=playbook.yml.path, output=tmp_path)
 
-        readme_filename = os.path.basename(playbook.yml.path).replace('.yml', '_README.md')
-        readme = playbook.path + '/' + readme_filename
-        with open(readme) as f:
-            text = f.read()
-            assert 'Supported Cortex XSOAR versions: 5.0.0 and later.' in text
-    finally:
-        os.remove(readme)
+    readme_filename = os.path.basename(playbook.yml.path).replace('.yml', '_README.md')
+    readme = str(tmp_path) + '/' + readme_filename
+    with open(readme) as f:
+        text = f.read()
+        assert 'Supported Cortex XSOAR versions: 5.0.0 and later.' in text
 
 # script tests
 

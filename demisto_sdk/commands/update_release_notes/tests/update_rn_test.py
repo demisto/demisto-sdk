@@ -989,8 +989,8 @@ def test_get_from_version_at_update_rn(integration):
         When
             - Updating release notes for integration, trying to extract the 'fromversion' key from the integration yml.
         Then
-            - Case 1: Assert that the `fromverrsion` value is 5.0.0
-            - Case 2: Assert that the `fromverrsion` value is ''
+            - Case 1: Assert that the `fromversion` value is 5.0.0
+            - Case 2: Assert that the `fromversion` value is ''
         """
     from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
 

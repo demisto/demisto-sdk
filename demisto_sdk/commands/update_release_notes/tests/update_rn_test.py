@@ -475,7 +475,7 @@ class TestRNUpdate(unittest.TestCase):
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
-    def test_build_rn_desc_new_file(self):
+    def test_build_rn_desc_old_file(self):
         """
             Given
                 - A new file

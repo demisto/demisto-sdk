@@ -897,6 +897,36 @@ class TestValidators:
         assert not validate_manager.validate_no_old_format(old_format_files)
         assert handle_error_mock.call_count == 2
 
+    def test_validate_no_old_format_deprecated_content(self, repo):
+        """
+            Given:
+                - a pack with a script in old format_file with deprecated: true
+                - a script in old format_file with deprecated: false
+                - a script in old format_file without deprecated field
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return True for the first script as the file is valid
+                - return False for script2 and scrupt3 - validate should fail and raise [ST106] error.
+        """
+        validate_manager = ValidateManager()
+        pack1 = repo.create_pack('Pack1')
+        script = pack1.create_script('Script1')
+        script2 = pack1.create_script('Script2')
+        script3 = pack1.create_script('Script3')
+        script.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                         "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                               "deprecated": True})
+        script2.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                                "deprecated": False})
+        script3.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"})
+        old_format_file = {script.yml.path}
+        deprecated_false_file = {script2.yml.path, script3.yml.path}
+        assert validate_manager.validate_no_old_format(old_format_file)
+        assert not validate_manager.validate_no_old_format(deprecated_false_file)
+
     def test_filter_changed_files(self, mocker):
         """
             Given:

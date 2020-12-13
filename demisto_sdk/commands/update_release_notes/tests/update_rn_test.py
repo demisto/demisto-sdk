@@ -496,6 +496,68 @@ class TestRNUpdate(unittest.TestCase):
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
 
+    def test_build_rn_desc_new_file(self):
+        """
+            Given
+                - A new file
+            When
+                - Running the command build_rn_desc on a file in order to generate rn description.
+            Then
+                - Validate That from-version added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=True, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+
+    def test_build_rn_desc_old_file(self):
+        """
+            Given
+                - An old file
+            When
+                - Running the command build_rn_desc on a file in order to generate rn description.
+            Then
+                - Validate That from-version was not added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=False, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' not in desc
+
+    def test_build_rn_template_with_fromversion(self):
+        """
+            Given
+                - New playbook integration and script.
+            When
+                - running the command build_rn_template on this files in order to generate rn description.
+            Then
+                - Validate That from-version added to each of rn descriptions.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        changed_items = {
+            'Hello World Integration': {'type': 'Integration', 'description': "", 'is_new_file': True,
+                                        'fromversion': '5.0.0'},
+            'Hello World Playbook': {'type': 'Playbook', 'description': '', 'is_new_file': True,
+                                     'fromversion': '5.5.0'},
+            "Hello World Script": {'type': 'Script', 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+        }
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_template(changed_items=changed_items)
+        assert '(Available from Cortex XSOAR 5.0.0).' in desc
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+        assert '(Available from Cortex XSOAR 6.0.0).' in desc
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -562,11 +624,13 @@ class TestRNUpdateUnit:
 
         """
         self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
-        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', self.meta_backup)
+        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+                    self.meta_backup)
 
     def teardown(self):
         if self.meta_backup:
-            shutil.copy(self.meta_backup, 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+            shutil.copy(self.meta_backup,
+                        'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
@@ -988,3 +1052,23 @@ class TestRNUpdateUnit:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
+
+
+def test_get_from_version_at_update_rn(integration):
+    """
+        Given
+            - Case 1: An integration path
+            - Case 2: A fake integration path
+        When
+            - Updating release notes for integration, trying to extract the 'fromversion' key from the integration yml.
+        Then
+            - Case 1: Assert that the `fromversion` value is 5.0.0
+            - Case 2: Assert that the `fromversion` value is None
+        """
+    from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
+
+    integration.yml.write_dict({'fromversion': '5.0.0'})
+    fromversion = get_from_version_at_update_rn(integration.yml.path)
+    assert fromversion == '5.0.0'
+    fromversion = get_from_version_at_update_rn('fake_path.yml')
+    assert fromversion is None

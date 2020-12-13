@@ -458,12 +458,11 @@ class TestRNUpdate(unittest.TestCase):
         self.assertRaises(ValueError, update_rn.bump_version_number)
 
     def test_add_fromversion_to_new_file(self):
-        """Unit test
+        """
             Given
-                - build_rn_desc command
-                - pack
+                - A new file
             When
-                - running the command build_rn_desc on pack in order to generate rn description.
+                - Running the command build_rn_desc on a file in order to generate rn description.
             Then
                 - Validate That from-version added to the rn description.
             """
@@ -477,14 +476,13 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
     def test_build_rn_template_with_fromversion(self):
-        """Unit test
+        """
             Given
-                - build_rn_template command
-                - pack
+                - New playbook integration and script.
             When
-                - running the command build_rn_template on pack in order to generate rn description.
+                - running the command build_rn_template on this files in order to generate rn description.
             Then
-                - Validate That from-version added to the rn description.
+                - Validate That from-version added to each of rn descriptions.
             """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -986,13 +984,13 @@ class TestRNUpdateUnit:
 def test_get_from_version_at_update_rn(integration):
     """
         Given
-            - integration
-            - get_from_version_at_update_rn command
+            - Case 1: An integration path
+            - Case 2: A fake integration path
         When
-            - Updating release notes for integration, trying to get fromversion
+            - Updating release notes for integration, trying to extract the 'fromversion' key from the integration yml.
         Then
-            - Successfully receiving fromversion if yml file path right,
-            - receiving '' if yml path wrong
+            - Case 1: Assert that the `fromverrsion` value is 5.0.0
+            - Case 2: Assert that the `fromverrsion` value is ''
         """
     from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
 

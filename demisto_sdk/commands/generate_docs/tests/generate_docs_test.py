@@ -313,14 +313,12 @@ def test_get_input_data_complex():
 
 
 def test_generate_playbook(playbook):
-    """Unit test
     Given
-        - generate_playbook_doc command
-        - playbook
+        - A playbook path
     When
-        - running the command generate_playbook_doc on playbook in order to generate documentation.
+        - running the command generate_playbook_doc in order to generate documentation.
     Then
-        - Validate That from-version added to the documentation.
+        - Validate that from-version added to the documentation.
     """
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc

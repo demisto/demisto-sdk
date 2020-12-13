@@ -6,7 +6,7 @@
 * Improved retry support when building docker images for linting.
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
-* Added version of availability (fromversion) to the README and to the release notes, when a new integration is released, in **update-release-notes** and **generate_docs** command.
+* Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

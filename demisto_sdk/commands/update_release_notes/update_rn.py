@@ -565,13 +565,13 @@ def check_docker_image_changed(added_or_modified_yml):
         return False, ''
 
 
-def get_from_version_at_update_rn(path):
+def get_from_version_at_update_rn(path: str):
     """
     Args:
-        path: path to yml file, if exists
+        path (str): path to yml file, if exists
 
-    Returns: - '' if no such yml file,
-             - fromversion if there fromversion in the yml file
+    Returns: 
+            str. Fromversion if there fromversion key in the yml file.
 
     """
     if not os.path.isfile(path):

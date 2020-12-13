@@ -328,11 +328,7 @@ def test_generate_playbook(playbook):
 
         generate_playbook_doc(input=playbook.yml.path)
 
-        # playbook_filename = os.path.basename(playbook.yml.path).replace('.yml', '')
-        # readme = playbook.path + '/' + playbook_filename + '_README.md'
-        playbook_path = playbook.yml.path
-
-        readme_filename = os.path.basename(playbook.yml.path).replace('.yml', '_README.md', 1)
+        readme_filename = os.path.basename(playbook.yml.path).replace('.yml', '_README.md')
         readme = playbook.path + '/' + readme_filename
         with open(readme) as f:
             text = f.read()

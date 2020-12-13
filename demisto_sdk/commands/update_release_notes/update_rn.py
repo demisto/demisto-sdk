@@ -570,7 +570,7 @@ def get_from_version_at_update_rn(path: str):
     Args:
         path (str): path to yml file, if exists
 
-    Returns: 
+    Returns:
             str. Fromversion if there fromversion key in the yml file.
 
     """

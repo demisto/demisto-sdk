@@ -900,15 +900,20 @@ class TestValidators:
     def test_validate_no_old_format_deprecated_content(self, repo):
         """
             Given:
-                - an old format_file with deprecated: true
+                - a pack with a script in old format_file with deprecated: true
             When:
                 - running validate_no_old_format on the file
             Then:
                 - return a True as the file is valid
         """
         validate_manager = ValidateManager()
-        old_format_files = {"demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/"
-                            "script-SampleScriptDeprecated.yml"}
+        pack1 = repo.create_pack('Pack1')
+        script = pack1.create_script('Script1')
+        script.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                         "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                               "deprecated": True})
+
+        old_format_files = {script.yml.path}
         assert validate_manager.validate_no_old_format(old_format_files)
 
     def test_filter_changed_files(self, mocker):

@@ -919,7 +919,7 @@ class TestValidators:
                                "deprecated": True})
         script2.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
                                           "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
-                               "deprecated": False})
+                                "deprecated": False})
         script3.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
                                           "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"})
         old_format_file = {script.yml.path}

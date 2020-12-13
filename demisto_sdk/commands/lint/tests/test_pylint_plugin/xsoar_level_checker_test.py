@@ -117,7 +117,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Two given function, One does not have type annotations and the other does.
+            - Main function that in the else claus doesnt raises a NotImplementedError
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
@@ -141,8 +141,11 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
     def test_not_implemented_error_exists(self):
         """
         Given:
+            - String of a code part which is being examined by pylint plugin.
         When:
+            - Main function that in the else claus raises a NotImplementedError
         Then:
+            - Ensure that the there was not message added to the checker.
         """
         node = astroid.extract_node("""
             def main() -> bool:

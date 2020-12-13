@@ -478,11 +478,11 @@ class TestRNUpdate(unittest.TestCase):
     def test_build_rn_desc_old_file(self):
         """
             Given
-                - A new file
+                - An old file
             When
                 - Running the command build_rn_desc on a file in order to generate rn description.
             Then
-                - Validate That from-version added to the rn description.
+                - Validate That from-version was not added to the rn description.
             """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 

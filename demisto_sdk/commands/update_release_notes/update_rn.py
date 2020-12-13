@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', full_text: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', prev_rn_text: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -44,7 +44,7 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.text = text
-        self.full_text = full_text
+        self.prev_rn_text = prev_rn_text
         self.pack_metadata_only = pack_metadata_only
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -99,7 +99,7 @@ class UpdateRN:
                     'description': get_file_description(packfile, file_type),
                     'is_new_file': True if packfile in self.added_files else False
                 }
-            rn_string = self.full_text
+            rn_string = self.prev_rn_text
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
@@ -139,7 +139,6 @@ class UpdateRN:
         """
         master_current_version = '0.0.0'
         master_metadata = get_remote_file(self.metadata_path)
-        # run_command(f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
         if master_metadata:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         else:

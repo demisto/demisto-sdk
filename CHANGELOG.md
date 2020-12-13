@@ -4,8 +4,10 @@
 * Added support for vulture and mypy linting when running without docker.
 * Added support for *prev-ver* flag in **update-release-notes** command.
 * Improved retry support when building docker images for linting.
+* Added the option to create an ID set on a specific pack in **create-id-set** command.
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
+* Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
 * Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
 
 # 1.2.11

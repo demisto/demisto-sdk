@@ -785,6 +785,8 @@ def generate_doc(**kwargs):
     '-h', '--help'
 )
 @click.option(
+    '-i', '--input', help='Input file path, the default is the content repo.', default='', required=False)
+@click.option(
     "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)

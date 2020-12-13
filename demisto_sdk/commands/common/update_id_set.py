@@ -1387,6 +1387,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         print_error(
             f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
         )
+    print(new_ids_dict)
 
     return new_ids_dict
 

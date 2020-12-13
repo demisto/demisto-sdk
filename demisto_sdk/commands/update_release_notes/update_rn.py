@@ -427,7 +427,7 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f'##### New: {content_name}\n- {desc}'
                 if from_version:
-                    rn_desc += f'(Available from Cortex XSOAR {from_version}).'
+                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
@@ -576,5 +576,5 @@ def get_from_version_at_update_rn(path: str):
     """
     if not os.path.isfile(path):
         print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
-        return ''
+        return
     return get_from_version(path)

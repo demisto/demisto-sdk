@@ -328,8 +328,8 @@ def test_generate_playbook(playbook):
 
         generate_playbook_doc(input=playbook.yml.path)
 
-        playbook_filename = os.path.basename(playbook.yml.path).replace('.yml', '')
-        readme = playbook.path + '/' + playbook_filename + '_README.md'
+        readme_filename = os.path.basename(playbook.yml.path).replace('.yml', '_README.md')
+        readme = playbook.path + '/' + readme_filename
         with open(readme) as f:
             text = f.read()
             assert 'Supported Cortex XSOAR versions: 5.0.0 and later.' in text

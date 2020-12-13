@@ -42,7 +42,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
 
     expected_rn = '\n' + '#### Integrations\n' + \
                   '##### New: Azure Feed\n' + \
-                  '- Azure.CloudIPs Feed Integration.(Available from Cortex XSOAR 5.5.0).\n'
+                  '- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n'
 
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')

@@ -567,11 +567,13 @@ class TestRNUpdateUnit:
 
         """
         self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
-        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', self.meta_backup)
+        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+                    self.meta_backup)
 
     def teardown(self):
         if self.meta_backup:
-            shutil.copy(self.meta_backup, 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+            shutil.copy(self.meta_backup,
+                        'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
@@ -990,7 +992,7 @@ def test_get_from_version_at_update_rn(integration):
             - Updating release notes for integration, trying to extract the 'fromversion' key from the integration yml.
         Then
             - Case 1: Assert that the `fromversion` value is 5.0.0
-            - Case 2: Assert that the `fromversion` value is ''
+            - Case 2: Assert that the `fromversion` value is None
         """
     from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
 
@@ -998,4 +1000,4 @@ def test_get_from_version_at_update_rn(integration):
     fromversion = get_from_version_at_update_rn(integration.yml.path)
     assert fromversion == '5.0.0'
     fromversion = get_from_version_at_update_rn('fake_path.yml')
-    assert fromversion == ''
+    assert fromversion is None

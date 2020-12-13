@@ -374,7 +374,7 @@ def secrets(config, **kwargs):
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
                          "Meant to be used with integrations/scripts that use the folder (package) structure. "
                          "Will lookup up what docker image to use and will setup the dev dependencies and "
-                         "file in the target folder. If no additional flags specifying the packages are given,"
+                         "file in the target folder. If no additional flags specifying the packs are given,"
                          " will lint only changed files")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,

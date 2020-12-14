@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
                                                get_api_module_integrations_set,
-                                               get_json,
+                                               get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_yaml,
                                                pack_name_to_path, print_color,
@@ -96,7 +96,8 @@ class UpdateRN:
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
-                    'is_new_file': True if packfile in self.added_files else False
+                    'is_new_file': True if packfile in self.added_files else False,
+                    'fromversion': get_from_version_at_update_rn(packfile)
                 }
 
             rn_string = self.build_rn_template(changed_files)
@@ -344,10 +345,12 @@ class UpdateRN:
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
+            from_version = data.get('fromversion', '')
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
-            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file, self.text)
+            rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
+                                         text=self.text, from_version=from_version)
             if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
@@ -416,13 +419,16 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file, text):
+    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
         if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
                      'Indicator Fields'):
             rn_desc = f'- **{content_name}**\n'
         else:
             if is_new_file:
-                rn_desc = f'##### New: {content_name}\n- {desc}\n'
+                rn_desc = f'##### New: {content_name}\n- {desc}'
+                if from_version:
+                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
+                rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
                 if self.update_type == 'maintenance':
@@ -447,7 +453,7 @@ class UpdateRN:
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
                 rn_desc = f'\n- **{content_name}**'
             else:
-                rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file\
+                rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
 
             if _type in current_rn:
@@ -557,3 +563,18 @@ def check_docker_image_changed(added_or_modified_yml):
                 # changed.
                 return True, diff_line.split()[-1]
         return False, ''
+
+
+def get_from_version_at_update_rn(path: str):
+    """
+    Args:
+        path (str): path to yml file, if exists
+
+    Returns:
+            str. Fromversion if there fromversion key in the yml file.
+
+    """
+    if not os.path.isfile(path):
+        print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
+        return
+    return get_from_version(path)

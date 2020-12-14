@@ -11,11 +11,11 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
 COMMON_SERVER = UNIT_TEST_DATA / 'common_server'
-ARTIFACTS_EXPEXTED_RESULTS = TEST_DATA / 'artifacts'
+ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / 'artifacts'
 
 
 def same_folders(src1, src2):
-    """Assert if folder contains diffrent files"""
+    """Assert if folder contains different files"""
     dcmp = dircmp(src1, src2)
     if dcmp.left_only or dcmp.right_only:
         return False
@@ -162,7 +162,7 @@ def test_dump_pack(mock_git):
         dump_pack(artifact_manager=config, pack=Pack(TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'))
 
         assert same_folders(src1=temp / 'content_packs' / 'Sample01',
-                            src2=ARTIFACTS_EXPEXTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
+                            src2=ARTIFACTS_EXPECTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
 
 
 def test_create_content_artifacts(mock_git):
@@ -178,7 +178,7 @@ def test_create_content_artifacts(mock_git):
         exit_code = create_content_artifacts(artifact_manager=config)
 
         assert exit_code == 0
-        assert same_folders(temp, ARTIFACTS_EXPEXTED_RESULTS / 'content')
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
 
 
 def test_create_private_content_artifacts(private_repo):
@@ -196,7 +196,7 @@ def test_create_private_content_artifacts(private_repo):
         config.content = Content(private_repo)
         exit_code = create_content_artifacts(artifact_manager=config)
 
-        assert same_folders(temp, ARTIFACTS_EXPEXTED_RESULTS / 'private')
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
         assert exit_code == 0
 
 

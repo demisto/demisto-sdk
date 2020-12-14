@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     DocFile, IncidentField, IncidentType, IndicatorField, IndicatorType,
     Integration, Layout, LayoutsContainer, OldClassifier, OldIndicatorType,
     PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget)
+    SecretIgnore, Widget, AuthorImage)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -49,6 +49,7 @@ TYPE_CONVERSION_BY_FILE_NAME = {
     '.secrets-ignore': SecretIgnore,
     '.pack-ignore': PackIgnore,
     f'{OLD_INDICATOR_TYPE}.json': OldIndicatorType,
+    f'Author_image.png': AuthorImage
 }
 
 

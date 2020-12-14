@@ -1,5 +1,4 @@
 type: map
-allowempty: True
 mapping:
   typeId:
     type: str
@@ -18,6 +17,10 @@ mapping:
     required: True
   system:
     type: bool
+  description:
+    type: str
+  id:
+    type: str
   layout:
     type: map
     mapping:

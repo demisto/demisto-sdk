@@ -22,8 +22,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.create_artifacts.marketplace_services import (
-    GCPConfig, init_storage_client)
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
@@ -51,10 +49,7 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, bucket_name: str, service_account: str, id_set_path: str, pack_names: str,
-                 ci_build_number: str, override_all_packs: bool, key_string: str, storage_base_path: str,
-                 remove_test_playbooks: bool, bucket_upload: bool, private_bucket_name: str, circle_branch: str,
-                 force_upload: bool, output_files: bool):
+                 cpus: int, id_set_path: str, pack_names: str, key_string: str, remove_test_playbooks: bool):
         """ Content artifacts configuration
 
         Args:
@@ -64,20 +59,10 @@ class ArtifactsManager:
             content_version: release content version.
             suffix: suffix to add all file we creates.
             cpus: available cpus in the computer.
-            bucket_name: storage bucket name.
-            service_account: path to gcloud service account.
             id_set_path: the full path of id_set.json.
             pack_names: Packs to create artifacts for.
-            ci_build_number: CircleCi build number.
-            override_all_packs: Override all existing packs in cloud storage.
             key_string: Base64 encoded signature key used for signing packs.
-            storage_base_path: Storage base path of the directory to upload to.
             remove_test_playbooks: Should remove test playbooks from content packs or not.
-            bucket_upload: is bucket upload build?
-            private_bucket_name: private storage bucket name.
-            circle_branch: CircleCi branch of current build.
-            force_upload: is force upload build.
-            output_files: Whether to output the files.
         """
         # options arguments
         self.artifacts_path = Path(artifacts_path)
@@ -86,20 +71,10 @@ class ArtifactsManager:
         self.content_version = content_version
         self.suffix = suffix
         self.cpus = cpus
-        self.bucket_name = bucket_name
-        self.service_account = service_account
         self.id_set_path = id_set_path
         self.pack_names = pack_names
-        self.ci_build_number = ci_build_number
-        self.override_all_packs = override_all_packs
         self.key_string = key_string
-        self.storage_base_path = storage_base_path
         self.remove_test_playbooks = remove_test_playbooks
-        self.bucket_upload = bucket_upload
-        self.private_bucket_name = private_bucket_name
-        self.circle_branch = circle_branch
-        self.force_upload = force_upload
-        self.output_files = output_files
 
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
@@ -108,11 +83,6 @@ class ArtifactsManager:
         self.content_all_path = self.artifacts_path / 'all_content'
 
         # inits
-        if service_account:
-            self.storage_client = init_storage_client(service_account)
-            self.storage_bucket = self.storage_client.bucket(self.bucket_name)
-        if storage_base_path:
-            GCPConfig.STORAGE_BASE_PATH = storage_base_path
         self.content = Content.from_cwd()
         self.execution_start = time.time()
         self.exit_code = EX_SUCCESS
@@ -631,7 +601,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
         DuplicateFiles: Exception occured if duplicate files exists in the same dir (Protect from override).
     """
     new_created_files = []
-    # Handle case where files allready created
+    # Handle case where files already created
     if created_files:
         for file in created_files:
             new_file = dest_dir / file.name
@@ -678,8 +648,8 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
     Logic by time line:
         1. Delete artifacts directories if exists.
         2. Create directories.
-        3. If any error occured -> Delete artifacts directories -> Exit.
-        4. If finish succesfully:
+        3. If any error occurred -> Delete artifacts directories -> Exit.
+        4. If finish successfully:
             a. If zip:
                 1. Zip artifacts zip.
                 2. Delete artifacts directories.

@@ -117,7 +117,8 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Main function that in the else claus doesnt raises a NotImplementedError
+            - Main function that in the else claus doesnt raises a NotImplementedError but raises a DemistoError
+            - Main function that in the if claus raises a ValueError
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
@@ -126,9 +127,9 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                 if True:
                     return True
                 if b:
-                    return False
+                    raise ValueError("this is an error")
                 else:
-                    return False
+                    raise DemistoError("this is an error")
         """)
         with self.assertAddsMessages(
                 pylint.testutils.Message(

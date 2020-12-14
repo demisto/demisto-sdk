@@ -22,16 +22,15 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import logging_setup
+####################
+# Global variables #
+####################
+from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
-
-####################
-# Global variables #
-####################
-
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
@@ -72,7 +71,7 @@ class ArtifactsManager:
         self.suffix = suffix
         self.cpus = cpus
         self.id_set_path = id_set_path
-        self.pack_names = pack_names
+        self.pack_names = arg_to_list(pack_names)
         self.key_string = key_string
         self.remove_test_playbooks = remove_test_playbooks
 
@@ -341,7 +340,8 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     """
     futures = []
     for pack_name, pack in artifact_manager.content.packs.items():
-        if pack_name not in IGNORED_PACKS:
+        if (pack_name in artifact_manager.pack_names or 'all' in artifact_manager.pack_names) and \
+                pack_name not in IGNORED_PACKS:
             futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
 
     return futures

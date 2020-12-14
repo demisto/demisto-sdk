@@ -10,6 +10,7 @@
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
 * Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
 * Added new code validations for *NotImplementedError* exception raise to `XSOAR-linter`.
+* Command create-content-artifacts additional support for **Author_image.png** object.
 * Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
 
 # 1.2.11

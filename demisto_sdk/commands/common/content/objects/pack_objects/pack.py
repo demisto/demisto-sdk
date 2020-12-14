@@ -44,7 +44,7 @@ class Pack:
             yield path_to_pack_object(object_path)
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
-        """Generic content objcets iterable generator
+        """Generic content objects iterable generator
 
         Args:
             dir_name: Directory name, for example: Tools.

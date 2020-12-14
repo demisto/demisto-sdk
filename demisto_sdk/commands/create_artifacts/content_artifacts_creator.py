@@ -352,7 +352,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             b. Integration/Script/Playbook readme (Used for website documentation deployment).
             c. .pack-ignore (Internal only).
             d. .secrets-ignore (Internal only).
-            e. Author_image.png (Internal only).
 
     Returns:
         ArtifactsReport: ArtifactsReport object.

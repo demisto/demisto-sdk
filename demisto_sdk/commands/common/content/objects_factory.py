@@ -2,11 +2,11 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, ChangeLog, Classifier, ClassifierMapper, Connection, Dashboard,
-    DocFile, IncidentField, IncidentType, IndicatorField, IndicatorType,
-    Integration, Layout, LayoutsContainer, OldClassifier, OldIndicatorType,
-    PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget)
+    AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
+    Connection, Dashboard, DocFile, IncidentField, IncidentType,
+    IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
+    OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
+    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -49,6 +49,7 @@ TYPE_CONVERSION_BY_FILE_NAME = {
     '.secrets-ignore': SecretIgnore,
     '.pack-ignore': PackIgnore,
     f'{OLD_INDICATOR_TYPE}.json': OldIndicatorType,
+    'Author_image.png': AuthorImage,
 }
 
 

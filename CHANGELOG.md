@@ -9,7 +9,8 @@
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
 * Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
-* Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
+* Added new code validations for *NotImplementedError* exception raise to `XSOAR-linter`.
+
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

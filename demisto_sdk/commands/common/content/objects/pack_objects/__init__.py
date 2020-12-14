@@ -6,6 +6,7 @@ import inspect
 from .abstract_pack_objects.json_content_object import *  # lgtm [py/polluting-import]
 from .abstract_pack_objects.yaml_content_object import *  # lgtm [py/polluting-import]
 from .abstract_pack_objects.yaml_unify_content_object import *  # lgtm [py/polluting-import]
+from .author_image.author_image import *  # lgtm [py/polluting-import]
 from .change_log.change_log import *  # lgtm [py/polluting-import]
 from .classifier.classifier import *  # lgtm [py/polluting-import]
 from .connection.connection import *  # lgtm [py/polluting-import]
@@ -27,8 +28,6 @@ from .script.script import *  # lgtm [py/polluting-import]
 from .secret_ignore.secret_ignore import *  # lgtm [py/polluting-import]
 from .tool.agent_tool import *  # lgtm [py/polluting-import]
 from .widget.widget import *  # lgtm [py/polluting-import]
-from .author_image.author_image import *  # lgtm [py/polluting-import]
-
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

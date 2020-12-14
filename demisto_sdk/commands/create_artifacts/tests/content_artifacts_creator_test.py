@@ -27,10 +27,10 @@ def same_folders(src1, src2):
 
 @contextmanager
 def destroy_by_ext(suffix: str):
-    """Modify file content to invalid by file extention - json/yaml.
+    """Modify file content to invalid by file extension - json/yaml.
 
      Open:
-        - Choose file by file extention.
+        - Choose file by file extension.
         - Modify file content to not valid.
 
     Close:
@@ -70,7 +70,7 @@ def duplicate_file():
 
 @contextmanager
 def temp_dir():
-    """Create Temp direcotry for test.
+    """Create Temp directory for test.
 
      Open:
         - Create temp directory.

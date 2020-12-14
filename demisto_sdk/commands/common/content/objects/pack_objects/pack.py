@@ -15,10 +15,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, Classifier, ClassifierMapper, Connection, Dashboard, DocFile,
-    IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
-    Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
-    ReleaseNote, Report, Script, SecretIgnore, Widget, AuthorImage)
+    AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
+    Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
+    IndicatorType, Integration, Layout, OldClassifier, PackIgnore,
+    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
+    Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path

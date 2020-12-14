@@ -115,7 +115,7 @@ class ContentGitRepo:
             res = runner.invoke(main, "secrets")
             try:
                 assert res.exit_code == 0
-                res = runner.invoke(main, "lint -g --no-test")
+                res = runner.invoke(main, "lint -g --no-test --no-xsoar-linter")
                 assert res.exit_code == 0
                 res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
                 assert res.exit_code == 0

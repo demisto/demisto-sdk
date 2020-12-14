@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, Classifier, ClassifierMapper, Connection, Dashboard, DocFile,
     IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
     Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
-    ReleaseNote, Report, Script, SecretIgnore, Widget)
+    ReleaseNote, Report, Script, SecretIgnore, Widget, AuthorImage)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
@@ -180,5 +180,14 @@ class Pack:
         file = self._path / "README.md"
         if file.exists():
             obj = Readme(file)
+
+        return obj
+
+    @property
+    def author_image(self) -> Optional[AuthorImage]:
+        obj = None
+        file = self._path / "Author_image.png"
+        if file.exists():
+            obj = AuthorImage(file)
 
         return obj

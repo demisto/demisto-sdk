@@ -1046,7 +1046,5 @@ class Linter:
         for command in commands_obj:
             args_curr = command.get('arguments', [])
             for arg in args_curr:
-                arg_curr = arg.get('name', '')
-                if arg_curr not in args:
-                    args.append(arg.get('name', ''))
+                args.append(arg.get('name', ''))
         return args

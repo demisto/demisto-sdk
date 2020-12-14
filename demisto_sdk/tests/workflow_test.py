@@ -106,7 +106,7 @@ class ContentGitRepo:
         """
         Run all of the following validations:
         * secrets
-        * lint -g --no-test
+        * lint -g --no-test --no-xsoar-linter
         * validate -g --skip-pack-dependencies
         """
         with ChangeCWD(self.content):
@@ -331,7 +331,7 @@ def test_workflow_by_sequence(function: Callable):
         Run validations:
             Will run all validation with expected the test to pass.
             * secrets
-            * lint -g --no-test
+            * lint -g --no-test --no-xsoar-linter
             * validate -g --skip-pack-dependencies
     """
     global content_git_repo

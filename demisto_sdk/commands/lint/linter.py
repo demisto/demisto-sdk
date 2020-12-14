@@ -74,7 +74,9 @@ class Linter:
             "is_long_running": False,
             "lint_unittest_files": [],
             "additional_requirements": [],
-            "docker_engine": docker_engine
+            "docker_engine": docker_engine,
+            "params": [],
+            "args": [],
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -188,9 +190,10 @@ class Linter:
             yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
+            self._facts['params'] = self._get_params_list(yml_obj)
+            self._facts['args'] = self._get_args_list(script_obj)
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
@@ -403,6 +406,8 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
+            myenv['args'] = ','.join([str(elem) for elem in self._facts['args']]) if self._facts['args'] else ''
+            myenv['params'] = ','.join([str(elem) for elem in self._facts['params']]) if self._facts['params'] else ''
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -751,10 +756,13 @@ class Linter:
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
                                                                                                    image=test_image,
                                                                                                    command=[
-                                                                                                       build_pylint_command(self._facts["lint_files"])],
+                                                                                                       build_pylint_command(
+                                                                                                           self._facts[
+                                                                                                               "lint_files"])],
                                                                                                    user=f"{os.getuid()}:4000",
                                                                                                    detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+                                                                                                   environment=self._facts[
+                                                                                                       "env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -822,10 +830,13 @@ class Linter:
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
                                                                                                    image=test_image,
                                                                                                    command=[
-                                                                                                       build_pytest_command(test_xml=test_xml, json=True)],
+                                                                                                       build_pytest_command(
+                                                                                                           test_xml=test_xml,
+                                                                                                           json=True)],
                                                                                                    user=f"{os.getuid()}:4000",
                                                                                                    detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+                                                                                                   environment=self._facts[
+                                                                                                       "env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -977,7 +988,8 @@ class Linter:
                                                                                                    command=build_pwsh_test_command(),
                                                                                                    user=f"{os.getuid()}:4000",
                                                                                                    detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+                                                                                                   environment=self._facts[
+                                                                                                       "env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -1007,3 +1019,34 @@ class Linter:
             exit_code = RERUN
 
         return exit_code, output
+
+    def _get_params_list(self, yml_obj: dict):
+        """ Get all parameters from yml file of the pack
+           Args:
+               yml_obj(dict): yml load file
+           Returns:
+               list: list of all params
+        """
+        configuration_obj = yml_obj.get('configuration', []) if isinstance(yml_obj.get('configuration'),
+                                                                           list) else yml_obj
+        param_names = []
+        for param in configuration_obj:
+            param_names.append(param.get('name', ''))
+        return param_names
+
+    def _get_args_list(self, script_obj: dict):
+        """ Get all arguments from yml file of the pack
+           Args:
+               script_obj(dict): the script section of the yml file.
+           Returns:
+               list: list of all arguments
+        """
+        commands_obj = script_obj.get('commands', {})
+        args = []
+        for command in commands_obj:
+            args_curr = command.get('arguments', [])
+            for arg in args_curr:
+                arg_curr = arg.get('name', '')
+                if arg_curr not in args:
+                    args.append(arg.get('name', ''))
+        return args

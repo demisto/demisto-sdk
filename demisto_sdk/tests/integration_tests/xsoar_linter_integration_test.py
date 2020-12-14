@@ -7,51 +7,62 @@ from demisto_sdk.tests.constants_test import (
     XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER, XSOAR_LINTER_PY3_VALID)
 
 files = [
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, []),
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', True, 0, []),
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, [], [], []),
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', True, 0, [],
+     ['url', 'proxy', 'insecure', 'fetch_limit', 'fetch_time', 'fetch_shaping', 'fetch_filter',
+      'fetch_queue_id', 'credentials'], ['limit', 'custom_filter', 'custom_shaping', 'limit', 'custom_filter']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', True, 1, [
-        'Print is found, Please remove all prints from the code.']),
+        'Print is found, Please remove all prints from the code.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',
         'Sleep is found, Please remove all sleep statements from the code.',
-        'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *']),
+        'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
+        "Some parameters from yml file are not implemented in the python file, Please make sure that every param is "
+        "implemented in your code. The params that are not implemented are ['test']",
+        "Some args from yml file are not implemented in the python file, Please make sure that every arg is "
+        "implemented in your code. The arguments that are not implemented are ['testarg']"],
+     ['url', 'proxy', 'insecure', 'fetch_limit', 'fetch_time', 'fetch_shaping', 'fetch_filter',
+      'fetch_queue_id', 'credentials', 'test'],
+     ['limit', 'custom_filter', 'custom_shaping', 'limit', 'custom_filter', 'testarg']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
       'Main function wasnt found in the file, Please add main()',
       'Do not use return_outputs function. Please return CommandResults object instead.',
-      'Do not use demisto.results function.']),
+      'Do not use demisto.results function.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', False, 1,
      ['Sys.exit use is found, Please use return instead.',
-      'Sleep is found, Please remove all sleep statements from the code.']),
+      'Sleep is found, Please remove all sleep statements from the code.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', True, 1,
-     ['Sys.exit use is found, Please use return instead.']),
+     ['Sys.exit use is found, Please use return instead.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'community', False, 1,
-     ['Print is found, Please remove all prints from the code.']),
+     ['Print is found, Please remove all prints from the code.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'partner', False, 4,
-     ['try and except statements were not found in main function.']),
+     ['try and except statements were not found in main function.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'community', False, 0,
-     []),
+     [], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'partner', False, 4,
      ['return_error should be used in main function. Please add it.',
-      'return_error used too many times, should be used only once in the code, in main function.']),
+      'return_error used too many times, should be used only once in the code, in main function.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'xsoar', False, 4,
      ['return_error should be used in main function. Please add it.',
-      'return_error used too many times, should be used only once in the code, in main function.']),
+      'return_error used too many times, should be used only once in the code, in main function.'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, '', False, 1,
-     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
+     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'xsoar', False, 1,
-     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
+     ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
-     ['Function arguments are missing type annotations. Please add type annotations']),
+     ['Function arguments are missing type annotations. Please add type annotations'], [], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Initialize of params was found outside of main function. Please use demisto.params() only inside main',
-      'Initialize of args was found outside of main function. Please use demisto.args() only inside main func']),
+      'Initialize of args was found outside of main function. Please use demisto.args() only inside main func'], [], []
+     ),
 
 ]
 
 
-@pytest.mark.parametrize('file, python_version,support_level,long_running,exit_code,error_msgs', files)
-def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_running, exit_code, error_msgs):
+@pytest.mark.parametrize('file, python_version,support_level,long_running,exit_code,error_msgs,params,args', files)
+def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_running, exit_code, error_msgs, params,
+                             args):
     """
     Given
     - file to run the linter on.
@@ -81,6 +92,8 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
                            docker_engine=True)
     runner._facts['support_level'] = support_level
     runner._facts['is_long_running'] = long_running
+    runner._facts['args'] = args
+    runner._facts['params'] = params
     exit_code_actual, output = runner._run_xsoar_linter(python_version, [file])
     assert exit_code == exit_code_actual
     for msg in error_msgs:

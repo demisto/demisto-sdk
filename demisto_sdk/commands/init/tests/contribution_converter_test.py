@@ -101,11 +101,13 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     sample_script_path = scripts_path / 'SampleScript'
     script_yml = sample_script_path / 'SampleScript.yml'
     script_py = sample_script_path / 'SampleScript.py'
+    script_readme_md = sample_script_path / 'README.md'
 
     assert scripts_path.exists()
     assert sample_script_path.exists()
     assert script_yml.exists()
     assert script_py.exists()
+    assert script_readme_md.exists()
 
     integrations_path = converted_pack_path / 'Integrations'
     sample_integration_path = integrations_path / 'Sample'
@@ -113,9 +115,16 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_py = sample_integration_path / 'Sample.py'
     integration_description = sample_integration_path / 'Sample_description.md'
     integration_image = sample_integration_path / 'Sample_image.png'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image]
+    integration_readme_md = sample_integration_path / 'README.md'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image,
+                         integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    with open(integration_readme_md, 'r') as readme:
+        readme_file = readme.read()
+        assert 'This is a sample integration\n' \
+               'This integration was integrated and tested with version xx of Sample.\n' \
+               'Supported Cortex XSOAR versions: 5.0.0 and later.'in readme_file
 
     layouts_path = converted_pack_path / 'Layouts'
     sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'

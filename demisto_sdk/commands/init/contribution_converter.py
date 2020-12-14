@@ -10,6 +10,14 @@ from string import punctuation
 from typing import Dict, List, Union
 
 import click
+from demisto_sdk.commands.unify.unifier import Unifier
+
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+
+from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
@@ -234,6 +242,18 @@ class ContributionConverter:
             input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
         )
 
+    def generate_readme_for_converted_pack(self, yml_path: str) -> None:
+        """Runs the demisto-sdk's generate-docs command on the pack converted from the contribution zipfile"""
+        click.echo(f'Executing \'generate-docs\' on the restructured contribution zip files at "{yml_path}"')
+        file_type = find_type(yml_path)
+        file_type = file_type.value if file_type else file_type
+        if file_type == 'integration':
+            generate_integration_doc(yml_path)
+        if file_type == 'script':
+            generate_script_doc(input=yml_path, examples=[])
+        if file_type == 'playbook':
+            generate_playbook_doc(yml_path)
+
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
@@ -268,6 +288,15 @@ class ContributionConverter:
                     self.content_item_to_package_format(
                         pack_subdir, del_unified=True, source_mapping=files_to_source_mapping
                     )
+
+                directories = get_child_directories(pack_subdir)
+                for directory in directories:
+                    unify = Unifier(input=directory, dir_name=basename)
+                    unified_files = unify.merge_script_package_to_yml()
+                    for unified_file in unified_files:
+                        self.generate_readme_for_converted_pack(unified_file)
+                        os.remove(unified_file)
+
             # format
             self.format_converted_pack()
         except Exception as e:

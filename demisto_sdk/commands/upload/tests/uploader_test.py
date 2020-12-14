@@ -230,6 +230,28 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
 
 
+def test_upload_indicator_field_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - An indicator field named DNS to upload
+
+    When
+        - Uploading indicator field
+
+    Then
+        - Ensure indicator field is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    indicator_field_name = "incidentfield-dns.json"
+    indicator_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{indicator_field_name}"
+    uploader = Uploader(input=indicator_field_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+
+    assert [(indicator_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
+
+
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """
     Given

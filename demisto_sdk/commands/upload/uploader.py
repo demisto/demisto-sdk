@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
@@ -32,10 +33,28 @@ from packaging.version import Version
 from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
-UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
-                             FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
-                             FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
-                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER]
+UPLOAD_SUPPORTED_ENTITIES = [
+    FileType.INTEGRATION,
+    FileType.SCRIPT,
+    FileType.TEST_SCRIPT,
+    FileType.PLAYBOOK,
+    FileType.TEST_PLAYBOOK,
+
+    FileType.OLD_CLASSIFIER,
+    FileType.CLASSIFIER,
+    FileType.MAPPER,
+
+    FileType.INCIDENT_TYPE,
+    FileType.INCIDENT_FIELD,
+    # FileType.REPUTATION,
+    FileType.INDICATOR_FIELD,
+
+    FileType.WIDGET,
+    # FileType.REPORT,
+    FileType.DASHBOARD,
+    FileType.LAYOUT,
+    FileType.LAYOUTS_CONTAINER,
+]
 
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
@@ -52,7 +71,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    REPORTS_DIR,
 ]
 
 

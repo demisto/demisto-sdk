@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import os
 import re
@@ -7,11 +8,14 @@ import time
 from concurrent.futures import as_completed
 from contextlib import contextmanager
 from shutil import make_archive, rmtree
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (BASE_PACK,
+                                                   CUSTOM_CONTENT_FILE_ENDINGS,
                                                    DOCUMENTATION_DIR,
+                                                   INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, PACKS_DIR,
+                                                   PACKS_PACK_META_FILE_NAME,
                                                    RELEASE_NOTES_DIR,
                                                    SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -35,6 +39,7 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
+
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger: logging.Logger
 EX_SUCCESS = 0
@@ -436,6 +441,8 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
     pack_created_files: List[Path] = []
     test_new_created_files: List[Path] = []
 
+    content_items_handler(content_object)
+
     with content_files_handler(artifact_manager, content_object) as files_to_remove:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
         if is_in_content_packs(content_object):
@@ -448,7 +455,7 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
             files_to_remove.extend(
                 [created_file for created_file in pack_created_files if created_file.name.endswith('_45.yml')])
 
-        # Content test fileter
+        # Content test filter
         if is_in_content_test(artifact_manager, content_object):
             object_report.set_content_test()
             test_new_created_files = dump_link_files(artifact_manager, content_object,
@@ -585,7 +592,7 @@ class DuplicateFiles(Exception):
 def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentObject,
                     dest_dir: Path, created_files: Optional[List[Path]] = None) -> List[Path]:
     """ Dump content object to requested destination dir.
-    Due to perfomence issue if known files allredy created and dump is done for the same object, This function
+    Due to performance issue if known files already created and dump is done for the same object, This function
     will link files instead of creating the files from scratch (Reduce unify, split etc.)
 
     Args:
@@ -598,7 +605,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
         List[Path]: List of new created files.
 
     Raises:
-        DuplicateFiles: Exception occured if duplicate files exists in the same dir (Protect from override).
+        DuplicateFiles: Exception occurred if duplicate files exists in the same dir (Protect from override).
     """
     new_created_files = []
     # Handle case where files already created
@@ -718,3 +725,69 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
         for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
                              artifact_manager.content_all_path]:
             logger.info(template.format(artifact_dir))
+
+
+###############################
+# Metadata handling functions #
+###############################
+
+
+def load_user_metadata(pack_metadata, pack_path, pack_name):
+    """Loads user defined metadata and stores part of it's data in defined properties fields.
+
+    Args:
+        pack_metadata (PackMetaData): the pack metadata object to load data into.
+        pack_name (str): name of the pack.
+        pack_path (str): path of the pack directory.
+    """
+    global logger
+
+    user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
+
+    if not os.path.exists(user_metadata_path):
+        logger.error(f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
+        return
+
+    try:
+        with open(user_metadata_path, "r") as user_metadata_file:
+            user_metadata = json.load(user_metadata_file)  # loading user metadata
+            # part of old packs are initialized with empty list
+            if isinstance(user_metadata, list):
+                user_metadata = {}
+
+        pack_metadata.name = user_metadata.get('name', '')
+        pack_metadata.description = user_metadata.get('description', '')
+        pack_metadata.support = user_metadata.get('support', '')
+        pack_metadata.current_version = user_metadata.get('currentVersion', '')
+        pack_metadata.author = user_metadata.get('author', '')
+        pack_metadata.hidden = user_metadata.get('hidden', False)
+
+    except Exception:
+        logger.error(f'Failed loading {pack_name} user metadata.')
+
+
+CONTENT_ITEMS: Dict[str, List] = {
+    'automation': [],
+    'playbook': [],
+    'integration': [],
+    'incidentfield': [],
+    'incidenttype': [],
+    'dashboard': [],
+    'indicatorfield': [],
+    'report': [],
+    'reputation': [],
+    'layoutscontainer': [],
+    'classifier': [],
+    'widget': []
+}
+
+
+def content_items_handler(content_object: ContentObject):
+    content_object_directory = content_object.path.parts[-3]
+
+    if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
+        return
+
+    # reputation in old format aren't supported in 6.0.0 server version
+    if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name, 'reputation-.*.json'):
+        return

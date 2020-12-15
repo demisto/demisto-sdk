@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
@@ -23,6 +23,7 @@ class PackMetaData(JSONObject):
         self._author: str = ''
         self._certification: str = ''
         self._price: int = 0
+        self._hidden: bool = False
         self._serverMinVersion: str = '0.0.0'
         self._currentVersion: str = '0.0.0'
         self._versionInfo: int = 0
@@ -194,6 +195,19 @@ class PackMetaData(JSONObject):
         self._price = new_pack_price
 
     @property
+    def hidden(self) -> bool:
+        """Object hidden attribute.
+        Returns:
+            bool: pack hidden.
+        """
+        return self._hidden
+
+    @hidden.setter
+    def hidden(self, is_hidden: bool):
+        """Setter for the hidden attribute"""
+        self._hidden = is_hidden
+
+    @property
     def server_min_version(self) -> str:
         """Object serverMinVersion attribute.
 
@@ -318,3 +332,6 @@ class PackMetaData(JSONObject):
     def dependencies(self, new_pack_dependencies: Dict[str, Dict]):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
+
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
+        pass

@@ -385,6 +385,45 @@ class TestAllArgsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_a)
             self.checker.leave_module(node_a)
 
+        self.checker.args_list = ['test1']
+        node_a = astroid.extract_node("""
+            def test_function():
+                args.get('test1')  #@
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_all_index_args_are_implemented(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - all args are implemented in the code.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        self.checker.args_list = ['test1']
+        node_a = astroid.extract_node("""
+            def test_function():
+                args['test1'] #@
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.args_list = ['test1']
+        node_a = astroid.extract_node("""
+                    def test_function():
+                        demisto.args()['test1'] #@
+                 """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
+            self.checker.leave_module(node_a)
+
 
 class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
     """
@@ -392,7 +431,7 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
     """
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
-    def test_some_params_arent_implemented(self):
+    def test_some_get_params_arent_implemented(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
@@ -417,7 +456,23 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_a)
             self.checker.leave_module(node_a)
 
-    def test_all_params_are_implemented(self):
+        self.checker.param_list = ['test1', 'test2']
+        node_a = astroid.extract_node("""
+            def test_function():
+                test1 = param.get('test').get('test1')  #@
+         """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-params-exist',
+                    args=str(['test1', 'test2']),
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_all_get_params_are_implemented(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
@@ -434,4 +489,63 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.param_list = ['test1']
+        node_a = astroid.extract_node("""
+            def test_function():
+                params.get('test1')  #@
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_all_index_params_are_implemented(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - all params are implemented in the code.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        self.checker.param_list = ['test1']
+        node_a = astroid.extract_node("""
+            def test_function():
+                params['test1']['identifier'] #@
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.param_list = ['test1']
+        node_a = astroid.extract_node("""
+                    def test_function():
+                        params['test1'] #@
+                 """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.param_list = ['test1']
+        node_a = astroid.extract_node("""
+                    def test_function():
+                        demisto.params()['test1'] #@
+                 """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.param_list = ['test1']
+        node_a = astroid.extract_node("""
+                    def test_function():
+                        demisto.params()['test1']['identifier'] #@
+                 """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subsscript(node_a)
             self.checker.leave_module(node_a)

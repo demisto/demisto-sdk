@@ -1,5 +1,6 @@
 import os
 
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -50,8 +51,8 @@ class CustomBaseChecker(BaseChecker):
         self._sleep_checker(node)
         self._quit_checker(node)
         self._exit_checker(node)
-        self._arg_implemented_check(node)
-        self._params_implemented_check(node)
+        self._arg_implemented_get_check(node)
+        self._params_implemented_get_check(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -59,6 +60,10 @@ class CustomBaseChecker(BaseChecker):
     # Print statment for Python2 only.
     def visit_print(self, node):
         self.add_message("print-exists", node=node)
+
+    def visit_subsscript(self, node):
+        self._arg_implemented_index_check(node)
+        self._params_implemented_index_check(node)
 
     def leave_module(self, node):
         self._all_args_implemented(node)
@@ -113,7 +118,7 @@ class CustomBaseChecker(BaseChecker):
         except Exception:
             pass
 
-    def _arg_implemented_check(self, node):
+    def _arg_implemented_get_check(self, node):
         try:
             if node.func.attrname == 'get':
                 for get_arg in node.args:
@@ -122,7 +127,20 @@ class CustomBaseChecker(BaseChecker):
         except Exception:
             pass
 
-    def _params_implemented_check(self, node):
+    def _arg_implemented_index_check(self, node):
+        try:
+            # for demisto.args()['arg'] implementation
+            if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args' and node.slice.value.value in self.args_list:
+                self.args_list.remove(node.slice.value.value)
+        except Exception:
+            try:
+                # for args['arg'] implementation
+                if node.value.name == 'args' and node.slice.value.value in self.args_list:
+                    self.args_list.remove(node.slice.value.value)
+            except Exception:
+                pass
+
+    def _params_implemented_get_check(self, node):
         try:
             if node.func.attrname == 'get':
                 for get_param in node.args:
@@ -133,6 +151,34 @@ class CustomBaseChecker(BaseChecker):
                         for get_param in node.func.expr.args:
                             if get_param.value in self.param_list:
                                 self.param_list.remove(get_param.value)
+        except Exception:
+            pass
+
+    def _params_implemented_index_check(self, node):
+        try:
+            # for demisto.params()['param'] implementation
+            if isinstance(node.value, astroid.Call):
+                if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params' and\
+                        node.slice.value.value in self.param_list:
+                    self.param_list.remove(node.slice.value.value)
+
+            # for params['param'] implementation
+            elif isinstance(node.value, astroid.Name):
+                if node.value.name == 'params' and node.slice.value.value in self.param_list:
+                    self.param_list.remove(node.slice.value.value)
+
+            # for double index ['cred']['id']
+            elif isinstance(node.value, astroid.Subscript):
+                # for demisto.params()['cred']['identifier']
+                if isinstance(node.value.value, astroid.Call):
+                    if node.value.value.func.expr.name == 'demisto' and node.value.value.func.attrname == 'params' and\
+                            node.value.slice.value.value in self.param_list:
+                        self.param_list.remove(node.value.slice.value.value)
+                # for params['cred']['identifier']
+                if isinstance(node.value.value, astroid.Name):
+                    if node.value.value.name == 'params' and node.value.slice.value.value in self.param_list:
+                        self.param_list.remove(node.value.slice.value.value)
+
         except Exception:
             pass
 

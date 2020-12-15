@@ -8,6 +8,11 @@
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
+* Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
+* Added new code validations for *NotImplementedError* exception raise to `XSOAR-linter`.
+* Command create-content-artifacts additional support for **Author_image.png** object.
+* Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
+* Added support for **update-release-notes** command to update release notes according to master branch.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 
 # 1.2.11

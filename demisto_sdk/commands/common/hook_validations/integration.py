@@ -101,6 +101,15 @@ class IntegrationValidator(ContentEntityValidator):
             answers.append(self.are_tests_configured())
         return all(answers)
 
+    def is_valid_as_deprecated(self):
+        """Check if the integration is valid as a deprecated integration."""
+
+        answers = [
+            self.is_valid_deprecated_integration_display_name(),
+            self.is_valid_deprecated_integration_description(),
+        ]
+        return all(answers)
+
     def are_tests_configured(self) -> bool:
         """
         Checks if the integration has a TestPlaybook and if the TestPlaybook is configured in conf.json

@@ -1027,11 +1027,14 @@ class Linter:
            Returns:
                list: list of all params
         """
-        configuration_obj = yml_obj.get('configuration', []) if isinstance(yml_obj.get('configuration'),
-                                                                           list) else yml_obj
         param_names = []
-        for param in configuration_obj:
-            param_names.append(param.get('name', ''))
+        try:
+            configuration_obj = yml_obj.get('configuration', []) if isinstance(yml_obj.get('configuration'),
+                                                                               list) else yml_obj
+            for param in configuration_obj:
+                param_names.append(param.get('name', ''))
+        except Exception:
+            pass
         return param_names
 
     def _get_args_list(self, script_obj: dict):
@@ -1041,10 +1044,13 @@ class Linter:
            Returns:
                list: list of all arguments
         """
-        commands_obj = script_obj.get('commands', {})
         args = []
-        for command in commands_obj:
-            args_curr = command.get('arguments', [])
-            for arg in args_curr:
-                args.append(arg.get('name', ''))
+        try:
+            commands_obj = script_obj.get('commands', {})
+            for command in commands_obj:
+                args_curr = command.get('arguments', [])
+                for arg in args_curr:
+                    args.append(arg.get('name', ''))
+        except Exception:
+            pass
         return args

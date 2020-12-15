@@ -549,3 +549,60 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_subsscript(node_a)
             self.checker.leave_module(node_a)
+
+
+class TestApiModuleChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests that if there is an import from api module then the feed params are removed from params list
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_api_module_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Parameters list which includes feed required params.
+            - Feed Params list which is a list with three required params.
+            - import from some ApiModule (HTTPFeedApiModule).
+        Then:
+             - Ensure that there is no errors, Check that there is no error message.
+               This is because the current params list parameters should be implemented in the api module
+        """
+        self.checker.param_list = ['feedReputation', 'feed']
+        self.checker.feed_params = ['feedReputation', 'feed', 'feedInterval']
+        node_a = astroid.extract_node("""
+            from HTTPFeedApiModule import *
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_api_module_doesnt_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Parameters list which includes feed required params.
+            - Feed Params list which is empty.
+            - No import from any ApiModule.
+        Then:
+            - Ensure that the correct error messages is printed, as this is not implemented within any api module
+             all params should be implemented
+        """
+        self.checker.param_list = ['feedReputation', 'feed']
+        self.checker.feed_params = ['feedReputation', 'feed', 'feedInterval']
+        node_a = astroid.extract_node("""
+                a = test
+         """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-params-exist',
+                    args=str(['feedReputation', 'feed']),
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+            self.checker.leave_module(node_a)

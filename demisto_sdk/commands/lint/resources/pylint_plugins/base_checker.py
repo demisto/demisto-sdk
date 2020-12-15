@@ -45,6 +45,7 @@ class CustomBaseChecker(BaseChecker):
         super(CustomBaseChecker, self).__init__(linter)
         self.args_list = os.getenv('args').split(',') if os.getenv('args') else []
         self.param_list = os.getenv('params').split(',') if os.getenv('params') else []
+        self.feed_params = os.getenv('feed_params').split(',') if os.getenv('feed_params') else []
 
     def visit_call(self, node):
         self._print_checker(node)
@@ -56,6 +57,7 @@ class CustomBaseChecker(BaseChecker):
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
+        self._api_module_import_checker(node)
 
     # Print statment for Python2 only.
     def visit_print(self, node):
@@ -115,6 +117,17 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.modname == 'CommonServerPython' and not node.names[0][0] == '*':
                 self.add_message("invalid-import-common-server-python", node=node)
+        except Exception:
+            pass
+
+    def _api_module_import_checker(self, node):
+        try:
+            # for feeds which use api module -> the feed required params are implemented in the api module code.
+            # as a result we will remove them from param list.
+            if 'ApiModule' in node.modname:
+                for param in self.feed_params:
+                    if param in self.param_list:
+                        self.param_list.remove(param)
         except Exception:
             pass
 

@@ -18,7 +18,8 @@ import docker.errors
 import git
 import requests
 # Local packages
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+                                                   TYPE_PWSH, TYPE_PYTHON)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from docker.models.containers import Container
 
@@ -442,3 +443,11 @@ def split_warnings_errors(output: str):
             other_msg_list.append(msg)
 
     return error_list, warnings_list, other_msg_list
+
+
+def prepare_feed_params_list():
+    """get required feed param names from feed required params list"""
+    feed_params = []
+    for param in FEED_REQUIRED_PARAMS:
+        feed_params.append(param.get('name', ''))
+    return feed_params

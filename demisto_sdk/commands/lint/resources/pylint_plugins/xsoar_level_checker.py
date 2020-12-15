@@ -34,25 +34,31 @@ class XsoarChecker(BaseChecker):
     # -------------------------------------------- Validations--------------------------------------------------
 
     def _type_annotations_checker(self, node):
-        if not os.getenv('PY2'):
-            annotation = True
-            for ann, args in zip(node.args.annotations, node.args.args):
-                if not ann and args.name != 'self':
-                    annotation = False
-            if not annotation and node.name not in ['main', '__init__']:
-                self.add_message("missing-arg-type-annoation", node=node)
+        try:
+            if not os.getenv('PY2'):
+                annotation = True
+                for ann, args in zip(node.args.annotations, node.args.args):
+                    if not ann and args.name != 'self':
+                        annotation = False
+                if not annotation and node.name not in ['main', '__init__']:
+                    self.add_message("missing-arg-type-annoation", node=node)
+        except Exception:
+            pass
 
     def _not_implemented_error_in_main(self, node):
-        if node.name == 'main':
-            not_implemented_error_exist = False
-            for child in self._inner_search_return_error(node):
-                if isinstance(child, astroid.If):
-                    else_cluse = child.orelse
-                    for line in else_cluse:
-                        if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
-                            not_implemented_error_exist = True
-            if not not_implemented_error_exist:
-                self.add_message("not-implemented-error-doesnt-exist", node=node)
+        try:
+            if node.name == 'main':
+                not_implemented_error_exist = False
+                for child in self._inner_search_return_error(node):
+                    if isinstance(child, astroid.If):
+                        else_cluse = child.orelse
+                        for line in else_cluse:
+                            if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
+                                not_implemented_error_exist = True
+                if not not_implemented_error_exist:
+                    self.add_message("not-implemented-error-doesnt-exist", node=node)
+        except Exception:
+            pass
 
     def _inner_search_return_error(self, node):
         try:

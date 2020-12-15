@@ -8,7 +8,7 @@
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
-* Fixed the default run of **lint** to be only on changed files, if no additional flags specifying the packages are given.
+* Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

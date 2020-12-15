@@ -1034,7 +1034,7 @@ class Linter:
             for param in configuration_obj:
                 param_names.append(param.get('name', ''))
         except Exception:
-            pass
+            logger.debug(f"Failed getting the parameters from the yml file")
         return param_names
 
     def _get_args_list(self, script_obj: dict):
@@ -1052,5 +1052,5 @@ class Linter:
                 for arg in args_curr:
                     args.append(arg.get('name', ''))
         except Exception:
-            pass
+            logger.debug(f"Failed getting the arguments from the yml file")
         return args

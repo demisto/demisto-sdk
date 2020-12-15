@@ -63,7 +63,7 @@ class CustomBaseChecker(BaseChecker):
     def visit_print(self, node):
         self.add_message("print-exists", node=node)
 
-    def visit_subsscript(self, node):
+    def visit_subscript(self, node):
         self._arg_implemented_index_check(node)
         self._params_implemented_index_check(node)
 
@@ -133,10 +133,11 @@ class CustomBaseChecker(BaseChecker):
 
     def _arg_implemented_get_check(self, node):
         try:
-            if node.func.attrname == 'get':
+            if node.func.attrname == 'get' or node.func.attrname == 'getArg':
                 for get_arg in node.args:
                     if get_arg.value in self.args_list:
                         self.args_list.remove(get_arg.value)
+
         except Exception:
             pass
 
@@ -155,7 +156,7 @@ class CustomBaseChecker(BaseChecker):
 
     def _params_implemented_get_check(self, node):
         try:
-            if node.func.attrname == 'get':
+            if node.func.attrname == 'get' or node.func.attrname == 'getParam':
                 for get_param in node.args:
                     if get_param.value in self.param_list:
                         self.param_list.remove(get_param.value)
@@ -170,27 +171,27 @@ class CustomBaseChecker(BaseChecker):
     def _params_implemented_index_check(self, node):
         try:
             # for demisto.params()['param'] implementation
-            if isinstance(node.value, astroid.Call):
-                if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params' and\
-                        node.slice.value.value in self.param_list:
-                    self.param_list.remove(node.slice.value.value)
+            if isinstance(node.value,
+                          astroid.Call) and node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params' and \
+                    node.slice.value.value in self.param_list:
+                self.param_list.remove(node.slice.value.value)
 
             # for params['param'] implementation
-            elif isinstance(node.value, astroid.Name):
-                if node.value.name == 'params' and node.slice.value.value in self.param_list:
-                    self.param_list.remove(node.slice.value.value)
+            elif isinstance(node.value,
+                            astroid.Name) and node.value.name == 'params' and node.slice.value.value in self.param_list:
+                self.param_list.remove(node.slice.value.value)
 
             # for double index ['cred']['id']
             elif isinstance(node.value, astroid.Subscript):
                 # for demisto.params()['cred']['identifier']
-                if isinstance(node.value.value, astroid.Call):
-                    if node.value.value.func.expr.name == 'demisto' and node.value.value.func.attrname == 'params' and\
-                            node.value.slice.value.value in self.param_list:
-                        self.param_list.remove(node.value.slice.value.value)
+                if isinstance(node.value.value,
+                              astroid.Call) and node.value.value.func.expr.name == 'demisto' and node.value.value.func.attrname == 'params' and \
+                        node.value.slice.value.value in self.param_list:
+                    self.param_list.remove(node.value.slice.value.value)
                 # for params['cred']['identifier']
-                if isinstance(node.value.value, astroid.Name):
-                    if node.value.value.name == 'params' and node.value.slice.value.value in self.param_list:
-                        self.param_list.remove(node.value.slice.value.value)
+                elif isinstance(node.value.value,
+                                astroid.Name) and node.value.value.name == 'params' and node.value.slice.value.value in self.param_list:
+                    self.param_list.remove(node.value.slice.value.value)
 
         except Exception:
             pass

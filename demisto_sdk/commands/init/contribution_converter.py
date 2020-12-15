@@ -10,14 +10,6 @@ from string import punctuation
 from typing import Dict, List, Union
 
 import click
-from demisto_sdk.commands.unify.unifier import Unifier
-
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
-
-from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
-
-from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
@@ -29,7 +21,14 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                get_child_files,
                                                get_content_path)
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+    generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.unify.unifier import Unifier
 
 
 class ContributionConverter:

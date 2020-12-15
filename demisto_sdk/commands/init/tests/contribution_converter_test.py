@@ -124,7 +124,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
         readme_file = readme.read()
         assert 'This is a sample integration\n' \
                'This integration was integrated and tested with version xx of Sample.\n' \
-               'Supported Cortex XSOAR versions: 5.0.0 and later.'in readme_file
+               'Supported Cortex XSOAR versions: 5.0.0 and later.' in readme_file
 
     layouts_path = converted_pack_path / 'Layouts'
     sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'

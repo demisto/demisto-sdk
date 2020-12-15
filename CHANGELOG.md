@@ -1,4 +1,8 @@
 # Changelog
+* Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
+
+
+# 1.2.12
 * Bandit now reports also on medium severity issues.
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
@@ -13,7 +17,6 @@
 * Command create-content-artifacts additional support for **Author_image.png** object.
 * Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
 * Added support for **update-release-notes** command to update release notes according to master branch.
-
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

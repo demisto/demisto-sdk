@@ -5,9 +5,9 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
+from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.text_based import TextBased
-from TestSuite.playbook import Playbook
 
 
 class Contribution:

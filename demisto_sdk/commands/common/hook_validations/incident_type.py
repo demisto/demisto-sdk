@@ -1,6 +1,7 @@
 import re
 from distutils.version import LooseVersion
 
+import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -19,6 +20,8 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         if not self.old_file:
             return True
+
+        click.secho(f'Validating backwards compatibility for {self.file_path}')
 
         is_bc_broke = any(
             [

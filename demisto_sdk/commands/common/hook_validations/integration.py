@@ -1,3 +1,4 @@
+import click
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
@@ -46,6 +47,8 @@ class IntegrationValidator(ContentEntityValidator):
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
         if not self.old_file:
             return True
+
+        click.secho(f'Validating backwards compatibility for {self.file_path}')
 
         answers = [
             self.is_changed_context_path(),

@@ -1,3 +1,4 @@
+import click
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
@@ -37,6 +38,8 @@ class ScriptValidator(ContentEntityValidator):
         """Check if the script is backward compatible."""
         if not self.old_file:
             return True
+
+        click.secho(f'Validating backwards compatibility for {self.file_path}')
 
         is_breaking_backwards = [
             self.is_context_path_changed(),

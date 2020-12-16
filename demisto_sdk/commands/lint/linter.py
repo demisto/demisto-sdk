@@ -16,8 +16,7 @@ import docker.errors
 import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common.constants import (FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATIONS_DIR,
+from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
@@ -35,6 +34,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                get_python_version_from_image,
                                                prepare_feed_params_list,
                                                pylint_plugin,
+                                               remove_required_params_list,
                                                split_warnings_errors,
                                                stream_docker_container_output)
 from jinja2 import Environment, FileSystemLoader, exceptions
@@ -80,7 +80,8 @@ class Linter:
             "params": [],
             "args": [],
             "fetch": None,
-            "feed": None
+            "feed": None,
+            "feed_params": None
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -196,7 +197,9 @@ class Linter:
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['fetch'] = script_obj.get('isfetch')
-            self._facts['feed'] = prepare_feed_params_list() if script_obj.get('feed') else []
+            self._facts['feed'] = script_obj.get('feed')
+
+            self._facts['feed_params'] = prepare_feed_params_list() if script_obj.get('feed') else []
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
             self._facts['params'] = self._get_params_list(yml_obj)
             self._facts['args'] = self._get_args_list(script_obj)
@@ -414,7 +417,8 @@ class Linter:
                 myenv['PY2'] = 'True'
             myenv['args'] = ','.join([str(elem) for elem in self._facts['args']]) if self._facts['args'] else ''
             myenv['params'] = ','.join([str(elem) for elem in self._facts['params']]) if self._facts['params'] else ''
-            myenv['feed_params'] = ','.join([str(elem) for elem in self._facts['feed']]) if self._facts['feed'] else ''
+            myenv['feed_params'] = ','.join([str(elem) for elem in self._facts['feed_params']]) \
+                if self._facts['feed_params'] else ''
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -1041,12 +1045,8 @@ class Linter:
             for param in configuration_obj:
                 param_names.append(param.get('name', ''))
 
-            # remove fetch required params
-            if self._facts['fetch']:
-                for fetch_param in FETCH_REQUIRED_PARAMS:
-                    if fetch_param.get('name') in param_names:
-                        param_names.remove(fetch_param.get('name'))
-
+            # remove server required params ( fetch / feed) according to which integration it is
+            param_names = remove_required_params_list(param_names, self._facts['fetch'], self._facts['feed'])
         except Exception:
             logger.debug("Failed getting the parameters from the yml file")
         return param_names

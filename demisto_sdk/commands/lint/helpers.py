@@ -18,8 +18,10 @@ import docker.errors
 import git
 import requests
 # Local packages
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.constants import (
+    FEED_OPTIONAL_PARAMS_SERVER_IMP, FEED_REQUIRED_PARAMS_CONTENT_IMP,
+    FEED_REQUIRED_PARAMS_SERVER_IMP, FETCH_OPTIONAL_PARAMS,
+    FETCH_REQUIRED_PARAMS, TYPE_PWSH, TYPE_PYTHON)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from docker.models.containers import Container
 
@@ -447,7 +449,21 @@ def split_warnings_errors(output: str):
 
 def prepare_feed_params_list():
     """get required feed param names from feed required params list"""
-    feed_params = []
-    for param in FEED_REQUIRED_PARAMS:
-        feed_params.append(param.get('name', ''))
-    return feed_params
+    feed_params_content = []
+    for param in FEED_REQUIRED_PARAMS_CONTENT_IMP:
+        feed_params_content.append(param.get('name', ''))
+    return feed_params_content
+
+
+def remove_required_params_list(param_names: list, isfetch: bool, isfeed: bool):
+    required_list = []
+    if isfeed:
+        required_list.extend(FEED_REQUIRED_PARAMS_SERVER_IMP)
+        required_list.extend(FEED_OPTIONAL_PARAMS_SERVER_IMP)
+    if isfetch:
+        required_list.extend(FETCH_REQUIRED_PARAMS)
+        required_list.extend(FETCH_OPTIONAL_PARAMS)
+    for feed_param in required_list:
+        if feed_param.get('name') in param_names:
+            param_names.remove(feed_param.get('name'))
+    return param_names

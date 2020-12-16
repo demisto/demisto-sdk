@@ -45,7 +45,8 @@ class CustomBaseChecker(BaseChecker):
         super(CustomBaseChecker, self).__init__(linter)
         self.args_list = os.getenv('args').split(',') if os.getenv('args') else []
         self.param_list = os.getenv('params').split(',') if os.getenv('params') else []
-        self.feed_params = os.getenv('feed_params').split(',') if os.getenv('feed_params') else []
+        self.feed_params = os.getenv('feed_params').split(',') \
+            if os.getenv('feed_params') else []
 
     def visit_call(self, node):
         self._print_checker(node)

@@ -103,7 +103,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.MAPPER.value: CLASSIFIERS_DIR
 }
 
-
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
@@ -320,7 +319,6 @@ PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = fr'{INTEGRATIONS_DIR_REGEX}/integration
 PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_INTEGRATION_NON_SPLIT_README_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$'
 
-
 SCRIPTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{SCRIPTS_DIR}'
 SCRIPT_DIR_REGEX = fr'{SCRIPTS_DIR_REGEX}\/([^\\/]+)'
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
@@ -335,7 +333,6 @@ PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = fr'{SCRIPTS_DIR_REGEX}/script-([^\\/]+)'
 PACKS_SCRIPT_TEST_PLAYBOOK = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$'
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$'
-
 
 PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
 PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json'
@@ -375,7 +372,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*'
 PACKS_MAPPER_JSON_REGEX = fr'{_PACKS_MAPPER_BASE_REGEX}\.json'
 
-
 PACKS_CONNECTIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}'
 PACKS_CONNECTION_JSON_REGEX = fr'{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$'
 
@@ -388,7 +384,6 @@ PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
-
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
                                                                                      PACKS_DIR,
@@ -812,7 +807,6 @@ SCHEMA_TO_REGEX = {
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
-
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
@@ -867,8 +861,7 @@ BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
 IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONTENT_PACK}
-
-FEED_REQUIRED_PARAMS = [
+FEED_REQUIRED_PARAMS_SERVER_IMP = [
     {
         'defaultvalue': 'true',
         'display': 'Fetch indicators',
@@ -921,7 +914,9 @@ FEED_REQUIRED_PARAMS = [
         'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
                           ' This means that if an indicator from this feed is on the exclusion list,'
                           ' the indicator might still be added to the system.'
-    },
+    }
+]
+FEED_REQUIRED_PARAMS_CONTENT_IMP = [
     {
         'additionalinfo': 'Supports CSV values.',
         'display': 'Tags',
@@ -939,6 +934,22 @@ FEED_REQUIRED_PARAMS = [
     }
 ]
 
+FEED_OPTIONAL_PARAMS_SERVER_IMP = [
+    {
+        'additionalinfo': "Incremental feeds pull only new or modified indicators that have been sent from the"
+                          "integration. As the determination if the indicator is new or modified happens on the"
+                          " 3rd-party vendor's side, and only indicators that are new or modified are sent to"
+                          " Cortex XSOAR, all indicators coming from these feeds are labeled new or modified.",
+        'display': 'Incremental Feed',
+        'name': 'feedIncremental',
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+        'required': False,
+        'type': 8
+    }
+]
+
+FEED_REQUIRED_PARAMS = FEED_REQUIRED_PARAMS_SERVER_IMP + FEED_REQUIRED_PARAMS_CONTENT_IMP
+
 FETCH_REQUIRED_PARAMS = [
     {
         'display': 'Incident type',
@@ -949,6 +960,15 @@ FETCH_REQUIRED_PARAMS = [
     {
         'display': 'Fetch incidents',
         'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]
+
+FETCH_OPTIONAL_PARAMS = [
+    {
+        'display': 'Fetch credentials',
+        'name': 'isFetchCredentials',
         'required': False,
         'type': 8
     }

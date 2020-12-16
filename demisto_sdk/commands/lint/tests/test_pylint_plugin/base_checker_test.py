@@ -411,7 +411,7 @@ class TestAllArgsImplementedChecker(pylint.testutils.CheckerTestCase):
          """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
         self.checker.args_list = ['test1']
@@ -421,7 +421,7 @@ class TestAllArgsImplementedChecker(pylint.testutils.CheckerTestCase):
                  """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
 
@@ -517,7 +517,7 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
          """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
         self.checker.param_list = ['test1']
@@ -527,7 +527,7 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
                  """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
         self.checker.param_list = ['test1']
@@ -537,7 +537,7 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
                  """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
         self.checker.param_list = ['test1']
@@ -547,7 +547,7 @@ class TestAllParamsImplementedChecker(pylint.testutils.CheckerTestCase):
                  """)
         assert node_a is not None
         with self.assertNoMessages():
-            self.checker.visit_subsscript(node_a)
+            self.checker.visit_subscript(node_a)
             self.checker.leave_module(node_a)
 
 

@@ -1,5 +1,6 @@
 import os
 
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -17,7 +18,12 @@ base_msg = {
               "Please remove all quit statements from the code.",),
     "E9006": ("Invalid CommonServerPython import was found. Please change the import to: "
               "from CommonServerPython import *", "invalid-import-common-server-python",
-              "Please change the import to: from CommonServerPython import *")
+              "Please change the import to: from CommonServerPython import *"),
+    "E9010": ("Some commands from yml file are not implemented in the python file, Please make sure that every "
+              "command is implemented in your code. The commands that are not implemented are %s",
+              "unimplemented-commands-exist",
+              "Some commands from yml file are not implemented in the python file, Please make sure that every "
+              "command is implemented in your code.")
 }
 
 
@@ -32,6 +38,7 @@ class CustomBaseChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(CustomBaseChecker, self).__init__(linter)
+        self.commands = os.getenv('commands').split(',') if os.getenv('commands') else []
 
     def visit_call(self, node):
         self._print_checker(node)
@@ -45,6 +52,12 @@ class CustomBaseChecker(BaseChecker):
     # Print statment for Python2 only.
     def visit_print(self, node):
         self.add_message("print-exists", node=node)
+
+    def visit_dict(self, node):
+        self._commands_in_dict_keys_checker(node)
+
+    def visit_module(self, node):
+        self._all_commands_implemented(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -94,6 +107,19 @@ class CustomBaseChecker(BaseChecker):
                 self.add_message("invalid-import-common-server-python", node=node)
         except Exception:
             pass
+
+    def _commands_in_dict_keys_checker(self, node):
+        try:
+            for sub_node in node.get_children():
+                if isinstance(sub_node, astroid.Name) and sub_node.name in self.commands:
+                    self.commands.remove(sub_node.name)
+        except Exception:
+            pass
+
+    def _all_commands_implemented(self, node):
+        if self.commands:
+            self.add_message("unimplemented-commands-exist",
+                             args=str(self.commands), node=node)
 
 
 def register(linter):

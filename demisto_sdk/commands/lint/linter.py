@@ -74,7 +74,8 @@ class Linter:
             "is_long_running": False,
             "lint_unittest_files": [],
             "additional_requirements": [],
-            "docker_engine": docker_engine
+            "docker_engine": docker_engine,
+            "commands": None
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -190,6 +191,7 @@ class Linter:
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
 
             self._facts['is_long_running'] = script_obj.get('longRunning')
+            self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -403,6 +405,8 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
+            myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
+                if self._facts['commands'] else ''
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -1007,3 +1011,19 @@ class Linter:
             exit_code = RERUN
 
         return exit_code, output
+
+    def _get_commands_list(self, script_obj: dict):
+        """ Get all commands from yml file of the pack
+           Args:
+               script_obj(dict): the script section of the yml file.
+           Returns:
+               list: list of all commands
+        """
+        commands_list = []
+        try:
+            commands_obj = script_obj.get('commands', {})
+            for command in commands_obj:
+                commands_list.append(command.get('name', ''))
+        except Exception:
+            logger.debug("Failed getting the commands from the yml file")
+        return commands_list

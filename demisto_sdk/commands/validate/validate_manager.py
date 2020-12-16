@@ -1195,7 +1195,7 @@ class ValidateManager:
         """
 
         Args:
-            skip_dependencies (bool): whether should skip id set validation or not
+            skip_id_set_creation (bool): whether should skip id set validation or not
             this will also determine whether a new id_set can be created by validate.
             id_set_path (str): id_set.json path file
 

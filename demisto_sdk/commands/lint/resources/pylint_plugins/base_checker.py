@@ -54,6 +54,7 @@ class CustomBaseChecker(BaseChecker):
         self._exit_checker(node)
         self._arg_implemented_get_check(node)
         self._params_implemented_get_check(node)
+        self._handle_proxy_exist_checker(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -117,6 +118,13 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.modname == 'CommonServerPython' and not node.names[0][0] == '*':
                 self.add_message("invalid-import-common-server-python", node=node)
+        except Exception:
+            pass
+
+    def _handle_proxy_exist_checker(self, node):
+        try:
+            if node.func.name == "handle_proxy" and "proxy" in self.param_list:
+                self.param_list.remove("proxy")
         except Exception:
             pass
 

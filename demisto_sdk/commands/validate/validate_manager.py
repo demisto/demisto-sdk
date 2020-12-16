@@ -54,16 +54,14 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.commands.common.tools import (filter_packagify_changes,
-                                               find_type, get_api_module_ids,
+from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_content_release_identifier,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, has_remote_configured,
-                                               is_origin_content_repo,
-                                               open_id_set_file, run_command)
+                                               get_yaml, open_id_set_file,
+                                               run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from packaging import version
 

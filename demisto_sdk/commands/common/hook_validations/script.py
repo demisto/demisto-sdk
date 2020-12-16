@@ -1,4 +1,5 @@
-from demisto_sdk.commands.common.constants import PYTHON_SUBTYPES, TYPE_PWSH
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -61,8 +62,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
-            self.is_valid_pwsh(),
-            self.is_valid_deprecated_script()
+            self.is_valid_pwsh()
         ])
         # check only on added files
         if not self.old_file:
@@ -173,7 +173,8 @@ class ScriptValidator(ContentEntityValidator):
     def is_docker_image_valid(self):
         # type: () -> bool
         # dockers should not be checked when running on all files
-        if self.skip_docker_check:
+        # dockers should not be checked when running on ApiModules scripts
+        if self.skip_docker_check or API_MODULES_PACK in self.file_path:
             return True
 
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
@@ -209,7 +210,7 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_deprecated_script(self) -> bool:
+    def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')

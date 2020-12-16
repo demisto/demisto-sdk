@@ -339,12 +339,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", "3.7"]],
+            "images": [["image", 3.7]],
             "test": False,
             "version_two": False,
             "lint_files": [],
             "lint_unittest_files": [unittest_path],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": 3.7,
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')
@@ -390,12 +391,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", "3.7"]],
+            "images": [["image", 3.7]],
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
             "lint_unittest_files": [unittest_path],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": 3.7,
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')

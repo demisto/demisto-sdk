@@ -8,10 +8,10 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES, PACKS_DIR,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
-from demisto_sdk.commands.common.content import Content
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -64,6 +64,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                is_origin_content_repo,
                                                open_id_set_file, run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from packaging import version
 
 
 class ValidateManager:
@@ -72,7 +73,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            no_auto_stage=False
+            skip_id_set_creation=False, no_auto_stage=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -88,6 +89,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
+        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
         self.no_auto_stage = no_auto_stage
@@ -98,7 +100,7 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.id_set_file = self.get_id_set_file(self.skip_dependencies, self.id_set_path)
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -109,6 +111,7 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
+        self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
                 click.echo('Running in a private repository')
@@ -345,13 +348,13 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -470,26 +473,56 @@ class ValidateManager:
 
         return True
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
+
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=playbook_validator.current_file,
+                                                               is_modified=True,
+                                                               is_backward_check=False,
+                                                               validator=playbook_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         return playbook_validator.is_valid_playbook(validate_rn=False,
                                                     id_set_file=self.id_set_file)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
+
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=integration_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=integration_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks)
+
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=script_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=script_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         if is_modified and self.is_backward_check:
             return all([script_validator.is_valid_file(validate_rn=False),
                         script_validator.is_backward_compatible()])
@@ -680,7 +713,8 @@ class ValidateManager:
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
-            if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
+            # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
+            if 'toversion' not in yaml_data and not yaml_data.get('deprecated'):
                 error_message, error_code = Errors.invalid_package_structure(file_path)
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False
@@ -1012,7 +1046,7 @@ class ValidateManager:
         return packs
 
     @staticmethod
-    def get_id_set_file(skip_dependencies, id_set_path):
+    def get_id_set_file(skip_id_set_creation, id_set_path):
         """
 
         Args:
@@ -1025,8 +1059,53 @@ class ValidateManager:
         """
         id_set = {}
         if not os.path.isfile(id_set_path):
-            if not skip_dependencies:
+            if not skip_id_set_creation:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             id_set = open_id_set_file(id_set_path)
         return id_set
+
+    def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
+                                      validator):
+        """If file is deprecated, validate it. Return None otherwise.
+
+        Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
+
+        Args:
+            file_type: (FileType) Type of file to validate.
+            file_path: (str) file path to validate.
+            current_file: (dict) file in json format to validate.
+            is_modified: (boolean) for whether the file was modified.
+            is_backward_check: (boolean) for whether to preform backwards compatibility validation.
+            validator: (ContentEntityValidator) validator object to run backwards compatibility validation from.
+
+        Returns:
+            True if current_file is deprecated and valid.
+            False if current_file is deprecated and invalid.
+            None if current_file is not deprecated.
+        """
+        if file_type == FileType.PLAYBOOK:
+            is_deprecated = "hidden" in current_file and current_file["hidden"]
+        else:
+            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+
+        toversion_is_old = "toversion" in current_file and \
+                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(OLDEST_SUPPORTED_VERSION)
+
+        if is_deprecated or toversion_is_old:
+            click.echo(f"Validating deprecated file: {file_path}")
+
+            is_valid_as_deprecated = True
+            if hasattr(validator, "is_valid_as_deprecated"):
+                is_valid_as_deprecated = validator.is_valid_as_deprecated()
+
+            if is_modified and is_backward_check:
+                return all([is_valid_as_deprecated, validator.is_backward_compatible()])
+
+            self.ignored_files.add(file_path)
+            if self.print_ignored_files:
+                click.echo(f"Skipping validation for: {file_path}")
+
+            return is_valid_as_deprecated
+        return None

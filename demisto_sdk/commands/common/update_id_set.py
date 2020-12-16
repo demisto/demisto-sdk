@@ -1,3 +1,4 @@
+import copy
 import glob
 import itertools
 import json
@@ -7,6 +8,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Optional, Tuple
@@ -358,7 +360,6 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
 
 
 def get_playbook_data(file_path: str) -> dict:
-    playbook_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     graph = build_tasks_graph(data_dictionary)
 
@@ -383,13 +384,8 @@ def get_playbook_data(file_path: str) -> dict:
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
-    playbook_data['name'] = name
-    playbook_data['file_path'] = file_path
-    if toversion:
-        playbook_data['toversion'] = toversion
-    if fromversion:
-        playbook_data['fromversion'] = fromversion
-
+    playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
+                                              from_version=fromversion, pack=pack)
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -400,8 +396,6 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['tests'] = tests
     if deprecated:
         playbook_data['deprecated'] = deprecated
-    if pack:
-        playbook_data['pack'] = pack
     if skippable_tasks:
         playbook_data['skippable_tasks'] = skippable_tasks
     if dependent_incident_fields:
@@ -412,7 +406,6 @@ def get_playbook_data(file_path: str) -> dict:
 
 
 def get_script_data(file_path, script_code=None):
-    script_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     if script_code is None:
@@ -428,12 +421,8 @@ def get_script_data(file_path, script_code=None):
     script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
     pack = get_pack_name(file_path)
 
-    script_data['name'] = name
-    script_data['file_path'] = file_path
-    if toversion:
-        script_data['toversion'] = toversion
-    if fromversion:
-        script_data['fromversion'] = fromversion
+    script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
+                                            pack=pack)
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -444,8 +433,6 @@ def get_script_data(file_path, script_code=None):
         script_data['command_to_integration'] = command_to_integration
     if tests:
         script_data['tests'] = tests
-    if pack:
-        script_data['pack'] = pack
 
     return {id_: script_data}
 
@@ -509,7 +496,6 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
 
 
 def get_layout_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     layout = json_data.get('layout', {})
@@ -524,19 +510,12 @@ def get_layout_data(path):
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
 
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
         data['typeID'] = type_
     if type_name:
         data['typename'] = type_name
         incident_indicator_types_dependency.add(type_name)
-    data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
     if kind:
         data['kind'] = kind
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
@@ -574,7 +553,6 @@ def get_layoutscontainer_data(path):
 
 
 def get_incident_field_data(path, incidents_types_list):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -604,15 +582,8 @@ def get_incident_field_data(path, incidents_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
@@ -622,7 +593,6 @@ def get_incident_field_data(path, incidents_types_list):
 
 
 def get_indicator_type_data(path, all_integrations):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -649,15 +619,7 @@ def get_indicator_type_data(path, all_integrations):
         if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if associated_integrations:
         data['integrations'] = list(associated_integrations)
     if all_scripts:
@@ -667,7 +629,6 @@ def get_indicator_type_data(path, all_integrations):
 
 
 def get_incident_type_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -678,15 +639,7 @@ def get_incident_type_data(path):
     pre_processing_script = json_data.get('preProcessingScript')
     pack = get_pack_name(path)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if pre_processing_script and pre_processing_script != '':
@@ -696,7 +649,6 @@ def get_incident_type_data(path):
 
 
 def get_classifier_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -713,23 +665,28 @@ def get_classifier_data(path):
     for key, value in key_type_map.items():
         incidents_types.add(value)
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
 
     return {id_: data}
 
 
-def get_mapper_data(path):
+def create_common_entity_data(path, name, to_version, from_version, pack):
     data = OrderedDict()
+    if name:
+        data['name'] = name
+    data['file_path'] = path
+    if to_version:
+        data['toversion'] = to_version
+    if from_version:
+        data['fromversion'] = from_version
+    if pack:
+        data['pack'] = pack
+    return data
+
+
+def get_mapper_data(path):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -749,16 +706,7 @@ def get_mapper_data(path):
         incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
-
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
@@ -768,7 +716,6 @@ def get_mapper_data(path):
 
 
 def get_widget_data(path):
-    data = OrderedDict()
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -782,43 +729,57 @@ def get_widget_data(path):
     if json_data.get('dataType') == 'scripts':
         scripts = json_data.get('query')
 
-    if name:
-        data['name'] = name
-    data['file_path'] = path
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if scripts:
         data['scripts'] = [scripts]
 
     return {id_: data}
 
 
-def get_general_data(path):
-    data = OrderedDict()
-    json_data = get_json(path)
+def get_dashboard_data(path):
+    dashboard_data = get_json(path)
+    layouts = dashboard_data.get('layout', {})
+    return parse_dashboard_or_report_data(layouts, dashboard_data, path)
 
+
+def get_report_data(path):
+    report_data = get_json(path)
+    layouts = report_data.get('dashboard', {}).get('layout')
+    return parse_dashboard_or_report_data(layouts, report_data, path)
+
+
+def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
+    id_ = data_file_json.get('id')
+    name = data_file_json.get('name', '')
+    fromversion = data_file_json.get('fromVersion')
+    toversion = data_file_json.get('toVersion')
+    pack = get_pack_name(path)
+    scripts = set()
+    if all_layouts:
+        for layout in all_layouts:
+            widget_data = layout.get('widget')
+            if widget_data.get('dataType') == 'scripts':
+                scripts.add(widget_data.get('query'))
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if scripts:
+        data['scripts'] = list(scripts)
+
+    return {id_: data}
+
+
+def get_general_data(path):
+    json_data = get_json(path)
     id_ = json_data.get('id')
     brandname = json_data.get('brandName', '')
     name = json_data.get('name', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if brandname:  # for classifiers
         data['name'] = brandname
-    data['file_path'] = path
-    if name:  # for the rest
-        data['name'] = name
-    if toversion:
-        data['toversion'] = toversion
-    if fromversion:
-        data['fromversion'] = fromversion
-    if pack:
-        data['pack'] = pack
-
     return {id_: data}
 
 
@@ -1002,10 +963,17 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     return playbook, script
 
 
-def get_integrations_paths():
-    path_list = [
-        ['Packs', '*', 'Integrations', '*']
-    ]
+def get_integrations_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'Integrations', '*']
+        ]
+
+    else:
+        path_list = [
+            ['Packs', '*', 'Integrations', '*']
+        ]
+
     integration_files = list()
     for path in path_list:
         integration_files.extend(glob.glob(os.path.join(*path)))
@@ -1013,23 +981,36 @@ def get_integrations_paths():
     return integration_files
 
 
-def get_playbooks_paths():
-    path_list = [
-        ['Packs', '*', 'Playbooks', '*.yml']
-    ]
+def get_playbooks_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'Playbooks', '*.yml']
+        ]
 
-    playbook_files = list()
+    else:
+        path_list = [
+            ['Packs', '*', 'Playbooks', '*.yml']
+        ]
+
+    playbook_files = list(pack_to_create)
     for path in path_list:
         playbook_files.extend(glob.glob(os.path.join(*path)))
 
     return playbook_files
 
 
-def get_general_paths(path):
-    path_list = [
-        [path, '*'],
-        ['Packs', '*', path, '*']
-    ]
+def get_general_paths(path, pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*']
+        ]
+
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
@@ -1037,16 +1018,102 @@ def get_general_paths(path):
     return files
 
 
+class IDSetType(Enum):
+    PLAYBOOK = 'playbooks'
+    INTEGRATION = 'integrations'
+    SCRIPT = 'scripts'
+    TEST_PLAYBOOK = 'TestPlaybooks'
+    WIDGET = 'Widgets'
+    CLASSIFIER = 'Classifiers'
+    MAPPER = 'Mappers'
+    REPORT = 'Reports'
+    DASHBOARD = 'Dashboards'
+    INCIDENT_FIELD = 'IncidentFields'
+    INCIDENT_TYPE = 'IncidentTypes'
+    INDICATOR_FIELD = 'IndicatorFields'
+    INDICATOR_TYPE = 'IndicatorTypes'
+    LAYOUTS = 'Layouts'
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
+class IDSet:
+    def __init__(self, id_set_dict=None):
+        self._id_set_dict = id_set_dict if id_set_dict else {}
+
+    def get_dict(self):
+        return self._id_set_dict
+
+    def get_list(self, item_type):
+        return self._id_set_dict.get(item_type, [])
+
+    def add_to_list(self, object_type: IDSetType, obj):
+        if not IDSetType.has_value(object_type):
+            raise ValueError(f'Invalid IDSetType {object_type}')
+
+        self._id_set_dict.setdefault(object_type, []).append(obj)
+
+
+def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
+    """
+    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    """
+    with open(first_id_set_path, mode='r') as f1:
+        first_id_set = json.load(f1)
+
+    with open(second_id_set_path, mode='r') as f2:
+        second_id_set = json.load(f2)
+
+    unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
+
+    if unified_id_set:
+        with open(output_id_set_path, mode='w', encoding='utf-8') as f:
+            json.dump(unified_id_set.get_dict(), f, indent=4)
+
+    return unified_id_set, duplicates
+
+
+def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs: bool = True):
+    """
+    Merged two id_set dictionaries into single id_set. Returns the unified id_set dict.
+    """
+    duplicates = []
+    united_id_set = IDSet(copy.deepcopy(first_id_set_dict))
+
+    first_id_set = IDSet(first_id_set_dict)
+    second_id_set = IDSet(second_id_set_dict)
+
+    for object_type, object_list in second_id_set.get_dict().items():
+        subset = first_id_set.get_list(object_type)
+
+        for obj in object_list:
+            obj_id = list(obj.keys())[0]
+            is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
+                                         external_object=obj)
+            if is_duplicate:
+                duplicates.append(obj_id)
+            else:
+                united_id_set.add_to_list(object_type, obj)
+
+    if duplicates:
+        return None, duplicates
+
+    return united_id_set, []
+
+
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_to_create: list = None,  # noqa: C901
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
                      print_logs: bool = True):
     """Re create the id set
 
     Args:
         id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
             Defaults to DEFAULT_ID_SET_PATH.
+        pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
 
     Returns: id set object
@@ -1069,10 +1136,12 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
             if mtime >= target_time:
-                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
-                            f" modify time: {mtime_dt} "
-                            "doesn't require a refresh. Will use current id set. "
-                            "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.", LOG_COLORS.GREEN)
+                print_color(
+                    f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
+                    f" modify time: {mtime_dt} "
+                    "doesn't require a refresh. Will use current id set. "
+                    "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.",
+                    LOG_COLORS.GREEN)
                 with open(id_set_path, mode="r") as f:
                     return json.load(f)
             else:
@@ -1116,7 +1185,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_integration,
                                         print_logs=print_logs
                                         ),
-                                get_integrations_paths()):
+                                get_integrations_paths(pack_to_create)):
                 integration_list.extend(arr)
 
         progress_bar.update(1)
@@ -1128,7 +1197,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.PLAYBOOK,),
                                         data_extraction_func=get_playbook_data,
                                         ),
-                                get_playbooks_paths()):
+                                get_playbooks_paths(pack_to_create)):
                 playbooks_list.extend(arr)
 
         progress_bar.update(1)
@@ -1138,7 +1207,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_script,
                                         print_logs=print_logs
                                         ),
-                                get_general_paths(SCRIPTS_DIR)):
+                                get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 scripts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1148,7 +1217,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for pair in pool.map(partial(process_test_playbook_path,
                                          print_logs=print_logs
                                          ),
-                                 get_general_paths(TEST_PLAYBOOKS_DIR)):
+                                 get_general_paths(TEST_PLAYBOOKS_DIR, pack_to_create)):
                 if pair[0]:
                     testplaybooks_list.append(pair[0])
                 if pair[1]:
@@ -1163,7 +1232,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
                                         data_extraction_func=get_classifier_data,
                                         ),
-                                get_general_paths(CLASSIFIERS_DIR)):
+                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 classifiers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1173,9 +1242,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.DASHBOARD,),
-                                        data_extraction_func=get_general_data,
+                                        data_extraction_func=get_dashboard_data,
                                         ),
-                                get_general_paths(DASHBOARDS_DIR)):
+                                get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 dashboards_list.extend(arr)
 
         progress_bar.update(1)
@@ -1187,7 +1256,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.INCIDENT_TYPE,),
                                         data_extraction_func=get_incident_type_data,
                                         ),
-                                get_general_paths(INCIDENT_TYPES_DIR)):
+                                get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 incident_type_list.extend(arr)
 
         progress_bar.update(1)
@@ -1199,7 +1268,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         print_logs=print_logs,
                                         incidents_types_list=incident_type_list
                                         ),
-                                get_general_paths(INCIDENT_FIELDS_DIR)):
+                                get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 incident_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1211,7 +1280,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.INDICATOR_FIELD,),
                                         data_extraction_func=get_general_data,
                                         ),
-                                get_general_paths(INDICATOR_FIELDS_DIR)):
+                                get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 indicator_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1223,7 +1292,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         print_logs=print_logs,
                                         all_integrations=integration_list
                                         ),
-                                get_general_paths(INDICATOR_TYPES_DIR)):
+                                get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1235,14 +1304,14 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.LAYOUT,),
                                         data_extraction_func=get_layout_data,
                                         ),
-                                get_general_paths(LAYOUTS_DIR)):
+                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUTS_CONTAINER,),
                                         data_extraction_func=get_layoutscontainer_data,
                                         ),
-                                get_general_paths(LAYOUTS_DIR)):
+                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1252,9 +1321,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.REPORT,),
-                                        data_extraction_func=get_general_data,
+                                        data_extraction_func=get_report_data,
                                         ),
-                                get_general_paths(REPORTS_DIR)):
+                                get_general_paths(REPORTS_DIR, pack_to_create)):
                 reports_list.extend(arr)
 
         progress_bar.update(1)
@@ -1266,7 +1335,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.WIDGET,),
                                         data_extraction_func=get_widget_data,
                                         ),
-                                get_general_paths(WIDGETS_DIR)):
+                                get_general_paths(WIDGETS_DIR, pack_to_create)):
                 widgets_list.extend(arr)
 
         progress_bar.update(1)
@@ -1278,7 +1347,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, objects_t
                                         expected_file_types=(FileType.MAPPER,),
                                         data_extraction_func=get_mapper_data,
                                         ),
-                                get_general_paths(MAPPERS_DIR)):
+                                get_general_paths(MAPPERS_DIR, pack_to_create)):
                 mappers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1346,11 +1415,24 @@ def find_duplicates(id_set, print_logs):
     return lists_to_return
 
 
-def has_duplicate(id_set, id_to_check, object_type=None, print_logs=True):
-    duplicates = [duplicate for duplicate in id_set if duplicate.get(id_to_check)]
+def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None):
+    """
+    Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
-    if len(duplicates) < 2:
+    Pass `external_object` to check if it exists in `id_set_subset_list`.
+    Otherwise the function will check if `id_set_subset_list` contains 2 or more items with the id of `id_to_check`
+
+    """
+    duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
+
+    if external_object and len(duplicates) == 0:
         return False
+
+    if not external_object and len(duplicates) == 1:
+        return False
+
+    if external_object:
+        duplicates.append(external_object)
 
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]

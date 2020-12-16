@@ -18,10 +18,6 @@ references:
         - checkout-content
         - prepare-tox3-7
 
-    reqs_id_set: &reqs_id_set
-      requires:
-        - create-id-set
-
 jobs:
   tox3-7-unit-tests:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
@@ -221,12 +217,12 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
+      - validate-files:
+          <<: *tag_filter
+          <<: *reqs_content_checkout
       - create-id-set:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - validate-files:
-          <<: *tag_filter
-          <<: *reqs_id_set
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout

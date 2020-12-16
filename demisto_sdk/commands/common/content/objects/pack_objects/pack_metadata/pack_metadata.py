@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
+from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%sZ'
@@ -24,8 +25,8 @@ class PackMetaData(JSONObject):
         self._certification: str = ''
         self._price: int = 0
         self._hidden: bool = False
-        self._serverMinVersion: str = '0.0.0'
-        self._currentVersion: str = '0.0.0'
+        self._serverMinVersion: Version = parse('0.0.0')
+        self._currentVersion: Version = parse('0.0.0')
         self._versionInfo: int = 0
         self._tags: List = []
         self._categories: List = []
@@ -208,7 +209,7 @@ class PackMetaData(JSONObject):
         self._hidden = is_hidden
 
     @property
-    def server_min_version(self) -> str:
+    def server_min_version(self) -> Version:
         """Object serverMinVersion attribute.
 
         Returns:
@@ -217,12 +218,12 @@ class PackMetaData(JSONObject):
         return self._serverMinVersion
 
     @server_min_version.setter
-    def server_min_version(self, new_pack_server_min_version: str):
+    def server_min_version(self, new_pack_server_min_version: Version):
         """Setter for the serverMinVersion attribute"""
         self._serverMinVersion = new_pack_server_min_version
 
     @property
-    def current_version(self) -> str:
+    def current_version(self) -> Version:
         """Object currentVersion attribute.
 
         Returns:
@@ -231,7 +232,7 @@ class PackMetaData(JSONObject):
         return self._currentVersion
 
     @current_version.setter
-    def current_version(self, new_pack_current_version: str):
+    def current_version(self, new_pack_current_version: Version):
         """Setter for the currentVersion attribute"""
         self._currentVersion = new_pack_current_version
 

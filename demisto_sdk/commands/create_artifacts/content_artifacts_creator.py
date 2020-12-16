@@ -10,20 +10,15 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Dict, List, Optional, Union
 
-from demisto_sdk.commands.common.constants import (BASE_PACK,
-                                                   CUSTOM_CONTENT_FILE_ENDINGS,
-                                                   DOCUMENTATION_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   RELEASE_NOTES_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR)
+from demisto_sdk.commands.common.constants import (
+    BASE_PACK, CONTENT_ITEMS_DISPLAY_FOLDERS, CUSTOM_CONTENT_FILE_ENDINGS,
+    DOCUMENTATION_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME, RELEASE_NOTES_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TOOLS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, Script, TextObject, YAMLContentObject,
+    JSONContentObject, PackMetaData, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import logging_setup
 ####################
@@ -441,7 +436,7 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
     pack_created_files: List[Path] = []
     test_new_created_files: List[Path] = []
 
-    content_items_handler(content_object)
+    # content_items_handler(content_object)
 
     with content_files_handler(artifact_manager, content_object) as files_to_remove:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
@@ -732,7 +727,7 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 ###############################
 
 
-def load_user_metadata(pack_metadata, pack_path, pack_name):
+def load_user_metadata(pack_metadata: PackMetaData, pack_path: str, pack_name: str):
     """Loads user defined metadata and stores part of it's data in defined properties fields.
 
     Args:
@@ -766,28 +761,52 @@ def load_user_metadata(pack_metadata, pack_path, pack_name):
         logger.error(f'Failed loading {pack_name} user metadata.')
 
 
-CONTENT_ITEMS: Dict[str, List] = {
-    'automation': [],
-    'playbook': [],
-    'integration': [],
-    'incidentfield': [],
-    'incidenttype': [],
-    'dashboard': [],
-    'indicatorfield': [],
-    'report': [],
-    'reputation': [],
-    'layoutscontainer': [],
-    'classifier': [],
-    'widget': []
-}
+class ContentItemsHandler:
+    def __init__(self, pack_metadata: PackMetaData):
+        self.content_items: Dict[str, List] = {
+            'automation': [],
+            'playbook': [],
+            'integration': [],
+            'incidentfield': [],
+            'incidenttype': [],
+            'dashboard': [],
+            'indicatorfield': [],
+            'report': [],
+            'reputation': [],
+            'layoutscontainer': [],
+            'classifier': [],
+            'widget': []
+        }
+        self.pack_metadata = pack_metadata
 
+    def handle_content_item(self, content_object: ContentObject):
+        global logger
 
-def content_items_handler(content_object: ContentObject):
-    content_object_directory = content_object.path.parts[-3]
+        content_object_directory = content_object.path.parts[-3]
 
-    if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
-        return
+        if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
+            return
 
-    # reputation in old format aren't supported in 6.0.0 server version
-    if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name, 'reputation-.*.json'):
-        return
+        if content_object.to_version < FIRST_MARKETPLACE_VERSION:
+            return
+
+        # reputation in old format aren't supported in 6.0.0 server version
+        if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name,
+                                                                            'reputation-.*.json'):
+            return
+
+        # skip content items that are not displayed in contentItems
+        if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
+            return
+
+        logging.debug(
+            f"Iterating over {content_object.path} file and collecting items of {content_object.path.parts[-4]} pack")
+
+        self.pack_metadata.server_min_version = max(self.pack_metadata.server_min_version, content_object.from_version)
+
+    def add_script_as_content_item(self, content_object: ContentObject):
+        self.content_items['automation'].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('comment', ''),
+            'tags': content_object.get('tags', [])
+        })

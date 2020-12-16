@@ -28,7 +28,6 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
-from demisto_sdk.commands.unify.unifier import Unifier
 
 
 class ContributionConverter:
@@ -251,6 +250,7 @@ class ContributionConverter:
         if file_type == 'script':
             generate_script_doc(input=yml_path, examples=[])
         if file_type == 'playbook':
+            print('#################')
             generate_playbook_doc(yml_path)
 
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
@@ -285,16 +285,27 @@ class ContributionConverter:
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
-                        pack_subdir, del_unified=True, source_mapping=files_to_source_mapping
+                        pack_subdir, del_unified=False, source_mapping=files_to_source_mapping
                     )
+
+                elif basename == 'Playbooks':
+                    files = get_child_files(pack_subdir)
+                    for file in files:
+                        file_name = os.path.basename(file)
+                        if file_name.endswith('.yml'):
+                            self.generate_readme_for_converted_pack(file)
 
                 directories = get_child_directories(pack_subdir)
                 for directory in directories:
-                    unify = Unifier(input=directory, dir_name=basename)
-                    unified_files = unify.merge_script_package_to_yml()
-                    for unified_file in unified_files:
-                        self.generate_readme_for_converted_pack(unified_file)
-                        os.remove(unified_file)
+                    files = get_child_files(directory)
+                    for file in files:
+                        file_name = os.path.basename(file)
+                        if file_name.startswith('integration') or file_name.startswith('script'):
+                            unified_file = file
+                            self.generate_readme_for_converted_pack(unified_file)
+                            os.remove(unified_file)
+                        if file_name.startswith('playbook'):
+                            self.generate_readme_for_converted_pack(file)
 
             # format
             self.format_converted_pack()
@@ -360,6 +371,9 @@ class ContributionConverter:
                         extractor = Extractor(input=content_item_file_path,
                                               file_type=file_type, output=content_item_dir)
                     extractor.extract_to_package_format()
+                    output_path = extractor.get_output_path()
+                    # Moving the unified file to its package.
+                    shutil.move(content_item_file_path, output_path)
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'

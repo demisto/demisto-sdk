@@ -126,6 +126,14 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                'This integration was integrated and tested with version xx of Sample.\n' \
                'Supported Cortex XSOAR versions: 5.0.0 and later.' in readme_file
 
+    playbooks_path = converted_pack_path / 'Playbooks'
+    playbook_yml = playbooks_path / 'playbook-SamplePlaybook.yml'
+    playbook_readme_md = playbooks_path / 'playbook-SamplePlaybook_README.md'
+
+    assert playbooks_path.exists()
+    assert playbook_yml.exists()
+    assert playbook_readme_md.exists()
+
     layouts_path = converted_pack_path / 'Layouts'
     sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
     sample_layout = layouts_path / f'{LAYOUT}-fakelayout.json'

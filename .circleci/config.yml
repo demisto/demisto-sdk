@@ -20,8 +20,6 @@ references:
 
     reqs_id_set: &reqs_id_set
       requires:
-        - checkout-content
-        - prepare-tox3-7
         - create-id-set
 
 jobs:

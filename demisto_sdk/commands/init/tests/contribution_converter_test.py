@@ -120,11 +120,6 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
-    with open(integration_readme_md, 'r') as readme:
-        readme_file = readme.read()
-        assert 'This is a sample integration\n' \
-               'This integration was integrated and tested with version xx of Sample.\n' \
-               'Supported Cortex XSOAR versions: 5.0.0 and later.' in readme_file
 
     playbooks_path = converted_pack_path / 'Playbooks'
     playbook_yml = playbooks_path / 'playbook-SamplePlaybook.yml'

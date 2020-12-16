@@ -8,18 +8,20 @@ import time
 from concurrent.futures import as_completed
 from contextlib import contextmanager
 from shutil import make_archive, rmtree
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
-    BASE_PACK, CONTENT_ITEMS_CLASSIFIERS, CONTENT_ITEMS_DASHBOARDS,
-    CONTENT_ITEMS_DISPLAY_FOLDERS, CONTENT_ITEMS_INCIDENT_FIELDS,
-    CONTENT_ITEMS_INCIDENT_TYPES, CONTENT_ITEMS_INDICATOR_FIELDS,
-    CONTENT_ITEMS_INDICATOR_TYPES, CONTENT_ITEMS_INTEGRATIONS,
-    CONTENT_ITEMS_LAYOUTS, CONTENT_ITEMS_PLAYBOOKS, CONTENT_ITEMS_REPORTS,
-    CONTENT_ITEMS_SCRIPTS, CONTENT_ITEMS_WIDGETS, CUSTOM_CONTENT_FILE_ENDINGS,
-    DOCUMENTATION_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME, RELEASE_NOTES_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR)
+    BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_CLASSIFIERS,
+    CONTENT_ITEMS_DASHBOARDS, CONTENT_ITEMS_DISPLAY_FOLDERS,
+    CONTENT_ITEMS_INCIDENT_FIELDS, CONTENT_ITEMS_INCIDENT_TYPES,
+    CONTENT_ITEMS_INDICATOR_FIELDS, CONTENT_ITEMS_INDICATOR_TYPES,
+    CONTENT_ITEMS_INTEGRATIONS, CONTENT_ITEMS_LAYOUTS, CONTENT_ITEMS_PLAYBOOKS,
+    CONTENT_ITEMS_REPORTS, CONTENT_ITEMS_SCRIPTS, CONTENT_ITEMS_WIDGETS,
+    CUSTOM_CONTENT_FILE_ENDINGS, DASHBOARDS_DIR, DOCUMENTATION_DIR,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -113,6 +115,159 @@ class ArtifactsManager:
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
+
+
+class ContentItemsHandler:
+    def __init__(self, pack_metadata: PackMetaData):
+        self.pack_metadata = pack_metadata
+        self.content_items: Dict[str, List] = {
+            CONTENT_ITEMS_SCRIPTS: [],
+            CONTENT_ITEMS_PLAYBOOKS: [],
+            CONTENT_ITEMS_INTEGRATIONS: [],
+            CONTENT_ITEMS_INCIDENT_FIELDS: [],
+            CONTENT_ITEMS_INCIDENT_TYPES: [],
+            CONTENT_ITEMS_DASHBOARDS: [],
+            CONTENT_ITEMS_INDICATOR_FIELDS: [],
+            CONTENT_ITEMS_REPORTS: [],
+            CONTENT_ITEMS_INDICATOR_TYPES: [],
+            CONTENT_ITEMS_LAYOUTS: [],
+            CONTENT_ITEMS_CLASSIFIERS: [],
+            CONTENT_ITEMS_WIDGETS: []
+        }
+        self.content_folder_name_to_func: Dict[str, Callable] = {
+            SCRIPTS_DIR: self.add_script_as_content_item,
+            PLAYBOOKS_DIR: self.add_playbook_as_content_item,
+            INTEGRATIONS_DIR: self.add_integration_as_content_item,
+            INCIDENT_FIELDS_DIR: self.add_incident_field_as_content_item,
+            INCIDENT_TYPES_DIR: self.add_incident_type_as_content_item,
+            DASHBOARDS_DIR: self.add_dashboard_as_content_item,
+            INDICATOR_FIELDS_DIR: self.add_indicator_field_as_content_item,
+            INDICATOR_TYPES_DIR: self.add_indicator_type_as_content_item,
+            REPORTS_DIR: self.add_report_as_content_item,
+            LAYOUTS_DIR: self.add_layout_as_content_item,
+            CLASSIFIERS_DIR: self.add_classifier_as_content_item,
+            WIDGETS_DIR: self.add_widget_as_content_item
+        }
+
+    def handle_content_item(self, content_object: ContentObject):
+        global logger
+
+        content_object_directory = content_object.path.parts[-3]
+
+        if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
+            return
+
+        if content_object.to_version < FIRST_MARKETPLACE_VERSION:
+            return
+
+        # reputation in old format aren't supported in 6.0.0 server version
+        if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name,
+                                                                            'reputation-.*.json'):
+            return
+
+        # skip content items that are not displayed in contentItems
+        if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
+            return
+
+        logging.debug(
+            f"Iterating over {content_object.path} file and collecting items of {content_object.path.parts[-4]} pack")
+
+        self.pack_metadata.server_min_version = max(self.pack_metadata.server_min_version, content_object.from_version)
+
+        self.content_folder_name_to_func[content_object_directory](content_object)
+
+    def add_script_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_SCRIPTS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('comment', ''),
+            'tags': content_object.get('tags', [])
+        })
+
+    def add_playbook_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_PLAYBOOKS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('comment', ''),
+            'tags': content_object.get('tags', [])
+        })
+
+    def add_integration_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INTEGRATIONS].append({
+            'name': content_object.get('display', ""),
+            'description': content_object.get('description', ''),
+            'category': content_object.get('category', ''),
+            'commands': [
+                {
+                    'name': c.get('name', ''),
+                    'description': c.get('description', '')
+                }
+                for c in content_object.script.get('commands', [])]
+        })
+
+    def add_incident_field_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INCIDENT_FIELDS].append({
+            'name': content_object.get('name', ''),
+            'type': content_object.get('type', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_incident_type_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INCIDENT_TYPES].append({
+            'name': content_object.get('name', ''),
+            'playbook': content_object.get('playbookId', ''),
+            'closureScript': content_object.get('closureScript', ''),
+            'hours': int(content_object.get('hours', 0)),
+            'days': int(content_object.get('days', 0)),
+            'weeks': int(content_object.get('weeks', 0))
+        })
+
+    def add_dashboard_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_DASHBOARDS].append({
+            'name': content_object.get('name', '')
+        })
+
+    def add_indicator_field_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INDICATOR_FIELDS].append({
+            'name': content_object.get('name', ''),
+            'type': content_object.get('type', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_indicator_type_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INDICATOR_TYPES].append({
+            'details': content_object.get('details', ''),
+            'reputationScriptName': content_object.get('reputationScriptName', ''),
+            'enhancementScriptNames': content_object.get('enhancementScriptNames', [])
+        })
+
+    def add_report_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_REPORTS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_layout_as_content_item(self, content_object: ContentObject):
+        if content_object.get('description'):
+            self.content_items[CONTENT_ITEMS_LAYOUTS].append({
+                'name': content_object.get('name', ''),
+                'description': content_object.get('description')
+            })
+        else:
+            self.content_items[CONTENT_ITEMS_LAYOUTS].append({
+                'name': content_object.get('name', '')
+            })
+
+    def add_classifier_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_CLASSIFIERS].append({
+            'name': content_object.get('name') or content_object.get('id', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_widget_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_WIDGETS].append({
+            'name': content_object.get('name', ''),
+            'dataType': content_object.get('dataType', ''),
+            'widgetType': content_object.get('widgetType', '')
+        })
 
 
 @contextmanager
@@ -374,34 +529,36 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         ArtifactsReport: ArtifactsReport object.
     """
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
+    content_items_handler = ContentItemsHandler(pack.pack_metadata)
+
     for integration in pack.integrations:
-        pack_report += dump_pack_conditionally(artifact_manager, integration)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, integration)
     for script in pack.scripts:
-        pack_report += dump_pack_conditionally(artifact_manager, script)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, script)
     for playbook in pack.playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, playbook)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, playbook)
     for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, test_playbook)
     for report in pack.reports:
-        pack_report += dump_pack_conditionally(artifact_manager, report)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, report)
     for layout in pack.layouts:
-        pack_report += dump_pack_conditionally(artifact_manager, layout)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, layout)
     for dashboard in pack.dashboards:
-        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, dashboard)
     for incident_field in pack.incident_fields:
-        pack_report += dump_pack_conditionally(artifact_manager, incident_field)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, incident_field)
     for incident_type in pack.incident_types:
-        pack_report += dump_pack_conditionally(artifact_manager, incident_type)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, incident_type)
     for indicator_field in pack.indicator_fields:
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, indicator_field)
     for indicator_type in pack.indicator_types:
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, indicator_type)
     for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, connection)
     for classifier in pack.classifiers:
-        pack_report += dump_pack_conditionally(artifact_manager, classifier)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, classifier)
     for widget in pack.widgets:
-        pack_report += dump_pack_conditionally(artifact_manager, widget)
+        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, widget)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
@@ -427,11 +584,13 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     return pack_report
 
 
-def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
+def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_items_handler: ContentItemsHandler,
+                            content_object: ContentObject) -> ObjectReport:
     """ Dump pack object by the following logic
 
     Args:
         artifact_manager: Artifacts manager object.
+        content_items_handler: Content items handler object.
         content_object: content_object (e.g. Integration/Script/Layout etc)
 
     Returns:
@@ -441,7 +600,7 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
     pack_created_files: List[Path] = []
     test_new_created_files: List[Path] = []
 
-    # content_items_handler(content_object)
+    content_items_handler.handle_content_item(content_object)
 
     with content_files_handler(artifact_manager, content_object) as files_to_remove:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
@@ -764,74 +923,3 @@ def load_user_metadata(pack_metadata: PackMetaData, pack_path: str, pack_name: s
 
     except Exception:
         logger.error(f'Failed loading {pack_name} user metadata.')
-
-
-class ContentItemsHandler:
-    def __init__(self, pack_metadata: PackMetaData):
-        self.content_items: Dict[str, List] = {
-            CONTENT_ITEMS_SCRIPTS: [],
-            CONTENT_ITEMS_PLAYBOOKS: [],
-            CONTENT_ITEMS_INTEGRATIONS: [],
-            CONTENT_ITEMS_INCIDENT_FIELDS: [],
-            CONTENT_ITEMS_INCIDENT_TYPES: [],
-            CONTENT_ITEMS_DASHBOARDS: [],
-            CONTENT_ITEMS_INDICATOR_FIELDS: [],
-            CONTENT_ITEMS_REPORTS: [],
-            CONTENT_ITEMS_INDICATOR_TYPES: [],
-            CONTENT_ITEMS_LAYOUTS: [],
-            CONTENT_ITEMS_CLASSIFIERS: [],
-            CONTENT_ITEMS_WIDGETS: []
-        }
-        self.pack_metadata = pack_metadata
-
-    def handle_content_item(self, content_object: ContentObject):
-        global logger
-
-        content_object_directory = content_object.path.parts[-3]
-
-        if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
-            return
-
-        if content_object.to_version < FIRST_MARKETPLACE_VERSION:
-            return
-
-        # reputation in old format aren't supported in 6.0.0 server version
-        if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name,
-                                                                            'reputation-.*.json'):
-            return
-
-        # skip content items that are not displayed in contentItems
-        if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
-            return
-
-        logging.debug(
-            f"Iterating over {content_object.path} file and collecting items of {content_object.path.parts[-4]} pack")
-
-        self.pack_metadata.server_min_version = max(self.pack_metadata.server_min_version, content_object.from_version)
-
-    def add_script_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_SCRIPTS].append({
-            'name': content_object.get('name', ''),
-            'description': content_object.get('comment', ''),
-            'tags': content_object.get('tags', [])
-        })
-
-    def add_playbook_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_PLAYBOOKS].append({
-            'name': content_object.get('name', ''),
-            'description': content_object.get('comment', ''),
-            'tags': content_object.get('tags', [])
-        })
-
-    def add_integration_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INTEGRATIONS].append({
-            'name': content_object.get('display', ""),
-            'description': content_object.get('description', ''),
-            'category': content_object.get('category', ''),
-            'commands': [
-                {
-                    'name': c.get('name', ''),
-                    'description': c.get('description', "")
-                }
-                for c in content_object.script.get('commands', [])]
-        })

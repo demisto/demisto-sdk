@@ -250,7 +250,6 @@ class ContributionConverter:
         if file_type == 'script':
             generate_script_doc(input=yml_path, examples=[])
         if file_type == 'playbook':
-            print('#################')
             generate_playbook_doc(yml_path)
 
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):

@@ -11,7 +11,12 @@ from shutil import make_archive, rmtree
 from typing import Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
-    BASE_PACK, CONTENT_ITEMS_DISPLAY_FOLDERS, CUSTOM_CONTENT_FILE_ENDINGS,
+    BASE_PACK, CONTENT_ITEMS_CLASSIFIERS, CONTENT_ITEMS_DASHBOARDS,
+    CONTENT_ITEMS_DISPLAY_FOLDERS, CONTENT_ITEMS_INCIDENT_FIELDS,
+    CONTENT_ITEMS_INCIDENT_TYPES, CONTENT_ITEMS_INDICATOR_FIELDS,
+    CONTENT_ITEMS_INDICATOR_TYPES, CONTENT_ITEMS_INTEGRATIONS,
+    CONTENT_ITEMS_LAYOUTS, CONTENT_ITEMS_PLAYBOOKS, CONTENT_ITEMS_REPORTS,
+    CONTENT_ITEMS_SCRIPTS, CONTENT_ITEMS_WIDGETS, CUSTOM_CONTENT_FILE_ENDINGS,
     DOCUMENTATION_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, RELEASE_NOTES_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TOOLS_DIR)
@@ -764,18 +769,18 @@ def load_user_metadata(pack_metadata: PackMetaData, pack_path: str, pack_name: s
 class ContentItemsHandler:
     def __init__(self, pack_metadata: PackMetaData):
         self.content_items: Dict[str, List] = {
-            'automation': [],
-            'playbook': [],
-            'integration': [],
-            'incidentfield': [],
-            'incidenttype': [],
-            'dashboard': [],
-            'indicatorfield': [],
-            'report': [],
-            'reputation': [],
-            'layoutscontainer': [],
-            'classifier': [],
-            'widget': []
+            CONTENT_ITEMS_SCRIPTS: [],
+            CONTENT_ITEMS_PLAYBOOKS: [],
+            CONTENT_ITEMS_INTEGRATIONS: [],
+            CONTENT_ITEMS_INCIDENT_FIELDS: [],
+            CONTENT_ITEMS_INCIDENT_TYPES: [],
+            CONTENT_ITEMS_DASHBOARDS: [],
+            CONTENT_ITEMS_INDICATOR_FIELDS: [],
+            CONTENT_ITEMS_REPORTS: [],
+            CONTENT_ITEMS_INDICATOR_TYPES: [],
+            CONTENT_ITEMS_LAYOUTS: [],
+            CONTENT_ITEMS_CLASSIFIERS: [],
+            CONTENT_ITEMS_WIDGETS: []
         }
         self.pack_metadata = pack_metadata
 
@@ -805,8 +810,28 @@ class ContentItemsHandler:
         self.pack_metadata.server_min_version = max(self.pack_metadata.server_min_version, content_object.from_version)
 
     def add_script_as_content_item(self, content_object: ContentObject):
-        self.content_items['automation'].append({
+        self.content_items[CONTENT_ITEMS_SCRIPTS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('comment', ''),
             'tags': content_object.get('tags', [])
+        })
+
+    def add_playbook_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_PLAYBOOKS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('comment', ''),
+            'tags': content_object.get('tags', [])
+        })
+
+    def add_integration_as_content_item(self, content_object: ContentObject):
+        self.content_items[CONTENT_ITEMS_INTEGRATIONS].append({
+            'name': content_object.get('display', ""),
+            'description': content_object.get('description', ''),
+            'category': content_object.get('category', ''),
+            'commands': [
+                {
+                    'name': c.get('name', ''),
+                    'description': c.get('description', "")
+                }
+                for c in content_object.script.get('commands', [])]
         })

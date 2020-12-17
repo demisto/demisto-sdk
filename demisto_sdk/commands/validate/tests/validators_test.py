@@ -1147,11 +1147,11 @@ class TestValidators:
         Then
             - Validate that not a git diff staged command runs
         """
-        def run_command_effect(arg):
+        def run_command_effect_2(arg):
             assert 'staged' not in arg
             return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
 
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect_2)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)

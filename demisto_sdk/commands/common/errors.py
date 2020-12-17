@@ -134,6 +134,7 @@ ERROR_CODE = {
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
+    "incident_type_auto_extract_fields_invalid": "IT102",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -873,6 +874,22 @@ class Errors:
     @error_code_decorator
     def incident_type_invalid_playbook_id_field():
         return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_auto_extract_fields_invalid(incident_fields):
+        return f"The following incident fields are not formatted correctly under " \
+               f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
+               f"Please format them in open of the following ways:\n" \
+               f"1. To extract all indicators from the field: \n" \
+               f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"2. To extract the incident field to a specific indicator without using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"INDICATOR_TYPE\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"3. To extract indicators from the field using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: [\"INDICATOR_TYPE1\", \"INDICATOR_TYPE2\"]"
 
     @staticmethod
     @error_code_decorator

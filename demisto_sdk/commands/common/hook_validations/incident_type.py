@@ -42,7 +42,8 @@ class IncidentTypeValidator(ContentEntityValidator):
                 is_incident_type__valid,
                 self.is_id_equals_name(),
                 self.is_including_int_fields(),
-                self.is_valid_playbook_id()
+                self.is_valid_playbook_id(),
+                self.is_valid_autoextract()
             ])
 
         return is_incident_type__valid
@@ -118,4 +119,40 @@ class IncidentTypeValidator(ContentEntityValidator):
             error_message, error_code = Errors.incident_type_invalid_playbook_id_field()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    def is_valid_autoextract(self):
+        auto_extract = self.current_file.get('extractSettings', {}).get('fieldCliNameToExtractSettings')
+
+        # no auto extraction set in incident type.
+        if not auto_extract:
+            return True
+
+        invalid_incident_fields = []
+        for incident_field in auto_extract:
+            extracting_all = incident_field.get('isExtractingAllIndicatorTypes')
+            extract_as_is = incident_field.get('extractAsIsIndicatorTypeId')
+            extracted_indicator_types = incident_field.get('extractIndicatorTypesIDs')
+
+            # General format check.
+            if type(extracting_all) != bool or type(extract_as_is) != str or type(extracted_indicator_types) != list:
+                invalid_incident_fields.append(incident_field)
+
+            # If trying to extract without regex make sure extract all is set to
+            # False and the extracted indicators list is empty
+            elif extract_as_is != "":
+                if extracting_all is True or len(extracted_indicator_types) > 0:
+                    invalid_incident_fields.append(incident_field)
+
+            # If trying to extract with regex make sure extract all is set to
+            # False and the extract_as_is should be set to an empty string
+            elif len(extracted_indicator_types) > 0:
+                if extracting_all is True or extract_as_is != "":
+                    invalid_incident_fields.append(incident_field)
+
+        if invalid_incident_fields:
+            error_message, error_code = Errors.incident_type_auto_extract_fields_invalid(invalid_incident_fields)
+            if self.handle_error(error_message, error_code, self.file_path):
+                return False
+
         return True

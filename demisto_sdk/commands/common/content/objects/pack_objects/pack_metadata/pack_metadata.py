@@ -1,12 +1,22 @@
+import json
+import logging
+import os
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
+logger: logging.Logger
+
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%sZ'
+XSOAR_NAME = 'xsoar'
+XSOAR_CERTIFIED = 'certified'
+XSOAR_AUTHOR = 'Cortex XSOAR'
+XSOAR_SUPPORT_URL = 'https://www.paloaltonetworks.com/cortex'
+XSOAR_EULA_URL = 'https://github.com/demisto/content/blob/master/LICENSE'
 
 
 class PackMetaData(JSONObject):
@@ -19,20 +29,25 @@ class PackMetaData(JSONObject):
         self._updated: datetime = datetime.now()
         self._legacy: bool = False
         self._support: str = ''
-        self._supportDetails: Dict = {}
         self._eulaLink: str = ''
+        self._email: str = ''
+        self._url: str = ''
         self._author: str = ''
         self._certification: str = ''
         self._price: int = 0
+        self._premium: bool = False
+        self._vendorId: str = ''
+        self._vendorName: str = ''
         self._hidden: bool = False
+        self._previewOnly: bool = False
         self._serverMinVersion: Version = parse('0.0.0')
         self._currentVersion: Version = parse('0.0.0')
         self._versionInfo: int = 0
-        self._tags: List = []
-        self._categories: List = []
+        self._tags: List[str] = []
+        self._categories: List[str] = []
         self._contentItems: Dict[str, List] = {}
-        self._useCases: List = []
-        self._keywords: List = []
+        self._useCases: List[str] = []
+        self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
 
     @property
@@ -98,6 +113,26 @@ class PackMetaData(JSONObject):
             self._created = new_pack_created_date
 
     @property
+    def updated(self) -> datetime:
+        """Object updated attribute.
+
+        Returns:
+            datetime: pack updated date.
+        """
+        return self._updated
+
+    @updated.setter
+    def updated(self, new_pack_updated_date: Union[str, datetime]):
+        """Setter for the updated attribute"""
+        if isinstance(new_pack_updated_date, str):
+            try:
+                self._updated = datetime.strptime(new_pack_updated_date, DATETIME_FORMAT)
+            except ValueError:
+                return
+        else:
+            self._updated = new_pack_updated_date
+
+    @property
     def legacy(self) -> bool:
         """Object legacy attribute.
 
@@ -132,12 +167,17 @@ class PackMetaData(JSONObject):
         Returns:
             dict: pack support details.
         """
-        return self._supportDetails
+        support_details = {}
 
-    @support_details.setter
-    def support_details(self, new_pack_support_details: dict):
-        """Setter for the supportDetails attribute"""
-        self._supportDetails = new_pack_support_details
+        if self.eula_link:  # set support url from user input
+            support_details['url'] = self.url
+        elif self.support == XSOAR_NAME:  # in case support type is xsoar, set default xsoar support url
+            support_details['url'] = XSOAR_SUPPORT_URL
+        # add support email if defined
+        if self.email:
+            support_details['email'] = self.email
+
+        return support_details
 
     @property
     def eula_link(self) -> str:
@@ -154,12 +194,46 @@ class PackMetaData(JSONObject):
         self._eulaLink = new_pack_eula_link
 
     @property
+    def email(self) -> str:
+        """Object email attribute.
+
+        Returns:
+            str: pack author email.
+        """
+        return self._email
+
+    @email.setter
+    def email(self, new_pack_email: str):
+        """Setter for the email attribute"""
+        self._email = new_pack_email
+
+    @property
+    def url(self) -> str:
+        """Object url attribute.
+
+        Returns:
+            str: pack url.
+        """
+        return self._url
+
+    @url.setter
+    def url(self, new_pack_url: str):
+        """Setter for the url attribute"""
+        self._url = new_pack_url
+
+    @property
     def author(self) -> str:
         """Object author attribute.
 
         Returns:
             str: pack author.
         """
+        if self.support == XSOAR_NAME:
+            if not self._author:
+                return XSOAR_AUTHOR
+            elif self._author != XSOAR_AUTHOR:
+                logging.warning(f'{self._author} author doest not match {XSOAR_AUTHOR} default value')
+                return self._author
         return self._author
 
     @author.setter
@@ -174,7 +248,10 @@ class PackMetaData(JSONObject):
         Returns:
             str: pack certification.
         """
-        return self._certification
+        if self.support == XSOAR_NAME:
+            return XSOAR_CERTIFIED
+        else:
+            return self._certification
 
     @certification.setter
     def certification(self, new_pack_certification: str):
@@ -191,9 +268,54 @@ class PackMetaData(JSONObject):
         return self._price
 
     @price.setter
-    def price(self, new_pack_price: int):
+    def price(self, new_pack_price: Union[int, str]):
         """Setter for the price attribute"""
-        self._price = new_pack_price
+        try:
+            self._price = int(new_pack_price)
+        except ValueError:
+            self._price = 0
+
+    @property
+    def premium(self) -> bool:
+        """Object premium attribute.
+
+        Returns:
+            bool: pack premium.
+        """
+        return self._premium
+
+    @premium.setter
+    def premium(self, is_premium: bool):
+        """Setter for the premium attribute"""
+        self._premium = is_premium
+
+    @property
+    def vendor_id(self) -> str:
+        """Object vendorId attribute.
+
+        Returns:
+            str: pack vendor_id.
+        """
+        return self._vendorId
+
+    @vendor_id.setter
+    def vendor_id(self, new_pack_vendor_id: str):
+        """Setter for the vendorId attribute"""
+        self._vendorId = new_pack_vendor_id
+
+    @property
+    def vendor_name(self) -> str:
+        """Object vendorName attribute.
+
+        Returns:
+            str: pack vendor_name.
+        """
+        return self._vendorName
+
+    @vendor_name.setter
+    def vendor_name(self, new_pack_vendor_name: str):
+        """Setter for the vendorName attribute"""
+        self._vendorName = new_pack_vendor_name
 
     @property
     def hidden(self) -> bool:
@@ -221,6 +343,19 @@ class PackMetaData(JSONObject):
     def server_min_version(self, new_pack_server_min_version: Version):
         """Setter for the serverMinVersion attribute"""
         self._serverMinVersion = new_pack_server_min_version
+
+    @property
+    def preview_only(self) -> bool:
+        """Object previewOnly attribute.
+        Returns:
+            bool: pack preview_only.
+        """
+        return self._previewOnly
+
+    @preview_only.setter
+    def preview_only(self, is_preview_only: bool):
+        """Setter for the previewOnly attribute"""
+        self._previewOnly = is_preview_only
 
     @property
     def current_version(self) -> Version:
@@ -251,30 +386,30 @@ class PackMetaData(JSONObject):
         self._versionInfo = new_pack_version_info
 
     @property
-    def tags(self) -> List:
+    def tags(self) -> List[str]:
         """Object tags attribute.
 
         Returns:
-            List: pack tags.
+            List[str]: pack tags.
         """
         return self._tags
 
     @tags.setter
-    def tags(self, new_pack_tags: List):
+    def tags(self, new_pack_tags: List[str]):
         """Setter for the tags attribute"""
         self._tags = new_pack_tags
 
     @property
-    def categories(self) -> List:
+    def categories(self) -> List[str]:
         """Object categories attribute.
 
         Returns:
-            List: pack categories.
+            List[str]: pack categories.
         """
-        return self._categories
+        return [category.title() for category in self._categories]
 
     @categories.setter
-    def categories(self, new_pack_categories: List):
+    def categories(self, new_pack_categories: List[str]):
         """Setter for the categories attribute"""
         self._categories = new_pack_categories
 
@@ -293,30 +428,30 @@ class PackMetaData(JSONObject):
         self._contentItems = new_pack_content_items
 
     @property
-    def use_cases(self) -> List:
+    def use_cases(self) -> List[str]:
         """Object useCases attribute.
 
         Returns:
-            List: pack use_cases.
+            List[str]: pack use_cases.
         """
-        return self._useCases
+        return [use_case.title() for use_case in self._useCases]
 
     @use_cases.setter
-    def use_cases(self, new_pack_use_cases: List):
+    def use_cases(self, new_pack_use_cases: List[str]):
         """Setter for the useCases attribute"""
         self._useCases = new_pack_use_cases
 
     @property
-    def keywords(self) -> List:
+    def keywords(self) -> List[str]:
         """Object keywords attribute.
 
         Returns:
-            List: pack keywords.
+            List[str]: pack keywords.
         """
         return self._keywords
 
     @keywords.setter
-    def keywords(self, new_pack_keywords: List):
+    def keywords(self, new_pack_keywords: List[str]):
         """Setter for the keywords attribute"""
         self._keywords = new_pack_keywords
 
@@ -334,5 +469,39 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
-    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
-        pass
+    def dump(self, dest_dir: Union[Path, str] = '') -> List[Path]:
+        file_content = {
+            'name': self.name,
+            'id': self.id,
+            'description': self.description,
+            'created': self.created.strftime(DATETIME_FORMAT),
+            'updated': self.created.strftime(DATETIME_FORMAT),
+            'legacy': self.legacy,
+            'support': self.support,
+            'supportDetails': self.support_details,
+            'eulaLink': self.eula_link,
+            'author': self.author,
+            'certification': self.certification,
+            'price': self.price,
+            'serverMinVersion': str(self.server_min_version),
+            'currentVersion': str(self.current_version),
+            'tags': self.tags,
+            'categories': self.categories,
+            'contentItems': self.content_items,
+            'useCases': self.use_cases,
+            'keywords': self.keywords,
+            'dependencies': self.dependencies
+        }
+
+        if self.price > 0:
+            file_content['premium'] = self.premium
+            file_content['vendorId'] = self.vendor_id
+            file_content['vendorName'] = self.vendor_name
+            if self.preview_only:
+                file_content['previewOnly'] = True
+
+        new_metadata_path = os.path.join(dest_dir, 'metadata.json')
+        with open(new_metadata_path, 'w') as metadata_file:
+            json.dump(file_content, metadata_file, indent=4)
+
+        return [Path(new_metadata_path)]

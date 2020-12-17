@@ -330,7 +330,7 @@ def validate(config, **kwargs):
 @click.option('--cpus',
               help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
                    'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
-@click.option('-isp', '--id_set_path', help='The full path of id_set.json')
+@click.option('-idp', '--id_set_path', help='The full path of id_set.json')
 @click.option('-p', '--pack_names',
               help=("Packs to create artifacts for. Optional values are: `all` or "
                     "csv list of packs. "

@@ -17,11 +17,11 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_ITEMS_INDICATOR_FIELDS, CONTENT_ITEMS_INDICATOR_TYPES,
     CONTENT_ITEMS_INTEGRATIONS, CONTENT_ITEMS_LAYOUTS, CONTENT_ITEMS_PLAYBOOKS,
     CONTENT_ITEMS_REPORTS, CONTENT_ITEMS_SCRIPTS, CONTENT_ITEMS_WIDGETS,
-    CUSTOM_CONTENT_FILE_ENDINGS, DASHBOARDS_DIR, DOCUMENTATION_DIR,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR)
+    CORE_PACKS_LIST, DASHBOARDS_DIR, DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -32,6 +32,8 @@ from demisto_sdk.commands.common.logger import logging_setup
 # Global variables #
 ####################
 from demisto_sdk.commands.common.tools import arg_to_list
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
@@ -118,8 +120,8 @@ class ArtifactsManager:
 
 
 class ContentItemsHandler:
-    def __init__(self, pack_metadata: PackMetaData):
-        self.pack_metadata = pack_metadata
+    def __init__(self, metadata: PackMetaData):
+        self.server_min_version = metadata.server_min_version
         self.content_items: Dict[str, List] = {
             CONTENT_ITEMS_SCRIPTS: [],
             CONTENT_ITEMS_PLAYBOOKS: [],
@@ -154,8 +156,8 @@ class ContentItemsHandler:
 
         content_object_directory = content_object.path.parts[-3]
 
-        if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
-            return
+        # if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
+        #     return
 
         if content_object.to_version < FIRST_MARKETPLACE_VERSION:
             return
@@ -172,7 +174,7 @@ class ContentItemsHandler:
         logging.debug(
             f"Iterating over {content_object.path} file and collecting items of {content_object.path.parts[-4]} pack")
 
-        self.pack_metadata.server_min_version = max(self.pack_metadata.server_min_version, content_object.from_version)
+        self.server_min_version = max(self.server_min_version, content_object.from_version)
 
         self.content_folder_name_to_func[content_object_directory](content_object)
 
@@ -529,36 +531,53 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         ArtifactsReport: ArtifactsReport object.
     """
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
-    content_items_handler = ContentItemsHandler(pack.pack_metadata)
+
+    pack.metadata = load_user_metadata(pack)
+    content_items_handler = ContentItemsHandler(pack.metadata)
+    is_feed_pack = False
 
     for integration in pack.integrations:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, integration)
+        content_items_handler.handle_content_item(integration)
+        is_feed_pack = is_feed_pack or integration.is_feed
+        pack_report += dump_pack_conditionally(artifact_manager, integration)
     for script in pack.scripts:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, script)
+        content_items_handler.handle_content_item(script)
+        pack_report += dump_pack_conditionally(artifact_manager, script)
     for playbook in pack.playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, playbook)
+        content_items_handler.handle_content_item(playbook)
+        is_feed_pack = is_feed_pack or playbook.get('name').startswith('TIM')
+        pack_report += dump_pack_conditionally(artifact_manager, playbook)
     for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, test_playbook)
+        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
     for report in pack.reports:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, report)
+        content_items_handler.handle_content_item(report)
+        pack_report += dump_pack_conditionally(artifact_manager, report)
     for layout in pack.layouts:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, layout)
+        content_items_handler.handle_content_item(layout)
+        pack_report += dump_pack_conditionally(artifact_manager, layout)
     for dashboard in pack.dashboards:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, dashboard)
+        content_items_handler.handle_content_item(dashboard)
+        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
     for incident_field in pack.incident_fields:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, incident_field)
+        content_items_handler.handle_content_item(incident_field)
+        pack_report += dump_pack_conditionally(artifact_manager, incident_field)
     for incident_type in pack.incident_types:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, incident_type)
+        content_items_handler.handle_content_item(incident_type)
+        pack_report += dump_pack_conditionally(artifact_manager, incident_type)
     for indicator_field in pack.indicator_fields:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, indicator_field)
+        content_items_handler.handle_content_item(indicator_field)
+        pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, indicator_type)
+        content_items_handler.handle_content_item(indicator_type)
+        pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, connection)
+        pack_report += dump_pack_conditionally(artifact_manager, connection)
     for classifier in pack.classifiers:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, classifier)
+        content_items_handler.handle_content_item(classifier)
+        pack_report += dump_pack_conditionally(artifact_manager, classifier)
     for widget in pack.widgets:
-        pack_report += dump_pack_conditionally(artifact_manager, content_items_handler, widget)
+        content_items_handler.handle_content_item(widget)
+        pack_report += dump_pack_conditionally(artifact_manager, widget)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
@@ -571,9 +590,14 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             object_report.set_content_all()
             dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
         pack_report += object_report
-    if pack.pack_metadata:
-        pack_report += ObjectReport(pack.pack_metadata, content_packs=True)
-        pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
+    if pack.metadata:
+        pack_report += ObjectReport(pack.metadata, content_packs=True)
+        pack.metadata.content_items = content_items_handler.content_items
+        pack.metadata.server_min_version = content_items_handler.server_min_version
+        pack.metadata.dependencies = handle_dependencies(pack, artifact_manager.id_set_path)
+        if is_feed_pack and 'TIM' not in pack.metadata.tags:
+            pack.metadata.tags.append('TIM')
+        pack.metadata.dump(artifact_manager.content_packs_path / pack.id)
     if pack.readme:
         pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)
@@ -584,13 +608,12 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     return pack_report
 
 
-def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_items_handler: ContentItemsHandler,
+def dump_pack_conditionally(artifact_manager: ArtifactsManager,
                             content_object: ContentObject) -> ObjectReport:
     """ Dump pack object by the following logic
 
     Args:
         artifact_manager: Artifacts manager object.
-        content_items_handler: Content items handler object.
         content_object: content_object (e.g. Integration/Script/Layout etc)
 
     Returns:
@@ -599,8 +622,6 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_items_ha
     object_report = ObjectReport(content_object)
     pack_created_files: List[Path] = []
     test_new_created_files: List[Path] = []
-
-    content_items_handler.handle_content_item(content_object)
 
     with content_files_handler(artifact_manager, content_object) as files_to_remove:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
@@ -891,21 +912,20 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 ###############################
 
 
-def load_user_metadata(pack_metadata: PackMetaData, pack_path: str, pack_name: str):
+def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
     """Loads user defined metadata and stores part of it's data in defined properties fields.
 
     Args:
-        pack_metadata (PackMetaData): the pack metadata object to load data into.
-        pack_name (str): name of the pack.
-        pack_path (str): path of the pack directory.
+        pack (Pack): current pack object.
     """
     global logger
 
-    user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
+    metadata = pack.metadata
+    user_metadata_path = os.path.join(pack.path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
 
     if not os.path.exists(user_metadata_path):
-        logger.error(f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
-        return
+        logger.error(f'{pack.path.name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
+        return None
 
     try:
         with open(user_metadata_path, "r") as user_metadata_file:
@@ -914,12 +934,56 @@ def load_user_metadata(pack_metadata: PackMetaData, pack_path: str, pack_name: s
             if isinstance(user_metadata, list):
                 user_metadata = {}
 
-        pack_metadata.name = user_metadata.get('name', '')
-        pack_metadata.description = user_metadata.get('description', '')
-        pack_metadata.support = user_metadata.get('support', '')
-        pack_metadata.current_version = user_metadata.get('currentVersion', '')
-        pack_metadata.author = user_metadata.get('author', '')
-        pack_metadata.hidden = user_metadata.get('hidden', False)
+        metadata.id = pack.id
+        metadata.name = user_metadata.get('name', '')
+        metadata.description = user_metadata.get('description', '')
+        if isinstance(user_metadata.get('price'), int):
+            metadata.price = user_metadata.get('price', 0)
+        else:
+            logger.exception(f'{metadata.name} pack price is not valid. The price was set to 0.')
+        metadata.support = user_metadata.get('support', '')
+        metadata.url = user_metadata.get('url', '')
+        metadata.email = user_metadata.get('email', '')
+        metadata.certification = user_metadata.get('certification', '')
+        metadata.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
+        metadata.author = user_metadata.get('author', '')
+        metadata.hidden = user_metadata.get('hidden', False)
+        metadata.tags = user_metadata.get('tags', [])
+        metadata.keywords = user_metadata.get('keywords', [])
+        metadata.categories = user_metadata.get('categories', [])
+        metadata.use_cases = user_metadata.get('useCases', [])
+
+        if metadata.price > 0:
+            metadata.premium = True
+            metadata.vendor_id = user_metadata.get('vendorId', '')
+            metadata.vendor_name = user_metadata.get('vendorName', '')
+            metadata.preview_only = user_metadata.get('previewOnly', False)
+        if metadata.use_cases and 'Use Case' not in metadata.tags:
+            metadata.tags.append('Use Case')
+
+        return pack.metadata
 
     except Exception:
-        logger.error(f'Failed loading {pack_name} user metadata.')
+        logger.error(f'Failed loading {pack.path.name} user metadata.')
+        return None
+
+
+def handle_dependencies(pack: Pack, id_set_path: str):
+    calculated_dependencies = PackDependencies.find_dependencies(pack.path.name,
+                                                                 id_set_path=id_set_path,
+                                                                 update_pack_metadata=False, silent_mode=True)
+
+    # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
+    # They can be overridden in the user metadata to be not mandatory so we need to check there as well
+    if pack.path.name in CORE_PACKS_LIST:
+        mandatory_dependencies = [k for k, v in calculated_dependencies.items()
+                                  if v.get('mandatory', False) is True and
+                                  k not in CORE_PACKS_LIST and
+                                  k not in pack.metadata.dependencies.keys()]
+        if mandatory_dependencies:
+            raise Exception(f'New mandatory dependencies {mandatory_dependencies} were '
+                            f'found in the core pack {pack.path.name}')
+
+    calculated_dependencies.update(pack.metadata.dependencies)
+
+    return calculated_dependencies

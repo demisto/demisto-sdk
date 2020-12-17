@@ -51,7 +51,8 @@ class ReadMeValidator(BaseValidator):
         """
         return all([
             self.is_image_path_valid(),
-            self.is_mdx_file()
+            self.is_mdx_file(),
+            self.is_image_path_valid()
         ])
 
     def mdx_verify(self) -> bool:
@@ -170,6 +171,42 @@ class ReadMeValidator(BaseValidator):
                 self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
         return True
+
+    def verify_no_empty_sections(self: str) -> bool:
+        """ Check the following:
+            1. if Troubleshooting exists, it isn't empty.
+            2. no 'FILL IN REQUIRED PERMISSIONS HERE'.
+            3. no unexplicit version number - such as "version xx of".
+
+        Returns:
+            bool: True If all req ok else False
+        """
+        with open(self.file_path) as f:
+            is_valid = True
+            errors = ""
+            readme_content = f.read()
+            troubleshooting = re.findall(r'(## Troubleshooting\n\n?)(.*)', readme_content, re.IGNORECASE)
+            required_permissions = re.findall(r'FILL IN REQUIRED PERMISSIONS HERE', readme_content, re.IGNORECASE)
+            version_numbers = re.findall(r'version xx', readme_content, re.IGNORECASE)
+
+            if troubleshooting:
+                if troubleshooting[0][1] == '---':
+                    errors = "Troubleshooting is empty, please elaborate or delete the section.\n"
+                    is_valid = False
+
+            if required_permissions:
+                errors = errors + "Replace 'FILL IN REQUIRED PERMISSIONS HERE' with a suitable info.\n"
+                is_valid = False
+
+            if version_numbers:
+                errors = errors + "Replace 'version xx' with a proper version.\n"
+                is_valid = False
+
+            if not is_valid:
+                error_message, error_code = Errors.readme_error(errors)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+
+        return is_valid
 
     @staticmethod
     def start_mdx_server():

@@ -172,7 +172,7 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
-    def verify_no_empty_sections(self: str) -> bool:
+    def verify_no_empty_sections(self) -> bool:
         """ Check the following:
             1. if Troubleshooting exists, it isn't empty.
             2. no 'FILL IN REQUIRED PERMISSIONS HERE'.

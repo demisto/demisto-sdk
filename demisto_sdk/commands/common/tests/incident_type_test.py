@@ -102,3 +102,58 @@ def test_is_valid_playbook_id(playbook_id, is_valid):
     structure.current_file = {"playbookId": playbook_id}
     validator = IncidentTypeValidator(structure)
     assert validator.is_valid_playbook_id() == is_valid
+
+
+def test_is_valid_autoextract_no_extract_rules():
+    """
+    Given
+    - an incident type without auto extract section .
+
+    When
+    - Running is_valid_autoextract on it.
+
+    Then
+    - Ensure returns True.
+    """
+    structure = StructureValidator("")
+    validator = IncidentTypeValidator(structure)
+    assert validator.is_valid_autoextract()
+
+
+EXTRACT_VARIATIONS = [
+    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": False, "extractIndicatorTypesIDs": []}, True),
+    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": False, "extractIndicatorTypesIDs": []}, True),
+    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": False,
+      "extractIndicatorTypesIDs": ["IP", "CIDR"]}, True),
+    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": True, "extractIndicatorTypesIDs": []}, True),
+    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": False,
+      "extractIndicatorTypesIDs": ["IP"]}, False),
+    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": True,
+      "extractIndicatorTypesIDs": []}, False),
+    ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": True,
+      "extractIndicatorTypesIDs": ["IP"]}, False),
+    ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": True,
+      "extractIndicatorTypesIDs": ["IP"]}, False)
+]
+
+
+@pytest.mark.parametrize("extract_field, answer", EXTRACT_VARIATIONS)
+def test_is_valid_autoextract(extract_field, answer):
+    """
+    Given
+    - an incident type with a valid or invalid auto extract section .
+
+    When
+    - Running is_valid_autoextract on it.
+
+    Then
+    - Ensure returns True if the field is formatted correctly and False otherwise.
+    """
+    structure = StructureValidator("")
+    validator = IncidentTypeValidator(structure)
+    validator.current_file['extractSettings'] = {
+        'fieldCliNameToExtractSettings': {
+            "incident_field": extract_field
+        }
+    }
+    assert validator.is_valid_autoextract() is answer

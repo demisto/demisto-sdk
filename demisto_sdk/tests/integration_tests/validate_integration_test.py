@@ -1178,13 +1178,15 @@ class TestIncidentTypeValidation:
     def test_invalid_incident_type_with_extract_fields(self, mocker, repo):
         """
         Given
-        - a valid Incident Type with auto-extract fields.
+        - an invalid Incident Type with auto-extract fields.
 
         When
         - Running validate on it.
 
         Then
-        - Ensure validate passes and identifies the file as an incident type.
+        - Ensure validate fails on IT102.
+        - Ensure all wrongly formatted extraction incident fields are listed in the output.
+        - Ensure all valid extraction fields are not listed
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')

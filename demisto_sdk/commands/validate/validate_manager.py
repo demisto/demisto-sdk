@@ -98,7 +98,6 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -121,6 +120,8 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.skip_id_set_creation = skip_id_set_creation
+
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())

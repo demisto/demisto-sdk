@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
-INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid3.md'
 
 README_INPUTS = [
     (VALID_MD, True),
@@ -85,30 +84,108 @@ def test_is_image_path_valid():
     assert images_paths[2] not in captured_output.getvalue()
 
 
-def test_verify_no_empty_sections():
+@pytest.mark.parametrize("file_input, missing_section",
+                         [("## Troubleshooting\n## OtherSection", "Troubleshooting"),
+                          ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
+                          ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
+                          ("## Additional Information\n\n#### OtherSection", "Additional Information"),
+                          ("## Known Limitations\n\n----------\n", "Known Limitations")])
+def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missing_section):
     """
     Given
-        - A README file with 3 errors.
+        - Empty sections in different forms
     When
         - Run validate on README file
     Then
-        - Ensure:
-            - No empty Troubleshooting section
-            - No 'FILL IN REQUIRED PERMISSIONS HERE'
-            - No unexplicit version number
+        - Ensure no empty sections from the SECTIONS list
     """
-    troubleshooting_error = "Troubleshooting is empty, please elaborate or delete the section."
-    required_error = "Replace 'FILL IN REQUIRED PERMISSIONS HERE' with a suitable info."
-    version_error = "Replace 'version xx' with a proper version."
 
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-    readme_validator = ReadMeValidator(INVALID3_MD)
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
     result = readme_validator.verify_no_empty_sections()
-    sys.stdout = sys.__stdout__   # reset stdout.
-    output = captured_output.getvalue()
+
+    stdout, _ = capsys.readouterr()
+    section_error = f'{missing_section} is empty, please elaborate or delete the section.'
 
     assert not result
-    assert troubleshooting_error in output
-    assert required_error in output
-    assert version_error in output
+    assert section_error in stdout
+
+
+@pytest.mark.parametrize("file_input",
+                         ["## Troubleshooting\n## OtherSection\n## Additional Information\n\n#### OtherSection\n##"])
+def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_input):
+    """
+    Given
+        - Couple of empty sections
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_no_empty_sections()
+
+    stdout, _ = capsys.readouterr()
+    error = 'Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the' \
+            ' section.\nAdditional Information is empty, please elaborate or delete the section.'
+
+    assert not result
+    assert error in stdout
+
+@pytest.mark.parametrize("file_input",
+                         [("## Troubleshooting\ninput"),
+                          ("## Troubleshooting\n\n---\ninput"),
+                          ("## Use Cases\n\n----------\ninput"),
+                          ("## Additional Information\n\ninput"),
+                          ("## Known Limitations\n\n----------\ninput")])
+def test_valid_sections(integration, file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_no_empty_sections()
+
+    assert result
+
+
+@pytest.mark.parametrize("file_input, section",
+                         [("##### Required Permissions\n**FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+                           'FILL IN REQUIRED PERMISSIONS HERE'),
+                          ("##### Required Permissions **FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
+                           'FILL IN REQUIRED PERMISSIONS HERE'),
+                          ("##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+                           'FILL IN REQUIRED PERMISSIONS HERE'),
+                          ("##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
+                           'FILL IN REQUIRED PERMISSIONS HERE'),
+                          ("This integration was integrated and tested with version xx of integration v2",
+                           'version xx')])
+def test_verify_no_default_sections_left(integration, capsys, file_input, section):
+    """
+    Given
+        - Read me that contains sections that are created as default and need to be changed
+    When
+        - Run validate on README file
+    Then
+        - Ensure no default sections in the readme file
+    """
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_no_default_sections_left()
+
+    stdout, _ = capsys.readouterr()
+    section_error = f'Replace "{section}" with a suitable info.'
+    assert not result
+    assert section_error in stdout

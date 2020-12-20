@@ -19,6 +19,18 @@ from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
 
+SECTIONS = [
+    'Troubleshooting',
+    'Use Cases',
+    'Known Limitations',
+    'Additional Information'
+]
+
+USER_FILL_SECTIONS = [
+    'FILL IN REQUIRED PERMISSIONS HERE',
+    'version xx'
+]
+
 
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
@@ -43,6 +55,7 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
+        self.file_text = (open(file_path)).read()
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -52,14 +65,13 @@ class ReadMeValidator(BaseValidator):
         return all([
             self.is_image_path_valid(),
             self.is_mdx_file(),
-            self.is_image_path_valid()
+            self.verify_no_empty_sections(),
+            self.verify_no_default_sections_left()
         ])
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
-        with open(self.file_path, 'r') as f:
-            readme_content = f.read()
-        readme_content = self.fix_mdx(readme_content)
+        readme_content = self.fix_mdx(self.file_text)
         with tempfile.NamedTemporaryFile('w+t') as fp:
             fp.write(readme_content)
             fp.flush()
@@ -75,9 +87,7 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
             ReadMeValidator.start_mdx_server()
-        with open(self.file_path, 'r') as f:
-            readme_content = f.read()
-        readme_content = self.fix_mdx(readme_content)
+        readme_content = self.fix_mdx(self.file_text)
         response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=10)
         if response.status_code != 200:
             error_message, error_code = Errors.readme_error(response.text)
@@ -158,10 +168,8 @@ class ReadMeValidator(BaseValidator):
         return txt.startswith('<p>') or txt.startswith('<!DOCTYPE html>') or ('<thead>' in txt and '<tbody>' in txt)
 
     def is_image_path_valid(self) -> bool:
-        with open(self.file_path) as f:
-            readme_content = f.read()
         invalid_paths = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', self.file_text,
             re.IGNORECASE)
         if invalid_paths:
             for path in invalid_paths:
@@ -173,38 +181,49 @@ class ReadMeValidator(BaseValidator):
         return True
 
     def verify_no_empty_sections(self) -> bool:
-        """ Check the following:
-            1. if Troubleshooting exists, it isn't empty.
-            2. no 'FILL IN REQUIRED PERMISSIONS HERE'.
-            3. no unexplicit version number - such as "version xx of".
-
+        """ Check that if the following headlines exists, they are not empty:
+            1. Troubleshooting
+            2. Use Cases
+            3. Known Limitations
+            4. Additional Information
         Returns:
             bool: True If all req ok else False
         """
-        with open(self.file_path) as f:
-            is_valid = True
-            errors = ""
-            readme_content = f.read()
-            troubleshooting = re.findall(r'(## Troubleshooting\n\n?)(.*)', readme_content, re.IGNORECASE)
-            required_permissions = re.findall(r'FILL IN REQUIRED PERMISSIONS HERE', readme_content, re.IGNORECASE)
-            version_numbers = re.findall(r'version xx', readme_content, re.IGNORECASE)
-
-            if troubleshooting:
-                if troubleshooting[0][1] == '---':
-                    errors = "Troubleshooting is empty, please elaborate or delete the section.\n"
+        is_valid = True
+        errors = ""
+        for section in SECTIONS:
+            found_section = re.findall(rf'(## {section}\n\n?)(-*\s*\n\n?)?(\s*.*)', self.file_text, re.IGNORECASE)
+            if found_section:
+                line_after_headline = str(found_section[0][2])
+                # checks if the line after the section's headline is another headline or empty
+                if not line_after_headline or line_after_headline.startswith("##"):
+                    errors = errors + f"{section} is empty, please elaborate or delete the section.\n"
                     is_valid = False
-
-            if required_permissions:
-                errors = errors + "Replace 'FILL IN REQUIRED PERMISSIONS HERE' with a suitable info.\n"
-                is_valid = False
-
-            if version_numbers:
-                errors = errors + "Replace 'version xx' with a proper version.\n"
-                is_valid = False
 
             if not is_valid:
                 error_message, error_code = Errors.readme_error(errors)
                 self.handle_error(error_message, error_code, file_path=self.file_path)
+
+        return is_valid
+
+    def verify_no_default_sections_left(self) -> bool:
+        """ Check that there are no default leftovers such as:
+            1. 'FILL IN REQUIRED PERMISSIONS HERE'.
+            2. unexplicit version number - such as "version xx of".
+        Returns:
+            bool: True If all req ok else False
+        """
+        is_valid = True
+        errors = ""
+        for section in USER_FILL_SECTIONS:
+            required_section = re.findall(rf'{section}', self.file_text, re.IGNORECASE)
+            if required_section:
+                errors = errors + f'Replace "{section}" with a suitable info.\n'
+                is_valid = False
+
+        if not is_valid:
+            error_message, error_code = Errors.readme_error(errors)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid
 

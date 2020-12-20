@@ -133,7 +133,8 @@ EXTRACT_VARIATIONS = [
     ({"extractAsIsIndicatorTypeId": "", "isExtractingAllIndicatorTypes": True,
       "extractIndicatorTypesIDs": ["IP"]}, False),
     ({"extractAsIsIndicatorTypeId": "IP", "isExtractingAllIndicatorTypes": True,
-      "extractIndicatorTypesIDs": ["IP"]}, False)
+      "extractIndicatorTypesIDs": ["IP"]}, False),
+    ({}, False)
 ]
 
 

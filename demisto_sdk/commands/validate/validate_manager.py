@@ -114,12 +114,16 @@ class ValidateManager:
                 click.echo('Running in a private repository')
             self.skip_conf_json = True
 
+        self.print_percent = False
+        self.completion_percentage = 0
+
         if validate_all:
             # No need to check docker images on build branch hence we do not check on -a mode
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.skip_id_set_creation = skip_id_set_creation
+            self.print_percent = True
 
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
@@ -211,9 +215,14 @@ class ValidateManager:
             conf_json_validator = ConfJsonValidator()
             all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
+        num_of_packs = len(os.listdir(PACKS_DIR))
+        count = 1
+
         for pack_name in os.listdir(PACKS_DIR):
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
+            count += 1
 
         return all(all_packs_valid)
 
@@ -304,7 +313,10 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
-            click.echo(f"\nValidating {file_path} as {file_type.value}")
+            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            if self.print_percent:
+                validation_print += f' - {self.completion_percentage}%'
+            click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,

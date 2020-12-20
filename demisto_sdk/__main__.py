@@ -804,10 +804,10 @@ def id_set_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i1', '--id-set1', help='First id_set.json file path', required=True
+    '--id-set1', help='First id_set.json file path', required=True
 )
 @click.option(
-    '-i2', '--id-set2', help='Second id_set.json file path', required=True
+    '--id-set2', help='Second id_set.json file path', required=True
 )
 @click.option(
     '-o', '--output', help='File path of the united id_set', required=True

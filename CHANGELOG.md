@@ -1,5 +1,6 @@
 # Changelog
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
+* Added support for Auto-Extract feature validation in incident types in the **validate** command.
 
 
 # 1.2.12

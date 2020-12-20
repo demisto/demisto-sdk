@@ -880,16 +880,16 @@ class Errors:
     def incident_type_auto_extract_fields_invalid(incident_fields):
         return f"The following incident fields are not formatted correctly under " \
                f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
-               f"Please format them in open of the following ways:\n" \
+               f"Please format them in one of the following ways:\n" \
                f"1. To extract all indicators from the field: \n" \
                f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
                f"extractIndicatorTypesIDs: []\n" \
                f"2. To extract the incident field to a specific indicator without using regex: \n" \
-               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"INDICATOR_TYPE\", " \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"<INDICATOR_TYPE>\", " \
                f"extractIndicatorTypesIDs: []\n" \
                f"3. To extract indicators from the field using regex: \n" \
                f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
-               f"extractIndicatorTypesIDs: [\"INDICATOR_TYPE1\", \"INDICATOR_TYPE2\"]"
+               f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
 
     @staticmethod
     @error_code_decorator

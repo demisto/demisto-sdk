@@ -122,6 +122,11 @@ class IncidentTypeValidator(ContentEntityValidator):
         return True
 
     def is_valid_autoextract(self):
+        """Check if extractSettings field is valid.
+
+        Returns:
+            bool. True if extractSettings is valid or empty, False otherwise
+        """
         auto_extract_data = self.current_file.get('extractSettings', {}).get('fieldCliNameToExtractSettings')
 
         # no auto extraction set in incident type.
@@ -129,10 +134,10 @@ class IncidentTypeValidator(ContentEntityValidator):
             return True
 
         invalid_incident_fields = []
-        for incident_field in auto_extract_data:
-            extracting_all = auto_extract_data[incident_field].get('isExtractingAllIndicatorTypes')
-            extract_as_is = auto_extract_data[incident_field].get('extractAsIsIndicatorTypeId')
-            extracted_indicator_types = auto_extract_data[incident_field].get('extractIndicatorTypesIDs')
+        for incident_field, extracted_settings in auto_extract_data.items():
+            extracting_all = extracted_settings.get('isExtractingAllIndicatorTypes')
+            extract_as_is = extracted_settings.get('extractAsIsIndicatorTypeId')
+            extracted_indicator_types = extracted_settings.get('extractIndicatorTypesIDs')
 
             # General format check.
             if type(extracting_all) != bool or type(extract_as_is) != str or type(extracted_indicator_types) != list:

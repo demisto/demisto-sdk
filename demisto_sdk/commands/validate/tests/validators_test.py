@@ -1107,59 +1107,59 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
 
-    # def test_staged(self, mocker):
-    #     """
-    #     Given
-    #         - staged = True flag
-    #         - diff on yml file
-    #     When
-    #         - Run the validate command.
-    #     Then
-    #         - Validate checks for the staged files using git diff.
-    #         - get_modified_and_added_files returns a list of only staged files.
-    #     """
-    #     def run_command_effect(arg):
-    #         # if the call is to check the staged files only - return the HelloWorld integration.
-    #         if arg == 'git diff --name-only --staged':
-    #             return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
-    #
-    #         # else return all the files that were changed from master and their status in comparison to the master.
-    #         else:
-    #             return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
-    #
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-    #     mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
-    #
-    #     validate_manager = ValidateManager(staged=True)
-    #     modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
-    #     assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
-    #     assert modified_packs == {'HelloWorld'}
-    #
-    # def test_not_staged(self, mocker):
-    #     """
-    #     Given
-    #         - staged = False flag
-    #         - diff on yml file
-    #     When
-    #         - Run the validate command.
-    #     Then
-    #         - Validate that not a git diff staged command runs
-    #     """
-    #     def run_command_effect(arg):
-    #         assert 'staged' not in arg
-    #         return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
-    #
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
-    #     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-    #     mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
-    #
-    #     validate_manager = ValidateManager(staged=False, skip_id_set_creation=)
-    #     modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
-    #     assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
-    #     assert modified_packs == {'HelloWorld'}
+    def test_staged(self, mocker):
+        """
+        Given
+            - staged = True flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate checks for the staged files using git diff.
+            - get_modified_and_added_files returns a list of only staged files.
+        """
+        def run_command_effect(arg):
+            # if the call is to check the staged files only - return the HelloWorld integration.
+            if arg == 'git diff --name-only --staged':
+                return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+            # else return all the files that were changed from master and their status in comparison to the master.
+            else:
+                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=True, skip_id_set_creation=True)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
+
+    def test_not_staged(self, mocker):
+        """
+        Given
+            - staged = False flag
+            - diff on yml file
+        When
+            - Run the validate command.
+        Then
+            - Validate that not a git diff staged command runs
+        """
+        def run_command_effect(arg):
+            assert 'staged' not in arg
+            return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
+
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
+        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+
+        validate_manager = ValidateManager(staged=False, skip_id_set_creation=True)
+        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
+        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+        assert modified_packs == {'HelloWorld'}
 
 
 def test_content_release_identifier_exists():

@@ -31,12 +31,46 @@ class Initiator:
            name (str): The name for the new pack/integration/script directory.
            id (str): The id for the created script/integration.
            integration (bool): Indicates whether to create an integration.
+           template (str): If an integration is initialized, specifies the integration template.
            script (bool): Indicates whether to create a script.
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+    DEFAULT_INTEGRATION_TEMPLATE = 'Boilerplate'
+
+    HELLO_WORLD_INTEGRATION = 'HelloWorld'
+    HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
+    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION]
+
+    TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
+    TEMPLATE_INTEGRATION_FILES = {f'{TEMPLATE_INTEGRATION_NAME}.py',
+                                  f'{TEMPLATE_INTEGRATION_NAME}.yml',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_description.md',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_image.png',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_test.py',
+                                  'Pipfile', 'Pipfile.lock'}
+
+    HELLO_WORLD_TEST_DATA_FILES = {os.path.join('test_data', 'domain_reputation.json'),
+                                   os.path.join('test_data', 'get_alert.json'),
+                                   os.path.join('test_data', 'ip_reputation.json'),
+                                   os.path.join('test_data', 'scan_results.json'),
+                                   os.path.join('test_data', 'search_alerts.json'),
+                                   os.path.join('test_data', 'update_alert_status.json'),
+                                   os.path.join('test_data', 'domain_reputation.json')}
+    TEST_DATA_DIR = 'test_data'
+
+    HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
+
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    PACK_INITIAL_VERSION = "1.0.0"
+
+    DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
+
+    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
+                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
@@ -51,6 +85,12 @@ class Initiator:
         if not integration and not script and not pack:
             self.is_pack = True
 
+        while template not in self.INTEGRATION_TEMPLATE_OPTIONS or template != '':
+            options_str = ', '.join(self.INTEGRATION_TEMPLATE_OPTIONS)
+            template = str(input(f"Enter a valid template name, or press enter to choose the default template"
+                                 f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}"))
+        self.template = template if template else self.DEFAULT_INTEGRATION_TEMPLATE
+
         self.full_output_path = ''
 
         while ' ' in name:
@@ -59,26 +99,6 @@ class Initiator:
         self.dir_name = name
 
         self.is_pack_creation = not all([self.is_script, self.is_integration])
-
-    HELLO_WORLD_INTEGRATION = 'HelloWorld'
-    HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
-    HELLO_WORLD_INTEGRATION_FILES = {'HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
-                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
-                                     os.path.join('test_data', 'domain_reputation.json'),
-                                     os.path.join('test_data', 'get_alert.json'),
-                                     os.path.join('test_data', 'ip_reputation.json'),
-                                     os.path.join('test_data', 'scan_results.json'),
-                                     os.path.join('test_data', 'search_alerts.json'),
-                                     os.path.join('test_data', 'update_alert_status.json'),
-                                     os.path.join('test_data', 'domain_reputation.json')}
-    TEST_DATA_DIR = 'test_data'
-    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-    PACK_INITIAL_VERSION = "1.0.0"
-
-    DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-                PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def init(self):
         """Starts the init command process.
@@ -310,15 +330,16 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        if not self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES):
+        integration_template_files = self.get_integration_template_files()
+        if not self.get_remote_templates(integration_template_files):
             hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
             copy_tree(str(hello_world_path), self.full_output_path)
 
-        if self.id != self.HELLO_WORLD_INTEGRATION:
+        if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
-            self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True)
-            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
+            self.rename(current_suffix=self.template)
+            self.yml_reformatting(current_suffix=self.template, integration=True)
+            self.fix_test_file_import(name_to_change=self.template)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
@@ -460,6 +481,20 @@ class Initiator:
             except Exception as err:
                 print_v(f'Could not copy demistomock: {str(err)}')
 
+    def get_integration_template_files(self):
+        """
+        Gets the list of the integration file names to create according to the selected template.
+        Returns:
+            set. The names of integration files to create.
+        """
+        template_files = {filename.replace(self.TEMPLATE_INTEGRATION_NAME, self.template)
+                          for filename in self.TEMPLATE_INTEGRATION_FILES}
+
+        if self.template == self.HELLO_WORLD_INTEGRATION:
+            template_files.add(self.HELLO_WORLD_TEST_DATA_FILES)
+
+        return template_files
+
     def get_remote_templates(self, files_list):
         """
         Downloading the object related template-files and saving them in the output path.
@@ -469,8 +504,9 @@ class Initiator:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
         if self.is_integration:
-            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
-            os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+            path = os.path.join('Packs', self.template, 'Integrations', self.template)
+            if self.template == self.HELLO_WORLD_INTEGRATION:
+                os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
         else:
             path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')
 

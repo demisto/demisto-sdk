@@ -671,11 +671,13 @@ def generate_test_playbook(**kwargs):
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
                            "directory.")
 @click.option(
-    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+    '--integration', is_flag=True, help="Create an Integration based on Boilerplate template")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
 @click.option(
     "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "-t", "--template", help="Specify one of the following integration templates: IAM, HelloWorld")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")

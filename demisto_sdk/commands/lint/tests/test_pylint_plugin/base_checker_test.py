@@ -308,3 +308,67 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
                 ),
         ):
             self.checker.visit_importfrom(node_a)
+
+
+class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
+    """
+
+
+
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_valid_common_server_python_import(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - valid import of commonServerPython exists in the code.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2']
+        node_a = astroid.extract_node("""
+            if  a == 'test-1': #@
+                return true 
+            else:
+                return false
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test2']),
+
+                ),
+        ):
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_commands_in_dict_(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - valid import of commonServerPython exists in the code.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2' , 'test3']
+        node_a = astroid.extract_node("""
+            {'test-1' : 1, 'test2':2} #@
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test3']),
+                ),
+        ):
+            self.checker.visit_dict(node_a)
+            self.checker.leave_module(node_a)
+
+
+

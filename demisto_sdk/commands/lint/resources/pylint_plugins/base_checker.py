@@ -56,7 +56,10 @@ class CustomBaseChecker(BaseChecker):
     def visit_dict(self, node):
         self._commands_in_dict_keys_checker(node)
 
-    def visit_module(self, node):
+    def visit_if(self, node):
+        self._commands_in_if_statment_checker(node)
+
+    def leave_module(self, node):
         self._all_commands_implemented(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
@@ -110,11 +113,27 @@ class CustomBaseChecker(BaseChecker):
 
     def _commands_in_dict_keys_checker(self, node):
         try:
-            for sub_node in node.get_children():
-                if isinstance(sub_node, astroid.Name) and sub_node.name in self.commands:
-                    self.commands.remove(sub_node.name)
+            for sub_node in node.itered():
+                if sub_node.value in self.commands:
+                    self.commands.remove(sub_node.value)
         except Exception:
             pass
+
+    def _commands_in_if_statment_checker(self, node):
+        try:
+            # for if command == 'command'
+            comp_with = node.test.ops[0][1].value
+            if comp_with in self.commands:
+                self.commands.remove(comp_with)
+        except Exception:
+            try:
+                # for elif command == 'command'
+                for elif_clause in node.orelse:
+                    comp_with = elif_clause.test.ops[0][1].value
+                    if comp_with in self.commands:
+                        self.commands.remove(comp_with)
+            except Exception:
+                pass
 
     def _all_commands_implemented(self, node):
         if self.commands:

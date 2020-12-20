@@ -136,12 +136,13 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
     assert not result
     assert error in stdout
 
+
 @pytest.mark.parametrize("file_input",
-                         [("## Troubleshooting\ninput"),
-                          ("## Troubleshooting\n\n---\ninput"),
-                          ("## Use Cases\n\n----------\ninput"),
-                          ("## Additional Information\n\ninput"),
-                          ("## Known Limitations\n\n----------\ninput")])
+                         ["## Troubleshooting\ninput",
+                          "## Troubleshooting\n\n---\ninput",
+                          "## Use Cases\n\n----------\ninput",
+                          "## Additional Information\n\ninput",
+                          "## Known Limitations\n\n----------\ninput"])
 def test_valid_sections(integration, file_input):
     """
     Given

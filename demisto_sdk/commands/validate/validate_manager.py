@@ -315,7 +315,7 @@ class ValidateManager:
         if not self.check_only_schema:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
-                validation_print += f' - {self.completion_percentage}%'
+                validation_print += f' [{self.completion_percentage}%]'
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,

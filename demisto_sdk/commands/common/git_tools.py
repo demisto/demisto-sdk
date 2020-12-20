@@ -21,9 +21,9 @@ def get_current_working_branch() -> str:
     return ''
 
 
-def get_changed_files(from_branch: str = 'master', filter_results: Callable = None):
-    temp_files = run_command(f'git diff --ignore-cr-at-eol --name-status {from_branch}').split('\n')
-    print_error(f'\n\n temp_files is: {}')
+def get_changed_files(from_branch: str = 'master', filter_results: Callable = None, ignore_eol_characters = False):
+    git_diff_cmd = f'git diff --ignore-cr-at-eol --name-status {from_branch}' if ignore_eol_characters else f'git diff --name-status {from_branch}'
+    temp_files = run_command(git_diff_cmd).split('\n')
     files: List = []
     for file in temp_files:
         if file:

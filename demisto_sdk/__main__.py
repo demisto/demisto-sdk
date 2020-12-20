@@ -456,6 +456,10 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
     "-y", "--assume-yes",
     help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
     is_flag=True)
+@click.option(
+    "-e", "--ignore-eol",
+    help="Whether to ignore eol characters as changes (relevant for Windows users)",
+    is_flag=True)
 def format_yml(**kwargs):
     return format_manager(**kwargs)
 

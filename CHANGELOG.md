@@ -1,6 +1,7 @@
 # Changelog
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
-
+* Added a print to indicate backwards compatibility is being checked in **validate** command.
+* Added a percent print when running the **validate** command with the *-a* flag.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

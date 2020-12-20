@@ -88,7 +88,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation
+        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
@@ -117,9 +117,10 @@ class ValidateManager:
 
         if validate_all:
             # No need to check docker images on build branch hence we do not check on -a mode
-            # also do not skip id set creation
+            # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
+            self.skip_id_set_creation = skip_id_set_creation
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())

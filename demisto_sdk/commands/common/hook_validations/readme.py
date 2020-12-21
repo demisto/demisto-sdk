@@ -55,7 +55,11 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
-        self.file_text = (open(file_path)).read()
+        self.file_text = self.open_file()
+
+    def open_file(self):
+        with open(self.file_path) as f:
+            return f.read()
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -197,7 +201,7 @@ class ReadMeValidator(BaseValidator):
                 line_after_headline = str(found_section[0][2])
                 # checks if the line after the section's headline is another headline or empty
                 if not line_after_headline or line_after_headline.startswith("##"):
-                    errors = errors + f"{section} is empty, please elaborate or delete the section.\n"
+                    errors += f'{section} is empty, please elaborate or delete the section.\n'
                     is_valid = False
 
             if not is_valid:
@@ -218,7 +222,7 @@ class ReadMeValidator(BaseValidator):
         for section in USER_FILL_SECTIONS:
             required_section = re.findall(rf'{section}', self.file_text, re.IGNORECASE)
             if required_section:
-                errors = errors + f'Replace "{section}" with a suitable info.\n'
+                errors += f'Replace "{section}" with a suitable info.\n'
                 is_valid = False
 
         if not is_valid:

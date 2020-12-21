@@ -1,7 +1,5 @@
 Use the Zoom integration manage your Zoom users and meetings
-This integration was integrated and tested with version xx of Zoom.
-Supported Cortex XSOAR versions: 5.0.0 and later.
-
+This integration was integrated and tested with version xx of Zoom
 ## Configure Zoom on Cortex XSOAR
 
 1. Navigate to **Settings** > **Integrations** > **Servers & Services**.

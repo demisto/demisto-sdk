@@ -677,7 +677,7 @@ def generate_test_playbook(**kwargs):
 @click.option(
     "--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
-    "-t", "--template", help="Specify one of the following integration templates: IAM, HelloWorld")
+    "-t", "--template", help="Use one of the following integration templates: HelloIAMWorld, HelloWorld")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")

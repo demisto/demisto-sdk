@@ -172,7 +172,8 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
 
     """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.lstrip('origin/')
+    if tag.startswith('origin/'):
+        tag = tag[len('origin/'):]
 
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')

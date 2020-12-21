@@ -85,10 +85,10 @@ class Initiator:
         if not integration and not script and not pack:
             self.is_pack = True
 
-        while template not in self.INTEGRATION_TEMPLATE_OPTIONS or template != '':
+        while template not in self.INTEGRATION_TEMPLATE_OPTIONS and template != '':
             options_str = ', '.join(self.INTEGRATION_TEMPLATE_OPTIONS)
             template = str(input(f"Enter a valid template name, or press enter to choose the default template"
-                                 f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}"))
+                                 f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}\n"))
         self.template = template if template else self.DEFAULT_INTEGRATION_TEMPLATE
 
         self.full_output_path = ''
@@ -332,8 +332,9 @@ class Initiator:
 
         integration_template_files = self.get_integration_template_files()
         if not self.get_remote_templates(integration_template_files):
-            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
-            copy_tree(str(hello_world_path), self.full_output_path)
+            default_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',
+                                                                  self.DEFAULT_INTEGRATION_TEMPLATE))
+            copy_tree(str(default_template_path), self.full_output_path)
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.

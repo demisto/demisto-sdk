@@ -386,7 +386,7 @@ def test_integration_init(initiator, tmpdir):
     Then
         - Ensure the function's return value is True
         - Ensure integration directory with the desired integration name is created successfully.
-        - Ensure integration directory contain all files.
+        - Ensure integration directory contain all files of the Boilerplate template.
     """
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
@@ -394,6 +394,44 @@ def test_integration_init(initiator, tmpdir):
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
+
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+    res = initiator.integration_init()
+    integration_dir_files = {file for file in listdir(integration_path)}
+    expected_files = {
+        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    assert expected_files == integration_dir_files
+
+
+def test_template_integration_init(initiator, tmpdir):
+    """
+    Tests `integration_init` function with a given integration template name.
+
+    Given
+        - Inputs to init integration in a given output.
+        - An integration template - HelloWorld.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contains all the files of the template integration.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.template = 'HelloWorld'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()

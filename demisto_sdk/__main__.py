@@ -267,7 +267,7 @@ def unify(**kwargs):
     help='Skip validation of pack dependencies.')
 @click.option(
     '--skip-id-set-creation', is_flag=True,
-    help='Skip validation of pack dependencies.')
+    help='Skip id_set.json file creation.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)

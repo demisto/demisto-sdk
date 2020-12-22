@@ -1132,7 +1132,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
 
-        validate_manager = ValidateManager(staged=True)
+        validate_manager = ValidateManager(staged=True, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}
@@ -1156,7 +1156,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
 
-        validate_manager = ValidateManager(staged=False)
+        validate_manager = ValidateManager(staged=False, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}

@@ -19,21 +19,22 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
-PACK_METADATA_PARTNER_NO_EMAIL_NO_URL = {
+PACK_METADATA_PARTNER = {
     "name": "test",
     "description": "test",
     "support": "partner",
     "currentVersion": "1.0.1",
     "author": "bar",
-    "url": '',
-    "email": '',
     "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
     "tags": [],
     "useCases": [],
-    "keywords": []
+    "keywords": [],
+    "price": 2,
+    "email": "some@mail.com",
+    "url": "https://www.paloaltonetworks.com/cortex"
 }
 
 
@@ -78,7 +79,7 @@ class TestPackUniqueFilesValidator:
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.validate_pack_unique_files()
 
-    def test_validate_partner_contribute_pack_metadata(self, mocker, repo):
+    def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """
         Given
         - Partner contributed pack without email and url.
@@ -89,18 +90,48 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
+        pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
+        pack_metadata_no_email_and_url['email'] = ''
+        pack_metadata_no_email_and_url['url'] = ''
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
-                            return_value=json.dumps(PACK_METADATA_PARTNER_NO_EMAIL_NO_URL))
+                            return_value=json.dumps(pack_metadata_no_email_and_url))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
         pack = repo.create_pack('PackName')
-        pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL_NO_URL)
+        pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
         assert 'Contributed packs must include email or url' in result.stdout
+
+    def test_validate_partner_contribute_pack_metadata_price_change(self, mocker, repo):
+        """
+        Given
+        - Partner contributed pack where price has changed.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate found errors.
+        """
+        pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
+        pack_metadata_price_changed['price'] = 3
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file',
+                            return_value=PACK_METADATA_PARTNER)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=json.dumps(pack_metadata_price_changed))
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+        pack = repo.create_pack('PackName')
+        pack.pack_metadata.write_json(pack_metadata_price_changed)
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
+        assert 'The pack price was changed from 2 to 3 - revert the change' in result.stdout
 
     def test_check_timestamp_format(self):
         """

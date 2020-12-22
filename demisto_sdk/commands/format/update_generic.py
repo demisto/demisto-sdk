@@ -49,12 +49,13 @@ class BaseUpdate:
                  assume_yes: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
+        self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
-        self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path else self.output_file)
+        self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path
+                                         else self.output_file, self.verbose)
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate
-        self.verbose = verbose
         self.assume_yes = assume_yes
         self.updated_id_dict: Dict = {}
 
@@ -253,10 +254,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str) -> dict:
+    def is_old_file(path: str, verbose: bool = False) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
-            data = get_remote_file(path)
+            data = get_remote_file(path, suppress_print=not verbose)
             if not data:
                 return {}
             else:

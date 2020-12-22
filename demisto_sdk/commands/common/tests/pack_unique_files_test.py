@@ -135,6 +135,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
+
         def error_raising_function(argument):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 

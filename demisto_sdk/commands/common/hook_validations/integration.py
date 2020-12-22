@@ -17,8 +17,7 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.utils import is_v2_file
-from demisto_sdk.commands.common.tools import (print_error,
+from demisto_sdk.commands.common.tools import (is_v2_file, print_error,
                                                server_version_compare)
 
 
@@ -100,6 +99,15 @@ class IntegrationValidator(ContentEntityValidator):
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
+        return all(answers)
+
+    def is_valid_as_deprecated(self):
+        """Check if the integration is valid as a deprecated integration."""
+
+        answers = [
+            self.is_valid_deprecated_integration_display_name(),
+            self.is_valid_deprecated_integration_description(),
+        ]
         return all(answers)
 
     def are_tests_configured(self) -> bool:
@@ -767,7 +775,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file):
+        if not is_v2_file(self.current_file, check_in_display=True):
             return True
         else:
             display_name = self.current_file.get('display')

@@ -1101,6 +1101,76 @@ class TestDependsOnWidgets:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
+class TestDependsOnDashboard:
+    def test_collect_dashboard_dependencies(self, id_set):
+        """
+        Given
+            - A dashboard entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the dashboard depends on.
+        """
+        expected_result = {('CommonScripts', True)}
+
+        test_input = [
+            {
+                "Dummy_dashboard": {
+                    "name": "Dummy Widget",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": [
+                        "AssignAnalystToIncident"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_widget_dependencies(
+            pack_widgets=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+            header='Dashboards',
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnReports:
+    def test_collect_report_dependencies(self, id_set):
+        """
+        Given
+            - A report entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the report depends on.
+        """
+        expected_result = {('CommonScripts', True)}
+
+        test_input = [
+            {
+                "Dummy_report": {
+                    "name": "Dummy Widget",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": [
+                        "AssignAnalystToIncident"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_widget_dependencies(
+            pack_widgets=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+            header='Reports',
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
 SEARCH_PACKS_INPUT = [
     (['type'], 'IncidentFields', set()),
     (['emailaddress'], 'IncidentFields', {'Compliance'}),
@@ -1157,12 +1227,14 @@ class TestDependencyGraph:
             - Assert all the dependencies are correct
             - Assert all the mandatory dependencies are correct
         """
+
         def mock_find_pack_dependencies(pack_id, *_, **__):
             dependencies = {'pack1': [('pack2', True), ('pack3', False)],
                             'pack2': [('pack3', False), ('pack2', True)],
                             'pack3': [],
                             'pack4': [('pack6', False)]}
             return dependencies[pack_id]
+
         mocker.patch(
             'demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies._find_pack_dependencies',
             side_effect=mock_find_pack_dependencies

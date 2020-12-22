@@ -2,6 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
+from typing import List, Union
 
 import pytest
 from demisto_sdk.commands.common import tools
@@ -12,7 +13,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                filter_files_by_type,
                                                filter_files_on_pack,
                                                filter_packagify_changes,
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_ryaml,
                                                has_remote_configured,
                                                is_origin_content_repo, is_uuid,
+                                               is_v2_file,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
@@ -597,6 +599,66 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
     ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
     assert len(ignore_test_set) == 0
+
+
+@pytest.mark.parametrize(argnames="arg, expected_result",
+                         argvalues=[["a1,b2,c3", ['a1', 'b2', 'c3']],
+                                    ["[\"a1\",\"b2\",\"c3\"]", ["a1", "b2", "c3"]],
+                                    [['a1', 'b2', 'c3'], ['a1', 'b2', 'c3']],
+                                    ["", []],
+                                    [[], []]
+                                    ])
+def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
+    """
+        Given
+        - String or list of strings.
+        Case a: comma-separated string.
+        Case b: a string representing a list.
+        Case c: python list.
+        Case d: empty string.
+        Case e: empty list.
+
+        When
+        - Convert given string to list of strings, for example at unify.add_contributors_support.
+
+        Then:
+        - Ensure a Python list is returned with the relevant values.
+        """
+    func_result = arg_to_list(arg=arg, separator=",")
+    assert func_result == expected_result
+
+
+V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
+V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2", "id": "integrationname V2"}
+NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
+NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
+NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
+V2_NAME_INPUTS = [
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
+    (NOT_V2_VIA_NAME, False),
+    (NOT_V2_VIA_DISPLAY, True)
+]
+
+
+@pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
+def test_is_v2_file_via_name(current, answer):
+    assert is_v2_file(current) is answer
+
+
+V2_DISPLAY_INPUTS = [
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY, False),
+    (NOT_V2_VIA_NAME, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
+]
+
+
+@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
+def test_is_v2_file_via_display(current, answer):
+    assert is_v2_file(current, check_in_display=True) is answer
 
 
 @pytest.mark.parametrize('s, is_valid_uuid', [

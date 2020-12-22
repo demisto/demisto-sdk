@@ -10,10 +10,10 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106']
+                         'PB106', 'IN109', 'IN110', 'IN122']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'PA117', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -114,6 +114,7 @@ ERROR_CODE = {
     "invalid_deprecated_playbook": "PB104",
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
+    "invalid_script_id": "PB107",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -150,7 +151,6 @@ ERROR_CODE = {
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
-    "pack_readme_file_missing": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
@@ -768,6 +768,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_script_id(script_entry_to_check, pb_task):
+        return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right script id is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
@@ -1044,11 +1053,6 @@ class Errors:
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
         return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
-
-    @staticmethod
-    @error_code_decorator
-    def pack_readme_file_missing(file_name):
-        return f'{file_name} file does not exist, create one in the root of the pack'
 
     @staticmethod
     @error_code_decorator

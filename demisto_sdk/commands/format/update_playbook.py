@@ -3,9 +3,9 @@ import re
 from typing import Tuple
 
 import click
+from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
-from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
@@ -53,11 +53,28 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         """If no fromversion is specified, asks the user for it's value and updates the playbook."""
 
         if not self.data.get('fromversion', ''):
+
+            if self.assume_yes:
+                if self.verbose:
+                    if self.from_version:
+                        click.echo(f"Adding `fromversion: {self.from_version}`")
+
+                    else:
+                        click.echo(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
+                self.data['fromversion'] = self.from_version if self.from_version else OLDEST_SUPPORTED_VERSION
+                return
+
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
                         fg='red')
             user_answer = input()
             if user_answer in ['n', 'N', 'no', 'No']:
-                print_error('Moving forward without updating fromversion tag')
+                click.secho('Moving forward without updating fromversion tag', fg='yellow')
+                return
+
+            if self.from_version:
+                if self.verbose:
+                    click.echo(f"Adding `fromversion: {self.from_version}`")
+                self.data['fromversion'] = self.from_version
                 return
 
             is_input_version_valid = False
@@ -68,7 +85,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     self.data['fromversion'] = user_desired_version
                     is_input_version_valid = True
                 else:
-                    print_error('Version format is not valid')
+                    click.secho('Version format is not valid', fg='red')
 
     def run_format(self) -> int:
         self.update_fromversion_by_user()
@@ -129,7 +146,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()
             return super().run_format()
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
 
@@ -150,5 +169,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             return super().run_format()
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE

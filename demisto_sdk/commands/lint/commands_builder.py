@@ -53,7 +53,7 @@ def build_flake8_command(files: List[Path], py_num: float) -> str:
     """
 
     command = f"{get_python_exec(py_num)} -m flake8"
-    # Generating file pattrens - path1,path2,path3,..
+    # Generating file patterns - path1,path2,path3,..
     files_list = [str(file) for file in files]
     command += ' ' + ' '.join(files_list)
 
@@ -70,17 +70,20 @@ def build_bandit_command(files: List[Path]) -> str:
         str: bandit command
     """
     command = "python3 -m bandit"
-    # Only reporting on the high-severity issues
-    command += " -lll"
-    # report only issues of a given confidence level HIGH
+    # Reporting only issues with high and medium severity level
+    command += " -ll"
+    # Reporting only issues of a high confidence level
     command += " -iii"
+    # Skip the following tests: Pickle usage, Use of insecure hash func, Audit url open,
+    # Using xml.etree.ElementTree.fromstring,  Using xml.dom.minidom.parseString
+    command += " -s B301,B303,B310,B314,B318"
     # Aggregate output by filename
     command += " -a file"
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
-    # only show output in the case of an error
+    # Only show output in the case of an error
     command += " -q"
-    # Generating path pattrens - path1,path2,path3,..
+    # Generating path patterns - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
 
@@ -137,7 +140,7 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     # Load plugins
     if checker_path:
         command += f" --load-plugins {checker_path}"
-    # Generating path pattrens - file1 file2 file3,..
+    # Generating path patterns - file1 file2 file3,..
     files_list = [str(file) for file in files]
     command += " " + " ".join(files_list)
     return command
@@ -172,7 +175,7 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --allow-redefinition"
     # Disable cache creation
     command += " --cache-dir=/dev/null"
-    # Generating path pattrens - file1 file2 file3,..
+    # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
 
@@ -225,7 +228,7 @@ def build_pylint_command(files: List[Path]) -> str:
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"
-    # Generating path pattrens - file1 file2 file3,..
+    # Generating path patterns - file1 file2 file3,..
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
     return command

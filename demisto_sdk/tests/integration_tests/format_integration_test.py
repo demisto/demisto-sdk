@@ -9,6 +9,9 @@ import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
+from demisto_sdk.commands.common.hook_validations.playbook import \
+    PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format import update_generic
@@ -480,6 +483,7 @@ def test_format_on_relative_path_playbook(mocker, repo):
     playbook.create_default_playbook()
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
+    mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
@@ -543,6 +547,150 @@ def test_format_commonserver_skipped_files(repo):
     commonserver_excluded_files.remove('CommonServerPython.py')
     for excluded_file in commonserver_excluded_files:
         assert excluded_file not in format_result.stdout
+
+
+def test_format_playbook_without_fromversion_no_preset_flag(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack with assume-yes flag without from-version flag
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the oldest supported version to the playbook.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == OLDEST_SUPPORTED_VERSION
+
+
+def test_format_playbook_without_fromversion_with_preset_flag(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack with assume-yes flag with from-version flag
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the given from-version.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '--from-version',
+                                         '6.0.0', '-v'])
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
+
+
+def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack with from-version flag
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the given from-version.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--from-version',
+                                         '6.0.0', '-v'], input='y')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
+
+
+def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the inputted version.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
+
+
+def test_format_playbook_without_fromversion_without_preset_flag_manual_two_tries(repo):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure the format does not except wrong version format.
+        - Ensure format adds fromversion with the inputted version.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if 'fromversion' in playbook_content:
+        del playbook_content['fromversion']
+
+    assert 'fromversion' not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5\n5.5.0')
+    assert 'Version format is not valid' in format_result.stdout
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
 
 
 def test_format_incident_type_layout_id(repo):

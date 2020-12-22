@@ -6,11 +6,11 @@ This integration was integrated and tested with version xx of Zoom
 2. Search for Zoom.
 3. Click **Add instance** to create and configure a new integration instance.
 
-| **Parameter** | **Description** | **Required** |
-| --- | --- | --- |
-| apiKey |  | True |
-| apiSecret |  | True |
-| proxy | Use system proxy settings | False |
+    | **Parameter** | **Description** | **Required** |
+    | --- | --- | --- |
+    | apiKey |  | True |
+    | apiSecret |  | True |
+    | proxy | Use system proxy settings | False |
 
 4. Click **Test** to validate the URLs, token, and connection.
 ## Commands

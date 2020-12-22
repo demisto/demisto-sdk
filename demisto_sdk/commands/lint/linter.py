@@ -4,6 +4,9 @@ import io
 import json
 import logging
 import os
+import platform
+import time
+import traceback
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -123,30 +126,34 @@ class Linter:
         # If not python pack - skip pack
         if skip:
             return self._pkg_lint_status
+        try:
+            # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
+            with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
+                                    pack_path=self._pack_abs_dir,
+                                    lint_files=self._facts["lint_files"],
+                                    modules=modules,
+                                    pack_type=self._pkg_lint_status["pack_type"]):
+                # Run lint check on host - flake8, bandit, mypy
+                if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                    self._run_lint_in_host(no_flake8=no_flake8,
+                                           no_bandit=no_bandit,
+                                           no_mypy=no_mypy,
+                                           no_vulture=no_vulture,
+                                           no_xsoar_linter=no_xsoar_linter)
 
-        # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-        with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
-                                pack_path=self._pack_abs_dir,
-                                lint_files=self._facts["lint_files"],
-                                modules=modules,
-                                pack_type=self._pkg_lint_status["pack_type"]):
-            # Run lint check on host - flake8, bandit, mypy
-            if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                self._run_lint_in_host(no_flake8=no_flake8,
-                                       no_bandit=no_bandit,
-                                       no_mypy=no_mypy,
-                                       no_vulture=no_vulture,
-                                       no_xsoar_linter=no_xsoar_linter)
-
-            # Run lint and test check on pack docker image
-            if self._facts["docker_engine"]:
-                self._run_lint_on_docker_image(no_pylint=no_pylint,
-                                               no_test=no_test,
-                                               no_pwsh_analyze=no_pwsh_analyze,
-                                               no_pwsh_test=no_pwsh_test,
-                                               keep_container=keep_container,
-                                               test_xml=test_xml)
-
+                # Run lint and test check on pack docker image
+                if self._facts["docker_engine"]:
+                    self._run_lint_on_docker_image(no_pylint=no_pylint,
+                                                   no_test=no_test,
+                                                   no_pwsh_analyze=no_pwsh_analyze,
+                                                   no_pwsh_test=no_pwsh_test,
+                                                   keep_container=keep_container,
+                                                   test_xml=test_xml)
+        except Exception as ex:
+            err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
+            logger.error(f"{err}. Traceback: {traceback.format_exc()}")
+            self._pkg_lint_status["errors"].append(err)
+            self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
     def _gather_facts(self, modules: dict) -> bool:
@@ -229,6 +236,11 @@ class Linter:
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
                     except (FileNotFoundError, IOError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
+            elif not self._facts["python_version"]:
+                # get python version from yml
+                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                self._facts["python_version"] = pynum
+                logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
@@ -289,17 +301,17 @@ class Linter:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
                                                          lint_files=self._facts["lint_files"])
                 elif lint_check == "XSOAR_linter" and not no_xsoar_linter:
-                    exit_code, output = self._run_xsoar_linter(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
-                elif lint_check == "mypy" and not no_mypy and self._facts["docker_engine"]:
-                    exit_code, output = self._run_mypy(py_num=self._facts["images"][0][1],
+                elif lint_check == "mypy" and not no_mypy:
+                    exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-                elif lint_check == "vulture" and not no_vulture and self._facts["docker_engine"]:
+                elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
 
@@ -323,7 +335,7 @@ class Linter:
                 exit_code = SUCCESS
                 output = ""
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["images"][0][1],
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
                                                          lint_files=self._facts["lint_unittest_files"])
                 if exit_code:
                     error, warning, other = split_warnings_errors(output)
@@ -674,25 +686,28 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
-        for trial in range(2):
-            dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+        dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+        dockerfile = template.render(image=test_image_name,
+                                     copy_pack=True)
+        with open(file=dockerfile_path, mode="+x") as file:
+            file.write(str(dockerfile))
+        # we only do retries in CI env where docker build is sometimes flacky
+        build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1
+        for trial in range(build_tries):
             try:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                dockerfile = template.render(image=test_image_name,
-                                             copy_pack=True)
-                with open(file=dockerfile_path, mode="+x") as file:
-                    file.write(str(dockerfile))
-
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,
                                                                       forcerm=True)
                 test_image_name = docker_image_final[0].short_id
                 break
-            except (docker.errors.ImageNotFound, docker.errors.APIError, urllib3.exceptions.ReadTimeoutError,
-                    exceptions.TemplateError) as e:
-                logger.info(f"{log_prompt} - errors occurred when copy pack dir {e}")
-                if trial == 2:
+            except Exception as e:
+                logger.exception(f"{log_prompt} - errors occurred when building image in dir {e}")
+                if trial >= build_tries:
                     errors = str(e)
+                else:
+                    logger.info(f"{log_prompt} - sleeping 2 seconds and will retry build after")
+                    time.sleep(2)
         if dockerfile_path.exists():
             dockerfile_path.unlink()
 
@@ -700,6 +715,17 @@ class Linter:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
 
         return test_image_name, errors
+
+    def _docker_remove_container(self, container_name: str):
+        try:
+            container_obj = self._docker_client.containers.get(container_name)
+            container_obj.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        except requests.exceptions.ChunkedEncodingError as err:
+            # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
+            if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
+                raise
 
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
@@ -716,24 +742,19 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pylint"
         # Check if previous run left container a live if it do, we remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        self._docker_remove_container(container_name)
 
         # Run container
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=[
-                                                                   build_pylint_command(self._facts["lint_files"])],
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=[
+                                                                                                       build_pylint_command(self._facts["lint_files"])],
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -791,25 +812,20 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        self._docker_remove_container(container_name)
         # Collect tests
         exit_code = SUCCESS
         output = ''
         test_json = {}
         try:
             # Running pytest container
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=[
-                                                                   build_pytest_command(test_xml=test_xml, json=True)],
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=[
+                                                                                                       build_pytest_command(test_xml=test_xml, json=True)],
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -950,23 +966,18 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pwsh-test"
         # Check if previous run left container a live if it do, we remove it
-        container_obj: docker.models.containers.Container
-        try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
-        except docker.errors.NotFound:
-            pass
+        self._docker_remove_container(container_name)
 
         # Run container
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj = self._docker_client.containers.run(name=container_name,
-                                                               image=test_image,
-                                                               command=build_pwsh_test_command(),
-                                                               user=f"{os.getuid()}:4000",
-                                                               detach=True,
-                                                               environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
+                                                                                                   image=test_image,
+                                                                                                   command=build_pwsh_test_command(),
+                                                                                                   user=f"{os.getuid()}:4000",
+                                                                                                   detach=True,
+                                                                                                   environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")

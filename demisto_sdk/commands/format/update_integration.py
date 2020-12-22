@@ -117,7 +117,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
             for counter, param in enumerate(params):
-                if 'defaultvalue' in param:
+                if 'defaultvalue' in param and param.get('name') != 'feed':
                     params[counter].pop('defaultvalue')
             for param in FEED_REQUIRED_PARAMS:
                 if param not in params:
@@ -140,7 +140,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_docker_image()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
-        except Exception:
+        except Exception as err:
+            if self.verbose:
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

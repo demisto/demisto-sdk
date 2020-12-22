@@ -175,7 +175,6 @@ INDICATOR_FIELD = {
     "system": False,
     "content": True,
     "group": 2,
-    "mergeStrategy": "",
     "hidden": False,
     "associatedTypes": [
         "Employee"
@@ -189,8 +188,7 @@ INDICATOR_FIELD = {
     "defaultRows": None,
     "sla": 0,
     "threshold": 72,
-    "breachScript": "",
-    "validatedError": ""
+    "breachScript": ""
 }
 
 INCIDENT_TYPE = {

@@ -110,7 +110,6 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
-    @patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -123,9 +122,11 @@ class TestValidators:
         -  Ensure it accepts the 'beta' key as valid
         """
         try:
+            mocker.patch.object(OldReleaseNotesValidator, 'get_master_diff', return_value='Comment.')
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
             structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
+            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
@@ -366,8 +367,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_file(self, _, file_path):
+    def test_run_all_validations_on_file(self, mocker, file_path):
         """
         Given
         - A file in packs or beta integration
@@ -378,6 +378,8 @@ class TestValidators:
         Then
         -  The file will be validated
         """
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -895,6 +897,36 @@ class TestValidators:
         assert not validate_manager.validate_no_old_format(old_format_files)
         assert handle_error_mock.call_count == 2
 
+    def test_validate_no_old_format_deprecated_content(self, repo):
+        """
+            Given:
+                - a pack with a script in old format_file with deprecated: true
+                - a script in old format_file with deprecated: false
+                - a script in old format_file without deprecated field
+            When:
+                - running validate_no_old_format on the file
+            Then:
+                - return True for the first script as the file is valid
+                - return False for script2 and scrupt3 - validate should fail and raise [ST106] error.
+        """
+        validate_manager = ValidateManager()
+        pack1 = repo.create_pack('Pack1')
+        script = pack1.create_script('Script1')
+        script2 = pack1.create_script('Script2')
+        script3 = pack1.create_script('Script3')
+        script.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                         "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                               "deprecated": True})
+        script2.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                                "deprecated": False})
+        script3.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"})
+        old_format_file = {script.yml.path}
+        deprecated_false_file = {script2.yml.path, script3.yml.path}
+        assert validate_manager.validate_no_old_format(old_format_file)
+        assert not validate_manager.validate_no_old_format(deprecated_false_file)
+
     def test_filter_changed_files(self, mocker):
         """
             Given:
@@ -1100,7 +1132,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
 
-        validate_manager = ValidateManager(staged=True)
+        validate_manager = ValidateManager(staged=True, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}
@@ -1124,7 +1156,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
         mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
 
-        validate_manager = ValidateManager(staged=False)
+        validate_manager = ValidateManager(staged=False, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
         assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
         assert modified_packs == {'HelloWorld'}

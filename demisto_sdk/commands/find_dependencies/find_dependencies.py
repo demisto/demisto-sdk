@@ -832,7 +832,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose_file: VerboseFile,
-                                     exclude_ignored_dependencies: bool = True) -> set:
+                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets") -> set:
         """
         Collects widget dependencies.
 
@@ -847,7 +847,7 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Widgets')
+        verbose_file.write(f'\n### {header}')
 
         for widget in pack_widgets:
             widget_data = next(iter(widget.values()))
@@ -900,7 +900,10 @@ class PackDependencies:
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
 
         if not sum(pack_items.values(), []):
-            print_warning(f"Couldn't find any items for pack '{pack_id}'. make sure your spelling is correct.")
+            print_warning(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+                          f"1 - The spelling is correct.\n"
+                          f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
+                          f"Tests/id_set.json` and rerun the command.")
 
         return pack_items
 
@@ -982,11 +985,26 @@ class PackDependencies:
             verbose_file,
             exclude_ignored_dependencies
         )
+        dashboards_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['dashboards'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Dashboards'
+        )
+        reports_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['reports'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Reports'
+        )
 
         pack_dependencies = (
-            scripts_dependencies | playbooks_dependencies | layouts_dependencies |
-            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies
         )
 
         return pack_dependencies

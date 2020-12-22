@@ -171,7 +171,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
-            self._is_approved_tags()
+            self._is_approved_tags(),
+            self._is_price_changed()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -318,6 +319,20 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
+        return True
+
+    def _is_price_changed(self) -> bool:
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        old_meta_file_content = get_remote_file(metadata_file_path)
+        current_meta_file_content = get_json(metadata_file_path)
+        current_price = current_meta_file_content.get('price')
+        old_price = old_meta_file_content.get('price')
+
+        # if a price was added, removed or changed compared to the master version - return an error
+        if (old_price and not current_price) or (current_price and not old_price) or (old_price != current_price):
+            if self._add_error(Errors.pack_metadata_price_change(old_price, current_price), self.pack_meta_file):
+                return False
+
         return True
 
     def validate_pack_unique_files(self):

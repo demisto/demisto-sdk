@@ -324,14 +324,28 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def get_master_private_repo_meta_file(self, metadata_file_path: str):
+        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+
+        # if there was no past version
+        if not old_meta_file_content:
+            return None
+
+        return json.loads(old_meta_file_content)
+
     def _is_price_changed(self) -> bool:
         # only check on private repo
         if not self.private_repo:
             return True
 
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
-        current_repo = Repo(Path.cwd(), search_parent_directories=True)
-        old_meta_file_content = json.loads(current_repo.git.show(f'master:{metadata_file_path}'))
+        old_meta_file_content = self.get_master_private_repo_meta_file(metadata_file_path)
+
+        # if there was no past version
+        if not old_meta_file_content:
+            return True
+
         current_meta_file_content = get_json(metadata_file_path)
         current_price = current_meta_file_content.get('price')
         old_price = old_meta_file_content.get('price')

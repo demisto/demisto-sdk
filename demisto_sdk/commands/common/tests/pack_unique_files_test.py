@@ -91,6 +91,7 @@ class TestPackUniqueFilesValidator:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(PACK_METADATA_PARTNER_NO_EMAIL_NO_URL))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)

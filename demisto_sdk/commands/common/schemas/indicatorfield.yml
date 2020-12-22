@@ -1,5 +1,4 @@
 type: map
-allowempty: True
 mapping:
   fromVersion:
     type: str
@@ -79,3 +78,11 @@ mapping:
     type: bool
   unsearchable:
     type: bool
+  itemVersion:
+    type: str
+  toServerVersion:
+    type: str
+  fromServerVersion:
+    type: str
+  propagationLabels:
+    type: any

@@ -11,15 +11,15 @@ references:
 
     reqs_tox: &reqs_tox
       requires:
-        - tox3-8
+        - prepare-tox3-7
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - tox3-8
+        - prepare-tox3-7
 
 jobs:
-  tox3-7:
+  tox3-7-unit-tests:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -45,7 +45,7 @@ jobs:
             paths:
               - .tox/py37
 
-  tox3-8:
+  tox3-8-unit-tests:
       docker:
         - image: circleci/python:3.8.3-buster-node
       steps:
@@ -65,10 +65,6 @@ jobs:
             name: Tox build
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
-        - save_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            paths:
-              - .tox/py38
         - store_artifacts:
             path: coverage_html_report
         - run:
@@ -80,13 +76,39 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-        - persist_to_workspace:
-            root: ~/project
-            paths:
-              - .tox
+
+  prepare-tox3-7:
+    docker:
+      - image: circleci/python:3.8.3-buster-node
+    steps:
+      - checkout
+      - restore_cache:
+          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+      - run:
+          # install npm modules so readme tests run with mdx verification
+          name: npm install
+          command: |
+            npm ci
+      - run:
+          name: Setup Tox
+          command: |
+            pip install tox
+      - run:
+          name: Tox build
+          command: |
+            tox -e py37 --notest
+      - save_cache:
+          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          paths:
+            - .tox/py37
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .tox
+
   precommit-checks:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -94,13 +116,13 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
               pre-commit --version
               pre-commit run -a
               deactivate
   checkout-content:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - run:
@@ -125,16 +147,18 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
               cd content
+              npm update
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
+              demisto-sdk -v
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -143,13 +167,14 @@ jobs:
             name: Test create ID set
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
+              demisto-sdk -v
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - attach_workspace:
@@ -158,9 +183,10 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py38/bin/activate
+              . .tox/py37/bin/activate
 
               cd content
+              demisto-sdk -v
               mkdir ./tmp
 
               CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
@@ -180,9 +206,11 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
-      - tox3-7:
+      - tox3-7-unit-tests:
           <<: *tag_filter
-      - tox3-8:
+      - tox3-8-unit-tests:
+          <<: *tag_filter
+      - prepare-tox3-7:
           <<: *tag_filter
       - checkout-content:
           <<: *tag_filter
@@ -201,7 +229,8 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-8
+            - tox3-7-unit-tests
+            - tox3-8-unit-tests
             - precommit-checks
             - validate-files
             - create-id-set

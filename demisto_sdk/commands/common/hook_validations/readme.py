@@ -55,11 +55,6 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
-        self.file_text = self.open_file()
-
-    def open_file(self):
-        with open(self.file_path) as f:
-            return f.read()
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -75,7 +70,9 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
-        readme_content = self.fix_mdx(self.file_text)
+        with open(self.file_path, 'r') as f:
+            readme_content = f.read()
+        readme_content = self.fix_mdx(readme_content)
         with tempfile.NamedTemporaryFile('w+t') as fp:
             fp.write(readme_content)
             fp.flush()
@@ -91,7 +88,9 @@ class ReadMeValidator(BaseValidator):
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
             ReadMeValidator.start_mdx_server()
-        readme_content = self.fix_mdx(self.file_text)
+        with open(self.file_path, 'r') as f:
+            readme_content = f.read()
+        readme_content = self.fix_mdx(readme_content)
         response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=10)
         if response.status_code != 200:
             error_message, error_code = Errors.readme_error(response.text)
@@ -172,8 +171,10 @@ class ReadMeValidator(BaseValidator):
         return txt.startswith('<p>') or txt.startswith('<!DOCTYPE html>') or ('<thead>' in txt and '<tbody>' in txt)
 
     def is_image_path_valid(self) -> bool:
+        with open(self.file_path) as f:
+            readme_content = f.read()
         invalid_paths = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', self.file_text,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
             re.IGNORECASE)
         if invalid_paths:
             for path in invalid_paths:
@@ -195,8 +196,10 @@ class ReadMeValidator(BaseValidator):
         """
         is_valid = True
         errors = ""
+        with open(self.file_path) as f:
+            readme_content = f.read()
         for section in SECTIONS:
-            found_section = re.findall(rf'(## {section}\n\n?)(-*\s*\n\n?)?(\s*.*)', self.file_text, re.IGNORECASE)
+            found_section = re.findall(rf'(## {section}\n\n?)(-*\s*\n\n?)?(\s*.*)', readme_content, re.IGNORECASE)
             if found_section:
                 line_after_headline = str(found_section[0][2])
                 # checks if the line after the section's headline is another headline or empty
@@ -219,8 +222,10 @@ class ReadMeValidator(BaseValidator):
         """
         is_valid = True
         errors = ""
+        with open(self.file_path) as f:
+            readme_content = f.read()
         for section in USER_FILL_SECTIONS:
-            required_section = re.findall(rf'{section}', self.file_text, re.IGNORECASE)
+            required_section = re.findall(rf'{section}', readme_content, re.IGNORECASE)
             if required_section:
                 errors += f'Replace "{section}" with a suitable info.\n'
                 is_valid = False

@@ -204,8 +204,10 @@ class ReadMeValidator(BaseValidator):
                 line_after_headline = str(found_section[0][2])
                 # checks if the line after the section's headline is another headline or empty
                 if not line_after_headline or line_after_headline.startswith("##"):
-                    errors += f'{section} is empty, please elaborate or delete the section.\n'
-                    is_valid = False
+                    # assuming that a sub headline is part of the section
+                    if not line_after_headline.startswith("###"):
+                        errors += f'{section} is empty, please elaborate or delete the section.\n'
+                        is_valid = False
 
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)

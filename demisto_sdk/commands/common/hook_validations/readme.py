@@ -207,9 +207,9 @@ class ReadMeValidator(BaseValidator):
                     errors += f'{section} is empty, please elaborate or delete the section.\n'
                     is_valid = False
 
-            if not is_valid:
-                error_message, error_code = Errors.readme_error(errors)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
+        if not is_valid:
+            error_message, error_code = Errors.readme_error(errors)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid
 

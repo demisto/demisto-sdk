@@ -86,6 +86,7 @@ def test_is_image_path_valid():
 
 @pytest.mark.parametrize("file_input, missing_section",
                          [("## Troubleshooting\n## OtherSection", "Troubleshooting"),
+                          ("## Troubleshooting", "Troubleshooting"),
                           ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
                           ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
                           ("## Additional Information\n\n#### OtherSection", "Additional Information"),

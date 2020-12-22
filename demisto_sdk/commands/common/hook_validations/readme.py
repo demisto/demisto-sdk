@@ -199,7 +199,7 @@ class ReadMeValidator(BaseValidator):
         with open(self.file_path) as f:
             readme_content = f.read()
         for section in SECTIONS:
-            found_section = re.findall(rf'(## {section}\n\n?)(-*\s*\n\n?)?(\s*.*)', readme_content, re.IGNORECASE)
+            found_section = re.findall(rf'(## {section}\n*)(-*\s*\n\n?)?(\s*.*)', readme_content, re.IGNORECASE)
             if found_section:
                 line_after_headline = str(found_section[0][2])
                 # checks if the line after the section's headline is another headline or empty

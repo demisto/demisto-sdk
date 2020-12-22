@@ -89,7 +89,7 @@ def test_is_image_path_valid():
                           ("## Troubleshooting", "Troubleshooting"),
                           ("## Troubleshooting\n\n---\n## OtherSection", "Troubleshooting"),
                           ("## Use Cases\n\n----------\n## OtherSection", "Use Cases"),
-                          ("## Additional Information\n\n#### OtherSection", "Additional Information"),
+                          ("## Additional Information\n\n## OtherSection", "Additional Information"),
                           ("## Known Limitations\n\n----------\n", "Known Limitations")])
 def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missing_section):
     """
@@ -114,7 +114,7 @@ def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missi
 
 
 @pytest.mark.parametrize("file_input",
-                         ["## Troubleshooting\n## OtherSection\n## Additional Information\n\n#### OtherSection\n##"])
+                         ["## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"])
 def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_input):
     """
     Given
@@ -143,6 +143,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
                           "## Troubleshooting\n\n---\ninput",
                           "## Use Cases\n\n----------\ninput",
                           "## Additional Information\n\ninput",
+                          "## Additional Information\n\n### OtherSection",
                           "## Known Limitations\n\n----------\ninput"])
 def test_valid_sections(integration, file_input):
     """

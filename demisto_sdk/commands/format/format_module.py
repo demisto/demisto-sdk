@@ -72,7 +72,7 @@ def format_manager(input: str = None,
                    verbose: bool = False,
                    update_docker: bool = False,
                    assume_yes: bool = False,
-                   ignore_eol = False):
+                   ignore_eol=False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -90,7 +90,11 @@ def format_manager(input: str = None,
         files = get_files_in_dir(input, ['json', 'yml', 'py'])
     else:
         files = [file['name'] for file in
-                 get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D', ignore_eol_characters=ignore_eol)]
+                 get_changed_files(from_branch='origin/master',
+                                   filter_results=lambda _file: not _file.pop('status') == 'D',
+                                   ignore_eol_characters=ignore_eol,
+                                   )
+                 ]
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")

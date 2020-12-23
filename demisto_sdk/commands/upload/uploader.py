@@ -35,7 +35,7 @@ from tabulate import tabulate
 UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
                              FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
                              FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
-                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER]
+                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER, FileType.BETA_INTEGRATION]
 
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]

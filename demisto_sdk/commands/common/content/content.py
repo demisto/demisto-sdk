@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
     ContentDescriptor, Documentation)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from git import InvalidGitRepositoryError, Repo
+from demisto_sdk.commands.common.tools import find_type
+from git import GitCommandError, InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
 
@@ -78,7 +79,8 @@ class Content:
     def path(self) -> Path:
         return self._path
 
-    def _content_files_list_generator_factory(self, dir_name: str, prefix: str = "*", suffix: str = "*") -> Iterator[Any]:
+    def _content_files_list_generator_factory(self, dir_name: str, prefix: str = "*", suffix: str = "*") -> Iterator[
+            Any]:
         """Generic content objcets iterable generator
 
         Args:
@@ -133,7 +135,7 @@ class Content:
         content_repo: Repo = self.git()
 
         # staging all local changes
-        content_repo.git.add('.')
+        self._stage_files(content_repo)
 
         committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
                          for item in content_repo.remote().refs[prev_ver].commit.diff(
@@ -161,7 +163,7 @@ class Content:
         content_repo: Repo = self.git()
 
         # staging all local changes
-        content_repo.git.add('.')
+        self._stage_files(content_repo)
 
         committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
                          for item in content_repo.remote().refs[prev_ver].commit.diff(
@@ -192,7 +194,8 @@ class Content:
 
         # staging all local changes
         if not no_auto_stage:
-            content_repo.git.add('.')
+            self._stage_files(content_repo)
+
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
         committed = {Path(os.path.join(item.a_path)) for item
@@ -222,7 +225,7 @@ class Content:
 
         # staging all local changes
         if not no_auto_stage:
-            content_repo.git.add('.')
+            self._stage_files(content_repo)
 
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
@@ -251,7 +254,7 @@ class Content:
 
         # staging all local changes
         if not no_auto_stage:
-            content_repo.git.add('.')
+            self._stage_files(content_repo)
 
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
@@ -260,7 +263,7 @@ class Content:
         if committed_only:
             return committed
 
-        staged = {(Path(item.a_path), Path(item.b_path))for item
+        staged = {(Path(item.a_path), Path(item.b_path)) for item
                   in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('R')}
 
@@ -268,3 +271,26 @@ class Content:
             return staged
 
         return staged.union(committed)
+
+    def _stage_files(self, content_repo):
+        git_status = content_repo.git.status('--short', '-u').split('\n')
+
+        # in case there are no local changes - return
+        if git_status == ['']:
+            return
+
+        all_paths = self._extract_existing_paths(git_status)
+        for file_path in all_paths:
+            if find_type(file_path):
+                try:
+                    content_repo.git.add(file_path)
+                except GitCommandError:
+                    continue
+
+    @staticmethod
+    def _extract_existing_paths(git_status):
+        extracted_paths = []
+        for line in git_status:
+            extracted_paths.append(line.split()[-1])
+
+        return extracted_paths

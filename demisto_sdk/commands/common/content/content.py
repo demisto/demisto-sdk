@@ -202,6 +202,11 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
+        all_branch_changed_files = {Path(os.path.join(item)) for item in
+                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+
+        committed = committed.intersection(all_branch_changed_files)
+
         if committed_only:
             return committed - renamed
 
@@ -231,6 +236,11 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('A')}
 
+        all_branch_changed_files = {Path(os.path.join(item)) for item in
+                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+
+        committed = committed.intersection(all_branch_changed_files)
+
         if committed_only:
             return committed
 
@@ -259,6 +269,11 @@ class Content:
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('R')}
+
+        all_branch_changed_files = {Path(os.path.join(item)) for item in
+                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+
+        committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
 
         if committed_only:
             return committed

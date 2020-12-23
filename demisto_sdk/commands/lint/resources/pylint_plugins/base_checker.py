@@ -131,31 +131,29 @@ class CustomBaseChecker(BaseChecker):
                 pass
 
     def _commands_in_if_statment_checker(self, node):
-        try:
-            # for if command == 'command'
-            comp_with = node.test.ops[0][1]
+        def _check_if(comp_with):
             if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
                 self.commands.remove(comp_with.value)
-            # fro if command in ['command1','command2']
+            # for if command in ['command1','command2']
             elif isinstance(comp_with, astroid.List):
                 for var_lst in comp_with.itered():
                     if var_lst.value in self.commands:
                         self.commands.remove(var_lst.value)
+            # for if command in ('command1','command2')
+            elif isinstance(comp_with, astroid.Tuple):
+                for var_lst in comp_with.elts:
+                    if var_lst.value in self.commands:
+                        self.commands.remove(var_lst.value)
+        try:
+            # for if command == 'command'
+            comp_with = node.test.ops[0][1]
+            _check_if(comp_with)
+            # for elif clause
+            for elif_clause in node.orelse:
+                comp_with = elif_clause.test.ops[0][1]
+                _check_if(comp_with)
         except Exception:
-            try:
-                # for elif clause
-                for elif_clause in node.orelse:
-                    comp_with = elif_clause.test.ops[0][1]
-                    # for elif command == 'command'
-                    if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
-                        self.commands.remove(comp_with.value)
-                    # for elif command in ['command']
-                    elif isinstance(comp_with, astroid.List):
-                        for var_lst in comp_with.itered():
-                            if var_lst.value in self.commands:
-                                self.commands.remove(var_lst.value)
-            except Exception:
-                pass
+            pass
 
     def _all_commands_implemented(self, node):
         if self.commands:

@@ -6,6 +6,8 @@
 * Fixed a regression in the **upload** command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
 * Fixed an issue where the **upload** command would fail to upload beta integrations.
 * Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
+* Added price change validation in the **validate** command.
+* Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 
 
 # 1.2.12
@@ -59,7 +61,6 @@
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
 * Fixed the **update-release-notes** command to ignore changes in the metadata file.
 * Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
-* Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 
 
 # 1.2.8

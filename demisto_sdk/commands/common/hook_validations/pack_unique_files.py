@@ -7,6 +7,7 @@ import os
 import re
 from datetime import datetime
 from distutils.version import LooseVersion
+from pathlib import Path
 
 import click
 from dateutil import parser
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from git import Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -38,7 +40,7 @@ class PackUniqueFilesValidator(BaseValidator):
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
-                 should_version_raise=False, id_set_path=None, suppress_print=False):
+                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -55,6 +57,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self._errors = []
         self.should_version_raise = should_version_raise
         self.id_set_path = id_set_path
+        self.private_repo = private_repo
 
     # error handling
     def _add_error(self, error, file_path):
@@ -171,7 +174,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
-            self._is_approved_tags()
+            self._is_approved_tags(),
+            self._is_price_changed()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -318,6 +322,39 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
+        return True
+
+    def get_master_private_repo_meta_file(self, metadata_file_path: str):
+        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+
+        # if there was no past version
+        if not old_meta_file_content:
+            return None
+
+        return json.loads(old_meta_file_content)
+
+    def _is_price_changed(self) -> bool:
+        # only check on private repo
+        if not self.private_repo:
+            return True
+
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        old_meta_file_content = self.get_master_private_repo_meta_file(metadata_file_path)
+
+        # if there was no past version
+        if not old_meta_file_content:
+            return True
+
+        current_meta_file_content = get_json(metadata_file_path)
+        current_price = current_meta_file_content.get('price')
+        old_price = old_meta_file_content.get('price')
+
+        # if a price was added, removed or changed compared to the master version - return an error
+        if (old_price and not current_price) or (current_price and not old_price) or (old_price != current_price):
+            if self._add_error(Errors.pack_metadata_price_change(old_price, current_price), self.pack_meta_file):
+                return False
+
         return True
 
     def validate_pack_unique_files(self):

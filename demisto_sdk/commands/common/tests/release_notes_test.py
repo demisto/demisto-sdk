@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 def get_validator(file_path='', modified_files=None, added_files=None):
@@ -163,6 +164,7 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
     validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -199,6 +201,7 @@ def test_are_release_notes_complete_invalid_file_type(release_notes, complete_ex
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES_INVALID)
     validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -236,6 +239,7 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
     validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -262,6 +266,7 @@ def test_are_release_notes_complete_renamed_file(mocker):
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, renamed_file)
     validator.suppress_print = False
     assert validator.are_release_notes_complete()
@@ -305,6 +310,7 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
     validator.suppress_print = False
     assert validator.has_release_notes_been_filled_out() == filled_expected_result

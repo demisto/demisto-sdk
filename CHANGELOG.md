@@ -1,5 +1,11 @@
 # Changelog
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
+* Removed supported version message from the documentation when running **generate_docs**.
+* Added a print to indicate backwards compatibility is being checked in **validate** command.
+* Added a percent print when running the **validate** command with the *-a* flag.
+* Fixed a regression in the **upload** command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
+* Fixed an issue where the **upload** command would fail to upload beta integrations.
+* Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
 
 
 # 1.2.12
@@ -53,6 +59,7 @@
 * Fixed an issue in the **validate** command where *--staged* flag did not bring only changed files.
 * Fixed the **update-release-notes** command to ignore changes in the metadata file.
 * Fixed the **validate** command to ignore metadata changes when checking if a version bump is needed.
+* Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 
 
 # 1.2.8

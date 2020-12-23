@@ -312,20 +312,18 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
 
 class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
     """
-
-
-
+    Class which tests the functionality of commands checker.
     """
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
-    def test_valid_common_server_python_import(self):
+    def test_regular_if_else_checker(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - valid import of commonServerPython exists in the code.
+            - if else claus exists when the if contains only one command instead of two.
         Then:
-            - Ensure that no being added to the message errors of pylint for each appearance
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2']
         node_a = astroid.extract_node("""
@@ -346,18 +344,20 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
-    def test_commands_in_dict_(self):
+    def test_not_command_dict_checker(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - valid import of commonServerPython exists in the code.
+            - Command names are part of a dict when the key is the command name and the value is the function.
+            - Two of the commands appear in the dict as keys.
+            - The last command does not appear in the dict as a key, instead it appears as a value.
         Then:
-            - Ensure that no being added to the message errors of pylint for each appearance
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
         node_a = astroid.extract_node("""
-            {'test-1' : 1, 'test2':2} #@
+            {'test-1' : 1, 'test2':2 , 'test': 'test3'} #@
         """)
         assert node_a
         with self.assertAddsMessages(
@@ -370,12 +370,32 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_dict(node_a)
             self.checker.leave_module(node_a)
 
-    def test_commands_in_list_checker(self):
+    def test_all_command_dict_checker(self):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - valid import of commonServerPython exists in the code.
+            - Command names are part of a dict when the key is the command name and the value is the function.
+        Then:
+            - Ensure that nothing being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+            {'test-1' : 1, 'test2':2 , 'test3': 3} #@
+        """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_dict(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_not_all_if_command_in_list_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Commands appear in the if claus as a list.
+            - Two of the commands appear in the list.
+            - The last command does not appear in the list.
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
@@ -385,7 +405,6 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                 return False
             elif a in ['test2']:
                 return True #@
-
         """)
         assert node_a
         with self.assertAddsMessages(
@@ -397,12 +416,68 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_if(node_a)
             self.checker.visit_if(node_b)
-
             self.checker.leave_module(node_a)
 
+    def test_all_if_command_in_list_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - All commands appear in the if claus as a list.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
         self.checker.commands = ['test-1', 'test2', 'test3']
         node_a = astroid.extract_node("""
                    if a in ['test-1','test2','test3']:  #@
+                       return False
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_not_all_if_command_in_tuple_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Commands appear in the if claus as a tuple.
+            - Two of the commands appear in the tuple.
+            - The last command does not appear in the tuple.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+            if a in ('test-1','test2'):  #@
+                return False
+            else:
+                return True
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test3']),
+                ),
+        ):
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_all_if_command_in_tuple_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - All commands appear in the if claus as a tuple.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+                   if a in ('test-1','test2','test3'):  #@
                        return False
                """)
         assert node_a

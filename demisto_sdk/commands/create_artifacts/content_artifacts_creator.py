@@ -58,8 +58,9 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, id_set_path: str, pack_names: str, encryptor: Path, encryption_key: str, signature_key: str,
-                 sign_directory: Path, remove_test_playbooks: bool):
+                 cpus: int, id_set_path: str = '', pack_names: str = 'all', encryptor: Path = None,
+                 encryption_key: str = '', signature_key: str = '',
+                 sign_directory: Path = None, remove_test_playbooks: bool = True):
         """ Content artifacts configuration
 
         Args:
@@ -555,7 +556,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += dump_pack_conditionally(artifact_manager, script)
     for playbook in pack.playbooks:
         content_items_handler.handle_content_item(playbook)
-        is_feed_pack = is_feed_pack or playbook.get('name').startswith('TIM')
+        is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
         pack_report += dump_pack_conditionally(artifact_manager, playbook)
     for test_playbook in pack.test_playbooks:
         pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
@@ -604,7 +605,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
         pack.metadata.server_min_version = content_items_handler.server_min_version
-        pack.metadata.dependencies = handle_dependencies(pack, artifact_manager.id_set_path)
+        if artifact_manager.id_set_path:
+            # Dependencies can only be done when id_set file is given.
+            pack.metadata.dependencies = handle_dependencies(pack, artifact_manager.id_set_path)
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump(artifact_manager.content_packs_path / pack.id)

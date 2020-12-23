@@ -166,8 +166,7 @@ def test_dump_pack(mock_git):
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -175,7 +174,7 @@ def test_create_content_artifacts(mock_git):
                                   suffix='',
                                   cpus=1,
                                   packs=False)
-        exit_code = create_content_artifacts(artifact_manager=config)
+        exit_code = config.create_content_artifacts()
 
         assert exit_code == 0
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
@@ -183,8 +182,7 @@ def test_create_content_artifacts(mock_git):
 
 def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.common.content import Content
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
 
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
@@ -194,7 +192,7 @@ def test_create_private_content_artifacts(private_repo):
                                   cpus=1,
                                   packs=False)
         config.content = Content(private_repo)
-        exit_code = create_content_artifacts(artifact_manager=config)
+        exit_code = config.create_content_artifacts()
 
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
         assert exit_code == 0
@@ -202,8 +200,7 @@ def test_create_private_content_artifacts(private_repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failue(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -213,14 +210,13 @@ def test_malformed_file_failue(suffix: str, mock_git):
                                   packs=False)
 
         with destroy_by_ext(suffix):
-            exit_code = create_content_artifacts(artifact_manager=config)
+            exit_code = config.create_content_artifacts()
 
     assert exit_code == 1
 
 
 def test_duplicate_file_failure(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, create_content_artifacts)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -230,6 +226,6 @@ def test_duplicate_file_failure(mock_git):
                                   packs=False)
 
         with duplicate_file():
-            exit_code = create_content_artifacts(artifact_manager=config)
+            exit_code = config.create_content_artifacts()
 
     assert exit_code == 1

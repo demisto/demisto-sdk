@@ -28,7 +28,7 @@ from wcmatch.pathlib import Path
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
-        self._metadata = PackMetaData(self._path.joinpath('pack_metadata.json'))
+        self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objcets iterable generator

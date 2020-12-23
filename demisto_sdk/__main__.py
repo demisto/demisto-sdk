@@ -815,8 +815,6 @@ def id_set_command(**kwargs):
 def merge_id_sets_command(**kwargs):
     first = kwargs['id_set1']
     second = kwargs['id_set2']
-    if not os.path.exists(kwargs['output']):
-        os.makedirs(kwargs['output'])
     output = kwargs['output']
 
     merge_id_sets_from_files(

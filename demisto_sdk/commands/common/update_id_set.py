@@ -1060,6 +1060,10 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     """
     Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
+
+    if not os.path.exists(output_id_set_path):
+        os.makedirs(output_id_set_path)
+
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)
 

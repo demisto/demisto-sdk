@@ -644,7 +644,8 @@ class ValidateManager:
                                                                print_as_warnings=self.print_ignored_errors,
                                                                should_version_raise=should_version_raise,
                                                                validate_dependencies=not self.skip_dependencies,
-                                                               id_set_path=id_set_path)
+                                                               id_set_path=id_set_path,
+                                                               private_repo=self.is_external_repo)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")

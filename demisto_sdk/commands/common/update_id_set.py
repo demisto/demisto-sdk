@@ -1074,7 +1074,7 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
 
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
 
-    print_warning(f'unified_id_set: \n {unified_id_set}')
+    print_warning(f'unified_id_set: \n {unified_id_set}, \n duplicates \n {duplicates}')
 
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:

@@ -1,4 +1,6 @@
 # Changelog
+
+# 5.6.7
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.
 * Added a print to indicate backwards compatibility is being checked in **validate** command.

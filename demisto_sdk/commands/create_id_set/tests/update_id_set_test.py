@@ -15,10 +15,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_fields_by_script_argument, get_general_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_playbook_data, get_report_data, get_script_data,
-    get_values_for_keys_recursively, get_widget_data, has_duplicate,
-    merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_script, re_create_id_set)
+    get_mapper_data, get_metadata_data, get_playbook_data, get_report_data,
+    get_script_data, get_values_for_keys_recursively, get_widget_data,
+    has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -87,6 +88,7 @@ class TestIDSetCreator:
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
         assert 'Mappers' in id_set.keys()
+        assert 'Packs' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -1197,6 +1199,59 @@ class TestReport:
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
+
+
+class TestPacksMetadata:
+    METADATA_WITH_XSOAR_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'xsoar',
+        'currentVersion': '1.0.0',
+        'author': 'Cortex XSOAR'
+    }
+
+    METADATA_WITH_PARTNER_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'partner',
+        'currentVersion': '1.0.0',
+        'author': 'Some Partner'
+    }
+
+    METADATA_WITH_COMMUNITY_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'community',
+        'currentVersion': '1.0.0',
+        'author': 'Someone'
+    }
+
+    TEST_PACK = [
+        (METADATA_WITH_XSOAR_SUPPORT, 'Cortex XSOAR', 'certified'),
+        (METADATA_WITH_PARTNER_SUPPORT, 'Some Partner', 'certified'),
+        (METADATA_WITH_COMMUNITY_SUPPORT, 'Someone', ''),
+    ]
+
+    @staticmethod
+    @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
+    def test_process_metadata_(repo, metadata_file_content, author, certification):
+        """
+        Given
+            - A pack_metadata file for Pack1
+
+        When
+            - parsing pack metadata files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json(metadata_file_content)
+
+        res = get_metadata_data(pack.pack_metadata.path)
+        result = res.get('Pack1')
+
+        assert 'name' in result.keys()
+        assert result.get('minVersion') == '1.0.0'
+        assert result.get('author') == author
+        assert result.get('certification') == certification
 
 
 class TestGenericFunctions:

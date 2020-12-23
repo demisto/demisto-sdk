@@ -35,7 +35,8 @@ class VerboseFile:
         self.fd = None
 
 
-def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tuple:
+def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, complete_data: bool = False,
+                            id_set_data: dict = {}) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -43,6 +44,8 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
     Args:
         dependency_graph (DiGraph): dependency direct graph.
         graph_root (str): graph root pack id.
+        complete_data (bool): whether to update complete data on the dependent packs.
+        id_set_data (dict): id set data.
 
     Returns:
         dict: first level dependencies parsed data.
@@ -54,7 +57,18 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
                                dependency_graph.has_edge(graph_root, k)]
 
     for dependency_id, additional_data in parsed_dependency_graph:
-        additional_data['display_name'] = find_pack_display_name(dependency_id)
+        pack_name = find_pack_display_name(dependency_id)
+
+        if not complete_data:
+            additional_data['display_name'] = pack_name
+
+        else:
+            dependency_data = id_set_data.get('Packs', {}).get(pack_name)
+            if dependency_data:
+                additional_data.update(dependency_data)
+            else:
+                additional_data['display_name'] = pack_name
+
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
@@ -1101,7 +1115,7 @@ class PackDependencies:
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
                           update_pack_metadata: bool = True,
                           silent_mode: bool = False, debug_file_path: str = '',
-                          skip_id_set_creation: bool = False) -> dict:
+                          skip_id_set_creation: bool = False, complete_data: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1113,6 +1127,7 @@ class PackDependencies:
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
+            complete_data (bool): Whether to update complete data on the dependent packs.
 
         Returns:
             Dict: first level dependencies of a given pack.
@@ -1131,7 +1146,10 @@ class PackDependencies:
             dependency_graph = PackDependencies.build_dependency_graph(
                 pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,
                 exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
+        if not complete_data:
+            first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
+        else:
+            first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, complete_data, id_set)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

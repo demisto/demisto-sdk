@@ -5,7 +5,7 @@ import networkx as nx
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, VerboseFile)
+    PackDependencies, VerboseFile, parse_for_pack_metadata)
 from TestSuite.utils import IsEqualFunctions
 
 
@@ -27,7 +27,7 @@ class TestIdSetFilters:
 
         assert len(found_filtered_result) == 0
 
-    @pytest.mark.parametrize("pack_id", ["CalculateTimeDifference", "Expanse", "HelloWorld"])
+    @pytest.mark.parametrize("pack_id", ["ImpossibleTraveler", "Expanse", "HelloWorld"])
     def test_search_for_pack_script_item(self, pack_id, id_set):
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
 
@@ -41,28 +41,32 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "fromversion": "5.0.0"
                 }
             },
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "fromversion": "5.0.0"
                 }
             },
             {
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "fromversion": "5.0.0"
                 }
             },
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "fromversion": "5.0.0"
                 }
             }
         ]
@@ -82,18 +86,27 @@ class TestIdSetFilters:
 
         expected_result = [
             {
-                "ExpanseParseRawIncident": {
-                    "name": "Expanse Incident Playbook",
-                    "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
-                    "fromversion": "5.0.0",
-                    "implementing_scripts": [
-                        "ExpanseParseRawIncident"
-                    ],
-                    "tests": [
-                        "No tests (auto formatted)"
-                    ],
-                    "pack": "Expanse"
-                }
+                'Expanse Behavior Severity Update':
+                    {
+                        'name': 'Expanse Behavior Severity Update',
+                        'file_path': 'Packs/Expanse/Playbooks/Expanse_Behavior_Severity_Update.yml',
+                        'fromversion': '5.0.0', 'pack': 'Expanse',
+                        'implementing_scripts': ['IsGreaterThan', 'Exists'],
+                        'implementing_playbooks': ['Expanse Incident Playbook'],
+                        'command_to_integration': {'ip': 'Expanse'},
+                        'tests': ['No tests (auto formatted)'],
+                        'incident_fields': ['severity']
+                    }
+            },
+            {
+                'ExpanseParseRawIncident':
+                    {
+                        'name': 'Expanse Incident Playbook',
+                        'file_path': 'Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml',
+                        'fromversion': '5.0.0', 'pack': 'Expanse',
+                        'implementing_scripts': ['ExpanseParseRawIncident'],
+                        'tests': ['No tests (auto formatted)']
+                    }
             }
         ]
 
@@ -369,15 +382,16 @@ class TestDependsOnScriptAndIntegration:
             - Should recognize the mandatory pack and the non mandatory packs.
         """
         expected_result = {
-            ('Active_Directory_Query', True), ('Recorded_Future', False), ('illuminate', False), ('ThreatQ', False),
-            ('Anomali_ThreatStream', False), ('URLHaus', False), ('Symantec_Deepsight', False),
-            ('XForceExchange', False), ('Active_Directory_Query', True), ('XFE', False), ('MISP', False),
-            ('AlienVault_OTX', False), ('ThreatMiner', False), ('isight', False), ('CrowdStrikeIntel', False),
-            ('ReversingLabs_A1000', False), ('PolySwarm', False), ('TruSTAR', False),
-            ('ReversingLabs_Titanium_Cloud', False), ('ThreatExchange', False), ('EclecticIQ', False),
-            ('AutoFocus', False), ('McAfee-TIE', False), ('Maltiverse', False), ('Palo_Alto_Networks_WildFire', False),
-            ('Polygon', False), ('Cofense-Intelligence', False), ('Lastline', False), ('ThreatConnect', False),
-            ('VirusTotal', False), ('Flashpoint', False)
+            ('ThreatQ', False), ('Maltiverse', False), ('PolySwarm', False), ('illuminate', False),
+            ('McAfee-TIE', False), ('Recorded_Future', False), ('TruSTAR', False), ('RecordedFuture', False),
+            ('EclecticIQ', False), ('XForceExchange', False), ('CrowdStrikeIntel', False), ('AutoFocus', False),
+            ('ThreatExchange', False), ('Anomali_ThreatStream', False), ('URLHaus', False), ('MISP', False),
+            ('Polygon', False), ('ThreatMiner', False), ('Zimperium', False), ('ReversingLabs_Titanium_Cloud', False),
+            ('VirusTotal', False), ('Lastline', False), ('Synapse', False), ('Symantec_Deepsight', False),
+            ('Active_Directory_Query', True), ('CrowdStrikeMalquery', False), ('isight', False),
+            ('PaloAltoNetworks_Threat_Vault', False), ('Flashpoint', False), ('Cofense-Intelligence', False),
+            ('AlienVault_OTX', False), ('ReversingLabs_A1000', False), ('ThreatConnect', False), ('CyberTotal', False),
+            ('Palo_Alto_Networks_WildFire', False)
         }
 
         test_input = [
@@ -514,7 +528,7 @@ class TestDependsOnPlaybook:
     @pytest.mark.parametrize("dependency_playbook,expected_result",
                              [("Pentera Run Scan", {("Pcysys", True)}),
                               ("Indeni Demo", {("Indeni", True)}),
-                              ("Failed Login Playbook - Slack v2", {("Slack", True)})
+                              ("GDPR Breach Notification", {("GDPR", True)})
                               ])
     def test_collect_playbooks_dependencies_on_playbook(self, dependency_playbook, expected_result, id_set):
         test_input = [
@@ -547,7 +561,7 @@ class TestDependsOnPlaybook:
 
     @pytest.mark.parametrize("integration_command,expected_result",
                              [("aws-get-indicators", {("FeedAWS", True)}),
-                              ("autofocus-get-indicators", {("FeedAutofocus", True)}),
+                              ("autofocus-get-indicators", {("AutoFocus", True)}),
                               ("alienvault-get-indicators", {("FeedAlienVault", True)})
                               ])
     def test_collect_playbooks_dependencies_on_integrations(self, integration_command, expected_result, id_set):
@@ -692,9 +706,9 @@ class TestDependsOnPlaybook:
         """
         expected_result = {
             # playbooks:
-            ('Slack', False), ('Indeni', True),
+            ('Indeni', True),
             # integrations:
-            ('FeedAlienVault', False), ('ipinfo', True), ('FeedAutofocus', True),
+            ('FeedAlienVault', False), ('ipinfo', True), ('AutoFocus', True),
             # scripts:
             ('GetServerURL', False), ('HelloWorld', True),
         }
@@ -1289,3 +1303,81 @@ class TestDependencyGraph:
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
         assert 'NonSupported' not in pack_dependencies
+
+
+class TestPackMetadataParsing:
+    PACK_NAME = 'Hunting'
+
+    def test_parse_for_pack_metadata_complete_data(self, mocker, id_set):
+        """
+
+        Given:
+            - id_set data
+            - pack name
+            - dependency graph for the pack
+
+        When: Parsing the dependency data for pack metadata with complete data
+
+        Then: Parse the dependency information for pack_metadata correctly.
+
+        """
+        graph = PackDependencies.build_dependency_graph(pack_id=self.PACK_NAME,
+                                                        id_set=id_set,
+                                                        verbose_file=VerboseFile(),
+                                                        exclude_ignored_dependencies=False
+                                                        )
+
+        # Since Hunting depends only on "Common Playbooks" pack
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
+                     return_value='Common Playbooks')
+
+        metadata_dependencies, _ = parse_for_pack_metadata(
+            dependency_graph=graph,
+            graph_root=self.PACK_NAME,
+            complete_data=True,
+            id_set_data=id_set
+        )
+
+        values = metadata_dependencies.get('CommonPlaybooks')
+
+        assert 'CommonPlaybooks' in metadata_dependencies.keys()
+        assert values.get('author') == 'Cortex XSOAR'
+        assert values.get('certification') == 'certified'
+        assert 'mandatory' in values.keys()
+        assert 'minVersion' in values.keys()
+        assert values.get('name') == 'Common Playbooks'
+
+    def test_parse_for_pack_metadata_minimal_data(self, mocker, id_set):
+        """
+
+        Given:
+            - id_set data
+            - pack name
+            - dependency graph for the pack
+
+        When: Parsing the dependency data for pack metadata with minimal data
+
+        Then: Parse the dependency information for pack_metadata correctly.
+
+        """
+        graph = PackDependencies.build_dependency_graph(pack_id=self.PACK_NAME,
+                                                        id_set=id_set,
+                                                        verbose_file=VerboseFile(),
+                                                        exclude_ignored_dependencies=False
+                                                        )
+
+        # Since Hunting depends only on "Common Playbooks" pack
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
+                     return_value='Common Playbooks')
+
+        metadata_dependencies, _ = parse_for_pack_metadata(
+            dependency_graph=graph,
+            graph_root=self.PACK_NAME,
+            complete_data=False,
+            id_set_data=id_set
+        )
+
+        values = metadata_dependencies.get('CommonPlaybooks')
+
+        assert 'CommonPlaybooks' in metadata_dependencies.keys()
+        assert values == {'display_name': 'Common Playbooks', 'mandatory': True}

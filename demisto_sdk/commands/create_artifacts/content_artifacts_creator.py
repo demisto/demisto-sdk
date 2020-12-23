@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import time
 from concurrent.futures import as_completed
@@ -57,7 +58,8 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, id_set_path: str, pack_names: str, key_string: str, remove_test_playbooks: bool):
+                 cpus: int, id_set_path: str, pack_names: str, encryptor: Path, encryption_key: str, signature_key: str,
+                 sign_directory: Path, remove_test_playbooks: bool):
         """ Content artifacts configuration
 
         Args:
@@ -69,7 +71,10 @@ class ArtifactsManager:
             cpus: available cpus in the computer.
             id_set_path: the full path of id_set.json.
             pack_names: Packs to create artifacts for.
-            key_string: Base64 encoded signature key used for signing packs.
+            encryptor: Path to the encryptor executable file.
+            encryption_key: The encryption key for the packs.
+            signature_key: Base64 encoded signature key used for signing packs.
+            sign_directory: Path to the signDirectory executable file.
             remove_test_playbooks: Should remove test playbooks from content packs or not.
         """
         # options arguments
@@ -81,7 +86,10 @@ class ArtifactsManager:
         self.cpus = cpus
         self.id_set_path = id_set_path
         self.pack_names = arg_to_list(pack_names)
-        self.key_string = key_string
+        self.encryptor = encryptor
+        self.encryption_key = encryption_key
+        self.signature_key = signature_key
+        self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
 
         # run related arguments
@@ -89,6 +97,7 @@ class ArtifactsManager:
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
         self.content_all_path = self.artifacts_path / 'all_content'
+        self.content_uploadable_zips_path = self.artifacts_path / 'uploadable_packs'
 
         # inits
         self.content = Content.from_cwd()
@@ -155,6 +164,8 @@ class ContentItemsHandler:
         global logger
 
         content_object_directory = content_object.path.parts[-3]
+        if content_object_directory not in self.content_folder_name_to_func.keys():
+            content_object_directory = content_object.path.parts[-2]
 
         # if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
         #     return
@@ -188,8 +199,7 @@ class ContentItemsHandler:
     def add_playbook_as_content_item(self, content_object: ContentObject):
         self.content_items[CONTENT_ITEMS_PLAYBOOKS].append({
             'name': content_object.get('name', ''),
-            'description': content_object.get('comment', ''),
-            'tags': content_object.get('tags', [])
+            'description': content_object.get('description', ''),
         })
 
     def add_integration_as_content_item(self, content_object: ContentObject):
@@ -248,7 +258,7 @@ class ContentItemsHandler:
         })
 
     def add_layout_as_content_item(self, content_object: ContentObject):
-        if content_object.get('description'):
+        if content_object.get('description') is not None:
             self.content_items[CONTENT_ITEMS_LAYOUTS].append({
                 'name': content_object.get('name', ''),
                 'description': content_object.get('description')
@@ -853,6 +863,9 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
     else:
+        sign_packs(artifact_manager)
+        zip_packs(artifact_manager)
+        encrypt_packs(artifact_manager)
         if artifact_manager.zip_artifacts:
             zip_dirs(artifact_manager)
             delete_dirs(artifact_manager)
@@ -886,6 +899,20 @@ def zip_dirs(artifact_manager: ArtifactsManager):
             for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
                                  artifact_manager.content_packs_path, artifact_manager.content_all_path]:
                 pool.schedule(make_archive, args=(artifact_dir, 'zip', artifact_dir))
+
+
+def zip_packs(artifact_manager: ArtifactsManager):
+    """Zip packs directories"""
+    with ProcessPoolHandler(artifact_manager) as pool:
+        for pack_name, pack in artifact_manager.content.packs.items():
+            dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
+
+            if artifact_manager.encryption_key and artifact_manager.encryptor:
+                zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, f'{pack.id}_not_encrypted')
+            else:
+                zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
+
+            pool.schedule(make_archive, args=(zip_path, 'zip', dumped_pack_dir))
 
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
@@ -937,9 +964,10 @@ def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
         metadata.id = pack.id
         metadata.name = user_metadata.get('name', '')
         metadata.description = user_metadata.get('description', '')
-        if isinstance(user_metadata.get('price'), int):
-            metadata.price = user_metadata.get('price', 0)
-        else:
+        metadata.created = user_metadata.get('created')
+        try:
+            metadata.price = int(user_metadata.get('price', 0))
+        except Exception:
             logger.exception(f'{metadata.name} pack price is not valid. The price was set to 0.')
         metadata.support = user_metadata.get('support', '')
         metadata.url = user_metadata.get('url', '')
@@ -952,6 +980,7 @@ def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
         metadata.keywords = user_metadata.get('keywords', [])
         metadata.categories = user_metadata.get('categories', [])
         metadata.use_cases = user_metadata.get('useCases', [])
+        metadata.dependencies = user_metadata.get('dependencies', {})
 
         if metadata.price > 0:
             metadata.premium = True
@@ -971,7 +1000,9 @@ def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
 def handle_dependencies(pack: Pack, id_set_path: str):
     calculated_dependencies = PackDependencies.find_dependencies(pack.path.name,
                                                                  id_set_path=id_set_path,
-                                                                 update_pack_metadata=False, silent_mode=True)
+                                                                 update_pack_metadata=False,
+                                                                 silent_mode=True,
+                                                                 complete_data=True)
 
     # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
     # They can be overridden in the user metadata to be not mandatory so we need to check there as well
@@ -987,3 +1018,102 @@ def handle_dependencies(pack: Pack, id_set_path: str):
     calculated_dependencies.update(pack.metadata.dependencies)
 
     return calculated_dependencies
+
+
+###############################
+# Pack signing and encryption #
+###############################
+
+
+def sign_packs(artifact_manager: ArtifactsManager):
+    """Sign packs directories"""
+    if artifact_manager.signDirectory and artifact_manager.signature_key:
+        with ProcessPoolHandler(artifact_manager) as pool:
+            for pack_name, pack in artifact_manager.content.packs.items():
+                if pack_name in artifact_manager.pack_names:
+                    dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
+                    pool.schedule(sign_pack, args=(pack, dumped_pack_dir, artifact_manager.signature_key))
+
+    elif artifact_manager.signDirectory or artifact_manager.signature_key:
+        logger.exception('Failed to sign packs. In order to do so, you need to provide both signature_key and '
+                         'sign_directory arguments.')
+
+
+def sign_pack(pack: Pack, dumped_pack_dir: Path, signature_string: str):
+    """ Signs pack folder and creates signature file.
+
+    Args:
+        pack (Pack): The pack to sign.
+        dumped_pack_dir (Path): Path to the updated pack to sign.
+        signature_string (str): Base64 encoded string used to sign the pack.
+
+    """
+    try:
+        with open('keyfile', 'wb') as keyfile:
+            keyfile.write(signature_string.encode())
+        arg = f'./signDirectory {dumped_pack_dir} keyfile base64'
+        signing_process = subprocess.Popen(arg, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output, err = signing_process.communicate()
+        signing_process.wait()
+
+        if err:
+            logger.error(f'Failed to sign pack for {pack.path.name} - {str(err)}')
+            return
+
+        logger.info(f'Signed {pack.path.name} pack successfully')
+    except Exception:
+        logger.exception(f'Failed to sign pack for {pack.path.name}')
+
+
+def encrypt_packs(artifact_manager: ArtifactsManager):
+    """Encrypt packs zips"""
+    if artifact_manager.encryptor and artifact_manager.encryption_key:
+        subprocess.call(f'chmod +x {artifact_manager.encryptor}', shell=True)
+
+        with ProcessPoolHandler(artifact_manager) as pool:
+            for pack_name, pack in artifact_manager.content.packs.items():
+                if pack_name in artifact_manager.pack_names:
+                    dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
+                                                   f'{pack.id}_not_encrypted.zip')
+                    pool.schedule(encrypt_pack, args=(artifact_manager, pack, dumped_pack_zip,
+                                                      artifact_manager.encryption_key))
+
+    elif artifact_manager.encryptor or artifact_manager.encryption_key:
+        logger.exception('Failed to sign packs. In order to do so, you need to provide both encryption_key and '
+                         'encryptor arguments.')
+
+
+def encrypt_pack(artifact_manager: ArtifactsManager, pack: Pack, zip_pack_path: Path, encryption_key: str):
+    """ Encrypt pack zip.
+
+    Args:
+        artifact_manager (ArtifactsManager): Artifacts manager object.
+        pack (Pack): The pack to sign.
+        zip_pack_path (Path): Path to the pack not encrypted script.
+        encryption_key (str): The encryption key for the packs.
+
+    """
+    current_working_dir = os.getcwd()
+
+    try:
+        os.chdir(artifact_manager.content_uploadable_zips_path)
+        output_file = str(zip_pack_path).replace('_not_encrypted.zip', '.zip')
+        full_command = f'{artifact_manager.encryptor} {zip_pack_path} {output_file} "{encryption_key}"'
+        encryption_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output, err = encryption_process.communicate()
+        encryption_process.wait()
+
+        if err:
+            logger.error(f'Failed to encrypt pack for {pack.path.name} - {str(err)}')
+            return
+
+        os.remove(zip_pack_path)
+
+    except Exception as error:
+        logger.info(f"Error while trying to encrypt pack. {error}")
+        return
+
+    finally:
+        os.chdir(current_working_dir)
+
+    logger.info(f'Encrypted {pack.path.name} pack successfully')

@@ -11,7 +11,7 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import click
 import networkx
@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   PACKS_PACK_META_FILE_NAME,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -33,7 +34,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -749,6 +750,19 @@ def get_report_data(path):
     return parse_dashboard_or_report_data(layouts, report_data, path)
 
 
+def get_metadata_data(path):
+    metadata_data = get_json(path)
+
+    data = {
+        'name': metadata_data.get('name'),
+        'minVersion': metadata_data.get('currentVersion', ''),
+        'author': metadata_data.get('author', ''),
+        'certification': 'certified' if metadata_data.get('support', '').lower() in ['xsoar', 'partner'] else ''
+    }
+
+    return {data['name']: data}
+
+
 def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
     id_ = data_file_json.get('id')
     name = data_file_json.get('name', '')
@@ -964,6 +978,25 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     return playbook, script
 
 
+def process_packs(file_path: str, print_logs: bool) -> list:
+    """
+    Process a pack metadata file.
+    Args:
+        file_path: pack_metadata file path
+        print_logs: Whether to print logs to stdout
+
+    Returns:
+        a dict of packs data.
+    """
+    try:
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+        return [get_metadata_data(file_path)]
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
+
 def get_integrations_paths(pack_to_create):
     if pack_to_create:
         path_list = [
@@ -974,12 +1007,6 @@ def get_integrations_paths(pack_to_create):
         path_list = [
             ['Packs', '*', 'Integrations', '*']
         ]
-
-    integration_files = list()
-    for path in path_list:
-        integration_files.extend(glob.glob(os.path.join(*path)))
-
-    return integration_files
 
 
 def get_playbooks_paths(pack_to_create):
@@ -1017,6 +1044,10 @@ def get_general_paths(path, pack_to_create):
         files.extend(glob.glob(os.path.join(*path)))
 
     return files
+
+
+def get_pack_metadata_path():
+    return glob.glob(os.path.join('Packs', '*', PACKS_PACK_META_FILE_NAME))
 
 
 class IDSetType(Enum):
@@ -1175,6 +1206,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count() * 1.5))
 
@@ -1353,6 +1385,15 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
+        for arr in pool.map(partial(process_packs,
+                                    print_logs=print_logs,
+                                    ),
+                            get_pack_metadata_path()):
+            packs_dict.update(arr[0])
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1370,6 +1411,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
+    new_ids_dict['Packs'] = {key: packs_dict[key] for key in sorted(packs_dict.keys())}
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

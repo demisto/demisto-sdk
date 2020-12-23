@@ -336,9 +336,13 @@ def validate(config, **kwargs):
                     "csv list of packs. "
                     "Default is set to `all`"),
               default="all")
-@click.option('-k', '--key_string', help='Base64 encoded signature key used for signing packs.')
+@click.option('-e', '--encryptor', help='Path to the encryptor executable file.', type=click.Path(resolve_path=True))
+@click.option('-ek', '--encryption_key', help='The encryption key for the packs')
+@click.option('-sk', '--signature_key', help='Base64 encoded signature key used for signing packs.')
+@click.option('-sd', '--sign_directory', help='Path to the signDirectory executable file.',
+              type=click.Path(resolve_path=True))
 @click.option('-rt', '--remove_test_playbooks', is_flag=True,
-              help='Should remove test playbooks from content packs or not.')
+              help='Should remove test playbooks from content packs or not.', default=True)
 def create_artifacts(**kwargs) -> int:
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
@@ -983,7 +987,10 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
-def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
+@click.option(
+    "-cd", "--complete_data", help="Whether to update complete data on the dependent packs.",
+    is_flag=True, default=False)
+def find_dependencies_command(id_set_path, verbose, no_update, complete_data, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
@@ -998,6 +1005,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
                                            id_set_path=id_set_path,
                                            debug_file_path=verbose,
                                            update_pack_metadata=update_pack_metadata,
+                                           complete_data=complete_data
                                            )
     except ValueError as exp:
         print_error(str(exp))

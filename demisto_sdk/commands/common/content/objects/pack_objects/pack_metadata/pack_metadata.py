@@ -11,8 +11,9 @@ from wcmatch.pathlib import Path
 
 logger: logging.Logger
 
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%sZ'
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 XSOAR_NAME = 'xsoar'
+PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
 XSOAR_AUTHOR = 'Cortex XSOAR'
 XSOAR_SUPPORT_URL = 'https://www.paloaltonetworks.com/cortex'
@@ -25,11 +26,11 @@ class PackMetaData(JSONObject):
         self._name: str = ''
         self._id: str = ''
         self._description: str = ''
-        self._created: datetime = datetime.now()
-        self._updated: datetime = datetime.now()
-        self._legacy: bool = False
+        self._created: datetime = datetime.utcnow()
+        self._updated: datetime = datetime.utcnow()
+        self._legacy: bool = True
         self._support: str = ''
-        self._eulaLink: str = ''
+        self._eulaLink: str = 'https://github.com/demisto/content/blob/master/LICENSE'
         self._email: str = ''
         self._url: str = ''
         self._author: str = ''
@@ -104,6 +105,9 @@ class PackMetaData(JSONObject):
     @created.setter
     def created(self, new_pack_created_date: Union[str, datetime]):
         """Setter for the created attribute"""
+        if not new_pack_created_date:
+            return
+
         if isinstance(new_pack_created_date, str):
             try:
                 self._created = datetime.strptime(new_pack_created_date, DATETIME_FORMAT)
@@ -248,7 +252,7 @@ class PackMetaData(JSONObject):
         Returns:
             str: pack certification.
         """
-        if self.support == XSOAR_NAME:
+        if self.support in [XSOAR_NAME, PARTNER_SUPPORT]:
             return XSOAR_CERTIFIED
         else:
             return self._certification
@@ -475,7 +479,7 @@ class PackMetaData(JSONObject):
             'id': self.id,
             'description': self.description,
             'created': self.created.strftime(DATETIME_FORMAT),
-            'updated': self.created.strftime(DATETIME_FORMAT),
+            'updated': self.updated.strftime(DATETIME_FORMAT),
             'legacy': self.legacy,
             'support': self.support,
             'supportDetails': self.support_details,

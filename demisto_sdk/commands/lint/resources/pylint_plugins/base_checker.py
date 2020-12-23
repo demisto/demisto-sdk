@@ -1,6 +1,5 @@
 import os
 
-import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -48,6 +47,7 @@ class CustomBaseChecker(BaseChecker):
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
+        self._api_module_import_checker(node)
 
     # Print statment for Python2 only.
     def visit_print(self, node):
@@ -139,6 +139,15 @@ class CustomBaseChecker(BaseChecker):
         if self.commands:
             self.add_message("unimplemented-commands-exist",
                              args=str(self.commands), node=node)
+
+    def _api_module_import_checker(self, node):
+        try:
+            # for feeds which use api module -> the feed required params are implemented in the api module code.
+            # as a result we will remove them from param list.
+            if 'ApiModule' in node.modname:
+                self.commands = []
+        except Exception:
+            pass
 
 
 def register(linter):

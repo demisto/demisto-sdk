@@ -1070,7 +1070,7 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     with open(second_id_set_path, mode='r') as f2:
         second_id_set = json.load(f2)
 
-    print_warning(f'f1: \n {first_id_set}, \n\n  f2: \n {second_id_set}')
+    # print_warning(f'f1: \n {first_id_set}, \n\n  f2: \n {second_id_set}')
 
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
 

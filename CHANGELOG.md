@@ -5,6 +5,8 @@
 * Added a percent print when running the **validate** command with the *-a* flag.
 * Fixed a regression in the `upload` command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
 * Fixed an issue where the `upload` command would fail to upload beta integrations.
+* Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
+
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

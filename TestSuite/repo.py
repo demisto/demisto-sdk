@@ -70,11 +70,14 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name):
+    def setup_one_pack(self, name) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
             name (string): Name of the desired pack.
+
+        Returns:
+            Pack. The pack object created.
 
         """
         pack = self.create_pack(name)
@@ -160,6 +163,8 @@ class Repo:
         test_playbook.create_default_playbook()
         test_playbook.yml.update({'id': f'{name}_test_playbook'})
         test_playbook.yml.update({'name': f'{name}_test_playbook'})
+
+        return pack
 
     def setup_content_repo(self, number_of_packs):
         """Creates a fully constructed content repository, where packs names will pack_<index>.

@@ -1,10 +1,13 @@
 from contextlib import contextmanager
+from datetime import datetime
 from filecmp import cmp, dircmp
 from shutil import copyfile, copytree, rmtree
 
 import pytest
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.tools import src_root
+from packaging.version import parse
+from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
@@ -147,6 +150,63 @@ def test_modify_common_server_constants():
     path_before.write_text(old_data)
 
 
+def test_load_user_metadata_basic(repo):
+    """
+    When:
+        - Dumping a specific pack, processing the pack's metadata.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that pack's metadata information was loaded successfully.
+
+    """
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+            'description': 'A description for the pack',
+            'created': '2020-06-08T15:37:54Z',
+            'price': 0,
+            'support': 'xsoar',
+            'url': 'some url',
+            'email': 'some email',
+            'currentVersion': '1.1.1',
+            'author': 'Cortex XSOAR',
+            'tags': ['tag1'],
+            'dependencies': [{'dependency': {'dependency': '1'}}]
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    result = load_user_metadata(artifact_manager.content.packs['Pack1'])
+    assert result.id == 'Pack1'
+    assert result.name == 'Pack Number 1'
+    assert result.description == 'A description for the pack'
+    assert result.created == datetime(2020, 6, 8, 15, 37, 54)
+    assert result.price == 0
+    assert result.support == 'xsoar'
+    assert result.url == 'some url'
+    assert result.email == 'some email'
+    assert result.certification == 'certified'
+    assert result.current_version == parse('1.1.1')
+    assert result.author == 'Cortex XSOAR'
+    assert result.tags == ['tag1']
+    assert result.dependencies == [{'dependency': {'dependency': '1'}}]
+
+
 def test_dump_pack(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager, Pack, create_dirs, dump_pack)
@@ -199,7 +259,7 @@ def test_create_private_content_artifacts(private_repo):
 
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
-def test_malformed_file_failue(suffix: str, mock_git):
+def test_malformed_file_failure(suffix: str, mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,

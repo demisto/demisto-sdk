@@ -608,6 +608,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         if artifact_manager.id_set_path:
             # Dependencies can only be done when id_set file is given.
             pack.metadata.dependencies = handle_dependencies(pack, artifact_manager.id_set_path)
+        else:
+            logger.info('Skipping dependencies extraction since no id_set file was provided.')
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump(artifact_manager.content_packs_path / pack.id)
@@ -621,8 +623,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     return pack_report
 
 
-def dump_pack_conditionally(artifact_manager: ArtifactsManager,
-                            content_object: ContentObject) -> ObjectReport:
+def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
     """ Dump pack object by the following logic
 
     Args:

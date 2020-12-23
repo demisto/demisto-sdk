@@ -3,16 +3,19 @@ import os
 import shutil
 import unittest
 
+import mock
 import pytest
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
-    def test_build_rn_template_integration(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_integration(self, mock_master):
         """
             Given:
                 - a dict of changed items
@@ -37,7 +40,7 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
             "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
 
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -61,7 +64,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_playbook_new_file(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_playbook_new_file(self, mock_master):
         """
             Given:
                 - a dict of changed items
@@ -72,6 +76,7 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -81,7 +86,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_playbook_modified_file(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_playbook_modified_file(self, mock_master):
         """
             Given:
                 - a dict of changed items
@@ -92,6 +98,7 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -101,7 +108,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_file_without_description(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_file_without_description(self, mock_master):
         """
             Given:
                 - a dict of changed items
@@ -113,6 +121,7 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -121,7 +130,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_file__maintenance(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_file__maintenance(self, mock_master):
         """
             Given:
                 - a dict of changed items, with a maintenance rn update
@@ -134,6 +144,7 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
                           "- Maintenance and stability enhancements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='maintenance',
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -143,7 +154,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_file__documentation(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_file__documentation(self, mock_master):
         """
             Given:
                 - a dict of changed items, with a maintenance rn update
@@ -156,6 +168,7 @@ class TestRNUpdate(unittest.TestCase):
         expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
                           "- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='documentation',
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -165,7 +178,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_build_rn_template_when_only_pack_metadata_changed(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_build_rn_template_when_only_pack_metadata_changed(self, mock_master):
         """
         Given:
             - an empty dict of changed items
@@ -176,6 +190,7 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = "\n#### Integrations\n##### HelloWorld\n- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
                              added_files=set(),
                              pack_metadata_only=True)
@@ -183,7 +198,8 @@ class TestRNUpdate(unittest.TestCase):
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    def test_only_docs_changed(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_only_docs_changed(self, mock_master):
         """
         Given:
             - case 1: only the readme was added/modified
@@ -200,6 +216,7 @@ class TestRNUpdate(unittest.TestCase):
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
+        mock_master.return_value = '1.0.0'
 
         # case 1:
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor',
@@ -242,7 +259,8 @@ class TestRNUpdate(unittest.TestCase):
                              added_files=set())
         assert not update_rn.only_docs_changed()
 
-    def test_find_corresponding_yml(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_find_corresponding_yml(self, mock_master):
         """
             Given:
                 - a filepath containing a python file
@@ -253,13 +271,15 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = "Integration/HelloWorld.yml"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         filepath = 'Integration/HelloWorld.py'
         filename = update_rn.find_corresponding_yml(filepath)
         assert expected_result == filename
 
-    def test_return_release_notes_path(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_return_release_notes_path(self, mock_master):
         """
             Given:
                 - a pack name and version
@@ -270,13 +290,15 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = 'Packs/HelloWorld/ReleaseNotes/1_1_1.md'
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         input_version = '1.1.1'
         result = update_rn.return_release_notes_path(input_version)
         assert expected_result == result
 
-    def test_bump_version_number_minor(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_minor(self, mock_master):
         """
             Given:
                 - a pack name and version
@@ -289,6 +311,7 @@ class TestRNUpdate(unittest.TestCase):
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '1.1.0'
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
@@ -298,7 +321,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
 
-    def test_bump_version_number_major(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_major(self, mock_master):
         """
             Given:
                 - a pack name and version
@@ -311,6 +335,7 @@ class TestRNUpdate(unittest.TestCase):
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '2.0.0'
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
@@ -320,7 +345,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
 
-    def test_bump_version_number_revision(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_revision(self, mock_master):
         """
             Given:
                 - a pack name and version
@@ -333,6 +359,7 @@ class TestRNUpdate(unittest.TestCase):
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'))
         expected_version = '1.0.1'
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json')
@@ -342,7 +369,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
 
-    def test_bump_version_number_specific(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_specific(self, mock_master):
         """
             Given:
                 - a pack name and specific version
@@ -356,6 +384,7 @@ class TestRNUpdate(unittest.TestCase):
         expected_version = '2.0.0'
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, specific_version='2.0.0',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH,
@@ -367,7 +396,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
 
-    def test_bump_version_number_revision_overflow(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_revision_overflow(self, mock_master):
         """
             Given:
                 - a pack name and a version before an overflow condition
@@ -379,6 +409,7 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '0.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
@@ -387,7 +418,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
 
-    def test_bump_version_number_minor_overflow(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_minor_overflow(self, mock_master):
         """
             Given:
                 - a pack name and a version before an overflow condition
@@ -399,6 +431,7 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '0.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
@@ -407,7 +440,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
 
-    def test_bump_version_number_major_overflow(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_number_major_overflow(self, mock_master):
         """
             Given:
                 - a pack name and a version before an overflow condition
@@ -419,6 +453,7 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'))
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '0.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
@@ -427,7 +462,8 @@ class TestRNUpdate(unittest.TestCase):
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
 
-    def test_bump_version_file_not_found(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_file_not_found(self, mock_master):
         """
             Given:
                 - a pack name and a metadata which does not exist
@@ -437,12 +473,14 @@ class TestRNUpdate(unittest.TestCase):
                 - return ValueError
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '0.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
         self.assertRaises(SystemExit, update_rn.bump_version_number)
 
-    def test_bump_version_no_version(self):
+    @mock.patch.object(UpdateRN, 'get_master_version')
+    def test_bump_version_no_version(self, mock_master):
         """
             Given:
                 - a pack name and a version before an overflow condition
@@ -452,10 +490,73 @@ class TestRNUpdate(unittest.TestCase):
                 - return ValueError
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         self.assertRaises(ValueError, update_rn.bump_version_number)
+
+    def test_build_rn_desc_new_file(self):
+        """
+            Given
+                - A new file
+            When
+                - Running the command build_rn_desc on a file in order to generate rn description.
+            Then
+                - Validate That from-version added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=True, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+
+    def test_build_rn_desc_old_file(self):
+        """
+            Given
+                - An old file
+            When
+                - Running the command build_rn_desc on a file in order to generate rn description.
+            Then
+                - Validate That from-version was not added to the rn description.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+                                       is_new_file=False, text='', from_version='5.5.0')
+        assert '(Available from Cortex XSOAR 5.5.0).' not in desc
+
+    def test_build_rn_template_with_fromversion(self):
+        """
+            Given
+                - New playbook integration and script.
+            When
+                - running the command build_rn_template on this files in order to generate rn description.
+            Then
+                - Validate That from-version added to each of rn descriptions.
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        changed_items = {
+            'Hello World Integration': {'type': 'Integration', 'description': "", 'is_new_file': True,
+                                        'fromversion': '5.0.0'},
+            'Hello World Playbook': {'type': 'Playbook', 'description': '', 'is_new_file': True,
+                                     'fromversion': '5.5.0'},
+            "Hello World Script": {'type': 'Script', 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+        }
+        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
+                             added_files=set())
+
+        desc = update_rn.build_rn_template(changed_items=changed_items)
+        assert '(Available from Cortex XSOAR 5.0.0).' in desc
+        assert '(Available from Cortex XSOAR 5.5.0).' in desc
+        assert '(Available from Cortex XSOAR 6.0.0).' in desc
 
 
 class TestRNUpdateUnit:
@@ -523,11 +624,13 @@ class TestRNUpdateUnit:
 
         """
         self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
-        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', self.meta_backup)
+        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+                    self.meta_backup)
 
     def teardown(self):
         if self.meta_backup:
-            shutil.copy(self.meta_backup, 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+            shutil.copy(self.meta_backup,
+                        'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
@@ -542,6 +645,7 @@ class TestRNUpdateUnit:
                 - return tuple where first value is the pack name, and second is the item type
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path=pack_name, update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
@@ -550,7 +654,7 @@ class TestRNUpdateUnit:
         result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
-    def test_check_rn_directory(self):
+    def test_check_rn_directory(self, mocker):
         """
             Given:
                 - a filepath for a release notes directory
@@ -561,12 +665,13 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes')
         update_rn = UpdateRN(pack_path="Packs/VulnDB", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.check_rn_dir(filepath)
 
-    def test_create_markdown(self):
+    def test_create_markdown(self, mocker):
         """
             Given:
                 - a filepath for a release notes file and a markdown string
@@ -576,13 +681,14 @@ class TestRNUpdateUnit:
                 - create the file or skip if it exists.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/VulnDB", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
         update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
 
-    def test_update_existing_rn(self):
+    def test_update_existing_rn(self, mocker):
         """
             Given:
                 - Existing release notes and set of changed files
@@ -592,12 +698,13 @@ class TestRNUpdateUnit:
                 - return updated release notes while preserving the integrity of the existing notes.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
         assert self.EXPECTED_RN_RES == new_rn
 
-    def test_commit_to_bump(self):
+    def test_commit_to_bump(self, mocker):
         """
             Given:
                 - No inputs, but a condition where bumping the version is ready
@@ -609,6 +716,7 @@ class TestRNUpdateUnit:
         ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         TEMP_FILE = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json')
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
@@ -618,7 +726,7 @@ class TestRNUpdateUnit:
         os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
-    def test_find_added_pack_files(self):
+    def test_find_added_pack_files(self, mocker):
         """
             Given:
                 - List of added files
@@ -630,12 +738,13 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         added_files = {'HelloWorld/something_new.md', 'HelloWorld/test_data/nothing.md'}
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
                              added_files=added_files)
         update_rn.find_added_pack_files()
         assert update_rn.modified_files_in_pack == {'HelloWorld/something_new.md'}
 
-    def test_does_pack_metadata_exist_no(self):
+    def test_does_pack_metadata_exist_no(self, mocker):
         """
             Given:
                 - Checking for the existance of a pack metadata file
@@ -645,13 +754,14 @@ class TestRNUpdateUnit:
                 - return False to indicate it does not exist.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
         update_rn.metadata_path = 'This/Doesnt/Exist'
         result = update_rn._does_pack_metadata_exist()
         assert result is False
 
-    def test_execute_update_invalid(self):
+    def test_execute_update_invalid(self, mocker):
         """
             Given:
                 - A protected pack name
@@ -661,6 +771,7 @@ class TestRNUpdateUnit:
                 - return an error message and exit.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         update_rn = UpdateRN(pack_path="Packs/Legacy", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
         update_rn.execute_update()
@@ -697,6 +808,7 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         from subprocess import Popen
         import json
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value=git_current_version)
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
@@ -708,7 +820,7 @@ class TestRNUpdateUnit:
         bump_result = update_rn.is_bump_required()
         assert bump_result is expected_result
 
-    def test_renamed_files(self):
+    def test_renamed_files(self, mocker):
         """
         Given:
             A file was renamed
@@ -718,6 +830,7 @@ class TestRNUpdateUnit:
             file list should contain the new file path and ignore the old path.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         modified_files = {
             'file1',
             ('file2', 'file2_new'),
@@ -784,6 +897,8 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         from demisto_sdk.commands.update_release_notes.update_rn import update_api_modules_dependents_rn
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+
         modified = {'/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml'}
         added = {}
         id_set_content = {'integrations':
@@ -859,6 +974,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
         client = UpdateRN(pack_path="Packs/Test", update_type='minor',
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
@@ -891,6 +1007,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_0_0.md')
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
         client = UpdateRN(pack_path="Packs/Test", update_type='minor',
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
@@ -927,7 +1044,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
                                                                                 '/update_release_notes/tests_data'
                                                                                 '/Packs/release_notes/1_1_0.md')
-
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
@@ -935,3 +1052,23 @@ class TestRNUpdateUnit:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
+
+
+def test_get_from_version_at_update_rn(integration):
+    """
+        Given
+            - Case 1: An integration path
+            - Case 2: A fake integration path
+        When
+            - Updating release notes for integration, trying to extract the 'fromversion' key from the integration yml.
+        Then
+            - Case 1: Assert that the `fromversion` value is 5.0.0
+            - Case 2: Assert that the `fromversion` value is None
+        """
+    from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
+
+    integration.yml.write_dict({'fromversion': '5.0.0'})
+    fromversion = get_from_version_at_update_rn(integration.yml.path)
+    assert fromversion == '5.0.0'
+    fromversion = get_from_version_at_update_rn('fake_path.yml')
+    assert fromversion is None

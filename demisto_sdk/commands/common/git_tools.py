@@ -256,7 +256,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
             # changes in old scripts and integrations - unified python scripts/integrations
             elif file_status.lower() in ['m', 'a', 'r'] and \
                     find_type(file_path) in [FileType.INTEGRATION, FileType.SCRIPT] and \
-                    ValidateManager._is_py_script_or_integration(file_path):
+                    ValidateManager._is_old_file_format(file_path):
                 old_format_files.add(file_path)
             # identify modified files
             elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):

@@ -107,7 +107,8 @@ class ValidateManager:
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DESCRIPTION,
-                                   FileType.DOC_IMAGE)
+                                   FileType.DOC_IMAGE,
+                                   FileType.PACK_METADATA)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -822,17 +823,10 @@ class ValidateManager:
 
     def setup_git_params(self):
         self.branch_name = self.get_current_working_branch()
-        if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
-                                             not self.branch_name.startswith('20.')):
 
-            # on a non-master branch - we use '...' comparison range to check changes from origin/master.
-            # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
-            self.compare_type = '...'
-
-        else:
+        # if running on release branch or master - check against last release.
+        if self.branch_name == 'master' or self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
             self.skip_pack_rn_validation = True
-            # on master branch - we use '..' comparison range to check changes from the last release branch.
-            self.compare_type = '..'
             self.prev_ver = get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
@@ -902,25 +896,9 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                file_type = find_type(file_path)
-                if not file_type:
-                    self.ignored_files.add(file_path)
-                    continue
-
-                if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE]:
-                    file_path = file_path.replace('.py', '.yml').replace('.pws', '.yml')
-
-                    if old_path:
-                        old_path = old_path.replace('.py', '.yml').replace('.pws', ',yml')
-
-                if self._is_py_script_or_integration(file_path):
-                    old_format_files.add(file_path)
-
-                if old_path:
-                    filtered_set.add((old_path, file_path))
-
-                else:
-                    filtered_set.add(file_path)
+                formatted_path = self.format_file_path(file_path, old_path, old_format_files)
+                if formatted_path:
+                    filtered_set.add(formatted_path)
 
             # handle a case where a file was deleted locally though recognised as added against master.
             except FileNotFoundError:
@@ -928,6 +906,34 @@ class ValidateManager:
                     self.ignored_files.add(file_path)
 
         return filtered_set, old_format_files
+
+    def format_file_path(self, file_path, old_path, old_format_files):
+        file_type = find_type(file_path)
+
+        # ignore unrecognized file types
+        if not file_type:
+            self.ignored_files.add(file_path)
+            return None
+
+        # redirect code files to the associated yml file
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE]:
+            file_path = file_path.replace('.py', '.yml').replace('.pws', '.yml')
+
+            if old_path:
+                old_path = old_path.replace('.py', '.yml').replace('.pws', ',yml')
+
+        # check for old file format
+        if self._is_old_file_format(file_path):
+            old_format_files.add(file_path)
+            return None
+
+        # if renamed file - return a tuple
+        if old_path:
+            return old_path, file_path
+
+        # else return the file path
+        else:
+            return file_path
 
     """ ######################################## Validate Tools ############################################### """
 
@@ -995,7 +1001,7 @@ class ValidateManager:
         return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
-    def _is_py_script_or_integration(file_path):
+    def _is_old_file_format(file_path):
         file_yml = get_yaml(file_path)
         if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':

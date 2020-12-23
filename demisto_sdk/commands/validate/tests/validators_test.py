@@ -657,7 +657,7 @@ class TestValidators:
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_py_script_or_integration(test_file)
+        res = validate_manager._is_old_file_format(test_file)
         assert res is False
 
     def test_is_py_or_yml_invalid(self):
@@ -674,7 +674,7 @@ class TestValidators:
         test_file = os.path.join(files_path,
                                  'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_py_script_or_integration(test_file)
+        res = validate_manager._is_old_file_format(test_file)
         assert res is False
 
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
@@ -945,7 +945,7 @@ class TestValidators:
         """
 
         mocker.patch.object(os.path, 'isfile', return_value=True)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
+        mocker.patch.object(ValidateManager, '_is_old_file_format', return_value=True)
         diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
                       f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
                       f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
@@ -1130,7 +1130,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+        mocker.patch.object(ValidateManager, '_is_old_file_format', return_value=False)
 
         validate_manager = ValidateManager(staged=True, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
@@ -1154,7 +1154,7 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
         mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
+        mocker.patch.object(ValidateManager, '_is_old_file_format', return_value=False)
 
         validate_manager = ValidateManager(staged=False, skip_id_set_creation=True)
         modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')

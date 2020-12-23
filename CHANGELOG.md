@@ -3,7 +3,8 @@
 * Removed supported version message from the documentation when running **generate_docs**.
 * Added a print to indicate backwards compatibility is being checked in **validate** command.
 * Added a percent print when running the **validate** command with the *-a* flag.
-* Fixed a regression in the `upload` command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
+* Fixed a regression in the **upload** command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
+* Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

@@ -329,8 +329,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         """
         self.checker.commands = ['test-1', 'test2']
         node_a = astroid.extract_node("""
-            if  a == 'test-1': #@
-                return true 
+            if a == 'test-1': #@
+                return true
             else:
                 return false
         """)
@@ -355,7 +355,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
-        self.checker.commands = ['test-1', 'test2' , 'test3']
+        self.checker.commands = ['test-1', 'test2', 'test3']
         node_a = astroid.extract_node("""
             {'test-1' : 1, 'test2':2} #@
         """)
@@ -370,5 +370,42 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_dict(node_a)
             self.checker.leave_module(node_a)
 
+    def test_commands_in_list_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - valid import of commonServerPython exists in the code.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a, node_b = astroid.extract_node("""
+            if a in ['test-1','test2']:  #@
+                return False
+            elif a in ['test2']:
+                return True #@
 
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test3']),
+                ),
+        ):
+            self.checker.visit_if(node_a)
+            self.checker.visit_if(node_b)
 
+            self.checker.leave_module(node_a)
+
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+                   if a in ['test-1','test2','test3']:  #@
+                       return False
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)

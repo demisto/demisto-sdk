@@ -1,5 +1,6 @@
 import os
 
+import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -112,26 +113,47 @@ class CustomBaseChecker(BaseChecker):
             pass
 
     def _commands_in_dict_keys_checker(self, node):
-        try:
-            for sub_node in node.itered():
-                if sub_node.value in self.commands:
-                    self.commands.remove(sub_node.value)
-        except Exception:
-            pass
+        # for py2
+        if os.getenv('PY2'):
+            try:
+                for item in node.items:
+                    if item[0].value in self.commands:
+                        self.commands.remove(item[0].value)
+            except Exception:
+                pass
+        # for py3
+        else:
+            try:
+                for sub_node in node.itered():
+                    if sub_node.value in self.commands:
+                        self.commands.remove(sub_node.value)
+            except Exception:
+                pass
 
     def _commands_in_if_statment_checker(self, node):
         try:
             # for if command == 'command'
-            comp_with = node.test.ops[0][1].value
-            if comp_with in self.commands:
-                self.commands.remove(comp_with)
+            comp_with = node.test.ops[0][1]
+            if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
+                self.commands.remove(comp_with.value)
+            # fro if command in ['command1','command2']
+            elif isinstance(comp_with, astroid.List):
+                for var_lst in comp_with.itered():
+                    if var_lst.value in self.commands:
+                        self.commands.remove(var_lst.value)
         except Exception:
             try:
-                # for elif command == 'command'
+                # for elif clause
                 for elif_clause in node.orelse:
-                    comp_with = elif_clause.test.ops[0][1].value
-                    if comp_with in self.commands:
-                        self.commands.remove(comp_with)
+                    comp_with = elif_clause.test.ops[0][1]
+                    # for elif command == 'command'
+                    if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
+                        self.commands.remove(comp_with.value)
+                    # for elif command in ['command']
+                    elif isinstance(comp_with, astroid.List):
+                        for var_lst in comp_with.itered():
+                            if var_lst.value in self.commands:
+                                self.commands.remove(var_lst.value)
             except Exception:
                 pass
 

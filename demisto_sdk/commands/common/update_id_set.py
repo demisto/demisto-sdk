@@ -1101,7 +1101,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
                                          external_object=obj)
             if is_duplicate:
-                print(obj_id)
+                print_warning(f'obj: \n {obj}, \n obj_id \n {obj_id}')
                 duplicates.append(obj_id)
             else:
                 united_id_set.add_to_list(object_type, obj)

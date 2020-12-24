@@ -1069,6 +1069,10 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
             json.dump(unified_id_set.get_dict(), f, indent=4)
+        print(f'Successfully merge {first_id_set_path} and {second_id_set_path} ID sets')
+
+    if duplicates:
+        raise Exception(f'There is duplicates between {first_id_set_path} and {second_id_set_path} ID sets.')
 
     return unified_id_set, duplicates
 

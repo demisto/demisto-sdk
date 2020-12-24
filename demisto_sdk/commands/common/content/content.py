@@ -321,4 +321,4 @@ class Content:
         #current_branch_commit = content_repo.commit(content_repo.active_branch)
 
         #return {Path(os.path.join(item.a_path)) for item in current_branch_commit.diff(merge_base)}
-        return {Path(os.path.join(item)) for item in content_repo.git.diff("--name-only", f"{prev_ver}...refs/heads/{content_repo.active_branch}"}
+        return {Path(os.path.join(item)) for item in content_repo.git.diff("--name-only", f"{prev_ver}...refs/heads/{content_repo.active_branch}")}

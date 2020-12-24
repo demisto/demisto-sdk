@@ -25,14 +25,15 @@ PACK_METADATA_PARTNER_NO_EMAIL_NO_URL = {
     "support": "partner",
     "currentVersion": "1.0.1",
     "author": "bar",
-    "url": '',
-    "email": '',
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
     "tags": [],
     "useCases": [],
-    "keywords": []
+    "keywords": [],
+    "price": 2,
+    "email": "some@mail.com",
+    "url": "https://www.paloaltonetworks.com/cortex"
 }
 
 

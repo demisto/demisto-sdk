@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (DOCUMENTATION,
@@ -205,6 +206,9 @@ class Content:
         all_branch_changed_files = {Path(os.path.join(item)) for item in
                                     content_repo.git.diff(f'{prev_ver}...{content_repo.active_branch}',
                                                           '--name-only').split('\n')}
+
+        print(all_branch_changed_files)
+        sys.exit(0)
 
         committed = committed.intersection(all_branch_changed_files)
 

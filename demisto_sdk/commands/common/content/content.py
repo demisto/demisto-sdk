@@ -203,7 +203,8 @@ class Content:
             content_repo.active_branch).iter_change_type('M')}
 
         all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+                                    content_repo.git.diff(f'{prev_ver}...{content_repo.active_branch}',
+                                                          '--name-only').split('\n')}
 
         committed = committed.intersection(all_branch_changed_files)
 
@@ -237,7 +238,8 @@ class Content:
             content_repo.active_branch).iter_change_type('A')}
 
         all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+                                    content_repo.git.diff(f'{prev_ver}...{content_repo.active_branch}',
+                                                          '--name-only').split('\n')}
 
         committed = committed.intersection(all_branch_changed_files)
 
@@ -271,7 +273,8 @@ class Content:
             content_repo.active_branch).iter_change_type('R')}
 
         all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...HEAD', '--name-only').split('\n')}
+                                    content_repo.git.diff(f'{prev_ver}...{content_repo.active_branch}',
+                                                          '--name-only').split('\n')}
 
         committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
 

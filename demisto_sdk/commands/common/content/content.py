@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import os
-import sys
 from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
-from pprint import pprint
 
 from demisto_sdk.commands.common.constants import (DOCUMENTATION,
                                                    DOCUMENTATION_DIR,
@@ -205,14 +203,8 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
-
-
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
         committed = committed.intersection(all_branch_changed_files)
-
-        pprint(all_branch_changed_files)
-
-        sys.exit(0)
 
         if committed_only:
             return committed - renamed
@@ -322,5 +314,6 @@ class Content:
     @staticmethod
     def _get_all_changed_files(content_repo, prev_ver):
         origin_prev_ver = prev_ver if prev_ver.startswith('origin/') else f"origin/{prev_ver}"
-        pprint(f'{origin_prev_ver}...{content_repo.active_branch}')
-        return {Path(os.path.join(item)) for item in content_repo.git.diff('--name-only', f'{origin_prev_ver}...{content_repo.active_branch}').split('\n')}
+        return {Path(os.path.join(item)) for item
+                in content_repo.git.diff('--name-only',
+                                         f'{origin_prev_ver}...{content_repo.active_branch}').split('\n')}

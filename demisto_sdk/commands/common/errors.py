@@ -155,6 +155,7 @@ ERROR_CODE = {
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
+    "pack_metadata_price_change": "PA121",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -974,6 +975,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
         return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_price_change(old_price, new_price) -> str:
+        return f"The pack price was changed from {old_price} to {new_price} - revert the change"
 
     @staticmethod
     @error_code_decorator

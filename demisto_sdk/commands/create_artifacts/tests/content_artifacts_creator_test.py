@@ -154,8 +154,12 @@ def test_modify_common_server_constants():
 
 
 def test_dump_pack(mock_git):
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager, Pack, create_dirs, dump_pack)
+
+    cca.logger = logging_setup(0)
+
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',

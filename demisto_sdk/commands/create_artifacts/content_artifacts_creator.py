@@ -542,6 +542,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
+    global logger
+
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata = load_user_metadata(pack)

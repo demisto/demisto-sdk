@@ -321,7 +321,6 @@ class Content:
 
     @staticmethod
     def _get_all_changed_files(content_repo, prev_ver):
-        merge_base = content_repo.merge_base(content_repo.active_branch, prev_ver)
-        current_branch_commit = content_repo.commit(content_repo.active_branch)
-
-        return {Path(os.path.join(item.a_path)) for item in current_branch_commit.diff(merge_base)}
+        origin_prev_ver = prev_ver if prev_ver.startswith('origin/') else f"origin/{prev_ver}"
+        pprint(f'{origin_prev_ver}...{content_repo.active_branch}')
+        return {Path(os.path.join(item.a_path)) for item in content_repo.git.diff('--name-only', f'{origin_prev_ver}...{content_repo.active_branch}')}

@@ -203,9 +203,7 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
-        all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...refs/heads/{content_repo.active_branch}',
-                                                          '--name-only').split('\n')}
+        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
 
         committed = committed.intersection(all_branch_changed_files)
 
@@ -238,9 +236,7 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('A')}
 
-        all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...refs/heads/{content_repo.active_branch}',
-                                                          '--name-only').split('\n')}
+        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
 
         committed = committed.intersection(all_branch_changed_files)
 
@@ -273,9 +269,7 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('R')}
 
-        all_branch_changed_files = {Path(os.path.join(item)) for item in
-                                    content_repo.git.diff(f'{prev_ver}...refs/heads/{content_repo.active_branch}',
-                                                          '--name-only').split('\n')}
+        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
 
         committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
 
@@ -313,3 +307,10 @@ class Content:
             extracted_paths.append(line.split()[-1])
 
         return extracted_paths
+
+    @staticmethod
+    def _get_all_changed_files(content_repo, prev_ver):
+        merge_base = content_repo.merge_base(content_repo.active_branch, prev_ver)
+        current_branch_commit = content_repo.commit(content_repo.active_branch)
+
+        return {Path(os.path.join(item.a_path)) for item in current_branch_commit.diff(merge_base)}

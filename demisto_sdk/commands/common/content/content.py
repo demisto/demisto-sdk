@@ -323,4 +323,4 @@ class Content:
     def _get_all_changed_files(content_repo, prev_ver):
         origin_prev_ver = prev_ver if prev_ver.startswith('origin/') else f"origin/{prev_ver}"
         pprint(f'{origin_prev_ver}...{content_repo.active_branch}')
-        return {Path(os.path.join(item.a_path)) for item in content_repo.git.diff('--name-only', f'{origin_prev_ver}...{content_repo.active_branch}')}
+        return {Path(os.path.join(item)) for item in content_repo.git.diff('--name-only', f'{origin_prev_ver}...{content_repo.active_branch}').split('\n')}

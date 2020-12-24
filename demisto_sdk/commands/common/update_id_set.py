@@ -978,6 +978,24 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     return playbook, script
 
 
+def get_integrations_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'Integrations', '*']
+        ]
+
+    else:
+        path_list = [
+            ['Packs', '*', 'Integrations', '*']
+        ]
+
+    integration_files = list()
+    for path in path_list:
+        integration_files.extend(glob.glob(os.path.join(*path)))
+
+    return integration_files
+
+
 def process_packs(file_path: str, print_logs: bool) -> list:
     """
     Process a pack metadata file.
@@ -1046,8 +1064,18 @@ def get_general_paths(path, pack_to_create):
     return files
 
 
-def get_pack_metadata_path():
-    return glob.glob(os.path.join('Packs', '*', PACKS_PACK_META_FILE_NAME))
+def get_pack_metadata_path(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, '*', PACKS_PACK_META_FILE_NAME]
+        ]
+
+    else:
+        path_list = [
+            ['Packs', '*', PACKS_PACK_META_FILE_NAME]
+        ]
+
+    return glob.glob(os.path.join(*path_list))
 
 
 class IDSetType(Enum):
@@ -1138,8 +1166,8 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
-                     print_logs: bool = True):
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa: C901
+                     objects_to_create: list = None, print_logs: bool = True):
     """Re create the id set
 
     Args:
@@ -1389,7 +1417,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         for arr in pool.map(partial(process_packs,
                                     print_logs=print_logs,
                                     ),
-                            get_pack_metadata_path()):
+                            get_pack_metadata_path(pack_to_create)):
             packs_dict.update(arr[0])
 
         progress_bar.update(1)

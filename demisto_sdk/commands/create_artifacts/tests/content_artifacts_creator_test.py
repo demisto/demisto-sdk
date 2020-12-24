@@ -1,10 +1,13 @@
+import os
 from contextlib import contextmanager
 from datetime import datetime
 from filecmp import cmp, dircmp
+from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 
 import pytest
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 from packaging.version import parse
 from TestSuite.test_tools import ChangeCWD
@@ -150,63 +153,6 @@ def test_modify_common_server_constants():
     path_before.write_text(old_data)
 
 
-def test_load_user_metadata_basic(repo):
-    """
-    When:
-        - Dumping a specific pack, processing the pack's metadata.
-
-    Given:
-        - Pack object.
-
-    Then:
-        - Verify that pack's metadata information was loaded successfully.
-
-    """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, load_user_metadata)
-
-    pack_1 = repo.setup_one_pack('Pack1')
-    pack_1.pack_metadata.write_json(
-        {
-            'name': 'Pack Number 1',
-            'description': 'A description for the pack',
-            'created': '2020-06-08T15:37:54Z',
-            'price': 0,
-            'support': 'xsoar',
-            'url': 'some url',
-            'email': 'some email',
-            'currentVersion': '1.1.1',
-            'author': 'Cortex XSOAR',
-            'tags': ['tag1'],
-            'dependencies': [{'dependency': {'dependency': '1'}}]
-        }
-    )
-
-    with ChangeCWD(repo.path):
-        with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
-
-    result = load_user_metadata(artifact_manager.content.packs['Pack1'])
-    assert result.id == 'Pack1'
-    assert result.name == 'Pack Number 1'
-    assert result.description == 'A description for the pack'
-    assert result.created == datetime(2020, 6, 8, 15, 37, 54)
-    assert result.price == 0
-    assert result.support == 'xsoar'
-    assert result.url == 'some url'
-    assert result.email == 'some email'
-    assert result.certification == 'certified'
-    assert result.current_version == parse('1.1.1')
-    assert result.author == 'Cortex XSOAR'
-    assert result.tags == ['tag1']
-    assert result.dependencies == [{'dependency': {'dependency': '1'}}]
-
-
 def test_dump_pack(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager, Pack, create_dirs, dump_pack)
@@ -289,3 +235,318 @@ def test_duplicate_file_failure(mock_git):
             exit_code = config.create_content_artifacts()
 
     assert exit_code == 1
+
+
+def test_load_user_metadata_basic(repo):
+    """
+    When:
+        - Dumping a specific pack, processing the pack's metadata.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that pack's metadata information was loaded successfully.
+
+    """
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+            'description': 'A description for the pack',
+            'created': '2020-06-08T15:37:54Z',
+            'price': 0,
+            'support': 'xsoar',
+            'url': 'some url',
+            'email': 'some email',
+            'currentVersion': '1.1.1',
+            'author': 'Cortex XSOAR',
+            'tags': ['tag1'],
+            'dependencies': [{'dependency': {'dependency': '1'}}]
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    result = load_user_metadata(artifact_manager.content.packs['Pack1'])
+    assert result.id == 'Pack1'
+    assert result.name == 'Pack Number 1'
+    assert result.description == 'A description for the pack'
+    assert result.created == datetime(2020, 6, 8, 15, 37, 54)
+    assert result.price == 0
+    assert result.support == 'xsoar'
+    assert result.url == 'some url'
+    assert result.email == 'some email'
+    assert result.certification == 'certified'
+    assert result.current_version == parse('1.1.1')
+    assert result.author == 'Cortex XSOAR'
+    assert result.tags == ['tag1']
+    assert result.dependencies == [{'dependency': {'dependency': '1'}}]
+
+
+def test_load_user_metadata_advanced(repo):
+    """
+    When:
+        - Dumping a specific pack, processing the pack's metadata.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that pack's metadata information was loaded successfully.
+
+    """
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+            'price': 10,
+            'tags': ['tag1'],
+            'useCases': ['usecase1'],
+            'vendorId': 'vendorId',
+            'vendorName': 'vendorName'
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    result = load_user_metadata(artifact_manager.content.packs['Pack1'])
+    assert result.id == 'Pack1'
+    assert result.name == 'Pack Number 1'
+    assert result.price == 10
+    assert result.vendor_id == 'vendorId'
+    assert result.vendor_name == 'vendorName'
+    assert result.tags == ['tag1', 'Use Case']
+
+
+def test_load_user_metadata_no_metadata_file(repo, capsys):
+    """
+    When:
+        - Dumping a pack with no pack_metadata file.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    cca.logger = logging_setup(3)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+            'price': 'price',
+            'tags': ['tag1'],
+            'useCases': ['usecase1'],
+            'vendorId': 'vendorId',
+            'vendorName': 'vendorName'
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        os.remove(pack_1.pack_metadata.path)
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    load_user_metadata(artifact_manager.content.packs['Pack1'])
+
+    captured = capsys.readouterr()
+    assert 'Pack1 pack is missing pack_metadata.json file.' in captured.err
+
+
+def test_load_user_metadata_invalid_price(repo, capsys):
+    """
+    When:
+        - Dumping a pack with invalid price in pack_metadata file.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    cca.logger = logging_setup(3)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+            'price': 'price',
+            'tags': ['tag1'],
+            'useCases': ['usecase1'],
+            'vendorId': 'vendorId',
+            'vendorName': 'vendorName'
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    load_user_metadata(artifact_manager.content.packs['Pack1'])
+
+    captured = capsys.readouterr()
+    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.err
+
+
+def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
+    """
+    When:
+        - Dumping a pack with invalid pack_metadata file.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, load_user_metadata)
+
+    cca.logger = logging_setup(3)
+
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_as_text('Invalid of course {')
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True)
+
+    load_user_metadata(artifact_manager.content.packs['Pack1'])
+
+    captured = capsys.readouterr()
+    assert 'Failed loading Pack1 user metadata.' in captured.err
+
+
+@pytest.mark.parametrize('key, tool', [('some_key', False), ('', True)])
+def test_sign_packs_failure(repo, capsys, key, tool):
+    """
+    When:
+        - Signing a pack.
+
+    Given:
+        - Pack object.
+        - Signature key without the signing tool, or vice-versa.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, sign_packs)
+
+    cca.logger = logging_setup(3)
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True,
+                                                signature_key=key)
+
+            if tool:
+                with open('./tool', 'w') as tool_file:
+                    tool_file.write('some tool')
+
+                artifact_manager.signDirectory = Path(temp / 'tool')
+
+    sign_packs(artifact_manager)
+
+    captured = capsys.readouterr()
+    assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
+           'sign_directory arguments.' in captured.err
+
+
+@pytest.mark.parametrize('key, tool', [('some_key', False), ('', True)])
+def test_encrypt_packs_failure(repo, capsys, key, tool):
+    """
+    When:
+        - Signing a pack.
+
+    Given:
+        - Pack object.
+        - Encryption key without the encryption tool, or vice-versa.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager, encrypt_packs)
+
+    cca.logger = logging_setup(3)
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True,
+                                                encryption_key=key)
+
+            if tool:
+                with open('./tool', 'w') as tool_file:
+                    tool_file.write('some tool')
+
+                artifact_manager.encryptor = Path(temp / 'tool')
+
+    encrypt_packs(artifact_manager)
+
+    captured = capsys.readouterr()
+    assert 'Failed to sign packs. In order to do so, you need to provide both encryption_key and ' \
+           'encryptor arguments.' in captured.err

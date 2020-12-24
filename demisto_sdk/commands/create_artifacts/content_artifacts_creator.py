@@ -114,7 +114,8 @@ class ArtifactsManager:
             # content/Packs
             futures.extend(dump_packs(self, pool))
             # content/TestPlaybooks
-            futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+            if not self.remove_test_playbooks:
+                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
             # content/content-descriptor.json
             futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
             # content/Documentation/doc-*.json
@@ -972,7 +973,7 @@ def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
         try:
             metadata.price = int(user_metadata.get('price', 0))
         except Exception:
-            logger.exception(f'{metadata.name} pack price is not valid. The price was set to 0.')
+            logger.error(f'{metadata.name} pack price is not valid. The price was set to 0.')
         metadata.support = user_metadata.get('support', '')
         metadata.url = user_metadata.get('url', '')
         metadata.email = user_metadata.get('email', '')
@@ -1002,6 +1003,17 @@ def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
 
 
 def handle_dependencies(pack: Pack, id_set_path: str):
+    """Updates pack's dependencies using the find_dependencies command.
+
+    Args:
+        pack (Pack): current pack object.
+        id_set_path: the id_set file path.
+
+    Returns:
+        dict. All dependencies for the pack.
+    """
+    global logger
+
     calculated_dependencies = PackDependencies.find_dependencies(pack.path.name,
                                                                  id_set_path=id_set_path,
                                                                  update_pack_metadata=False,
@@ -1016,8 +1028,8 @@ def handle_dependencies(pack: Pack, id_set_path: str):
                                   k not in CORE_PACKS_LIST and
                                   k not in pack.metadata.dependencies.keys()]
         if mandatory_dependencies:
-            raise Exception(f'New mandatory dependencies {mandatory_dependencies} were '
-                            f'found in the core pack {pack.path.name}')
+            logger.error(f'New mandatory dependencies {mandatory_dependencies} were '
+                         f'found in the core pack {pack.path.name}')
 
     calculated_dependencies.update(pack.metadata.dependencies)
 
@@ -1039,8 +1051,8 @@ def sign_packs(artifact_manager: ArtifactsManager):
                     pool.schedule(sign_pack, args=(pack, dumped_pack_dir, artifact_manager.signature_key))
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
-        logger.exception('Failed to sign packs. In order to do so, you need to provide both signature_key and '
-                         'sign_directory arguments.')
+        logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
+                     'sign_directory arguments.')
 
 
 def sign_pack(pack: Pack, dumped_pack_dir: Path, signature_string: str):

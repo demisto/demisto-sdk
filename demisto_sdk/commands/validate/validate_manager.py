@@ -1041,7 +1041,8 @@ class ValidateManager:
     def get_packs_that_should_have_version_raised(self, modified_files, added_files):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
+            FileType.TEST_SCRIPT, FileType.PACK_METADATA
         })
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes

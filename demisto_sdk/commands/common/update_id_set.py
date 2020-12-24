@@ -1060,18 +1060,11 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     """
     Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
-
-    if not os.path.exists(output_id_set_path):
-        os.makedirs(output_id_set_path)
-
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)
 
     with open(second_id_set_path, mode='r') as f2:
         second_id_set = json.load(f2)
-
-    # print_warning(f'f1: \n {first_id_set}, \n\n  f2: \n {second_id_set}')
-
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
 
     print_warning(f'unified_id_set: \n {unified_id_set}, \n duplicates \n {duplicates}')
@@ -1101,6 +1094,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
                                          external_object=obj)
             if is_duplicate:
+                print_warning(f'There is duplicates between the ID sets - duplicate ID: {obj_id}')
                 print_warning(f'obj: \n {obj}, \n obj_id \n {obj_id}')
                 duplicates.append(obj_id)
             else:

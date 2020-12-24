@@ -823,7 +823,7 @@ def merge_id_sets_command(**kwargs):
         output_id_set_path=output
     )
     if duplicates:
-        print_warning(f'Failed to merge ID sets {first} and {second}, '
+        print_warning(f'Failed to merge ID sets: {first} with {second}, '
                       f'there are entities with ID: {duplicates} that exist in both ID sets')
         sys.exit(1)
 

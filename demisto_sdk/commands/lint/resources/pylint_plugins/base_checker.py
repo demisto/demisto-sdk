@@ -138,6 +138,9 @@ class CustomBaseChecker(BaseChecker):
         def _check_if(comp_with):
             if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
                 self.commands.remove(comp_with.value)
+            # for if command == 'command1' or command == 'commands2'
+            elif isinstance(comp_with, astroid.Name) and comp_with.name in self.commands:
+                self.commands.remove(comp_with.name)
             # for if command in ['command1','command2']
             elif isinstance(comp_with, astroid.List):
                 for var_lst in comp_with.itered():
@@ -149,13 +152,15 @@ class CustomBaseChecker(BaseChecker):
                     if var_lst.value in self.commands:
                         self.commands.remove(var_lst.value)
         try:
-            # for if command == 'command'
-            comp_with = node.test.ops[0][1]
-            _check_if(comp_with)
+            # for if command == 'command1' or command == 'commands2'
+            if isinstance(node.test, astroid.BoolOp):
+                for value in node.test.values:
+                    _check_if(value.ops[0][1])
+            # for regular if
+            _check_if(node.test.ops[0][1])
             # for elif clause
             for elif_clause in node.orelse:
-                comp_with = elif_clause.test.ops[0][1]
-                _check_if(comp_with)
+                _check_if(elif_clause.test.ops[0][1])
         except Exception:
             pass
 

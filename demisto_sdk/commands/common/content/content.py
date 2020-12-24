@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
+from pprint import pprint
 
 from demisto_sdk.commands.common.constants import (DOCUMENTATION,
                                                    DOCUMENTATION_DIR,
@@ -204,10 +205,13 @@ class Content:
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
+
+
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
         committed = committed.intersection(all_branch_changed_files)
 
-        print(all_branch_changed_files)
+        pprint(all_branch_changed_files)
+
         sys.exit(0)
 
         if committed_only:
@@ -317,8 +321,7 @@ class Content:
 
     @staticmethod
     def _get_all_changed_files(content_repo, prev_ver):
-        #merge_base = content_repo.merge_base(content_repo.active_branch, prev_ver)
-        #current_branch_commit = content_repo.commit(content_repo.active_branch)
+        merge_base = content_repo.merge_base(content_repo.active_branch, prev_ver)
+        current_branch_commit = content_repo.commit(content_repo.active_branch)
 
-        # return {Path(os.path.join(item.a_path)) for item in current_branch_commit.diff(merge_base)}
-        return {Path(os.path.join(item)) for item in content_repo.git.diff("--name-only", f"origin/{prev_ver}...refs/heads/{content_repo.active_branch}")}
+        return {Path(os.path.join(item.a_path)) for item in current_branch_commit.diff(merge_base)}

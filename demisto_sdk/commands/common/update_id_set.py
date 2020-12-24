@@ -1066,16 +1066,12 @@ def get_general_paths(path, pack_to_create):
 
 def get_pack_metadata_path(pack_to_create):
     if pack_to_create:
-        path_list = [
-            [pack_to_create, '*', PACKS_PACK_META_FILE_NAME]
-        ]
+        path = [pack_to_create, '*', PACKS_PACK_META_FILE_NAME]
 
     else:
-        path_list = [
-            ['Packs', '*', PACKS_PACK_META_FILE_NAME]
-        ]
+        path = ['Packs', '*', PACKS_PACK_META_FILE_NAME]
 
-    return glob.glob(os.path.join(*path_list))
+    return glob.glob(os.path.join(*path))
 
 
 class IDSetType(Enum):

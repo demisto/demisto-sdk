@@ -102,7 +102,6 @@ class TestCreateMetadata:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],
@@ -135,7 +134,6 @@ class TestCreateMetadata:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],
@@ -176,7 +174,6 @@ class TestCreateMetadata:
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': PACK_URL,
             'useCases': [],
             'githubUser': []
@@ -216,7 +213,6 @@ class TestCreateMetadata:
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': PACK_URL,
             'useCases': [],
             'githubUser': []
@@ -256,7 +252,6 @@ class TestCreateMetadata:
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[3],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': MARKETPLACE_LIVE_DISCUSSIONS,
             'useCases': [],
             'githubUser': []

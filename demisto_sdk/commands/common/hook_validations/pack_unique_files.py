@@ -233,13 +233,14 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check created field in iso format
             created_field = metadata.get(PACK_METADATA_CREATED, '')
-            if not self.check_timestamp_format(created_field):
-                suggested_value = parser.parse(created_field).isoformat() + "Z"
-                if self._add_error(
-                        Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_CREATED,
-                                                                      created_field, suggested_value),
-                        self.pack_meta_file):
-                    return False
+            if created_field:
+                if not self.check_timestamp_format(created_field):
+                    suggested_value = parser.parse(created_field).isoformat() + "Z"
+                    if self._add_error(
+                            Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_CREATED,
+                                                                          created_field, suggested_value),
+                            self.pack_meta_file):
+                        return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,

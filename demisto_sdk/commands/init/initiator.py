@@ -209,7 +209,6 @@ class Initiator:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],

@@ -27,7 +27,6 @@ PACK_METADATA_PARTNER_NO_EMAIL_NO_URL = {
     "author": "bar",
     "url": '',
     "email": '',
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],

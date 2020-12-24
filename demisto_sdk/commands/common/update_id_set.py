@@ -1069,10 +1069,10 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
             json.dump(unified_id_set.get_dict(), f, indent=4)
-        print(f'Successfully merge {first_id_set_path} and {second_id_set_path} ID sets')
-
-    if duplicates:
-        raise Exception(f'There is duplicates between {first_id_set_path} and {second_id_set_path} ID sets.')
+    #     print(f'Successfully merge {first_id_set_path} and {second_id_set_path} ID sets')
+    #
+    # if duplicates:
+    #     raise Exception(f'There is duplicates between {first_id_set_path} and {second_id_set_path} ID sets.')
 
     return unified_id_set, duplicates
 
@@ -1095,7 +1095,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
                                          external_object=obj)
             if is_duplicate:
-                print_warning(f'There is duplicates between the ID sets - duplicate ID: {obj_id}')
+                # print_warning(f'There is duplicates between the ID sets - duplicate ID: {obj_id}')
                 duplicates.append(obj_id)
             else:
                 united_id_set.add_to_list(object_type, obj)

@@ -198,22 +198,20 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
-        # staging all local changes
-        if not no_auto_stage:
-            self._stage_files(content_repo)
-
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
-        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
-
-        committed = committed.intersection(all_branch_changed_files)
-
+        # all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
+        # committed = committed.intersection(all_branch_changed_files)
         if committed_only:
             return committed - renamed
+
+        # staging all local changes
+        if not no_auto_stage:
+            self._stage_files(content_repo)
 
         staged = {Path(os.path.join(item.a_path)) for item
                   in content_repo.head.commit.diff(
@@ -233,20 +231,20 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
-        # staging all local changes
-        if not no_auto_stage:
-            self._stage_files(content_repo)
-
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('A')}
 
-        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
+        # all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
 
-        committed = committed.intersection(all_branch_changed_files)
+        # committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
             return committed
+
+        # staging all local changes
+        if not no_auto_stage:
+            self._stage_files(content_repo)
 
         staged = {Path(os.path.join(item.a_path)) for item in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
@@ -266,20 +264,20 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
-        # staging all local changes
-        if not no_auto_stage:
-            self._stage_files(content_repo)
-
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('R')}
 
-        all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
+        # all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
 
-        committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
+        # committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
 
         if committed_only:
             return committed
+
+        # staging all local changes
+        if not no_auto_stage:
+            self._stage_files(content_repo)
 
         staged = {(Path(item.a_path), Path(item.b_path)) for item
                   in content_repo.head.commit.diff(

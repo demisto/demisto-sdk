@@ -1066,9 +1066,6 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     with open(second_id_set_path, mode='r') as f2:
         second_id_set = json.load(f2)
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
-
-    print_warning(f'unified_id_set: \n {unified_id_set}, \n duplicates \n {duplicates}')
-
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
             json.dump(unified_id_set.get_dict(), f, indent=4)
@@ -1095,7 +1092,6 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
                                          external_object=obj)
             if is_duplicate:
                 print_warning(f'There is duplicates between the ID sets - duplicate ID: {obj_id}')
-                print_warning(f'obj: \n {obj}, \n obj_id \n {obj_id}')
                 duplicates.append(obj_id)
             else:
                 united_id_set.add_to_list(object_type, obj)

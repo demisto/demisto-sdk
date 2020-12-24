@@ -8,7 +8,7 @@
 * Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
 * Added price change validation in the **validate** command.
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
-
+* Added validation for support types in the pack metadata file.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

@@ -21,6 +21,8 @@ from demisto_sdk.commands.common.tools import find_type
 from git import GitCommandError, InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
+CIRCLE_CONTENT_ROOT_PATH = os.path.abspath(os.path.join(__file__, '../../..'))
+
 
 class Content:
     def __init__(self, path: Union[str, Path]):
@@ -57,7 +59,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> Optional[Repo]:
+    def git(root_path=None) -> Optional[Repo]:
         """ Git repository object.
 
         Returns:
@@ -70,7 +72,10 @@ class Content:
             1. Should be called when cwd inside content repository.
         """
         try:
-            repo = Repo(Path.cwd(), search_parent_directories=True)
+            if root_path:
+                repo = Repo(root_path, search_parent_directories=True)
+            else:
+                repo = Repo(Path.cwd(), search_parent_directories=True)
         except InvalidGitRepositoryError:
             repo = None
 
@@ -191,7 +196,7 @@ class Content:
     def modified_files(self, prev_ver='master', committed_only=False, staged_only=False,
                        no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git()
+        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
         # staging all local changes
         if not no_auto_stage:
@@ -226,7 +231,7 @@ class Content:
 
     def added_files(self, prev_ver='master', committed_only=False, staged_only=False, no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git()
+        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
         # staging all local changes
         if not no_auto_stage:
@@ -259,7 +264,7 @@ class Content:
     def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False,
                       no_auto_stage=False) -> Set[Tuple[Path, Path]]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git()
+        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
 
         # staging all local changes
         if not no_auto_stage:

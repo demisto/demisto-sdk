@@ -207,6 +207,9 @@ class Content:
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
         committed = committed.intersection(all_branch_changed_files)
 
+        print(all_branch_changed_files)
+        sys.exit(0)
+
         if committed_only:
             return committed - renamed
 
@@ -237,9 +240,6 @@ class Content:
             content_repo.active_branch).iter_change_type('A')}
 
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
-
-        print(all_branch_changed_files)
-        sys.exit(0)
 
         committed = committed.intersection(all_branch_changed_files)
 

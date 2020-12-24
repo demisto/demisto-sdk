@@ -484,3 +484,44 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
+
+
+class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
+    """
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_indicators_exist(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Invalid use of indicators inside of CommandResults in the code.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
+
+        """
+        node_a = astroid.extract_node("""CommandResults(name=name,test=test,indicators=indicators)""")
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='commandresults-indicators-exists',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+
+    def test_indicators_doesnt_exist(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - No use of  indicators inside of CommandResults in the code.
+            - Use of indicator instead of indicators inside of CommandResults.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        node_a = astroid.extract_node("""CommandResults(name=name,test=test,indicator=indicators)""")
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)

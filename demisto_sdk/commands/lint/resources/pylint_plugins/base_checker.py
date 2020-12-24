@@ -19,6 +19,9 @@ base_msg = {
     "E9006": ("Invalid CommonServerPython import was found. Please change the import to: "
               "from CommonServerPython import *", "invalid-import-common-server-python",
               "Please change the import to: from CommonServerPython import *"),
+    "E9007": ("Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.",
+              "commandresults-indicators-exists",
+              "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."),
     "E9010": ("Some commands from yml file are not implemented in the python file, Please make sure that every "
               "command is implemented in your code. The commands that are not implemented are %s",
               "unimplemented-commands-exist",
@@ -45,6 +48,7 @@ class CustomBaseChecker(BaseChecker):
         self._sleep_checker(node)
         self._quit_checker(node)
         self._exit_checker(node)
+        self._commandresults_indicator_check(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -166,6 +170,15 @@ class CustomBaseChecker(BaseChecker):
             # as a result we will remove them from param list.
             if 'ApiModule' in node.modname:
                 self.commands = []
+        except Exception:
+            pass
+
+    def _commandresults_indicator_check(self, node):
+        try:
+            if node.func.name == 'CommandResults':
+                for keyword in node.keywords:
+                    if keyword.arg == 'indicators':
+                        self.add_message("commandresults-indicators-exists", node=node)
         except Exception:
             pass
 

@@ -16,6 +16,7 @@ files = [
         'Print is found, Please remove all prints from the code.',
         'Sleep is found, Please remove all sleep statements from the code.',
         'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
+        'Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.',
         "Some commands from yml file are not implemented in the python file, Please make sure that every command is"
         " implemented in your code. The commands that are not implemented are ['error']"],
      ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),

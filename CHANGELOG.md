@@ -1,4 +1,5 @@
 # Changelog
+* Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.
 * Added a print to indicate backwards compatibility is being checked in **validate** command.
@@ -8,7 +9,8 @@
 * Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
 * Added price change validation in the **validate** command.
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
-
+* Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
+* Added validation for support types in the pack metadata file.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

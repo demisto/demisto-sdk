@@ -36,10 +36,15 @@ class Initiator:
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    DEFAULT_INTEGRATION_TEMPLATE = 'Boilerplate'
+    TEST_DATA_DIR = 'test_data'
+    DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
+
+    ''' INTEGRATION TEMPLATES CONSTANTS '''
+    DEFAULT_INTEGRATION_TEMPLATE = 'BaseIntegration'
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
+
     INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION]
 
     TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
@@ -48,19 +53,32 @@ class Initiator:
                                   f'{TEMPLATE_INTEGRATION_NAME}_description.md',
                                   f'{TEMPLATE_INTEGRATION_NAME}_image.png',
                                   f'{TEMPLATE_INTEGRATION_NAME}_test.py',
-                                  'Pipfile', 'Pipfile.lock'}
+                                  'Pipfile', 'Pipfile.lock', 'README.md', 'command_examples'}
 
-    HELLO_WORLD_TEST_DATA_FILES = {os.path.join('test_data', 'domain_reputation.json'),
-                                   os.path.join('test_data', 'get_alert.json'),
-                                   os.path.join('test_data', 'ip_reputation.json'),
-                                   os.path.join('test_data', 'scan_results.json'),
-                                   os.path.join('test_data', 'search_alerts.json'),
-                                   os.path.join('test_data', 'update_alert_status.json'),
-                                   os.path.join('test_data', 'domain_reputation.json')}
-    TEST_DATA_DIR = 'test_data'
+    DEFAULT_INTEGRATION_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'baseintegration-dummy.json')}
+
+    HELLO_WORLD_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'domain_reputation.json'),
+                                   os.path.join(TEST_DATA_DIR, 'get_alert.json'),
+                                   os.path.join(TEST_DATA_DIR, 'ip_reputation.json'),
+                                   os.path.join(TEST_DATA_DIR, 'scan_results.json'),
+                                   os.path.join(TEST_DATA_DIR, 'search_alerts.json'),
+                                   os.path.join(TEST_DATA_DIR, 'update_alert_status.json'),
+                                   os.path.join(TEST_DATA_DIR, 'domain_reputation.json')}
+
+    ''' SCRIPT TEMPLATES CONSTANTS '''
+    DEFAULT_SCRIPT_TEMPLATE = 'BaseScript'
 
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
+
+    SCRIPT_TEMPLATE_OPTIONS = [HELLO_WORLD_SCRIPT]
+
+    TEMPLATE_SCRIPT_NAME = '%%TEMPLATE_NAME%%'
+    TEMPLATE_SCRIPT_FILES = {f'{TEMPLATE_SCRIPT_NAME}.py',
+                             f'{TEMPLATE_SCRIPT_NAME}.yml',
+                             f'{TEMPLATE_SCRIPT_NAME}_test.py',
+                             'README.md'}
+
+    DEFAULT_SCRIPT_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'basescript-dummy.json')}
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
@@ -85,11 +103,7 @@ class Initiator:
         if not integration and not script and not pack:
             self.is_pack = True
 
-        while template not in self.INTEGRATION_TEMPLATE_OPTIONS and template != '':
-            options_str = ', '.join(self.INTEGRATION_TEMPLATE_OPTIONS)
-            template = str(input(f"Enter a valid template name, or press enter to choose the default template"
-                                 f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}\n"))
-        self.template = template if template else self.DEFAULT_INTEGRATION_TEMPLATE
+        self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
 
@@ -117,6 +131,32 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+    def get_selected_template(self, template: str = '') -> str:
+        """ Makes sure a valid template is selected
+
+        Args:
+            template (str): the given template name (empty string if not given)
+
+        Returns:
+            str. A valid template name. If no template was specified, returns the default template name.
+        """
+        if self.is_integration:
+            while template and template not in self.INTEGRATION_TEMPLATE_OPTIONS:
+                options_str = ', '.join(self.INTEGRATION_TEMPLATE_OPTIONS)
+                template = str(input(f"Enter a valid template name, or press enter to choose the default template"
+                                     f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}\n"))
+            return template if template else self.DEFAULT_INTEGRATION_TEMPLATE
+
+        elif self.is_script:
+            while template and template not in self.SCRIPT_TEMPLATE_OPTIONS:
+                options_str = ', '.join(self.SCRIPT_TEMPLATE_OPTIONS)
+                template = str(input(f"Enter a valid template name, or press enter to choose the default template"
+                                     f" ({self.DEFAULT_SCRIPT_TEMPLATE}).\nValid options: {options_str}\n"))
+            return template if template else self.DEFAULT_SCRIPT_TEMPLATE
+
+        # if reached here it is a pack init - will be used again if user decides to create an integration
+        return template
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -190,7 +230,7 @@ class Initiator:
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock)
+                                         demisto_mock=self.demisto_mock, template=self.template)
             return integration_init.init()
 
         return True
@@ -321,7 +361,7 @@ class Initiator:
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
-            self.full_output_path = os.path.join('Integrations', self.dir_name)
+            self.full_output_path = os.path.join(INTEGRATIONS_DIR, self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
@@ -330,11 +370,10 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        integration_template_files = self.get_integration_template_files()
-        if not self.get_remote_templates(integration_template_files):
-            default_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',
-                                                                  self.DEFAULT_INTEGRATION_TEMPLATE))
-            copy_tree(str(default_template_path), self.full_output_path)
+        integration_template_files = self.get_template_files()
+        if not self.get_remote_templates(integration_template_files, dir=INTEGRATIONS_DIR):
+            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
+            copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
@@ -370,15 +409,17 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        if not self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES):
-            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_SCRIPT))
-            copy_tree(str(hello_world_path), self.full_output_path)
+        script_template_files = self.get_template_files()
+        if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
+            default_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',
+                                                                  self.DEFAULT_SCRIPT_TEMPLATE))
+            copy_tree(str(default_template_path), self.full_output_path)
 
-        if self.id != self.HELLO_WORLD_SCRIPT:
+        if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
-            self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
-            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_SCRIPT)
+            self.rename(current_suffix=self.template)
+            self.yml_reformatting(current_suffix=self.template)
+            self.fix_test_file_import(name_to_change=self.template)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
@@ -482,41 +523,57 @@ class Initiator:
             except Exception as err:
                 print_v(f'Could not copy demistomock: {str(err)}')
 
-    def get_integration_template_files(self):
+    def get_template_files(self):
         """
-        Gets the list of the integration file names to create according to the selected template.
+        Gets the list of the integration/script file names to create according to the selected template.
         Returns:
-            set. The names of integration files to create.
+            set. The names of integration/script files to create.
         """
-        template_files = {filename.replace(self.TEMPLATE_INTEGRATION_NAME, self.template)
-                          for filename in self.TEMPLATE_INTEGRATION_FILES}
+        if self.is_integration:
+            template_files = {filename.replace(self.TEMPLATE_INTEGRATION_NAME, self.template)
+                              for filename in self.TEMPLATE_INTEGRATION_FILES}
 
-        if self.template == self.HELLO_WORLD_INTEGRATION:
-            template_files.add(self.HELLO_WORLD_TEST_DATA_FILES)
+            if self.template == self.HELLO_WORLD_INTEGRATION:
+                template_files = template_files.union(self.HELLO_WORLD_TEST_DATA_FILES)
+
+            elif self.template == self.DEFAULT_INTEGRATION_TEMPLATE:
+                template_files = template_files.union(self.DEFAULT_INTEGRATION_TEST_DATA_FILES)
+        else:
+            template_files = {filename.replace(self.TEMPLATE_SCRIPT_NAME, self.template)
+                              for filename in self.TEMPLATE_SCRIPT_FILES}
+
+            if self.template == self.DEFAULT_SCRIPT_TEMPLATE:
+                template_files = template_files.union(self.DEFAULT_SCRIPT_TEST_DATA_FILES)
 
         return template_files
 
-    def get_remote_templates(self, files_list):
+    def get_remote_templates(self, files_list, dir):
         """
         Downloading the object related template-files and saving them in the output path.
         Args:
             files_list: List of files to download.
+            dir: The name of the relevant directory (e.g. "Integrations", "Scripts").
         Returns:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
-        if self.is_integration:
-            path = os.path.join('Packs', self.template, 'Integrations', self.template)
-            if self.template == self.HELLO_WORLD_INTEGRATION:
-                os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+        if self.template in [self.HELLO_WORLD_INTEGRATION, self.DEFAULT_INTEGRATION_TEMPLATE]:
+            os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+
+        if self.template in [self.DEFAULT_INTEGRATION_TEMPLATE, self.DEFAULT_SCRIPT_TEMPLATE]:
+            pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
         else:
-            path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')
+            pack_name = self.template
+
+        path = os.path.join('Packs', pack_name, dir, self.template)
 
         for file in files_list:
             try:
                 file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
-            except Exception:
+            except Exception as e:
+                print_warning("errrrorrrr: " + str(e))
+                print_warning("file_content: " + str(file_content))
                 print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")
                 return False
 

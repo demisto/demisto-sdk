@@ -138,16 +138,8 @@ class CustomBaseChecker(BaseChecker):
         def _check_if(comp_with):
             if isinstance(comp_with, astroid.Const) and comp_with.value in self.commands:
                 self.commands.remove(comp_with.value)
-            # for if command == 'command1' or command == 'commands2'
-            elif isinstance(comp_with, astroid.Name) and comp_with.name in self.commands:
-                self.commands.remove(comp_with.name)
-            # for if command in {'command1','command2'}
-            elif isinstance(comp_with, astroid.Set):
-                for var_lst in comp_with.itered():
-                    if var_lst.name in self.commands:
-                        self.commands.remove(var_lst.name)
-            # for if command in ['command1','command2']
-            elif isinstance(comp_with, astroid.List):
+            # for if command in ['command1','command2'] or for if command in {'command1','command2'}
+            elif isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
                 for var_lst in comp_with.itered():
                     if var_lst.value in self.commands:
                         self.commands.remove(var_lst.value)

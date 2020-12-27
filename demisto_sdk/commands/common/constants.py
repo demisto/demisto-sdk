@@ -929,6 +929,7 @@ FEED_REQUIRED_PARAMS_CONTENT_IMP = [
         'display': 'Traffic Light Protocol Color',
         'name': 'tlp_color',
         'required': False,
+        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
         'type': 15
     }
 ]

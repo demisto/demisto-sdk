@@ -269,10 +269,10 @@ class CustomBaseChecker(BaseChecker):
         if isinstance(comp_with, astroid.JoinedStr):
             for value in comp_with.values:
                 if isinstance(value, astroid.FormattedValue):
-                    infered.append(_infer_single_var(value.value))
+                    infered.extend(_infer_single_var(value.value))
                 elif isinstance(value, astroid.Const):
                     infered.append(value.value)
-                infered = [''.join(infered)]
+            infered = [''.join(infered)]
         elif isinstance(comp_with, astroid.Name):
             infered = _infer_single_var(comp_with)
         elif isinstance(comp_with, astroid.Const):

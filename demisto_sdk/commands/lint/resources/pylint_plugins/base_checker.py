@@ -121,41 +121,46 @@ class CustomBaseChecker(BaseChecker):
         if os.getenv('PY2'):
             try:
                 for item in node.items:
-                    command = self._string_value(item[0])
-                    if command and command in self.commands:
-                        self.commands.remove(command)
+                    commands = self._infer_name(item[0])
+                    for command in commands:
+                        if command in self.commands:
+                            self.commands.remove(command)
             except Exception:
                 pass
         # for py3
         else:
             try:
                 for sub_node in node.itered():
-                    command = self._string_value(sub_node)
-                    if command and command in self.commands:
-                        self.commands.remove(command)
+                    commands = self._infer_name(sub_node)
+                    for command in commands:
+                        if command in self.commands:
+                            self.commands.remove(command)
             except Exception:
                 pass
 
     def _commands_in_if_statment_checker(self, node):
         def _check_if(comp_with):
             # for regular if 'command' == command with inference mechanize
-            command = self._string_value(comp_with)
-            if command and command in self.commands:
-                self.commands.remove(command)
+            commands = self._infer_name(comp_with)
+            for command in commands:
+                if command in self.commands:
+                    self.commands.remove(command)
 
             # for if command in ['command1','command2'] or for if command in {'command1','command2'}
-            elif isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
+            if isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
                 for var_lst in comp_with.itered():
-                    command = self._string_value(var_lst)
-                    if command and command in self.commands:
-                        self.commands.remove(command)
+                    commands = self._infer_name(var_lst)
+                    for command in commands:
+                        if command in self.commands:
+                            self.commands.remove(command)
 
             # for if command in ('command1','command2')
             elif isinstance(comp_with, astroid.Tuple):
                 for var_lst in comp_with.elts:
-                    command = self._string_value(var_lst)
-                    if command and command in self.commands:
-                        self.commands.remove(command)
+                    commands = self._infer_name(var_lst)
+                    for command in commands:
+                        if command in self.commands:
+                            self.commands.remove(command)
 
         try:
             # for if command == 'command1' or command == 'commands2'
@@ -195,30 +200,30 @@ class CustomBaseChecker(BaseChecker):
 
     #  --------------------------------------- Helper Function ----------------------------------------------------
 
-    def _infer_command_name(self, comp_with):
-        # for if f'{command}-command' == 'commands1'
-        formatted_command = ''
-        for value in comp_with.values:
-            if isinstance(value, astroid.FormattedValue):
-                try:
-                    for inference in value.value.infer():
-                        formatted_command += inference.value
-                except astroid.InferenceError:
-                    pass
-            elif isinstance(value, astroid.Const):
-                formatted_command += value.value
-        return formatted_command
+    def _infer_name(self, comp_with):
 
-    def _string_value(self, comp_with):
-        val = ''
-        try:
-            if isinstance(comp_with, astroid.Const):
-                val = comp_with.value
-            elif isinstance(comp_with, astroid.JoinedStr):
-                val = self._infer_command_name(comp_with)
-        except Exception:
-            pass
-        return val
+        def _infer_single_var(var):
+            var_infered = []
+            try:
+                for inference in var.infer():
+                    var_infered.append(inference.value)
+            except astroid.InferenceError:
+                pass
+            return var_infered
+
+        infered = []
+        if isinstance(comp_with, astroid.JoinedStr):
+            for value in comp_with.values:
+                if isinstance(value, astroid.FormattedValue):
+                    infered.extend(_infer_single_var(value.value))
+                elif isinstance(value, astroid.Const):
+                    infered.append(value.value)
+            infered = [''.join(infered)]
+        elif isinstance(comp_with, astroid.Name):
+            infered = _infer_single_var(comp_with)
+        elif isinstance(comp_with, astroid.Const):
+            infered = [comp_with.value]
+        return infered
 
 
 def register(linter):

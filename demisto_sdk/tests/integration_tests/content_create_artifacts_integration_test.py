@@ -69,7 +69,7 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_test_specific_pack_creation(repo, capsys):
+def test_test_specific_pack_creation(repo, caplog):
     """Test the -p flag for specific packs creation
     """
     pack_1 = repo.setup_one_pack('Pack1')
@@ -91,14 +91,12 @@ def test_test_specific_pack_creation(repo, capsys):
             runner = CliRunner()
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
 
-    captured = capsys.readouterr()
-
     assert result.exit_code == 0
-    assert 'Pack1' in captured.out
-    assert 'Pack2' not in captured.out
+    assert 'Pack1' in caplog.text
+    assert 'Pack2' not in caplog.text
 
 
-def test_test_all_packs_creation(repo, capsys):
+def test_test_all_packs_creation(repo, caplog):
     """Test the -p flag for all packs creation
     """
     pack_1 = repo.setup_one_pack('Pack1')
@@ -120,8 +118,6 @@ def test_test_all_packs_creation(repo, capsys):
             runner = CliRunner()
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
-    captured = capsys.readouterr()
-
     assert result.exit_code == 0
-    assert 'Pack1' in captured.out
-    assert 'Pack2' in captured.out
+    assert 'Pack1' in caplog.text
+    assert 'Pack2' in caplog.text

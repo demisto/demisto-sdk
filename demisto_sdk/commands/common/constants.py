@@ -928,7 +928,6 @@ FEED_REQUIRED_PARAMS_CONTENT_IMP = [
         'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
         'display': 'Traffic Light Protocol Color',
         'name': 'tlp_color',
-        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
         'required': False,
         'type': 15
     }

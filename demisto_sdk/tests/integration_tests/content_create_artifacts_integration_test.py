@@ -87,8 +87,8 @@ def test_test_specific_pack_creation(repo):
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
 
     assert result.exit_code == 0
-    assert 'Pack1' in result.output
-    assert 'Pack2' not in result.output
+    assert 'Pack1' in result.stdout
+    assert 'Pack2' not in result.stdout
 
 
 def test_test_all_packs_creation(repo):
@@ -114,5 +114,5 @@ def test_test_all_packs_creation(repo):
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
     assert result.exit_code == 0
-    assert 'Pack1' in result.output
-    assert 'Pack2' in result.output
+    assert 'Pack1' in result.stdout
+    assert 'Pack2' in result.stdout

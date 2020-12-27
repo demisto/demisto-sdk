@@ -568,12 +568,14 @@ class Initiator:
 
         for file in files_list:
             try:
-                file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
+                filename = file
+                if 'README.md' in file:
+                    # Actual readme file name is `README_example.md`
+                    filename = file.replace('README.md', 'README_example.md')
+                file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception as e:
-                print_warning("errrrorrrr: " + str(e))
-                print_warning("file_content: " + str(file_content))
                 print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")
                 return False
 

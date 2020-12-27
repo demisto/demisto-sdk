@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import Repo
+from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -40,7 +40,8 @@ class PackUniqueFilesValidator(BaseValidator):
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
-                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False):
+                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
+                 skip_id_set_creation=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -58,6 +59,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.should_version_raise = should_version_raise
         self.id_set_path = id_set_path
         self.private_repo = private_repo
+        self.skip_id_set_creation = skip_id_set_creation
 
     # error handling
     def _add_error(self, error, file_path):
@@ -326,7 +328,10 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
-        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+        try:
+            old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+        except GitCommandError:
+            old_meta_file_content = None
 
         # if there was no past version
         if not old_meta_file_content:
@@ -378,7 +383,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False)
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation)
+
+            if not first_level_dependencies:
+                click.secho("No id_set.json file found - skipping dependencies check\n", fg='yellow')
+                return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)

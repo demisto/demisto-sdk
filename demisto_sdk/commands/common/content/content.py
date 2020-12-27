@@ -58,7 +58,7 @@ class Content:
         return content
 
     @staticmethod
-    def git(root_path=None) -> Optional[Repo]:
+    def git() -> Optional[Repo]:
         """ Git repository object.
 
         Returns:
@@ -71,10 +71,7 @@ class Content:
             1. Should be called when cwd inside content repository.
         """
         try:
-            if root_path:
-                repo = Repo(root_path, search_parent_directories=True)
-            else:
-                repo = Repo(Path.cwd(), search_parent_directories=True)
+            repo = Repo(Path.cwd(), search_parent_directories=True)
         except InvalidGitRepositoryError:
             repo = None
 
@@ -195,7 +192,7 @@ class Content:
     def modified_files(self, prev_ver='master', committed_only=False, staged_only=False,
                        no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
+        content_repo: Repo = self.git()
 
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
@@ -229,7 +226,7 @@ class Content:
 
     def added_files(self, prev_ver='master', committed_only=False, staged_only=False, no_auto_stage=False) -> Set[Path]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
+        content_repo: Repo = self.git()
 
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
@@ -262,7 +259,7 @@ class Content:
     def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False,
                       no_auto_stage=False) -> Set[Tuple[Path, Path]]:
         prev_ver = prev_ver.replace('origin/', '')
-        content_repo: Repo = self.git(CIRCLE_CONTENT_ROOT_PATH if committed_only else None)
+        content_repo: Repo = self.git()
 
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(

@@ -1,3 +1,5 @@
+from demisto_sdk.commands.common.content.objects.pack_objects.dashboard.dashboard import \
+    Dashboard
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -5,10 +7,15 @@ from demisto_sdk.commands.common.tools import print_error
 
 
 class DashboardValidator(ContentEntityValidator):
-    @staticmethod
-    def get_widgets_from_dashboard(dashboard):
+
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors,
+                         print_as_warnings=print_as_warnings, suppress_print=suppress_print)
+        self.dashboard_object = Dashboard(structure_validator.file_path)
+
+    def get_widgets_from_dashboard(self):
         # type: () -> list
-        layout_of_dashboard: list = dashboard.get('layout', [])
+        layout_of_dashboard: list = self.dashboard_object.get('layout', [])
         widgets = []
         if layout_of_dashboard:
             widgets = [item.get('widget') for item in layout_of_dashboard]
@@ -62,12 +69,12 @@ class DashboardValidator(ContentEntityValidator):
         fields_to_exclude = ['system', 'isCommon', 'shared', 'owner',
                              'sortValues', 'vcShouldIgnore', 'commitMessage', 'shouldCommit']
 
-        widgets = self.get_widgets_from_dashboard(self.current_file)
+        widgets = self.get_widgets_from_dashboard()
 
         for field in fields_to_exclude:
             if self.current_file.get(field) is not None:
                 error_message, error_code = Errors.remove_field_from_dashboard(field)
-                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.dashboard_object.path,
                                                       should_print=False)
                 if formatted_message:
                     is_valid = False
@@ -77,8 +84,8 @@ class DashboardValidator(ContentEntityValidator):
                 for widget in widgets:
                     if widget.get(field):
                         error_message, error_code = Errors.remove_field_from_widget(field, widget)
-                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                              should_print=False)
+                        formatted_message = self.handle_error(error_message, error_code,
+                                                              file_path=self.dashboard_object.path, should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message
@@ -97,12 +104,12 @@ class DashboardValidator(ContentEntityValidator):
         is_valid = True
         fields_to_include = ['fromDate', 'toDate', 'fromDateLicense']
 
-        widgets = self.get_widgets_from_dashboard(self.current_file)
+        widgets = self.get_widgets_from_dashboard()
 
         for field in fields_to_include:
             if not self.current_file.get(field):
                 error_message, error_code = Errors.include_field_in_dashboard(field)
-                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.dashboard_object.path,
                                                       should_print=False)
                 if formatted_message:
                     is_valid = False
@@ -113,8 +120,8 @@ class DashboardValidator(ContentEntityValidator):
                     if not widget.get(field):
                         widget_name = widget.get("name")
                         error_message, error_code = Errors.include_field_in_widget(field, widget_name)
-                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                              should_print=False)
+                        formatted_message = self.handle_error(error_message, error_code,
+                                                              file_path=self.dashboard_object.path, should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message

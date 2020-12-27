@@ -163,7 +163,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
-        full_file_path (string):The full path of the file.
+        full_file_path (any):The full path of the file.
         tag (string): The branch name. default is 'master'
         return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
         suppress_print (bool): whether to suppress the warning message in case the file was not found.
@@ -171,6 +171,9 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
         The file content in the required format.
 
     """
+    if isinstance(full_file_path, Path):
+        full_file_path = str(full_file_path)
+
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.lstrip('origin/')
 

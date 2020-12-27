@@ -1,9 +1,11 @@
 import re
-from distutils.version import LooseVersion
 
+from demisto_sdk.commands.common.content.objects.pack_objects.incident_type.incident_type import \
+    IncidentType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from packaging.version import Version
 
 # Checks if playbookID is a UUID format
 INVALID_PLAYBOOK_ID = r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}'
@@ -13,6 +15,10 @@ class IncidentTypeValidator(ContentEntityValidator):
     """IncidentTypeValidator is designed to validate the correctness of the file structure we enter to content repo.
     And also try to catch possible Backward compatibility breaks due to the performed changes.
     """
+
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings)
+        self.incident_type_object = IncidentType(structure_validator.file_path)
 
     def is_backward_compatible(self):
         """Check whether the Incident Type is backward compatible or not
@@ -74,10 +80,10 @@ class IncidentTypeValidator(ContentEntityValidator):
 
         old_from_version = self.old_file.get('fromVersion', None)
         if old_from_version:
-            current_from_version = self.current_file.get('fromVersion', None)
+            current_from_version = self.incident_type_object.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.incident_type_object.path):
                     is_bc_broke = True
         return is_bc_broke
 
@@ -91,18 +97,17 @@ class IncidentTypeValidator(ContentEntityValidator):
         fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']
 
         try:
-            from_version = self.current_file.get("fromVersion", "0.0.0")
-            if LooseVersion(from_version) >= LooseVersion("5.0.0"):
+            if self.incident_type_object.from_version >= Version("5.0.0"):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         error_message, error_code = Errors.incident_type_integer_field(field)
-                        if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        if self.handle_error(error_message, error_code, file_path=self.incident_type_object.path):
                             is_valid = False
 
         except (AttributeError, ValueError):
             error_message, error_code = Errors.invalid_incident_field_or_type_from_version()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.incident_type_object.path):
                 is_valid = False
 
         return is_valid
@@ -113,9 +118,9 @@ class IncidentTypeValidator(ContentEntityValidator):
         Returns:
             bool. True if playbook ID is valid, False otherwise.
         """
-        playbook_id = self.current_file.get('playbookId', '')
+        playbook_id = self.incident_type_object.get('playbookId', '')
         if playbook_id and re.search(INVALID_PLAYBOOK_ID, playbook_id):
             error_message, error_code = Errors.incident_type_invalid_playbook_id_field()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.incident_type_object.path):
                 return False
         return True

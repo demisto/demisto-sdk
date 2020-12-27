@@ -50,7 +50,7 @@ class BaseValidator:
             warning (bool): Print the error as a warning
             suggested_fix(str): A suggested fix
             error_message(str): The error message
-            file_path(str): The file from which the error occurred
+            file_path(any): The file from which the error occurred
             error_code(str): The error code
             should_print(bool): whether the command should be printed
 

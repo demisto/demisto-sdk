@@ -1065,7 +1065,9 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
 
     with open(second_id_set_path, mode='r') as f2:
         second_id_set = json.load(f2)
+
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
+
     if unified_id_set:
         with open(output_id_set_path, mode='w', encoding='utf-8') as f:
             json.dump(unified_id_set.get_dict(), f, indent=4)

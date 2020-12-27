@@ -142,10 +142,18 @@ class CustomBaseChecker(BaseChecker):
 
     def _arg_implemented_get_check(self, node):
         try:
-            if node.func.attrname == 'get' or node.func.attrname == 'getArg':
+            # for args.get('arg') or args.getArg('arg')
+            if (isinstance(node.func.expr, astroid.Name) and (
+                    node.func.expr.name == 'args' and node.func.attrname == 'get') or node.func.attrname == 'getArg') or (
+                    # for demisto.args().get('arg') and demisto.args().getArg('arg')
+                    isinstance(node.func.expr, astroid.Call) and (
+                    node.func.expr.func.expr.name == 'demisto' and node.func.expr.func.attrname == 'args') or node.func.expr.func.attrname == 'getArg'):
+
                 for get_arg in node.args:
-                    if get_arg.value in self.args_list:
-                        self.args_list.remove(get_arg.value)
+                    args = self._infer_name(get_arg)
+                    for arg in args:
+                        if arg in self.args_list:
+                            self.args_list.remove(arg)
 
         except Exception:
             pass
@@ -153,27 +161,45 @@ class CustomBaseChecker(BaseChecker):
     def _arg_implemented_index_check(self, node):
         try:
             # for demisto.args()['arg'] implementation
-            if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args' and node.slice.value.value in self.args_list:
-                self.args_list.remove(node.slice.value.value)
+            if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args':
+                args = self._infer_name(node.slice.value)
+                for arg in args:
+                    if arg in self.args_list:
+                        self.args_list.remove(arg)
+
         except Exception:
             try:
                 # for args['arg'] implementation
-                if node.value.name == 'args' and node.slice.value.value in self.args_list:
-                    self.args_list.remove(node.slice.value.value)
+                if node.value.name == 'args':
+                    args = self._infer_name(node.slice.value)
+                    for arg in args:
+                        if arg in self.args_list:
+                            self.args_list.remove(arg)
             except Exception:
                 pass
 
     def _params_implemented_get_check(self, node):
         try:
-            if node.func.attrname == 'get' or node.func.attrname == 'getParam':
+            # for params.get('param') or params.getParam('param')
+            if (isinstance(node.func.expr, astroid.Name) and (
+                    node.func.expr.name == 'params' and node.func.attrname == 'get') or node.func.attrname == 'getParam') or (
+                    # for demisto.params().get('param') and demisto.params().getArg('param')
+                    isinstance(node.func.expr, astroid.Call) and (
+                    node.func.expr.func.expr.name == 'demisto' and node.func.expr.func.attrname == 'params') or node.func.expr.func.attrname == 'getParam'):
+
                 for get_param in node.args:
-                    if get_param.value in self.param_list:
-                        self.param_list.remove(get_param.value)
-                    # for credentials case where the argument is credential but usually implement with another get
-                    elif node.func.expr.func.attrname == 'get':
-                        for get_param in node.func.expr.args:
-                            if get_param.value in self.param_list:
-                                self.param_list.remove(get_param.value)
+                    params = self._infer_name(get_param)
+                    for param in params:
+                        if param in self.param_list:
+                            self.param_list.remove(param)
+            # for credentials case where the argument is credential but usually implement with another get
+            elif isinstance(node.func.expr, astroid.Call) and (
+                    node.func.expr.func.expr.name == 'params' and node.func.expr.func.attrname == 'get') or node.func.expr.func.attrname == 'getParam':
+                for get_param in node.func.expr.args:
+                    params = self._infer_name(get_param)
+                    for param in params:
+                        if param in self.param_list:
+                            self.param_list.remove(param)
         except Exception:
             pass
 
@@ -181,26 +207,37 @@ class CustomBaseChecker(BaseChecker):
         try:
             # for demisto.params()['param'] implementation
             if isinstance(node.value,
-                          astroid.Call) and node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params' and \
-                    node.slice.value.value in self.param_list:
-                self.param_list.remove(node.slice.value.value)
+                          astroid.Call) and node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params':
+                params = self._infer_name(node.slice.value)
+                for param in params:
+                    if param in self.param_list:
+                        self.param_list.remove(param)
 
             # for params['param'] implementation
             elif isinstance(node.value,
-                            astroid.Name) and node.value.name == 'params' and node.slice.value.value in self.param_list:
-                self.param_list.remove(node.slice.value.value)
+                            astroid.Name) and node.value.name == 'params':
+                params = self._infer_name(node.slice.value)
+                for param in params:
+                    if param in self.param_list:
+                        self.param_list.remove(param)
 
             # for double index ['cred']['id']
             elif isinstance(node.value, astroid.Subscript):
                 # for demisto.params()['cred']['identifier']
                 if isinstance(node.value.value,
-                              astroid.Call) and node.value.value.func.expr.name == 'demisto' and node.value.value.func.attrname == 'params' and \
-                        node.value.slice.value.value in self.param_list:
-                    self.param_list.remove(node.value.slice.value.value)
+                              astroid.Call) and node.value.value.func.expr.name == 'demisto' and node.value.value.func.attrname == 'params':
+                    params = self._infer_name(node.value.slice.value)
+                    for param in params:
+                        if param in self.param_list:
+                            self.param_list.remove(param)
+
                 # for params['cred']['identifier']
                 elif isinstance(node.value.value,
-                                astroid.Name) and node.value.value.name == 'params' and node.value.slice.value.value in self.param_list:
-                    self.param_list.remove(node.value.slice.value.value)
+                                astroid.Name) and node.value.value.name == 'params':
+                    params = self._infer_name(node.value.slice.value)
+                    for param in params:
+                        if param in self.param_list:
+                            self.param_list.remove(param)
 
         except Exception:
             pass
@@ -214,6 +251,33 @@ class CustomBaseChecker(BaseChecker):
         if self.param_list:
             self.add_message("unimplemented-params-exist",
                              args=str(self.param_list), node=node)
+
+    #  --------------------------------------- Helper Function ----------------------------------------------------
+
+    def _infer_name(self, comp_with):
+
+        def _infer_single_var(var):
+            var_infered = []
+            try:
+                for inference in var.infer():
+                    var_infered.append(inference.value)
+            except astroid.InferenceError:
+                pass
+            return var_infered
+
+        infered = []
+        if isinstance(comp_with, astroid.JoinedStr):
+            for value in comp_with.values:
+                if isinstance(value, astroid.FormattedValue):
+                    infered.append(_infer_single_var(value.value))
+                elif isinstance(value, astroid.Const):
+                    infered.append(value.value)
+                infered = [''.join(infered)]
+        elif isinstance(comp_with, astroid.Name):
+            infered = _infer_single_var(comp_with)
+        elif isinstance(comp_with, astroid.Const):
+            infered = [comp_with.value]
+        return infered
 
 
 def register(linter):

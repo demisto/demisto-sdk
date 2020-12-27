@@ -1064,7 +1064,8 @@ class Linter:
             for command in commands_obj:
                 args_curr = command.get('arguments', [])
                 for arg in args_curr:
-                    args.append(arg.get('name', ''))
+                    if arg.get('name', '') not in args:
+                        args.append(arg.get('name', ''))
         except Exception:
             logger.debug("Failed getting the arguments from the yml file")
         return args

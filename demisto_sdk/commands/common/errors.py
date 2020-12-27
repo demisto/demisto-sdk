@@ -151,9 +151,11 @@ ERROR_CODE = {
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
+    "pack_metadata_invalid_support_type": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
+    "pack_metadata_price_change": "PA121",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -951,6 +953,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_invalid_support_type(pack_meta_file):
+        return 'Support field should be one of the following: xsoar, partner, developer or community.'
+
+    @staticmethod
+    @error_code_decorator
     def pack_metadata_version_should_be_raised(pack, old_version):
         return f"The pack version (currently: {old_version}) needs to be raised - " \
                f"make sure you are merged from master and " \
@@ -968,6 +975,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
         return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_price_change(old_price, new_price) -> str:
+        return f"The pack price was changed from {old_price} to {new_price} - revert the change"
 
     @staticmethod
     @error_code_decorator

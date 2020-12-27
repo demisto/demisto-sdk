@@ -17,6 +17,7 @@ files = [
         'Print is found, Please remove all prints from the code.',
         'Sleep is found, Please remove all sleep statements from the code.',
         'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
+        'Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.',
         "Some parameters from yml file are not implemented in the python file, Please make sure that every param is "
         "implemented in your code. The params that are not implemented are ['test']",
         "Some args from yml file are not implemented in the python file, Please make sure that every arg is "

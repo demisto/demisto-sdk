@@ -267,7 +267,7 @@ def unify(**kwargs):
     help='Skip validation of pack dependencies.')
 @click.option(
     '--skip-id-set-creation', is_flag=True,
-    help='Skip validation of pack dependencies.')
+    help='Skip id_set.json file creation.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -817,11 +817,15 @@ def merge_id_sets_command(**kwargs):
     second = kwargs['id_set2']
     output = kwargs['output']
 
-    merge_id_sets_from_files(
+    _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
+    if duplicates:
+        print_error(f'Failed to merge ID sets: {first} with {second}, '
+                    f'there are entities with ID: {duplicates} that exist in both ID sets')
+        sys.exit(1)
 
 
 # ====================== update-release-notes =================== #

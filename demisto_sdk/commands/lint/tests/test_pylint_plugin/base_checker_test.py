@@ -485,6 +485,45 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
+    def test_infer_if_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - All commands appear in the if claus as a tuple.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['integration-name-test-1']
+        node_a = astroid.extract_node("""
+                A = 'integration-name'
+                if demisto.commands() == f'{A}-test-1':  #@
+                    return False
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_infer_dict_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - All commands appear in the if claus as a tuple.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['integration-name-test1', 'integration-name-test2']
+        node_a = astroid.extract_node("""
+                A = 'integration-name'
+                {f'{A}-test1': run_1, f'{A}-test2': run_2}  #@
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_dict(node_a)
+            self.checker.leave_module(node_a)
+
 
 class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
     """

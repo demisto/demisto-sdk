@@ -83,7 +83,7 @@ def test_test_specific_pack_creation(repo):
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
-            runner = CliRunner(mix_stderr=False, )
+            runner = CliRunner()
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
 
     assert result.exit_code == 0
@@ -110,7 +110,7 @@ def test_test_all_packs_creation(repo):
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
-            runner = CliRunner(mix_stderr=False, )
+            runner = CliRunner()
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
     assert result.exit_code == 0

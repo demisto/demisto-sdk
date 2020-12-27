@@ -25,6 +25,8 @@ PACK_TAGS = 'Tag1,Tag2'
 PACK_GITHUB_USERS = ''
 INTEGRATION_NAME = 'IntegrationName'
 SCRIPT_NAME = 'ScriptName'
+DEFAULT_INTEGRATION = 'BaseIntegration'
+DEFAULT_SCRIPT = 'BaseScript'
 
 
 @pytest.fixture
@@ -338,7 +340,7 @@ def test_get_remote_templates__valid(mocker, initiator):
     mocker.patch.object(tools, 'get_remote_file', return_value=b'Test im in file')
     initiator.full_output_path = PACK_NAME
     os.makedirs(PACK_NAME, exist_ok=True)
-    res = initiator.get_remote_templates(['Test.py'])
+    res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)
     file_path = os.path.join(PACK_NAME, 'Test.py')
     with open(file_path, 'r') as f:
         file_content = f.read()
@@ -365,7 +367,7 @@ def test_get_remote_templates__invalid(mocker, initiator):
     mocker.patch.object(tools, 'get_remote_file', return_value={})
     initiator.full_output_path = PACK_NAME
     os.makedirs(PACK_NAME, exist_ok=True)
-    res = initiator.get_remote_templates(['Test.py'])
+    res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)
 
     assert not res
 
@@ -394,12 +396,13 @@ def test_integration_init(initiator, tmpdir):
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
+    initiator.template = DEFAULT_INTEGRATION
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        "Pipfile", "Pipfile.lock", "command_examples", "test_data", "README.md", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
         f"{INTEGRATION_NAME}_image.png"
     }
@@ -437,7 +440,7 @@ def test_template_integration_init(initiator, tmpdir):
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        "Pipfile", "Pipfile.lock", "README.md", "command_examples", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
         f"{INTEGRATION_NAME}_image.png", "test_data"
     }
@@ -465,6 +468,7 @@ def test_script_init(initiator, tmpdir):
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
+    initiator.template = DEFAULT_SCRIPT
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
@@ -474,4 +478,5 @@ def test_script_init(initiator, tmpdir):
 
     assert res
     assert os.path.isdir(script_path)
-    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py"} == script_dir_files
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
+            "README.md", "test_data"} == script_dir_files

@@ -1120,7 +1120,8 @@ class PackDependencies:
         if not id_set_path or not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
-            return {}
+            else:
+                return {}
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)

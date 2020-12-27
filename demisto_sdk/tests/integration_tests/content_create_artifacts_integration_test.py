@@ -1,3 +1,6 @@
+import logging
+import sys
+
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -6,6 +9,8 @@ from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test 
     destroy_by_ext, duplicate_file, same_folders, temp_dir)
 from TestSuite.test_tools import ChangeCWD
 from wcmatch.pathlib import Path
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 

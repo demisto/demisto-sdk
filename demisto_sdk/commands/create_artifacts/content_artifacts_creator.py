@@ -109,6 +109,8 @@ class ArtifactsManager:
         global logger
         logger = logging_setup(3)
 
+        print('Creating content artifacts')
+
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
             futures: List[ProcessFuture] = []
             # content/Packs

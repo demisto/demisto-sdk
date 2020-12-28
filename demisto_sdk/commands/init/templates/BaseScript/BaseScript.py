@@ -19,6 +19,9 @@ from CommonServerPython import *
 from CommonServerUserPython import *
 
 
+''' STANDALONE FUNCTION '''
+
+
 # TODO: REMOVE the following dummy function:
 def basescript_dummy(dummy: str) -> Dict[str, str]:
     """Returns a simple python dict with the information provided

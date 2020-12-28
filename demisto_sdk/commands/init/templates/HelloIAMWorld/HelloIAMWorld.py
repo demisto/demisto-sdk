@@ -12,6 +12,9 @@ ERROR_CODES_TO_SKIP = [
 ]
 
 
+'''CLIENT CLASS'''
+
+
 class Client(BaseClient):
     """ A client class that implements logic to authenticate with the application. """
 
@@ -198,9 +201,6 @@ class Client(BaseClient):
         demisto.error(traceback.format_exc())
 
 
-'''HELPER FUNCTIONS'''
-
-
 def get_error_details(res: Dict[str, Any]) -> str:
     """ Parses the error details retrieved from the application and outputs the resulted string.
 
@@ -213,10 +213,6 @@ def get_error_details(res: Dict[str, Any]) -> str:
     message = res.get('error', {}).get('message')   # TODO: make sure you parse the error details correctly
     details = res.get('error', {}).get('detail')
     return f'{message}: {details}'
-
-
-'''COMMAND FUNCTIONS'''
-
 
 def test_module(client: Client):
     """ Tests connectivity with the client. """
@@ -277,7 +273,7 @@ def main():
 
     demisto.debug(f'Command being called is {command}')
 
-    '''CRUD commands'''
+    # CRUD commands
 
     if command == 'iam-get-user':
         user_profile = iam_command.get_user(client, args)
@@ -294,7 +290,7 @@ def main():
     if user_profile:
         return_results(user_profile)
 
-    '''non-CRUD commands'''
+    # non-CRUD commands
 
     try:
         if command == 'test-module':

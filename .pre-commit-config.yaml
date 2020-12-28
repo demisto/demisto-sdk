@@ -6,6 +6,7 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-docstring-first
+        exclude: demisto_sdk/commands/init/templates/*
     -   id: check-json
     -   id: check-yaml
     -   id: debug-statements
@@ -25,6 +26,7 @@ repos:
         args: [--atomic, --recursive]
         types: [python]
         verbose: true
+        exclude: demisto_sdk/commands/init/templates/*
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.4.1
     hooks:

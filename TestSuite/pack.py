@@ -315,7 +315,7 @@ class Pack:
             readme: Optional[str] = None,
     ) -> Playbook:
         if name is None:
-            name = f'playbook-{len(self.playbooks)}.yml'
+            name = f'playbook-{len(self.playbooks)}'
         if yml is None:
             yml = {}
         playbook = Playbook(self._playbooks_path, name, self._repo)

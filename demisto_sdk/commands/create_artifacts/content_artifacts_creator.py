@@ -403,6 +403,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     if pack.readme:
         pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)
+    if pack.author_image:
+        pack_report += ObjectReport(pack.author_image, content_packs=True)
+        pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
 
     return pack_report
 

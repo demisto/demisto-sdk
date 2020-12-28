@@ -311,7 +311,6 @@ def test_get_input_data_complex():
 
     assert _value == 'File.Name'
 
-
 # script tests
 
 

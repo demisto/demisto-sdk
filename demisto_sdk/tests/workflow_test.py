@@ -107,7 +107,7 @@ class ContentGitRepo:
         Run all of the following validations:
         * secrets
         * lint -g --no-test
-        * validate -g --skip-pack-dependencies
+        * validate -g --skip-id-set-creation
         """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
@@ -117,7 +117,8 @@ class ContentGitRepo:
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --skip-id-set-creation"
+                                          " --no-docker-checks")
                 assert res.exit_code == 0
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
@@ -332,7 +333,7 @@ def test_workflow_by_sequence(function: Callable):
             Will run all validation with expected the test to pass.
             * secrets
             * lint -g --no-test
-            * validate -g --skip-pack-dependencies
+            * validate -g --skip-id-set-creation
     """
     global content_git_repo
     function(content_git_repo)

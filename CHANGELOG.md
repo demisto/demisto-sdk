@@ -1,4 +1,18 @@
 # Changelog
+* Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
+* Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
+* Removed supported version message from the documentation when running **generate_docs**.
+* Added a print to indicate backwards compatibility is being checked in **validate** command.
+* Added a percent print when running the **validate** command with the *-a* flag.
+* Fixed a regression in the **upload** command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
+* Fixed an issue where the **upload** command would fail to upload beta integrations.
+* Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
+* Added price change validation in the **validate** command.
+* Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
+* Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
+* Added validation for support types in the pack metadata file.
+
+# 1.2.12
 * Bandit now reports also on medium severity issues.
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
@@ -8,6 +22,11 @@
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
+* Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.
+* Added new code validations for *NotImplementedError* exception raise to `XSOAR-linter`.
+* Command create-content-artifacts additional support for **Author_image.png** object.
+* Fixed an issue where schemas were not enforced for incident fields, indicator fields and old layouts in the validate command.
+* Added support for **update-release-notes** command to update release notes according to master branch.
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

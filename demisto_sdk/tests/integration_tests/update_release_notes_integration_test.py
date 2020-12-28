@@ -49,8 +49,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     runner = CliRunner(mix_stderr=True)
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(set(), added_files,
-                                                                                       set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(set(), added_files, set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
 
@@ -93,8 +92,8 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                       set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                     set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
 
@@ -135,8 +134,8 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                       set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                     set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
@@ -179,8 +178,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     old_files = {join(VMWARE_PACK_PATH, 'Integrations', 'integration-VMware.yml')}
     rn_path = join(VMWARE_RN_PACK_PATH, '1_0_1.md')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(set(), set(), old_files,
-                                                                                       set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(set(), set(), set(), old_files))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='VMware')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
@@ -189,7 +187,6 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
         os.remove(rn_path)
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'VMware')])
-
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping VMware to version: 1.0.1' in result.stdout
@@ -213,7 +210,7 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     - Ensure an error is raised
     """
     runner = CliRunner(mix_stderr=False)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', side_effect=FileNotFoundError)
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='VMware')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
@@ -256,8 +253,8 @@ def test_update_release_notes_existing(demisto_client, mocker):
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                       set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                     set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
@@ -322,8 +319,8 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                       set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                     set(), set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='ApiModules')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
@@ -350,16 +347,16 @@ def test_update_release_on_matadata_change(demisto_client, mocker):
     runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
-                        return_value=(set(), set(), set(), {'demisto_sdk/tests/test_files/1.pack_metadata.json'},
-                                      {'FeedAzureValid'}))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
+                        return_value=(set(), set(), {'demisto_sdk/tests/test_files/1.pack_metadata.json'}, set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch('demisto_sdk.commands.common.git_tools.get_packs', return_value={'FeedAzureValid'})
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
 
     assert result.exit_code == 0
-    assert 'Either no cahnges were found in FeedAzureValid pack or the changes found should not be documented in the ' \
+    assert 'Either no changes were found in FeedAzureValid pack or the changes found should not be documented in the ' \
            'release notes file If relevant changes were made,' \
            ' please commit the changes and rerun the command' in result.stdout
 

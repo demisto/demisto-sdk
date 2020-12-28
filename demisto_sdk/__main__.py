@@ -880,7 +880,7 @@ def update_pack_releasenotes(**kwargs):
     try:
         validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
         validate_manager.setup_git_params()
-        modified, added, old, changed_meta_files = validate_manager.get_changed_files_from_git()
+        modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
         _packs = get_packs(modified).union(get_packs(old)).union(
             get_packs(added))
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
@@ -893,8 +893,8 @@ def update_pack_releasenotes(**kwargs):
         if 'ReleaseNotes' in file_path:
             packs_existing_rn[get_pack_name(file_path)] = file_path
 
-    filterd_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-    filterd_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
+    filtered_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
+    filtered_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
 
     if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
@@ -924,8 +924,8 @@ def update_pack_releasenotes(**kwargs):
                             f"-i {pack}` without specifying the update_type.")
                 continue
 
-            pack_modified = filter_files_on_pack(pack, filterd_modified)
-            pack_added = filter_files_on_pack(pack, filterd_added)
+            pack_modified = filter_files_on_pack(pack, filtered_modified)
+            pack_added = filter_files_on_pack(pack, filtered_added)
             pack_old = filter_files_on_pack(pack, old)
 
             # default case:
@@ -940,7 +940,7 @@ def update_pack_releasenotes(**kwargs):
                     os.unlink(packs_existing_rn[pack])
 
             else:
-                print_warning(f'Either no cahnges were found in {pack} pack '
+                print_warning(f'Either no changes were found in {pack} pack '
                               f'or the changes found should not be documented in the release notes file '
                               f'If relevant changes were made, please commit the changes and rerun the command')
     else:

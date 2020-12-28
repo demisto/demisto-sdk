@@ -50,6 +50,8 @@ class CustomBaseChecker(BaseChecker):
         self.param_list = os.getenv('params').split(',') if os.getenv('params') else []
         self.feed_params = os.getenv('feed_params').split(',') \
             if os.getenv('feed_params') else []
+        self.args_names = ['args', 'dargs', 'arguments', 'd_args', 'data_args']
+        self.params_names = ['params', 'PARAMS', 'integration_parameters']
 
     def visit_call(self, node):
         self._print_checker(node)
@@ -64,6 +66,9 @@ class CustomBaseChecker(BaseChecker):
     def visit_importfrom(self, node):
         self._common_server_import(node)
         self._api_module_import_checker(node)
+
+    # def visit_functiondef(self, node):
+    #     self._add_function_args(node)
 
     # Print statment for Python2 only.
     def visit_print(self, node):
@@ -157,7 +162,7 @@ class CustomBaseChecker(BaseChecker):
         try:
             # for args.get('arg') or args.getArg('arg')
             if (isinstance(node.func.expr, astroid.Name) and (
-                    node.func.expr.name == 'args' and node.func.attrname == 'get') or node.func.attrname == 'getArg') or (
+                    node.func.expr.name in self.args_names and node.func.attrname == 'get') or node.func.attrname == 'getArg') or (
                     # for demisto.args().get('arg') and demisto.args().getArg('arg')
                     isinstance(node.func.expr, astroid.Call) and (
                     node.func.expr.func.expr.name == 'demisto' and node.func.expr.func.attrname == 'args') or node.func.expr.func.attrname == 'getArg'):
@@ -183,7 +188,7 @@ class CustomBaseChecker(BaseChecker):
         except Exception:
             try:
                 # for args['arg'] implementation
-                if node.value.name == 'args':
+                if node.value.name in self.args_names:
                     args = self._infer_name(node.slice.value)
                     for arg in args:
                         if arg in self.args_list:
@@ -195,7 +200,7 @@ class CustomBaseChecker(BaseChecker):
         try:
             # for params.get('param') or params.getParam('param')
             if (isinstance(node.func.expr, astroid.Name) and (
-                    node.func.expr.name == 'params' and node.func.attrname == 'get') or node.func.attrname == 'getParam') or (
+                    node.func.expr.name in self.params_names and node.func.attrname == 'get') or node.func.attrname == 'getParam') or (
                     # for demisto.params().get('param') and demisto.params().getArg('param')
                     isinstance(node.func.expr, astroid.Call) and (
                     node.func.expr.func.expr.name == 'demisto' and node.func.expr.func.attrname == 'params') or node.func.expr.func.attrname == 'getParam'):
@@ -207,7 +212,7 @@ class CustomBaseChecker(BaseChecker):
                             self.param_list.remove(param)
             # for credentials case where the argument is credential but usually implement with another get
             elif isinstance(node.func.expr, astroid.Call) and (
-                    node.func.expr.func.expr.name == 'params' and node.func.expr.func.attrname == 'get') or node.func.expr.func.attrname == 'getParam':
+                    node.func.expr.func.expr.name in self.params_names and node.func.expr.func.attrname == 'get') or node.func.expr.func.attrname == 'getParam':
                 for get_param in node.func.expr.args:
                     params = self._infer_name(get_param)
                     for param in params:
@@ -228,7 +233,7 @@ class CustomBaseChecker(BaseChecker):
 
             # for params['param'] implementation
             elif isinstance(node.value,
-                            astroid.Name) and node.value.name == 'params':
+                            astroid.Name) and node.value.name in self.params_names:
                 params = self._infer_name(node.slice.value)
                 for param in params:
                     if param in self.param_list:
@@ -291,6 +296,11 @@ class CustomBaseChecker(BaseChecker):
         elif isinstance(comp_with, astroid.Const):
             infered = [comp_with.value]
         return infered
+
+    def _add_function_args(self, node):
+        for arg in node.args.args:
+            if arg in self.args_list:
+                self.args_list.remove(arg)
 
 
 def register(linter):

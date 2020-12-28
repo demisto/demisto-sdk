@@ -41,11 +41,10 @@ class Initiator:
 
     ''' INTEGRATION TEMPLATES CONSTANTS '''
     DEFAULT_INTEGRATION_TEMPLATE = 'BaseIntegration'
-
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
 
-    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION]
+    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION, DEFAULT_INTEGRATION_TEMPLATE]
 
     TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
     TEMPLATE_INTEGRATION_FILES = {f'{TEMPLATE_INTEGRATION_NAME}.py',
@@ -67,10 +66,9 @@ class Initiator:
 
     ''' SCRIPT TEMPLATES CONSTANTS '''
     DEFAULT_SCRIPT_TEMPLATE = 'BaseScript'
-
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
 
-    SCRIPT_TEMPLATE_OPTIONS = [HELLO_WORLD_SCRIPT]
+    SCRIPT_TEMPLATE_OPTIONS = [HELLO_WORLD_SCRIPT, DEFAULT_SCRIPT_TEMPLATE]
 
     TEMPLATE_SCRIPT_NAME = '%%TEMPLATE_NAME%%'
     TEMPLATE_SCRIPT_FILES = {f'{TEMPLATE_SCRIPT_NAME}.py',
@@ -575,7 +573,7 @@ class Initiator:
                 file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
-            except Exception as e:
+            except Exception:
                 print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")
                 return False
 

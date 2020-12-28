@@ -11,6 +11,9 @@
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 * Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
 * Added validation for support types in the pack metadata file.
+* Added that when running **validate** will default to `-g` and `--post-commit` flags.
+* Fixed an issue with running **validate** on master branch where the command didn't compare to previous commit. 
+
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.
@@ -20,7 +23,6 @@
 * Improved retry support when building docker images for linting.
 * Added the option to create an ID set on a specific pack in **create-id-set** command.
 * Added the *--skip-id-set-creation* flag to **validate** command in order to add the capability to run validate command without creating id_set validation.
-* Fixed an issue with running **validate** on master branch.
 * Fixed an issue where **validate** command checked docker image tag on ApiModules pack.
 * Fixed an issue where **find-dependencies** did not calculate dashboards and reports dependencies.
 * Added supported version message to the documentation and release notes files when running **generate_docs** and **update-release-notes** commands respectively.

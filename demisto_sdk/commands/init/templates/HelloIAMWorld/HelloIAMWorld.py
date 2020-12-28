@@ -201,6 +201,9 @@ class Client(BaseClient):
         demisto.error(traceback.format_exc())
 
 
+'''HELPER FUNCTIONS'''
+
+
 def get_error_details(res: Dict[str, Any]) -> str:
     """ Parses the error details retrieved from the application and outputs the resulted string.
 
@@ -213,6 +216,10 @@ def get_error_details(res: Dict[str, Any]) -> str:
     message = res.get('error', {}).get('message')   # TODO: make sure you parse the error details correctly
     details = res.get('error', {}).get('detail')
     return f'{message}: {details}'
+
+
+'''COMMAND FUNCTIONS'''
+
 
 def test_module(client: Client):
     """ Tests connectivity with the client. """

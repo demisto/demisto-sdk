@@ -90,7 +90,6 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-
 def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:

@@ -36,19 +36,20 @@ class Initiator:
     """
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False, feed: bool = False):
         self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.is_feed = feed ######### add in click arguments
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
-        if not integration and not script and not pack:
+        if not integration and not script and not pack and not feed:
             self.is_pack = True
 
         self.full_output_path = ''
@@ -58,10 +59,11 @@ class Initiator:
 
         self.dir_name = name
 
-        self.is_pack_creation = not all([self.is_script, self.is_integration])
+        self.is_pack_creation = not all([self.is_script, self.is_integration, self.is_feed])
 
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+    HELLO_WORLD_FEED = 'HeloWorldFeed'
     HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
     HELLO_WORLD_INTEGRATION_FILES = {'HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
                                      'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
@@ -72,6 +74,9 @@ class Initiator:
                                      os.path.join('test_data', 'search_alerts.json'),
                                      os.path.join('test_data', 'update_alert_status.json'),
                                      os.path.join('test_data', 'domain_reputation.json')}
+    HELLO_WORLD_FEED_FILES = {'HelloWorldFeed.py', 'HelloWorldFeed.yml', 'HelloWorldFeed_description.md',
+                                     'HelloWorldFeed_image.png', 'HelloWorldFeed_test.py', 'Pipfile', 'Pipfile.lock',
+                                } ########## need to add test data
     TEST_DATA_DIR = 'test_data'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
@@ -97,6 +102,11 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+        elif self.is_feed:
+            self.get_created_dir_name(created_object="feed")
+            self.get_object_id(created_object="feed")
+            return self.feed_init()
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -365,6 +375,44 @@ class Initiator:
 
         return True
 
+    def feed_init(self) -> bool:
+        """Creates a new feed according to a template.
+
+        Returns:
+            bool. True if the feed was created successfully, False otherwise.
+        """
+        # if output directory given create the feed there
+        if self.output:
+            self.full_output_path = os.path.join(self.output, self.dir_name)
+
+        # will create the feed under the Integrations directory of the pack
+        elif os.path.isdir(INTEGRATIONS_DIR):
+            self.full_output_path = os.path.join('Integrations', self.dir_name)
+
+        # if non of the conditions above apply - create the feed in the local directory
+        else:
+            self.full_output_path = self.dir_name
+
+        if not self.create_new_directory():
+            return False
+
+        if not self.get_remote_templates(self.HELLO_WORLD_FEED_FILES):
+            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_FEED))
+            copy_tree(str(hello_world_path), self.full_output_path)
+
+        if self.id != self.HELLO_WORLD_FEED:
+            # note rename does not work on the yml file - that is done in the yml_reformatting function.
+            self.rename(current_suffix=self.HELLO_WORLD_FEED) ##########check from here
+            self.yml_reformatting(current_suffix=self.HELLO_WORLD_FEED, integration=True)
+            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_FEED)
+
+        self.copy_common_server_python()
+        self.copy_demistotmock()
+
+        click.echo(f"Finished creating feed: {self.full_output_path}.", color=LOG_COLORS.GREEN)
+
+        return True
+
     def yml_reformatting(self, current_suffix: str, integration: bool = False):
         """Formats the given yml to fit the newly created integration/script
 
@@ -398,14 +446,14 @@ class Initiator:
                   os.path.join(self.full_output_path, f"{self.dir_name}.py"))
         os.rename(os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
                   os.path.join(self.full_output_path, f"{self.dir_name}_test.py"))
-        if self.is_integration:
+        if self.is_integration or self.is_feed:
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_image.png"))
             os.rename(os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
                       os.path.join(self.full_output_path, f"{self.dir_name}_description.md"))
 
     def create_new_directory(self, ) -> bool:
-        """Creates a new directory for the integration/script/pack.
+        """Creates a new directory for the integration/script/pack/feed.
 
         Returns:
             bool. True if directory was successfully created, False otherwise.
@@ -470,6 +518,9 @@ class Initiator:
         """
         if self.is_integration:
             path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
+            os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+        elif self.is_feed:
+            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorldFeed')
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
         else:
             path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')

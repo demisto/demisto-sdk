@@ -10,8 +10,8 @@ You must add at least a Unit Test function for every XSOAR command
 you are implementing with your integration
 """
 
-import json
 import io
+import json
 
 
 def util_load_json(path):

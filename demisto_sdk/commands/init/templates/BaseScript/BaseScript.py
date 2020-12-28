@@ -11,15 +11,12 @@ Linting: https://xsoar.pan.dev/docs/integrations/linting
 
 """
 
+import traceback
+from typing import Any, Dict
+
 import demistomock as demisto
 from CommonServerPython import *
 from CommonServerUserPython import *
-
-from typing import Dict, Any
-import traceback
-
-
-''' STANDALONE FUNCTION '''
 
 
 # TODO: REMOVE the following dummy function:

@@ -14,23 +14,20 @@ https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/Hel
 
 """
 
+import traceback
+from typing import Any, Dict
+
+import requests
+
 import demistomock as demisto
 from CommonServerPython import *  # noqa # pylint: disable=unused-wildcard-import
 from CommonServerUserPython import *  # noqa
-
-import requests
-import traceback
-from typing import Dict, Any
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
 
 
-''' CONSTANTS '''
-
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'  # ISO8601 format with UTC, default in XSOAR
-
-''' CLIENT CLASS '''
 
 
 class Client(BaseClient):

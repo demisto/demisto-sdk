@@ -1,6 +1,7 @@
+import traceback
+
 import demistomock as demisto
 from CommonServerPython import *
-import traceback
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -9,8 +10,6 @@ requests.packages.urllib3.disable_warnings()
 ERROR_CODES_TO_SKIP = [
     404
 ]
-
-'''CLIENT CLASS'''
 
 
 class Client(BaseClient):

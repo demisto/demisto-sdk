@@ -10,7 +10,7 @@ from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test 
 from TestSuite.test_tools import ChangeCWD
 from wcmatch.pathlib import Path
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 
@@ -69,15 +69,9 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_test_specific_pack_creation(repo, mocker):
+def test_test_specific_pack_creation(repo):
     """Test the -p flag for specific packs creation
     """
-    import demisto_sdk.commands.common.logger as logger
-
-    logs_list = []
-    log = mock_logging_setup(logs_list)
-    mocker.patch.object(logger, 'logging_setup', return_value=log)
-
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
         {
@@ -97,20 +91,14 @@ def test_test_specific_pack_creation(repo, mocker):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
 
-    full_logs = ''.join([record.msg for record in logs_list])
-
     assert result.exit_code == 0
-    assert 'Pack1' in full_logs
-    assert 'Pack2' not in full_logs
+    assert 'Pack1' in result.stdout
+    assert 'Pack2' not in result.stdout
 
 
 def test_all_packs_creation(repo):
     """Test the -p flag for all packs creation
     """
-
-    logs_list = []
-    mock_logging_setup(logs_list)
-
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
         {
@@ -130,28 +118,6 @@ def test_all_packs_creation(repo):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
-    full_logs = ''.join([record.msg for record in logs_list])
-
     assert result.exit_code == 0
-    assert 'Pack1' in full_logs
-    assert 'Pack2' in full_logs
-
-
-def mock_logging_setup(logs_list) -> logging.Logger:
-    # Handler class that stores raw LogRecords instances
-    class RecordsHandler(logging.Handler):
-        # Using list since it's mutable
-        def __init__(self, records_list):
-            self.records_list = records_list
-            super().__init__()
-
-        def emit(self, record):
-            self.records_list.append(record)
-
-    logger: logging.Logger = logging.getLogger('demisto-sdk')
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
-    logger.addHandler(RecordsHandler(logs_list))
-    logger.propagate = False
-
-    return logger
+    assert 'Pack1' in result.stdout
+    assert 'Pack2' in result.stdout

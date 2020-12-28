@@ -111,7 +111,7 @@ class ArtifactsManager:
         global logger
         logger = logging_setup(3)
 
-        logger.debug('Doing Something')
+        logger.error('Doing Something')
 
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
             futures: List[ProcessFuture] = []

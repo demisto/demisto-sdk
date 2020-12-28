@@ -646,7 +646,7 @@ def test_encrypt_packs_failure(repo, capsys, key, tool):
     encrypt_packs(artifact_manager)
 
     captured = capsys.readouterr()
-    assert 'Failed to sign packs. In order to do so, you need to provide both encryption_key and ' \
+    assert 'Failed to encrypt packs. In order to do so, you need to provide both encryption_key and ' \
            'encryptor arguments.' in captured.err
 
 

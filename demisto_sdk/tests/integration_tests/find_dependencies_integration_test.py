@@ -1,6 +1,5 @@
 import os
 
-import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
@@ -147,12 +146,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
-    @pytest.mark.parametrize('is_complete_data, expected_dependency_result', [
-        (False, ['"display_name": "FindDependencyPack1"']),
-        (True, ['"name": "Find Dependency Pack 1"', '"minVersion": "1.0.0"', '"author": "Cortex XSOAR"',
-                '"certification": "certified"'])
-    ])
-    def test_integration_find_dependencies_with_dependency(self, repo, is_complete_data, expected_dependency_result):
+    def test_integration_find_dependencies_with_dependency(self, repo):
         """
         Given
         - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -163,7 +157,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         Then
         - Ensure find-dependencies passes.
         - Ensure dependency is printed.
-        - Ensure the data level is correct.
         """
         pack1 = repo.create_pack('FindDependencyPack1')
         integration = pack1.create_integration('integration1')
@@ -193,39 +186,19 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 'pack': 'FindDependencyPack1',
             }
         })
-        id_set['Packs'] = {
-            'FindDependencyPack1': {
-                "name": "Find Dependency Pack 1",
-                "minVersion": "1.0.0",
-                "author": "Cortex XSOAR",
-                "certification": "certified"
-            },
-            'FindDependencyPack2': {
-                "name": "Find Dependency Pack 2",
-                "minVersion": "1.0.0",
-                "author": "Cortex XSOAR",
-                "certification": "certified"
-            }
-        }
 
         repo.id_set.write_json(id_set)
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
-            running_args = [FIND_DEPENDENCIES_CMD,
-                            '-i', 'Packs/' + os.path.basename(pack2.path),
-                            '-idp', repo.id_set.path,
-                            '--no-update',
-                            ]
-            if is_complete_data:
-                running_args.append('-cd')
-
-            result = runner.invoke(main, running_args)
-
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
+                                          '-i', 'Packs/' + os.path.basename(pack2.path),
+                                          '-idp', repo.id_set.path,
+                                          '--no-update',
+                                          ])
         assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output
-        for line in expected_dependency_result:
-            assert line in result.output
+        assert '"display_name": "FindDependencyPack1"' in result.output
         assert result.exit_code == 0
         assert result.stderr == ""
 

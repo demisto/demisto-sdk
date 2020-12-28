@@ -1,5 +1,4 @@
-import logging
-import sys
+import os
 
 import pytest
 from click.testing import CliRunner
@@ -9,8 +8,6 @@ from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test 
     destroy_by_ext, duplicate_file, same_folders, temp_dir)
 from TestSuite.test_tools import ChangeCWD
 from wcmatch.pathlib import Path
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 ARTIFACTS_CMD = 'create-content-artifacts'
 
@@ -69,7 +66,7 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_test_specific_pack_creation(repo):
+def test_test_specific_pack_creation(repo, mocker):
     """Test the -p flag for specific packs creation
     """
     pack_1 = repo.setup_one_pack('Pack1')
@@ -91,9 +88,9 @@ def test_test_specific_pack_creation(repo):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
 
-    assert result.exit_code == 0
-    assert 'Pack1' in result.stdout or 'Pack1' in result.stderr
-    assert 'Pack2' not in result.stdout
+            assert result.exit_code == 0
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
+            assert not os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
 
 
 def test_all_packs_creation(repo):
@@ -118,6 +115,6 @@ def test_all_packs_creation(repo):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
-    assert result.exit_code == 0
-    assert 'Pack1' in result.stdout or 'Pack1' in result.stderr
-    assert 'Pack2' in result.stdout
+            assert result.exit_code == 0
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))

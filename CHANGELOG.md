@@ -11,7 +11,6 @@
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 * Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
 * Added validation for support types in the pack metadata file.
-* Added that when running **validate** will default to `-g` and `--post-commit` flags.
 * Fixed an issue with running **validate** on master branch where the command didn't compare to previous commit. 
 
 

@@ -11,18 +11,19 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_CLASSIFIERS,
-    CONTENT_ITEMS_DASHBOARDS, CONTENT_ITEMS_DISPLAY_FOLDERS,
-    CONTENT_ITEMS_INCIDENT_FIELDS, CONTENT_ITEMS_INCIDENT_TYPES,
-    CONTENT_ITEMS_INDICATOR_FIELDS, CONTENT_ITEMS_INDICATOR_TYPES,
-    CONTENT_ITEMS_INTEGRATIONS, CONTENT_ITEMS_LAYOUTS, CONTENT_ITEMS_PLAYBOOKS,
-    CONTENT_ITEMS_REPORTS, CONTENT_ITEMS_SCRIPTS, CONTENT_ITEMS_WIDGETS,
-    CORE_PACKS_LIST, DASHBOARDS_DIR, DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR)
+    BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_CLASSIFIERS_KEY,
+    CONTENT_ITEMS_DASHBOARDS_KEY, CONTENT_ITEMS_DISPLAY_FOLDERS,
+    CONTENT_ITEMS_INCIDENT_FIELDS_KEY, CONTENT_ITEMS_INCIDENT_TYPES_KEY,
+    CONTENT_ITEMS_INDICATOR_FIELDS_KEY, CONTENT_ITEMS_INDICATOR_TYPES_KEY,
+    CONTENT_ITEMS_INTEGRATIONS_KEY, CONTENT_ITEMS_LAYOUTS_KEY,
+    CONTENT_ITEMS_PLAYBOOKS_KEY, CONTENT_ITEMS_REPORTS_KEY,
+    CONTENT_ITEMS_SCRIPTS_KEY, CONTENT_ITEMS_WIDGETS_KEY, DASHBOARDS_DIR,
+    DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    PACKS_DIR, PACKS_PACK_META_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -44,6 +45,7 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
+CORE_PACKS_LIST = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger: logging.Logger
@@ -134,18 +136,18 @@ class ContentItemsHandler:
     def __init__(self, metadata: PackMetaData):
         self.server_min_version = metadata.server_min_version
         self.content_items: Dict[str, List] = {
-            CONTENT_ITEMS_SCRIPTS: [],
-            CONTENT_ITEMS_PLAYBOOKS: [],
-            CONTENT_ITEMS_INTEGRATIONS: [],
-            CONTENT_ITEMS_INCIDENT_FIELDS: [],
-            CONTENT_ITEMS_INCIDENT_TYPES: [],
-            CONTENT_ITEMS_DASHBOARDS: [],
-            CONTENT_ITEMS_INDICATOR_FIELDS: [],
-            CONTENT_ITEMS_REPORTS: [],
-            CONTENT_ITEMS_INDICATOR_TYPES: [],
-            CONTENT_ITEMS_LAYOUTS: [],
-            CONTENT_ITEMS_CLASSIFIERS: [],
-            CONTENT_ITEMS_WIDGETS: []
+            CONTENT_ITEMS_SCRIPTS_KEY: [],
+            CONTENT_ITEMS_PLAYBOOKS_KEY: [],
+            CONTENT_ITEMS_INTEGRATIONS_KEY: [],
+            CONTENT_ITEMS_INCIDENT_FIELDS_KEY: [],
+            CONTENT_ITEMS_INCIDENT_TYPES_KEY: [],
+            CONTENT_ITEMS_DASHBOARDS_KEY: [],
+            CONTENT_ITEMS_INDICATOR_FIELDS_KEY: [],
+            CONTENT_ITEMS_REPORTS_KEY: [],
+            CONTENT_ITEMS_INDICATOR_TYPES_KEY: [],
+            CONTENT_ITEMS_LAYOUTS_KEY: [],
+            CONTENT_ITEMS_CLASSIFIERS_KEY: [],
+            CONTENT_ITEMS_WIDGETS_KEY: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -192,20 +194,20 @@ class ContentItemsHandler:
         self.content_folder_name_to_func[content_object_directory](content_object)
 
     def add_script_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_SCRIPTS].append({
+        self.content_items[CONTENT_ITEMS_SCRIPTS_KEY].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('comment', ''),
             'tags': content_object.get('tags', [])
         })
 
     def add_playbook_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_PLAYBOOKS].append({
+        self.content_items[CONTENT_ITEMS_PLAYBOOKS_KEY].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', ''),
         })
 
     def add_integration_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INTEGRATIONS].append({
+        self.content_items[CONTENT_ITEMS_INTEGRATIONS_KEY].append({
             'name': content_object.get('display', ""),
             'description': content_object.get('description', ''),
             'category': content_object.get('category', ''),
@@ -218,14 +220,14 @@ class ContentItemsHandler:
         })
 
     def add_incident_field_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INCIDENT_FIELDS].append({
+        self.content_items[CONTENT_ITEMS_INCIDENT_FIELDS_KEY].append({
             'name': content_object.get('name', ''),
             'type': content_object.get('type', ''),
             'description': content_object.get('description', '')
         })
 
     def add_incident_type_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INCIDENT_TYPES].append({
+        self.content_items[CONTENT_ITEMS_INCIDENT_TYPES_KEY].append({
             'name': content_object.get('name', ''),
             'playbook': content_object.get('playbookId', ''),
             'closureScript': content_object.get('closureScript', ''),
@@ -235,49 +237,49 @@ class ContentItemsHandler:
         })
 
     def add_dashboard_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_DASHBOARDS].append({
+        self.content_items[CONTENT_ITEMS_DASHBOARDS_KEY].append({
             'name': content_object.get('name', '')
         })
 
     def add_indicator_field_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INDICATOR_FIELDS].append({
+        self.content_items[CONTENT_ITEMS_INDICATOR_FIELDS_KEY].append({
             'name': content_object.get('name', ''),
             'type': content_object.get('type', ''),
             'description': content_object.get('description', '')
         })
 
     def add_indicator_type_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_INDICATOR_TYPES].append({
+        self.content_items[CONTENT_ITEMS_INDICATOR_TYPES_KEY].append({
             'details': content_object.get('details', ''),
             'reputationScriptName': content_object.get('reputationScriptName', ''),
             'enhancementScriptNames': content_object.get('enhancementScriptNames', [])
         })
 
     def add_report_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_REPORTS].append({
+        self.content_items[CONTENT_ITEMS_REPORTS_KEY].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', '')
         })
 
     def add_layout_as_content_item(self, content_object: ContentObject):
         if content_object.get('description') is not None:
-            self.content_items[CONTENT_ITEMS_LAYOUTS].append({
+            self.content_items[CONTENT_ITEMS_LAYOUTS_KEY].append({
                 'name': content_object.get('name', ''),
                 'description': content_object.get('description')
             })
         else:
-            self.content_items[CONTENT_ITEMS_LAYOUTS].append({
+            self.content_items[CONTENT_ITEMS_LAYOUTS_KEY].append({
                 'name': content_object.get('name', '')
             })
 
     def add_classifier_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_CLASSIFIERS].append({
+        self.content_items[CONTENT_ITEMS_CLASSIFIERS_KEY].append({
             'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', '')
         })
 
     def add_widget_as_content_item(self, content_object: ContentObject):
-        self.content_items[CONTENT_ITEMS_WIDGETS].append({
+        self.content_items[CONTENT_ITEMS_WIDGETS_KEY].append({
             'name': content_object.get('name', ''),
             'dataType': content_object.get('dataType', ''),
             'widgetType': content_object.get('widgetType', '')

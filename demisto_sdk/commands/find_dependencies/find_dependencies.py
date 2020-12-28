@@ -1146,10 +1146,7 @@ class PackDependencies:
             dependency_graph = PackDependencies.build_dependency_graph(
                 pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,
                 exclude_ignored_dependencies=exclude_ignored_dependencies)
-        if not complete_data:
-            first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
-        else:
-            first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, complete_data, id_set)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, complete_data, id_set)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

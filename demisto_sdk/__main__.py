@@ -987,10 +987,7 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
     hidden=True, required=False)
-@click.option(
-    "-cd", "--complete_data", help="Whether to update complete data on the dependent packs.",
-    is_flag=True, default=False)
-def find_dependencies_command(id_set_path, verbose, no_update, complete_data, **kwargs):
+def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
@@ -1005,7 +1002,6 @@ def find_dependencies_command(id_set_path, verbose, no_update, complete_data, **
                                            id_set_path=id_set_path,
                                            debug_file_path=verbose,
                                            update_pack_metadata=update_pack_metadata,
-                                           complete_data=complete_data
                                            )
     except ValueError as exp:
         print_error(str(exp))

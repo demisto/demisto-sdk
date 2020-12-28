@@ -1003,34 +1003,18 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
                                 FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
 
 # the format is defined in issue #19786, may change in the future
-CONTENT_ITEMS_SCRIPTS = 'automation'
-CONTENT_ITEMS_PLAYBOOKS = 'playbook'
-CONTENT_ITEMS_INTEGRATIONS = 'integration'
-CONTENT_ITEMS_INCIDENT_FIELDS = 'incidentfield'
-CONTENT_ITEMS_INCIDENT_TYPES = 'incidenttype'
-CONTENT_ITEMS_DASHBOARDS = 'dashboard'
-CONTENT_ITEMS_INDICATOR_FIELDS = 'indicatorfield'
-CONTENT_ITEMS_REPORTS = 'report'
-CONTENT_ITEMS_INDICATOR_TYPES = 'reputation'
-CONTENT_ITEMS_LAYOUTS = 'layoutscontainer'
-CONTENT_ITEMS_CLASSIFIERS = 'classifier'
-CONTENT_ITEMS_WIDGETS = 'widget'
-
-# # the format is defined in issue #19786, may change in the future
-# CONTENT_REPO_FOLDER_TO_CONTENT_ITEMS_KEY = {
-#     SCRIPTS_DIR: CONTENT_ITEMS_SCRIPTS,
-#     PLAYBOOKS_DIR: CONTENT_ITEMS_PLAYBOOKS,
-#     INTEGRATIONS_DIR: CONTENT_ITEMS_INTEGRATIONS,
-#     INCIDENT_FIELDS_DIR: CONTENT_ITEMS_INCIDENT_FIELDS,
-#     INCIDENT_TYPES_DIR: CONTENT_ITEMS_INCIDENT_TYPES,
-#     DASHBOARDS_DIR: CONTENT_ITEMS_DASHBOARDS,
-#     INDICATOR_FIELDS_DIR: CONTENT_ITEMS_INDICATOR_FIELDS,
-#     REPORTS_DIR: CONTENT_ITEMS_REPORTS,
-#     INDICATOR_TYPES_DIR: CONTENT_ITEMS_INDICATOR_TYPES,
-#     LAYOUTS_DIR: CONTENT_ITEMS_LAYOUTS,
-#     CLASSIFIERS_DIR: CONTENT_ITEMS_CLASSIFIERS,
-#     WIDGETS_DIR: CONTENT_ITEMS_WIDGETS
-# }
+CONTENT_ITEMS_SCRIPTS_KEY = 'automation'
+CONTENT_ITEMS_PLAYBOOKS_KEY = 'playbook'
+CONTENT_ITEMS_INTEGRATIONS_KEY = 'integration'
+CONTENT_ITEMS_INCIDENT_FIELDS_KEY = 'incidentfield'
+CONTENT_ITEMS_INCIDENT_TYPES_KEY = 'incidenttype'
+CONTENT_ITEMS_DASHBOARDS_KEY = 'dashboard'
+CONTENT_ITEMS_INDICATOR_FIELDS_KEY = 'indicatorfield'
+CONTENT_ITEMS_REPORTS_KEY = 'report'
+CONTENT_ITEMS_INDICATOR_TYPES_KEY = 'reputation'
+CONTENT_ITEMS_LAYOUTS_KEY = 'layoutscontainer'
+CONTENT_ITEMS_CLASSIFIERS_KEY = 'classifier'
+CONTENT_ITEMS_WIDGETS_KEY = 'widget'
 
 YML_SUPPORTED_FOLDERS = {
     INTEGRATIONS_DIR,
@@ -1066,32 +1050,3 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }
-
-CORE_PACKS_LIST = [
-    "Base",
-    "rasterize",
-    "DemistoRESTAPI",
-    "DemistoLocking",
-    "ImageOCR",
-    "WhereIsTheEgg",
-    "AutoFocus",
-    "UrlScan",
-    "Active_Directory_Query",
-    "FeedTAXII",
-    "VirusTotal",
-    "Whois",
-    "Phishing",
-    "CommonScripts",
-    "CommonPlaybooks",
-    "CommonTypes",
-    "CommonDashboards",
-    "CommonReports",
-    "CommonWidgets",
-    "TIM_Processing",
-    "TIM_SIEM",
-    "HelloWorld",
-    "ExportIndicators",
-    "Malware",
-    "DefaultPlaybook",
-    "AccessInvestigation"
-]

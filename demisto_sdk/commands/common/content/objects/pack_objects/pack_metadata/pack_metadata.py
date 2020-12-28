@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
+from demisto_sdk.commands.common.constants import ContentItems
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
 from packaging.version import Version, parse
@@ -46,7 +47,7 @@ class PackMetaData(JSONObject):
         self._versionInfo: int = 0
         self._tags: List[str] = []
         self._categories: List[str] = []
-        self._contentItems: Dict[str, List] = {}
+        self._contentItems: Dict[ContentItems, List] = {}
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
@@ -424,10 +425,10 @@ class PackMetaData(JSONObject):
         Returns:
             Dict[str, List]: pack content_items.
         """
-        return self._contentItems
+        return {key.value: value for key, value in self._contentItems.items()}
 
     @content_items.setter
-    def content_items(self, new_pack_content_items: Dict[str, List]):
+    def content_items(self, new_pack_content_items: Dict[ContentItems, List]):
         """Setter for the contentItems attribute"""
         self._contentItems = new_pack_content_items
 

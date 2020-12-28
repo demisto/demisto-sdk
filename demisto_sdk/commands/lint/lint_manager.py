@@ -55,6 +55,10 @@ class LintManager:
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
         self._all_packs = all_packs
+        # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
+        lint_no_packs_command = not git and not all_packs and not input
+        if lint_no_packs_command:
+            git = True
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,

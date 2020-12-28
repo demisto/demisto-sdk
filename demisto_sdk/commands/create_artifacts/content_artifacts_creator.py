@@ -1076,8 +1076,8 @@ def sign_pack(pack: Pack, dumped_pack_dir: Path, signature_string: str):
             return
 
         logger.info(f'Signed {pack.path.name} pack successfully')
-    except Exception:
-        logger.exception(f'Failed to sign pack for {pack.path.name}')
+    except Exception as error:
+        logger.error(f'Error while trying to sign pack {pack.path.name}.\n {error}')
 
 
 def encrypt_packs(artifact_manager: ArtifactsManager):
@@ -1094,7 +1094,7 @@ def encrypt_packs(artifact_manager: ArtifactsManager):
                                                       artifact_manager.encryption_key))
 
     elif artifact_manager.encryptor or artifact_manager.encryption_key:
-        logger.exception('Failed to sign packs. In order to do so, you need to provide both encryption_key and '
+        logger.exception('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '
                          'encryptor arguments.')
 
 
@@ -1125,7 +1125,7 @@ def encrypt_pack(artifact_manager: ArtifactsManager, pack: Pack, zip_pack_path: 
         os.remove(zip_pack_path)
 
     except Exception as error:
-        logger.info(f"Error while trying to encrypt pack. {error}")
+        logger.error(f'Error while trying to encrypt pack {pack.path.name}.\n {error}')
         return
 
     finally:

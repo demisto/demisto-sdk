@@ -137,7 +137,7 @@ class TestIDSetCreator:
 
         Then
         - ensure that an ID set is created and no error is returned
-        - ensure output id_set is empty
+        - ensure output id_set is empty, except for "Packs" key
 
         """
         pack = repo.create_pack()
@@ -149,7 +149,10 @@ class TestIDSetCreator:
         with open(self.file_path, 'r') as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
-            assert len(content_entity_value_list) == 0
+            if content_entity != 'Packs':
+                assert len(content_entity_value_list) == 0
+            else:
+                assert len(content_entity_value_list) == 1
 
 
 class TestDuplicates:

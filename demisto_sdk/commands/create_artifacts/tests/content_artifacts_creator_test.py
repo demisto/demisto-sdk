@@ -513,11 +513,105 @@ def test_sign_packs_failure(repo, capsys, key, tool):
            'sign_directory arguments.' in captured.err
 
 
+def test_sign_pack_exception_thrown(repo, capsys, mocker):
+    """
+    When:
+        - Signing a pack.
+
+    Given:
+        - Pack object.
+        - No signing executable.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import sign_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+    import subprocess
+
+    mocker.patch.object(subprocess, 'Popen', autospec=True)
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    sign_pack(content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert 'Error while trying to sign pack Pack1' in captured.err
+
+
+def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
+    """
+    When:
+        - Signing a pack.
+
+    Given:
+        - Pack object.
+        - subprocess is failing due to an error.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import sign_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    fake_process.register_subprocess(
+        f'./signDirectory {pack.path} keyfile base64', stderr=["error"]
+    )
+
+    sign_pack(content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert 'Failed to sign pack for Pack1 -' in captured.err
+
+
+def test_sign_pack_success(repo, capsys, fake_process):
+    """
+    When:
+        - Signing a pack.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that success is written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import sign_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    fake_process.register_subprocess(
+        f'./signDirectory {pack.path} keyfile base64', stdout=['success']
+    )
+
+    sign_pack(content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert f'Signed {content_object_pack.path.name} pack successfully' in captured.err
+
+
 @pytest.mark.parametrize('key, tool', [('some_key', False), ('', True)])
 def test_encrypt_packs_failure(repo, capsys, key, tool):
     """
     When:
-        - Signing a pack.
+        - Encrypting a pack.
 
     Given:
         - Pack object.
@@ -554,3 +648,133 @@ def test_encrypt_packs_failure(repo, capsys, key, tool):
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both encryption_key and ' \
            'encryptor arguments.' in captured.err
+
+
+def test_encrypt_pack_exception_thrown(repo, capsys):
+    """
+    When:
+        - Encrypting a pack.
+
+    Given:
+        - Pack object.
+        - Exception thrown.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager, encrypt_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True,
+                                                encryption_key='key')
+
+    encrypt_pack(artifact_manager, content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert 'Error while trying to encrypt pack Pack1.' in captured.err
+
+
+def test_encrypt_pack_error_from_subprocess(repo, capsys, fake_process, mocker):
+    """
+    When:
+        - Encrypting a pack.
+
+    Given:
+        - Pack object.
+        - subprocess is failing due to an error.
+
+    Then:
+        - Verify that exceptions are written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager, encrypt_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+    import os
+
+    mocker.patch.object(os, 'chdir', return_value=None)
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    fake_process.register_subprocess(
+        f'encryptor_path {pack.path} {pack.path} "key"', stderr=["error"]
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True,
+                                                encryption_key='key',
+                                                encryptor=Path('encryptor_path'))
+
+    encrypt_pack(artifact_manager, content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert 'Failed to encrypt pack for Pack1 -' in captured.err
+
+
+def test_encrypt_pack_success(repo, capsys, fake_process, mocker):
+    """
+    When:
+        - Encrypting a pack.
+
+    Given:
+        - Pack object.
+
+    Then:
+        - Verify that success is written to the logger.
+
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager, encrypt_pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+    import os
+
+    mocker.patch.object(os, 'chdir', return_value=None)
+    mocker.patch.object(os, 'remove', return_value=None)
+
+    cca.logger = logging_setup(3)
+
+    pack = repo.create_pack('Pack1')
+    content_object_pack = Pack(pack.path)
+
+    fake_process.register_subprocess(
+        f'encryptor_path {pack.path} {pack.path} "key"', stdout=['success']
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            artifact_manager = ArtifactsManager(artifacts_path=temp,
+                                                content_version='6.0.0',
+                                                zip=False,
+                                                suffix='',
+                                                cpus=1,
+                                                packs=True,
+                                                encryption_key='key',
+                                                encryptor=Path('encryptor_path'))
+
+    encrypt_pack(artifact_manager, content_object_pack, content_object_pack.path, 'key')
+
+    captured = capsys.readouterr()
+    assert f'Encrypted {content_object_pack.path.name} pack successfully' in captured.err

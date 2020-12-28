@@ -1231,7 +1231,7 @@ class TestPacksMetadata:
 
     @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
-    def test_process_metadata_(repo, metadata_file_content, author, certification):
+    def test_process_metadata(repo, metadata_file_content, author, certification):
         """
         Given
             - A pack_metadata file for Pack1
@@ -1249,6 +1249,7 @@ class TestPacksMetadata:
         result = res.get('Pack1')
 
         assert 'name' in result.keys()
+        assert result.get('id') == 'Pack1'
         assert result.get('minVersion') == '1.0.0'
         assert result.get('author') == author
         assert result.get('certification') == certification

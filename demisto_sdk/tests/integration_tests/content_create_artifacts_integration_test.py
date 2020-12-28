@@ -104,14 +104,12 @@ def test_test_specific_pack_creation(repo, mocker):
     assert 'Pack2' not in full_logs
 
 
-def test_all_packs_creation(repo, mocker):
+def test_all_packs_creation(repo):
     """Test the -p flag for all packs creation
     """
-    import demisto_sdk.commands.common.logger as logger
 
     logs_list = []
-    log = mock_logging_setup(logs_list)
-    mocker.patch.object(logger, 'logging_setup', return_value=log)
+    mock_logging_setup(logs_list)
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(

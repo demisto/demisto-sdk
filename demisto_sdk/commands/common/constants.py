@@ -1002,19 +1002,22 @@ FEATURE_BRANCHES = ['v4.5.0']
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
 
-# the format is defined in issue #19786, may change in the future
-CONTENT_ITEMS_SCRIPTS_KEY = 'automation'
-CONTENT_ITEMS_PLAYBOOKS_KEY = 'playbook'
-CONTENT_ITEMS_INTEGRATIONS_KEY = 'integration'
-CONTENT_ITEMS_INCIDENT_FIELDS_KEY = 'incidentfield'
-CONTENT_ITEMS_INCIDENT_TYPES_KEY = 'incidenttype'
-CONTENT_ITEMS_DASHBOARDS_KEY = 'dashboard'
-CONTENT_ITEMS_INDICATOR_FIELDS_KEY = 'indicatorfield'
-CONTENT_ITEMS_REPORTS_KEY = 'report'
-CONTENT_ITEMS_INDICATOR_TYPES_KEY = 'reputation'
-CONTENT_ITEMS_LAYOUTS_KEY = 'layoutscontainer'
-CONTENT_ITEMS_CLASSIFIERS_KEY = 'classifier'
-CONTENT_ITEMS_WIDGETS_KEY = 'widget'
+
+class ContentItems(Enum):
+    # the format is defined in issue #19786, may change in the future
+    SCRIPTS_KEY = 'automation'
+    PLAYBOOKS_KEY = 'playbook'
+    INTEGRATIONS_KEY = 'integration'
+    INCIDENT_FIELDS_KEY = 'incidentfield'
+    INCIDENT_TYPES_KEY = 'incidenttype'
+    DASHBOARDS_KEY = 'dashboard'
+    INDICATOR_FIELDS_KEY = 'indicatorfield'
+    REPORTS_KEY = 'report'
+    INDICATOR_TYPES_KEY = 'reputation'
+    LAYOUTS_KEY = 'layoutscontainer'
+    CLASSIFIERS_KEY = 'classifier'
+    WIDGETS_KEY = 'widget'
+
 
 YML_SUPPORTED_FOLDERS = {
     INTEGRATIONS_DIR,

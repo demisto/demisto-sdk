@@ -440,9 +440,9 @@ def test_template_integration_init(initiator, tmpdir):
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "Pipfile", "Pipfile.lock", "README.md", "command_examples", f"{INTEGRATION_NAME}.py",
+        "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
-        f"{INTEGRATION_NAME}_image.png", "test_data"
+        f"{INTEGRATION_NAME}_image.png", "test_data", "command_examples"
     }
 
     assert res

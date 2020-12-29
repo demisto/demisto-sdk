@@ -37,7 +37,6 @@ class Initiator:
     """
 
     TEST_DATA_DIR = 'test_data'
-    DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
 
     ''' INTEGRATION TEMPLATES CONSTANTS '''
     DEFAULT_INTEGRATION_TEMPLATE = 'BaseIntegration'
@@ -77,6 +76,12 @@ class Initiator:
                              'README.md'}
 
     DEFAULT_SCRIPT_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'basescript-dummy.json')}
+
+    ''' TEMPLATES PACKS CONSTANTS '''
+    DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
+    HELLO_WORLD_PACK_NAME = 'HelloWorld'
+    DEFAULT_TEMPLATES = [DEFAULT_INTEGRATION_TEMPLATE, DEFAULT_SCRIPT_TEMPLATE]
+    HELLO_WORLD_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
@@ -409,9 +414,8 @@ class Initiator:
 
         script_template_files = self.get_template_files()
         if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
-            default_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',
-                                                                  self.DEFAULT_SCRIPT_TEMPLATE))
-            copy_tree(str(default_template_path), self.full_output_path)
+            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',  self.template))
+            copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
@@ -554,11 +558,15 @@ class Initiator:
         Returns:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
-        if self.template in [self.HELLO_WORLD_INTEGRATION, self.DEFAULT_INTEGRATION_TEMPLATE]:
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
-        if self.template in [self.DEFAULT_INTEGRATION_TEMPLATE, self.DEFAULT_SCRIPT_TEMPLATE]:
+        if self.template in self.DEFAULT_TEMPLATES:
             pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
+
+        elif self.template in self.HELLO_WORLD_TEMPLATES:
+            pack_name = self.HELLO_WORLD_PACK_NAME
+
         else:
             pack_name = self.template
 
@@ -567,7 +575,7 @@ class Initiator:
         for file in files_list:
             try:
                 filename = file
-                if 'README.md' in file:
+                if 'README.md' in file and self.template not in self.HELLO_WORLD_TEMPLATES:
                     # Actual readme file name is `README_example.md`
                     filename = file.replace('README.md', 'README_example.md')
                 file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)

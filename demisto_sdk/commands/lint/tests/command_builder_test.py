@@ -30,7 +30,7 @@ def test_build_xsoar_linter_py3_command(files):
     output = build_xsoar_linter_command(files, 3.8, "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -42,7 +42,7 @@ def test_build_xsoar_linter_py2_command(files):
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -64,7 +64,7 @@ def test_build_bandit_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
     output = build_bandit_command(files)
     files = [str(file) for file in files]
-    expected = f"python3 -m bandit -lll -iii -a file --exclude=CommonServerPython.py,demistomock.py," \
+    expected = f"python3 -m bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py," \
                f"conftest.py,venv -q -r {','.join(files)}"
     assert expected == output

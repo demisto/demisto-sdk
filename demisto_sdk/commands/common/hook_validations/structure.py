@@ -8,6 +8,7 @@ import os
 import re
 from typing import Optional, Tuple
 
+import click
 import yaml
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -85,6 +86,7 @@ class StructureValidator(BaseValidator):
             ]
 
             if self.old_file:  # In case the file is modified
+                click.secho(f'Validating backwards compatibility for {self.file_path}')
                 answers.append(not self.is_id_modified())
                 answers.append(self.is_valid_fromversion_on_modified())
 

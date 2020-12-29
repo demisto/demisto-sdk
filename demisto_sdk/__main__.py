@@ -265,6 +265,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
+@click.option(
+    '--skip-id-set-creation', is_flag=True,
+    help='Skip id_set.json file creation.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -291,7 +294,8 @@ def validate(config, **kwargs):
             silence_init_prints=kwargs['silence_init_prints'],
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
-            staged=kwargs['staged']
+            staged=kwargs['staged'],
+            skip_id_set_creation=kwargs.get('skip_id_set_creation')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -370,7 +374,8 @@ def secrets(config, **kwargs):
                          "Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n "
                          "Meant to be used with integrations/scripts that use the folder (package) structure. "
                          "Will lookup up what docker image to use and will setup the dev dependencies and "
-                         "file in the target folder. ")
+                         "file in the target folder. If no additional flags specifying the packs are given,"
+                         " will lint only changed files")
 @click.help_option('-h', '--help')
 @click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
                                                                                                resolve_path=True))
@@ -405,6 +410,9 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
+    lint_no_packs_command = not git and not all_packs
+    if lint_no_packs_command:
+        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,
@@ -781,6 +789,8 @@ def generate_doc(**kwargs):
     '-h', '--help'
 )
 @click.option(
+    '-i', '--input', help='Input file path, the default is the content repo.', default='', required=False)
+@click.option(
     "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
     id_set_creator = IDSetCreator(**kwargs)
@@ -807,11 +817,15 @@ def merge_id_sets_command(**kwargs):
     second = kwargs['id_set2']
     output = kwargs['output']
 
-    merge_id_sets_from_files(
+    _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
+    if duplicates:
+        print_error(f'Failed to merge ID sets: {first} with {second}, '
+                    f'there are entities with ID: {duplicates} that exist in both ID sets')
+        sys.exit(1)
 
 
 # ====================== update-release-notes =================== #
@@ -837,6 +851,9 @@ def merge_id_sets_command(**kwargs):
     '--text', help="Text to add to all of the release notes files",
 )
 @click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
+)
+@click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 @click.option(
@@ -850,6 +867,8 @@ def update_pack_releasenotes(**kwargs):
     text = kwargs.get('text')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
+    prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
+    prev_rn_text = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -858,19 +877,19 @@ def update_pack_releasenotes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
         validate_manager.setup_git_params()
         modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
-            '...', 'origin/master')
+            '...', prev_ver)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")
         sys.exit(1)
 
-    packs_existing_rn = set()
+    packs_existing_rn = {}
     for file_path in added:
         if 'ReleaseNotes' in file_path:
-            packs_existing_rn.add(get_pack_name(file_path))
+            packs_existing_rn[get_pack_name(file_path)] = file_path
 
     filterd_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
     filterd_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -891,7 +910,13 @@ def update_pack_releasenotes(**kwargs):
         sys.exit(0)
     if _packs:
         for pack in _packs:
-            if pack in packs_existing_rn and update_type is not None:
+            if pack in packs_existing_rn and update_type is None:
+                try:
+                    with open(packs_existing_rn[pack], 'r') as f:
+                        prev_rn_text = f.read()
+                except Exception as e:
+                    print_error(f'Failed to load the previous release notes file content: {e}')
+            elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-i {pack}` without specifying the update_type.")
@@ -905,8 +930,12 @@ def update_pack_releasenotes(**kwargs):
             if pack_modified or pack_added or pack_old:
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
-                                          added_files=pack_added, specific_version=specific_version, text=text)
-                update_pack_rn.execute_update()
+                                          added_files=pack_added, specific_version=specific_version, text=text,
+                                          prev_rn_text=prev_rn_text)
+                updated = update_pack_rn.execute_update()
+                # if new release notes were created and if previous release notes existed, remove previous
+                if updated and prev_rn_text:
+                    os.unlink(packs_existing_rn[pack])
 
             else:
                 print_warning(f'Either no cahnges were found in {pack} pack '

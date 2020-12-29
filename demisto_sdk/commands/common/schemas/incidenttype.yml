@@ -71,3 +71,6 @@ mapping:
     mapping:
       fieldCliNameToExtractSettings:
         type: any
+      mode:
+        type: str
+        enum: [All, Specific]

@@ -3,9 +3,11 @@ import os
 
 import networkx as nx
 import pytest
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, VerboseFile, parse_for_pack_metadata)
+    PackDependencies, VerboseFile, parse_for_pack_metadata,
+    update_pack_metadata_with_dependencies)
 from TestSuite.utils import IsEqualFunctions
 
 
@@ -1316,7 +1318,7 @@ class TestPackMetadataParsing:
             - pack name
             - dependency graph for the pack
 
-        When: Parsing the dependency data for pack metadata with complete data
+        When: Parsing the dependency data for pack metadata with complete data.
 
         Then: Parse the dependency information for pack_metadata correctly.
 
@@ -1347,6 +1349,43 @@ class TestPackMetadataParsing:
         assert 'minVersion' in values.keys()
         assert values.get('name') == 'Common Playbooks'
 
+    def test_parse_for_pack_metadata_complete_data_no_dependency_in_id_set(self, mocker, id_set):
+        """
+
+        Given:
+            - id_set data missing the information on the dependent pack
+            - pack name
+            - dependency graph for the pack
+
+        When: Parsing the dependency data for pack metadata with complete data.
+
+        Then: Parse the dependency information for pack_metadata correctly.
+
+        """
+        graph = PackDependencies.build_dependency_graph(pack_id=self.PACK_NAME,
+                                                        id_set=id_set,
+                                                        verbose_file=VerboseFile(),
+                                                        exclude_ignored_dependencies=False
+                                                        )
+
+        # Since Hunting depends only on "Common Playbooks" pack
+        del id_set['Packs']['Common Playbooks']
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
+                     return_value='Common Playbooks')
+
+        metadata_dependencies, _ = parse_for_pack_metadata(
+            dependency_graph=graph,
+            graph_root=self.PACK_NAME,
+            complete_data=True,
+            id_set_data=id_set
+        )
+
+        values = metadata_dependencies.get('CommonPlaybooks')
+
+        assert 'CommonPlaybooks' in metadata_dependencies.keys()
+        assert not values.get('name')
+        assert values.get('display_name') == 'Common Playbooks'
+
     def test_parse_for_pack_metadata_minimal_data(self, mocker, id_set):
         """
 
@@ -1355,7 +1394,7 @@ class TestPackMetadataParsing:
             - pack name
             - dependency graph for the pack
 
-        When: Parsing the dependency data for pack metadata with minimal data
+        When: Parsing the dependency data for pack metadata with minimal data.
 
         Then: Parse the dependency information for pack_metadata correctly.
 
@@ -1381,3 +1420,25 @@ class TestPackMetadataParsing:
 
         assert 'CommonPlaybooks' in metadata_dependencies.keys()
         assert values == {'display_name': 'Common Playbooks', 'mandatory': True}
+
+    def test_update_pack_metadata_with_dependencies(self, mocker, capsys):
+        """
+
+        Given: -
+
+        When: Trying to update pack metadata with dependencies.
+
+        Then: Catch system exit when pack path was not found.
+
+        """
+        import demisto_sdk.commands.find_dependencies.find_dependencies as fd
+
+        mocker.patch.object(fd, 'find_pack_path', return_value=None)
+
+        with pytest.raises(SystemExit) as e:
+            update_pack_metadata_with_dependencies('Pack1', {})
+
+        captured = capsys.readouterr()
+
+        assert e.value.code == 1
+        assert f'Pack1 {PACKS_PACK_META_FILE_NAME} was not found' in captured.out

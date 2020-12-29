@@ -348,7 +348,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
-        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+        old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
         # if there was no past version
         if not old_meta_file_content:

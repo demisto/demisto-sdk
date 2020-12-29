@@ -275,6 +275,16 @@ class TestPackUniqueFilesValidator:
                    self.validator.get_errors()
 
     def test_get_master_private_repo_meta_file_running_on_master(self, mocker, repo, capsys):
+        """
+        Given:
+            - A repo which runs on master branch
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -288,6 +298,17 @@ class TestPackUniqueFilesValidator:
         assert "Running on master branch - skipping price change validation" in capsys.readouterr().out
 
     def test_get_master_private_repo_meta_file_getting_git_error(self, repo, capsys, mocker):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - git.show command raises GitCommandError.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -307,6 +328,17 @@ class TestPackUniqueFilesValidator:
         assert "Got an error while trying to connect to git" in capsys.readouterr().out
 
     def test_get_master_private_repo_meta_file_file_not_found(self, mocker, repo, capsys):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - git.show command returns None.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)

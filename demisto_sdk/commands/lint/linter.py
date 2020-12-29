@@ -404,8 +404,6 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
-            # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
-            # as a result we can use the env vars as a getway.
             myenv['is_script'] = str(self._facts['is_script'])
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),

@@ -26,6 +26,7 @@ class XsoarChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(XsoarChecker, self).__init__(linter)
+        self.is_script = True if os.getenv('is_script') == 'True' else False
 
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
@@ -47,16 +48,17 @@ class XsoarChecker(BaseChecker):
 
     def _not_implemented_error_in_main(self, node):
         try:
-            if node.name == 'main':
-                not_implemented_error_exist = False
-                for child in self._inner_search_return_error(node):
-                    if isinstance(child, astroid.If):
-                        else_cluse = child.orelse
-                        for line in else_cluse:
-                            if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
-                                not_implemented_error_exist = True
-                if not not_implemented_error_exist:
-                    self.add_message("not-implemented-error-doesnt-exist", node=node)
+            if not self.is_script:
+                if node.name == 'main':
+                    not_implemented_error_exist = False
+                    for child in self._inner_search_return_error(node):
+                        if isinstance(child, astroid.If):
+                            else_cluse = child.orelse
+                            for line in else_cluse:
+                                if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
+                                    not_implemented_error_exist = True
+                    if not not_implemented_error_exist:
+                        self.add_message("not-implemented-error-doesnt-exist", node=node)
         except Exception:
             pass
 

@@ -163,3 +163,29 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         assert node is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+    def test_not_implemented_error_doesnt_exists_on_Script(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Main function that in the else claus raises a NotImplementedError but its in a script path
+        Then:
+            - Ensure that the there was not message added to the checker.
+        """
+        self.checker.is_script = True
+        node = astroid.extract_node("""
+            def main() -> bool:
+                try:
+                    if True:
+                        return True
+                    if b:
+                        return False
+                    else:
+                        raise DemistoException("this command wasnt implemented")
+                except Exception:
+                    pass
+        """)
+        assert node is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

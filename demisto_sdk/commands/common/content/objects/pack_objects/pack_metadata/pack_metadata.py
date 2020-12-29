@@ -4,7 +4,9 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from demisto_sdk.commands.common.constants import ContentItems
+from demisto_sdk.commands.common.constants import (XSOAR_AUTHOR, XSOAR_SUPPORT,
+                                                   XSOAR_SUPPORT_URL,
+                                                   ContentItems)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
 from packaging.version import Version, parse
@@ -13,11 +15,8 @@ from wcmatch.pathlib import Path
 logger: logging.Logger
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-XSOAR_NAME = 'xsoar'
 PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
-XSOAR_AUTHOR = 'Cortex XSOAR'
-XSOAR_SUPPORT_URL = 'https://www.paloaltonetworks.com/cortex'
 XSOAR_EULA_URL = 'https://github.com/demisto/content/blob/master/LICENSE'
 
 
@@ -174,9 +173,9 @@ class PackMetaData(JSONObject):
         """
         support_details = {}
 
-        if self.eula_link:  # set support url from user input
+        if self.url:  # set support url from user input
             support_details['url'] = self.url
-        elif self.support == XSOAR_NAME:  # in case support type is xsoar, set default xsoar support url
+        elif self.support == XSOAR_SUPPORT:  # in case support type is xsoar, set default xsoar support url
             support_details['url'] = XSOAR_SUPPORT_URL
         # add support email if defined
         if self.email:
@@ -233,7 +232,7 @@ class PackMetaData(JSONObject):
         Returns:
             str: pack author.
         """
-        if self.support == XSOAR_NAME:
+        if self.support == XSOAR_SUPPORT:
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
@@ -253,7 +252,7 @@ class PackMetaData(JSONObject):
         Returns:
             str: pack certification.
         """
-        if self.support in [XSOAR_NAME, PARTNER_SUPPORT]:
+        if self.support in [XSOAR_SUPPORT, PARTNER_SUPPORT]:
             return XSOAR_CERTIFIED
         else:
             return self._certification

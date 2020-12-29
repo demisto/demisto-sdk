@@ -414,7 +414,7 @@ class Initiator:
 
         script_template_files = self.get_template_files()
         if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
-            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates',  self.template))
+            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
             copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:

@@ -165,8 +165,6 @@ class LintManager:
         pkgs: list
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
-        elif not all_packs and not git and not input:
-            pkgs = [Path().cwd()]
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             for item in input.split(','):

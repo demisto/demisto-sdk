@@ -18,8 +18,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_mapper_data, get_metadata_data, get_playbook_data, get_report_data,
     get_script_data, get_values_for_keys_recursively, get_widget_data,
     has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_script,
-    re_create_id_set)
+    process_incident_fields, process_integration, process_packs,
+    process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -1256,6 +1256,72 @@ class TestPacksMetadata:
         assert result.get('minVersion') == '1.0.0'
         assert result.get('author') == author
         assert result.get('certification') == certification
+
+    @staticmethod
+    def test_get_metadata_bad_path(repo, mocker):
+        """
+        Given
+            - A bad path for a pack.
+
+        When
+            - Parsing pack metadata files.
+
+        Then
+            - Handle the exceptions gracefully.
+        """
+        import demisto_sdk.commands.common.update_id_set as uid
+        mocker.patch.object(uid, 'get_json', return_value={'name': 'Pack1'})
+
+        res = get_metadata_data('Pack1')
+        result = res.get('Pack1')
+
+        assert 'name' in result.keys()
+        assert not result.get('id')
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', [True, False])
+    def test_process_packs_success(capsys, mocker, print_logs):
+        """
+        Given
+            - A pack metadata file path.
+            - Whether to print information to log.
+
+        When
+            - Parsing pack metadata files.
+
+        Then
+            - Verify output to logs.
+        """
+        import demisto_sdk.commands.common.update_id_set as uid
+        mocker.patch.object(uid, 'get_metadata_data', return_value={'name': 'Pack'})
+
+        res = process_packs('Pack_Path', print_logs)
+        captured = capsys.readouterr()
+
+        assert res == [{'name': 'Pack'}]
+        assert ('adding Pack_Path to id_set' in captured.out) == print_logs
+
+    @staticmethod
+    def test_process_packs_exception_thrown(capsys, mocker):
+        """
+        Given
+            - A pack metadata file path.
+
+        When
+            - Parsing pack metadata files.
+
+        Then
+            - Handle the exceptions gracefully.
+        """
+        import demisto_sdk.commands.common.update_id_set as uid
+        # mocking some exception
+        mocker.patch.object(uid, 'get_metadata_data', side_effect=lambda x: 1 / 0)
+
+        with pytest.raises(Exception):
+            process_packs('Pack_Path', True)
+        captured = capsys.readouterr()
+
+        assert 'failed to process Pack_Path, Error:' in captured.out
 
 
 class TestGenericFunctions:

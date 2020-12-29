@@ -139,7 +139,7 @@ EXTRACT_VARIATIONS = [
 
 
 @pytest.mark.parametrize("extract_field, answer", EXTRACT_VARIATIONS)
-def test_is_valid_autoextract(extract_field, answer):
+def test_is_valid_autoextract_fields(extract_field, answer):
     """
     Given
     - an incident type with a valid or invalid auto extract section .
@@ -153,8 +153,45 @@ def test_is_valid_autoextract(extract_field, answer):
     structure = StructureValidator("")
     validator = IncidentTypeValidator(structure)
     validator.current_file['extractSettings'] = {
+        'mode': "All",
         'fieldCliNameToExtractSettings': {
             "incident_field": extract_field
+        }
+    }
+    assert validator.is_valid_autoextract() is answer
+
+
+EXTRACTION_MODE_VARIATIONS = [
+    ('All', True),
+    ('Specific', True),
+    (None, False),
+    ('', False),
+    ('all', False)
+]
+
+
+@pytest.mark.parametrize("extract_mode, answer", EXTRACTION_MODE_VARIATIONS)
+def test_is_valid_autoextract_mode(extract_mode, answer):
+    """
+    Given
+    - an incident type with a valid or invalid auto extract mode.
+
+    When
+    - Running is_valid_autoextract on it.
+
+    Then
+    - Ensure returns True if the field is formatted correctly and False otherwise.
+    """
+    structure = StructureValidator("")
+    validator = IncidentTypeValidator(structure)
+    validator.current_file['extractSettings'] = {
+        'mode': extract_mode,
+        'fieldCliNameToExtractSettings': {
+            "incident_field": {
+                "extractAsIsIndicatorTypeId": "",
+                "isExtractingAllIndicatorTypes": False,
+                "extractIndicatorTypesIDs": []
+            }
         }
     }
     assert validator.is_valid_autoextract() is answer

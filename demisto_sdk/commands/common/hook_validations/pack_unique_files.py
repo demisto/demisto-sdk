@@ -351,6 +351,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
         # if running on master branch in private repo - do not run the test
         if current_repo.active_branch == 'master':
+            if not self.suppress_print:
+                click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
 
         old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')

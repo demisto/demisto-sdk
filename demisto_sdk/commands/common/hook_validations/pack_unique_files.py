@@ -355,7 +355,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
 
-        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+        old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
         # if there was no past version
         if not old_meta_file_content:

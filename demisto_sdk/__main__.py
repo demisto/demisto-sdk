@@ -267,7 +267,7 @@ def unify(**kwargs):
     help='Skip validation of pack dependencies.')
 @click.option(
     '--skip-id-set-creation', is_flag=True,
-    help='Skip validation of pack dependencies.')
+    help='Skip id_set.json file creation.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -279,6 +279,10 @@ def validate(config, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
+        # default validate to -g --post-commit
+        if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
+            kwargs['use_git'] = True
+            kwargs['post_commit'] = True
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
@@ -817,11 +821,15 @@ def merge_id_sets_command(**kwargs):
     second = kwargs['id_set2']
     output = kwargs['output']
 
-    merge_id_sets_from_files(
+    _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
+    if duplicates:
+        print_error(f'Failed to merge ID sets: {first} with {second}, '
+                    f'there are entities with ID: {duplicates} that exist in both ID sets')
+        sys.exit(1)
 
 
 # ====================== update-release-notes =================== #

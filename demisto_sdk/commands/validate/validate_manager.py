@@ -98,7 +98,6 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -115,10 +114,18 @@ class ValidateManager:
                 click.echo('Running in a private repository')
             self.skip_conf_json = True
 
+        self.print_percent = False
+        self.completion_percentage = 0
+
         if validate_all:
             # No need to check docker images on build branch hence we do not check on -a mode
+            # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
+            self.skip_id_set_creation = skip_id_set_creation
+            self.print_percent = True
+
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
@@ -208,9 +215,14 @@ class ValidateManager:
             conf_json_validator = ConfJsonValidator()
             all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
+        num_of_packs = len(os.listdir(PACKS_DIR))
+        count = 1
+
         for pack_name in os.listdir(PACKS_DIR):
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
+            count += 1
 
         return all(all_packs_valid)
 
@@ -301,7 +313,10 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
-            click.echo(f"\nValidating {file_path} as {file_type.value}")
+            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            if self.print_percent:
+                validation_print += f' [{self.completion_percentage}%]'
+            click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
@@ -400,7 +415,6 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
-
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:
@@ -632,7 +646,8 @@ class ValidateManager:
                                                                print_as_warnings=self.print_ignored_errors,
                                                                should_version_raise=should_version_raise,
                                                                validate_dependencies=not self.skip_dependencies,
-                                                               id_set_path=id_set_path)
+                                                               id_set_path=id_set_path,
+                                                               private_repo=self.is_external_repo)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -817,7 +832,9 @@ class ValidateManager:
             # on a non-master branch - we use '...' comparison range to check changes from origin/master.
             # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
             self.compare_type = '...'
-
+        elif self.branch_name == 'master':
+            self.compare_type == '..'
+            self.prev_ver = 'HEAD~1'
         else:
             self.skip_pack_rn_validation = True
             # on master branch - we use '..' comparison range to check changes from the last release branch.
@@ -1195,7 +1212,7 @@ class ValidateManager:
         """
 
         Args:
-            skip_dependencies (bool): whether should skip id set validation or not
+            skip_id_set_creation (bool): whether should skip id set validation or not
             this will also determine whether a new id_set can be created by validate.
             id_set_path (str): id_set.json path file
 

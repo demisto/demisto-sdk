@@ -135,6 +135,7 @@ ERROR_CODE = {
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
     "incident_type_auto_extract_fields_invalid": "IT102",
+    "incident_type_invalid_auto_extract_mode": "IT103",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -892,6 +893,13 @@ class Errors:
                f"3. To extract indicators from the field using regex: \n" \
                f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
                f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_auto_extract_mode():
+        return 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
 
     @staticmethod
     @error_code_decorator

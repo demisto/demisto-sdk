@@ -128,10 +128,13 @@ class IncidentTypeValidator(ContentEntityValidator):
             bool. True if extractSettings is valid or empty, False otherwise
         """
         auto_extract_data = self.current_file.get('extractSettings', {}).get('fieldCliNameToExtractSettings')
+        auto_extract_mode = self.current_file.get('extractSettings', {}).get('mode')
 
         # no auto extraction set in incident type.
         if not auto_extract_data:
             return True
+
+        is_valid = True
 
         invalid_incident_fields = []
         for incident_field, extracted_settings in auto_extract_data.items():
@@ -158,6 +161,11 @@ class IncidentTypeValidator(ContentEntityValidator):
         if invalid_incident_fields:
             error_message, error_code = Errors.incident_type_auto_extract_fields_invalid(invalid_incident_fields)
             if self.handle_error(error_message, error_code, self.file_path):
-                return False
+                is_valid = False
 
-        return True
+        if auto_extract_mode not in ['All', 'Specific']:
+            error_message, error_code = Errors.incident_type_invalid_auto_extract_mode()
+            if self.handle_error(error_message, error_code, self.file_path):
+                is_valid = False
+
+        return is_valid

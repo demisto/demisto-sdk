@@ -358,8 +358,9 @@ class PackUniqueFilesValidator(BaseValidator):
             old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
         except GitCommandError as e:
-            click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
-                        f"Skipping price change validation")
+            if not self.suppress_print:
+                click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
+                            f"Skipping price change validation")
             return None
 
         # if there was no past version

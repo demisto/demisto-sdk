@@ -167,7 +167,7 @@ class LintManager:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         elif not all_packs and not git and not input:
             pkgs = [Path().cwd()]
-        else: # specific pack as input, -i flag has been used
+        else:  # specific pack as input, -i flag has been used
             pkgs = []
             for item in input.split(','):
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))

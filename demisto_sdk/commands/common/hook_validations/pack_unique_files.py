@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import Repo
+from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -354,8 +354,13 @@ class PackUniqueFilesValidator(BaseValidator):
             if not self.suppress_print:
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
+        try:
+            old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
-        old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
+        except GitCommandError as e:
+            click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
+                        f"Skipping price change validation")
+            return None
 
         # if there was no past version
         if not old_meta_file_content:

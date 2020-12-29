@@ -10,11 +10,12 @@ xsoar_msg = {
         "missing-arg-type-annoation",
         "Function arguments are missing type annotations. Please add type annotations",),
     "W9018": (
-        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
+        "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
+        "recognized. "
         "exception",
         "not-implemented-error-doesnt-exist",
-        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
-        "exception",),
+        "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
+        "recognized.",),
 }
 
 

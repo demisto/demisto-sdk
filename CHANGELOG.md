@@ -1,4 +1,5 @@
 # Changelog
+* Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.

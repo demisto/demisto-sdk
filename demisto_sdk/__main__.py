@@ -279,6 +279,10 @@ def validate(config, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
+        # default validate to -g --post-commit
+        if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
+            kwargs['use_git'] = True
+            kwargs['post_commit'] = True
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],

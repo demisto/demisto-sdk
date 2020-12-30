@@ -78,6 +78,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_errors(self, raw=False) -> list:
         """Get the dict version or string version for print"""
+        errors = []
         if raw:
             errors = self._errors
         elif self._errors:

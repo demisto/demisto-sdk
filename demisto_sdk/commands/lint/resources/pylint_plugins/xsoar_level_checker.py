@@ -16,6 +16,11 @@ xsoar_msg = {
         "not-implemented-error-doesnt-exist",
         "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
         "recognized.",),
+    "W9019": (
+        "It is best practice to use .get when accessing dict object rather then direct access.",
+        "direct-access-dict-exist",
+        "It is best practice to use .get when accessing dict object rather then direct access.",),
+
 }
 
 
@@ -32,6 +37,9 @@ class XsoarChecker(BaseChecker):
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
         self._not_implemented_error_in_main(node)
+
+    def visit_subscript(self, node):
+        self._direct_access_dict_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -60,6 +68,16 @@ class XsoarChecker(BaseChecker):
                                     not_implemented_error_exist = True
                     if not not_implemented_error_exist:
                         self.add_message("not-implemented-error-doesnt-exist", node=node)
+        except Exception:
+            pass
+
+    def _direct_access_dict_checker(self, node):
+        try:
+            # check if the direct usage is not an assign to dict like a['a'] = b
+            if not isinstance(node.parent, astroid.Assign) and isinstance(node.value, astroid.Name):
+                for infered in node.value.infer():
+                    if isinstance(infered, astroid.Dict):
+                        self.add_message("direct-access-dict-exist", node=node)
         except Exception:
             pass
 

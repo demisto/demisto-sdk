@@ -147,7 +147,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     if is_silenced:
         p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(command.split(), cwd=cwd)
+        p = Popen(command.split(), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:
@@ -537,7 +537,7 @@ def old_get_latest_release_notes_text(rn_path):
         # get release notes up to release header
         new_rn = new_rn[0].rstrip()
     else:
-        new_rn = rn.replace(UNRELEASE_HEADER, '')
+        new_rn = rn.replace(UNRELEASE_HEADER, '')  # type: ignore
 
     return new_rn if new_rn else None
 

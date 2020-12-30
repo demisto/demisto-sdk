@@ -106,7 +106,7 @@ def build_tasks_graph(playbook_data):
                 print_warning(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                 continue
 
-            leaf_next_tasks: list = sum(leaf_task.get('nexttasks', {}).values(), [])
+            leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])  # type: ignore
 
             for task_id in leaf_next_tasks:
                 task = tasks.get(task_id)

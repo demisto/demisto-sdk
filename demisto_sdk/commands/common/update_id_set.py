@@ -1052,8 +1052,10 @@ class IDSet:
     def add_to_list(self, object_type: IDSetType, obj):
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
-        print(f'obj: {obj}, \n object_type: {object_type}')
-        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
+
+        if obj not in self._id_set_dict[object_type]:
+            self._id_set_dict.setdefault(object_type, []).append(obj)
+            print(f'obj: {obj}, \n object_type: {object_type}')
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):

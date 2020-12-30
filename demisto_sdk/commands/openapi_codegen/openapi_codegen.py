@@ -49,7 +49,7 @@ class OpenAPIIntegration:
     def __init__(self, file_path: str, base_name: str, command_prefix: str, context_path: str,
                  unique_keys: Optional[str] = None, root_objects: Optional[str] = None,
                  verbose: bool = False, fix_code: bool = False, configuration: Optional[dict] = None):
-        self.json = None
+        self.json: dict = {}
         self.file_path = file_path
         self.base_name = base_name
         self.command_prefix = command_prefix
@@ -62,8 +62,8 @@ class OpenAPIIntegration:
         self.base_path = ''
         self.name = ''
         self.description = ''
-        self.definitions = None
-        self.components = None
+        self.definitions: dict = {}
+        self.components: dict = {}
         self.reference: dict = {}
         self.functions: list = []
         self.parameters: list = []
@@ -147,6 +147,7 @@ class OpenAPIIntegration:
                 'context_path': function.get('context_path', ''),
                 'root_object': function.get('root_object', '')
             }
+
             headers = []
             if function['consumes'] and JSON_TYPE_HEADER not in function['consumes']\
                     and ALL_TYPE_HEADER not in function['consumes']:
@@ -155,8 +156,9 @@ class OpenAPIIntegration:
             if function['produces'] and JSON_TYPE_HEADER not in function['produces']\
                     and ALL_TYPE_HEADER not in function['produces']:
                 headers.append({'Accept': function['produces'][0]})
-
             command['headers'] = headers
+
+            commands = []
             for arg in function['arguments']:
                 command['arguments'].append({
                     'name': str(arg.get('name', '')),
@@ -183,7 +185,8 @@ class OpenAPIIntegration:
             if 'unique_key' not in command:
                 command['unique_key'] = ''
 
-            configuration['commands'].append(command)
+            commands.append(command)
+        configuration['commands'] = commands
 
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'

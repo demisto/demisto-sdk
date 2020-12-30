@@ -82,7 +82,7 @@ class XSOARIntegration:
                                            type_=8,
                                            required=False)]
 
-        script = XSOARIntegration.Script('', 'python', 'python3', 'demisto/python3:3.8.3.9324', True, False)
+        script = XSOARIntegration.Script('', 'python', 'python3', 'demisto/python3:3.8.3.9324', True, None)
 
         return cls(commonfields, name, display, category, description, configurations,
                    script)

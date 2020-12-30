@@ -219,7 +219,7 @@ class ValidateManager:
         count = 1
 
         for pack_name in os.listdir(PACKS_DIR):
-            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
+            self.completion_percentage = int(format((count / num_of_packs) * 100, ".2f"))
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1
@@ -976,7 +976,7 @@ class ValidateManager:
         old_format_files = set()
         changed_meta_files = set()
         for f in all_files:
-            file_data = list(filter(None, f.split('\t')))
+            file_data: list = list(filter(None, f.split('\t')))
 
             if not file_data:
                 continue
@@ -1111,7 +1111,7 @@ class ValidateManager:
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
 
     def get_error_ignore_list(self, pack_name):
-        ignored_errors_list = {}
+        ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
@@ -1134,9 +1134,11 @@ class ValidateManager:
         return ignored_errors_list
 
     @staticmethod
-    def get_current_working_branch():
+    def get_current_working_branch() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
+        if not branch_name_reg:
+            return ''
         return branch_name_reg.group(1)
 
     def get_content_release_identifier(self) -> Optional[str]:

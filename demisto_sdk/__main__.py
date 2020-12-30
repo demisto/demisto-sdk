@@ -414,9 +414,6 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_no_packs_command = not git and not all_packs
-    if lint_no_packs_command:
-        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,

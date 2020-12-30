@@ -283,6 +283,10 @@ def validate(config, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
+        # default validate to -g --post-commit
+        if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
+            kwargs['use_git'] = True
+            kwargs['post_commit'] = True
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
@@ -415,9 +419,6 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_no_packs_command = not git and not all_packs
-    if lint_no_packs_command:
-        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,
@@ -676,11 +677,15 @@ def generate_test_playbook(**kwargs):
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
                            "directory.")
 @click.option(
-    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+    '--integration', is_flag=True, help="Create an Integration based on BaseIntegration template")
 @click.option(
-    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+    '--script', is_flag=True, help="Create a Script based on BaseScript example")
 @click.option(
     "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
@@ -822,11 +827,15 @@ def merge_id_sets_command(**kwargs):
     second = kwargs['id_set2']
     output = kwargs['output']
 
-    merge_id_sets_from_files(
+    _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
+    if duplicates:
+        print_error(f'Failed to merge ID sets: {first} with {second}, '
+                    f'there are entities with ID: {duplicates} that exist in both ID sets')
+        sys.exit(1)
 
 
 # ====================== update-release-notes =================== #

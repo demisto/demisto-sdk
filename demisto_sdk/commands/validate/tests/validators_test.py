@@ -7,8 +7,7 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
-from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -54,19 +53,14 @@ from demisto_sdk.tests.constants_test import (
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
     SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
-    VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
     VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_JSON_FILE_FOR_UNIT_TESTING, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
-    VALID_PIPEFILE_PATH, VALID_PLAYBOOK_CONDITION,
-    VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
-    VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
-    VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
+    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
@@ -941,6 +935,8 @@ class TestValidators:
         validate_manager.always_valid = False
         validate_manager.setup_git_params()
         assert not validate_manager.always_valid
+        assert validate_manager.compare_type == '..'
+        assert validate_manager.prev_ver == 'HEAD~1'
 
         mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
         validate_manager.setup_git_params()

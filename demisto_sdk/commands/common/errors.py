@@ -134,6 +134,8 @@ ERROR_CODE = {
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
+    "incident_type_auto_extract_fields_invalid": "IT102",
+    "incident_type_invalid_auto_extract_mode": "IT103",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -151,6 +153,7 @@ ERROR_CODE = {
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
+    "pack_metadata_invalid_support_type": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
@@ -877,6 +880,29 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incident_type_auto_extract_fields_invalid(incident_fields):
+        return f"The following incident fields are not formatted correctly under " \
+               f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
+               f"Please format them in one of the following ways:\n" \
+               f"1. To extract all indicators from the field: \n" \
+               f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"2. To extract the incident field to a specific indicator without using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"<INDICATOR_TYPE>\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"3. To extract indicators from the field using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_auto_extract_mode():
+        return 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
+
+    @staticmethod
+    @error_code_decorator
     def pack_file_does_not_exist(file_name):
         return f'"{file_name}" file does not exist, create one in the root of the pack'
 
@@ -949,6 +975,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_missing_url_and_email():
         return 'Contributed packs must include email or url.'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_invalid_support_type(pack_meta_file):
+        return 'Support field should be one of the following: xsoar, partner, developer or community.'
 
     @staticmethod
     @error_code_decorator

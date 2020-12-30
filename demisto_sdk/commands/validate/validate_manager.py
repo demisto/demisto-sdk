@@ -219,7 +219,7 @@ class ValidateManager:
         count = 1
 
         for pack_name in os.listdir(PACKS_DIR):
-            self.completion_percentage = int(format((count / num_of_packs) * 100, ".2f"))
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1

@@ -138,7 +138,7 @@ class Extractor:
                 self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                                 "Make sure to install it with: pip install autopep8.\n"
                                 "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
-
+            next_steps: str = ''
             if self.pipenv:
                 self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
                 try:
@@ -182,7 +182,7 @@ class Extractor:
                                     f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
                 arg_path = os.path.relpath(output_path)
                 self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
-                next_steps: str = "Next steps: \n" \
+                next_steps = "Next steps: \n" \
                                   "* Install additional py packages for unit testing (if needed): cd {};" \
                                   " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
                 next_steps += "* Create unit tests\n" \

@@ -974,7 +974,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     try:
         assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
-        assert "/" in str(pack_name)
+        assert "/" not in str(pack_name)
     except AssertionError:
         print_error("Input path is not a pack. For example: Pack/HelloWorld")
         sys.exit(1)

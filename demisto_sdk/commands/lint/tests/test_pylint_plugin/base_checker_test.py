@@ -485,6 +485,54 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
+    def test_not_all_if_command_in_set_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Commands appear in the if claus as a tuple.
+            - Two of the commands appear in the set.
+            - The last command does not appear in the set.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+            if a in {'test-1','test2'}:  #@
+                return False
+            else:
+                return True
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test3']),
+                ),
+        ):
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+    def test_all_if_command_in_set_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - All commands appear in the if claus as a set.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+                   if a in {'test-1','test2','test3'}:  #@
+                       return False
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
     def test_infer_if_checker(self):
         """
         Given:

@@ -11,6 +11,8 @@
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 * Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
 * Added validation for support types in the pack metadata file.
+* Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
+* Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
 * Fixed an issue in the **lint** command where the *-i* flag was ignored.
 
 # 1.2.12

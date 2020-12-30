@@ -1225,6 +1225,7 @@ class ValidateManager:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             id_set = open_id_set_file(id_set_path)
+            print(id_set)
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,

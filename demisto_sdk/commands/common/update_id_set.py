@@ -1055,7 +1055,7 @@ class IDSet:
 
         if obj not in self._id_set_dict[object_type]:
             self._id_set_dict.setdefault(object_type, []).append(obj)
-            print(f'obj: {obj}, \n object_type: {object_type}')
+            # print(f'obj: {obj}, \n object_type: {object_type}')
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
@@ -1101,7 +1101,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
     if duplicates:
         return None, duplicates
-
+    print(united_id_set, '\n\n\n')
     return united_id_set, []
 
 

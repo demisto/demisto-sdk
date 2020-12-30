@@ -13,6 +13,7 @@
 * Added validation for support types in the pack metadata file.
 * Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
+* Added an option for **format** to run on a whole pack.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

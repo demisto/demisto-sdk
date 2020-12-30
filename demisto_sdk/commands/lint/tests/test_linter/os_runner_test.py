@@ -339,12 +339,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", "3.7"]],
+            "images": [["image", 3.7]],
             "test": False,
             "version_two": False,
             "lint_files": [],
             "lint_unittest_files": [unittest_path],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": 3.7,
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')
@@ -361,10 +362,7 @@ class TestRunLintInHost:
                                      no_xsoar_linter=False,
                                      no_mypy=False,
                                      no_vulture=False)
-        linter_obj._run_flake8.assert_called_once_with(
-            py_num=linter_obj._facts["images"][0][1],
-            lint_files=linter_obj._facts["lint_unittest_files"]
-        )
+        linter_obj._run_flake8.assert_called_once()
         assert linter_obj._pkg_lint_status.get("flake8_errors") == 'Error'
         linter_obj._run_bandit.assert_not_called()
         linter_obj._run_mypy.assert_not_called()
@@ -390,12 +388,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", "3.7"]],
+            "images": [["image", 3.7]],
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
             "lint_unittest_files": [unittest_path],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": 3.7,
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')
@@ -412,15 +411,7 @@ class TestRunLintInHost:
                                      no_mypy=False,
                                      no_xsoar_linter=False,
                                      no_vulture=False)
-        assert linter_obj._run_flake8.call_count == 2
-        linter_obj._run_flake8.assert_any_call(
-            py_num=linter_obj._facts["images"][0][1],
-            lint_files=linter_obj._facts["lint_unittest_files"]
-        )
-        linter_obj._run_flake8.assert_any_call(
-            py_num=linter_obj._facts["images"][0][1],
-            lint_files=linter_obj._facts["lint_files"]
-        )
+        linter_obj._run_flake8.assert_called_once()
         linter_obj._run_bandit.assert_called_once()
         linter_obj._run_xsoar_linter.assert_called_once()
         linter_obj._run_mypy.assert_called_once()

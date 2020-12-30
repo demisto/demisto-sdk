@@ -7,7 +7,6 @@ import json
 import os
 import sys
 from distutils.version import LooseVersion
-from pathlib import PurePosixPath, PureWindowsPath
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (
@@ -17,18 +16,18 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_api_module_ids,
                                                get_api_module_integrations_set,
-                                               get_json,
+                                               get_from_version, get_json,
                                                get_latest_release_notes_text,
-                                               get_pack_name, get_yaml,
-                                               pack_name_to_path, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+                                               get_pack_name, get_remote_file,
+                                               get_yaml, pack_name_to_path,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', prev_rn_text: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -45,6 +44,7 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.text = text
+        self.prev_rn_text = prev_rn_text
         self.pack_metadata_only = pack_metadata_only
         try:
             self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -52,6 +52,7 @@ class UpdateRN:
             print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
                         f"the pack path is correct.")
             sys.exit(1)
+        self.master_version = self.get_master_version()
 
     @staticmethod
     def check_for_release_notes_valid_file_path(file_path):
@@ -96,10 +97,12 @@ class UpdateRN:
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
-                    'is_new_file': True if packfile in self.added_files else False
+                    'is_new_file': True if packfile in self.added_files else False,
+                    'fromversion': get_from_version_at_update_rn(packfile)
                 }
-
-            rn_string = self.build_rn_template(changed_files)
+            rn_string = self.prev_rn_text
+            if not rn_string:
+                rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
@@ -114,12 +117,14 @@ class UpdateRN:
                                 f"the new release notes to your branch.\nFor information regarding proper"
                                 f" format of the release notes, please refer to "
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                    return True
                 else:
                     print_color("No changes to pack files were detected from the previous time "
                                 "this command was run. The release notes have not been "
                                 "changed.", LOG_COLORS.GREEN)
             else:
                 print_warning("No changes which would belong in release notes were detected.")
+        return False
 
     def _does_pack_metadata_exist(self):
         """Check if pack_metadata.json exists"""
@@ -128,6 +133,21 @@ class UpdateRN:
             return False
 
         return True
+
+    def get_master_version(self):
+        """
+        Get the current version from origin/master if available, otherwise return '0.0.0'
+        """
+        master_current_version = '0.0.0'
+        try:
+            master_metadata = get_remote_file(self.metadata_path)
+        except Exception as e:
+            print_error(f"master branch is unreachable.\n The reason is:{e} \n "
+                        f"The updated version will be taken from local metadata file instead of master")
+            pass
+        if master_metadata:
+            master_current_version = master_metadata.get('currentVersion', '0.0.0')
+        return master_current_version
 
     def is_bump_required(self):
         """
@@ -140,21 +160,9 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            master_metadata = run_command(
-                f"git show origin/master:{str(PurePosixPath(PureWindowsPath(self.metadata_path)))}")
-            if len(master_metadata) > 0:
-                master_metadata_json = json.loads(master_metadata)
-                master_current_version = master_metadata_json.get('currentVersion', '0.0.0')
-            else:
-                print_error(f"Unable to locate the metadata on the master branch.\n The reason is:{master_metadata}")
-                sys.exit(0)
-            if LooseVersion(master_current_version) == LooseVersion(new_version):
+            if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 return True
-            elif LooseVersion(master_current_version) > LooseVersion(new_version):
-                print_error("The master branch is currently ahead of your pack's version. "
-                            "Please pull from master and re-run the command.")
-                sys.exit(0)
-            elif LooseVersion(master_current_version) < LooseVersion(new_version):
+            elif LooseVersion(self.master_version) < LooseVersion(new_version):
                 return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
@@ -264,14 +272,15 @@ class UpdateRN:
             raise ValueError("Received no update type when one was expected.")
         new_version = ''  # This will never happen since we pre-validate the argument
         data_dictionary = self.get_pack_metadata()
+        current_version = self.master_version if self.master_version != '0.0.0' else self.get_pack_metadata().get(
+            'currentVersion', '99.99.99')
         if specific_version:
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                         f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
             data_dictionary['currentVersion'] = specific_version
             return specific_version, data_dictionary
         elif self.update_type == 'major':
-            version = data_dictionary.get('currentVersion', '99.99.99')
-            version = version.split('.')
+            version = current_version.split('.')
             version[0] = str(int(version[0]) + 1)
             if int(version[0]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -280,8 +289,7 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         elif self.update_type == 'minor':
-            version = data_dictionary.get('currentVersion', '99.99.99')
-            version = version.split('.')
+            version = current_version.split('.')
             version[1] = str(int(version[1]) + 1)
             if int(version[1]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -291,8 +299,7 @@ class UpdateRN:
             new_version = '.'.join(version)
         # We validate the input via click
         elif self.update_type in ['revision', 'maintenance', 'documentation']:
-            version = data_dictionary.get('currentVersion', '99.99.99')
-            version = version.split('.')
+            version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
                 raise ValueError(f"Version number is greater than 99 for the {self.pack} pack. "
@@ -344,10 +351,12 @@ class UpdateRN:
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
+            from_version = data.get('fromversion', '')
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
-            rn_desc = self.build_rn_desc(_type, content_name, desc, is_new_file, self.text)
+            rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
+                                         text=self.text, from_version=from_version)
             if _type == 'Integration':
                 if not integration_header:
                     rn_string += '\n#### Integrations\n'
@@ -416,13 +425,16 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file, text):
+    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
         if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
                      'Indicator Fields'):
             rn_desc = f'- **{content_name}**\n'
         else:
             if is_new_file:
-                rn_desc = f'##### New: {content_name}\n- {desc}\n'
+                rn_desc = f'##### New: {content_name}\n- {desc}'
+                if from_version:
+                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
+                rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
                 if self.update_type == 'maintenance':
@@ -447,7 +459,7 @@ class UpdateRN:
             if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'):
                 rn_desc = f'\n- **{content_name}**'
             else:
-                rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file\
+                rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
 
             if _type in current_rn:
@@ -557,3 +569,18 @@ def check_docker_image_changed(added_or_modified_yml):
                 # changed.
                 return True, diff_line.split()[-1]
         return False, ''
+
+
+def get_from_version_at_update_rn(path: str):
+    """
+    Args:
+        path (str): path to yml file, if exists
+
+    Returns:
+            str. Fromversion if there fromversion key in the yml file.
+
+    """
+    if not os.path.isfile(path):
+        print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
+        return
+    return get_from_version(path)

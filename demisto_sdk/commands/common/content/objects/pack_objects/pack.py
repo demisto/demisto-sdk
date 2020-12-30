@@ -15,10 +15,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, Classifier, ClassifierMapper, Connection, Dashboard, DocFile,
-    IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
-    Layout, OldClassifier, PackIgnore, PackMetaData, Playbook, Readme,
-    ReleaseNote, Report, Script, SecretIgnore, Widget)
+    AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
+    Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
+    IndicatorType, Integration, Layout, OldClassifier, PackIgnore,
+    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
+    Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
@@ -43,7 +44,7 @@ class Pack:
             yield path_to_pack_object(object_path)
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
-        """Generic content objcets iterable generator
+        """Generic content objects iterable generator
 
         Args:
             dir_name: Directory name, for example: Tools.
@@ -180,5 +181,14 @@ class Pack:
         file = self._path / "README.md"
         if file.exists():
             obj = Readme(file)
+
+        return obj
+
+    @property
+    def author_image(self) -> Optional[AuthorImage]:
+        obj = None
+        file = self._path / "Author_image.png"
+        if file.exists():
+            obj = AuthorImage(file)
 
         return obj

@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -9,9 +8,9 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
-    KNOWN_FILE_STATUSES, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    TESTS_DIRECTORIES, FileType)
+    KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -62,16 +61,18 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               run_command)
+                                               open_id_set_file, run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from packaging import version
 
 
 class ValidateManager:
     def __init__(
-        self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-        print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
-        validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
-        silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False
+            self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
+            print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+            validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
+            silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
+            skip_id_set_creation=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,6 +88,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
+        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
@@ -106,15 +108,24 @@ class ValidateManager:
                                    FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
+        self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
                 click.echo('Running in a private repository')
             self.skip_conf_json = True
 
+        self.print_percent = False
+        self.completion_percentage = 0
+
         if validate_all:
             # No need to check docker images on build branch hence we do not check on -a mode
+            # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
+            self.skip_id_set_creation = skip_id_set_creation
+            self.print_percent = True
+
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if self.validate_in_id_set:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
@@ -204,9 +215,14 @@ class ValidateManager:
             conf_json_validator = ConfJsonValidator()
             all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
+        num_of_packs = len(os.listdir(PACKS_DIR))
+        count = 1
+
         for pack_name in os.listdir(PACKS_DIR):
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
+            count += 1
 
         return all(all_packs_valid)
 
@@ -297,12 +313,16 @@ class ValidateManager:
                 return False
 
         if not self.check_only_schema:
-            click.echo(f"\nValidating {file_path} as {file_type.value}")
+            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            if self.print_percent:
+                validation_print += f' [{self.completion_percentage}%]'
+            click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
                                                  ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
-                                                 old_file_path=old_file_path, branch_name=self.branch_name)
+                                                 old_file_path=old_file_path, branch_name=self.branch_name,
+                                                 is_new_file=not is_modified)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
@@ -341,13 +361,13 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified)
+            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -395,7 +415,6 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
-
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:
@@ -471,25 +490,56 @@ class ValidateManager:
 
         return True
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors)
-        return playbook_validator.is_valid_playbook(validate_rn=False)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified):
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=playbook_validator.current_file,
+                                                               is_modified=True,
+                                                               is_backward_check=False,
+                                                               validator=playbook_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
+        return playbook_validator.is_valid_playbook(validate_rn=False,
+                                                    id_set_file=self.id_set_file)
+
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks)
+
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=integration_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=integration_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks)
+
+        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
+                                                               file_path=structure_validator.file_path,
+                                                               current_file=script_validator.current_file,
+                                                               is_modified=is_modified,
+                                                               is_backward_check=self.is_backward_check,
+                                                               validator=script_validator)
+        if deprecated_result is not None:
+            return deprecated_result
+
         if is_modified and self.is_backward_check:
             return all([script_validator.is_valid_file(validate_rn=False),
                         script_validator.is_backward_compatible()])
@@ -596,7 +646,9 @@ class ValidateManager:
                                                                print_as_warnings=self.print_ignored_errors,
                                                                should_version_raise=should_version_raise,
                                                                validate_dependencies=not self.skip_dependencies,
-                                                               id_set_path=id_set_path)
+                                                               id_set_path=id_set_path,
+                                                               private_repo=self.is_external_repo,
+                                                               skip_id_set_creation=self.skip_id_set_creation)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -659,9 +711,6 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
-            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
@@ -683,7 +732,8 @@ class ValidateManager:
         for file_path in old_format_files:
             click.echo(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
-            if 'toversion' not in yaml_data:  # we only fail on old format if no toversion (meaning it is latest)
+            # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
+            if 'toversion' not in yaml_data and not yaml_data.get('deprecated'):
                 error_message, error_code = Errors.invalid_package_structure(file_path)
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False
@@ -736,14 +786,13 @@ class ValidateManager:
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
-            if not os.path.isfile(self.id_set_path):
-                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-            with open(self.id_set_path, 'r') as conf_file:
-                id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 set(map(lambda integration: integration.get('pack'), integrations)))
+
+            # APIModules pack is without a version and should not have RN
+            packs_that_should_have_new_rn.remove(API_MODULES_PACK)
 
         # new packs should not have RN
         packs_that_should_have_new_rn = packs_that_should_have_new_rn - self.new_packs
@@ -784,7 +833,9 @@ class ValidateManager:
             # on a non-master branch - we use '...' comparison range to check changes from origin/master.
             # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
             self.compare_type = '...'
-
+        elif self.branch_name == 'master':
+            self.compare_type == '..'
+            self.prev_ver = 'HEAD~1'
         else:
             self.skip_pack_rn_validation = True
             # on master branch - we use '..' comparison range to check changes from the last release branch.
@@ -801,6 +852,23 @@ class ValidateManager:
             prev_ver = 'origin/' + prev_ver
         return prev_ver
 
+    def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
+        """The function gets sets of files which were changed in the current branch and filters
+        out only the files that were changed in the current commit"""
+        all_changed_files = run_command(f'git diff --name-only --staged').split()
+        formatted_changed_files = set()
+
+        for file in all_changed_files:
+            if find_type(file) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
+                file = os.path.splitext(file)[0] + '.yml'
+            formatted_changed_files.add(file)
+
+        modified_files = modified_files.intersection(formatted_changed_files)
+        added_files = added_files.intersection(formatted_changed_files)
+        old_format_files = old_format_files.intersection(formatted_changed_files)
+        changed_meta_files = changed_meta_files.intersection(formatted_changed_files)
+        return modified_files, added_files, old_format_files, changed_meta_files
+
     def get_modified_and_added_files(self, compare_type, prev_ver):
         """Get the modified and added files from a specific branch
 
@@ -816,14 +884,6 @@ class ValidateManager:
                 click.echo("Collecting staged files only")
             else:
                 click.echo("Collecting all committed files")
-        if self.staged:
-            all_changed_files_string = run_command('git diff --name-status --staged')
-            modified_files_list, added_files_list, _, old_format_files, changed_meta_files = self.filter_changed_files(
-                all_changed_files_string, prev_ver
-            )
-            modified_packs = self.get_packs(modified_files_list).union(self.get_packs(old_format_files)).union(
-                self.get_packs(added_files_list))
-            return modified_files_list, added_files_list, old_format_files, changed_meta_files, modified_packs
 
         prev_ver = self.add_origin(prev_ver)
         # all committed changes of the current branch vs the prev_ver
@@ -837,19 +897,24 @@ class ValidateManager:
         if not self.is_circle:
             remote_configured = has_remote_configured()
             is_origin_demisto = is_origin_content_repo()
-            if remote_configured and not is_origin_demisto:
+
+            repo = 'upstream'
+            if self.is_external_repo:
+                repo = 'origin'
+
+            if (remote_configured and not is_origin_demisto) or self.is_external_repo:
                 if not self.no_configuration_prints:
                     click.echo("Collecting all local changed files from fork against the content master")
 
                 # only changes against prev_ver (without local changes)
 
                 all_changed_files_string = run_command(
-                    'git diff --name-status upstream/master...HEAD')
+                    f'git diff --name-status {repo}/master...HEAD')
                 modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
                     self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
                 # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command('git diff --name-status --no-merges upstream/master...HEAD')
+                outer_changes_files_string = run_command(f'git diff --name-status --no-merges {repo}/master...HEAD')
                 nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
                     self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
@@ -885,6 +950,10 @@ class ValidateManager:
             modified_files = modified_files - set(nc_deleted_files)
             added_files = added_files - set(nc_deleted_files)
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
+
+        if self.staged:
+            modified_files, added_files, old_format_files, changed_meta_files = \
+                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
 
         modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
             self.get_packs(added_files))
@@ -923,7 +992,7 @@ class ValidateManager:
                 # if the file is a code file - change path to
                 # the associated yml path to trigger release notes validation.
                 if file_status.lower() != 'd' and \
-                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                        find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
                         not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                     # naming convention - code file and yml file in packages must have same name.
                     file_path = os.path.splitext(file_path)[0] + '.yml'
@@ -1138,3 +1207,68 @@ class ValidateManager:
                 packs.add(pack)
 
         return packs
+
+    @staticmethod
+    def get_id_set_file(skip_id_set_creation, id_set_path):
+        """
+
+        Args:
+            skip_id_set_creation (bool): whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
+            id_set_path (str): id_set.json path file
+
+        Returns:
+            str: is_set file path
+        """
+        id_set = {}
+        if not os.path.isfile(id_set_path):
+            if not skip_id_set_creation:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
+        return id_set
+
+    def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
+                                      validator):
+        """If file is deprecated, validate it. Return None otherwise.
+
+        Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
+
+        Args:
+            file_type: (FileType) Type of file to validate.
+            file_path: (str) file path to validate.
+            current_file: (dict) file in json format to validate.
+            is_modified: (boolean) for whether the file was modified.
+            is_backward_check: (boolean) for whether to preform backwards compatibility validation.
+            validator: (ContentEntityValidator) validator object to run backwards compatibility validation from.
+
+        Returns:
+            True if current_file is deprecated and valid.
+            False if current_file is deprecated and invalid.
+            None if current_file is not deprecated.
+        """
+        if file_type == FileType.PLAYBOOK:
+            is_deprecated = "hidden" in current_file and current_file["hidden"]
+        else:
+            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+
+        toversion_is_old = "toversion" in current_file and \
+                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(OLDEST_SUPPORTED_VERSION)
+
+        if is_deprecated or toversion_is_old:
+            click.echo(f"Validating deprecated file: {file_path}")
+
+            is_valid_as_deprecated = True
+            if hasattr(validator, "is_valid_as_deprecated"):
+                is_valid_as_deprecated = validator.is_valid_as_deprecated()
+
+            if is_modified and is_backward_check:
+                return all([is_valid_as_deprecated, validator.is_backward_compatible()])
+
+            self.ignored_files.add(file_path)
+            if self.print_ignored_files:
+                click.echo(f"Skipping validation for: {file_path}")
+
+            return is_valid_as_deprecated
+        return None

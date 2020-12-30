@@ -55,6 +55,10 @@ class LintManager:
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
         self._all_packs = all_packs
+        # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
+        lint_no_packs_command = not git and not all_packs and not input
+        if lint_no_packs_command:
+            git = True
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
@@ -133,7 +137,10 @@ class LintManager:
         docker_client: docker.DockerClient = docker.from_env()
         try:
             docker_client.ping()
-        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
+            if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
+                # when running lint in content we fail if docker isn't available for some reason
+                raise ValueError("Docker engine not available and we are in content CI env. Can not run lint!!") from ex
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
@@ -158,9 +165,7 @@ class LintManager:
         pkgs: list
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
-        elif not all_packs and not git and not input:
-            pkgs = [Path().cwd()]
-        else:
+        else:  # specific pack as input, -i flag has been used
             pkgs = []
             for item in input.split(','):
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))

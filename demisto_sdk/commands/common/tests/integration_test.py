@@ -386,9 +386,12 @@ class TestIntegrationValidator:
         assert validator.is_checkbox_param_configured_correctly() is answer
 
     INVALID_CATEGORY = {"category": "Analytics & SIEMM"}
-    VALID_CATEGORY = {"category": "Endpoint"}
+    VALID_CATEGORY1 = {"category": "Endpoint"}
+    VALID_CATEGORY2 = {"category": "File Integrity Management"}
+
     IS_VALID_CATEGORY_INPUTS = [
-        (VALID_CATEGORY, True),
+        (VALID_CATEGORY1, True),
+        (VALID_CATEGORY2, True),
         (INVALID_CATEGORY, False)
     ]
 

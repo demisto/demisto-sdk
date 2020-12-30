@@ -160,18 +160,19 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-def get_remote_file(full_file_path, tag='master', return_content=False):
+def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
         full_file_path (string):The full path of the file.
         tag (string): The branch name. default is 'master'
         return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print (bool): whether to suppress the warning message in case the file was not found.
     Returns:
         The file content in the required format.
 
     """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.lstrip('origin/')
+    tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
@@ -179,9 +180,10 @@ def get_remote_file(full_file_path, tag='master', return_content=False):
         res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
     except Exception as exc:
-        print_warning('Could not find the old entity file under "{}".\n'
-                      'please make sure that you did not break backward compatibility. '
-                      'Reason: {}'.format(github_path, exc))
+        if not suppress_print:
+            print_warning('Could not find the old entity file under "{}".\n'
+                          'please make sure that you did not break backward compatibility. '
+                          'Reason: {}'.format(github_path, exc))
         return {}
     if return_content:
         return res.content
@@ -1163,19 +1165,6 @@ def retrieve_file_ending(file_path: str) -> str:
     return ''
 
 
-def get_depth(data: Any) -> int:
-    """
-    Returns the depth of a data object
-    :param data: The data
-    :return: The depth of the data object
-    """
-    if data and isinstance(data, dict):
-        return 1 + max(get_depth(data[key]) for key in data)
-    if data and isinstance(data, list):
-        return 1 + max(get_depth(element) for element in data)
-    return 0
-
-
 def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
@@ -1419,6 +1408,17 @@ def camel_to_snake(camel: str) -> str:
     return snake
 
 
+def open_id_set_file(id_set_path):
+    id_set = None
+    try:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    except IOError:
+        print_warning("Could not open id_set file")
+    finally:
+        return id_set
+
+
 def get_demisto_version(demisto_client: demisto_client) -> str:
     """
     Args:
@@ -1430,3 +1430,40 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     resp = demisto_client.generic_request('/about', 'GET')
     about_data = json.loads(resp[0].replace("'", '"'))
     return parse(about_data.get('demistoVersion'))
+
+
+def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
+    """
+       Converts a string representation of lists to a python list
+       Args:
+              arg: string or list of string.
+              separator: A string separator to separate the strings, the default is a comma.
+       Returns:
+             list, contains strings.
+
+    """
+    if not arg:
+        return []
+    if isinstance(arg, list):
+        return arg
+    if isinstance(arg, str):
+        if arg[0] == '[' and arg[-1] == ']':
+            return json.loads(arg)
+        return [s.strip() for s in arg.split(separator)]
+    return [arg]
+
+
+def is_v2_file(current_file, check_in_display=False):
+    """Check if the specific integration of script is a v2
+    Returns:
+        bool. Whether the file is a v2 file
+    """
+    # integrations should be checked via display field, other entities should check name field
+    if check_in_display:
+        name = current_file.get('display', '')
+    else:
+        name = current_file.get('name', '')
+    suffix = str(name[-2:].lower())
+    if suffix != "v2":
+        return False
+    return True

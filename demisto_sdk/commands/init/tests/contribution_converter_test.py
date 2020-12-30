@@ -146,11 +146,13 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     - The contrib_converter class instance is instantiated with the 'description' argument
       of 'test pack description here'
     - The contrib_converter class instance is instantiated with the 'author' argument of 'Octocat Smith'
+    - The contrib_converter class instance is instantiated with the 'gh_user' argument of 'octocat'
     Then
     - Ensure pack with directory name of 'TestPack' is created
     - Ensure that the pack's 'pack_metadata.json' file's 'name' field is 'Test Pack'
     - Ensure that the pack's 'pack_metadata.json' file's 'description' field is 'test pack description here'
     - Ensure that the pack's 'pack_metadata.json' file's 'author' field is 'Octocat Smith'
+    - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
     '''
     # Create all Necessary Temporary directories
@@ -179,8 +181,9 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     contribution_path = contrib_zip.created_zip_filepath
     description = 'test pack description here'
     author = 'Octocat Smith'
+    gh_user = 'octocat'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author)
+        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user)
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'
@@ -193,6 +196,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
         assert metadata.get('name', '') == name
         assert metadata.get('description', '') == description
         assert metadata.get('author', '') == author
+        assert metadata.get('githubUser', []) == [gh_user]
         assert not metadata.get('email')
 
 

@@ -414,9 +414,6 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_no_packs_command = not git and not all_packs
-    if lint_no_packs_command:
-        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,
@@ -675,11 +672,15 @@ def generate_test_playbook(**kwargs):
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
                            "directory.")
 @click.option(
-    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+    '--integration', is_flag=True, help="Create an Integration based on BaseIntegration template")
 @click.option(
-    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+    '--script', is_flag=True, help="Create a Script based on BaseScript example")
 @click.option(
     "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")

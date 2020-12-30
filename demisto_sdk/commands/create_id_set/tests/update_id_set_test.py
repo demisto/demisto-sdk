@@ -232,7 +232,7 @@ class TestDuplicates:
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details)
+            are the same kind (details) and they are from different pack
 
         When
             - checking for duplicate

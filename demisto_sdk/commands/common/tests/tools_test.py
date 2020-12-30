@@ -348,6 +348,13 @@ class TestGetFilesInDir:
                  f'{integration_instance_dir}/TestIntegration_testt.py']
         assert sorted(get_files_in_dir(integrations_dir, ['py'])) == sorted(files)
 
+    def test_recursive_pack(self):
+        pack_dir = 'demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack'
+        files = [f'{pack_dir}/Integrations/TestIntegration/TestIntegration.py',
+                 f'{pack_dir}/Integrations/TestIntegration/TestIntegration_testt.py',
+                 f'{pack_dir}/Scripts/TestScript/TestScript.py']
+        assert sorted(get_files_in_dir(pack_dir, ['py'])) == sorted(files)
+
 
 run_command_os_inputs = [
     ('ls', os.getcwd()),

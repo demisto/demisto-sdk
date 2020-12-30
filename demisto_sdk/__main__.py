@@ -279,6 +279,10 @@ def validate(config, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
+        # default validate to -g --post-commit
+        if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
+            kwargs['use_git'] = True
+            kwargs['post_commit'] = True
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
@@ -410,9 +414,6 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_no_packs_command = not git and not all_packs
-    if lint_no_packs_command:
-        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,

@@ -75,6 +75,7 @@ class Linter:
             "lint_unittest_files": [],
             "additional_requirements": [],
             "docker_engine": docker_engine,
+            "is_script": False,
             "commands": None
         }
         # Pack lint status object - visualize it
@@ -189,7 +190,7 @@ class Linter:
             yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-
+            self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
@@ -405,6 +406,7 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
+            myenv['is_script'] = str(self._facts['is_script'])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
             # as a result we can use the env vars as a getway.
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \

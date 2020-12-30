@@ -650,7 +650,7 @@ class ValidateManager:
                                                                private_repo=self.is_external_repo)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
-            click.secho(pack_errors, fg="bright_red")
+            click.secho(str(pack_errors), fg="bright_red")
             return False
 
         return True

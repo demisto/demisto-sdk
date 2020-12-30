@@ -16,6 +16,7 @@
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
 * Added support for Auto-Extract feature validation in incident types in the **validate** command.
 * Fixed an issue in the **lint** command where the *-i* flag was ignored.
+* Fixed an issue in the **lint** command where flake8 ran twice.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

@@ -74,7 +74,8 @@ class Linter:
             "is_long_running": False,
             "lint_unittest_files": [],
             "additional_requirements": [],
-            "docker_engine": docker_engine
+            "docker_engine": docker_engine,
+            "is_script": False,
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -188,7 +189,7 @@ class Linter:
             yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-
+            self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
@@ -403,6 +404,7 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
+            myenv['is_script'] = str(self._facts['is_script'])
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)

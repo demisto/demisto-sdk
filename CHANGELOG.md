@@ -14,7 +14,7 @@
 * Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
 * Added support for Auto-Extract feature validation in incident types in the **validate** command.
-
+* Fixed an issue in the **lint** command where the *-i* flag was ignored.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

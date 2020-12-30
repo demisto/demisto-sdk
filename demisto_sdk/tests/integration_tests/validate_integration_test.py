@@ -1275,7 +1275,7 @@ class TestIncidentTypeValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
         assert f'Validating {incident_type.path} as incidenttype' in result.stdout
-        assert 'ST110' in result.stdout  # wrong format error
+        assert 'IT103' in result.stdout  # wrong format error
 
         # check all errors are listed
         assert 'The `mode` field under `extractSettings` should be one of the following:\n' \

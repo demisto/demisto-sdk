@@ -261,7 +261,7 @@ class TestDuplicates:
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        assert has_duplicates == (True, True)
+        assert has_duplicates is True
 
     @staticmethod
     def test_has_no_duplicate():
@@ -295,7 +295,7 @@ class TestDuplicates:
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        assert has_duplicates == (False, False)
+        assert has_duplicates is False
 
 
 class TestIntegrations:

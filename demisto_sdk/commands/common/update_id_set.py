@@ -1053,7 +1053,7 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        self._id_set_dict.setdefault(object_type, []).append(obj)
+        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
@@ -1090,11 +1090,10 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
         for obj in object_list:
             obj_id = list(obj.keys())[0]
-            is_duplicate, legal_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
-                                                          external_object=obj)
+            is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
+                                         external_object=obj)
             if is_duplicate:
-                if not legal_duplicate:
-                    duplicates.append(obj_id)
+                duplicates.append(obj_id)
             else:
                 united_id_set.add_to_list(object_type, obj)
 
@@ -1427,10 +1426,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
     duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
 
     if external_object and len(duplicates) == 0:
-        return False, False
+        return False
 
     if not external_object and len(duplicates) == 1:
-        return False, False
+        return False
 
     if external_object:
         duplicates.append(external_object)
@@ -1450,10 +1449,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
-                return False, False
+                return False
 
         if dict1.get('pack') == dict2.get('pack'):
-            return True, True
+            return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
@@ -1465,9 +1464,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            return True, False
+            return True
 
-    return False, False
+    return False
 
 
 def sort(data):

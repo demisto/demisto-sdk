@@ -158,7 +158,6 @@ class OpenAPIIntegration:
                 headers.append({'Accept': function['produces'][0]})
             command['headers'] = headers
 
-            commands = []
             for arg in function['arguments']:
                 command['arguments'].append({
                     'name': str(arg.get('name', '')),
@@ -185,8 +184,7 @@ class OpenAPIIntegration:
             if 'unique_key' not in command:
                 command['unique_key'] = ''
 
-            commands.append(command)
-        configuration['commands'] = commands
+            configuration['commands'].append(command)  # type: ignore
 
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'

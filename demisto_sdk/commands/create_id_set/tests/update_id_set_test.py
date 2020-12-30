@@ -248,7 +248,8 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep.json'
+                'path': 'Layouts/layout-details-urlrep.json',
+                'pack': 'urlRep1'
             }
         })
 
@@ -256,7 +257,8 @@ class TestDuplicates:
             'urlRep': {
                 'typeID': 'urlRep',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep2.json'
+                'path': 'Layouts/layout-details-urlrep2.json',
+                'pack': 'urlRep2'
             }
         })
 

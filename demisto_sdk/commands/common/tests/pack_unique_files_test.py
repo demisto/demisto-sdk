@@ -176,6 +176,24 @@ class TestPackUniqueFilesValidator:
         assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 
+    def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
+        """
+        Given
+        -  skip_id_set_creation flag set to true.
+        -  No id_set file exists
+
+        When
+        - Running validate_pack_dependencies.
+
+        Then
+        - Ensure that the validation passes and that the skipping message is printed.
+        """
+        self.validator.skip_id_set_creation = True
+        res = self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        assert res
+        assert "Unable to find id_set.json file - skipping dependencies check" in capsys.readouterr().out
+        self.validator.skip_id_set_creation = False
+
     @pytest.mark.parametrize('usecases, is_valid', [
         ([], True),
         (['Phishing', 'Malware'], True),

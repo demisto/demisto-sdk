@@ -16,6 +16,7 @@
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
 * Added support for Auto-Extract feature validation in incident types in the **validate** command.
 * Fixed an issue in the **lint** command where the *-i* flag was ignored.
+* Improved **merge-id-sets** command to support merge between two ID sets that contain the same pack.
 * Fixed an issue in the **lint** command where flake8 ran twice.
 
 # 1.2.12

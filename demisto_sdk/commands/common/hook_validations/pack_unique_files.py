@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import Repo
+from git import Repo, GitCommandError
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -348,10 +348,25 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
-        old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
+        # if running on master branch in private repo - do not run the test
+        if current_repo.active_branch == 'master':
+            if not self.suppress_print:
+                click.secho("Running on master branch - skipping price change validation", fg="yellow")
+            return None
+        try:
+            old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
-        # if there was no past version
+        except GitCommandError as e:
+            if not self.suppress_print:
+                click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
+                            f"Skipping price change validation")
+            return None
+
+            # if there was no past version
         if not old_meta_file_content:
+            if not self.suppress_print:
+                click.secho("Unable to find previous pack_metadata.json file - skipping price change validation",
+                            fg="yellow")
             return None
 
         return json.loads(old_meta_file_content)

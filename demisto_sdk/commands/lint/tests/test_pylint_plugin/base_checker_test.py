@@ -572,6 +572,27 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_dict(node_a)
             self.checker.leave_module(node_a)
 
+    def test_commands_dismiss_for_feeds_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - For feeds which import from any ApiModule, the commands should not be checks as they are probably implemented
+              in the ApiModule itself.
+        Then:
+            - Ensure that no being added to the message errors of pylint for each appearance
+        """
+        self.checker.commands = ['integration-name-test1', 'integration-name-test2']
+        node_a = astroid.extract_node("""
+                from TestApiModule import *
+
+
+               """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(node_a)
+            self.checker.leave_module(node_a)
+
 
 class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
     """

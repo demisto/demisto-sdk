@@ -138,7 +138,6 @@ class Extractor:
                 self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                                 "Make sure to install it with: pip install autopep8.\n"
                                 "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
-            next_steps: str = ''
             if self.pipenv:
                 self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
                 try:

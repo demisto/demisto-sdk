@@ -182,16 +182,16 @@ class Extractor:
                                     f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
                 arg_path = os.path.relpath(output_path)
                 self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
-                next_steps = "Next steps: \n" \
+                next_steps: str = "Next steps: \n" \
                                   "* Install additional py packages for unit testing (if needed): cd {};" \
                                   " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
                 next_steps += "* Create unit tests\n" \
                               "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
-            next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
-                          "    git rm {}\n".format(self.input)
-            if found_readme:
-                next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
-            next_steps += "    git add {}\n".format(arg_path)
+                next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
+                              "    git rm {}\n".format(self.input)
+                if found_readme:
+                    next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
+                next_steps += "    git add {}\n".format(arg_path)
             self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
         return 0
 

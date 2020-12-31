@@ -830,7 +830,9 @@ class ValidateManager:
         # if running on release branch or master - check against last release.
         if self.branch_name == 'master' or self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
             self.skip_pack_rn_validation = True
-            self.prev_ver = get_content_release_identifier(self.branch_name)
+
+            self.prev_ver = 'HEAD~1' if self.branch_name == 'master' else \
+                get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
             if self.branch_name.startswith('20.'):

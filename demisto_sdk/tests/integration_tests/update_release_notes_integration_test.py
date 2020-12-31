@@ -8,6 +8,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from TestSuite.test_tools import ChangeCWD
 
 UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -333,7 +334,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     assert 'Changes were detected. Bumping FeedTAXII to version: 1.0.1' in result.stdout
 
 
-def test_update_release_on_matadata_change(demisto_client, mocker):
+def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     """
     Given
     - change only in metadata
@@ -344,21 +345,23 @@ def test_update_release_on_matadata_change(demisto_client, mocker):
     Then
     - Ensure not find changes which would belong in release notes .
     """
-    runner = CliRunner(mix_stderr=False)
+    pack = repo.create_pack('FeedAzureValid')
+    pack.pack_metadata.write_json(open('demisto_sdk/tests/test_files/1.pack_metadata.json').read())
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'demisto_sdk/tests/test_files/1.pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {pack.pack_metadata.path}, set()))
+    mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.git_tools.get_packs', return_value={'FeedAzureValid'})
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
-
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
     assert result.exit_code == 0
-    assert 'Either no changes were found in FeedAzureValid pack or the changes found should not be documented in the ' \
-           'release notes file If relevant changes were made,' \
-           ' please commit the changes and rerun the command' in result.stdout
+    assert 'No changes that require release notes were detected. If such changes were made, ' \
+           'please commit the changes and rerun the command' in result.stdout
 
 
 def test_update_release_notes_master_ahead_of_current(demisto_client, mocker):

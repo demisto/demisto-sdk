@@ -106,6 +106,7 @@ class MapperValidator(ContentEntityValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file) -> bool:
+        print(id_set_file['IncidentFields'])
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True
@@ -120,7 +121,7 @@ class MapperValidator(ContentEntityValidator):
             incident_fields = value.get('internalMapping', {})
 
             for inc_name, inc_info in incident_fields.items():
-                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields and inc_name.lower() not in content_incident_fields:
+                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
                     invalid_inc_fields_list.append(inc_name)
 
         if invalid_inc_fields_list:

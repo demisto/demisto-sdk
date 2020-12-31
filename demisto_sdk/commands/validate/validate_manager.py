@@ -1222,12 +1222,10 @@ class ValidateManager:
         """
         id_set = {}
         if not os.path.isfile(id_set_path):
-            print(f'id_set_path: {id_set_path}')
             if not skip_id_set_creation:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
         else:
             id_set = open_id_set_file(id_set_path)
-            print(id_set)
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,

@@ -121,7 +121,7 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -162,7 +162,7 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -646,7 +646,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
@@ -733,14 +733,14 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(**kwargs):
-    input_path = kwargs.get('input')
+    input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
     examples = kwargs.get('examples')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
-    insecure = kwargs.get('insecure')
-    verbose = kwargs.get('verbose')
+    insecure: bool = kwargs.get('insecure', False)
+    verbose: bool = kwargs.get('verbose', False)
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -867,9 +867,9 @@ def merge_id_sets_command(**kwargs):
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
-    pre_release = kwargs.get('pre_release')
+    pre_release: bool = kwargs.get('pre_release', False)
     is_all = kwargs.get('all')
-    text = kwargs.get('text')
+    text: str = kwargs.get('text', '')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
@@ -973,9 +973,9 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
-        assert "Packs/" in input_path
+        assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in pack_name
+        assert "/" not in str(pack_name)
     except AssertionError:
         print_error("Input path is not a pack. For example: Pack/HelloWorld")
         sys.exit(1)

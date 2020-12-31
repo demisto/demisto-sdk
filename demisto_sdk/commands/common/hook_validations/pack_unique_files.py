@@ -78,11 +78,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def get_errors(self, raw=False):
+    def get_errors(self, raw=False) -> str:
         """Get the dict version or string version for print"""
         errors = ''
         if raw:
-            errors = self._errors
+            errors = '\n  '.join(self._errors)
         elif self._errors:
             errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
@@ -397,7 +397,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self):
+    def validate_pack_unique_files(self) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()

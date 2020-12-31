@@ -240,8 +240,8 @@ class TestDeprecatedIntegration:
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
@@ -304,8 +304,8 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
 
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
@@ -1599,12 +1599,12 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml['version'] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                   [VALIDATE_CMD, '-g', '--print-ignored-files',
                                     '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
@@ -1662,12 +1662,12 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml['version'] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                   [VALIDATE_CMD, '-g', '--print-ignored-files',
                                     '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
@@ -1922,8 +1922,8 @@ class TestScriptDeprecatedValidation:
         valid_script_yml['comment'] = 'Deprecated.'
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -1983,12 +1983,12 @@ class TestScriptDeprecatedValidation:
         valid_script_yml['commonfields']['version'] = -2
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', script.yml.rel_path, '--no-docker-checks',
+                                   [VALIDATE_CMD, '-g', '--no-docker-checks',
                                     '--print-ignored-files', '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
@@ -2229,8 +2229,8 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2281,8 +2281,8 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2326,8 +2326,8 @@ class TestValidationUsingGit:
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2364,8 +2364,8 @@ class TestValidationUsingGit:
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -2408,7 +2408,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', side_effect=FileNotFoundError)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',

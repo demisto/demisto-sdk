@@ -416,6 +416,8 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
+        if not self.no_configuration_prints:
+            self.git_config_prints()
 
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git()
@@ -833,8 +835,6 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
-
-        self.git_config_prints()
 
     def git_config_prints(self):
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',

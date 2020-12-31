@@ -935,7 +935,6 @@ class TestValidators:
         validate_manager.always_valid = False
         validate_manager.setup_git_params()
         assert not validate_manager.always_valid
-        assert validate_manager.compare_type == '..'
         assert validate_manager.prev_ver == 'HEAD~1'
 
         mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')

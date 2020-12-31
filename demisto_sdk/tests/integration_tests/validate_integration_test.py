@@ -1134,6 +1134,161 @@ class TestIncidentTypeValidation:
         assert 'The field days needs to be a positive integer' in result.stdout
         assert result.exit_code == 1
 
+    def test_valid_incident_type_with_extract_fields(self, mocker, repo):
+        """
+        Given
+        - a valid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as an incident type.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "IP",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_incident_type_with_extract_fields_wrong_field_formats(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT102.
+        - Ensure all wrongly formatted extraction incident fields are listed in the output.
+        - Ensure all valid extraction fields are not listed
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT102' in result.stdout
+
+        # check all errors are listed
+        assert all([field in result.stdout for field in {"attachment", "category", "closenotes"}])
+
+        # sanity check
+        assert "closinguserid" not in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_incident_type_with_extract_fields_invalid_mode(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields which have an invalid mode field.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT103.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Invalid",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT103' in result.stdout  # wrong format error
+
+        # check all errors are listed
+        assert 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types ' \
+               'set in the auto-extraction settings.' in result.stdout
+        assert result.exit_code == 1
+
 
 class TestLayoutValidation:
     def test_valid_layout(self, mocker, repo):

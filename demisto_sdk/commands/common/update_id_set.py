@@ -1059,7 +1059,7 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        self._id_set_dict.setdefault(object_type, []).append(obj)
+        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
@@ -1456,6 +1456,11 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
+
+        # If they have the same pack name they actually the same entity.
+        # Added to support merge between two ID sets that contain the same pack.
+        if dict1.get('pack') == dict2.get('pack'):
+            return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0

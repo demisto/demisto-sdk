@@ -28,7 +28,8 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
                                                            run_with_mock)
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
-from demisto_sdk.commands.test_content.tools import update_server_configuration
+from demisto_sdk.commands.test_content.tools import (
+    is_redhat_instance, update_server_configuration)
 from slack import WebClient as SlackClient
 
 ENV_RESULTS_PATH = './env_results.json'
@@ -1153,19 +1154,22 @@ class TestContext:
     def __init__(self,
                  build_context: BuildContext,
                  playbook: TestPlaybook,
-                 client: DefaultApi):
+                 client: DefaultApi,
+                 is_instance_using_docker: bool):
         """
         Initializes the TestContext class
         Args:
             build_context: The context of the current build
             playbook: The TestPlaybook instance to run in the current test execution
             client: A demisto client instance to use for communication with the server
+            is_instance_using_docker: Indication whether the current instance is using docker or podman
         """
         self.build_context = build_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
+        self.is_instance_using_docker = is_instance_using_docker
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1410,7 +1414,9 @@ class TestContext:
             The result of the test.
         """
         playbook_state = self._run_incident_test()
-        if playbook_state == PB_Status.COMPLETED:
+        # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
+        # the threshold configurations.
+        if playbook_state == PB_Status.COMPLETED and self.is_instance_using_docker:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1559,6 +1565,7 @@ class ServerContext:
                                self.build_context.logging_module,
                                build_number=self.build_context.build_number,
                                branch_name=self.build_context.build_name)
+        self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
 
@@ -1587,7 +1594,10 @@ class ServerContext:
             except Empty:
                 continue
             self._configure_new_client()
-            test_executed = TestContext(self.build_context, test_playbook, self.client).execute_test(self.proxy)
+            test_executed = TestContext(self.build_context,
+                                        test_playbook,
+                                        self.client,
+                                        self.is_instance_using_docker).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -1598,7 +1608,7 @@ class ServerContext:
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.docker_ip + ':' + self.proxy.PROXY_PORT,
+        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
                                               server=self.server_url)

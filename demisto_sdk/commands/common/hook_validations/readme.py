@@ -245,7 +245,7 @@ class ReadMeValidator(BaseValidator):
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
                 ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                                        stdout=subprocess.PIPE, text=True)
-                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()
+                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
                     raise Exception(f'Failed starting mdx server. stdout: {line}.')

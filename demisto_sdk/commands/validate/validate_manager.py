@@ -219,7 +219,7 @@ class ValidateManager:
         count = 1
 
         for pack_name in os.listdir(PACKS_DIR):
-            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1
@@ -415,7 +415,6 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
-
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:
@@ -648,7 +647,8 @@ class ValidateManager:
                                                                should_version_raise=should_version_raise,
                                                                validate_dependencies=not self.skip_dependencies,
                                                                id_set_path=id_set_path,
-                                                               private_repo=self.is_external_repo)
+                                                               private_repo=self.is_external_repo,
+                                                               skip_id_set_creation=self.skip_id_set_creation)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -833,7 +833,9 @@ class ValidateManager:
             # on a non-master branch - we use '...' comparison range to check changes from origin/master.
             # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
             self.compare_type = '...'
-
+        elif self.branch_name == 'master':
+            self.compare_type == '..'
+            self.prev_ver = 'HEAD~1'
         else:
             self.skip_pack_rn_validation = True
             # on master branch - we use '..' comparison range to check changes from the last release branch.
@@ -975,7 +977,7 @@ class ValidateManager:
         old_format_files = set()
         changed_meta_files = set()
         for f in all_files:
-            file_data = list(filter(None, f.split('\t')))
+            file_data: list = list(filter(None, f.split('\t')))
 
             if not file_data:
                 continue
@@ -1110,7 +1112,7 @@ class ValidateManager:
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
 
     def get_error_ignore_list(self, pack_name):
-        ignored_errors_list = {}
+        ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
@@ -1133,9 +1135,11 @@ class ValidateManager:
         return ignored_errors_list
 
     @staticmethod
-    def get_current_working_branch():
+    def get_current_working_branch() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
+        if not branch_name_reg:
+            return ''
         return branch_name_reg.group(1)
 
     def get_content_release_identifier(self) -> Optional[str]:

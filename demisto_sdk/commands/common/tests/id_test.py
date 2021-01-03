@@ -16,7 +16,7 @@ def test_validness_in_set():
         obj_data,
     ]
 
-    assert validator.is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set), \
+    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set), \
         "The id validator couldn't find id as valid one"
 
 
@@ -38,7 +38,7 @@ def test_obj_not_found_in_set():
         actual_obj_set,
     ]
 
-    assert validator.is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
+    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
         "The id validator couldn't find id as valid one"
 
 
@@ -59,7 +59,7 @@ def test_obj_data_mismatch_in_set():
         actual_obj_set,
     ]
 
-    assert validator.is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
+    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
         "The id validator couldn't find id as valid one"
 
 
@@ -88,7 +88,7 @@ def test_is_incident_type_using_real_playbook__happy_flow():
         'fromversion': '5.0.0'}
     }]
 
-    assert validator.is_playbook_found(incident_type_data=incident_type_data) is True, \
+    assert validator._is_playbook_found(incident_type_data=incident_type_data) is True, \
         "The incident type default playbook id does not exist in the id set"
 
 
@@ -117,7 +117,7 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
         'fromversion': '5.0.0'}
     }]
 
-    assert validator.is_playbook_found(incident_type_data=incident_type_data) is False
+    assert validator._is_playbook_found(incident_type_data=incident_type_data) is False
 
 
 def test_is_non_real_command_found__happy_flow():
@@ -140,7 +140,7 @@ def test_is_non_real_command_found__happy_flow():
         'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
     }
 
-    assert validator.is_non_real_command_found(script_data=script_data) is False, \
+    assert validator._is_non_real_command_found(script_data=script_data) is False, \
         "The script has a non real command"
 
 
@@ -164,5 +164,5 @@ def test_is_non_real_command_found__bad_command_name():
         'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
     }
 
-    assert validator.is_non_real_command_found(script_data=script_data) is True, \
+    assert validator._is_non_real_command_found(script_data=script_data) is True, \
         "The script has a non real command"

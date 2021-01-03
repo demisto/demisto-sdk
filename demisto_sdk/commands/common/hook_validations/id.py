@@ -67,7 +67,7 @@ class IDSetValidator(BaseValidator):
 
             return id_set
 
-    def is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):
+    def _is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):
         """Check if the file is represented correctly in the id_set
 
         Args:
@@ -116,23 +116,23 @@ class IDSetValidator(BaseValidator):
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = OrderedDict(get_playbook_data(file_path))
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
+                is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
 
             elif re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = OrderedDict(get_playbook_data(file_path))
-                is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
+                is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
 
             elif re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
 
                 script_data = get_script_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, script_data, self.script_set)
+                is_valid = self._is_valid_in_id_set(file_path, script_data, self.script_set)
 
             elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
 
                 integration_data = get_integration_data(file_path)
-                is_valid = self.is_valid_in_id_set(file_path, integration_data, self.integration_set)
+                is_valid = self._is_valid_in_id_set(file_path, integration_data, self.integration_set)
 
             elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
@@ -140,7 +140,7 @@ class IDSetValidator(BaseValidator):
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = self.is_valid_in_id_set(yml_path, script_data, self.script_set)
+                is_valid = self._is_valid_in_id_set(yml_path, script_data, self.script_set)
 
         return is_valid
 
@@ -157,11 +157,11 @@ class IDSetValidator(BaseValidator):
 
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             incident_type_data = OrderedDict(get_incident_type_data(file_path))
-            is_valid = self.is_playbook_found(incident_type_data)
+            is_valid = self._is_playbook_found(incident_type_data)
 
         return is_valid
 
-    def is_playbook_found(self, incident_type_data):
+    def _is_playbook_found(self, incident_type_data):
         """Check if the playbook is in the id_set
 
         Args:
@@ -199,11 +199,11 @@ class IDSetValidator(BaseValidator):
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             script_data = get_script_data(file_path)
-            is_valid = not self.is_non_real_command_found(script_data)
+            is_valid = not self._is_non_real_command_found(script_data)
 
         return is_valid
 
-    def is_non_real_command_found(self, script_data):
+    def _is_non_real_command_found(self, script_data):
         """Check if the script depend-on section has a non real command
 
         Args:

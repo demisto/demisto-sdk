@@ -422,4 +422,3 @@ class TestEnsureUniquePackDirName:
         os.makedirs(os.path.join(crb_crvrt.packs_dir_path, new_pack_dir_name))
         incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(new_pack_dir_name)
         assert incremented_new_pack_dir_name == pack_name + 'V3'
-

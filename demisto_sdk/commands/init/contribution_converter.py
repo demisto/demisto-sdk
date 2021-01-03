@@ -309,23 +309,6 @@ class ContributionConverter:
                     if self.create_new:
                         self.generate_reamde_for_new_content_pack()
 
-                #     directories = get_child_directories(pack_subdir)
-                #     for directory in directories:
-                #         files = get_child_files(directory)
-                #         for file in files:
-                #             file_name = os.path.basename(file)
-                #             if file_name.startswith('integration') or file_name.startswith('script'):
-                #                 unified_file = file
-                #                 self.generate_readme_for_pack_content_item(unified_file)
-                #                 os.remove(unified_file)
-                #
-                # elif basename == 'Playbooks':
-                #     files = get_child_files(pack_subdir)
-                #     for file in files:
-                #         file_name = os.path.basename(file)
-                #         if file_name.endswith('.yml'):
-                #             self.generate_readme_for_pack_content_item(file)
-
             # format
             self.format_converted_pack()
         except Exception as e:

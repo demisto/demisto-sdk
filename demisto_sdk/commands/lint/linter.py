@@ -740,7 +740,9 @@ class Linter:
                 name=container_name,
                 image=test_image,
                 command=[
-                    build_pylint_command(self._facts["lint_files"], image_name=test_image)],
+                    build_pylint_command(
+                        self._facts["lint_files"], python_version=get_python_version_from_image(test_image))
+                ],
                 user=f"{os.getuid()}:4000",
                 detach=True,
                 environment=self._facts["env_vars"]

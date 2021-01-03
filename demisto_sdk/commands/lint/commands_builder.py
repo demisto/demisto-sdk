@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.lint.helpers import get_python_version_from_image
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
 from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import \
@@ -208,12 +207,12 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     return command
 
 
-def build_pylint_command(files: List[Path], image_name: Optional[str] = None) -> str:
+def build_pylint_command(files: List[Path], python_version: Optional[float] = None) -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
         files(List[Path]): files to execute lint
-        image_name: The docker image name.
+        python_version: The version of the python docker image.
     Returns:
        str: pylint command
     """
@@ -225,8 +224,9 @@ def build_pylint_command(files: List[Path], image_name: Optional[str] = None) ->
     # disable xsoar linter messages
     disable = ['bad-option-value']
     # TODO: remove when pylint will update its version to support py3.9
-    if image_name is not None and get_python_version_from_image(image_name) >= 3.9:
-        disable.append('unsubscriptable-object')
+    if python_version is not None:
+        if python_version >= 3.9:
+            disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"

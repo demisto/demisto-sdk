@@ -105,10 +105,7 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     for file_type in file_endings:
         if project_dir.endswith(file_type):
             return [project_dir]
-        if recursive:
-            files.extend([str(f) for f in project_path.rglob(f'*.{file_type}')])
-        else:
-            files.extend([str(f) for f in project_path.glob(f'*.{file_type}')])
+        files.extend([str(f) for f in glob_function(f'*.{file_type}')])
     return files
 
 

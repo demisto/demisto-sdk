@@ -106,7 +106,6 @@ class MapperValidator(ContentEntityValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file) -> bool:
-        print(id_set_file['IncidentFields'])
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True

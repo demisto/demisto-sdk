@@ -191,7 +191,7 @@ class Extractor:
                 if found_readme:
                     next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
                 next_steps += "    git add {}\n".format(arg_path)
-            self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+                self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
         return 0
 
     def extract_code(self, code_file_path) -> int:

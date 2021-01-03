@@ -181,7 +181,8 @@ class IDSetValidator(BaseValidator):
                     is_found = True
                     break
             if not is_found:  # add error message if not valid
-                error_message, error_code = Errors.invalid_playbook_id(incident_type_name, incident_type_playbook)
+                error_message, error_code = Errors.incident_type_non_existent_playbook_id(incident_type_name,
+                                                                                          incident_type_playbook)
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
         return is_found

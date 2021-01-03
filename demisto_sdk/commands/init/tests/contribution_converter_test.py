@@ -44,6 +44,84 @@ def contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFa
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
+    """
+    Create a fake contribution zip file and test that it is converted to a Pack correctly.
+    The pack already exists, checking the update flow.
+
+    Args:
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
+            used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+
+    Scenario: Simulate converting a contribution zip file, checking that the readme file is not updates in this scenario
+
+    Given
+    - A contribution zip file
+    - The zipfile contains a unified integration file
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure integration are componentized and in valid directory structure
+    - Ensure that readme file has not been changed.
+
+    """
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    # contrib_zip.create_zip(contribution_zip_dir)
+    contrib_zip.create_zip(contribution_zip_dir)
+
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+
+    name = 'Contrib Test Pack'
+    contribution_path = contrib_zip.created_zip_filepath
+    description = 'test pack description here'
+    author = 'Octocat Smith'
+    contrib_converter_inst = ContributionConverter(
+        name=name, contribution=contribution_path, description=description, author=author, create_new=False)
+    contrib_converter_inst.convert_contribution_to_pack()
+    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
+    assert converted_pack_path.exists()
+
+    integrations_path = converted_pack_path / 'Integrations'
+    sample_integration_path = integrations_path / 'Sample'
+    integration_yml = sample_integration_path / 'Sample.yml'
+    integration_py = sample_integration_path / 'Sample.py'
+    integration_description = sample_integration_path / 'Sample_description.md'
+    integration_image = sample_integration_path / 'Sample_image.png'
+    integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image,
+                         integration_readme_md]
+    for integration_file in integration_files:
+        assert integration_file.exists()
+    # In a new pack that part will exist.
+    with open(integration_readme_md, 'r') as f:
+        assert '''This is a sample integration
+    This integration was integrated and tested with version xx of Sample
+    ## Configure Sample on Cortex XSOAR''' not in f.read()
+
+    assert not unified_yml.exists()
+
+
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
     '''Create a fake contribution zip file and test that it is converted to a Pack correctly
 
@@ -102,12 +180,14 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     script_yml = sample_script_path / 'SampleScript.yml'
     script_py = sample_script_path / 'SampleScript.py'
     script_readme_md = sample_script_path / 'README.md'
+    unified_script = sample_script_path / 'script-script0.yml'
 
     assert scripts_path.exists()
     assert sample_script_path.exists()
     assert script_yml.exists()
     assert script_py.exists()
     assert script_readme_md.exists()
+    assert not unified_script.exists()
 
     integrations_path = converted_pack_path / 'Integrations'
     sample_integration_path = integrations_path / 'Sample'
@@ -116,10 +196,17 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_description = sample_integration_path / 'Sample_description.md'
     integration_image = sample_integration_path / 'Sample_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
     integration_files = [integration_yml, integration_py, integration_description, integration_image,
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    with open(integration_readme_md, 'r') as f:
+        assert '''This is a sample integration
+This integration was integrated and tested with version xx of Sample
+## Configure Sample on Cortex XSOAR''' in f.read()
+
+    assert not unified_yml.exists()
 
     playbooks_path = converted_pack_path / 'Playbooks'
     playbook_yml = playbooks_path / 'playbook-SamplePlaybook.yml'
@@ -335,3 +422,4 @@ class TestEnsureUniquePackDirName:
         os.makedirs(os.path.join(crb_crvrt.packs_dir_path, new_pack_dir_name))
         incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(new_pack_dir_name)
         assert incremented_new_pack_dir_name == pack_name + 'V3'
+

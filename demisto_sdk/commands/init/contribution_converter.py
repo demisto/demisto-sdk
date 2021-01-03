@@ -242,7 +242,6 @@ class ContributionConverter:
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
         """Runs the demisto-sdk's generate-docs command on the pack converted from the contribution zipfile"""
-        click.echo(f'Executing \'generate-docs\' on the restructured contribution zip files at "{yml_path}"')
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == 'integration':
@@ -251,6 +250,26 @@ class ContributionConverter:
             generate_script_doc(input=yml_path, examples=[])
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
+
+    def generate_reamde_for_new_content_pack(self):
+        for pack_subdir in get_child_directories(self.pack_dir_path):
+            basename = os.path.basename(pack_subdir)
+            if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
+                directories = get_child_directories(pack_subdir)
+                for directory in directories:
+                    files = get_child_files(directory)
+                    for file in files:
+                        file_name = os.path.basename(file)
+                        if file_name.startswith('integration') or file_name.startswith('script'):
+                            unified_file = file
+                            self.generate_readme_for_pack_content_item(unified_file)
+                            os.remove(unified_file)
+            elif basename == 'Playbooks':
+                files = get_child_files(pack_subdir)
+                for file in files:
+                    file_name = os.path.basename(file)
+                    if file_name.endswith('.yml'):
+                        self.generate_readme_for_pack_content_item(file)
 
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
@@ -287,22 +306,25 @@ class ContributionConverter:
                         pack_subdir, del_unified=False, source_mapping=files_to_source_mapping
                     )
 
-                    directories = get_child_directories(pack_subdir)
-                    for directory in directories:
-                        files = get_child_files(directory)
-                        for file in files:
-                            file_name = os.path.basename(file)
-                            if file_name.startswith('integration') or file_name.startswith('script'):
-                                unified_file = file
-                                self.generate_readme_for_pack_content_item(unified_file)
-                                os.remove(unified_file)
+                    if self.create_new:
+                        self.generate_reamde_for_new_content_pack()
 
-                elif basename == 'Playbooks':
-                    files = get_child_files(pack_subdir)
-                    for file in files:
-                        file_name = os.path.basename(file)
-                        if file_name.endswith('.yml'):
-                            self.generate_readme_for_pack_content_item(file)
+                #     directories = get_child_directories(pack_subdir)
+                #     for directory in directories:
+                #         files = get_child_files(directory)
+                #         for file in files:
+                #             file_name = os.path.basename(file)
+                #             if file_name.startswith('integration') or file_name.startswith('script'):
+                #                 unified_file = file
+                #                 self.generate_readme_for_pack_content_item(unified_file)
+                #                 os.remove(unified_file)
+                #
+                # elif basename == 'Playbooks':
+                #     files = get_child_files(pack_subdir)
+                #     for file in files:
+                #         file_name = os.path.basename(file)
+                #         if file_name.endswith('.yml'):
+                #             self.generate_readme_for_pack_content_item(file)
 
             # format
             self.format_converted_pack()

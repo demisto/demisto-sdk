@@ -100,11 +100,12 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     :return: The path of files with file_endings in the current dir
     """
     files = []
-    pattern: str = '/**/*.' if recursive else '/*.'
+    project_path = Path(project_dir)
+    glob_function = project_path.rglob if recursive else project_path.glob
     for file_type in file_endings:
         if project_dir.endswith(file_type):
             return [project_dir]
-        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
+        files.extend([str(f) for f in glob_function(f'*.{file_type}')])
     return files
 
 

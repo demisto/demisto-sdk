@@ -63,99 +63,58 @@ def test_obj_data_mismatch_in_set():
         "The id validator couldn't find id as valid one"
 
 
-def test_duplicated_id_same_set():
-    validator = IDSetValidator(configuration=CONFIG, is_test_run=True)
+def test_is_incident_type_using_real_playbook__happy_flow():
+    """
+    Given
+        - incident type which has an existing default playbook id.
+        - id_set.json
 
-    obj_data = {
-        "test": {
-            "name": "test"
-        }
-    }
-    actual_obj_set = {
-        "test": {
-            "name": "test",
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
+    When
+        - is_playbook_found is called with an id_set.json
 
-    validator.id_set = {
-        "testing_set": obj_set
-    }
-    assert validator.is_id_duplicated(obj_id="test", obj_data=obj_data, obj_type="testing_set") is False, \
-        "The id validator found the id as duplicated although it is not"
-
-
-def test_duplicated_id_different_set():
+    Then
+        - Ensure that the playbook is in the id set.
+    """
     validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    obj_data = {
-        "test": {
-            "name": "test"
+    incident_type_data = {
+        "Zimperium Event": {
+            "playbooks": "Zimperium Incident Enrichment"
         }
     }
-    actual_obj_set = {
-        "test": {
-            "name": "test",
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
+    validator.playbook_set = [{'Zimperium Incident Enrichment': {
+        'name': 'Zimperium Incident Enrichment',
+        'file_path': 'Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml',
+        'fromversion': '5.0.0'}
+    }]
 
-    validator.id_set = {
-        "not_testing_set": obj_set
-    }
-    assert validator.is_id_duplicated(obj_id="test", obj_data=obj_data, obj_type="testing_set"), \
-        "The id validator couldn't find id as duplicated one(In different sets)"
+    assert validator.is_playbook_found(incident_type_data=incident_type_data) is True, \
+        "The incident type default playbook id does not exist in the id set"
 
 
-def test_duplicated_id_with_same_versioning_diff_data():
+def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
+    """
+    Given
+        - incident type which has a non existing default playbook id.
+        - id_set.json
+
+    When
+        - is_playbook_found is called with an id_set.json
+
+    Then
+        - Ensure that the playbook is in the id set.
+    """
     validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    obj_data = {
-        "test": {
-            "name": "test"
+    incident_type_data = {
+        "Zimperium Event": {
+            "playbooks": "a fake playbook id"
         }
     }
-    actual_obj_set = {
-        "test": {
-            "name": "not test",
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
+    validator.playbook_set = [{'Zimperium Incident Enrichment': {
+        'name': 'Zimperium Incident Enrichment',
+        'file_path': 'Packs/Zimperium/Playbooks/Zimperium_Incident_Enrichment.yml',
+        'fromversion': '5.0.0'}
+    }]
 
-    validator.id_set = {
-        "not_testing_set": obj_set
-    }
-    assert validator.is_id_duplicated(obj_id="test", obj_data=obj_data, obj_type="testing_set"), \
-        "The id validator couldn't find id as duplicated one(In different sets)"
-
-
-def test_duplicated_id_with_diff_versioning():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
-
-    obj_data = {
-        "test": {
-            "name": "test",
-            "fromversion": "1.0.0"
-        }
-    }
-    actual_obj_set = {
-        "test": {
-            "name": "test",
-            "toversion": "2.0.0"
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
-
-    validator.id_set = {
-        "testing_set": obj_set
-    }
-    assert validator.is_id_duplicated(obj_id="test", obj_data=obj_data, obj_type="testing_set"), \
-        "The id validator couldn't find id as duplicated one(In different sets)"
+    assert validator.is_playbook_found(incident_type_data=incident_type_data) is False

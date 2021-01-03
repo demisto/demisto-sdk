@@ -2,16 +2,14 @@ import json
 import os
 import re
 from collections import OrderedDict
-from distutils.version import LooseVersion
 
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (collect_ids,
-                                               get_script_or_integration_id)
-from demisto_sdk.commands.common.update_id_set import (get_integration_data,
+from demisto_sdk.commands.common.update_id_set import (get_incident_type_data,
+                                                       get_integration_data,
                                                        get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
@@ -146,100 +144,68 @@ class IDSetValidator(BaseValidator):
 
         return is_valid
 
-    def is_id_duplicated(self, obj_id: str, obj_data: OrderedDict, obj_type: str):
-        """Check if the given ID already exist in the system.
-
-        Args:
-            obj_id (string): The new ID we want to add.
-            obj_data (dict): Dictionary that holds the extracted details from the given file.
-            obj_type (string): the type of the new file.
-
-        Returns:
-            bool. Whether the ID already exist in the system or not.
-        """
-        is_duplicated = False
-        obj_data_list = list(obj_data.values())
-        dict_value = obj_data_list[0]
-        obj_toversion = dict_value.get('toversion', '99.99.99')
-        obj_fromversion = dict_value.get('fromversion', '0.0.0')
-
-        for section, section_data in self.id_set.items():
-            for instance in section_data:
-                instance_id = list(instance.keys())[0]
-                instance_to_version = instance[instance_id].get('toversion', '99.99.99')
-                instance_from_version = instance[instance_id].get('fromversion', '0.0.0')
-                if obj_id == instance_id:
-                    if section != obj_type and LooseVersion(obj_fromversion) < LooseVersion(instance_to_version):
-                        is_duplicated = True
-                        break
-
-                    elif obj_fromversion == instance_from_version and obj_toversion == instance_to_version:
-                        if instance[instance_id] != obj_data[obj_id]:
-                            is_duplicated = True
-                            break
-
-                    elif (LooseVersion(obj_fromversion) <= LooseVersion(instance_to_version) and
-                          (LooseVersion(obj_toversion) >= LooseVersion(instance_from_version))):
-                        is_duplicated = True
-                        break
-
-        if is_duplicated:
-            error_message, error_code = Errors.duplicated_id(obj_id)
-            if not self.handle_error(error_message, error_code, file_path='id_set.json'):
-                return False
-
-        return is_duplicated
-
-    def is_file_has_used_id(self, file_path):
-        """Check if the ID of the given file already exist in the system.
+    def is_incident_type_using_real_playbook(self, file_path):
+        """Check if the incident type is using an existing playbook
 
         Args:
             file_path (string): Path to the file.
 
         Returns:
-            bool. Whether the ID of the given file already exist in the system or not.
+            bool. Whether the incident type is using an existing playbook.
         """
-        is_used = False
-        is_json_file = False
-        if self.is_circle:
-            if re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                obj_type = self.TEST_PLAYBOOK_SECTION
-                obj_id = collect_ids(file_path)
-                obj_data = get_playbook_data(file_path)
+        is_valid = True
 
-            elif re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE):
-                obj_type = self.SCRIPTS_SECTION
-                obj_id = get_script_or_integration_id(file_path)
-                obj_data = get_script_data(file_path)
+        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+            incident_type_data = OrderedDict(get_incident_type_data(file_path))
+            is_valid = self.is_playbook_found(incident_type_data)
 
-            elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
+        return is_valid
 
-                obj_type = self.INTEGRATION_SECTION
-                obj_id = get_script_or_integration_id(file_path)
-                obj_data = get_integration_data(file_path)
+    def is_playbook_found(self, incident_type_data):
+        """Check if the playbook is in the id_set
 
-            elif re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                obj_type = self.PLAYBOOK_SECTION
-                obj_id = collect_ids(file_path)
-                obj_data = get_playbook_data(file_path)
+        Args:
+            incident_type_data (dict): Dictionary that holds the extracted details from the given incident type.
 
-            elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
+        Returns:
+            bool. Whether the playbook is in the id_set or not.
+        """
+        incident_type_name = list(incident_type_data.keys())[0]
+        incident_type_playbook = incident_type_data[incident_type_name].get('playbooks')
+        if incident_type_playbook:
+            # setting initially to false, if the default playbook is in the id_set, it will be valid
+            is_found = False
+            for checked_playbook in self.playbook_set:
+                checked_playbook_name = list(checked_playbook.keys())[0]
+                if incident_type_playbook == checked_playbook_name:
+                    is_found = True
+                    break
+            if not is_found:  # add error message if not valid
+                error_message, error_code = Errors.invalid_playbook_id(incident_type_name, incident_type_playbook)
+                self.handle_error(error_message, error_code, file_path="id_set.json")
 
-                unifier = Unifier(os.path.dirname(os.path.dirname(file_path)))
-                yml_path, code = unifier.get_script_or_integration_package_data()
+        return is_found
 
-                obj_data = get_script_data(yml_path, script_code=code)
+    def is_script_using_real_command(self, file_path):
+        """Check if the script is using a non dev command
 
-                obj_type = self.SCRIPTS_SECTION
-                obj_id = get_script_or_integration_id(yml_path)
+        Args:
+            file_path (string): Path to the file.
 
-            else:  # In case of a json file
-                is_json_file = True
+        Returns:
+            bool. Whether the script is using a real command.
+        """
+        is_valid = True
+        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+            script_data = get_script_data(file_path)
+            depends_on_commands = script_data.get('depends_on')
+            for command in depends_on_commands:
+                if command != 'test-module' and not command.endswith('-test'):
+                    if 'dev' in command or command.endswith('copy'):
+                        is_valid = False
+                        error_message, error_code = Errors.invalid_script_using_commands(script_data.get('name'),
+                                                                                         command)
+                        self.handle_error(error_message, error_code, file_path="id_set.json")
+                        break
 
-            if not is_json_file:
-                is_used = self.is_id_duplicated(obj_id, OrderedDict(obj_data), obj_type)
-
-        return is_used
+        return is_valid

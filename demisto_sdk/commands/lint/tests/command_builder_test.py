@@ -109,12 +109,13 @@ def test_build_pylint_command(files):
     assert expected == output
 
 
-def test_build_pylint_command_3_9_docker():
+def test_build_pylint_command_3_9_docker(mocker):
     """Build Pylint command"""
     from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    mocker.patch('demisto_sdk.commands.lint.commands_builder.get_python_version_from_image', return_value=3.9)
     NamedFile = namedtuple('File', 'name')
     files = [NamedFile('file1')]
-    output = build_pylint_command(files, 3.9)
+    output = build_pylint_command(files, 'demisto/python3:3.9.1.3421')
     assert output.endswith(files[0].name)
     assert 'disable=bad-option-value,unsubscriptable-object' in output
 

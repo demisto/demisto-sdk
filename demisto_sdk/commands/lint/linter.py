@@ -741,7 +741,7 @@ class Linter:
                 image=test_image,
                 command=[
                     build_pylint_command(
-                        self._facts["lint_files"], python_version=get_python_version_from_image(test_image))
+                        self._facts["lint_files"], docker_image=test_image)
                 ],
                 user=f"{os.getuid()}:4000",
                 detach=True,

@@ -106,7 +106,7 @@ def build_tasks_graph(playbook_data):
                 print_warning(f'{playbook_data.get("id")}: No such task {leaf} in playbook')
                 continue
 
-            leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])
+            leaf_next_tasks = sum(leaf_task.get('nexttasks', {}).values(), [])  # type: ignore
 
             for task_id in leaf_next_tasks:
                 task = tasks.get(task_id)
@@ -484,12 +484,13 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
                     get_values(item)
             return
 
-        for key, value in current_object.items():
-            if isinstance(value, (dict, list)):
-                get_values(value)
-            elif key in keys_to_search:
-                if isinstance(value, (str, int, float, bool)):
-                    values[key].append(value)
+        if isinstance(current_object, dict):
+            for key, value in current_object.items():
+                if isinstance(value, (dict, list)):
+                    get_values(value)
+                elif key in keys_to_search:
+                    if isinstance(value, (str, int, float, bool)):
+                        values[key].append(value)
 
     get_values(json_object)
     return values
@@ -560,7 +561,7 @@ def get_incident_field_data(path, incidents_types_list):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    all_associated_types = set()
+    all_associated_types: set = set()
     all_scripts = set()
 
     associated_types = json_data.get('associatedTypes')
@@ -572,7 +573,7 @@ def get_incident_field_data(path, incidents_types_list):
         all_associated_types = all_associated_types.union(set(system_associated_types))
 
     if 'all' in all_associated_types:
-        all_associated_types = [list(incident_type.keys())[0] for incident_type in incidents_types_list]
+        all_associated_types = {list(incident_type.keys())[0] for incident_type in incidents_types_list}
 
     scripts = json_data.get('script')
     if scripts:
@@ -601,7 +602,7 @@ def get_indicator_type_data(path, all_integrations):
     toversion = json_data.get('toVersion')
     reputation_command = json_data.get('reputationCommand')
     pack = get_pack_name(path)
-    all_scripts = set()
+    all_scripts: set = set()
     associated_integrations = set()
 
     for field in ['reputationScriptName', 'enhancementScriptNames']:
@@ -695,7 +696,7 @@ def get_mapper_data(path):
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     incidents_types = set()
-    incidents_fields = set()
+    incidents_fields: set = set()
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -1036,7 +1037,7 @@ class IDSetType(Enum):
 
     @classmethod
     def has_value(cls, value):
-        return value in cls._value2member_map_
+        return value in cls._value2member_map_  # type: ignore
 
 
 class IDSet:
@@ -1053,7 +1054,7 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        self._id_set_dict.setdefault(object_type, []).append(obj)
+        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
@@ -1450,6 +1451,11 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
+
+        # If they have the same pack name they actually the same entity.
+        # Added to support merge between two ID sets that contain the same pack.
+        if dict1.get('pack') == dict2.get('pack'):
+            return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0

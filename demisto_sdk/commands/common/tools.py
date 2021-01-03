@@ -148,7 +148,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     if is_silenced:
         p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(command.split(), cwd=cwd)
+        p = Popen(command.split(), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:
@@ -173,7 +173,7 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
 
     """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.lstrip('origin/')
+    tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
@@ -538,7 +538,7 @@ def old_get_latest_release_notes_text(rn_path):
         # get release notes up to release header
         new_rn = new_rn[0].rstrip()
     else:
-        new_rn = rn.replace(UNRELEASE_HEADER, '')
+        new_rn = rn.replace(UNRELEASE_HEADER, '')  # type: ignore
 
     return new_rn if new_rn else None
 

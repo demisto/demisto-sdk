@@ -223,6 +223,7 @@ def build_pylint_command(files: List[Path], image_name: Optional[str] = None) ->
     command += " -E"
     # disable xsoar linter messages
     disable = ['bad-option-value']
+    # TODO: remove when pylint will update its version to support py3.9
     if image_name is not None and 'demisto/python3:3.9' in image_name:
         disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"

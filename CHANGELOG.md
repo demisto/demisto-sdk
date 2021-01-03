@@ -1,6 +1,6 @@
 # Changelog
 * SDK repository is now mypy check_untyped_defs complaint.
-
+The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
 # 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).

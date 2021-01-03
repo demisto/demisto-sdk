@@ -1,5 +1,6 @@
 # Changelog
 * SDK repository is now mypy check_untyped_defs complaint.
+* Added an option for **format** to run on a whole pack.
 
 # 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.

@@ -188,7 +188,7 @@ class IDSetValidator(BaseValidator):
         return is_found
 
     def is_script_using_real_command(self, file_path):
-        """Check if the script is using a non dev command
+        """Check if the script is using a non real command
 
         Args:
             file_path (string): Path to the file.
@@ -199,14 +199,25 @@ class IDSetValidator(BaseValidator):
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             script_data = get_script_data(file_path)
-            depends_on_commands = script_data.get('depends_on')
-            for command in depends_on_commands:
-                if command != 'test-module' and not command.endswith('-test'):
-                    if 'dev' in command or command.endswith('copy'):
-                        is_valid = False
-                        error_message, error_code = Errors.invalid_script_using_commands(script_data.get('name'),
-                                                                                         command)
-                        self.handle_error(error_message, error_code, file_path="id_set.json")
-                        break
+            is_valid = not self.is_non_real_command_found(script_data)
 
         return is_valid
+
+    def is_non_real_command_found(self, script_data):
+        """Check if the script depend-on section has a non real command
+
+        Args:
+            script_data (dict): Dictionary that holds the extracted details from the given script.
+
+        Returns:
+            bool. Whether the script has a non real command.
+        """
+        depends_on_commands = script_data.get('depends_on')
+        for command in depends_on_commands:
+            if command != 'test-module' and not command.endswith('-test'):
+                if 'dev' in command or command.endswith('copy'):
+                    error_message, error_code = Errors.invalid_script_using_commands(script_data.get('name'),
+                                                                                     command)
+                    self.handle_error(error_message, error_code, file_path="id_set.json")
+                    return True
+        return False

@@ -2,7 +2,7 @@ import json
 import os
 import sys
 from io import StringIO
-from shutil import copyfile, rmtree
+from shutil import copyfile
 from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
@@ -90,7 +90,7 @@ class TestValidators:
         os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
-                rmtree(dir_to_delete)
+                os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),

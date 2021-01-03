@@ -1,5 +1,6 @@
 # Changelog
 * SDK repository is now mypy check_untyped_defs complaint.
+* The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
 * Added an option for **format** to run on a whole pack.
 
 # 1.2.13

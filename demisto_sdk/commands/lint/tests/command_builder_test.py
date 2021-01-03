@@ -1,3 +1,4 @@
+from collections import namedtuple
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -105,6 +106,18 @@ def test_build_pylint_command(files):
     expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
+    assert expected == output
+
+
+def test_build_pylint_command_3_9_docker():
+    """Build Pylint command"""
+    from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    NamedFile = namedtuple('File', 'name')
+    files = [NamedFile('file1')]
+    output = build_pylint_command(files, image_name='demisto/python3:3.9.1.14969')
+    expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=bad-option-value,unsubscriptable-object -d duplicate-string-formatting-argument" \
+               f" --generated-members=requests.packages.urllib3,requests.codes.ok {files[0].name}"
     assert expected == output
 
 

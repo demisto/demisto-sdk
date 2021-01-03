@@ -1,7 +1,7 @@
 # STD python packages
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
@@ -207,12 +207,12 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     return command
 
 
-def build_pylint_command(files: List[Path]) -> str:
+def build_pylint_command(files: List[Path], image_name: Optional[str] = None) -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
         files(List[Path]): files to execute lint
-
+        image_name: The docker image name.
     Returns:
        str: pylint command
     """
@@ -222,7 +222,10 @@ def build_pylint_command(files: List[Path]) -> str:
     # Prints only errors
     command += " -E"
     # disable xsoar linter messages
-    command += " --disable=bad-option-value"
+    disable = ['bad-option-value']
+    if image_name is not None and 'demisto/python3:3.9' in image_name:
+        disable.append('unsubscriptable-object')
+    command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger

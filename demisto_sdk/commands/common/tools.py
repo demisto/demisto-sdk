@@ -1427,9 +1427,12 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     Returns:
         the server version of the Demisto instance.
     """
-    resp = demisto_client.generic_request('/about', 'GET')
-    about_data = json.loads(resp[0].replace("'", '"'))
-    return parse(about_data.get('demistoVersion'))
+    try:
+        resp = demisto_client.generic_request('/about', 'GET')
+        about_data = json.loads(resp[0].replace("'", '"'))
+        return parse(about_data.get('demistoVersion'))
+    except Exception:
+        return "0"
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

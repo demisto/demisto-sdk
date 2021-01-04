@@ -108,6 +108,8 @@ def format_manager(input: str = None,
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
                 continue
+            if dirname.endswith('test_data') or dirname.endswith('doc_imgs'):
+                continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value

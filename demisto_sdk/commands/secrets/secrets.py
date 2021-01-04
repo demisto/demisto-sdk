@@ -144,7 +144,7 @@ class SecretsValidator(object):
         all_files = files_string.split('\n')
         text_files_list = set()
         for file_name in all_files:
-            file_data = list(filter(None, file_name.split('\t')))
+            file_data: list = list(filter(None, file_name.split('\t')))
             if not file_data:
                 continue
             file_status = file_data[0]
@@ -252,8 +252,8 @@ class SecretsValidator(object):
         return file_content
 
     @staticmethod
-    def create_temp_white_list(file_contents):
-        temp_white_list = set()
+    def create_temp_white_list(file_contents) -> set:
+        temp_white_list: set = set()
         context_paths = re.findall(r'contextPath: (\S+\.+\S+)', file_contents)
         for context_path in context_paths:
             context_path = context_path.split('.')
@@ -325,7 +325,7 @@ class SecretsValidator(object):
         return potential_secrets, false_positives
 
     @staticmethod
-    def calculate_shannon_entropy(data):
+    def calculate_shannon_entropy(data) -> float:
         """Algorithm to determine the randomness of a given data.
         Higher is more random/complex, most English words will yield in average result of 3
         :param data: could be either a list/dict or a string.
@@ -333,7 +333,7 @@ class SecretsValidator(object):
         """
         if not data:
             return 0
-        entropy = 0
+        entropy = 0.0
         # each unicode code representation of all characters which are considered printable
         for char in (ord(c) for c in string.printable):
             # probability of event X
@@ -366,7 +366,7 @@ class SecretsValidator(object):
         files_while_list = []
         with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
             secrets_white_list_file = json.load(secrets_white_list_file)
-            for name, white_list in secrets_white_list_file.items():
+            for name, white_list in secrets_white_list_file.items():  # type: ignore
                 if name == 'iocs':
                     for sublist in white_list:
                         ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
@@ -476,11 +476,12 @@ class SecretsValidator(object):
         return file_contents
 
     @staticmethod
-    def get_branch_name():
+    def get_branch_name() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
-        branch_name = branch_name_reg.group(1)
-        return branch_name
+        if not branch_name_reg:
+            return ''
+        return branch_name_reg.group(1)
 
     def find_secrets(self):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)

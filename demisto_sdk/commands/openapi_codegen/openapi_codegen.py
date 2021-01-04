@@ -49,7 +49,7 @@ class OpenAPIIntegration:
     def __init__(self, file_path: str, base_name: str, command_prefix: str, context_path: str,
                  unique_keys: Optional[str] = None, root_objects: Optional[str] = None,
                  verbose: bool = False, fix_code: bool = False, configuration: Optional[dict] = None):
-        self.json = None
+        self.json: dict = {}
         self.file_path = file_path
         self.base_name = base_name
         self.command_prefix = command_prefix
@@ -62,8 +62,8 @@ class OpenAPIIntegration:
         self.base_path = ''
         self.name = ''
         self.description = ''
-        self.definitions = None
-        self.components = None
+        self.definitions: dict = {}
+        self.components: dict = {}
         self.reference: dict = {}
         self.functions: list = []
         self.parameters: list = []
@@ -147,16 +147,17 @@ class OpenAPIIntegration:
                 'context_path': function.get('context_path', ''),
                 'root_object': function.get('root_object', '')
             }
+
             headers = []
-            if function['consumes'] and JSON_TYPE_HEADER not in function['consumes']\
+            if function['consumes'] and JSON_TYPE_HEADER not in function['consumes'] \
                     and ALL_TYPE_HEADER not in function['consumes']:
                 headers.append({'Content-Type': function['consumes'][0]})
 
-            if function['produces'] and JSON_TYPE_HEADER not in function['produces']\
+            if function['produces'] and JSON_TYPE_HEADER not in function['produces'] \
                     and ALL_TYPE_HEADER not in function['produces']:
                 headers.append({'Accept': function['produces'][0]})
-
             command['headers'] = headers
+
             for arg in function['arguments']:
                 command['arguments'].append({
                     'name': str(arg.get('name', '')),
@@ -183,7 +184,7 @@ class OpenAPIIntegration:
             if 'unique_key' not in command:
                 command['unique_key'] = ''
 
-            configuration['commands'].append(command)
+            configuration['commands'].append(command)  # type: ignore
 
         configuration['code_type'] = 'python'
         configuration['code_subtype'] = 'python3'
@@ -459,22 +460,22 @@ class OpenAPIIntegration:
         """
         url = self.configuration['url']
         params = [XSOARIntegration.Configuration(display=f'Server URL (e.g. {url})',
-                                                         name='url',
-                                                         defaultvalue=url,
-                                                         type_=0,
-                                                         required=True)]
+                                                 name='url',
+                                                 defaultvalue=url,
+                                                 type_=0,
+                                                 required=True)]
         if not isinstance(self.configuration['auth'], list):
             self.configuration['auth'] = [self.configuration['auth']]
         if BEARER_AUTH_TYPE in self.configuration['auth']:
             params.append(XSOARIntegration.Configuration(display='API Key',
-                                                                 name='api_key',
-                                                                 required=True,
-                                                                 type_=4))
+                                                         name='api_key',
+                                                         required=True,
+                                                         type_=4))
         if BASIC_AUTH_TYPE in self.configuration['auth']:
             params.append(XSOARIntegration.Configuration(display='Username',
-                                                                 name='credentials',
-                                                                 required=True,
-                                                                 type_=9))
+                                                         name='credentials',
+                                                         required=True,
+                                                         type_=9))
         if self.configuration.get('fetch_incidents', False):
             params.extend([
                 XSOARIntegration.Configuration(display='Fetch incidents',
@@ -507,13 +508,13 @@ class OpenAPIIntegration:
                                                required=True,
                                                options=['Low', 'Medium', 'High', 'Critical'])])
         params.extend([XSOARIntegration.Configuration(display='Trust any certificate (not secure)',
-                                                              name='insecure',
-                                                              type_=8,
-                                                              required=False),
+                                                      name='insecure',
+                                                      type_=8,
+                                                      required=False),
                        XSOARIntegration.Configuration(display='Use system proxy settings',
-                                                              name='proxy',
-                                                              type_=8,
-                                                              required=False)])
+                                                      name='proxy',
+                                                      type_=8,
+                                                      required=False)])
         return params
 
     def get_yaml_commands(self) -> list:

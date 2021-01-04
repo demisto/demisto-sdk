@@ -131,64 +131,19 @@ class Content:
 
         return descriptor_object
 
-    def modified_packs(self, prev_ver='master', committed_only=False, staged_only=False) -> Dict[str, Pack]:
-        content_repo: Repo = self.git()
+    def modified_files(self, prev_ver: str = 'master', committed_only: bool = False, staged_only: bool = False,
+                       no_auto_stage: bool = False) -> Set[Path]:
+        """Gets all the files that are recognized by git as modified against the prev_ver.
 
-        # staging all local changes
-        self._stage_files(content_repo)
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            committed_only (bool): Whether to return only committed files.
+            staged_only (bool): Whether to return only staged files.
+            no_auto_stage (bool): Whether to perform auto-staging to untracked content entities.
 
-        committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
-                         for item in content_repo.remote().refs[prev_ver].commit.diff(
-            content_repo.active_branch).iter_change_type('M')}
-
-        committed: Dict = {path.name: Pack(path) for path in committed_set}
-
-        if committed_only:
-            return committed
-
-        staged_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2])) for item
-                      in content_repo.head.commit.diff(
-            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}
-
-        staged: Dict = {path.name: Pack(path) for path in staged_set}
-
-        if staged_only:
-            return staged
-
-        staged.update(committed)
-
-        return staged
-
-    def added_packs(self, prev_ver='master', committed_only=False, staged_only=False) -> Dict[str, Pack]:
-        content_repo: Repo = self.git()
-
-        # staging all local changes
-        self._stage_files(content_repo)
-
-        committed_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2]))
-                         for item in content_repo.remote().refs[prev_ver].commit.diff(
-            content_repo.active_branch).iter_change_type('A')}
-
-        committed: Dict = {path.name: Pack(path) for path in committed_set}
-
-        if committed_only:
-            return committed
-
-        staged_set = {Path(os.path.join(*Path(item.a_path).parts[:Path(item.a_path).parts.index('Packs') + 2])) for item
-                      in content_repo.head.commit.diff(
-            paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
-
-        staged: Dict = {path.name: Pack(path) for path in staged_set}
-
-        if staged_only:
-            return staged
-
-        staged.update(committed)
-
-        return staged
-
-    def modified_files(self, prev_ver='master', committed_only=False, staged_only=False,
-                       no_auto_stage=False) -> Set[Path]:
+        Returns:
+            Set: A set of Paths to the modified files.
+        """
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
@@ -233,7 +188,19 @@ class Content:
 
         return staged.union(committed) - renamed
 
-    def added_files(self, prev_ver='master', committed_only=False, staged_only=False, no_auto_stage=False) -> Set[Path]:
+    def added_files(self, prev_ver: str = 'master', committed_only: bool = False, staged_only: bool = False,
+                    no_auto_stage: bool = False) -> Set[Path]:
+        """Gets all the files that are recognized by git as added against the prev_ver.
+
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            committed_only (bool): Whether to return only committed files.
+            staged_only (bool): Whether to return only staged files.
+            no_auto_stage (bool): Whether to perform auto-staging to untracked content entities.
+
+        Returns:
+            Set: A set of Paths to the added files.
+        """
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
@@ -273,8 +240,20 @@ class Content:
 
         return staged.union(committed)
 
-    def renamed_files(self, prev_ver='master', committed_only=False, staged_only=False,
-                      no_auto_stage=False) -> Set[Tuple[Path, Path]]:
+    def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False, staged_only: bool = False,
+                      no_auto_stage: bool = False) -> Set[Tuple[Path, Path]]:
+        """Gets all the files that are recognized by git as renamed against the prev_ver.
+
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            committed_only (bool): Whether to return only committed files.
+            staged_only (bool): Whether to return only staged files.
+            no_auto_stage (bool): Whether to perform auto-staging to untracked content entities.
+
+        Returns:
+            Set: A set of Tuples of Paths to the renamed files -
+            first element being the old file path and the second is the new.
+        """
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
@@ -306,7 +285,12 @@ class Content:
 
         return staged.union(committed)
 
-    def _stage_files(self, content_repo):
+    def _stage_files(self, content_repo: Repo):
+        """Stage all untracked content entities.
+
+        Args:
+            content_repo (Repo): A content repo object.
+        """
         git_status = content_repo.git.status('--short', '-u').split('\n')
 
         # in case there are no local changes - return
@@ -323,7 +307,16 @@ class Content:
                     continue
 
     @staticmethod
-    def _extract_existing_paths(git_status):
+    def _extract_existing_paths(git_status: list) -> list:
+        """Extract the paths to files found in the git status command output.
+        Removing old file paths of renamed files and file statuses.
+
+        Args:
+            git_status (list): Git status output.
+
+        Returns:
+            list: A list of the path to the existing files. x
+        """
         extracted_paths = []
         for line in git_status:
             extracted_paths.append(line.split()[-1])
@@ -331,7 +324,16 @@ class Content:
         return extracted_paths
 
     @staticmethod
-    def _get_all_changed_files(content_repo, prev_ver):
+    def _get_all_changed_files(content_repo: Repo, prev_ver: str) -> Set[Path]:
+        """Get all the files changed in the current branch without status distinction.
+
+        Args:
+            content_repo (Repo): Content repo object.
+            prev_ver (str): The base branch against which the comparison is made.
+
+        Returns:
+            Set: of Paths to files changed in the current branch.
+        """
         origin_prev_ver = prev_ver if prev_ver.startswith('origin/') else f"origin/{prev_ver}"
         return {Path(os.path.join(item)) for item
                 in content_repo.git.diff('--name-only',

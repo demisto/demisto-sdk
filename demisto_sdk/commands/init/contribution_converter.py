@@ -241,7 +241,12 @@ class ContributionConverter:
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
-        """Runs the demisto-sdk's generate-docs command on the pack converted from the contribution zipfile"""
+        """ Runs the demisto-sdk's generate-docs command on a pack content item
+
+        Args:
+            yml_path: str: Content item yml path.
+
+        """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == 'integration':
@@ -252,6 +257,9 @@ class ContributionConverter:
             generate_playbook_doc(yml_path)
 
     def generate_reamde_for_new_content_pack(self):
+        """
+        Generate the readme file for a new content pack.
+        """
         for pack_subdir in get_child_directories(self.pack_dir_path):
             basename = os.path.basename(pack_subdir)
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:

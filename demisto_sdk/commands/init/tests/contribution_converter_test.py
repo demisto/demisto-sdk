@@ -55,7 +55,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
         get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
-    Scenario: Simulate converting a contribution zip file, checking that the readme file is not updates in this scenario
+    Scenario: Simulate converting a contribution zip file.
 
     Given
     - A contribution zip file
@@ -83,7 +83,6 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
-    # contrib_zip.create_zip(contribution_zip_dir)
     contrib_zip.create_zip(contribution_zip_dir)
 
     # target_dir should have been deleted after creation of the zip file
@@ -121,7 +120,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
-    '''Create a fake contribution zip file and test that it is converted to a Pack correctly
+    """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
@@ -139,7 +138,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Converting the zipfile to a valid Pack structure
     Then
     - Ensure script and integration are componentized and in valid directory structure
-    '''
+    """
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -199,8 +198,6 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
-    with open(integration_readme_md, 'r') as f:
-        assert 'This integration was integrated and tested with version xx of Sample' in f.read()
 
     assert not unified_yml.exists()
 

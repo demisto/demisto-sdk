@@ -112,7 +112,8 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
         assert integration_file.exists()
     # In a new pack that part will exist.
     with open(integration_readme_md, 'r') as f:
-        assert 'This integration was integrated and tested with version xx of Sample' not in f.read()
+        readme_file = f.read()
+        assert 'This integration was integrated and tested with version xx of Sample' not in readme_file
 
     assert not unified_yml.exists()
 
@@ -198,6 +199,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    with open(integration_readme_md, 'r') as f:
+        readme_file = f.read()
+        assert 'This integration was integrated and tested with version xx of Sample' in readme_file
 
     assert not unified_yml.exists()
 

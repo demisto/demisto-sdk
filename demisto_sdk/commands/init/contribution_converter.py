@@ -316,15 +316,6 @@ class ContributionConverter:
 
                     if self.create_new:
                         self.generate_reamde_for_new_content_pack()
-                    else:
-                        directories = get_child_directories(pack_subdir)
-                        for directory in directories:
-                            files = get_child_files(directory)
-                            for file in files:
-                                file_name = os.path.basename(file)
-                                if file_name.startswith('integration') or file_name.startswith('script'):
-                                    unified_file = file
-                                    os.remove(unified_file)
 
             # format
             self.format_converted_pack()

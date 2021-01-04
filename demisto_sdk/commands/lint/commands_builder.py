@@ -212,7 +212,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
         files(List[Path]): files to execute lint
-        docker_version: The name of the python docker image.
+        docker_version: The version of the python docker image.
     Returns:
        str: pylint command
     """

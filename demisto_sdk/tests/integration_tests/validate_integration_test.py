@@ -240,8 +240,8 @@ class TestDeprecatedIntegration:
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
@@ -304,8 +304,8 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
 
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
@@ -1129,6 +1129,161 @@ class TestIncidentTypeValidation:
         assert 'The field days needs to be a positive integer' in result.stdout
         assert result.exit_code == 1
 
+    def test_valid_incident_type_with_extract_fields(self, mocker, repo):
+        """
+        Given
+        - a valid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as an incident type.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "IP",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_incident_type_with_extract_fields_wrong_field_formats(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT102.
+        - Ensure all wrongly formatted extraction incident fields are listed in the output.
+        - Ensure all valid extraction fields are not listed
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT102' in result.stdout
+
+        # check all errors are listed
+        assert all([field in result.stdout for field in {"attachment", "category", "closenotes"}])
+
+        # sanity check
+        assert "closinguserid" not in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_incident_type_with_extract_fields_invalid_mode(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields which have an invalid mode field.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT103.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Invalid",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT103' in result.stdout  # wrong format error
+
+        # check all errors are listed
+        assert 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types ' \
+               'set in the auto-extraction settings.' in result.stdout
+        assert result.exit_code == 1
+
 
 class TestLayoutValidation:
     def test_valid_layout(self, mocker, repo):
@@ -1444,12 +1599,12 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml['version'] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                   [VALIDATE_CMD, '-g', '--print-ignored-files',
                                     '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
@@ -1507,12 +1662,12 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml['version'] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                   [VALIDATE_CMD, '-g', '--print-ignored-files',
                                     '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
@@ -1767,8 +1922,8 @@ class TestScriptDeprecatedValidation:
         valid_script_yml['comment'] = 'Deprecated.'
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -1828,12 +1983,12 @@ class TestScriptDeprecatedValidation:
         valid_script_yml['commonfields']['version'] = -2
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+                                                                                         set(), set()))
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
-                                   [VALIDATE_CMD, '-g', '-i', script.yml.rel_path, '--no-docker-checks',
+                                   [VALIDATE_CMD, '-g', '--no-docker-checks',
                                     '--print-ignored-files', '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
@@ -2074,8 +2229,8 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2126,8 +2281,8 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, added_files,
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2171,8 +2326,8 @@ class TestValidationUsingGit:
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2209,8 +2364,8 @@ class TestValidationUsingGit:
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, set(),
-                                                                                           set(), set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -2253,7 +2408,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
-        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', side_effect=FileNotFoundError)
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', side_effect=FileNotFoundError)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',

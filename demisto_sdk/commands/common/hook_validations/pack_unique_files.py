@@ -33,6 +33,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
+SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -77,11 +78,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def get_errors(self, raw=False):
+    def get_errors(self, raw=False) -> str:
         """Get the dict version or string version for print"""
         errors = ''
         if raw:
-            errors = self._errors
+            errors = '\n  '.join(self._errors)
         elif self._errors:
             errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
@@ -177,7 +178,9 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
             self._is_approved_tags(),
-            self._is_price_changed()
+            self._is_price_changed(),
+            self._is_approved_tags(),
+            self._is_valid_support_type()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -286,6 +289,25 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def _is_valid_support_type(self) -> bool:
+        """Checks whether the support type is valid in the pack metadata.
+
+        Returns:
+            bool: True if the support type is valid, otherwise False
+
+        """
+        try:
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
+                self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
+                return False
+
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
+                return False
+
+        return True
+
     def _is_approved_usecases(self) -> bool:
         """Checks whether the usecases in the pack metadata are approved
 
@@ -328,13 +350,26 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
+
+        # if running on master branch in private repo - do not run the test
+        if current_repo.active_branch == 'master':
+            if not self.suppress_print:
+                click.secho("Running on master branch - skipping price change validation", fg="yellow")
+            return None
         try:
-            old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
-        except GitCommandError:
-            old_meta_file_content = None
+            old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
+
+        except GitCommandError as e:
+            if not self.suppress_print:
+                click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
+                            f"Skipping price change validation")
+            return None
 
         # if there was no past version
         if not old_meta_file_content:
+            if not self.suppress_print:
+                click.secho("Unable to find previous pack_metadata.json file - skipping price change validation",
+                            fg="yellow")
             return None
 
         return json.loads(old_meta_file_content)
@@ -347,7 +382,7 @@ class PackUniqueFilesValidator(BaseValidator):
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
         old_meta_file_content = self.get_master_private_repo_meta_file(metadata_file_path)
 
-        # if there was no past version
+        # if there was no past version or running on master branch
         if not old_meta_file_content:
             return True
 
@@ -362,7 +397,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self):
+    def validate_pack_unique_files(self) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -383,10 +418,12 @@ class PackUniqueFilesValidator(BaseValidator):
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation)
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+            )
 
             if not first_level_dependencies:
-                click.secho("No id_set.json file found - skipping dependencies check\n", fg='yellow')
+                if not self.suppress_print:
+                    click.secho("Unable to find id_set.json file - skipping dependencies check", fg="yellow")
                 return True
 
             for core_pack in core_pack_list:

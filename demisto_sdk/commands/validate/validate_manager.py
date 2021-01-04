@@ -226,7 +226,7 @@ class ValidateManager:
         count = 1
 
         for pack_name in os.listdir(PACKS_DIR):
-            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")
+            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1
@@ -424,6 +424,8 @@ class ValidateManager:
         """Runs validation on only changed packs/files (g)
         """
         self.setup_git_params()
+        if not self.no_configuration_prints:
+            self.git_config_prints()
 
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git()
@@ -836,13 +838,13 @@ class ValidateManager:
         # if running on release branch or master - check against last release.
         if self.branch_name == 'master' or self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
             self.skip_pack_rn_validation = True
-            self.prev_ver = get_content_release_identifier(self.branch_name)
+
+            self.prev_ver = 'HEAD~1' if self.branch_name == 'master' else \
+                get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
-
-        self.git_config_prints()
 
     def git_config_prints(self):
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
@@ -893,8 +895,8 @@ class ValidateManager:
         return changed_metadata_files
 
     def filter_to_relevant_files(self, file_set):
-        filtered_set = set()
-        old_format_files = set()
+        filtered_set: set = set()
+        old_format_files: set = set()
         for path in file_set:
             old_path = None
             if isinstance(path, tuple):
@@ -978,7 +980,7 @@ class ValidateManager:
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
 
     def get_error_ignore_list(self, pack_name):
-        ignored_errors_list = {}
+        ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
@@ -1001,9 +1003,11 @@ class ValidateManager:
         return ignored_errors_list
 
     @staticmethod
-    def get_current_working_branch():
+    def get_current_working_branch() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
+        if not branch_name_reg:
+            return ''
         return branch_name_reg.group(1)
 
     def get_content_release_identifier(self) -> Optional[str]:

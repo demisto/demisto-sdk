@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
+from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -175,6 +176,24 @@ class TestPackUniqueFilesValidator:
         assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 
+    def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
+        """
+        Given
+        -  skip_id_set_creation flag set to true.
+        -  No id_set file exists
+
+        When
+        - Running validate_pack_dependencies.
+
+        Then
+        - Ensure that the validation passes and that the skipping message is printed.
+        """
+        self.validator.skip_id_set_creation = True
+        res = self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        self.validator.skip_id_set_creation = False  # reverting to default for next tests
+        assert res
+        assert "Unable to find id_set.json file - skipping dependencies check" in capsys.readouterr().out
+
     @pytest.mark.parametrize('usecases, is_valid', [
         ([], True),
         (['Phishing', 'Malware'], True),
@@ -240,3 +259,119 @@ class TestPackUniqueFilesValidator:
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('type, is_valid', [
+        ('community', True),
+        ('partner', True),
+        ('xsoar', True),
+        ('someName', False),
+        ('test', False),
+        ('developer', True)
+    ])
+    def test_is_valid_support_type(self, repo, type, is_valid):
+        """
+        Given:
+            - Pack with support type in the metadata file.
+
+        When:
+            - Running _is_valid_support_type.
+
+        Then:
+            - Ensure True when the support types are valid, else False with the right error message.
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: type
+        })
+
+        self.validator.pack_path = pack.path
+        assert self.validator._is_valid_support_type() == is_valid
+        if not is_valid:
+            assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
+                   self.validator.get_errors()
+
+    def test_get_master_private_repo_meta_file_running_on_master(self, mocker, repo, capsys):
+        """
+        Given:
+            - A repo which runs on master branch
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
+
+        class MyRepo:
+            active_branch = 'master'
+
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
+        res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+        assert not res
+        assert "Running on master branch - skipping price change validation" in capsys.readouterr().out
+
+    def test_get_master_private_repo_meta_file_getting_git_error(self, repo, capsys, mocker):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - git.show command raises GitCommandError.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
+
+        class MyRepo:
+            active_branch = 'not-master'
+
+            class gitClass:
+                def show(self, var):
+                    raise GitCommandError("A", "B")
+
+            git = gitClass()
+
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
+        res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+        assert not res
+        assert "Got an error while trying to connect to git" in capsys.readouterr().out
+
+    def test_get_master_private_repo_meta_file_file_not_found(self, mocker, repo, capsys):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - git.show command returns None.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure result is None and the appropriate skipping message is printed.
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
+
+        class MyRepo:
+            active_branch = 'not-master'
+
+            class gitClass:
+                def show(self, var):
+                    return None
+
+            git = gitClass()
+
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
+        res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+        assert not res
+        assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
+               capsys.readouterr().out

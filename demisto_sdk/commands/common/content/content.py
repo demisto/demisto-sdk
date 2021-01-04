@@ -20,8 +20,6 @@ from demisto_sdk.commands.common.tools import find_type
 from git import GitCommandError, InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
-CIRCLE_CONTENT_ROOT_PATH = os.path.abspath(os.path.join(__file__, '../../..'))
-
 
 class Content:
     def __init__(self, path: Union[str, Path]):
@@ -194,12 +192,18 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
+        # get all renamed files - some of these can be identified as modified by git,
+        # but we want to identify them as renamed - so will remove them from the returned files.
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
+        # get all committed files identified as modified which are changed from prev_ver.
+        # this can result in extra files identified which were not touched on this branch.
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('M')}
 
+        # identify all files that were touched on this branch regardless of status
+        # intersect these with all the committed files to identify the committed modified files.
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
         committed = committed.intersection(all_branch_changed_files)
 
@@ -210,10 +214,15 @@ class Content:
         if not no_auto_stage:
             self._stage_files(content_repo)
 
+        # get all the files that are staged on the branch and identified as modified.
         staged = {Path(os.path.join(item.a_path)) for item
                   in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}
 
+        # If a file is Added in regards to prev_ver
+        # and is then modified locally after being committed - it is identified as modified
+        # but we want to identify the file as Added (its actual status against prev_ver) -
+        # so will remove it from the staged modified files.
         committed_added = {Path(os.path.join(item.a_path)) for item in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('A')}
 
@@ -228,12 +237,15 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
+        # get all committed files identified as added which are changed from prev_ver.
+        # this can result in extra files identified which were not touched on this branch.
         committed = {Path(os.path.join(item.a_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('A')}
 
+        # identify all files that were touched on this branch regardless of status
+        # intersect these with all the committed files to identify the committed added files.
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
-
         committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
@@ -243,9 +255,14 @@ class Content:
         if not no_auto_stage:
             self._stage_files(content_repo)
 
+        # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('A')}
 
+        # If a file is Added in regards to prev_ver
+        # and is then modified locally after being committed - it is identified as modified
+        # but we want to identify the file as Added (its actual status against prev_ver) -
+        # so will added it from the staged added files.
         committed_added_locally_modified = {Path(os.path.join(item.a_path)) for item in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('M')}.intersection(committed)
 
@@ -261,12 +278,15 @@ class Content:
         prev_ver = prev_ver.replace('origin/', '')
         content_repo: Repo = self.git()
 
+        # get all committed files identified as renamed which are changed from prev_ver.
+        # this can result in extra files identified which were not touched on this branch.
         committed = {(Path(item.a_path), Path(item.b_path)) for item
                      in content_repo.remote().refs[prev_ver].commit.diff(
             content_repo.active_branch).iter_change_type('R')}
 
+        # identify all files that were touched on this branch regardless of status
+        # intersect these with all the committed files to identify the committed added files.
         all_branch_changed_files = self._get_all_changed_files(content_repo, prev_ver)
-
         committed = {tuple_item for tuple_item in committed if tuple_item[1] in all_branch_changed_files}
 
         if committed_only:
@@ -276,6 +296,7 @@ class Content:
         if not no_auto_stage:
             self._stage_files(content_repo)
 
+        # get all the files that are staged on the branch and identified as renamed.
         staged = {(Path(item.a_path), Path(item.b_path)) for item
                   in content_repo.head.commit.diff(
             paths=list((Path().cwd() / 'Packs').glob('*/'))).iter_change_type('R')}
@@ -294,6 +315,7 @@ class Content:
 
         all_paths = self._extract_existing_paths(git_status)
         for file_path in all_paths:
+            # if the file is identified as a content entity stage it
             if find_type(file_path):
                 try:
                     content_repo.git.add(file_path)

@@ -44,6 +44,7 @@ class TestCreateImage:
 
 class TestPylint:
     def test_run_pylint_no_errors(self, mocker, linter_obj: Linter):
+        mocker.patch('demisto_sdk.commands.lint.linter.get_python_version_from_image', return_value=3.7)
         # Expected values
         exp_container_exit_code = 0
         exp_container_log = ""
@@ -67,6 +68,7 @@ class TestPylint:
                                         (32, "test", 2, "")])
     def test_run_pylint_with_errors(self, mocker, linter_obj: Linter, exp_container_exit_code: int, exp_container_log: str,
                                     exp_exit_code: int, exp_output: str):
+        mocker.patch('demisto_sdk.commands.lint.linter.get_python_version_from_image', return_value=3.7)
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
@@ -85,6 +87,7 @@ class TestPytest:
                                         (2, 1),
                                         (5, 0)])
     def test_run_pytest(self, mocker, linter_obj: Linter, exp_container_exit_code: int, exp_exit_code: int):
+        mocker.patch('demisto_sdk.commands.lint.linter.get_python_version_from_image', return_value=3.7)
         exp_test_json = mocker.MagicMock()
 
         # Docker client mocking
@@ -114,6 +117,7 @@ class TestRunLintInContainer:
                                         (False, False, False, False, TYPE_PYTHON)])
     def test_run_one_lint_check_success(self, mocker, linter_obj, lint_files, no_test: bool, no_pylint: bool,
                                         no_pwsh_analyze: bool, no_pwsh_test: bool, pack_type: str):
+        mocker.patch('demisto_sdk.commands.lint.linter.get_python_version_from_image', return_value=3.7)
         mocker.patch.dict(linter_obj._facts, {
             "images": [["image", "3.7"]],
             "test": True,

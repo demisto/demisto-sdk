@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -854,14 +855,13 @@ class ValidateManager:
                 click.echo("Running on committed and staged files")
 
     def get_changed_files_from_git(self):
-        content_object = Content.from_cwd()
-        modified_files = content_object.modified_files(prev_ver=self.prev_ver,
-                                                       committed_only=self.is_circle, staged_only=self.staged,
-                                                       no_auto_stage=self.no_auto_stage)
-        added_files = content_object.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                 staged_only=self.staged, no_auto_stage=self.no_auto_stage)
-        renamed_files = content_object.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                     staged_only=self.staged, no_auto_stage=self.no_auto_stage)
+        git_util = GitUtil(repo=Content.git())
+        modified_files = git_util.modified_files(prev_ver=self.prev_ver,
+                                                 committed_only=self.is_circle, staged_only=self.staged)
+        added_files = git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                           staged_only=self.staged)
+        renamed_files = git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                               staged_only=self.staged)
 
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)

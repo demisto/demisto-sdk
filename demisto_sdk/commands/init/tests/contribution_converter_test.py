@@ -62,6 +62,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     - The zipfile contains a unified integration file
     When
     - Converting the zipfile to a valid Pack structure
+    - The contribution is an update to an existing pack
     Then
     - Ensure integration are componentized and in valid directory structure
     - Ensure that readme file has not been changed.

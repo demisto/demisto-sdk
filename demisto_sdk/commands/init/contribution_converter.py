@@ -245,7 +245,6 @@ class ContributionConverter:
 
         Args:
             yml_path: str: Content item yml path.
-
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
@@ -256,9 +255,9 @@ class ContributionConverter:
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
 
-    def generate_reamde_for_new_content_pack(self):
+    def generate_reamdes_for_new_content_pack(self):
         """
-        Generate the readme file for a new content pack.
+        Generate the readme files for a new content pack.
         """
         for pack_subdir in get_child_directories(self.pack_dir_path):
             basename = os.path.basename(pack_subdir)
@@ -315,7 +314,7 @@ class ContributionConverter:
                     )
 
                     if self.create_new:
-                        self.generate_reamde_for_new_content_pack()
+                        self.generate_reamdes_for_new_content_pack()
 
             # format
             self.format_converted_pack()

@@ -117,11 +117,11 @@ class IDSetValidator(BaseValidator):
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                playbook_data = get_playbook_data(file_path)
+                playbook_data = OrderedDict(get_playbook_data(file_path))
                 is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
 
             elif re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                playbook_data = get_playbook_data(file_path)
+                playbook_data = OrderedDict(get_playbook_data(file_path))
                 is_valid = self.is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
 
             elif re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
@@ -240,6 +240,6 @@ class IDSetValidator(BaseValidator):
                 is_json_file = True
 
             if not is_json_file:
-                is_used = self.is_id_duplicated(obj_id, obj_data, obj_type)
+                is_used = self.is_id_duplicated(obj_id, OrderedDict(obj_data), obj_type)
 
         return is_used

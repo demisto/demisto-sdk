@@ -121,7 +121,7 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -162,7 +162,7 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -279,6 +279,10 @@ def validate(config, **kwargs):
         sys.exit(1)
     try:
         is_external_repo = tools.is_external_repository()
+        # default validate to -g --post-commit
+        if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
+            kwargs['use_git'] = True
+            kwargs['post_commit'] = True
         validator = ValidateManager(
             is_backward_check=not kwargs['no_backward_comp'],
             only_committed_files=kwargs['post_commit'], prev_ver=kwargs['prev_ver'],
@@ -410,9 +414,6 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_no_packs_command = not git and not all_packs
-    if lint_no_packs_command:
-        git = True  # when running 'lint' should operate as 'lint -g'
     lint_manager = LintManager(input=input,
                                git=git,
                                all_packs=all_packs,
@@ -645,7 +646,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
@@ -671,11 +672,15 @@ def generate_test_playbook(**kwargs):
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
                            "directory.")
 @click.option(
-    '--integration', is_flag=True, help="Create an Integration based on HelloWorld example")
+    '--integration', is_flag=True, help="Create an Integration based on BaseIntegration template")
 @click.option(
-    '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
+    '--script', is_flag=True, help="Create a Script based on BaseScript example")
 @click.option(
     "--pack", is_flag=True, help="Create pack and its sub directories")
+@click.option(
+    "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
@@ -728,14 +733,14 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(**kwargs):
-    input_path = kwargs.get('input')
+    input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
     examples = kwargs.get('examples')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
-    insecure = kwargs.get('insecure')
-    verbose = kwargs.get('verbose')
+    insecure: bool = kwargs.get('insecure', False)
+    verbose: bool = kwargs.get('verbose', False)
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -817,11 +822,15 @@ def merge_id_sets_command(**kwargs):
     second = kwargs['id_set2']
     output = kwargs['output']
 
-    merge_id_sets_from_files(
+    _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
+    if duplicates:
+        print_error(f'Failed to merge ID sets: {first} with {second}, '
+                    f'there are entities with ID: {duplicates} that exist in both ID sets')
+        sys.exit(1)
 
 
 # ====================== update-release-notes =================== #
@@ -858,9 +867,9 @@ def merge_id_sets_command(**kwargs):
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
-    pre_release = kwargs.get('pre_release')
+    pre_release: bool = kwargs.get('pre_release', False)
     is_all = kwargs.get('all')
-    text = kwargs.get('text')
+    text: str = kwargs.get('text', '')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
@@ -964,9 +973,9 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
-        assert "Packs/" in input_path
+        assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in pack_name
+        assert "/" not in str(pack_name)
     except AssertionError:
         print_error("Input path is not a pack. For example: Pack/HelloWorld")
         sys.exit(1)

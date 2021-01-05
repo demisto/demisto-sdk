@@ -251,7 +251,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
             if not description.endswith('.'):
                 description = f'{description}.'
 
-            argument_description = f'{description} Possible values are: {", ".join(arg.get("predefined"))}.'\
+            argument_description = f'{description} Possible values are: {", ".join(arg.get("predefined"))}.' \
                 if arg.get('predefined') else description
             if arg.get('defaultValue'):
                 argument_description = f'{argument_description} Default is {arg.get("defaultValue")}.'
@@ -346,7 +346,7 @@ def get_command_examples(commands_file_path):
         print('failed to open command file')
         commands = commands_file_path.split('\n')
 
-    commands = list(filter(None, map(command_example_filter, commands)))
+    commands: list = list(filter(None, map(command_example_filter, commands)))
 
     print('found the following commands:\n{}'.format('\n '.join(commands)))
     return commands

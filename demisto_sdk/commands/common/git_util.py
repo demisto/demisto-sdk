@@ -35,16 +35,19 @@ class GitUtil:
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
-        # get all committed files identified as modified which are changed from prev_ver.
-        # this can result in extra files identified which were not touched on this branch.
-        committed = {Path(os.path.join(item.a_path)) for item
-                     in self.repo.remote().refs[prev_ver].commit.diff(
-            self.repo.active_branch).iter_change_type('M')}
+        committed = set()
 
-        # identify all files that were touched on this branch regardless of status
-        # intersect these with all the committed files to identify the committed modified files.
-        all_branch_changed_files = self._get_all_changed_files(prev_ver)
-        committed = committed.intersection(all_branch_changed_files)
+        if not staged_only:
+            # get all committed files identified as modified which are changed from prev_ver.
+            # this can result in extra files identified which were not touched on this branch.
+            committed = {Path(os.path.join(item.a_path)) for item
+                         in self.repo.remote().refs[prev_ver].commit.diff(
+                self.repo.active_branch).iter_change_type('M')}
+
+            # identify all files that were touched on this branch regardless of status
+            # intersect these with all the committed files to identify the committed modified files.
+            all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
             return committed - renamed - deleted
@@ -86,16 +89,19 @@ class GitUtil:
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
-        # get all committed files identified as added which are changed from prev_ver.
-        # this can result in extra files identified which were not touched on this branch.
-        committed = {Path(os.path.join(item.a_path)) for item
-                     in self.repo.remote().refs[prev_ver].commit.diff(
-            self.repo.active_branch).iter_change_type('A')}
+        committed = set()
 
-        # identify all files that were touched on this branch regardless of status
-        # intersect these with all the committed files to identify the committed added files.
-        all_branch_changed_files = self._get_all_changed_files(prev_ver)
-        committed = committed.intersection(all_branch_changed_files)
+        if not staged_only:
+            # get all committed files identified as added which are changed from prev_ver.
+            # this can result in extra files identified which were not touched on this branch.
+            committed = {Path(os.path.join(item.a_path)) for item
+                         in self.repo.remote().refs[prev_ver].commit.diff(
+                self.repo.active_branch).iter_change_type('A')}
+
+            # identify all files that were touched on this branch regardless of status
+            # intersect these with all the committed files to identify the committed added files.
+            all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
             return committed - deleted
@@ -135,16 +141,19 @@ class GitUtil:
         """
         prev_ver = prev_ver.replace('origin/', '')
 
-        # get all committed files identified as added which are changed from prev_ver.
-        # this can result in extra files identified which were not touched on this branch.
-        committed = {Path(os.path.join(item.a_path)) for item
-                     in self.repo.remote().refs[prev_ver].commit.diff(
-            self.repo.active_branch).iter_change_type('D')}
+        committed = set()
 
-        # identify all files that were touched on this branch regardless of status
-        # intersect these with all the committed files to identify the committed added files.
-        all_branch_changed_files = self._get_all_changed_files(prev_ver)
-        committed = committed.intersection(all_branch_changed_files)
+        if not staged_only:
+            # get all committed files identified as added which are changed from prev_ver.
+            # this can result in extra files identified which were not touched on this branch.
+            committed = {Path(os.path.join(item.a_path)) for item
+                         in self.repo.remote().refs[prev_ver].commit.diff(
+                self.repo.active_branch).iter_change_type('D')}
+
+            # identify all files that were touched on this branch regardless of status
+            # intersect these with all the committed files to identify the committed added files.
+            all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
             return committed
@@ -177,18 +186,20 @@ class GitUtil:
         prev_ver = prev_ver.replace('origin/', '')
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
+        committed = set()
 
-        # get all committed files identified as renamed which are changed from prev_ver.
-        # this can result in extra files identified which were not touched on this branch.
-        committed = {(Path(item.a_path), Path(item.b_path)) for item
-                     in self.repo.remote().refs[prev_ver].commit.diff(
-            self.repo.active_branch).iter_change_type('R')}
+        if not staged_only:
+            # get all committed files identified as renamed which are changed from prev_ver.
+            # this can result in extra files identified which were not touched on this branch.
+            committed = {(Path(item.a_path), Path(item.b_path)) for item
+                         in self.repo.remote().refs[prev_ver].commit.diff(
+                self.repo.active_branch).iter_change_type('R')}
 
-        # identify all files that were touched on this branch regardless of status
-        # intersect these with all the committed files to identify the committed added files.
-        all_branch_changed_files = self._get_all_changed_files(prev_ver)
-        committed = {tuple_item for tuple_item in committed
-                     if (tuple_item[1] in all_branch_changed_files and tuple_item[1] not in deleted)}
+            # identify all files that were touched on this branch regardless of status
+            # intersect these with all the committed files to identify the committed added files.
+            all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            committed = {tuple_item for tuple_item in committed
+                         if (tuple_item[1] in all_branch_changed_files and tuple_item[1] not in deleted)}
 
         if committed_only:
             return committed

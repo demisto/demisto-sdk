@@ -45,7 +45,7 @@ class TextObject(GeneralObject):
             try:
                 self._text = self.path.read_text()
             except IOError as e:
-                raise exc.ContentSerializeError(self, self.path, e)
+                raise exc.ContentSerializeError(self, self.path, str(e))
 
     def to_str(self):
         """File content as string.

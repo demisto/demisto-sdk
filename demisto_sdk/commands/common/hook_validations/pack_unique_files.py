@@ -41,7 +41,8 @@ class PackUniqueFilesValidator(BaseValidator):
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
-                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False):
+                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
+                 skip_id_set_creation=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -59,6 +60,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.should_version_raise = should_version_raise
         self.id_set_path = id_set_path
         self.private_repo = private_repo
+        self.skip_id_set_creation = skip_id_set_creation
 
     # error handling
     def _add_error(self, error, file_path):
@@ -76,11 +78,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def get_errors(self, raw=False):
+    def get_errors(self, raw=False) -> str:
         """Get the dict version or string version for print"""
         errors = ''
         if raw:
-            errors = self._errors
+            errors = '\n  '.join(self._errors)
         elif self._errors:
             errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
@@ -395,7 +397,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self):
+    def validate_pack_unique_files(self) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -416,7 +418,13 @@ class PackUniqueFilesValidator(BaseValidator):
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False)
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+            )
+
+            if not first_level_dependencies:
+                if not self.suppress_print:
+                    click.secho("Unable to find id_set.json file - skipping dependencies check", fg="yellow")
+                return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)

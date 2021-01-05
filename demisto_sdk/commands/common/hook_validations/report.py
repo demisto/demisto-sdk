@@ -13,3 +13,8 @@ class ReportValidator(ContentEntityValidator):
         return all([
             self.is_valid_fromversion()
         ])
+
+    def is_valid_version(self):
+        """No version for a report
+        """
+        pass

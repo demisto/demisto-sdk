@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.constants import (
     OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
+    Classifier, ClassifierMapper, OldClassifier)
 from demisto_sdk.commands.common.content.objects.pack_objects.incident_field.incident_field import \
     IncidentField
 from demisto_sdk.commands.common.content.objects.pack_objects.incident_type.incident_type import \
@@ -385,10 +387,16 @@ class ValidateManager:
             return self.validate_image(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.INCIDENT_FIELD:
-            return self.validate_incident_field(file_path, pack_error_ignore_list, is_modified)
+            return IncidentField(file_path).validate(check_bc=(is_modified and self.is_backward_check),
+                                                     ignored_errors_list=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.INDICATOR_FIELD:
-            return self.validate_indicator_field(file_path, pack_error_ignore_list, is_modified)
+            return IndicatorField(file_path).validate(check_bc=(is_modified and self.is_backward_check),
+                                                      ignored_errors_list=pack_error_ignore_list,
+                                                      print_as_warnings=self.print_ignored_errors,
+                                                      prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
@@ -403,13 +411,22 @@ class ValidateManager:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.INCIDENT_TYPE:
-            return self.validate_incident_type(file_path, pack_error_ignore_list, is_modified)
+            return IncidentType(file_path).validate(check_bc=(is_modified and self.is_backward_check),
+                                                    ignored_errors_list=pack_error_ignore_list,
+                                                    print_as_warnings=self.print_ignored_errors,
+                                                    prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.MAPPER:
-            return self.validate_mapper(structure_validator, pack_error_ignore_list)
+            return ClassifierMapper(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors)
 
-        elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
-            return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
+        elif file_type == FileType.CLASSIFIER:
+            return Classifier(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                  print_as_warnings=self.print_ignored_errors)
+
+        elif file_type == FileType.OLD_CLASSIFIER:
+            return OldClassifier(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors)
 
         elif file_type == FileType.WIDGET:
             return self.validate_widget(structure_validator, pack_error_ignore_list)
@@ -571,18 +588,6 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return report_validator.is_valid_file(validate_rn=False)
 
-    def validate_incident_field(self, file_path, pack_error_ignore_list, is_modified):
-        return IncidentField(file_path).validate(check_bc=(is_modified and self.is_backward_check),
-                                                 ignored_errors_list=pack_error_ignore_list,
-                                                 print_as_warnings=self.print_ignored_errors,
-                                                 prev_ver=self.prev_ver, branch_name=self.branch_name)
-
-    def validate_indicator_field(self, file_path, pack_error_ignore_list, is_modified):
-        return IndicatorField(file_path).validate(check_bc=(is_modified and self.is_backward_check),
-                                                  ignored_errors_list=pack_error_ignore_list,
-                                                  print_as_warnings=self.print_ignored_errors,
-                                                  prev_ver=self.prev_ver, branch_name=self.branch_name)
-
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
@@ -602,29 +607,6 @@ class ValidateManager:
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors)
         return dashboard_validator.is_valid_dashboard(validate_rn=False)
-
-    def validate_incident_type(self, file_path, pack_error_ignore_list, is_modified):
-        return IncidentType(file_path).validate(check_bc=(is_modified and self.is_backward_check),
-                                                ignored_errors_list=pack_error_ignore_list,
-                                                print_as_warnings=self.print_ignored_errors,
-                                                prev_ver=self.prev_ver, branch_name=self.branch_name)
-
-    def validate_mapper(self, structure_validator, pack_error_ignore_list):
-        mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors)
-        return mapper_validator.is_valid_mapper(validate_rn=False)
-
-    def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
-        if file_type == FileType.CLASSIFIER:
-            new_classifier_version = True
-
-        else:
-            new_classifier_version = False
-
-        classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
-                                                   ignored_errors=pack_error_ignore_list,
-                                                   print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
         widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,

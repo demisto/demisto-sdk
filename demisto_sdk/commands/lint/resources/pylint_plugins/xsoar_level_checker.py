@@ -76,15 +76,17 @@ class XsoarChecker(BaseChecker):
     def _direct_access_dict_checker(self, node):
         try:
             # for demisto.args()[] implementation or for demisto.params()[]
-            if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args':
-                self.add_message("direct-access-args-params-dict-exist", node=node)
-            elif node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params':
-                self.add_message("direct-access-args-params-dict-exist", node=node)
+            if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
+                if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args':
+                    self.add_message("direct-access-args-params-dict-exist", node=node)
+                elif node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params':
+                    self.add_message("direct-access-args-params-dict-exist", node=node)
         except Exception:
             try:
-                # for args[]/params[] implementation
-                if node.value.name in self.common_args_params:
-                    self.add_message("direct-access-args-params-dict-exist", node=node)
+                if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
+                    # for args[]/params[] implementation
+                    if node.value.name in self.common_args_params:
+                        self.add_message("direct-access-args-params-dict-exist", node=node)
             except Exception:
                 pass
 

@@ -640,7 +640,7 @@ def delete_ticket_command(client: Client, args) -> Tuple[str, dict, dict]:
            human readable, context, raw response of this command.
     """
     ticket_id = args.get('ticket_id')
-    ticket_id = args['ticket_it']
+    args['test'] = 1
     try:
         response = client.delete_ticket_request(ticket_id)
     except Exception as e:

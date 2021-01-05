@@ -215,7 +215,7 @@ class IDSetValidator(BaseValidator):
         depends_on_commands = script_data.get('depends_on')
         for command in depends_on_commands:
             if command != 'test-module' and not command.endswith('-test'):
-                if 'dev' in command or command.endswith('copy'):
+                if command.endswith('dev') or command.endswith('copy'):
                     error_message, error_code = Errors.invalid_script_using_commands(script_data.get('name'),
                                                                                      command)
                     self.handle_error(error_message, error_code, file_path="id_set.json")

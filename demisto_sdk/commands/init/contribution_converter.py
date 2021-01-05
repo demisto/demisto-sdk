@@ -275,7 +275,7 @@ class ContributionConverter:
                 files = get_child_files(pack_subdir)
                 for file in files:
                     file_name = os.path.basename(file)
-                    if file_name.endswith('.yml'):
+                    if file_name.startswith('playbook') and file_name.endswith('.yml'):
                         self.generate_readme_for_pack_content_item(file)
 
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
@@ -315,6 +315,15 @@ class ContributionConverter:
 
                     if self.create_new:
                         self.generate_reamdes_for_new_content_pack()
+                    else:
+                        # Removing unified file for contribution pack update flow.
+                        directories = get_child_directories(pack_subdir)
+                        for directory in directories:
+                            files = get_child_files(directory)
+                            for file in files:
+                                file_name = os.path.basename(file)
+                                if file_name.startswith('integration') or file_name.startswith('script'):
+                                    os.remove(file)
 
             # format
             self.format_converted_pack()
@@ -359,6 +368,7 @@ class ContributionConverter:
                 file_type = file_type.value if file_type else file_type
                 try:
                     child_file_name = os.path.basename(child_file)
+                    print(child_file_name)
                     if source_mapping and child_file_name in source_mapping.keys():
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get('base_name', '')

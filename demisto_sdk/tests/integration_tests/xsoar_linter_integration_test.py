@@ -44,7 +44,7 @@ files = [
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
      ['Function arguments are missing type annotations. Please add type annotations',
-      'It is best practice to use .get when accessing dict object rather then direct access.']),
+      'It is best practice to use .get when accessing the arg/params dict object rather then direct access.']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Initialize of params was found outside of main function. Please use demisto.params() only inside main',
       'Initialize of args was found outside of main function. Please use demisto.args() only inside main func']),

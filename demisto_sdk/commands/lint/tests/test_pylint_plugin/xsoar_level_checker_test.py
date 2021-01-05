@@ -241,7 +241,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id='direct-access-dict-exist',
+                    msg_id='direct-access-args-params-dict-exist',
                     node=node_a,
                 ),
         ):
@@ -253,7 +253,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id='direct-access-dict-exist',
+                    msg_id='direct-access-args-params-dict-exist',
                     node=node_a,
                 ),
         ):
@@ -265,7 +265,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id='direct-access-dict-exist',
+                    msg_id='direct-access-args-params-dict-exist',
                     node=node_a,
                 ),
         ):
@@ -277,7 +277,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
-                    msg_id='direct-access-dict-exist',
+                    msg_id='direct-access-args-params-dict-exist',
                     node=node_a,
                 ),
         ):

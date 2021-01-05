@@ -17,9 +17,9 @@ xsoar_msg = {
         "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
         "recognized.",),
     "W9019": (
-        "It is best practice to use .get when accessing dict object rather then direct access.",
-        "direct-access-dict-exist",
-        "It is best practice to use .get when accessing dict object rather then direct access.",),
+        "It is best practice to use .get when accessing the arg/params dict object rather then direct access.",
+        "direct-access-args-params-dict-exist",
+        "It is best practice to use .get when accessing the arg/params dict object rather then direct access.",),
 
 }
 
@@ -35,7 +35,6 @@ class XsoarChecker(BaseChecker):
         self.is_script = True if os.getenv('is_script') == 'True' else False
         self.common_args_params = ['args', 'dargs', 'arguments', 'd_args', 'data_args', 'params', 'PARAMS',
                                    'integration_parameters']
-        self.common_params_names = ['params', 'PARAMS', 'integration_parameters']
 
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
@@ -78,14 +77,14 @@ class XsoarChecker(BaseChecker):
         try:
             # for demisto.args()[] implementation or for demisto.params()[]
             if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args':
-                self.add_message("direct-access-dict-exist", node=node)
+                self.add_message("direct-access-args-params-dict-exist", node=node)
             elif node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params':
-                self.add_message("direct-access-dict-exist", node=node)
+                self.add_message("direct-access-args-params-dict-exist", node=node)
         except Exception:
             try:
                 # for args[] implementation
-                if node.value.name in self.common_args_params or node.value.name in self.common_params_names:
-                    self.add_message("direct-access-dict-exist", node=node)
+                if node.value.name in self.common_args_params:
+                    self.add_message("direct-access-args-params-dict-exist", node=node)
             except Exception:
                 pass
 

@@ -306,7 +306,12 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
                     msg_id='invalid-import-common-server-python',
                     node=node_a,
                 ),
+                pylint.testutils.Message(
+                    msg_id='invalid-import-common-server-python',
+                    node=node_a,
+                ),
         ):
+            self.checker.visit_importfrom(node_a)
             self.checker.visit_importfrom(node_a)
 
 
@@ -328,6 +333,25 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         self.checker.commands = ['test-1', 'test2']
         node_a = astroid.extract_node("""
             if a == 'test-1': #@
+                return true
+            else:
+                return false
+        """)
+        assert node_a
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-commands-exist',
+                    node=node_a,
+                    args=str(['test2']),
+
+                ),
+        ):
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
+        self.checker.commands = ['test-1', 'test2', 'test3']
+        node_a = astroid.extract_node("""
+            if a == 'test-1' or a == 'test3': #@
                 return true
             else:
                 return false
@@ -368,6 +392,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                 ),
         ):
             self.checker.visit_dict(node_a)
+            self.checker.visit_call(node_a)
             self.checker.leave_module(node_a)
 
     def test_all_command_dict_checker(self):

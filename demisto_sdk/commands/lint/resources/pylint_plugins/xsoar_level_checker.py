@@ -82,7 +82,7 @@ class XsoarChecker(BaseChecker):
                 self.add_message("direct-access-args-params-dict-exist", node=node)
         except Exception:
             try:
-                # for args[] implementation
+                # for args[]/params[] implementation
                 if node.value.name in self.common_args_params:
                     self.add_message("direct-access-args-params-dict-exist", node=node)
             except Exception:

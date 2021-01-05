@@ -41,7 +41,7 @@ class CustomBaseChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(CustomBaseChecker, self).__init__(linter)
-        self.commands = os.getenv('commands').split(',') if os.getenv('commands') else []
+        self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
 
     def visit_call(self, node):
         self._print_checker(node)

@@ -108,7 +108,7 @@ def get_modified_and_added_files(compare_type,
         else:
             click.echo("Collecting all committed files")
 
-    prev_ver = add_origin(prev_ver)
+    prev_ver = add_origin(branch_name, prev_ver)
     # all committed changes of the current branch vs the prev_ver
     all_committed_files_string = run_command(
         f'git diff --name-status {prev_ver}{compare_type}refs/heads/{branch_name}')
@@ -207,7 +207,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
     ignored_files = set()
     new_packs = set()
     for f in all_files:
-        file_data = list(filter(None, f.split('\t')))
+        file_data: list = list(filter(None, f.split('\t')))
 
         if not file_data:
             continue

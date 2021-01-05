@@ -483,7 +483,7 @@ def get_tickets_list_command(client: Client, args: list) -> Tuple[str, dict, dic
     return human_readable_markdown, context, raw_response
 
 
-def create_ticket_command(client: Client, args: list) -> Tuple[str, dict, dict]:
+def create_ticket_command(client: Client, args: dict) -> Tuple[str, dict, dict]:
     """Function which creates a new ticket to the system according to users arguments.
         Args:
             client : Integretion client which communicates with the api.
@@ -495,7 +495,7 @@ def create_ticket_command(client: Client, args: list) -> Tuple[str, dict, dict]:
     category = None
     status = None
     priority = None
-    hd_queue_id = args.get('queue_id')
+    hd_queue_id = args['queue_id']
     custom_fields = args.get('custom_fields')
     if (custom_fields and "hd_queue_id" not in custom_fields) and (not hd_queue_id):
         raise DemistoException("hd_queue_id is a mandatory value, please add it.")

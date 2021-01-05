@@ -33,6 +33,7 @@ class XsoarChecker(BaseChecker):
     def __init__(self, linter=None):
         super(XsoarChecker, self).__init__(linter)
         self.is_script = True if os.getenv('is_script') == 'True' else False
+        self.common_args_params = ['args', 'dargs', 'arguments', 'd_args', 'data_args', 'params', 'PARAMS', 'integration_parameters']
 
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
@@ -74,7 +75,8 @@ class XsoarChecker(BaseChecker):
     def _direct_access_dict_checker(self, node):
         try:
             # check if the direct usage is not an assign to dict like a['a'] = b
-            if not isinstance(node.parent, astroid.Assign) and isinstance(node.value, astroid.Name):
+            if not isinstance(node.parent, astroid.Assign) and isinstance(node.value, astroid.Name) and \
+                    node.value.name in self.common_args_params:
                 for infered in node.value.infer():
                     if isinstance(infered, astroid.Dict):
                         self.add_message("direct-access-dict-exist", node=node)

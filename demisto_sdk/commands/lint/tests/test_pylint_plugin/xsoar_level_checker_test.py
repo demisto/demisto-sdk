@@ -233,6 +233,14 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_subscript(node_a)
 
+        node_a = astroid.extract_node("""
+             a = {'test1':1,'test2':2}
+             a['test1'] #@
+         """)
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subscript(node_a)
+
     def test_direct_access_exists(self):
         """
         Given:
@@ -243,8 +251,8 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct message id is being added to the message errors of pylint to the relevent function.
         """
         node_a = astroid.extract_node("""
-            a = {'test1':1,'test2':2}
-            a['test1'] #@
+            args = {'test1':1,'test2':2}
+            args['test1'] #@
         """)
         assert node_a is not None
         with self.assertAddsMessages(

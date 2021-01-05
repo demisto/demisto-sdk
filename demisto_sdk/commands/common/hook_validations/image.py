@@ -137,7 +137,7 @@ class ImageValidator(BaseValidator):
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             with open(self.file_path, "rb") as image:
                 image_data = image.read()
-                image = base64.b64encode(image_data)
+                image = base64.b64encode(image_data)  # type: ignore
                 if isinstance(image, bytes):
                     image = image.decode("utf-8")
 

@@ -1,4 +1,9 @@
 # Changelog
+* SDK repository is now mypy check_untyped_defs complaint.
+* The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
+* Added an option for **format** to run on a whole pack.
+
+# 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.
@@ -11,10 +16,13 @@
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 * Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
 * Added validation for support types in the pack metadata file.
+* Added support for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
 * Added support for Auto-Extract feature validation in incident types in the **validate** command.
 * Fixed an issue in the **lint** command where the *-i* flag was ignored.
+* Improved **merge-id-sets** command to support merge between two ID sets that contain the same pack.
+* Fixed an issue in the **lint** command where flake8 ran twice.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

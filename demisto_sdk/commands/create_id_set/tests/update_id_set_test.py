@@ -232,7 +232,7 @@ class TestDuplicates:
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details)
+            are the same kind (details) and they are from different pack
 
         When
             - checking for duplicate
@@ -248,7 +248,8 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep.json'
+                'path': 'Layouts/layout-details-urlrep.json',
+                'pack': 'urlRep1'
             }
         })
 
@@ -256,7 +257,8 @@ class TestDuplicates:
             'urlRep': {
                 'typeID': 'urlRep',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep2.json'
+                'path': 'Layouts/layout-details-urlrep2.json',
+                'pack': 'urlRep2'
             }
         })
 
@@ -1683,7 +1685,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'scripts': [
             {
                 'ScriptFoo': {
-                    'name': 'ScriptFoo'
+                    'name': 'ScriptFoo',
+                    'pack': 'ScriptFoo1'
                 }
             }
         ]
@@ -1700,7 +1703,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'scripts': [
             {
                 'ScriptFoo': {
-                    'name': 'ScriptFoo'
+                    'name': 'ScriptFoo',
+                    'pack': 'ScriptFoo2'
                 }
             }
         ]
@@ -1710,3 +1714,76 @@ def test_merged_id_sets_with_duplicates(caplog):
 
     assert output_id_set is None
     assert duplicates == ['ScriptFoo']
+
+
+def test_merged_id_sets_with_legal_duplicates(caplog):
+    """
+    Given
+    - first_id_set.json
+    - second_id_set.json
+    - they both has the same pack
+
+    When
+    - merged
+
+    Then
+    - ensure output id_set contains items from both id_sets
+    - ensure merge not fails
+    - ensure duplicate not added to id_set
+
+    """
+    caplog.set_level(logging.DEBUG)
+
+    first_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_Foo1': {
+                    'name': 'ScriptFoo',
+                    'pack': 'foo_1'
+                }
+            }
+        ]
+    }
+
+    second_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': []
+    }
+
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
+
+    assert output_id_set.get_dict() == {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_Foo1': {
+                    'name': 'ScriptFoo',
+                    'pack': 'foo_1'
+                }
+            }
+        ]
+    }
+
+    assert not duplicates

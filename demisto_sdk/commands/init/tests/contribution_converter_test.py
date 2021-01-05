@@ -200,11 +200,10 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
-    with open(integration_readme_md, 'r') as f:
-        readme_file = f.read()
-        assert '''This is a sample integration
-This integration was integrated and tested with version xx of Sample''' in readme_file
-
+    with open(integration_readme_md, 'r') as readme:
+        readme_file = readme.read()
+        assert 'This is a sample integration\nThis integration was integrated and tested with version xx of Sample\n' \
+               in readme_file
     assert not unified_yml.exists()
 
     playbooks_path = converted_pack_path / 'Playbooks'

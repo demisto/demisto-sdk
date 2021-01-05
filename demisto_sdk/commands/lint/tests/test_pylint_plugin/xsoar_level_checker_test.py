@@ -204,13 +204,12 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         When:
             - direct access to dict object doesnt exist
             - get access to dict exists
-            - direct access to list exists
         Then:
             - Ensure that there was no message errors of pylint
         """
         node_a = astroid.extract_node("""
-            a = {'test1':1,'test2':2}
-            a.get('test1') #@
+            args = {'test1':1,'test2':2}
+            args.get('test1') #@
         """)
 
         assert node_a is not None
@@ -218,25 +217,10 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_subscript(node_a)
 
         node_a = astroid.extract_node("""
-             a = ['test1','test2']
-             a['test1'] #@
-         """)
-        assert node_a is not None
-        with self.assertNoMessages():
-            self.checker.visit_subscript(node_a)
+            params = {'test1':1,'test2':2}
+            params.get('test1') #@
+        """)
 
-        node_a = astroid.extract_node("""
-             a = ['test1','test2']
-             a['test1'] #@
-         """)
-        assert node_a is not None
-        with self.assertNoMessages():
-            self.checker.visit_subscript(node_a)
-
-        node_a = astroid.extract_node("""
-             a = {'test1':1,'test2':2}
-             a['test1'] #@
-         """)
         assert node_a is not None
         with self.assertNoMessages():
             self.checker.visit_subscript(node_a)
@@ -253,6 +237,42 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         node_a = astroid.extract_node("""
             args = {'test1':1,'test2':2}
             args['test1'] #@
+        """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='direct-access-dict-exist',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_subscript(node_a)
+
+        node_a = astroid.extract_node("""
+            demisto.args()['test1'] #@
+        """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='direct-access-dict-exist',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_subscript(node_a)
+
+        node_a = astroid.extract_node("""
+            demisto.params()['test1'] #@
+        """)
+        assert node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='direct-access-dict-exist',
+                    node=node_a,
+                ),
+        ):
+            self.checker.visit_subscript(node_a)
+
+        node_a = astroid.extract_node("""
+            params['test1'] #@
         """)
         assert node_a is not None
         with self.assertAddsMessages(

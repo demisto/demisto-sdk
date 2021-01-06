@@ -11,15 +11,21 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
     OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
-from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content import Content, Report
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
     Classifier, ClassifierMapper, OldClassifier)
+from demisto_sdk.commands.common.content.objects.pack_objects.dashboard.dashboard import \
+    Dashboard
 from demisto_sdk.commands.common.content.objects.pack_objects.incident_field.incident_field import \
     IncidentField
 from demisto_sdk.commands.common.content.objects.pack_objects.incident_type.incident_type import \
     IncidentType
 from demisto_sdk.commands.common.content.objects.pack_objects.indicator_field.indicator_field import \
     IndicatorField
+from demisto_sdk.commands.common.content.objects.pack_objects.indicator_type.indicator_type import \
+    IndicatorType
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+    Layout, LayoutsContainer)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -71,6 +77,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_yaml, open_id_set_file,
                                                run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from git import InvalidGitRepositoryError
 from packaging import version
 
 
@@ -107,7 +114,16 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.branch_name = ''
+
+        try:
+            self.git_util = GitUtil(repo=Content.git())
+        except InvalidGitRepositoryError:
+            if self.use_git:
+                raise
+            else:
+                pass
+
+        self.branch_name = self.git_util.get_current_working_branch()
         self.changes_in_schema = False
         self.check_only_schema = False
         self.always_valid = False
@@ -368,7 +384,9 @@ class ValidateManager:
             return self.validate_readme(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.REPORT:
-            return self.validate_report(structure_validator, pack_error_ignore_list)
+            return Report(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                              print_as_warnings=self.print_ignored_errors,
+                                              prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.PLAYBOOK:
             return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
@@ -399,16 +417,25 @@ class ValidateManager:
                                                       prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.REPUTATION:
-            return self.validate_reputation(structure_validator, pack_error_ignore_list)
+            return IndicatorType(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.LAYOUT:
-            return self.validate_layout(structure_validator, pack_error_ignore_list)
+            return Layout(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                              print_as_warnings=self.print_ignored_errors,
+                                              prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.LAYOUTS_CONTAINER:
-            return self.validate_layoutscontainer(structure_validator, pack_error_ignore_list)
+            return LayoutsContainer(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors,
+                                                        prev_ver=self.prev_ver, branch_name=self.branch_name)
 
         elif file_type == FileType.DASHBOARD:
-            return self.validate_dashboard(structure_validator, pack_error_ignore_list)
+            return Dashboard(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                                 print_as_warnings=self.print_ignored_errors,
+                                                 prev_ver=self.prev_ver,
+                                                 branch_name=self.branch_name)
 
         elif file_type == FileType.INCIDENT_TYPE:
             return IncidentType(file_path).validate(check_bc=(is_modified and self.is_backward_check),
@@ -581,32 +608,6 @@ class ValidateManager:
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors)
         return image_validator.is_valid()
-
-    def validate_report(self, structure_validator, pack_error_ignore_list):
-        report_validator = ReportValidator(structure_validator=structure_validator,
-                                           ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors)
-        return report_validator.is_valid_file(validate_rn=False)
-
-    def validate_reputation(self, structure_validator, pack_error_ignore_list):
-        reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                   print_as_warnings=self.print_ignored_errors)
-        return reputation_validator.is_valid_file(validate_rn=False)
-
-    def validate_layout(self, structure_validator, pack_error_ignore_list):
-        layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
-
-    def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
-        layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                     print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
-
-    def validate_dashboard(self, structure_validator, pack_error_ignore_list):
-        dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                 print_as_warnings=self.print_ignored_errors)
-        return dashboard_validator.is_valid_dashboard(validate_rn=False)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
         widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -845,13 +846,12 @@ class ValidateManager:
                 click.echo("Running on committed and staged files")
 
     def get_changed_files_from_git(self):
-        git_util = GitUtil(repo=Content.git())
-        modified_files = git_util.modified_files(prev_ver=self.prev_ver,
-                                                 committed_only=self.is_circle, staged_only=self.staged)
-        added_files = git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                           staged_only=self.staged)
-        renamed_files = git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                               staged_only=self.staged)
+        modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
+                                                      committed_only=self.is_circle, staged_only=self.staged)
+        added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                staged_only=self.staged)
+        renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged)
 
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)

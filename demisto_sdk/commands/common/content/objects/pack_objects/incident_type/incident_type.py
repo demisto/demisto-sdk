@@ -12,12 +12,13 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    INVALID_PLAYBOOK_ID
 from demisto_sdk.commands.common.tools import get_remote_file
 from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION
 from packaging.version import Version
 from wcmatch.pathlib import Path
+
+# Checks if playbookID is a UUID format
+INVALID_PLAYBOOK_ID = r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}'
 
 
 class IncidentType(JSONContentObject):

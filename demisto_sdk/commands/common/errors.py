@@ -1,4 +1,5 @@
-from typing import Any
+from pathlib import Path
+from typing import Any, Union
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -207,8 +208,8 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
-    def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
-        return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+    def suggest_fix(file_path: Union[str, Path], *args: Any, cmd: str = 'format') -> str:
+        return f'To fix the problem, try running `demisto-sdk {cmd} -i {str(file_path)} {" ".join(args)}`'
 
     @staticmethod
     @error_code_decorator

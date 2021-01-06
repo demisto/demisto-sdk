@@ -256,3 +256,6 @@ class GitUtil:
         return {Path(os.path.join(item)) for item
                 in self.repo.git.diff('--name-only',
                                       f'{origin_prev_ver}...{self.repo.active_branch}').split('\n')}
+
+    def get_current_working_branch(self) -> str:
+        return str(self.repo.active_branch)

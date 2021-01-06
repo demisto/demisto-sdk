@@ -225,6 +225,15 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_subscript(node_a)
 
+        node_a = astroid.extract_node("""
+            params = {'test1':1,'test2':2}
+            params['test1'] = a #@
+        """)
+
+        assert node_a is not None
+        with self.assertNoMessages():
+            self.checker.visit_subscript(node_a)
+
     def test_direct_access_exists(self):
         """
         Given:
@@ -236,49 +245,53 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
         """
         node_a = astroid.extract_node("""
             args = {'test1':1,'test2':2}
-            args['test1'] #@
+            a = args['test1'] #@
         """)
+        node_b = node_a.value
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='direct-access-args-params-dict-exist',
-                    node=node_a,
+                    node=node_b,
                 ),
         ):
-            self.checker.visit_subscript(node_a)
+            self.checker.visit_subscript(node_b)
 
         node_a = astroid.extract_node("""
-            demisto.args()['test1'] #@
+            b = demisto.args()['test1'] #@
         """)
         assert node_a is not None
+        node_b = node_a.value
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='direct-access-args-params-dict-exist',
-                    node=node_a,
+                    node=node_b,
                 ),
         ):
-            self.checker.visit_subscript(node_a)
+            self.checker.visit_subscript(node_b)
 
         node_a = astroid.extract_node("""
-            demisto.params()['test1'] #@
+            b = demisto.params()['test1'] #@
         """)
+        node_b = node_a.value
         assert node_a is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='direct-access-args-params-dict-exist',
-                    node=node_a,
+                    node=node_b,
                 ),
         ):
-            self.checker.visit_subscript(node_a)
+            self.checker.visit_subscript(node_b)
 
         node_a = astroid.extract_node("""
-            params['test1'] #@
+            a = params['test1'] #@
         """)
-        assert node_a is not None
+        node_b = node_a.value
+        assert node_b is not None
         with self.assertAddsMessages(
                 pylint.testutils.Message(
                     msg_id='direct-access-args-params-dict-exist',
-                    node=node_a,
+                    node=node_b,
                 ),
         ):
-            self.checker.visit_subscript(node_a)
+            self.checker.visit_subscript(node_b)

@@ -728,7 +728,7 @@ def init(**kwargs):
 @click.option(
     "-cp", "--command_permissions", help="Path for file containing commands permissions"
                                          " Each command permissions should be in a separate line."
-                                         " (i.e. '!command-name Administrator READ-WRITE')", required=False)
+                                         " (i.e. 'command-name Administrator READ-WRITE')", required=False)
 @click.option(
     "-l", "--limitations", help="Known limitations. Number the steps by '*' (i.e. '* foo. * bar.')", required=False)
 @click.option(

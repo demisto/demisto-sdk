@@ -4,7 +4,7 @@
 * Added an option for **format** to run on a whole pack.
 * Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
 * Fixed an issue where Auto-Extract fields were only checked for newly added incident types in the **validate** command.
-* Added new validation of direct access to args/params dicts to `XSOAR-linter`.
+* Added a new warning validation of direct access to args/params dicts to `XSOAR-linter`.
 
 # 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.

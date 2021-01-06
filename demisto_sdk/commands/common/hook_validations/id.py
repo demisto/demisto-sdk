@@ -162,6 +162,7 @@ class IDSetValidator(BaseValidator):
         """
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+            click.echo(f"id set validations for: {file_path}")
             if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = OrderedDict(get_playbook_data(file_path))
                 is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.playbook_set)

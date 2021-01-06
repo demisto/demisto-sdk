@@ -337,7 +337,6 @@ class ValidateManager:
 
         # id_set validation
         if self.id_set_validations:
-            click.echo(f"id set validations for: {file_path}")
             if not self.id_set_validator.is_file_valid_in_set(file_path, file_type):
                 return False
 

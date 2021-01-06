@@ -187,7 +187,7 @@ class IDSetValidator(BaseValidator):
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self._is_valid_in_id_set(yml_path, script_data, self.script_set) and \
-                    self._is_non_real_command_found(script_data)
+                           self._is_non_real_command_found(script_data)
 
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))

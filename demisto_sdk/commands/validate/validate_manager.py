@@ -810,7 +810,7 @@ class ValidateManager:
                 error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors).handle_error(
-                    error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
                     is_valid.add(True)
 
                 else:

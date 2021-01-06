@@ -39,7 +39,8 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         is_incident_type__valid = all([
             super().is_valid_file(validate_rn),
-            self.is_valid_version()
+            self.is_valid_version(),
+            self.is_valid_autoextract()
         ])
 
         # check only on added files
@@ -48,8 +49,7 @@ class IncidentTypeValidator(ContentEntityValidator):
                 is_incident_type__valid,
                 self.is_id_equals_name(),
                 self.is_including_int_fields(),
-                self.is_valid_playbook_id(),
-                self.is_valid_autoextract()
+                self.is_valid_playbook_id()
             ])
 
         return is_incident_type__valid

@@ -24,8 +24,12 @@ from demisto_sdk.commands.common.content.objects.pack_objects.indicator_field.in
     IndicatorField
 from demisto_sdk.commands.common.content.objects.pack_objects.indicator_type.indicator_type import \
     IndicatorType
+from demisto_sdk.commands.common.content.objects.pack_objects.integration.integration import \
+    Integration
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
     Layout, LayoutsContainer)
+from demisto_sdk.commands.common.content.objects.pack_objects.widget.widget import \
+    Widget
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -392,7 +396,11 @@ class ValidateManager:
             return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return Integration(file_path).validate(check_bc=(is_modified and self.is_backward_check),
+                                                   ignored_errors=pack_error_ignore_list,
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   prev_ver=self.prev_ver, branch_name=self.branch_name,
+                                                   skip_docker_check=self.skip_docker_checks)
 
         elif file_type == FileType.SCRIPT:
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
@@ -456,7 +464,10 @@ class ValidateManager:
                                                      print_as_warnings=self.print_ignored_errors)
 
         elif file_type == FileType.WIDGET:
-            return self.validate_widget(structure_validator, pack_error_ignore_list)
+            return Widget(file_path).validate(ignored_errors=pack_error_ignore_list,
+                                              print_as_warnings=self.print_ignored_errors,
+                                              prev_ver=self.prev_ver,
+                                              branch_name=self.branch_name)
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -558,26 +569,6 @@ class ValidateManager:
         return playbook_validator.is_valid_playbook(validate_rn=False,
                                                     id_set_file=self.id_set_file)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
-        integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                     print_as_warnings=self.print_ignored_errors,
-                                                     skip_docker_check=self.skip_docker_checks)
-
-        deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
-                                                               file_path=structure_validator.file_path,
-                                                               current_file=integration_validator.current_file,
-                                                               is_modified=is_modified,
-                                                               is_backward_check=self.is_backward_check,
-                                                               validator=integration_validator)
-        if deprecated_result is not None:
-            return deprecated_result
-
-        if is_modified and self.is_backward_check:
-            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
-                        integration_validator.is_backward_compatible()])
-        else:
-            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
-
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
@@ -608,11 +599,6 @@ class ValidateManager:
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors)
         return image_validator.is_valid()
-
-    def validate_widget(self, structure_validator, pack_error_ignore_list):
-        widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors)
-        return widget_validator.is_valid_file(validate_rn=False)
 
     def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, id_set_path=None,
                                    should_version_raise=False) -> bool:

@@ -1009,3 +1009,4 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
                                 FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
 
 DEFAULT_VERSION = -1
+CONF_PATH = "./Tests/conf.json"

@@ -4,6 +4,7 @@ bandit>=1.6.2
 bs4>=0.0.1
 click>=7.0
 colorama==0.4.1
+coloredlogs>=15.0
 configparser>=5.0.0
 dateparser>=0.7.2
 demisto-py>=2.0.19

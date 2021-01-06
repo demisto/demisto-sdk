@@ -3,6 +3,7 @@ import os
 import re
 from collections import OrderedDict
 
+import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.errors import Errors
@@ -162,6 +163,7 @@ class IDSetValidator(BaseValidator):
         """
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+            click.echo(f"id set validations for: {file_path}")
             if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
                 playbook_data = OrderedDict(get_playbook_data(file_path))
                 is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
@@ -185,8 +187,8 @@ class IDSetValidator(BaseValidator):
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = self._is_valid_in_id_set(yml_path, script_data, self.script_set) and \
-                    self._is_non_real_command_found(script_data)
+                is_valid = (self._is_valid_in_id_set(yml_path, script_data, self.script_set) and
+                            self._is_non_real_command_found(script_data))
 
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))

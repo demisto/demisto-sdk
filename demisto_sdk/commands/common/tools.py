@@ -451,7 +451,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :return: The file name
     """
     if content_entity == LAYOUTS_DIR:
-        return data.get('typeId', '')
+        return data.get('typeId', data.get('name', ''))
     else:
         return data.get('name', '')
 

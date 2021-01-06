@@ -67,6 +67,53 @@ class IDSetValidator(BaseValidator):
 
             return id_set
 
+    def _is_playbook_found(self, incident_type_data):
+        """Check if the playbook is in the id_set
+
+        Args:
+            incident_type_data (dict): Dictionary that holds the extracted details from the given incident type.
+
+        Returns:
+            bool. Whether the playbook is in the id_set or not.
+        """
+        is_valid = True
+        incident_type_name = list(incident_type_data.keys())[0]
+        incident_type_playbook = incident_type_data[incident_type_name].get('playbooks')
+        if incident_type_playbook:
+            # setting initially to false, if the default playbook is in the id_set, it will be valid
+            is_valid = False
+            for checked_playbook in self.playbook_set:
+                checked_playbook_name = list(checked_playbook.keys())[0]
+                if incident_type_playbook == checked_playbook_name:
+                    is_valid = True
+                    break
+            if not is_valid:  # add error message if not valid
+                error_message, error_code = Errors.incident_type_non_existent_playbook_id(incident_type_name,
+                                                                                          incident_type_playbook)
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid
+
+    def _is_non_real_command_found(self, script_data):
+        """Check if the script depend-on section has a non real command
+
+        Args:
+            script_data (dict): Dictionary that holds the extracted details from the given script.
+
+        Returns:
+            bool. Whether the script is valid or not.
+        """
+        is_valid = True
+        depends_on_commands = script_data.get('depends_on')
+        for command in depends_on_commands:
+            if command != 'test-module':
+                if command.endswith('dev') or command.endswith('copy'):
+                    error_message, error_code = Errors.invalid_command_name_in_script(script_data.get('name'),
+                                                                                      command)
+                    self.handle_error(error_message, error_code, file_path="id_set.json")
+                    return not is_valid
+        return is_valid
+
     def _is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):
         """Check if the file is represented correctly in the id_set
 
@@ -103,11 +150,12 @@ class IDSetValidator(BaseValidator):
 
         return is_found
 
-    def is_file_valid_in_set(self, file_path):
-        """Check if the file is represented correctly in the id_set
+    def is_file_valid_in_set(self, file_path, file_type):
+        """Check if the file is valid in the id_set
 
         Args:
             file_path (string): Path to the file.
+            file_type (string): The file type.
 
         Returns:
             bool. Whether the file is represented correctly in the id_set or not.
@@ -124,100 +172,24 @@ class IDSetValidator(BaseValidator):
 
             elif re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
-
                 script_data = get_script_data(file_path)
                 is_valid = self._is_valid_in_id_set(file_path, script_data, self.script_set)
 
             elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
-
                 integration_data = get_integration_data(file_path)
                 is_valid = self._is_valid_in_id_set(file_path, integration_data, self.integration_set)
 
             elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
                     re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
-
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = self._is_valid_in_id_set(yml_path, script_data, self.script_set)
+                is_valid = self._is_valid_in_id_set(yml_path, script_data, self.script_set) and \
+                    self._is_non_real_command_found(script_data)
+
+            elif file_type == constants.FileType.INCIDENT_TYPE:
+                incident_type_data = OrderedDict(get_incident_type_data(file_path))
+                is_valid = self._is_playbook_found(incident_type_data)
 
         return is_valid
-
-    def is_incident_type_using_real_playbook(self, file_path):
-        """Check if the incident type is using an existing playbook
-
-        Args:
-            file_path (string): Path to the file.
-
-        Returns:
-            bool. Whether the incident type is using an existing playbook.
-        """
-        is_valid = True
-
-        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
-            incident_type_data = OrderedDict(get_incident_type_data(file_path))
-            is_valid = self._is_playbook_found(incident_type_data)
-
-        return is_valid
-
-    def _is_playbook_found(self, incident_type_data):
-        """Check if the playbook is in the id_set
-
-        Args:
-            incident_type_data (dict): Dictionary that holds the extracted details from the given incident type.
-
-        Returns:
-            bool. Whether the playbook is in the id_set or not.
-        """
-        incident_type_name = list(incident_type_data.keys())[0]
-        incident_type_playbook = incident_type_data[incident_type_name].get('playbooks')
-        if incident_type_playbook:
-            # setting initially to false, if the default playbook is in the id_set, it will be valid
-            is_found = False
-            for checked_playbook in self.playbook_set:
-                checked_playbook_name = list(checked_playbook.keys())[0]
-                if incident_type_playbook == checked_playbook_name:
-                    is_found = True
-                    break
-            if not is_found:  # add error message if not valid
-                error_message, error_code = Errors.incident_type_non_existent_playbook_id(incident_type_name,
-                                                                                          incident_type_playbook)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
-
-        return is_found
-
-    def is_script_using_real_command(self, file_path):
-        """Check if the script is using a non real command
-
-        Args:
-            file_path (string): Path to the file.
-
-        Returns:
-            bool. Whether the script is using a real command.
-        """
-        is_valid = True
-        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
-            script_data = get_script_data(file_path)
-            is_valid = not self._is_non_real_command_found(script_data)
-
-        return is_valid
-
-    def _is_non_real_command_found(self, script_data):
-        """Check if the script depend-on section has a non real command
-
-        Args:
-            script_data (dict): Dictionary that holds the extracted details from the given script.
-
-        Returns:
-            bool. Whether the script has a non real command.
-        """
-        depends_on_commands = script_data.get('depends_on')
-        for command in depends_on_commands:
-            if command != 'test-module' and not command.endswith('-test'):
-                if command.endswith('dev') or command.endswith('copy'):
-                    error_message, error_code = Errors.invalid_script_using_commands(script_data.get('name'),
-                                                                                     command)
-                    self.handle_error(error_message, error_code, file_path="id_set.json")
-                    return True
-        return False

@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
+    "invalid_command_name_in_script": "SC102",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -115,7 +116,6 @@ ERROR_CODE = {
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
     "invalid_script_id": "PB107",
-    "invalid_script_using_commands": "SC100",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -783,7 +783,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_script_using_commands(script_name, command):
+    def invalid_command_name_in_script(script_name, command):
         return f"in script {script_name} the comamnd {command} has an invalid name. " \
                f"Please make sure:\n" \
                f"1 - The right command name is set and the spelling is correct." \

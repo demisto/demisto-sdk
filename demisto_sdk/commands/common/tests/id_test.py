@@ -140,7 +140,7 @@ def test_is_non_real_command_found__happy_flow():
         'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
     }
 
-    assert validator._is_non_real_command_found(script_data=script_data) is False, \
+    assert validator._is_non_real_command_found(script_data=script_data) is True, \
         "The script has a non real command"
 
 
@@ -164,5 +164,5 @@ def test_is_non_real_command_found__bad_command_name():
         'tests': ['No test - deprecated script with no test prior'], 'pack': 'DeprecatedContent'
     }
 
-    assert validator._is_non_real_command_found(script_data=script_data) is True, \
+    assert validator._is_non_real_command_found(script_data=script_data) is False, \
         "The script has a non real command"

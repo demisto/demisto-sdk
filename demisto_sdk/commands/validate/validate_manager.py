@@ -337,16 +337,9 @@ class ValidateManager:
 
         # id_set validation
         if self.id_set_validations:
-            # if True:
-            click.echo(f"Validating id set registration for {file_path}")
-            if not self.id_set_validator.is_file_valid_in_set(file_path):
+            click.echo(f"id set validations for: {file_path}")
+            if not self.id_set_validator.is_file_valid_in_set(file_path, file_type):
                 return False
-            if file_type == FileType.INCIDENT_TYPE:
-                if not self.id_set_validator.is_incident_type_using_real_playbook(file_path):
-                    return False
-            if file_type == FileType.SCRIPT:
-                if not self.id_set_validator.is_script_using_real_command(file_path):
-                    return False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:

@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
+    "invalid_command_name_in_script": "SC102",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -136,6 +137,7 @@ ERROR_CODE = {
     "incident_type_invalid_playbook_id_field": "IT101",
     "incident_type_auto_extract_fields_invalid": "IT102",
     "incident_type_invalid_auto_extract_mode": "IT103",
+    "incident_type_non_existent_playbook_id": "IT104",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -781,6 +783,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the comamnd {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
@@ -900,6 +912,15 @@ class Errors:
         return 'The `mode` field under `extractSettings` should be one of the following:\n' \
                ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
                ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_non_existent_playbook_id(incident_type, playbook):
+        return f"in incident type {incident_type} the playbook {playbook} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right playbook name is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator

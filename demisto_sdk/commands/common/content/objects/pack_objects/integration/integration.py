@@ -85,7 +85,7 @@ class Integration(YAMLContentUnifiedObject):
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                         return client.integration_upload(file=file)  # type: ignore
 
-    def validate(self, ignored_errors, print_as_warnings, skip_docker_check, prev_ver, branch_name, check_bc):
+    def validate(self, ignored_errors, print_as_warnings, skip_docker_check, prev_ver, branch_name, check_bc, beta):
         self.handle_error = BaseValidator(print_as_warnings=print_as_warnings,
                                           ignored_errors=ignored_errors).handle_error
         self.branch_name = branch_name
@@ -93,6 +93,10 @@ class Integration(YAMLContentUnifiedObject):
         self.print_as_warnings = print_as_warnings
         self.ignored_errors = ignored_errors
         old_file = get_remote_file(self.path, tag=prev_ver)
+
+        if beta:
+            return self.is_valid_beta_integration(old_file)
+
         if check_bc:
             return self.is_valid_file(skip_docker_check) and self.is_backward_compatible(old_file)
         else:
@@ -963,3 +967,75 @@ class Integration(YAMLContentUnifiedObject):
                         output_for_reputation_valid = False
 
         return output_for_reputation_valid
+
+    def is_valid_beta_integration(self, old_file) -> bool:
+        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
+
+            Returns:
+                bool: True if integration is valid, False otherwise.
+        """
+        answers = [
+            self.is_valid_version(),
+            self.is_valid_fromversion(),
+            self.is_valid_default_arguments(),
+            self.is_valid_beta(old_file),
+            self.is_valid_image(),
+            self.is_valid_description(beta_integration=True),
+        ]
+        return all(answers)
+
+    def is_valid_beta(self, old_file):
+        # type: (dict) -> bool
+        """Validate that beta integration has correct beta attributes"""
+        valid_status = True
+        if not all([self._is_display_contains_beta(), self._has_beta_param()]):
+            valid_status = False
+        if not old_file:
+            if not all([self._id_has_no_beta_substring(), self._name_has_no_beta_substring()]):
+                valid_status = False
+        return valid_status
+
+    def _id_has_no_beta_substring(self):
+        # type: () -> bool
+        """Checks that 'id' field dose not include the substring 'beta'"""
+        common_fields = self.get('commonfields', {})
+        integration_id = common_fields.get('id', '')
+        if 'beta' in integration_id.lower():
+            error_message, error_code = Errors.beta_in_id()
+            if self.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True
+
+    def _name_has_no_beta_substring(self):
+        # type: () -> bool
+        """Checks that 'name' field dose not include the substring 'beta'"""
+        name = self.get('name', '')
+        if 'beta' in name.lower():
+            error_message, error_code = Errors.beta_in_name()
+            if self.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True
+
+    def _has_beta_param(self):
+        # type: () -> bool
+        """Checks that integration has 'beta' field with value set to true"""
+        beta = self.get('beta', False)
+        if not beta:
+            error_message, error_code = Errors.beta_field_not_found()
+            if self.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True
+
+    def _is_display_contains_beta(self):
+        # type: () -> bool
+        """Checks that 'display' field includes the substring 'beta'"""
+        display = self.get('display', '')
+        if 'beta' not in display.lower():
+            error_message, error_code = Errors.no_beta_in_display()
+            if self.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True

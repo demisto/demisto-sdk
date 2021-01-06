@@ -400,13 +400,17 @@ class ValidateManager:
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    prev_ver=self.prev_ver, branch_name=self.branch_name,
-                                                   skip_docker_check=self.skip_docker_checks)
+                                                   skip_docker_check=self.skip_docker_checks, beta=False)
 
         elif file_type == FileType.SCRIPT:
             return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
 
         elif file_type == FileType.BETA_INTEGRATION:
-            return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
+            return Integration(file_path).validate(check_bc=(is_modified and self.is_backward_check),
+                                                   ignored_errors=pack_error_ignore_list,
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   prev_ver=self.prev_ver, branch_name=self.branch_name,
+                                                   skip_docker_check=self.skip_docker_checks, beta=True)
 
         # Validate only images of packs
         elif file_type == FileType.IMAGE:
@@ -588,12 +592,6 @@ class ValidateManager:
                         script_validator.is_backward_compatible()])
         else:
             return script_validator.is_valid_file(validate_rn=False)
-
-    def validate_beta_integration(self, structure_validator, pack_error_ignore_list):
-        integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                     print_as_warnings=self.print_ignored_errors,
-                                                     skip_docker_check=self.skip_docker_checks)
-        return integration_validator.is_valid_beta_integration()
 
     def validate_image(self, file_path, pack_error_ignore_list):
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,

@@ -776,7 +776,7 @@ class ValidateManager:
             bool. True if no missing RN found, False otherwise
         """
         click.secho("\n================= Checking for missing release notes =================\n", fg="bright_cyan")
-
+        packs_that_should_have_new_rn_api_module_related: set = set()
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
         changed_files = modified_files.union(old_format_files).union(added_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
@@ -788,8 +788,9 @@ class ValidateManager:
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
             integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
-            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
-                set(map(lambda integration: integration.get('pack'), integrations)))
+            packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
+                                                                       integrations))
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(packs_that_should_have_new_rn_api_module_related)
 
             # APIModules pack is without a version and should not have RN
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)
@@ -808,7 +809,10 @@ class ValidateManager:
                 if 'NonSupported' in pack:
                     continue
                 ignored_errors_list = self.get_error_ignore_list(pack)
-                error_message, error_code = Errors.missing_release_notes_for_pack(pack)
+                if pack in packs_that_should_have_new_rn_api_module_related:
+                    error_message, error_code = Errors.missing_release_notes_for_pack(API_MODULES_PACK)
+                else:
+                    error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors).handle_error(
                         error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):

@@ -1,5 +1,8 @@
 # Changelog
 
+# 1.2.16
+* Added allowed ignore errors to the *IDSetValidator*.
+
 # 1.2.15
 * Added the *ID101* to the allowed ignored errors.
 

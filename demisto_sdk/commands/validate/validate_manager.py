@@ -79,7 +79,7 @@ class ValidateManager:
         self.no_configuration_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
-        self.validate_in_id_set = validate_id_set
+        self.id_set_validations = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
         self.use_git = use_git
@@ -129,7 +129,7 @@ class ValidateManager:
 
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
-        if self.validate_in_id_set:
+        if self.id_set_validations:
             self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
 
         if no_docker_checks:
@@ -338,9 +338,8 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.validate_in_id_set:
-            click.echo(f"Validating id set registration for {file_path}")
-            if not self.id_set_validator.is_file_valid_in_set(file_path):
+        if self.id_set_validations:
+            if not self.id_set_validator.is_file_valid_in_set(file_path, file_type):
                 return False
 
         # Note: these file are not ignored but there are no additional validators for connections

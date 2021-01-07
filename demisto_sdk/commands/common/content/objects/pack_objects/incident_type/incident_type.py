@@ -1,7 +1,7 @@
 import json
 import re
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
+from typing import Union
 
 import demisto_client
 from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
@@ -22,9 +22,9 @@ INVALID_PLAYBOOK_ID = r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}'
 
 
 class IncidentType(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, INCIDENT_TYPE)
-        self.handle_error: Callable = BaseValidator().handle_error
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client):
         """
@@ -45,17 +45,13 @@ class IncidentType(JSONContentObject):
             incident_type_unified_file.seek(0)
             return client.import_incident_types_handler(file=incident_type_unified_file.name)
 
-    def validate(self, check_bc, ignored_errors_list, print_as_warnings=False,
-                 prev_ver='origin/master', branch_name=''):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors_list, print_as_warnings=print_as_warnings). \
-            handle_error
-
-        old_file = get_remote_file(self.path, tag=prev_ver)
-        if check_bc:
-            return self.is_valid_file(old_file=old_file, prev_ver=prev_ver, branch_name=branch_name) and \
+    def validate(self):
+        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
+        if self.base.check_bc:
+            return self.is_valid_file(old_file=old_file) and \
                 self.is_backward_compatible(old_file=old_file)
         else:
-            return self.is_valid_file(old_file=old_file, prev_ver=prev_ver, branch_name=branch_name)
+            return self.is_valid_file(old_file=old_file)
 
     def is_backward_compatible(self, old_file):
         """Check whether the Incident Type is backward compatible or not
@@ -71,11 +67,11 @@ class IncidentType(JSONContentObject):
 
         return not is_bc_broke
 
-    def is_valid_file(self, old_file, prev_ver, branch_name):
+    def is_valid_file(self, old_file):
         """Check whether the Incident Type is valid or not
         """
         is_incident_type__valid = all([
-            self.is_valid_fromversion(prev_ver=prev_ver, branch_name=branch_name),
+            self.is_valid_fromversion(),
             self.is_valid_version(),
             self.is_valid_autoextract()
         ])
@@ -100,8 +96,8 @@ class IncidentType(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -116,8 +112,8 @@ class IncidentType(JSONContentObject):
         name = self.get('name', '')
         if file_id != name:
             error_message, error_code = Errors.id_should_equal_name(name, file_id)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
 
         return True
@@ -134,7 +130,7 @@ class IncidentType(JSONContentObject):
             current_from_version = self.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_bc_broke = True
         return is_bc_broke
 
@@ -153,12 +149,12 @@ class IncidentType(JSONContentObject):
                     int_field = self.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
                         error_message, error_code = Errors.incident_type_integer_field(field)
-                        if self.handle_error(error_message, error_code, file_path=self.path):
+                        if self.base.handle_error(error_message, error_code, file_path=self.path):
                             is_valid = False
 
         except (AttributeError, ValueError):
             error_message, error_code = Errors.invalid_incident_field_or_type_from_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         return is_valid
@@ -172,29 +168,29 @@ class IncidentType(JSONContentObject):
         playbook_id = self.get('playbookId', '')
         if playbook_id and re.search(INVALID_PLAYBOOK_ID, playbook_id):
             error_message, error_code = Errors.incident_type_invalid_playbook_id_field()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
-    def is_valid_fromversion(self, prev_ver, branch_name):
+    def is_valid_fromversion(self):
         """Check if the file has a fromversion 5.0.0 or higher
             This is not checked if checking on or against a feature branch.
         """
-        if not self.should_run_fromversion_validation(prev_ver, branch_name):
+        if not self.should_run_fromversion_validation():
             return True
 
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
 
-    def should_run_fromversion_validation(self, prev_ver, branch_name):
+    def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in prev_ver or feature_branch_name in branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES) or str(self.path).endswith('reputations.json'):
             return False
 
@@ -225,7 +221,8 @@ class IncidentType(JSONContentObject):
                 extracted_indicator_types = extracted_settings.get('extractIndicatorTypesIDs')
 
                 # General format check.
-                if type(extracting_all) != bool or type(extract_as_is) != str or type(extracted_indicator_types) != list:
+                if type(extracting_all) != bool or type(extract_as_is) != str or type(
+                        extracted_indicator_types) != list:
                     invalid_incident_fields.append(incident_field)
 
                 # If trying to extract without regex make sure extract all is set to
@@ -242,12 +239,12 @@ class IncidentType(JSONContentObject):
 
             if invalid_incident_fields:
                 error_message, error_code = Errors.incident_type_auto_extract_fields_invalid(invalid_incident_fields)
-                if self.handle_error(error_message, error_code, self.path):
+                if self.base.handle_error(error_message, error_code, self.path):
                     is_valid = False
 
         if auto_extract_mode not in ['All', 'Specific']:
             error_message, error_code = Errors.incident_type_invalid_auto_extract_mode()
-            if self.handle_error(error_message, error_code, self.path):
+            if self.base.handle_error(error_message, error_code, self.path):
                 is_valid = False
 
         return is_valid

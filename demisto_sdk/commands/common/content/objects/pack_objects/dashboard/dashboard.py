@@ -16,11 +16,9 @@ from wcmatch.pathlib import Path
 
 
 class Dashboard(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, DASHBOARD)
-        self.handle_error = BaseValidator().handle_error
-        self.prev_ver = 'master'
-        self.branch_name = ''
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client):
         """
@@ -33,12 +31,8 @@ class Dashboard(JSONContentObject):
         """
         return client.import_dashboard(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings, prev_ver, branch_name):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors,
-                                          print_as_warnings=print_as_warnings).handle_error
-        self.prev_ver = prev_ver
-        self.branch_name = branch_name
-        old_file = get_remote_file(self.path, tag=prev_ver)
+    def validate(self):
+        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
         return self.is_valid_dashboard(old_file)
 
     def is_valid_dashboard(self, old_file):
@@ -74,7 +68,7 @@ class Dashboard(JSONContentObject):
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -82,7 +76,7 @@ class Dashboard(JSONContentObject):
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES):
             return False
 
@@ -97,8 +91,8 @@ class Dashboard(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -113,8 +107,8 @@ class Dashboard(JSONContentObject):
         name = self.get('name', '')
         if file_id != name:
             error_message, error_code = Errors.id_should_equal_name(name, file_id)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(self.path)):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(self.path)):
                 return False
 
         return True
@@ -136,8 +130,8 @@ class Dashboard(JSONContentObject):
         for field in fields_to_exclude:
             if self.get(field) is not None:
                 error_message, error_code = Errors.remove_field_from_dashboard(field)
-                formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                      should_print=False)
+                formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                           should_print=False)
                 if formatted_message:
                     is_valid = False
                     error_msg += formatted_message
@@ -146,8 +140,8 @@ class Dashboard(JSONContentObject):
                 for widget in widgets:
                     if widget.get(field):
                         error_message, error_code = Errors.remove_field_from_widget(field, widget)
-                        formatted_message = self.handle_error(error_message, error_code,
-                                                              file_path=self.path, should_print=False)
+                        formatted_message = self.base.handle_error(error_message, error_code,
+                                                                   file_path=self.path, should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message
@@ -171,8 +165,8 @@ class Dashboard(JSONContentObject):
         for field in fields_to_include:
             if not self.get(field):
                 error_message, error_code = Errors.include_field_in_dashboard(field)
-                formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                      should_print=False)
+                formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                           should_print=False)
                 if formatted_message:
                     is_valid = False
                     error_msg += formatted_message
@@ -182,8 +176,8 @@ class Dashboard(JSONContentObject):
                     if not widget.get(field):
                         widget_name = widget.get("name")
                         error_message, error_code = Errors.include_field_in_widget(field, widget_name)
-                        formatted_message = self.handle_error(error_message, error_code,
-                                                              file_path=self.path, should_print=False)
+                        formatted_message = self.base.handle_error(error_message, error_code,
+                                                                   file_path=self.path, should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message

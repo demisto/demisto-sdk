@@ -13,24 +13,18 @@ from wcmatch.pathlib import Path
 
 
 class Report(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, REPORT)
-        self.handle_error = BaseValidator().handle_error
-        self.prev_ver = 'master'
-        self.branch_name = ''
+        self.base = base if base else BaseValidator()
 
-    def validate(self, ignored_errors, print_as_warnings, prev_ver, branch_name):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors,
-                                          print_as_warnings=print_as_warnings).handle_error
-        self.prev_ver = prev_ver
-        self.branch_name = branch_name
+    def validate(self):
 
         return self.is_valid_fromversion()
 
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES):
             return False
 
@@ -46,7 +40,7 @@ class Report(JSONContentObject):
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True

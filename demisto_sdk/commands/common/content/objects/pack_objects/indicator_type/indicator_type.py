@@ -20,18 +20,12 @@ VALID_INDICATOR_TYPE = '^[A-Za-z0-9_& ]*$'
 
 
 class IndicatorType(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, INDICATOR_TYPE)
-        self.handle_error = BaseValidator().handle_error
-        self.prev_ver = 'master',
-        self.branch_name = ''
+        self.base = base if base else BaseValidator()
 
-    def validate(self, ignored_errors, print_as_warnings, prev_ver, branch_name):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors,
-                                          print_as_warnings=print_as_warnings).handle_error
-        self.prev_ver = prev_ver
-        self.branch_name = branch_name
-        old_file = get_remote_file(self.path, tag=prev_ver)
+    def validate(self):
+        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
         return self.is_valid_file(old_file)
 
     def is_valid_file(self, old_file):
@@ -65,7 +59,7 @@ class IndicatorType(JSONContentObject):
             object_id = self.get('id')
             error_message, error_code = Errors.wrong_version_reputations(object_id, DEFAULT_VERSION)
 
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         return is_valid
@@ -77,7 +71,7 @@ class IndicatorType(JSONContentObject):
             expiration = self.get('expiration', "")
             if not isinstance(expiration, int) or expiration < 0:
                 error_message, error_code = Errors.reputation_expiration_should_be_numeric()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
         return True
@@ -92,7 +86,7 @@ class IndicatorType(JSONContentObject):
         details = self.get('details', None)
         if not id_ or not details:
             error_message, error_code = Errors.reputation_empty_required_fields()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -103,7 +97,7 @@ class IndicatorType(JSONContentObject):
         details = self.get('details', None)
         if id_ and details and id_ != details:
             error_message, error_code = Errors.reputation_id_and_details_not_equal()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -116,14 +110,14 @@ class IndicatorType(JSONContentObject):
         id_ = self.get('id', None)
         if id_ and not re.match(VALID_INDICATOR_TYPE, id_):
             error_message, error_code = Errors.reputation_invalid_indicator_type_id()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES) or str(self.path).endswith('reputations.json'):
             return False
 
@@ -139,7 +133,7 @@ class IndicatorType(JSONContentObject):
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True

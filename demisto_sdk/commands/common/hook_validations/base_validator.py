@@ -17,12 +17,23 @@ from demisto_sdk.commands.common.tools import (find_type, get_pack_name,
 
 
 class BaseValidator:
-
-    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
+                 check_bc: bool = False, prev_ver: str = '', branch_name: str = '',
+                 skip_docker_check: bool = False,
+                 file_type: FileType = FileType.INTEGRATION, skip_test_conf: bool = False,
+                 is_modified: bool = False, id_set_file: str = ''):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
+        self.prev_ver = prev_ver
+        self.branch_name = branch_name
+        self.skip_docker_check = skip_docker_check
+        self.file_type = file_type
+        self.check_bc = check_bc
+        self.skip_test_conf = skip_test_conf
+        self.is_modified = is_modified
+        self.id_set_file = id_set_file
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):

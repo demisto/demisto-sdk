@@ -163,9 +163,9 @@ INDICATOR_FIELD_CLINAME_VALIDATION_REGEX = r"[0-9a-z]+$"
 
 
 class IndicatorField(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, INDICATOR_FIELD)
-        self.handle_error = None
+        self.base = base if base else BaseValidator()
 
     def normalize_file_name(self) -> str:
         """Add prefix to file name if not exists.
@@ -194,16 +194,12 @@ class IndicatorField(JSONContentObject):
 
         return normalize_file_name
 
-    def validate(self, check_bc, ignored_errors_list, print_as_warnings=False,
-                 prev_ver='origin/master', branch_name=''):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors_list, print_as_warnings=print_as_warnings).\
-            handle_error
-
-        if check_bc:
-            return self.is_valid_file(prev_ver=prev_ver, branch_name=branch_name) and \
-                self.is_backward_compatible(old_file=get_remote_file(self.path, tag=prev_ver))
+    def validate(self):
+        if self.base.check_bc:
+            return self.is_valid_file() and \
+                self.is_backward_compatible(old_file=get_remote_file(self.path, tag=self.base.prev_ver))
         else:
-            return self.is_valid_file(prev_ver=prev_ver, branch_name=branch_name)
+            return self.is_valid_file()
 
     def is_backward_compatible(self, old_file):
         """Check whether the Indicator Field is backward compatible or not
@@ -220,7 +216,7 @@ class IndicatorField(JSONContentObject):
 
         return not is_bc_broke
 
-    def is_valid_file(self, prev_ver, branch_name):
+    def is_valid_file(self):
         """Check whether the Indicator Field is valid or not
         """
         return all(
@@ -234,7 +230,7 @@ class IndicatorField(JSONContentObject):
                 self.is_valid_cliname(),
                 self.is_valid_version(),
                 self.is_valid_required(),
-                self.is_valid_fromversion(prev_ver, branch_name)
+                self.is_valid_fromversion()
             ]
         )
 
@@ -276,8 +272,8 @@ class IndicatorField(JSONContentObject):
             for word in name.split():
                 if word.lower() in bad_words:
                     error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(error_message, error_code,
-                                      file_path=self.path, warning=True)
+                    self.base.handle_error(error_message, error_code,
+                                           file_path=self.path, warning=True)
 
         return True
 
@@ -286,7 +282,7 @@ class IndicatorField(JSONContentObject):
         is_valid_flag = self.get("content") is content_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value)
-            if not self.handle_error(error_message, error_code, file_path=self.path):
+            if not self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -296,7 +292,7 @@ class IndicatorField(JSONContentObject):
         is_valid_flag = self.get("system", False) is system_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value)
-            if not self.handle_error(error_message, error_code, file_path=self.path):
+            if not self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -310,8 +306,8 @@ class IndicatorField(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -322,7 +318,7 @@ class IndicatorField(JSONContentObject):
             return True
         error_message, error_code = Errors.invalid_incident_field_type(self.get('type'),
                                                                        TypeFields)
-        if self.handle_error(error_message, error_code, file_path=self.path):
+        if self.base.handle_error(error_message, error_code, file_path=self.path):
             return False
         return True
 
@@ -332,7 +328,7 @@ class IndicatorField(JSONContentObject):
         if GroupFieldTypes.is_valid_group(group):
             return True
         error_message, error_code = Errors.invalid_incident_field_group_value(group)
-        if self.handle_error(error_message, error_code, file_path=self.path):
+        if self.base.handle_error(error_message, error_code, file_path=self.path):
             return False
         return True
 
@@ -347,7 +343,7 @@ class IndicatorField(JSONContentObject):
             return True
         error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
             INDICATOR_FIELD_CLINAME_VALIDATION_REGEX)
-        if self.handle_error(error_message, error_code, file_path=self.path):
+        if self.base.handle_error(error_message, error_code, file_path=self.path):
             return False
         return True
 
@@ -364,7 +360,7 @@ class IndicatorField(JSONContentObject):
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
             error_message, error_code = Errors.invalid_incident_field_cli_name_value(cliname)
-            if not self.handle_error(error_message, error_code, file_path=self.path):
+            if not self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = True
         return is_valid
 
@@ -379,13 +375,13 @@ class IndicatorField(JSONContentObject):
         required = self.get('required', False)
         if required:
             error_message, error_code = Errors.new_incident_field_required()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         return is_valid
 
     def is_changed_from_version(self, old_file):
-        # type: () -> bool
+        # type: (dict) -> bool
         """Check if fromversion has been changed.
 
        Returns:
@@ -397,13 +393,13 @@ class IndicatorField(JSONContentObject):
             current_from_version = str(self.from_version)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_fromversion_changed = True
 
         return is_fromversion_changed
 
     def is_changed_type(self, old_file):
-        # type: () -> bool
+        # type: (dict) -> bool
         """Validate that the type was not changed."""
         is_type_changed = False
         current_type = self.get('type', "")
@@ -411,30 +407,30 @@ class IndicatorField(JSONContentObject):
             old_type = old_file.get('type', {})
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_type_changed = True
 
         return is_type_changed
 
-    def is_valid_fromversion(self, prev_ver, branch_name):
+    def is_valid_fromversion(self):
         """Check if the file has a fromversion 5.0.0 or higher
             This is not checked if checking on or against a feature branch.
         """
-        if not self.should_run_fromversion_validation(prev_ver, branch_name):
+        if not self.should_run_fromversion_validation():
             return True
 
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
 
-    def should_run_fromversion_validation(self, prev_ver, branch_name):
+    def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in prev_ver or feature_branch_name in branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES) or str(self.path).endswith('reputations.json'):
             return False
 

@@ -18,21 +18,14 @@ FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
 
 class Layout(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, LAYOUT)
-        self.handle_error = BaseValidator().handle_error
-        self.prev_ver = 'master'
-        self.branch_name = ''
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client):
         return client.import_layout(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings, prev_ver, branch_name):
-        self.handle_error = BaseValidator(print_as_warnings=print_as_warnings,
-                                          ignored_errors=ignored_errors).handle_error
-
-        self.prev_ver = prev_ver
-        self.branch_name = branch_name
+    def validate(self):
 
         return self.is_valid_layout()
 
@@ -59,8 +52,8 @@ class Layout(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(self.path)):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(self.path)):
                 return False
         return True
 
@@ -73,13 +66,13 @@ class Layout(JSONContentObject):
         is_valid = True
         if self.from_version >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layout('fromVersion')
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         if self.should_run_fromversion_validation() and self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         return is_valid
@@ -93,7 +86,7 @@ class Layout(JSONContentObject):
         if not self.get('toVersion') \
                 or self.to_version >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layout('toVersion')
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -101,14 +94,14 @@ class Layout(JSONContentObject):
         output_basename = os.path.basename(str(self.path))
         if not output_basename.startswith('layout-'):
             error_message, error_code = Errors.invalid_file_path_layout(output_basename)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES):
             return False
 
@@ -122,17 +115,15 @@ class Layout(JSONContentObject):
         """
         if self.to_version <= self.from_version:
             error_message, error_code = Errors.from_version_higher_to_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
 
 class LayoutsContainer(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, LAYOUTS_CONTAINER)
-        self.handle_error = BaseValidator().handle_error
-        self.branch_name = ''
-        self.prev_ver = 'master'
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client):
         """
@@ -145,13 +136,7 @@ class LayoutsContainer(JSONContentObject):
         """
         return client.import_layout(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings, prev_ver, branch_name):
-        self.handle_error = BaseValidator(print_as_warnings=print_as_warnings,
-                                          ignored_errors=ignored_errors).handle_error
-
-        self.prev_ver = prev_ver
-        self.branch_name = branch_name
-
+    def validate(self):
         return self.is_valid_layout()
 
     def is_valid_layout(self) -> bool:
@@ -177,8 +162,8 @@ class LayoutsContainer(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(self.path)):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(self.path)):
                 return False
         return True
 
@@ -190,7 +175,7 @@ class LayoutsContainer(JSONContentObject):
         """
         if self.to_version <= self.from_version:
             error_message, error_code = Errors.from_version_higher_to_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -203,7 +188,7 @@ class LayoutsContainer(JSONContentObject):
         if not self.get('fromVersion') or \
                 self.from_version < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer('fromVersion')
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -215,7 +200,7 @@ class LayoutsContainer(JSONContentObject):
         """
         if self.to_version < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer('toVersion')
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -223,6 +208,6 @@ class LayoutsContainer(JSONContentObject):
         output_basename = os.path.basename(str(self.path))
         if not output_basename.startswith('layoutscontainer-'):
             error_message, error_code = Errors.invalid_file_path_layoutscontainer(output_basename)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True

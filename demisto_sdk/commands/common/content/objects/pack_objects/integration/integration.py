@@ -1,6 +1,6 @@
 import json
 import tempfile
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import click
 import demisto_client
@@ -47,13 +47,9 @@ def _load_conf_file():
 
 
 class Integration(YAMLContentUnifiedObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, FileType.INTEGRATION, INTEGRATION)
-        self.handle_error = BaseValidator().handle_error
-        self.prev_ver = 'master'
-        self.branch_name = ''
-        self.ignored_errors: List = []
-        self.print_as_warnings = False
+        self.base = base if base else BaseValidator()
 
     @property
     def png_path(self) -> Optional[Path]:
@@ -85,22 +81,16 @@ class Integration(YAMLContentUnifiedObject):
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                         return client.integration_upload(file=file)  # type: ignore
 
-    def validate(self, ignored_errors, print_as_warnings, skip_docker_check, prev_ver, branch_name, check_bc, beta):
-        self.handle_error = BaseValidator(print_as_warnings=print_as_warnings,
-                                          ignored_errors=ignored_errors).handle_error
-        self.branch_name = branch_name
-        self.prev_ver = prev_ver
-        self.print_as_warnings = print_as_warnings
-        self.ignored_errors = ignored_errors
-        old_file = get_remote_file(self.path, tag=prev_ver)
+    def validate(self):
+        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
 
-        if beta:
+        if self.base.file_type == FileType.BETA_INTEGRATION:
             return self.is_valid_beta_integration(old_file)
 
-        if check_bc:
-            return self.is_valid_file(skip_docker_check) and self.is_backward_compatible(old_file)
+        if self.base.check_bc:
+            return self.is_valid_file() and self.is_backward_compatible(old_file)
         else:
-            return self.is_valid_file(skip_docker_check)
+            return self.is_valid_file()
 
     def is_backward_compatible(self, old_file):
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
@@ -116,12 +106,9 @@ class Integration(YAMLContentUnifiedObject):
         ]
         return not any(answers)
 
-    def is_valid_file(self, skip_test_conf: bool = False) -> bool:
+    def is_valid_file(self) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
-
-            Args:
-                skip_test_conf (bool): If true then will skip test playbook configuration validation
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -137,7 +124,7 @@ class Integration(YAMLContentUnifiedObject):
             self.is_checkbox_param_configured_correctly(),
             self.is_valid_category(),
             self.is_id_equals_name(),
-            self.is_docker_image_valid(skip_test_conf),
+            self.is_docker_image_valid(),
             self.is_valid_feed(),
             self.is_valid_fetch(),
             self.is_there_a_runnable(),
@@ -156,7 +143,7 @@ class Integration(YAMLContentUnifiedObject):
             self.is_not_valid_display_configuration()
         ]
 
-        if not skip_test_conf:
+        if not self.base.skip_test_conf:
             answers.append(self.are_tests_configured())
         return all(answers)
 
@@ -166,7 +153,7 @@ class Integration(YAMLContentUnifiedObject):
             return True
 
         error_message, error_code = Errors.wrong_version()
-        if self.handle_error(error_message, error_code, file_path=self.path):
+        if self.base.handle_error(error_message, error_code, file_path=self.path):
             return False
 
         return True
@@ -179,7 +166,7 @@ class Integration(YAMLContentUnifiedObject):
             subtype = self.get('script', {}).get('subtype')
             if subtype not in PYTHON_SUBTYPES:
                 error_message, error_code = Errors.wrong_subtype()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
         return True
@@ -207,12 +194,12 @@ class Integration(YAMLContentUnifiedObject):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
-                            if self.handle_error(error_message, error_code, file_path=self.path):
+                            if self.base.handle_error(error_message, error_code, file_path=self.path):
                                 flag = False
 
                 if not flag_found_arg:
                     error_message, error_code = Errors.no_default_arg(command_name)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         flag = False
 
         if not flag:
@@ -262,35 +249,35 @@ class Integration(YAMLContentUnifiedObject):
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
                     error_message, error_code = Errors.wrong_display_name(param_name, param_display)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                          should_print=False)
+                    formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                               should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('defaultvalue', '') not in ('false', ''):
                     error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                          should_print=False)
+                    formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                               should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('required', False):
                     error_message, error_code = Errors.wrong_required_value(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                          should_print=False)
+                    formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                               should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('type') != 8:
                     error_message, error_code = Errors.wrong_required_type(param_name)
-                    formatted_message = self.handle_error(error_message, error_code, file_path=self.path,
-                                                          should_print=False)
+                    formatted_message = self.base.handle_error(error_message, error_code, file_path=self.path,
+                                                               should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
         if err_msgs:
             err_msgs_str = "\n".join(err_msgs)
-            click.secho(f'{self.path} Received the following error for '
+            click.secho(f'{str(self.path)} Received the following error for '
                         f'{param_name} validation:\n{err_msgs_str}', fg='bright_red')
             return False
         return True
@@ -303,7 +290,7 @@ class Integration(YAMLContentUnifiedObject):
         """
         if configuration_param.get('required', False):
             error_message, error_code = Errors.wrong_required_value(param_name)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -313,7 +300,7 @@ class Integration(YAMLContentUnifiedObject):
         category = self.get('category', None)
         if category not in INTEGRATION_CATEGORIES:
             error_message, error_code = Errors.wrong_category(category)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -330,20 +317,20 @@ class Integration(YAMLContentUnifiedObject):
         name = self.get('name', '')
         if file_id != name:
             error_message, error_code = Errors.id_should_equal_name(name, file_id)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(self.path)):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(self.path)):
                 return False
 
         return True
 
-    def is_docker_image_valid(self, skip_docker_check):
+    def is_docker_image_valid(self):
         # dockers should not be checked when running on all files
-        if skip_docker_check:
+        if self.base.skip_docker_check:
             return True
 
         docker_image_validator = DockerImageValidator(self.path, is_modified_file=True, is_integration=True,
-                                                      ignored_errors=self.ignored_errors,
-                                                      print_as_warnings=self.print_as_warnings)
+                                                      ignored_errors=self.base.ignored_errors,
+                                                      print_as_warnings=self.base.print_as_warnings)
         if docker_image_validator.is_docker_image_valid():
             return True
 
@@ -356,8 +343,8 @@ class Integration(YAMLContentUnifiedObject):
             from_version = self.get("fromversion")
             if not from_version or self.from_version < Version('5.5.0'):
                 error_message, error_code = Errors.feed_wrong_from_version(from_version)
-                if self.handle_error(error_message, error_code, file_path=self.path,
-                                     suggested_fix=Errors.suggest_fix(self.path, '--from-version', '5.5.0')):
+                if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                          suggested_fix=Errors.suggest_fix(self.path, '--from-version', '5.5.0')):
                     valid_from_version = False
 
             valid_feed_params = self.all_feed_params_exist()
@@ -379,7 +366,7 @@ class Integration(YAMLContentUnifiedObject):
         for param in FEED_REQUIRED_PARAMS:
             if param not in params:
                 error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     params_exist = False
 
         return params_exist
@@ -400,7 +387,7 @@ class Integration(YAMLContentUnifiedObject):
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -419,10 +406,11 @@ class Integration(YAMLContentUnifiedObject):
         script = self.get('script', {})
 
         if not any([
-            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"), script.get('longRunning')]
+            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"),
+            script.get('longRunning')]
         ):
             error, code = Errors.integration_not_runnable()
-            if self.handle_error(error, code, file_path=self.path):
+            if self.base.handle_error(error, code, file_path=self.path):
                 return False
         return True
 
@@ -435,7 +423,7 @@ class Integration(YAMLContentUnifiedObject):
             correct_name = " v2"
             if not display_name.endswith(correct_name):  # type: ignore
                 error_message, error_code = Errors.invalid_v2_integration_name()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
             return True
@@ -453,7 +441,7 @@ class Integration(YAMLContentUnifiedObject):
             param_name = int_parameter.get('name')
             if is_param_hidden and param_name not in ALLOWED_HIDDEN_PARAMS:
                 error_message, error_code = Errors.found_hidden_param(param_name)
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     ans = False
 
         return ans
@@ -463,8 +451,8 @@ class Integration(YAMLContentUnifiedObject):
             from_version = self.get("fromversion", "0.0.0")
             if not from_version or self.from_version < Version('5.5.0'):
                 error_message, error_code = Errors.pwsh_wrong_version(from_version)
-                if self.handle_error(error_message, error_code, file_path=self.path,
-                                     suggested_fix=Errors.suggest_fix(self.path, '--from-version', '5.5.0')):
+                if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                          suggested_fix=Errors.suggest_fix(self.path, '--from-version', '5.5.0')):
                     return False
         return True
 
@@ -474,8 +462,8 @@ class Integration(YAMLContentUnifiedObject):
         Returns:
             bool. True if integration image/logo is valid, False otherwise.
         """
-        image_validator = ImageValidator(self.path, ignored_errors=self.ignored_errors,
-                                         print_as_warnings=self.print_as_warnings)
+        image_validator = ImageValidator(self.path, ignored_errors=self.base.ignored_errors,
+                                         print_as_warnings=self.base.print_as_warnings)
         if not image_validator.is_valid():
             return False
         return True
@@ -486,8 +474,8 @@ class Integration(YAMLContentUnifiedObject):
         Returns:
             bool: True if description is valid, False otherwise.
         """
-        description_validator = DescriptionValidator(self.path, ignored_errors=self.ignored_errors,
-                                                     print_as_warnings=self.print_as_warnings)
+        description_validator = DescriptionValidator(self.path, ignored_errors=self.base.ignored_errors,
+                                                     print_as_warnings=self.base.print_as_warnings)
         if beta_integration:
             if not description_validator.is_valid_beta_description():
                 return False
@@ -517,18 +505,18 @@ class Integration(YAMLContentUnifiedObject):
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
                     'first_fetch', yaml.dump(FIRST_FETCH_PARAM))
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
                     'max_fetch', yaml.dump(MAX_FETCH_PARAM))
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     fetch_params_exist = False
 
             elif not max_fetch_param.get("defaultvalue"):
                 error_message, error_code = Errors.no_default_value_in_parameter('max_fetch')
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -540,7 +528,7 @@ class Integration(YAMLContentUnifiedObject):
         if is_deprecated:
             if not display_name.endswith('(Deprecated)'):
                 error_message, error_code = Errors.invalid_deprecated_integration_display_name()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_valid = False
         return is_valid
 
@@ -551,7 +539,7 @@ class Integration(YAMLContentUnifiedObject):
         if is_deprecated:
             if not description.startswith('Deprecated.'):
                 error_message, error_code = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_valid = False
         return is_valid
 
@@ -566,7 +554,7 @@ class Integration(YAMLContentUnifiedObject):
             command_names = {command['name'] for command in script.get('commands', [])}
             if 'get-mapping-fields' not in command_names:
                 error, code = Errors.missing_get_mapping_fields_command()
-                if self.handle_error(error, code, file_path=self.path):
+                if self.base.handle_error(error, code, file_path=self.path):
                     return False
         return True
 
@@ -609,7 +597,7 @@ class Integration(YAMLContentUnifiedObject):
             error_message, error_code = Errors.integration_not_registered(self.path,
                                                                           missing_test_playbook_configurations,
                                                                           no_tests_key)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -617,7 +605,7 @@ class Integration(YAMLContentUnifiedObject):
     def should_run_fromversion_validation(self):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
-        if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
+        if any((feature_branch_name in self.base.prev_ver or feature_branch_name in self.base.branch_name)
                for feature_branch_name in FEATURE_BRANCHES):
             return False
 
@@ -633,7 +621,7 @@ class Integration(YAMLContentUnifiedObject):
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromversion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -666,7 +654,7 @@ class Integration(YAMLContentUnifiedObject):
                     context_list.append(output['contextPath'])
                 except KeyError:
                     error_message, error_code = Errors.invalid_context_output(command_name, output)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         return False
             command_to_context_dict[command['name']] = sorted(context_list)
         return command_to_context_dict
@@ -701,7 +689,7 @@ class Integration(YAMLContentUnifiedObject):
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
                     error_message, error_code = Errors.breaking_backwards_command(old_command)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         return True
 
         return False
@@ -717,7 +705,7 @@ class Integration(YAMLContentUnifiedObject):
         if not old_param_names.issubset(current_param_names):
             removed_parameters = old_param_names - current_param_names
             error_message, error_code = Errors.removed_integration_parameters(repr(removed_parameters))
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_removed_parameter = True
 
         return is_removed_parameter
@@ -753,13 +741,13 @@ class Integration(YAMLContentUnifiedObject):
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
                     error_message, error_code = Errors.added_required_fields(field)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         is_added_required = True
 
             # if required is True but no old field.
             elif required:
                 error_message, error_code = Errors.added_required_fields(field)
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_added_required = True
 
         return is_added_required
@@ -823,7 +811,7 @@ class Integration(YAMLContentUnifiedObject):
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
                 error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return True
 
         return False
@@ -842,7 +830,7 @@ class Integration(YAMLContentUnifiedObject):
             for arg in command.get('arguments', []):
                 if arg in arg_list:
                     error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         no_duplicates = False
 
                 else:
@@ -864,7 +852,7 @@ class Integration(YAMLContentUnifiedObject):
             param_name = configuration_param['name']
             if param_name in param_list:
                 error_message, error_code = Errors.duplicate_param(param_name)
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     no_duplicate_params = False
 
             else:
@@ -882,7 +870,7 @@ class Integration(YAMLContentUnifiedObject):
                 old_subtype = old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         return True
 
         return False
@@ -903,13 +891,13 @@ class Integration(YAMLContentUnifiedObject):
             if field_type == EXPIRATION_FIELD_TYPE:
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(configuration_param['name'])
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         return False
 
             elif not is_field_hidden and not configuration_display \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
         return True
@@ -950,20 +938,20 @@ class Integration(YAMLContentUnifiedObject):
                 if missing_outputs:
                     error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
                                                                            context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         output_for_reputation_valid = False
 
                 if missing_descriptions:
                     error_message, error_code = Errors.dbot_invalid_description(command_name, missing_descriptions,
                                                                                 context_standard)
-                    self.handle_error(error_message, error_code, file_path=self.path, warning=True)
+                    self.base.handle_error(error_message, error_code, file_path=self.path, warning=True)
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
                 if reputation_output and not reputation_output.intersection(context_outputs_paths):
                     error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
                                                                           context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.path):
+                    if self.base.handle_error(error_message, error_code, file_path=self.path):
                         output_for_reputation_valid = False
 
         return output_for_reputation_valid
@@ -1002,7 +990,7 @@ class Integration(YAMLContentUnifiedObject):
         integration_id = common_fields.get('id', '')
         if 'beta' in integration_id.lower():
             error_message, error_code = Errors.beta_in_id()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -1013,7 +1001,7 @@ class Integration(YAMLContentUnifiedObject):
         name = self.get('name', '')
         if 'beta' in name.lower():
             error_message, error_code = Errors.beta_in_name()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -1024,7 +1012,7 @@ class Integration(YAMLContentUnifiedObject):
         beta = self.get('beta', False)
         if not beta:
             error_message, error_code = Errors.beta_field_not_found()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -1035,7 +1023,7 @@ class Integration(YAMLContentUnifiedObject):
         display = self.get('display', '')
         if 'beta' not in display.lower():
             error_message, error_code = Errors.no_beta_in_display()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True

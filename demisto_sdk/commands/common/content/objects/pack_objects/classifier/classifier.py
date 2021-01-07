@@ -20,9 +20,9 @@ VALID_TYPE_OUTGOING = 'mapping-outgoing'
 
 
 class Classifier(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, CLASSIFIER)
-        self.handle_error = BaseValidator().handle_error
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client) -> bool:
         """
@@ -35,9 +35,7 @@ class Classifier(JSONContentObject):
         """
         return client.import_classifier(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings).\
-            handle_error
+    def validate(self,):
         return self.is_valid_classifier()
 
     def is_valid_classifier(self):
@@ -63,8 +61,8 @@ class Classifier(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -78,12 +76,12 @@ class Classifier(JSONContentObject):
         if from_version:
             if self.from_version < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                 error_message, error_code = Errors.invalid_from_version_in_new_classifiers()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
         else:
             error_message, error_code = Errors.missing_from_version_in_new_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -95,7 +93,7 @@ class Classifier(JSONContentObject):
         """
         if self.to_version <= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
             error_message, error_code = Errors.invalid_to_version_in_new_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 
         return True
@@ -108,7 +106,7 @@ class Classifier(JSONContentObject):
         """
         if self.to_version <= self.from_version:
             error_message, error_code = Errors.from_version_higher_to_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -120,14 +118,15 @@ class Classifier(JSONContentObject):
         """
         if self.get('type') != CLASSIFICATION_TYPE:
             error_message, error_code = Errors.invalid_type_in_new_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
 
 class OldClassifier(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, CLASSIFIER)
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client) -> bool:
         """
@@ -140,9 +139,7 @@ class OldClassifier(JSONContentObject):
         """
         return client.import_classifier(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings):
-        self.handle_error = BaseValidator(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings). \
-            handle_error
+    def validate(self):
         return self.is_valid_classifier()
 
     def is_valid_classifier(self):
@@ -156,7 +153,6 @@ class OldClassifier(JSONContentObject):
             self.is_valid_from_version(),
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
-            self.is_valid_type()
         ])
 
     def is_valid_version(self):
@@ -168,8 +164,8 @@ class OldClassifier(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -182,13 +178,13 @@ class OldClassifier(JSONContentObject):
         is_valid = True
         if self.from_version >= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
             error_message, error_code = Errors.invalid_from_version_in_old_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         if self.from_version < Version(OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               OLDEST_SUPPORTED_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 is_valid = False
 
         return is_valid
@@ -203,12 +199,12 @@ class OldClassifier(JSONContentObject):
         if to_version:
             if self.to_version > Version(TO_VERSION_FOR_OLD_CLASSIFIER):
                 error_message, error_code = Errors.invalid_to_version_in_old_classifiers()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
 
         else:
             error_message, error_code = Errors.missing_to_version_in_old_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -220,15 +216,15 @@ class OldClassifier(JSONContentObject):
         """
         if self.to_version <= self.from_version:
             error_message, error_code = Errors.from_version_higher_to_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
 
 class ClassifierMapper(JSONContentObject):
-    def __init__(self, path: Union[Path, str]):
+    def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, MAPPER)
-        self.handle_error = BaseValidator().handle_error
+        self.base = base if base else BaseValidator()
 
     def upload(self, client: demisto_client) -> bool:
         """
@@ -241,9 +237,7 @@ class ClassifierMapper(JSONContentObject):
         """
         return client.import_classifier(file=self.path)
 
-    def validate(self, ignored_errors, print_as_warnings):
-        self.handle_error = BaseValidator(print_as_warnings=print_as_warnings, ignored_errors=ignored_errors)\
-            .handle_error
+    def validate(self):
         return self.is_valid_mapper()
 
     def is_valid_mapper(self):
@@ -269,8 +263,8 @@ class ClassifierMapper(JSONContentObject):
         """
         if self.get('version') != DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version(DEFAULT_VERSION)
-            if self.handle_error(error_message, error_code, file_path=self.path,
-                                 suggested_fix=Errors.suggest_fix(str(self.path))):
+            if self.base.handle_error(error_message, error_code, file_path=self.path,
+                                      suggested_fix=Errors.suggest_fix(str(self.path))):
                 return False
         return True
 
@@ -284,11 +278,11 @@ class ClassifierMapper(JSONContentObject):
         if from_version:
             if self.from_version < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                 error_message, error_code = Errors.invalid_from_version_in_mapper()
-                if self.handle_error(error_message, error_code, file_path=self.path):
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
         else:
             error_message, error_code = Errors.missing_from_version_in_mapper()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -300,7 +294,7 @@ class ClassifierMapper(JSONContentObject):
         """
         if self.to_version < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
             error_message, error_code = Errors.invalid_to_version_in_mapper()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -312,7 +306,7 @@ class ClassifierMapper(JSONContentObject):
         """
         if self.to_version <= self.from_version:
             error_message, error_code = Errors.from_version_higher_to_version()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True
 
@@ -324,6 +318,6 @@ class ClassifierMapper(JSONContentObject):
         """
         if self.get('type') not in [VALID_TYPE_INCOMING, VALID_TYPE_OUTGOING]:
             error_message, error_code = Errors.invalid_type_in_mapper()
-            if self.handle_error(error_message, error_code, file_path=self.path):
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True

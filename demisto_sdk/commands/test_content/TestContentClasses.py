@@ -47,7 +47,7 @@ __all__ = ['BuildContext',
            'TestContext',
            'TestPlaybook',
            'TestResults',
-           'TestsExecution']
+           'ServerContext']
 
 
 class IntegrationConfiguration:
@@ -1502,7 +1502,7 @@ class TestContext:
         """
         Executes the test and return a boolean that indicates whether the test was executed or not.
         In case the test was not executed - it will be returned to the queue and will be collected later in the future
-        by some other TestsExecution instance.
+        by some other ServerContext instance.
         Args:
             proxy: The MITMProxy instance to use in the current test
 
@@ -1536,7 +1536,7 @@ class TestContext:
         return str(self)
 
 
-class TestsExecution:
+class ServerContext:
 
     def __init__(self, build_context: BuildContext, server_ip: str):
         self.build_context = build_context

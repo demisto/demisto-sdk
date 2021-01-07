@@ -77,6 +77,11 @@ class Uploader:
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
         """
+        if self.demisto_version == "0":
+            click.secho("Could not connect to XSOAR server. Try checking your connection configurations.",
+                        fg="bright_red")
+            return 1
+
         status_code = 0
         click.secho(f"Uploading {self.path} ...")
         if not os.path.exists(self.path):

@@ -14,3 +14,11 @@ class TestPlaybookValidator(ContentEntityValidator):
         return all([
             self.is_valid_fromversion(),
         ])
+
+    def is_valid_version(self):  # type: () -> bool
+        """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)
+
+        Return:
+            bool. whether the version is valid or not
+        """
+        return self._is_valid_version()

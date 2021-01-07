@@ -46,6 +46,8 @@ from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.test_content.execute_test_content import \
+    execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
@@ -121,7 +123,7 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -162,7 +164,7 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
@@ -174,8 +176,8 @@ def extract_code(config, **kwargs):
 @main.command(
     name="unify",
     short_help='Unify code, image, description and yml files to a single Demisto yml file. Note that '
-    'this should be used on a single integration/script and not a pack '
-    'not multiple scripts/integrations')
+               'this should be used on a single integration/script and not a pack '
+               'not multiple scripts/integrations')
 @click.help_option(
     '-h', '--help'
 )
@@ -201,7 +203,7 @@ def unify(**kwargs):
 # ====================== validate ====================== #
 @main.command(
     short_help='Validate your content files. If no additional flags are given, will validated only '
-    'committed files'
+               'committed files'
 )
 @click.help_option(
     '-h', '--help'
@@ -407,7 +409,8 @@ def secrets(config, **kwargs):
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool,
+         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool,
+         no_pwsh_analyze: bool,
          no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
@@ -552,7 +555,7 @@ def download(**kwargs):
                            "the base path for the outputs that the script generates")
 @click.option(
     "-r", "--raw-response", help="Used with `json-to-outputs` flag. Use the raw response of the query for"
-    " `json-to-outputs`", is_flag=True)
+                                 " `json-to-outputs`", is_flag=True)
 def run(**kwargs):
     runner = Runner(**kwargs)
     return runner.run()
@@ -604,8 +607,9 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
 @click.option(
     "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
 @click.option(
-    "-i", "--input", help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
-                          "The response can be obtained by running the command with `raw-response=true` argument.",
+    "-i", "--input",
+    help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
+         "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
     "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
@@ -646,7 +650,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
-    file_type = find_type(kwargs.get('input'), ignore_sub_categories=True)
+    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
@@ -733,14 +737,14 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(**kwargs):
-    input_path = kwargs.get('input')
+    input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
     examples = kwargs.get('examples')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
-    insecure = kwargs.get('insecure')
-    verbose = kwargs.get('verbose')
+    insecure: bool = kwargs.get('insecure', False)
+    verbose: bool = kwargs.get('verbose', False)
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -867,9 +871,9 @@ def merge_id_sets_command(**kwargs):
 def update_pack_releasenotes(**kwargs):
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
-    pre_release = kwargs.get('pre_release')
+    pre_release: bool = kwargs.get('pre_release', False)
     is_all = kwargs.get('all')
-    text = kwargs.get('text')
+    text: str = kwargs.get('text', '')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
@@ -973,9 +977,9 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
-        assert "Packs/" in input_path
+        assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in pack_name
+        assert "/" not in str(pack_name)
     except AssertionError:
         print_error("Input path is not a pack. For example: Pack/HelloWorld")
         sys.exit(1)
@@ -1104,6 +1108,55 @@ def openapi_codegen_command(**kwargs):
     else:
         tools.print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)
+
+
+# ====================== test-content command ====================== #
+@main.command(name="test-content",
+              short_help='''
+              Created incidents for selected test-playbooks and gives a report about the results''',
+              help='''Configure instances for the integration needed to run tests_to_run tests.
+              Run test module on each integration.
+              create an investigation for each test.
+              run test playbook on the created investigation using mock if possible.
+              Collect the result and give a report.''',
+              hidden=True)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-k', '--api-key', help='The Demisto API key for the server', required=True)
+@click.option(
+    '-s', '--server', help='The server URL to connect to')
+@click.option(
+    '-c', '--conf', help='Path to content conf.json file', required=True)
+@click.option(
+    '-e', '--secret', help='Path to content-test-conf conf.json file')
+@click.option(
+    '-n', '--nightly', type=bool, help='Run nightly tests')
+@click.option(
+    '-t', '--slack', help='The token for slack', required=True)
+@click.option(
+    '-a', '--circleci', help='The token for circleci', required=True)
+@click.option(
+    '-b', '--build-number', help='The build number', required=True)
+@click.option(
+    '-g', '--branch-name', help='The current content branch name', required=True)
+@click.option(
+    '-i', '--is-ami', type=bool, help='is AMI build or not', default=False)
+@click.option(
+    '-m',
+    '--mem-check',
+    type=bool,
+    help='Should trigger memory checks or not. The slack channel to check the data is: '
+         'dmst_content_nightly_memory_data',
+    default=False)
+@click.option(
+    '-d',
+    '--server-version',
+    help='Which server version to run the tests on(Valid only when using AMI)',
+    default="NonAMI")
+def test_content(**kwargs):
+    execute_test_content(**kwargs)
 
 
 @main.resultcallback()

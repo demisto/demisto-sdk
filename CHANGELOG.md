@@ -1,5 +1,7 @@
 # Changelog
 
+# 1.2.15
+* Added the *ID101* to the allowed ignored errors.
 
 # 1.2.14
 * SDK repository is now mypy check_untyped_defs complaint.

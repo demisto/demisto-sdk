@@ -106,13 +106,14 @@ class IDSetValidator(BaseValidator):
         """
         is_valid = True
         depends_on_commands = script_data.get('depends_on')
-        for command in depends_on_commands:
-            if command != 'test-module':
-                if command.endswith('dev') or command.endswith('copy'):
-                    error_message, error_code = Errors.invalid_command_name_in_script(script_data.get('name'),
-                                                                                      command)
-                    self.handle_error(error_message, error_code, file_path="id_set.json")
-                    return not is_valid
+        if depends_on_commands:
+            for command in depends_on_commands:
+                if command != 'test-module':
+                    if command.endswith('dev') or command.endswith('copy'):
+                        error_message, error_code = Errors.invalid_command_name_in_script(script_data.get('name'),
+                                                                                          command)
+                        self.handle_error(error_message, error_code, file_path="id_set.json")
+                        return not is_valid
         return is_valid
 
     def _is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):

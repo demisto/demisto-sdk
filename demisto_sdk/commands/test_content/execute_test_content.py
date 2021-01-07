@@ -6,7 +6,7 @@ import requests
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.TestContentClasses import (
-    BuildContext, TestsExecution)
+    BuildContext, ServerContext)
 
 
 def _handle_github_response(response, logging_module) -> dict:
@@ -45,7 +45,7 @@ def execute_test_content(**kwargs):
     build_context = BuildContext(kwargs, logging_manager)
     threads_list = []
     for server_ip in build_context.instances_ips:
-        tests_execution_instance = TestsExecution(build_context, server_ip)
+        tests_execution_instance = ServerContext(build_context, server_ip)
         threads_list.append(Thread(target=tests_execution_instance.execute_tests))
 
     for thread in threads_list:

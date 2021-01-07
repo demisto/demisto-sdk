@@ -1,10 +1,12 @@
 import json
+import os
 import tempfile
 from typing import Optional, Union
 
 import click
 import demisto_client
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH, DBOT_SCORES_DICT,
                                                    DEFAULT_VERSION,
                                                    FEATURE_BRANCHES,
@@ -24,8 +26,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -132,7 +132,7 @@ class Integration(YAMLContentUnifiedObject):
             self.is_valid_hidden_params(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
-            self.is_valid_description(beta_integration=False),
+            self.is_duplicate_description(),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_deprecated_integration_display_name(),
             self.is_valid_deprecated_integration_description(),
@@ -466,22 +466,6 @@ class Integration(YAMLContentUnifiedObject):
                                          print_as_warnings=self.base.print_as_warnings)
         if not image_validator.is_valid():
             return False
-        return True
-
-    def is_valid_description(self, beta_integration: bool = False) -> bool:
-        """Verifies integration description is valid.
-
-        Returns:
-            bool: True if description is valid, False otherwise.
-        """
-        description_validator = DescriptionValidator(self.path, ignored_errors=self.base.ignored_errors,
-                                                     print_as_warnings=self.base.print_as_warnings)
-        if beta_integration:
-            if not description_validator.is_valid_beta_description():
-                return False
-        else:
-            if not description_validator.is_valid():
-                return False
         return True
 
     def is_valid_max_fetch_and_first_fetch(self) -> bool:
@@ -968,7 +952,7 @@ class Integration(YAMLContentUnifiedObject):
             self.is_valid_default_arguments(),
             self.is_valid_beta(old_file),
             self.is_valid_image(),
-            self.is_valid_description(beta_integration=True),
+            self.is_valid_beta_description(),
         ]
         return all(answers)
 
@@ -1023,6 +1007,56 @@ class Integration(YAMLContentUnifiedObject):
         display = self.get('display', '')
         if 'beta' not in display.lower():
             error_message, error_code = Errors.no_beta_in_display()
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True
+
+    def is_duplicate_description(self):
+        """Check if the integration has a non-duplicate description ."""
+        is_description_in_yml = False
+        is_description_in_package = False
+
+        is_unified_integration = self.get('script', {}).get('script', '') not in {'-', ''}
+        if not (self.get('deprecated') or is_unified_integration):
+            error_message, error_code = Errors.no_description_file_warning()
+            self.base.handle_error(error_message, error_code, file_path=self.path, warning=True)
+
+        if os.path.exists(str(self.description_path)):
+            is_description_in_package = True
+
+        if self.get('detaileddescription'):
+            is_description_in_yml = True
+
+        if is_description_in_package and is_description_in_yml:
+            error_message, error_code = Errors.description_in_package_and_yml()
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
+                return False
+
+        return True
+
+    def is_valid_beta_description(self):
+        """Check if beta disclaimer exists in detailed description"""
+        description_in_yml = self.get('detaileddescription', '')
+        is_unified_integration = self.get('script', {}).get('script', '') not in {'-', ''}
+
+        if not is_unified_integration:
+            if not os.path.exists(str(self.description_path)):
+                error_message, error_code = Errors.description_missing_in_beta_integration()
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
+                    return False
+
+            with open(str(self.description_path)) as description_file:
+                description = description_file.read()
+            if BETA_INTEGRATION_DISCLAIMER not in description:
+                error_message, error_code = Errors.no_beta_disclaimer_in_description()
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
+                    return False
+            else:
+                return True
+
+        elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
+            error_message, error_code = Errors.no_beta_disclaimer_in_yml()
             if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
 

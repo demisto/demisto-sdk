@@ -29,6 +29,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout impo
     Layout, LayoutsContainer)
 from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import \
     Playbook
+from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
+    Readme
 from demisto_sdk.commands.common.content.objects.pack_objects.script.script import \
     Script
 from demisto_sdk.commands.common.content.objects.pack_objects.widget.widget import \
@@ -368,7 +370,7 @@ class ValidateManager:
                                                    is_modified)
 
         elif file_type == FileType.README:
-            return self.validate_readme(file_path, pack_error_ignore_list)
+            return Readme(file_path, base).validate()
 
         elif file_type == FileType.REPORT:
             return Report(file_path, base).validate()
@@ -466,11 +468,6 @@ class ValidateManager:
         return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """
-
-    def validate_readme(self, file_path, pack_error_ignore_list):
-        readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors)
-        return readme_validator.is_valid_file()
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)

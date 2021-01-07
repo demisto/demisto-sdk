@@ -89,38 +89,40 @@ class GitUtil:
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
-        committed = set()
+        # get all committed files identified as added which are changed from prev_ver.
+        # this can result in extra files identified which were not touched on this branch.
+        committed = {Path(os.path.join(item.a_path)) for item
+                     in self.repo.remote().refs[prev_ver].commit.diff(
+            self.repo.active_branch).iter_change_type('A')}
 
-        if not staged_only:
-            # get all committed files identified as added which are changed from prev_ver.
-            # this can result in extra files identified which were not touched on this branch.
-            committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote().refs[prev_ver].commit.diff(
-                self.repo.active_branch).iter_change_type('A')}
-
-            # identify all files that were touched on this branch regardless of status
-            # intersect these with all the committed files to identify the committed added files.
-            all_branch_changed_files = self._get_all_changed_files(prev_ver)
-            committed = committed.intersection(all_branch_changed_files)
+        # identify all files that were touched on this branch regardless of status
+        # intersect these with all the committed files to identify the committed added files.
+        all_branch_changed_files = self._get_all_changed_files(prev_ver)
+        committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
             return committed - deleted
 
         # get all untracked added files
-        untracked = self._get_untracked_files('A')
+        untracked_added = self._get_untracked_files('A')
+
+        # get all untracked modified files
+        untracked_modified = self._get_untracked_files('M')
 
         # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in
-                  self.repo.head.commit.diff().iter_change_type('A')}.union(untracked)
+                  self.repo.head.commit.diff().iter_change_type('A')}
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified
         # but we want to identify the file as Added (its actual status against prev_ver) -
         # so will added it from the staged added files.
+        # same goes to untracked files - can be identified as modified but are actually added against prev_ver
         committed_added_locally_modified = {Path(os.path.join(item.a_path)) for item in
                                             self.repo.head.commit.diff().iter_change_type('M')}.intersection(committed)
+        untracked = untracked_added.union(untracked_modified.intersection(committed))
 
-        staged = staged.union(committed_added_locally_modified)
+        staged = staged.union(committed_added_locally_modified).union(untracked)
 
         if staged_only:
             return staged - deleted

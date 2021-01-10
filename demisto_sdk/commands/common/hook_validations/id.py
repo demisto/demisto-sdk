@@ -10,8 +10,6 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.update_id_set import (get_incident_type_data,
-                                                       get_integration_data,
-                                                       get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
@@ -116,42 +114,6 @@ class IDSetValidator(BaseValidator):
                         return not is_valid
         return is_valid
 
-    def _is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):
-        """Check if the file is represented correctly in the id_set
-
-        Args:
-            file_path (string): Path to the file.
-            obj_data (dict): Dictionary that holds the extracted details from the given file.
-            obj_set (set): The set in which the file should be located at.
-
-        Returns:
-            bool. Whether the file is represented correctly in the id_set or not.
-        """
-        is_found = False
-        file_id = list(obj_data.keys())[0]
-
-        for checked_instance in obj_set:
-            checked_instance_id = list(checked_instance.keys())[0]
-            checked_instance_data = checked_instance[checked_instance_id]
-            checked_instance_toversion = checked_instance_data.get('toversion', '99.99.99')
-            checked_instance_fromversion = checked_instance_data.get('fromversion', '0.0.0')
-            obj_to_version = obj_data[file_id].get('toversion', '99.99.99')
-            obj_from_version = obj_data[file_id].get('fromversion', '0.0.0')
-            if checked_instance_id == file_id and checked_instance_toversion == obj_to_version and \
-                    checked_instance_fromversion == obj_from_version:
-                is_found = True
-                if checked_instance_data != obj_data[file_id]:
-                    error_message, error_code = Errors.id_set_not_updated(file_path)
-                    if self.handle_error(error_message, error_code, file_path="id_set.json"):
-                        return False
-
-        if not is_found:
-            error_message, error_code = Errors.id_set_not_updated(file_path)
-            if not self.handle_error(error_message, error_code, file_path="id_set.json"):
-                return True
-
-        return is_found
-
     def is_file_valid_in_set(self, file_path, file_type):
         """Check if the file is valid in the id_set
 
@@ -160,37 +122,17 @@ class IDSetValidator(BaseValidator):
             file_type (string): The file type.
 
         Returns:
-            bool. Whether the file is represented correctly in the id_set or not.
+            bool. Whether the file is valid in the id_set or not.
         """
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
-            if re.match(constants.PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                playbook_data = OrderedDict(get_playbook_data(file_path))
-                is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.playbook_set)
 
-            elif re.match(constants.TEST_PLAYBOOK_REGEX, file_path, re.IGNORECASE):
-                playbook_data = OrderedDict(get_playbook_data(file_path))
-                is_valid = self._is_valid_in_id_set(file_path, playbook_data, self.test_playbook_set)
-
-            elif re.match(constants.TEST_SCRIPT_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
-                script_data = get_script_data(file_path)
-                is_valid = self._is_valid_in_id_set(file_path, script_data, self.script_set)
-
-            elif re.match(constants.PACKS_INTEGRATION_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
-                integration_data = get_integration_data(file_path)
-                is_valid = self._is_valid_in_id_set(file_path, integration_data, self.integration_set)
-
-            elif re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE) or \
-                    re.match(constants.PACKS_SCRIPT_PY_REGEX, file_path, re.IGNORECASE):
+            if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
                 unifier = Unifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
-                is_valid = (self._is_valid_in_id_set(yml_path, script_data, self.script_set) and
-                            self._is_non_real_command_found(script_data))
-
+                is_valid = self._is_non_real_command_found(script_data)
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))
                 is_valid = self._is_playbook_found(incident_type_data)

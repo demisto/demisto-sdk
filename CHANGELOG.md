@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where a non relevant id_set validation run.
 * Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 
 # 1.2.16

@@ -97,6 +97,7 @@ class TestConfiguration:
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
         self.is_mockable = test_configuration.get('is_mockable')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
@@ -1513,6 +1514,21 @@ class TestContext:
 
         return True
 
+    def _is_runnable_on_current_server_instance(self) -> bool:
+        """
+        Nightly builds can have RHEL instances that uses podman instead of docker as well as the regular LINUX instance.
+        In such case - if the test in runnable on docker instances **only** and the current instance uses podman -
+        we will not execute the test under this instance and instead will will return it to the queue in order to run
+        it under some other instance
+        Returns:
+            True if this instance can be run on the current instance else False
+        """
+        if self.playbook.configuration.runnable_on_docker_only and not self.is_instance_using_docker:
+            self.build_context.logging_module.debug(
+                f'Skipping test {self.playbook} since it\'s not runnable on podman instances')
+            return False
+        return True
+
     def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
         """
         Executes the test and return a boolean that indicates whether the test was executed or not.
@@ -1525,6 +1541,8 @@ class TestContext:
             True if the test was executed by the instance else False
         """
         try:
+            if not self._is_runnable_on_current_server_instance():
+                return False
             self._send_circle_memory_and_pid_stats_on_slack()
             if self.playbook.is_mockable:
                 test_executed = self._execute_mockable_test(proxy)  # type: ignore
@@ -1535,7 +1553,6 @@ class TestContext:
             self.build_context.logging_module.exception(
                 f'Unexpected error while running test on playbook {self.playbook}')
             self._add_to_failed_playbooks()
-            self.build_context.tests_data_keeper.failed_playbooks.add(self.playbook.configuration.playbook_id)
             return True
         finally:
             self.build_context.logging_module.info(f'------ Test {self} end ------ \n')

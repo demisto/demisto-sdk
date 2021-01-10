@@ -361,7 +361,7 @@ class IncidentFieldValidator(ContentEntityValidator):
 
     def is_valid_grid_fromversion(self):
         # type: () -> bool
-        """Validate that a incident field with type grid is from version > 5.5.0"""
+        """Validate that a incident field with type grid is from version >= 5.5.0"""
         if self.current_file.get('type') == 'grid':
             current_version = LooseVersion(self.current_file.get('fromVersion', '0.0.0'))
             if current_version < LooseVersion('5.5.0'):

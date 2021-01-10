@@ -129,9 +129,6 @@ class ValidateManager:
 
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
-        if self.id_set_validations:
-            self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration())
-
         if no_docker_checks:
             self.skip_docker_checks = True
 
@@ -339,7 +336,10 @@ class ValidateManager:
 
         # id_set validation
         if self.id_set_validations:
-            if not self.id_set_validator.is_file_valid_in_set(file_path, file_type):
+            id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
+                                              ignored_errors=pack_error_ignore_list,
+                                              print_as_warnings=self.print_ignored_errors)
+            if not id_set_validator.is_file_valid_in_set(file_path, file_type):
                 return False
 
         # Note: these file are not ignored but there are no additional validators for connections

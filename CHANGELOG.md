@@ -1,5 +1,14 @@
 # Changelog
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 * Improved a **validate** command message for missing release notes of api module dependencies.
+
+# 1.2.16
+* Added allowed ignore errors to the *IDSetValidator*.
+
+# 1.2.15
+* Added the *ID101* to the allowed ignored errors.
+
+# 1.2.14
 * SDK repository is now mypy check_untyped_defs complaint.
 * The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
 * Added an option for **format** to run on a whole pack.

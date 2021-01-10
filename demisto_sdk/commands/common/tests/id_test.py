@@ -166,3 +166,27 @@ def test_is_non_real_command_found__bad_command_name():
 
     assert validator._is_non_real_command_found(script_data=script_data) is False, \
         "The script has a non real command"
+
+
+def test_is_non_real_command_found__no_depend_on_name():
+    """
+    Given
+        - script which has no executeCommand.
+
+    When
+        - is_non_real_command_found is called
+
+    Then
+        - Ensure that the scripts depend-on commands are valid.
+    """
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    script_data = {
+        'name': 'OktaUpdateUser',
+        'fidepends-le_path': 'Packs/CommonScripts/Scripts/NoExecuteCommand.yml',
+        'fromversion': '5.0.0', 'deprecated': True,
+        'tests': ['No test'], 'pack': 'CommonScripts'
+    }
+
+    assert validator._is_non_real_command_found(script_data=script_data) is True, \
+        "The script has a non real command"

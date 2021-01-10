@@ -112,13 +112,13 @@ def create_end_task(id):
     }
 
 
-def create_automation_task(_id, automation_name, item_type: ContentItemType, args=None):
-    scriptargs = {}  # type:Dict
+def create_automation_task(_id, automation_name, item_type: str, args=None):
+    script_args = {}  # type:Dict
     if args and len(args) > 0:
-        scriptargs['all'] = {}
+        script_args['all'] = {}
 
         for arg, val in args.items():
-            scriptargs['all']['simple'] = val
+            script_args['all']['simple'] = val
 
     if item_type == ContentItemType.INTEGRATION:
         script_name = f"|||{automation_name}"
@@ -144,7 +144,7 @@ def create_automation_task(_id, automation_name, item_type: ContentItemType, arg
                 str(_id + 1)
             ]
         },
-        "scriptarguments": scriptargs,
+        "scriptarguments": script_args,
         "separatecontext": False,
         "view": json.dumps({
             'position': {
@@ -159,13 +159,13 @@ def create_automation_task(_id, automation_name, item_type: ContentItemType, arg
     }
 
 
-def create_verify_outputs_task(id, conditions=[]):
+def create_verify_outputs_task(id_, conditions=[]):
     return {
-        "id": str(id),
-        "taskid": str(id),
+        "id": str(id_),
+        "taskid": str(id_),
         "type": "condition",
         "task": {
-            "id": str(id),
+            "id": str(id_),
             "version": -1,
             "name": "Verify Outputs",
             "type": "condition",
@@ -175,7 +175,7 @@ def create_verify_outputs_task(id, conditions=[]):
         },
         "nexttasks": {
             "yes": [
-                str(id + 1)
+                str(id_ + 1)
             ]
         },
         "separatecontext": False,
@@ -183,7 +183,7 @@ def create_verify_outputs_task(id, conditions=[]):
         "view": json.dumps({
             'position': {
                 'x': 50,
-                'y': id * 200
+                'y': id_ * 200
             }
         }),
         "note": False,
@@ -204,15 +204,10 @@ def outputs_to_condition(outputs):
         list of conditions generated from outputs
     """
     conditions = []
-    condition = {
-        'label': 'yes',
-        'condition': []
-    }
-
     for output in outputs:
         context_output_path = output.get('contextPath')
 
-        condition['condition'].append(
+        conditions.append(
             [
                 {
                     "operator": "isNotEmpty",
@@ -226,9 +221,13 @@ def outputs_to_condition(outputs):
             ]
         )
 
-    conditions.append(condition)
-
-    return conditions
+    condition = [
+        {
+            'label': 'yes',
+            'condition': conditions
+        }
+    ]
+    return condition
 
 
 def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):

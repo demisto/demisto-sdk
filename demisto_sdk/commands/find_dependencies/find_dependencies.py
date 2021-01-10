@@ -832,7 +832,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose_file: VerboseFile,
-                                     exclude_ignored_dependencies: bool = True) -> set:
+                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets") -> set:
         """
         Collects widget dependencies.
 
@@ -847,7 +847,7 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Widgets')
+        verbose_file.write(f'\n### {header}')
 
         for widget in pack_widgets:
             widget_data = next(iter(widget.values()))
@@ -985,11 +985,26 @@ class PackDependencies:
             verbose_file,
             exclude_ignored_dependencies
         )
+        dashboards_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['dashboards'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Dashboards'
+        )
+        reports_dependencies = PackDependencies._collect_widget_dependencies(
+            pack_items['reports'],
+            id_set,
+            verbose_file,
+            exclude_ignored_dependencies,
+            header='Reports'
+        )
 
         pack_dependencies = (
-            scripts_dependencies | playbooks_dependencies | layouts_dependencies |
-            incidents_fields_dependencies | indicators_types_dependencies | integrations_dependencies |
-            incidents_types_dependencies | classifiers_dependencies | mappers_dependencies | widget_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies
         )
 
         return pack_dependencies
@@ -1085,7 +1100,8 @@ class PackDependencies:
     @staticmethod
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
                           update_pack_metadata: bool = True,
-                          silent_mode: bool = False, debug_file_path: str = '') -> dict:
+                          silent_mode: bool = False, debug_file_path: str = '',
+                          skip_id_set_creation: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1096,13 +1112,17 @@ class PackDependencies:
             silent_mode (bool): Determines whether to echo the dependencies or not.
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            skip_id_set_creation (bool): Whether to skip id_set.json file creation.
 
         Returns:
             Dict: first level dependencies of a given pack.
 
         """
         if not id_set_path or not os.path.isfile(id_set_path):
-            id_set = IDSetCreator(print_logs=False).create_id_set()
+            if not skip_id_set_creation:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+            else:
+                return {}
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)

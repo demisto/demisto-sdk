@@ -19,6 +19,18 @@ from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
 
+SECTIONS = [
+    'Troubleshooting',
+    'Use Cases',
+    'Known Limitations',
+    'Additional Information'
+]
+
+USER_FILL_SECTIONS = [
+    'FILL IN REQUIRED PERMISSIONS HERE',
+    'version xx'
+]
+
 
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
@@ -51,7 +63,9 @@ class ReadMeValidator(BaseValidator):
         """
         return all([
             self.is_image_path_valid(),
-            self.is_mdx_file()
+            self.is_mdx_file(),
+            self.verify_no_empty_sections(),
+            self.verify_no_default_sections_left()
         ])
 
     def mdx_verify(self) -> bool:
@@ -171,6 +185,59 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
+    def verify_no_empty_sections(self) -> bool:
+        """ Check that if the following headlines exists, they are not empty:
+            1. Troubleshooting
+            2. Use Cases
+            3. Known Limitations
+            4. Additional Information
+        Returns:
+            bool: True If all req ok else False
+        """
+        is_valid = True
+        errors = ""
+        with open(self.file_path) as f:
+            readme_content = f.read()
+        for section in SECTIONS:
+            found_section = re.findall(rf'(## {section}\n*)(-*\s*\n\n?)?(\s*.*)', readme_content, re.IGNORECASE)
+            if found_section:
+                line_after_headline = str(found_section[0][2])
+                # checks if the line after the section's headline is another headline or empty
+                if not line_after_headline or line_after_headline.startswith("##"):
+                    # assuming that a sub headline is part of the section
+                    if not line_after_headline.startswith("###"):
+                        errors += f'{section} is empty, please elaborate or delete the section.\n'
+                        is_valid = False
+
+        if not is_valid:
+            error_message, error_code = Errors.readme_error(errors)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+
+        return is_valid
+
+    def verify_no_default_sections_left(self) -> bool:
+        """ Check that there are no default leftovers such as:
+            1. 'FILL IN REQUIRED PERMISSIONS HERE'.
+            2. unexplicit version number - such as "version xx of".
+        Returns:
+            bool: True If all req ok else False
+        """
+        is_valid = True
+        errors = ""
+        with open(self.file_path) as f:
+            readme_content = f.read()
+        for section in USER_FILL_SECTIONS:
+            required_section = re.findall(rf'{section}', readme_content, re.IGNORECASE)
+            if required_section:
+                errors += f'Replace "{section}" with a suitable info.\n'
+                is_valid = False
+
+        if not is_valid:
+            error_message, error_code = Errors.readme_error(errors)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+
+        return is_valid
+
     @staticmethod
     def start_mdx_server():
         with ReadMeValidator._MDX_SERVER_LOCK:
@@ -178,7 +245,7 @@ class ReadMeValidator(BaseValidator):
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
                 ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                                        stdout=subprocess.PIPE, text=True)
-                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()
+                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
                     raise Exception(f'Failed starting mdx server. stdout: {line}.')

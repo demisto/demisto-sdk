@@ -100,11 +100,12 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     :return: The path of files with file_endings in the current dir
     """
     files = []
-    pattern: str = '/**/*.' if recursive else '/*.'
+    project_path = Path(project_dir)
+    glob_function = project_path.rglob if recursive else project_path.glob
     for file_type in file_endings:
         if project_dir.endswith(file_type):
             return [project_dir]
-        files.extend([f for f in glob.glob(project_dir + pattern + file_type, recursive=recursive)])
+        files.extend([str(f) for f in glob_function(f'*.{file_type}')])
     return files
 
 
@@ -147,7 +148,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     if is_silenced:
         p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(command.split(), cwd=cwd)
+        p = Popen(command.split(), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:
@@ -172,7 +173,7 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
 
     """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.lstrip('origin/')
+    tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
@@ -537,7 +538,7 @@ def old_get_latest_release_notes_text(rn_path):
         # get release notes up to release header
         new_rn = new_rn[0].rstrip()
     else:
-        new_rn = rn.replace(UNRELEASE_HEADER, '')
+        new_rn = rn.replace(UNRELEASE_HEADER, '')  # type: ignore
 
     return new_rn if new_rn else None
 
@@ -1427,9 +1428,12 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     Returns:
         the server version of the Demisto instance.
     """
-    resp = demisto_client.generic_request('/about', 'GET')
-    about_data = json.loads(resp[0].replace("'", '"'))
-    return parse(about_data.get('demistoVersion'))
+    try:
+        resp = demisto_client.generic_request('/about', 'GET')
+        about_data = json.loads(resp[0].replace("'", '"'))
+        return parse(about_data.get('demistoVersion'))
+    except Exception:
+        return "0"
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

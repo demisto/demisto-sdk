@@ -53,10 +53,23 @@ mapping:
   disabled:
     type: bool
   reputationCalc:
-    type: float
+    type: int
+    enum: [0, 1, 2]
+  onChangeRepAlg:
+    type: int
+    enum: [0, 1, 2]
+  detached:
+    type: bool
   fromVersion:
     type: str
   toVersion:
     type: str
   layout:
     type: str
+  extractSettings:
+    type: map
+    mapping:
+      fieldCliNameToExtractSettings:
+        type: any
+      mode:
+        type: str

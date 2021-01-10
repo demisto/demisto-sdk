@@ -11,6 +11,7 @@ Create a pack, integration or script template.
 * **--integration** Create an integration
 * **--script** Create a script
 * **--pack** Create a pack
+* **-t, --template** Create an Integration/Script based on a specific template.
 
 **Notes**
 * If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.
@@ -25,7 +26,7 @@ You may choose to use the `name` parameter as the `id` for the yml file, or prov
 An integration will be created in the "Integrations" directory and a script will be created in the "Scripts" repository.
 * If no `output` given and the command is not activated from content repo nor a pack directory -
 The pack/integration/script will be created in your current working directory.
-* The templates are based on "Integrations/HelloWorld" and "Scripts/HelloWorldScript" found in content repo.
+* The default templates are based on "StarterPack/BaseIntegration" and "StarterPack/BaseScript" found in content repo.
 
 **Examples**
 

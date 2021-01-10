@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
+    "invalid_command_name_in_script": "SC102",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -79,7 +80,6 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": "DO106",
     "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
-    "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
     "remove_field_from_dashboard": "DA100",
     "include_field_in_dashboard": "DA101",
@@ -134,6 +134,9 @@ ERROR_CODE = {
     "incident_field_type_change": "IF111",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
+    "incident_type_auto_extract_fields_invalid": "IT102",
+    "incident_type_invalid_auto_extract_mode": "IT103",
+    "incident_type_non_existent_playbook_id": "IT104",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -151,9 +154,11 @@ ERROR_CODE = {
     "pack_metadata_version_should_be_raised": "PA114",
     "pack_timestamp_field_not_in_iso_format": 'PA115',
     "invalid_package_dependencies": "PA116",
+    "pack_metadata_invalid_support_type": "PA117",
     "pack_metadata_certification_is_invalid": "PA118",
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
+    "pack_metadata_price_change": "PA121",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -554,12 +559,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def id_set_not_updated(file_path):
-        return f"You have failed to update id_set.json with the data of {file_path} " \
-               f"please run `demisto-sdk create-id-set`"
-
-    @staticmethod
-    @error_code_decorator
     def duplicated_id(obj_id):
         return f"The ID {obj_id} already exists, please update the file or update the " \
                f"id_set.json toversion field of this id to match the old occurrence of this id"
@@ -777,6 +776,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the comamnd {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
@@ -876,6 +885,38 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incident_type_auto_extract_fields_invalid(incident_fields):
+        return f"The following incident fields are not formatted correctly under " \
+               f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
+               f"Please format them in one of the following ways:\n" \
+               f"1. To extract all indicators from the field: \n" \
+               f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"2. To extract the incident field to a specific indicator without using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"<INDICATOR_TYPE>\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"3. To extract indicators from the field using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_auto_extract_mode():
+        return 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_non_existent_playbook_id(incident_type, playbook):
+        return f"in incident type {incident_type} the playbook {playbook} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right playbook name is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def pack_file_does_not_exist(file_name):
         return f'"{file_name}" file does not exist, create one in the root of the pack'
 
@@ -951,6 +992,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_invalid_support_type(pack_meta_file):
+        return 'Support field should be one of the following: xsoar, partner, developer or community.'
+
+    @staticmethod
+    @error_code_decorator
     def pack_metadata_version_should_be_raised(pack, old_version):
         return f"The pack version (currently: {old_version}) needs to be raised - " \
                f"make sure you are merged from master and " \
@@ -968,6 +1014,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
         return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_price_change(old_price, new_price) -> str:
+        return f"The pack price was changed from {old_price} to {new_price} - revert the change"
 
     @staticmethod
     @error_code_decorator

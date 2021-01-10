@@ -365,8 +365,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if self.current_file.get('type') == 'grid':
             current_version = LooseVersion(self.current_file.get('fromVersion', '0.0.0'))
             if current_version < LooseVersion('5.5.0'):
-                error_message, error_code = Errors.incident_field_type_grid_minimal_version(
-                    'fromVersion', current_version)
+                error_message, error_code = Errors.incident_field_type_grid_minimal_version(current_version)
 
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

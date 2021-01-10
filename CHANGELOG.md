@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

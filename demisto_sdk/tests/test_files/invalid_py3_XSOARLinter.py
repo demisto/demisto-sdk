@@ -386,7 +386,7 @@ def test_module(client: Client, *_) -> Tuple[str, dict, dict]:
         parse_date_range(demisto.params().get('fetch_time'), date_format='%Y-%m-%dT%H:%M:%SZ')
         parsed_time = (datetime.utcnow() - timedelta(days=20))
         incidents, _ = parse_incidents(list_tickets_res, "1", '%Y-%m-%dT%H:%M:%SZ', parsed_time)
-    return 'ok', {}, {}
+    return CommandResults(indicators=indicators)
 
 
 def get_machines_list_command(client, args) -> Tuple[str, dict, dict]:
@@ -438,7 +438,8 @@ def get_assets_list_command(client, args) -> Tuple[str, dict, dict]:
     context = {
         'QuestKace.Asset(val.ID === obj.ID)': context
     }
-    return human_readable_markdown, context, raw_response
+    result = CommandResults(indicators=indicators)
+    return result
 
 
 def get_queues_list_command(client, args) -> Tuple[str, dict, dict]:

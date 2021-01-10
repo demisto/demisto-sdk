@@ -35,7 +35,7 @@ from tabulate import tabulate
 UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
                              FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
                              FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
-                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER]
+                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER, FileType.BETA_INTEGRATION]
 
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
@@ -67,7 +67,8 @@ class Uploader:
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
         self.path = input
         self.log_verbose = verbose
-        self.client = demisto_client.configure(verify_ssl=not insecure)
+        verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        self.client = demisto_client.configure(verify_ssl=verify)
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
@@ -76,6 +77,11 @@ class Uploader:
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
         """
+        if self.demisto_version == "0":
+            click.secho("Could not connect to XSOAR server. Try checking your connection configurations.",
+                        fg="bright_red")
+            return 1
+
         status_code = 0
         click.secho(f"Uploading {self.path} ...")
         if not os.path.exists(self.path):

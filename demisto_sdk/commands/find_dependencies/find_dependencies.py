@@ -1100,7 +1100,8 @@ class PackDependencies:
     @staticmethod
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
                           update_pack_metadata: bool = True,
-                          silent_mode: bool = False, debug_file_path: str = '') -> dict:
+                          silent_mode: bool = False, debug_file_path: str = '',
+                          skip_id_set_creation: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1111,13 +1112,17 @@ class PackDependencies:
             silent_mode (bool): Determines whether to echo the dependencies or not.
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            skip_id_set_creation (bool): Whether to skip id_set.json file creation.
 
         Returns:
             Dict: first level dependencies of a given pack.
 
         """
         if not id_set_path or not os.path.isfile(id_set_path):
-            id_set = IDSetCreator(print_logs=False).create_id_set()
+            if not skip_id_set_creation:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+            else:
+                return {}
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)

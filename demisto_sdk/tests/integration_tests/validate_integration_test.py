@@ -185,6 +185,136 @@ class TestDeprecatedIntegration:
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_bc_deprecated_integration(self, mocker, repo):
+        """
+        Given
+        - invalid but backwards compatible deprecated integration with valid deprecated fields.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['deprecated'] = True
+        valid_integration_yml['display'] = '(Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks',
+                                          '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_modified_bc_deprecated_integration(self, mocker, repo):
+        """
+        Given
+        - invalid modified but backwards compatible deprecated integration with valid deprecated fields.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['deprecated'] = True
+        valid_integration_yml['display'] = '(Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
+                                          '--print-ignored-files', '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_integration(self, mocker, repo):
+        """
+        Given
+        - invalid but backwards compatible integration with toversion < OLDEST_SUPPORTED_VERSION
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['toversion'] = '4.4.4'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks',
+                                          '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_modified_invalid_bc_unsupported_toversion_integration(self, mocker, repo):
+        """
+        Given
+        - A modified invalid but backwards compatible integration with toversion < OLDEST_SUPPORTED_VERSION
+
+        When
+        - Running validate -g on it.
+
+        Then
+        - Ensure validation passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml['toversion'] = '4.4.4'
+        valid_integration_yml['commonfields']['version'] = -2
+        integration = pack.create_integration(yml=valid_integration_yml)
+
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
+                                          '--print-ignored-files', '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
 
 class TestIntegrationValidation:
     def test_valid_integration(self, mocker, repo):
@@ -999,6 +1129,161 @@ class TestIncidentTypeValidation:
         assert 'The field days needs to be a positive integer' in result.stdout
         assert result.exit_code == 1
 
+    def test_valid_incident_type_with_extract_fields(self, mocker, repo):
+        """
+        Given
+        - a valid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as an incident type.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "IP",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_incident_type_with_extract_fields_wrong_field_formats(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT102.
+        - Ensure all wrongly formatted extraction incident fields are listed in the output.
+        - Ensure all valid extraction fields are not listed
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Specific",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT102' in result.stdout
+
+        # check all errors are listed
+        assert all([field in result.stdout for field in {"attachment", "category", "closenotes"}])
+
+        # sanity check
+        assert "closinguserid" not in result.stdout
+        assert result.exit_code == 1
+
+    def test_invalid_incident_type_with_extract_fields_invalid_mode(self, mocker, repo):
+        """
+        Given
+        - an invalid Incident Type with auto-extract fields which have an invalid mode field.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IT103.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_type_data = INCIDENT_TYPE.copy()
+        incident_type_data["extractSettings"] = {
+            "mode": "Invalid",
+            "fieldCliNameToExtractSettings": {
+                "attachment": {
+                    "extractAsIsIndicatorTypeId": "Data1",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["Data2"]
+                },
+                "category": {
+                    "extractAsIsIndicatorTypeId": "Data",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": []
+                },
+                "closenotes": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": True,
+                    "extractIndicatorTypesIDs": ["Data"]
+                },
+                "closinguserid": {
+                    "extractAsIsIndicatorTypeId": "",
+                    "isExtractingAllIndicatorTypes": False,
+                    "extractIndicatorTypesIDs": ["IP", "CIDR"]
+                }
+            }
+        }
+        incident_type = pack.create_incident_type('incident_type', incident_type_data)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_type.path], catch_exceptions=False)
+        assert f'Validating {incident_type.path} as incidenttype' in result.stdout
+        assert 'IT103' in result.stdout  # wrong format error
+
+        # check all errors are listed
+        assert 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types ' \
+               'set in the auto-extraction settings.' in result.stdout
+        assert result.exit_code == 1
+
 
 class TestLayoutValidation:
     def test_valid_layout(self, mocker, repo):
@@ -1266,6 +1551,129 @@ class TestPlaybookValidateDeprecated:
         assert 'The playbook description has to start with "Deprecated."' in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_bc_deprecated_playbook(self, mocker, repo):
+        """
+        Given
+        - an invalid, backwards compatible Playbook Deprecated. All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['hidden'] = True
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', playbook.yml.rel_path, '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_modified_invalid_bc_deprecated_playbook(self, mocker, repo):
+        """
+        Given
+        - A modified invalid, backwards compatible Playbook Deprecated. All deprecated fields are set correctly.
+
+        When
+        - Running validate -g on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['hidden'] = True
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        modified_files = {playbook.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                    '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_playbook(self, mocker, repo):
+        """
+        Given
+        - an invalid, backwards compatible deprecated playbook with toversion < OLDEST_SUPPORTED_VERSION.
+        - All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['toversion'] = '4.4.4'
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-i', playbook.yml.rel_path, '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_modified_invalid_bc_unsupported_toversion_playbook(self, mocker, repo):
+        """
+        Given
+        - A modified invalid, backwards compatible deprecated playbook with toversion < OLDEST_SUPPORTED_VERSION.
+        - All deprecated fields are set correctly.
+
+        When
+        - Running validate -g on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a playbook deprecated.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        pack = repo.create_pack('PackName')
+        valid_playbook_yml = get_yaml(VALID_DEPRECATED_PLAYBOOK_FILE_PATH)
+        valid_playbook_yml['toversion'] = '4.4.4'
+        valid_playbook_yml['version'] = -2
+        playbook = pack.create_playbook(yml=valid_playbook_yml)
+        modified_files = {playbook.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-g', '-i', playbook.yml.rel_path, '--print-ignored-files',
+                                    '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
 
 class TestReportValidation:
     def test_valid_report(self, mocker, repo):
@@ -1462,6 +1870,130 @@ class TestScriptDeprecatedValidation:
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout
         assert result.exit_code == 1
+
+    def test_invalid_bc_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - an invalid but backwards compatible deprecated Script. All deprecated fields are set correctly.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a deprecated script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['deprecated'] = True
+        valid_script_yml['commonfields']['version'] = -2
+        valid_script_yml['comment'] = 'Deprecated.'
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks',
+                                    '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_modified_invalid_bc_deprecated_script(self, mocker, repo):
+        """
+        Given
+        - A modified invalid but backwards compatible deprecated Script. All deprecated fields are set correctly.
+
+        When
+        - Running validate -g on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a deprecated script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['deprecated'] = True
+        valid_script_yml['commonfields']['version'] = -2
+        valid_script_yml['comment'] = 'Deprecated.'
+        script = pack.create_script(yml=valid_script_yml)
+        modified_files = {script.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-g', '-i', script.yml.rel_path, '--no-docker-checks',
+                                    '--print-ignored-files', '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_bc_unsupported_toversion_script(self, mocker, repo):
+        """
+        Given
+        - An invalid but backwards compatible Script with field toversion < OLDEST_SUPPORTED_VERSION.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['toversion'] = '4.4.4'
+        valid_script_yml['commonfields']['version'] = -2
+        script = pack.create_script(yml=valid_script_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks',
+                                    '--print-ignored-files'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_modified_invalid_bc_unsupported_toversion_script(self, mocker, repo):
+        """
+        Given
+        - A modified invalid but backwards compatible Script with field toversion < OLDEST_SUPPORTED_VERSION.
+
+        When
+        - Running validate -g on it.
+
+        Then
+        - Ensure validate passes and identifies the file as a script.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_unique_files', return_value='')
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+
+        pack = repo.create_pack('PackName')
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml['toversion'] = '4.4.4'
+        valid_script_yml['commonfields']['version'] = -2
+        script = pack.create_script(yml=valid_script_yml)
+        modified_files = {script.yml.rel_path}
+        mocker.patch.object(ValidateManager, 'get_modified_and_added_files', return_value=(modified_files, {},
+                                                                                           set(), set(), set()))
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main,
+                                   [VALIDATE_CMD, '-g', '-i', script.yml.rel_path, '--no-docker-checks',
+                                    '--print-ignored-files', '--skip-pack-release-notes'],
+                                   catch_exceptions=False)
+        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
 
 
 class TestWidgetValidation:
@@ -1800,7 +2332,8 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
-                                          '--skip-pack-release-notes', '--skip-pack-dependencies'],
+                                          '--skip-pack-release-notes', '--skip-pack-dependencies',
+                                          '--skip-id-set-creation'],
                                    catch_exceptions=False)
         assert 'Running validation on branch' in result.stdout
         assert 'Running validation on modified files' in result.stdout

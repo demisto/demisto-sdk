@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where a non relevant id_set validation run.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
 * Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 
 # 1.2.16

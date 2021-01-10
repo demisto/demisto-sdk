@@ -2,11 +2,12 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Dashboard, DocFile, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
-    OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
+    AgentTool, AuthorImage, BaseValidator, ChangeLog, Classifier,
+    ClassifierMapper, Connection, Dashboard, DocFile, IncidentField,
+    IncidentType, IndicatorField, IndicatorType, Integration, Layout,
+    LayoutsContainer, OldClassifier, OldIndicatorType, PackIgnore,
+    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
+    Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -87,3 +88,31 @@ def path_to_pack_object(path: Union[Path, str]) -> object:
         raise ContentFactoryError(None, path, "Unable to get object type from path.")
 
     return object_type(path)
+
+
+TYPE_CONVERSION_BY_FileType_validators = {
+    FileType.INTEGRATION: Integration,
+    FileType.BETA_INTEGRATION: Integration,
+    FileType.PLAYBOOK: Playbook,
+    FileType.SCRIPT: Script,
+    FileType.TEST_SCRIPT: Script,
+    FileType.TEST_PLAYBOOK: Playbook,
+    FileType.DASHBOARD: Dashboard,
+    FileType.WIDGET: Widget,
+    FileType.REPORT: Report,
+    FileType.OLD_CLASSIFIER: OldClassifier,
+    FileType.CLASSIFIER: Classifier,
+    FileType.MAPPER: ClassifierMapper,
+    FileType.LAYOUT: Layout,
+    FileType.LAYOUTS_CONTAINER: LayoutsContainer,
+    FileType.REPUTATION: IndicatorType,
+    FileType.INDICATOR_FIELD: IndicatorField,
+    FileType.INCIDENT_FIELD: IncidentField,
+    FileType.INCIDENT_TYPE: IncidentType,
+    FileType.README: Readme,
+    FileType.CONNECTION: Connection,
+}
+
+
+def path_to_object_validate(path: Union[str, Path], base: BaseValidator, file_type: FileType = FileType.INTEGRATION):
+    return TYPE_CONVERSION_BY_FileType_validators.get(file_type)(path, base)  # type: ignore

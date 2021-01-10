@@ -594,8 +594,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def no_image_given():
-        return "You've created/modified a yml or package but failed to provide an image as " \
-               "a .png file for it, please add an image in order to proceed."
+        return "Image file was not found or is not formatted correctly - provide a .png file.\n" \
+               "For integrations the name should be `<INTEGRATION_NAME>_image.png`."
 
     @staticmethod
     @error_code_decorator

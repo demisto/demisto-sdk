@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import get_remote_file
+from demisto_sdk.commands.common.tools import get_old_file
 from demisto_sdk.commands.format.format_constants import DEFAULT_VERSION
 from packaging.version import Version
 from wcmatch.pathlib import Path
@@ -46,7 +46,7 @@ class IncidentType(JSONContentObject):
             return client.import_incident_types_handler(file=incident_type_unified_file.name)
 
     def validate(self):
-        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
         if self.base.check_bc:
             return self.is_valid_file(old_file=old_file) and \
                 self.is_backward_compatible(old_file=old_file)

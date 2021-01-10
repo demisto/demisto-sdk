@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import get_remote_file
+from demisto_sdk.commands.common.tools import get_old_file
 from packaging.version import Version
 from pipenv.patched.piptools import click
 from wcmatch.pathlib import Path
@@ -32,7 +32,7 @@ class Dashboard(JSONContentObject):
         return client.import_dashboard(file=self.path)
 
     def validate(self):
-        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
         return self.is_valid_dashboard(old_file)
 
     def is_valid_dashboard(self, old_file):

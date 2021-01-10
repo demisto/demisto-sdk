@@ -43,21 +43,16 @@ class Playbook(YAMLContentObject):
             self.is_valid_version()
         ])
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self) -> bool:
         """Check whether the playbook is valid or not.
-
-         Args:
-            this will also determine whether a new id_set can be created by validate.
-            is_new_playbook (bool): whether the playbook is new or modified
-            id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
             bool. Whether the playbook is valid or not
         """
-        if 'TestPlaybooks' in self.path:
+        if 'TestPlaybooks' in str(self.path):
             click.secho(f'Skipping validation for Test Playbook {self.path}', fg='yellow')
             return True
-        if is_new_playbook:
+        if not self.base.is_modified:
             new_playbook_checks = [
                 self.is_valid_fromversion(),
                 self.is_valid_version(),
@@ -69,7 +64,7 @@ class Playbook(YAMLContentObject):
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
                 self.is_valid_as_deprecated(),
-                self.is_script_id_valid(id_set_file),
+                self.is_script_id_valid(),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -84,7 +79,7 @@ class Playbook(YAMLContentObject):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_script_id_valid(id_set_file),
+                self.is_script_id_valid(),
             ]
             answers = all(modified_playbook_checks)
 
@@ -367,22 +362,19 @@ class Playbook(YAMLContentObject):
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
 
-    def is_script_id_valid(self, id_set_file):
+    def is_script_id_valid(self):
         """Checks whether a script id is valid (i.e id exists in set_id)
-        Args:
-            id_set_file (dict): id_set.json file
-            this will also determine whether a new id_set can be created by validate.
 
         Return:
             bool. if all scripts ids of this playbook are valid.
         """
         is_valid = True
 
-        if not id_set_file:
+        if not self.base.id_set_file:
             click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
             return is_valid
 
-        id_set_scripts = id_set_file.get("scripts")
+        id_set_scripts = self.base.id_set_file.get("scripts")
         pb_tasks = self.get('tasks', {})
         for _, task_dict in pb_tasks.items():
             pb_task = task_dict.get('task', {})

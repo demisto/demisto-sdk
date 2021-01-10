@@ -1477,3 +1477,10 @@ def is_v2_file(current_file, check_in_display=False):
     if suffix != "v2":
         return False
     return True
+
+
+def get_old_file(file_path, old_file_path, prev_ver):
+    if old_file_path:
+        return get_remote_file(old_file_path, tag=prev_ver)
+    else:
+        return get_remote_file(file_path, tag=prev_ver)

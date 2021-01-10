@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import (get_demisto_version,
-                                               get_remote_file, is_v2_file)
+                                               get_old_file, is_v2_file)
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
@@ -47,7 +47,7 @@ class Script(YAMLContentUnifiedObject):
                         return client.import_script(file=file)
 
     def validate(self):
-        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
 
         if self.base.file_type == FileType.TEST_SCRIPT:
             return self.is_valid_test_script()

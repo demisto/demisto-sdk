@@ -1,6 +1,8 @@
 import io
 import json
 import os
+from pathlib import Path
+from typing import Union
 
 import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
@@ -21,7 +23,7 @@ class BaseValidator:
                  check_bc: bool = False, prev_ver: str = '', branch_name: str = '',
                  skip_docker_check: bool = False,
                  file_type: FileType = FileType.INTEGRATION, skip_test_conf: bool = False,
-                 is_modified: bool = False, id_set_file: str = ''):
+                 is_modified: bool = False, id_set_file: dict = None, old_file_path: Union[Path, str] = ''):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
@@ -34,6 +36,7 @@ class BaseValidator:
         self.skip_test_conf = skip_test_conf
         self.is_modified = is_modified
         self.id_set_file = id_set_file
+        self.old_file_path = old_file_path
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):

@@ -23,14 +23,15 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.image.image import \
+    Image
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (get_demisto_version,
-                                               get_remote_file,
+                                               get_old_file,
                                                is_test_config_match,
                                                is_v2_file)
 from packaging.version import Version, parse
@@ -82,7 +83,7 @@ class Integration(YAMLContentUnifiedObject):
                         return client.integration_upload(file=file)  # type: ignore
 
     def validate(self):
-        old_file = get_remote_file(self.path, tag=self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
 
         if self.base.file_type == FileType.BETA_INTEGRATION:
             return self.is_valid_beta_integration(old_file)
@@ -462,11 +463,7 @@ class Integration(YAMLContentUnifiedObject):
         Returns:
             bool. True if integration image/logo is valid, False otherwise.
         """
-        image_validator = ImageValidator(self.path, ignored_errors=self.base.ignored_errors,
-                                         print_as_warnings=self.base.print_as_warnings)
-        if not image_validator.is_valid():
-            return False
-        return True
+        return Image(self.path, self.base).validate()
 
     def is_valid_max_fetch_and_first_fetch(self) -> bool:
         """
@@ -1017,13 +1014,13 @@ class Integration(YAMLContentUnifiedObject):
         is_description_in_yml = False
         is_description_in_package = False
 
-        is_unified_integration = self.get('script', {}).get('script', '') not in {'-', ''}
-        if not (self.get('deprecated') or is_unified_integration):
-            error_message, error_code = Errors.no_description_file_warning()
-            self.base.handle_error(error_message, error_code, file_path=self.path, warning=True)
-
         if os.path.exists(str(self.description_path)):
             is_description_in_package = True
+
+        is_unified_integration = self.get('script', {}).get('script', '') not in {'-', ''}
+        if not (self.get('deprecated') or is_unified_integration) and not is_description_in_package:
+            error_message, error_code = Errors.no_description_file_warning()
+            self.base.handle_error(error_message, error_code, file_path=self.path, warning=True)
 
         if self.get('detaileddescription'):
             is_description_in_yml = True

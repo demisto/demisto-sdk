@@ -61,7 +61,7 @@ class Readme(TextObject):
         ])
 
     def is_image_path_valid(self) -> bool:
-        with open(self.file_path) as f:
+        with open(str(self.path)) as f:
             readme_content = f.read()
         invalid_paths = re.findall(
             r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,

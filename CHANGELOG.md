@@ -1,6 +1,8 @@
 # Changelog
 * Fixed an issue with support for Docker Desktop on Mac version 2.5.0+.
 * Added support for vulture and mypy linting when running without docker.
+* Added a validation for invalid fromVersion field in indicators of Grid type in **validate** command.
+
 
 # 1.2.11
 * Fixed an issue where the ***generate-docs*** command reset the enumeration of line numbering after an MD table.

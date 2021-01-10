@@ -322,3 +322,27 @@ class TestIncidentFieldsValidator:
         validator = IncidentFieldValidator(structure)
         assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
                                                         f' returns {not is_valid}.'
+
+    TYPES_FROMVERSION = [
+        ('grid', '5.5.0', True),
+        ('grid', '5.0.0', False),
+        ('number', '5.0.0', True)
+    ]
+
+    @pytest.mark.parametrize('field_type, fromVersion, is_valid', TYPES_FROMVERSION)
+    def test_is_valid_grid_fromversion(self, field_type, fromVersion, is_valid):
+        """
+            Given
+            - an invalid indicator-field - the field is with type grid but fromVersion is < 5.5.0.
+
+            When
+            - Running validate on it.
+
+            Then
+            - Ensure validate fails.
+        """
+        structure = StructureValidator("")
+        structure.current_file = {"fromVersion": fromVersion, "type": field_type}
+        validator = IncidentFieldValidator(structure)
+        assert validator.is_valid_grid_fromversion() == is_valid, f'is_valid_grid_fromVersion({field_type}, ' \
+                                                                  f'{fromVersion} returns {not is_valid}'

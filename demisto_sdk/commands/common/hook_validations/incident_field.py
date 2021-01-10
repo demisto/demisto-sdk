@@ -3,6 +3,7 @@ This module is designed to validate the correctness of incident field entities i
 """
 import re
 from enum import Enum, IntEnum
+from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -187,7 +188,8 @@ class IncidentFieldValidator(ContentEntityValidator):
                 self.is_valid_system_flag(),
                 self.is_valid_cliname(),
                 self.is_valid_version(),
-                self.is_valid_required()
+                self.is_valid_required(),
+                self.is_valid_grid_fromversion()
             ]
         )
 
@@ -356,3 +358,15 @@ class IncidentFieldValidator(ContentEntityValidator):
                     is_type_changed = True
 
         return is_type_changed
+
+    def is_valid_grid_fromversion(self):
+        # type: () -> bool
+        """Validate that a incident field with type grid is from version > 5.5.0"""
+        if self.current_file.get('type') == 'grid':
+            if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < LooseVersion('5.5.0'):
+                error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion', '5.5.0')
+
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        return True

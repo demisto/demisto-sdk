@@ -265,6 +265,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incident_field_type_grid_minimal_version(fromversion):
+        return f"field has a fromVersion of {fromversion} but the proper fromVersion is 5.5.0"
+
+    @staticmethod
+    @error_code_decorator
     def wrong_display_name(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 

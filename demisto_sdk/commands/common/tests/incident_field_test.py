@@ -333,7 +333,7 @@ class TestIncidentFieldsValidator:
     def test_is_valid_grid_fromversion(self, field_type, fromVersion, is_valid):
         """
             Given
-            - an invalid indicator-field - the field is with type grid but fromVersion is < 5.5.0.
+            - an invalid indicator-field - the field is of type grid but fromVersion is < 5.5.0.
 
             When
             - Running validate on it.

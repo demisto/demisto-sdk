@@ -2,11 +2,12 @@
 
 Schema struct files are those who start with PREFIX and end with SUFFIX."""
 
-from typing import List, Tuple
-from slack_sdk import WebClient
-from pprint import pformat
 import argparse
 import os
+from pprint import pformat
+from typing import Any, Dict, List, Tuple
+
+from slack_sdk import WebClient
 
 SCHEMA_UPDATE_CHANNEL = "dmst-schema-change"
 GITHUB_BASE_URL = "https://github.com/demisto/server/commit/"
@@ -30,7 +31,7 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
 
     Return: Tuple of
         commit_github_url: Url of commit on github.
-        changed_files: List of relevant files that were changed.
+        relevant_changed_files: List of relevant files that were changed.
         change_diffs: Dictionary with changed_files keys and changesets as values.
         commit_author: Author of commit.
     """
@@ -46,10 +47,11 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
             output_stream = os.popen(f"git diff HEAD^ -- {changed_file} | grep '^[+|-][^+|-]'")
             change_diffs[changed_file] = output_stream.read()
 
-    return commit_github_url, change_diffs.keys(), change_diffs, commit_author
+    relevant_changed_files = list(change_diffs.keys())
+    return commit_github_url, relevant_changed_files, change_diffs, commit_author
 
 
-def notify_slack(slack_token: str, channel: str, attachments: List[dict]):
+def notify_slack(slack_token: str, channel: str, attachments: List[Dict[str, Any]]):
     """Notify slack channel.
 
     Args:
@@ -68,7 +70,7 @@ def build_message(commit: str,
                   commit_github_url: str,
                   changed_files: List[str],
                   diffs: dict,
-                  commit_author: str) -> List[dict]:
+                  commit_author: str) -> List[Dict[str, Any]]:
     """Construct message for slack.
 
     Args:
@@ -83,13 +85,12 @@ def build_message(commit: str,
     """
 
     title = f"Commit {commit[0:7]} Modified Schema Struct Files"
-
     changes = [{"value": f"Changed by: {commit_author}"}]
     for changed_file in changed_files:
         changes.append({
             "title": f"{changed_file}",
             "value": f"```{diffs[changed_file]}```",
-            "short": False
+            "short": False  # type: ignore
         })
 
     message = [{

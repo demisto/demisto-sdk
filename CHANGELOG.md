@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.
@@ -13,7 +14,6 @@
 * Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
 * Fixed an issue where Auto-Extract fields were only checked for newly added incident types in the **validate** command.
 * Added a new warning validation of direct access to args/params dicts to `XSOAR-linter`.
-* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 
 # 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.

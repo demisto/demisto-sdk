@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'ID101']
+                         'PB106', 'IN109', 'IN110', 'IN122']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -80,7 +80,6 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": "DO106",
     "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
-    "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
     "remove_field_from_dashboard": "DA100",
     "include_field_in_dashboard": "DA101",
@@ -557,12 +556,6 @@ class Errors:
     def id_set_conflicts():
         return "You probably merged from master and your id_set.json has " \
                "conflicts. Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
-
-    @staticmethod
-    @error_code_decorator
-    def id_set_not_updated(file_path):
-        return f"You have failed to update id_set.json with the data of {file_path} " \
-               f"please run `demisto-sdk create-id-set`"
 
     @staticmethod
     @error_code_decorator

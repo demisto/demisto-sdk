@@ -115,7 +115,7 @@ class IDSetValidator(BaseValidator):
                                                                                           command)
                         self.handle_error(error_message, error_code, file_path="id_set.json")
                         return not is_valid
-            return is_valid
+        return is_valid
 
     def _is_valid_in_id_set(self, file_path: str, obj_data: OrderedDict, obj_set: list):
         """Check if the file is represented correctly in the id_set

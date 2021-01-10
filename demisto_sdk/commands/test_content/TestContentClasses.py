@@ -1311,26 +1311,14 @@ class TestContext:
     def _send_slack_message(self, channel, text, user_name, as_user):
         self.build_context.slack_client.api_call(
             "chat.postMessage",
-            channel=channel,
-            username=user_name,
-            as_user=as_user,
-            text=text,
-            mrkdwn='true'
+            json={
+                'channel': channel,
+                'username': user_name,
+                'as_user': as_user,
+                'text': text,
+                'mrkdwn': 'true'
+            }
         )
-
-    @staticmethod
-    def _retrieve_slack_user_id(circle_user_name, slack_client):
-        user_id = ''
-        res = slack_client.api_call('users.list')
-
-        user_list = res.get('members', [])
-        for user in user_list:
-            profile = user.get('profile', {})
-            name = profile.get('real_name_normalized', '')
-            if name == circle_user_name:
-                user_id = user.get('id', '')
-
-        return user_id
 
     def _notify_failed_test(self):
         if self.incident_id:
@@ -1343,10 +1331,12 @@ class TestContext:
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
-                channel=self.build_context.slack_user_id,
-                username="Content CircleCI",
-                as_user="False",
-                text=text
+                json={
+                    'channel': self.build_context.slack_user_id,
+                    'username': 'Content CircleCI',
+                    'as_user': 'False',
+                    'text': text
+                }
             )
 
     def _add_to_succeeded_playbooks(self) -> None:

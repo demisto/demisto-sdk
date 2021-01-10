@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

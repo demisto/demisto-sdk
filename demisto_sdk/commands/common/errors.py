@@ -132,6 +132,7 @@ ERROR_CODE = {
     "new_incident_field_required": "IF109",
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
+    "incident_field_type_grid_minimal_version": "IF112",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
     "incident_type_auto_extract_fields_invalid": "IT102",
@@ -194,6 +195,7 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
     "invalid_file_path_layoutscontainer": "LO103",
+
 }
 
 

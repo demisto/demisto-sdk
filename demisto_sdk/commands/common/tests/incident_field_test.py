@@ -344,5 +344,5 @@ class TestIncidentFieldsValidator:
         structure = StructureValidator("")
         structure.current_file = {"fromVersion": fromVersion, "type": field_type}
         validator = IncidentFieldValidator(structure)
-        assert validator.is_valid_grid_fromversion() == is_valid, f'is_valid_grid_fromVersion({field_type}, ' \
-                                                                  f'{fromVersion} returns {not is_valid}'
+        assert validator.is_valid_grid_fromversion() == is_valid, \
+            f'is_valid_grid_fromVersion({field_type}, {fromVersion} returns {not is_valid}'

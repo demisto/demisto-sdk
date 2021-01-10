@@ -216,7 +216,23 @@ INCIDENT_TYPE = {
     "closureScript": "",
     "disabled": False,
     "reputationCalc": 0,
-    "fromVersion": "5.5.0"
+    "fromVersion": "5.5.0",
+    "extractSettings": {
+        "mode": "specific",
+        "fieldCliNameToExtractSettings": {
+            "incident_field_1": {
+                "extractAsIsIndicatorTypeId": "",
+                "isExtractingAllIndicatorTypes": False,
+                "extractIndicatorTypesIDs": []
+            },
+            "incident_field_2": {
+                "extractAsIsIndicatorTypeId": "IP",
+                "isExtractingAllIndicatorTypes": False,
+                "extractIndicatorTypesIDs": []
+            }
+        }
+    }
+
 }
 
 LAYOUT = {

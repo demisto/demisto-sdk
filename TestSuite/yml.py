@@ -26,3 +26,8 @@ class YAML(File):
 
     def update_description(self, description: str):
         self.update({'description': description})
+
+    def delete(self, key: str):
+        yml_contents = self.read_dict()
+        del yml_contents[key]
+        self.write_dict(yml_contents)

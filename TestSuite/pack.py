@@ -115,13 +115,14 @@ class Pack:
             readme: Optional[str] = None,
             description: Optional[str] = None,
             changelog: Optional[str] = None,
-            image: Optional[bytes] = None
+            image: Optional[bytes] = None,
+            unified: bool = False
     ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
-        integration = Integration(self._integrations_path, name, self._repo)
+        integration = Integration(self._integrations_path, name, self._repo, create_unified=unified)
         integration.build(
             code,
             yml,

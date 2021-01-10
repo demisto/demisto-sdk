@@ -29,7 +29,7 @@ def test_is_incident_type_using_real_playbook__happy_flow():
         'fromversion': '5.0.0'}
     }]
 
-    assert validator._is_playbook_found(incident_type_data=incident_type_data) is True, \
+    assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is True, \
         "The incident type default playbook id does not exist in the id set"
 
 
@@ -58,7 +58,7 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
         'fromversion': '5.0.0'}
     }]
 
-    assert validator._is_playbook_found(incident_type_data=incident_type_data) is False
+    assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is False
 
 
 def test_is_non_real_command_found__happy_flow():

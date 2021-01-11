@@ -134,34 +134,35 @@ class IDSetValidator(BaseValidator):
         Returns:
             bool. Whether the integration fetch incident classifier is found.
         """
-        is_valid = True
+        is_valid_classifier = True
         integration_classifier = integration_data.get('classifiers')  # there is only 1 classifier per integration
         if integration_classifier:
             # setting initially to false, if the classifier is in the id_set, it will be valid
-            is_valid = False
+            is_valid_classifier = False
             for classifier in self.classifiers_set:
                 checked_classifier_name = list(classifier.keys())[0]
                 if integration_classifier == checked_classifier_name:
-                    is_valid = True
+                    is_valid_classifier = True
                     break
-            if not is_valid:  # add error message if not valid
+            if not is_valid_classifier:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_classifier(integration_classifier)
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
-        integration_mapper = integration_data.get('mappers')  # there is only 1 mapper per integration
+        is_valid_mapper = True
+        integration_mapper = integration_data.get('mappers', [''])[0]  # there is only 1 mapper per integration
         if integration_mapper:
             # setting initially to false, if the mapper is in the id_set, it will be valid
-            is_valid = False
+            is_valid_mapper = False
             for mapper in self.mappers_set:
                 checked_mapper_name = list(mapper.keys())[0]
                 if integration_mapper == checked_mapper_name:
-                    is_valid = True
+                    is_valid_mapper = True
                     break
-            if not is_valid:  # add error message if not valid
+            if not is_valid_mapper:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_mapper(integration_mapper)
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
-        return is_valid
+        return is_valid_classifier and is_valid_mapper
 
     def _is_classifier_incident_types_found(self, classifier_data):
         """Check if the classifier incident types were found

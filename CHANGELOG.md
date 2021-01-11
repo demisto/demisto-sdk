@@ -1,4 +1,5 @@
 # Changelog
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

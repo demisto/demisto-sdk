@@ -138,8 +138,7 @@ jobs:
               - content
 
   create-unified-id-set:
-      docker:
-        - image: ubuntu-2004:202010-01
+      runs-on: ubuntu-latest
       steps:
         - checkout
         - attach_workspace:

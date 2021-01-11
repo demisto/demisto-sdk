@@ -155,14 +155,12 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
-              GCS_MARKET_KEY: ${{ secrets.GCS_MARKET_KEY }}
-              source ./venv/bin/activate
-              GCS_PATH=$(mktemp)
-              echo "$GCS_MARKET_KEY" > "$GCS_PATH"
-              gcloud auth activate-service-account --key-file="$GCS_PATH" > auth.out 2>&1
+              sudo apt-get install google-cloud-sdk
+              gcloud --version
+              gsutil --version
 
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
-              CIRCLE_BRANCH="master" python3 Tests/Marketplace/download_private_id_set.py -b marketplace-dist -s $GCS_PATH
+              gsutil cp gs://marketplace-dist/content/private_id_set.json /home/circleci/project/artifacts/unified_id_set.json
 
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 /home/circleci/project/artifacts/unified_id_set.json -o /home/circleci/project/artifacts/unified_id_set.json
 

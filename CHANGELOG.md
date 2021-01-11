@@ -1,10 +1,21 @@
 # Changelog
+
+# 1.2.16
+* Added allowed ignore errors to the *IDSetValidator*.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
+
+# 1.2.15
+* Added the *ID101* to the allowed ignored errors.
+
+# 1.2.14
 * SDK repository is now mypy check_untyped_defs complaint.
 * The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
 * Added an option for **format** to run on a whole pack.
 * Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
 * Fixed an issue where Auto-Extract fields were only checked for newly added incident types in the **validate** command.
-* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
+* Added a new warning validation of direct access to args/params dicts to `XSOAR-linter`.
 
 # 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.

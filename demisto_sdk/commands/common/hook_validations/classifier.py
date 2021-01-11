@@ -151,10 +151,10 @@ class ClassifierValidator(ContentEntityValidator):
 
         invalid_inc_fields_list = []
         mapper = self.current_file.get('mapping', {})
-        for key, value in mapper.items():
-            incident_fields = value.get('internalMapping', {})
+        for incident_type, mapping in mapper.items():
+            incident_fields = mapping.get('internalMapping', {})
 
-            for inc_name, inc_info in incident_fields.items():
+            for inc_name, _ in incident_fields.items():
                 if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
                     invalid_inc_fields_list.append(inc_name)
 

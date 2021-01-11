@@ -4,65 +4,6 @@ from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 CONFIG = Configuration()
 
 
-def test_validness_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
-
-    obj_data = {
-        "test": {
-            "name": "test"
-        }
-    }
-    obj_set = [
-        obj_data,
-    ]
-
-    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set), \
-        "The id validator couldn't find id as valid one"
-
-
-def test_obj_not_found_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
-
-    obj_data = {
-        "test": {
-            "name": "test"
-        }
-    }
-    actual_obj_set = {
-        "test": {
-            "name": "test",
-            "fromversion": "1.2.2"
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
-
-    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
-        "The id validator couldn't find id as valid one"
-
-
-def test_obj_data_mismatch_in_set():
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
-
-    obj_data = {
-        "test": {
-            "name": "test"
-        }
-    }
-    actual_obj_set = {
-        "test": {
-            "name": "not test",
-        }
-    }
-    obj_set = [
-        actual_obj_set,
-    ]
-
-    assert validator._is_valid_in_id_set(file_path="test", obj_data=obj_data, obj_set=obj_set) is False, \
-        "The id validator couldn't find id as valid one"
-
-
 def test_is_incident_type_using_real_playbook__happy_flow():
     """
     Given
@@ -165,4 +106,28 @@ def test_is_non_real_command_found__bad_command_name():
     }
 
     assert validator._is_non_real_command_found(script_data=script_data) is False, \
+        "The script has a non real command"
+
+
+def test_is_non_real_command_found__no_depend_on_name():
+    """
+    Given
+        - script which has no executeCommand.
+
+    When
+        - is_non_real_command_found is called
+
+    Then
+        - Ensure that the scripts depend-on commands are valid.
+    """
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    script_data = {
+        'name': 'OktaUpdateUser',
+        'fidepends-le_path': 'Packs/CommonScripts/Scripts/NoExecuteCommand.yml',
+        'fromversion': '5.0.0', 'deprecated': True,
+        'tests': ['No test'], 'pack': 'CommonScripts'
+    }
+
+    assert validator._is_non_real_command_found(script_data=script_data) is True, \
         "The script has a non real command"

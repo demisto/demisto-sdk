@@ -47,7 +47,7 @@ __all__ = ['BuildContext',
            'TestContext',
            'TestPlaybook',
            'TestResults',
-           'TestsExecution']
+           'ServerContext']
 
 
 class IntegrationConfiguration:
@@ -1145,7 +1145,17 @@ class Integration:
 
 
 class TestContext:
-    def __init__(self, build_context: BuildContext, playbook: TestPlaybook, client: DefaultApi):
+    def __init__(self,
+                 build_context: BuildContext,
+                 playbook: TestPlaybook,
+                 client: DefaultApi):
+        """
+        Initializes the TestContext class
+        Args:
+            build_context: The context of the current build
+            playbook: The TestPlaybook instance to run in the current test execution
+            client: A demisto client instance to use for communication with the server
+        """
         self.build_context = build_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
@@ -1311,26 +1321,14 @@ class TestContext:
     def _send_slack_message(self, channel, text, user_name, as_user):
         self.build_context.slack_client.api_call(
             "chat.postMessage",
-            channel=channel,
-            username=user_name,
-            as_user=as_user,
-            text=text,
-            mrkdwn='true'
+            json={
+                'channel': channel,
+                'username': user_name,
+                'as_user': as_user,
+                'text': text,
+                'mrkdwn': 'true'
+            }
         )
-
-    @staticmethod
-    def _retrieve_slack_user_id(circle_user_name, slack_client):
-        user_id = ''
-        res = slack_client.api_call('users.list')
-
-        user_list = res.get('members', [])
-        for user in user_list:
-            profile = user.get('profile', {})
-            name = profile.get('real_name_normalized', '')
-            if name == circle_user_name:
-                user_id = user.get('id', '')
-
-        return user_id
 
     def _notify_failed_test(self):
         if self.incident_id:
@@ -1343,10 +1341,12 @@ class TestContext:
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
-                channel=self.build_context.slack_user_id,
-                username="Content CircleCI",
-                as_user="False",
-                text=text
+                json={
+                    'channel': self.build_context.slack_user_id,
+                    'username': 'Content CircleCI',
+                    'as_user': 'False',
+                    'text': text
+                }
             )
 
     def _add_to_succeeded_playbooks(self) -> None:
@@ -1404,7 +1404,7 @@ class TestContext:
             The result of the test.
         """
         playbook_state = self._run_incident_test()
-        if playbook_state:
+        if playbook_state == PB_Status.COMPLETED:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1498,15 +1498,31 @@ class TestContext:
                     'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
         return True
 
-    def execute_test(self, proxy: Optional[MITMProxy] = None):
-        self._send_circle_memory_and_pid_stats_on_slack()
-        if self.playbook.is_mockable:
-            test_executed = self._execute_mockable_test(proxy)  # type: ignore
-        else:
-            test_executed = self._execute_unmockable_test()
-        self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
-        self.build_context.logging_module.execute_logs()
-        return test_executed
+    def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
+        """
+        Executes the test and return a boolean that indicates whether the test was executed or not.
+        In case the test was not executed - it will be returned to the queue and will be collected later in the future
+        by some other ServerContext instance.
+        Args:
+            proxy: The MITMProxy instance to use in the current test
+
+        Returns:
+            True if the test was executed by the instance else False
+        """
+        try:
+            self._send_circle_memory_and_pid_stats_on_slack()
+            if self.playbook.is_mockable:
+                test_executed = self._execute_mockable_test(proxy)  # type: ignore
+            else:
+                test_executed = self._execute_unmockable_test()
+            return test_executed
+        except Exception:
+            self.build_context.logging_module.exception(f'Failed to execute {self.playbook}')
+            self.build_context.tests_data_keeper.failed_playbooks.add(self.playbook.configuration.playbook_id)
+            return True
+        finally:
+            self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
+            self.build_context.logging_module.execute_logs()
 
     def __str__(self):
         test_message = f'playbook: {self.playbook}'
@@ -1520,7 +1536,7 @@ class TestContext:
         return str(self)
 
 
-class TestsExecution:
+class ServerContext:
 
     def __init__(self, build_context: BuildContext, server_ip: str):
         self.build_context = build_context

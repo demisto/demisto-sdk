@@ -139,7 +139,7 @@ jobs:
 
   create-unified-id-set:
       - runs-on: ubuntu-latest
-      steps:
+      - steps:
         - checkout
         - attach_workspace:
             at: ~/project

@@ -241,6 +241,9 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
+      - create-unified-id-set:
+          <<: *tag_filter
+          <<: *reqs_content_checkout
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

@@ -144,8 +144,6 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - env:
-            GCS_MARKET_KEY: ${{ secrets.GCS_MARKET_KEY }}
         - run:
             name: Merge private and public ID sets
             when: always
@@ -157,6 +155,7 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
+              GCS_MARKET_KEY: ${{ secrets.GCS_MARKET_KEY }}
               source ./venv/bin/activate
               GCS_PATH=$(mktemp)
               echo "$GCS_MARKET_KEY" > "$GCS_PATH"

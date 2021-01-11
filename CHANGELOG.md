@@ -2,6 +2,7 @@
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

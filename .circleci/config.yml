@@ -144,7 +144,7 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        env:
+        - env:
             GCS_MARKET_KEY: ${{ secrets.GCS_MARKET_KEY }}
         - run:
             name: Merge private and public ID sets

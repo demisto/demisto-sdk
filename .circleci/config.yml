@@ -140,6 +140,7 @@ jobs:
   create-unified-id-set:
       docker:
         - image: circleci/python:3.8.3-buster-node
+      runs-on: ubuntu-latest
       steps:
         - checkout
         - attach_workspace:

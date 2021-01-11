@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
+                                                       get_mapper_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
@@ -169,12 +170,12 @@ class IDSetValidator(BaseValidator):
             classifier_data (dict): Dictionary that holds the extracted details from the given classfier.
 
         Returns:
-            bool. Whether the integration fetch incident classifier is found.
+            bool. Whether the classifier related incident types are found.
         """
         is_valid = True
         classifier_incident_types = set(classifier_data.get('incident_types', set()))
         if classifier_incident_types:
-            # setting initially to false, if the classifier is in the id_set, it will be valid
+            # setting initially to false, if the incident types is in the id_set, it will be valid
             is_valid = False
             for incident_type in self.incident_types_set:
                 incident_type_name = list(incident_type.keys())[0]
@@ -182,10 +183,38 @@ class IDSetValidator(BaseValidator):
                 if incident_type_name in classifier_incident_types:
                     classifier_incident_types.remove(incident_type_name)
 
-            if not classifier_incident_types:  # if nothing remains, these incident types were not found
+            if not classifier_incident_types:  # if nothing remains, these incident types were all found
                 is_valid = True
             if not is_valid:  # add error message if not valid
                 error_message, error_code = Errors.classifier_non_existent_incident_types(str(classifier_incident_types))
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid
+
+    def _is_mapper_incident_types_found(self, mapper_data):
+        """Check if the classifier incident types were found
+
+        Args:
+            mapper_data (dict): Dictionary that holds the extracted details from the given mapper.
+
+        Returns:
+            bool. Whether the classifier related incident types are found.
+        """
+        is_valid = True
+        mapper_incident_types = set(mapper_data.get('incident_types', set()))
+        if mapper_incident_types:
+            # setting initially to false, if the incident types is in the id_set, it will be valid
+            is_valid = False
+            for incident_type in self.incident_types_set:
+                incident_type_name = list(incident_type.keys())[0]
+                # remove a related incident types if exists in the id_set
+                if incident_type_name in mapper_incident_types:
+                    mapper_incident_types.remove(incident_type_name)
+
+            if not mapper_incident_types:  # if nothing remains, these incident types were all found
+                is_valid = True
+            if not is_valid:  # add error message if not valid
+                error_message, error_code = Errors.mapper_non_existent_incident_types(str(mapper_incident_types))
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
         return is_valid
@@ -218,5 +247,8 @@ class IDSetValidator(BaseValidator):
             elif file_type == constants.FileType.CLASSIFIER:
                 classifier_data = get_classifier_data(file_path)
                 is_valid = self._is_classifier_incident_types_found(classifier_data)
+            elif file_type == constants.FileType.MAPPER:
+                mapper_data = get_mapper_data(file_path)
+                is_valid = self._is_mapper_incident_types_found(mapper_data)
 
         return is_valid

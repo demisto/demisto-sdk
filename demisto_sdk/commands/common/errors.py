@@ -193,6 +193,7 @@ ERROR_CODE = {
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
+    "mapper_non_existent_incident_types": "MP105",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
@@ -1202,7 +1203,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def classifier_non_existent_incident_types(incident_types):
-        return f"The Classifiers related incident types: {incident_types} where not founc."
+        return f"The Classifiers related incident types: {incident_types} where not found."
 
     @staticmethod
     @error_code_decorator
@@ -1228,6 +1229,11 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def mapper_non_existent_incident_types(incident_types):
+        return f"The Mapper related incident types: {incident_types} where not found."
 
     @staticmethod
     @error_code_decorator

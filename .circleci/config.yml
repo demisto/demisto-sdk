@@ -144,6 +144,8 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
+        env:
+            GCS_MARKET_KEY: ${{ secrets.GCS_MARKET_KEY }}
         - run:
             name: Merge private and public ID sets
             when: always
@@ -155,8 +157,13 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
+              source ./venv/bin/activate
+              GCS_PATH=$(mktemp)
+              echo "$GCS_MARKET_KEY" > "$GCS_PATH"
+              gcloud auth activate-service-account --key-file="$GCS_PATH" > auth.out 2>&1
+
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
-              CIRCLE_BRANCH="master" gsutil cp gs://marketplace-dist/content/private_id_set.json /home/circleci/project/artifacts/unified_id_set.json
+              CIRCLE_BRANCH="master" python3 Tests/Marketplace/download_private_id_set.py -b marketplace-dist -s $GCS_PATH
 
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 /home/circleci/project/artifacts/unified_id_set.json -o /home/circleci/project/artifacts/unified_id_set.json
 

@@ -136,6 +136,30 @@ jobs:
             root: ~/project
             paths:
               - content
+
+  create-unified-id-set:
+      docker:
+        - image: circleci/python:3.8.3-buster-node
+      steps:
+        - checkout
+        - attach_workspace:
+            at: ~/project
+        - run:
+            name: Merge private and public ID sets
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+              cd content
+              npm update
+              npm ci
+              export PYTHONPATH=".:${PYTHONPATH}"
+              demisto-sdk -v
+
+              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              gsutil cp gs://marketplace-dist/content/private_id_set.json /home/circleci/project/artifacts/unified_id_set.json
+
+              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 /home/circleci/project/artifacts/unified_id_set.json -o /home/circleci/project/artifacts/unified_id_set.json
+
   validate-files:
       docker:
         - image: circleci/python:3.8.3-buster-node

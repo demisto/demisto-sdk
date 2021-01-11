@@ -138,7 +138,7 @@ jobs:
               - content
 
   create-unified-id-set:
-      runs-on: ubuntu-latest
+      - runs-on: ubuntu-latest
       steps:
         - checkout
         - attach_workspace:

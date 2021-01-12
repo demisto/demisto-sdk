@@ -1129,7 +1129,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         id_set_path = DEFAULT_ID_SET_PATH
     if id_set_path and os.path.exists(id_set_path):
         try:
-            refresh_interval = int(os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL', 2))
+            refresh_interval = int(os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL', -1))
         except ValueError:
             refresh_interval = -1
             print_color(

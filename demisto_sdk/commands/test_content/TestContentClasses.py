@@ -96,6 +96,7 @@ class TestConfiguration:
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.is_mockable = test_configuration.get('is_mockable')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -513,7 +514,11 @@ class BuildContext:
                                             integration_name in unmockable_integrations]
             if test_name and (not test_record.test_integrations or unmockable_integrations_used) or not self.isAMI:
                 unmockable_tests.append(test_record)
-
+                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
+                # it will be added twice if we don't continue.
+                continue
+            if test_record.is_mockable is False:
+                unmockable_tests.append(test_record)
         return unmockable_tests
 
     @staticmethod

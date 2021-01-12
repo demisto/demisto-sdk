@@ -2,7 +2,6 @@
 This module is designed to validate the correctness of incident field entities in content.
 """
 import re
-
 from enum import Enum, IntEnum
 
 from distutils.version import LooseVersion

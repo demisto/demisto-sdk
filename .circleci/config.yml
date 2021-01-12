@@ -94,10 +94,6 @@ jobs:
           command: |
             pip install tox
       - run:
-          name: gsutil install
-          command: |
-            pip install gsutil
-      - run:
           name: Tox build
           command: |
             tox -e py37 --notest
@@ -167,6 +163,10 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
+        - run:
+            name: gsutil install
+            command: |
+              pip install gsutil
         - run:
             name: Test create ID set
             when: always

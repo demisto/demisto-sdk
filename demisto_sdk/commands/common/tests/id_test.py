@@ -133,7 +133,7 @@ def test_is_non_real_command_found__no_depend_on_name():
         "The script has a non real command"
 
 
-def test_is_integration_handled_in_classifier_and_mapper__exist():
+def test_is_integration_classifier_and_mapper_found__exist():
     """
     Given
         - integration which has classifier and mapper.
@@ -203,11 +203,11 @@ def test_is_integration_handled_in_classifier_and_mapper__exist():
 
     }
 
-    assert validator._is_integration_handled_in_classifier_and_mapper(integration_data=integration_data) is True, \
+    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is True, \
         "The incident classifier and mapper were not found"
 
 
-def test_is_integration_handled_in_classifier_and_mapper__mapper_not_exist():
+def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
     """
     Given
         - integration which has classifier and mapper.
@@ -277,11 +277,11 @@ def test_is_integration_handled_in_classifier_and_mapper__mapper_not_exist():
 
     }
 
-    assert validator._is_integration_handled_in_classifier_and_mapper(integration_data=integration_data) is False, \
+    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False, \
         "The incident mapper was found"
 
 
-def test_is_integration_handled_in_classifier_and_mapper__classifier_not_exist():
+def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
     """
     Given
         - integration which has classifier and mapper.
@@ -351,7 +351,7 @@ def test_is_integration_handled_in_classifier_and_mapper__classifier_not_exist()
 
     }
 
-    assert validator._is_integration_handled_in_classifier_and_mapper(integration_data=integration_data) is False, \
+    assert validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False, \
         "The incident classifier was found"
 
 

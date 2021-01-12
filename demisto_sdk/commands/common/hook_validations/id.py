@@ -78,7 +78,7 @@ class IDSetValidator(BaseValidator):
             return id_set
 
     def _is_incident_type_default_playbook_found(self, incident_type_data):
-        """Check if the playbook is in the id_set
+        """Check if the default playbook of an incident type is in the id_set
 
         Args:
             incident_type_data (dict): Dictionary that holds the extracted details from the given incident type.
@@ -125,7 +125,7 @@ class IDSetValidator(BaseValidator):
                         return not is_valid
         return is_valid
 
-    def _is_integration_handled_in_classifier_and_mapper(self, integration_data):
+    def _is_integration_classifier_and_mapper_found(self, integration_data):
         """Check if the integration classifier and mapper are found
 
         Args:
@@ -135,7 +135,7 @@ class IDSetValidator(BaseValidator):
             bool. Whether the integration fetch incident classifier is found.
         """
         is_valid_classifier = True
-        integration_classifier = integration_data.get('classifiers')  # there is only 1 classifier per integration
+        integration_classifier = integration_data.get('classifiers', '')  # there is only 1 classifier per integration
         if integration_classifier:
             # setting initially to false, if the classifier is in the id_set, it will be valid
             is_valid_classifier = False
@@ -183,10 +183,12 @@ class IDSetValidator(BaseValidator):
                 # remove a related incident types if exists in the id_set
                 if incident_type_name in classifier_incident_types:
                     classifier_incident_types.remove(incident_type_name)
+                    if not classifier_incident_types:
+                        break
 
             if not classifier_incident_types:  # if nothing remains, these incident types were all found
                 is_valid = True
-            if not is_valid:  # add error message if not valid
+            else:  # there are missing incident types in the id_set, classifier is invalid
                 error_message, error_code = Errors.classifier_non_existent_incident_types(str(classifier_incident_types))
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
@@ -211,10 +213,12 @@ class IDSetValidator(BaseValidator):
                 # remove a related incident types if exists in the id_set
                 if incident_type_name in mapper_incident_types:
                     mapper_incident_types.remove(incident_type_name)
+                    if not mapper_incident_types:
+                        break
 
             if not mapper_incident_types:  # if nothing remains, these incident types were all found
                 is_valid = True
-            if not is_valid:  # add error message if not valid
+            else:  # there are missing incident types in the id_set, mapper is invalid
                 error_message, error_code = Errors.mapper_non_existent_incident_types(str(mapper_incident_types))
                 self.handle_error(error_message, error_code, file_path="id_set.json")
 
@@ -244,7 +248,7 @@ class IDSetValidator(BaseValidator):
                 is_valid = self._is_incident_type_default_playbook_found(incident_type_data)
             elif file_type == constants.FileType.INTEGRATION:
                 integration_data = get_integration_data(file_path)
-                is_valid = self._is_integration_handled_in_classifier_and_mapper(integration_data)
+                is_valid = self._is_integration_classifier_and_mapper_found(integration_data)
             elif file_type == constants.FileType.CLASSIFIER:
                 classifier_data = get_classifier_data(file_path)
                 is_valid = self._is_classifier_incident_types_found(classifier_data)

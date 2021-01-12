@@ -905,7 +905,8 @@ def update_pack_releasenotes(**kwargs):
 
     if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
-        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
+        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified,
+                                         id_set_path=id_set_path, text=text)
 
     # create release notes:
     if _pack:

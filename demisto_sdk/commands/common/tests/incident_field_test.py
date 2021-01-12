@@ -337,7 +337,7 @@ class TestIncidentFieldsValidator:
             - an invalid indicator-field - the field is of type grid but fromVersion is < 5.5.0.
 
             When
-            - Running validate on it.
+            - Running is_valid_indicator_grid_fromversion on it.
 
             Then
             - Ensure validate fails.

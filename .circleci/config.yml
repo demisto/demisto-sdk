@@ -180,9 +180,6 @@ jobs:
               cd content
               demisto-sdk -v
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
-
-              gsutil cp gs://marketplace-dist/content/private_id_set.json /home/circleci/project/artifacts/unified_id_set.json
-              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 /home/circleci/project/artifacts/unified_id_set.json -o /home/circleci/project/artifacts/unified_id_set.json
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node

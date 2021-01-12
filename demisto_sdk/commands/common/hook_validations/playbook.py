@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 from typing import Dict
 
 import click
@@ -356,3 +357,65 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
+
+    def are_playbook_entities_versions_valid(self, id_set_file):
+        is_valid = True
+
+        if not id_set_file:
+            click.secho("Skipping playbook entities versions validation. Could not read id_set.json.", fg="yellow")
+            return is_valid
+
+        current_playbook_name = self.current_file.get('name')
+        all_scripts = id_set_file.get("scripts")
+        all_playbooks = id_set_file.get("playbooks")
+        all_integrations = id_set_file.get("integrations")
+        playbook_entities = {}
+        for playbook in all_playbooks:
+            for name, playbook_data in playbook.items():
+                if name == current_playbook_name:
+                    playbook_entities = playbook_data
+                    break
+
+        playbook_version = playbook_entities.get("fromversion")
+        playbook_scripts_list = playbook_entities.get("implementing_scripts")
+        sub_playbooks_list = playbook_entities.get("implementing_playbooks")
+        playbook_integration_commands = playbook_entities.get("command_to_integration")
+        # add also for integrations
+
+        is_valid = self.is_sub_playbook_version_valid(sub_playbooks_list, all_playbooks, playbook_version)
+        is_valid = self.is_playbook_script_version_valid(playbook_scripts_list, all_scripts, playbook_version)
+        is_valid = self.is_playbook_integration_version_valid(playbook_integration_commands, all_integrations,
+                                                              playbook_version)
+
+    def is_sub_playbook_version_valid(self, sub_playbooks_list, all_playbooks, main_playbook_version):
+        is_valid = True
+        for playbook in all_playbooks:
+            for key, playbook_data in playbook.items():
+                sub_playbook_name = playbook_data.get("name")
+                if sub_playbook_name in sub_playbooks_list:
+                    sub_playbook_version = playbook_data.get("fromversion")
+                    is_sub_playbook_version_valid = LooseVersion(sub_playbook_version) <= LooseVersion(
+                        main_playbook_version)
+                    if not is_sub_playbook_version_valid:
+                        is_valid = False
+                        return is_valid
+        return is_valid
+
+    def is_playbook_script_version_valid(self, playbook_scripts_list, all_scripts, main_playbook_version):
+        is_valid = True
+        for script in all_scripts:
+            for key, script_data in script.items():
+                script_name = script_data.get("name")
+                if script_name in playbook_scripts_list:
+                    script_version = script_data.get("fromversion")
+                    if script_version:
+                        is_script_version_valid = LooseVersion(script_version) <= LooseVersion(main_playbook_version)
+                        if not is_script_version_valid:
+                            is_valid = False
+                            return is_valid
+        return is_valid
+
+    def is_playbook_integration_version_valid(self, playbook_integration_commands, all_integrations, playbook_version):
+        is_valid = True
+
+        return is_valid

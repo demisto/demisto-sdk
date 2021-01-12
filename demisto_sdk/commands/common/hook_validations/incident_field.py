@@ -3,9 +3,9 @@ This module is designed to validate the correctness of incident field entities i
 """
 import re
 
-from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
+from distutils.version import LooseVersion
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \

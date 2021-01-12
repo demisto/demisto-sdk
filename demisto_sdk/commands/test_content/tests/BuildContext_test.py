@@ -13,7 +13,8 @@ def generate_test_configuration(playbook_id: str,
                                 toversion: str = '',
                                 timeout: int = None,
                                 memory_threshold: int = None,
-                                pid_threshold: int = None
+                                pid_threshold: int = None,
+                                is_mockable: bool = None
                                 ) -> dict:
     playbook_config = {
         'playbookID': playbook_id,
@@ -34,6 +35,8 @@ def generate_test_configuration(playbook_id: str,
         playbook_config['memory_threshold'] = memory_threshold
     if pid_threshold:
         playbook_config['pid_threshold'] = pid_threshold
+    if is_mockable is not None:
+        playbook_config['is_mockable'] = is_mockable
     return playbook_config
 
 
@@ -295,3 +298,43 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
                                              content_conf_json=content_conf_json,
                                              filtered_tests_content=filtered_tests)
     assert 'playbook_with_version_mismatch' in build_context.tests_data_keeper.skipped_tests
+
+
+def test_unmockable_playbook_configuration(mocker, tmp_path):
+    """
+    Given:
+        - A build context that has a playbook configured with 'is_mockable=False'
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that the unmockable test configuration is in the unmockable_test_ids
+    """
+    filtered_tests = ['unmockable_playbook']
+    tests = [generate_test_configuration(playbook_id='unmockable_playbook',
+                                         is_mockable=False)]
+    content_conf_json = generate_content_conf_json(tests=tests)
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             filtered_tests_content=filtered_tests)
+    assert 'unmockable_playbook' in build_context.unmockable_test_ids
+
+
+def test_mockable_playbook_configuration(mocker, tmp_path):
+    """
+    Given:
+        - A build context that has a playbook configured with 'is_mockable' not set
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that the mockable test configuration is not in the unmockable_test_ids
+    """
+    filtered_tests = ['mockable_playbook']
+    tests = [generate_test_configuration(playbook_id='mockable_playbook',
+                                         integrations=['some_mockable_integration'])]
+    content_conf_json = generate_content_conf_json(tests=tests)
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             filtered_tests_content=filtered_tests)
+    assert 'mockable_playbook' not in build_context.unmockable_test_ids

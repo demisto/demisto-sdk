@@ -2,7 +2,7 @@
 * Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
 * Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
 * Improved a **validate** command message for missing release notes of api module dependencies.
-* Added a validation for the version of incident field of type grid.
+* Added a validation for the minimal version of an indicator field of type grid.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

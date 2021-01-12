@@ -26,7 +26,6 @@ class Layout(JSONContentObject):
         return client.import_layout(file=self.path)
 
     def validate(self):
-
         return self.is_valid_layout()
 
     def is_valid_layout(self) -> bool:

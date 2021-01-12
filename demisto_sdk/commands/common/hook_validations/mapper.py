@@ -120,8 +120,10 @@ class MapperValidator(ContentEntityValidator):
             incident_fields = value.get('internalMapping', {})
 
             for inc_name, inc_info in incident_fields.items():
-                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
-                    invalid_inc_fields_list.append(inc_name)
+                # for incoming mapper
+                if self.current_file.get('type', {}) == "mapping-incoming":
+                    if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
+                        invalid_inc_fields_list.append(inc_name)
 
                 # for outgoing mapper
                 if self.current_file.get('type', {}) == "mapping-outgoing":

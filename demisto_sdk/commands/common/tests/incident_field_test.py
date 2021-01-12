@@ -340,7 +340,7 @@ class TestIncidentFieldsValidator:
             - Running is_valid_indicator_grid_fromversion on it.
 
             Then
-            - Ensure validate fails.
+            - Ensure validate fails on versions < 5.5.0.
         """
         structure = StructureValidator("")
         structure.file_type = file_type

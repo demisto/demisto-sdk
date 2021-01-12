@@ -20,7 +20,13 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 class TestMapperValidator:
 
-    MAPPER_WITH_VALID_INCIDENT_FIELD = {"mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}}
+    INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD = {
+        "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
+        "type": "mapping-incoming"}
+
+    OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD = {
+        "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
+        "type": "mapping-outgoing"}
 
     ID_SET_WITH_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "Incident Field"}}],
                                   "IndicatorFields": [{"name": {"name": "Incident Field"}}]}
@@ -29,8 +35,10 @@ class TestMapperValidator:
                                      "IndicatorFields": [{"name": {"name": "name"}}]}
 
     IS_INCIDENT_FIELD_EXIST = [
-        (MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
+        (INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
+        (INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False),
+        (OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
+        (OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
     ]
 
     @pytest.mark.parametrize("mapper_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)

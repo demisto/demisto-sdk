@@ -267,7 +267,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incident_field_type_grid_minimal_version(fromversion):
+    def indicator_field_type_grid_minimal_version(fromversion):
         return f"field has a fromVersion of {fromversion} but the proper fromVersion is 5.5.0"
 
     @staticmethod

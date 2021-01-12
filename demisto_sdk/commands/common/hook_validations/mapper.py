@@ -124,8 +124,9 @@ class MapperValidator(ContentEntityValidator):
                     invalid_inc_fields_list.append(inc_name)
 
                 # for outgoing mapper
-                if inc_info['simple'] not in content_incident_fields and inc_name.lower() not in built_in_fields:
-                    invalid_inc_fields_list.append(inc_name)
+                if self.current_file.get('type', {}) == "mapping-outgoing":
+                    if inc_info['simple'] not in content_incident_fields and inc_name.lower() not in built_in_fields:
+                        invalid_inc_fields_list.append(inc_name)
 
         if invalid_inc_fields_list:
             error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)

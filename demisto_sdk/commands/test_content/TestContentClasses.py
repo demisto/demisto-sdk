@@ -1359,6 +1359,7 @@ class TestContext:
         """
         Adds the playbook to the succeeded playbooks list
         """
+        self.build_context.logging_module.error(f'Test failed: {self}')
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
@@ -1442,7 +1443,6 @@ class TestContext:
             self._add_to_succeeded_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
-            self.build_context.logging_module.error(f'Failed: {self} failed')
             self._add_to_failed_playbooks()
 
         else:
@@ -1487,7 +1487,7 @@ class TestContext:
         # Running playback after successful record to verify the record is valid for future runs
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.info(
-                'Running another playback attempt on the new record to verify that the record is valid')
+                f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
@@ -1496,6 +1496,9 @@ class TestContext:
                 self.build_context.logging_module.warning(
                     'Playback on newly created record has failed, see the following confluence page for help:\n'
                     'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
+            else:
+                self.build_context.logging_module.success(f'PASS: {self} succeed')
+
         return True
 
     def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
@@ -1517,7 +1520,9 @@ class TestContext:
                 test_executed = self._execute_unmockable_test()
             return test_executed
         except Exception:
-            self.build_context.logging_module.exception(f'Failed to execute {self.playbook}')
+            self.build_context.logging_module.exception(
+                f'Unexpected error while running test on playbook {self.playbook}')
+            self._add_to_failed_playbooks()
             self.build_context.tests_data_keeper.failed_playbooks.add(self.playbook.configuration.playbook_id)
             return True
         finally:

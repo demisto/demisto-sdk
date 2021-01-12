@@ -136,34 +136,6 @@ jobs:
             root: ~/project
             paths:
               - content
-
-  create-unified-id-set:
-      - runs-on: ubuntu-latest
-      - steps:
-        - checkout
-        - attach_workspace:
-            at: ~/project
-        - run:
-            name: Merge private and public ID sets
-            when: always
-            command: |
-              . .tox/py37/bin/activate
-              cd content
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
-
-              echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-              curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-
-              sudo apt-get install google-cloud-sdk
-              gcloud --version
-              gsutil --version
-
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
-              gsutil cp gs://marketplace-dist/content/private_id_set.json /home/circleci/project/artifacts/unified_id_set.json
-
-              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 /home/circleci/project/artifacts/unified_id_set.json -o /home/circleci/project/artifacts/unified_id_set.json
-
   validate-files:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -245,9 +217,6 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
-      - create-unified-id-set:
-          <<: *tag_filter
-          <<: *reqs_content_checkout
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

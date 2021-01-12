@@ -82,3 +82,9 @@ class Integration:
             unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
             unifier.merge_script_package_to_yml()
             shutil.rmtree(self._tmpdir_integration_path)
+
+    def create_default_image(self):
+        default_integration_dir = 'assets/default_integration'
+        with open(suite_join_path(default_integration_dir, 'default_image.png'), 'rb') as image_file:
+            image = image_file.read()
+        self.build(image=image)

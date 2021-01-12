@@ -29,5 +29,6 @@ class YAML(File):
 
     def delete(self, key: str):
         yml_contents = self.read_dict()
-        del yml_contents[key]
-        self.write_dict(yml_contents)
+        if key in yml_contents:
+            del yml_contents[key]
+            self.write_dict(yml_contents)

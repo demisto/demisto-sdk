@@ -127,9 +127,9 @@ class MapperValidator(ContentEntityValidator):
 
                 # for outgoing mapper
                 if self.current_file.get('type', {}) == "mapping-outgoing":
+                    # for inc timer type: "field.StartDate, and for using filters: "simple": "".
                     if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields\
-                            and inc_info['simple'].split('.')[0] not in content_incident_fields\
-                            and inc_info['simple']:  # for inc timer type, and for using filters
+                            and inc_info['simple'].split('.')[0] not in content_incident_fields and inc_info['simple']:
                         invalid_inc_fields_list.append(inc_name) if inc_info['simple'] else None
 
         if invalid_inc_fields_list:

@@ -16,12 +16,14 @@ FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
-    def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False, **kwargs):
+    def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False, is_circle=False,
+                 **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings, **kwargs)
         self.from_version = self.current_file.get('fromVersion')
         self.to_version = self.current_file.get('toVersion')
+        self.is_circle = is_circle
 
-    def is_valid_layout(self, validate_rn=True, id_set_file=None) -> bool:
+    def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
 
         Returns:
@@ -33,7 +35,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
-                    self.is_incident_field_exist(id_set_file)
+                    self.is_incident_field_exist(id_set_file, is_circle)
                     ])
 
     def is_valid_version(self) -> bool:
@@ -70,7 +72,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     @abstractmethod
-    def is_incident_field_exist(self, id_set_file) -> bool:
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         pass
 
 
@@ -107,12 +109,13 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self, id_set_file) -> bool:
-        is_valid = True
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        if not is_circle:
+            return True
 
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
+            return True
 
         layout_container_items = []
         for layout_container_field in LAYOUT_CONTAINER_FIELDS:
@@ -183,7 +186,10 @@ class LayoutValidator(LayoutBaseValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self, id_set_file) -> bool:
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        if not is_circle:
+            return True
+
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True

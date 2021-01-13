@@ -10,13 +10,13 @@ from threading import Lock
 from typing import Optional
 
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
                                                run_command_os)
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -96,6 +96,7 @@ class ReadMeValidator(BaseValidator):
         retry = Retry(total=2)
         adapter = HTTPAdapter(max_retries=retry)
         session = requests.Session()
+
         session.mount('http://', adapter)
         response = session.request(
             'POST',

@@ -17,15 +17,16 @@ CLASSIFICATION_TYPE = 'classification'
 
 class ClassifierValidator(ContentEntityValidator):
 
-    def __init__(self, structure_validator, new_classifier_version=True, ignored_errors=None,
+    def __init__(self, structure_validator, new_classifier_version=True, ignored_errors=None, is_circle=False,
                  print_as_warnings=False, suppress_print=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.new_classifier_version = new_classifier_version
         self.from_version = ''
         self.to_version = ''
+        self.is_circle = is_circle
 
-    def is_valid_classifier(self, validate_rn=True, id_set_file=None):
+    def is_valid_classifier(self, validate_rn=True, id_set_file=None, is_circle=False):
         """Checks whether the classifier is valid or not.
 
         Returns:
@@ -39,7 +40,7 @@ class ClassifierValidator(ContentEntityValidator):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_from_version(),
                 self.is_valid_type(),
-                self.is_incident_field_exist(id_set_file)
+                self.is_incident_field_exist(id_set_file, is_circle)
             ])
 
         return all([
@@ -136,12 +137,15 @@ class ClassifierValidator(ContentEntityValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self, id_set_file) -> bool:
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         """Checks if classifier incident fields is exist in content repo, this validation is only for old classifiers.
 
         Returns:
             bool. True if incident fields is valid - exist in content repo, else False.
         """
+        if not is_circle:
+            return True
+
         if not id_set_file:
             click.secho("Skipping classifier incident field validation. Could not read id_set.json.", fg="yellow")
             return True

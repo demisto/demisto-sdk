@@ -16,12 +16,10 @@ FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
-    def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False, is_circle=False,
-                 **kwargs):
+    def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings, **kwargs)
         self.from_version = self.current_file.get('fromVersion')
         self.to_version = self.current_file.get('toVersion')
-        self.is_circle = is_circle
 
     def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
@@ -110,6 +108,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        """Checks if incident field is valid - exist in the content.
+
+        Returns:
+            bool. True if incident field is valid, else False.
+        """
         if not is_circle:
             return True
 
@@ -187,6 +190,11 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        """Checks if incident field is valid - exist in the content.
+
+        Returns:
+            bool. True if incident field is valid, else False.
+        """
         if not is_circle:
             return True
 

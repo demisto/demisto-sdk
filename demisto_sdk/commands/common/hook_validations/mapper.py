@@ -16,13 +16,11 @@ VALID_TYPE_OUTGOING = 'mapping-outgoing'
 
 
 class MapperValidator(ContentEntityValidator):
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 is_circle=False):
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, suppress_print=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.from_version = ''
         self.to_version = ''
-        self.is_circle = is_circle
 
     def is_valid_mapper(self, validate_rn=True, id_set_file=None, is_circle=False):
         """Checks whether the mapper is valid or not.
@@ -108,8 +106,14 @@ class MapperValidator(ContentEntityValidator):
         return True
 
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        """Checks if incident field is valid - exist in the content.
+
+        Returns:
+            bool. True if incident field is valid, else False.
+        """
         if not is_circle:
             return True
+
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True

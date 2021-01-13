@@ -549,3 +549,110 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
     assert validator._is_mapper_incident_types_found(mapper_data=mapper_data) is False, \
         "The mapper incidenttypes was found"
+
+
+def test_is_playbook_scripts_found__exists():
+    """
+    Given
+        - playbook which has implemented scripts.
+
+    When
+        - _is_playbook_scripts_found is called
+
+    Then
+        - Ensure that the scripts where found.
+    """
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [
+        {"GenerateInvestigationSummaryReport": {"name": "name"}},
+        {"ADGetUser": {"name": "name"}}
+    ]
+
+    playbook_data = {
+        "Access Investigation - Generic - NIST": {
+            "name": "Access Investigation - Generic - NIST",
+            "file_path": "Packs/NIST/Playbooks/playbook-NIST_-_Access_Investigation_-_Generic.yml",
+            "fromversion": "5.0.0",
+            "implementing_scripts": [
+                "GenerateInvestigationSummaryReport",
+                "ADGetUser"
+            ],
+            "implementing_playbooks": [
+                "IP Enrichment - Generic v2",
+                "NIST - Lessons Learned",
+                "Block IP - Generic v2",
+                "Account Enrichment - Generic v2.1"
+            ],
+            "command_to_integration": {
+                "ad-expire-password": "Active Directory Query v2",
+                "ad-disable-account": "",
+                "send-mail": ""
+            },
+            "tests": [
+                "No test"
+            ],
+            "pack": "NIST",
+            "incident_fields": [
+                "sla",
+                "niststage",
+                "slaField"
+            ]
+        }
+    }
+
+    assert validator._is_playbook_scripts_found(playbook_data=playbook_data) is True, \
+        "The playbook scripts where not found"
+
+
+def test_is_playbook_scripts_found__missing_scripts():
+    """
+    Given
+        - playbook which has implemented scripts.
+
+    When
+        - _is_playbook_scripts_found is called
+
+    Then
+        - Ensure that the missing scripts where not found.
+    """
+    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [
+        {"GenerateInvestigationSummaryReport": {"name": "name"}}
+    ]
+
+    playbook_data = {
+        "Access Investigation - Generic - NIST": {
+            "name": "Access Investigation - Generic - NIST",
+            "file_path": "Packs/NIST/Playbooks/playbook-NIST_-_Access_Investigation_-_Generic.yml",
+            "fromversion": "5.0.0",
+            "implementing_scripts": [
+                "GenerateInvestigationSummaryReport",
+                "ADGetUser"
+            ],
+            "implementing_playbooks": [
+                "IP Enrichment - Generic v2",
+                "NIST - Lessons Learned",
+                "Block IP - Generic v2",
+                "Account Enrichment - Generic v2.1"
+            ],
+            "command_to_integration": {
+                "ad-expire-password": "Active Directory Query v2",
+                "ad-disable-account": "",
+                "send-mail": ""
+            },
+            "tests": [
+                "No test"
+            ],
+            "pack": "NIST",
+            "incident_fields": [
+                "sla",
+                "niststage",
+                "slaField"
+            ]
+        }
+    }
+
+    assert validator._is_playbook_scripts_found(playbook_data=playbook_data) is False, \
+        "The playbook missing scripts where found"

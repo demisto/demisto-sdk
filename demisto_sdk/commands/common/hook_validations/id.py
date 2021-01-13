@@ -13,16 +13,18 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
                                                        get_mapper_data,
+                                                       get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
 class IDSetValidator(BaseValidator):
-    """IDSetValidator was designed to make sure we create the id_set.json in the correct way so we can use it later on.
+    """IDSetValidator was designed to validate the inter connectivity between content entities
+     in the content, private repo and premium repo.
 
     The id_set.json file is created using the update_id_set.py script. It contains all the data from the various
-    executables we have in Content repository - Playbooks/Scripts/Integration. The script extracts the command and
-    script names so we will later on will be able to use it in the test filtering we have in our build system.
+    executables we have in Content repository -
+    Playbooks/Scripts/Integration/Mappers/Classifiers/IncidentFields/Layouts/IncidentTypes
 
     Attributes:
         is_circle (bool): whether we are running on circle or local env.
@@ -224,7 +226,37 @@ class IDSetValidator(BaseValidator):
 
         return is_valid
 
-    def is_file_valid_in_set(self, file_path, file_type):
+    def _is_playbook_scripts_found(self, playbook_data):
+        """Checks whether the script ids of a playbook are valid
+        Args:
+            playbook_data (dict): Dictionary that holds the extracted details from the given playbook.
+
+        Return:
+            bool. if all scripts ids of this playbook are valid.
+        """
+        is_valid = True
+        playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
+        implemented_scripts_in_playbook = set(playbook_data_2nd_level.get('implementing_scripts', []))
+        if implemented_scripts_in_playbook:
+            # setting initially to false, if the incident types is in the id_set, it will be valid
+            is_valid = False
+            for script in self.script_set:
+                script_name = list(script.keys())[0]
+                # remove a related incident types if exists in the id_set
+                if script_name in implemented_scripts_in_playbook:
+                    implemented_scripts_in_playbook.remove(script_name)
+                    if not implemented_scripts_in_playbook:
+                        break
+
+            if not implemented_scripts_in_playbook:  # if nothing remains, these scripts were all found
+                is_valid = True
+            else:  # there are missing scripts in the id_set, playbook is invalid
+                error_message, error_code = Errors.playbook_non_existing_scripts(str(implemented_scripts_in_playbook))
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid
+
+    def is_file_valid_in_id_set(self, file_path, file_type):
         """Check if the file is valid in the id_set
 
         Args:
@@ -255,5 +287,8 @@ class IDSetValidator(BaseValidator):
             elif file_type == constants.FileType.MAPPER:
                 mapper_data = get_mapper_data(file_path)
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
+            elif file_type == constants.FileType.PLAYBOOK:
+                playbook_data = get_playbook_data(file_path)
+                is_valid = self._is_playbook_scripts_found(playbook_data)
 
         return is_valid

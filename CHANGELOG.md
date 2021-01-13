@@ -1,4 +1,5 @@
 # Changelog
+* Unified all the id_set current validation to id.py and removed redundant code.
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.

@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -61,7 +62,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               open_id_set_file, run_command)
+                                               run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from packaging import version
 
@@ -124,8 +125,6 @@ class ValidateManager:
             self.skip_pack_rn_validation = True
             self.skip_id_set_creation = skip_id_set_creation
             self.print_percent = True
-
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if no_docker_checks:
             self.skip_docker_checks = True
@@ -337,7 +336,7 @@ class ValidateManager:
             id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
                                               ignored_errors=pack_error_ignore_list,
                                               print_as_warnings=self.print_ignored_errors)
-            if not id_set_validator.is_file_valid_in_set(file_path, file_type):
+            if not id_set_validator.is_file_valid_in_id_set(file_path, file_type):
                 return False
 
         # Note: these file are not ignored but there are no additional validators for connections
@@ -502,8 +501,7 @@ class ValidateManager:
         if deprecated_result is not None:
             return deprecated_result
 
-        return playbook_validator.is_valid_playbook(validate_rn=False,
-                                                    id_set_file=self.id_set_file)
+        return playbook_validator.is_valid_playbook(validate_rn=False)
 
     def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -710,6 +708,9 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
+        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
+            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
+
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
@@ -785,11 +786,16 @@ class ValidateManager:
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
+            if not os.path.isfile(self.id_set_path):
+                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
+            with open(self.id_set_path, 'r') as conf_file:
+                id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
-            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(packs_that_should_have_new_rn_api_module_related)
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
+                packs_that_should_have_new_rn_api_module_related)
 
             # APIModules pack is without a version and should not have RN
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)
@@ -1212,26 +1218,6 @@ class ValidateManager:
                 packs.add(pack)
 
         return packs
-
-    @staticmethod
-    def get_id_set_file(skip_id_set_creation, id_set_path):
-        """
-
-        Args:
-            skip_id_set_creation (bool): whether should skip id set validation or not
-            this will also determine whether a new id_set can be created by validate.
-            id_set_path (str): id_set.json path file
-
-        Returns:
-            str: is_set file path
-        """
-        id_set = {}
-        if not os.path.isfile(id_set_path):
-            if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
-        else:
-            id_set = open_id_set_file(id_set_path)
-        return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
                                       validator):

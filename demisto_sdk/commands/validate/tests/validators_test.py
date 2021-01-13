@@ -126,7 +126,6 @@ class TestValidators:
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
             structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme='playbook')
             validator = PlaybookValidator(structure)
-            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
@@ -379,7 +378,6 @@ class TestValidators:
         -  The file will be validated
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
-        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

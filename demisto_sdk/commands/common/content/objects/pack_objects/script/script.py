@@ -1,5 +1,5 @@
 import tempfile
-from typing import Union
+from typing import Optional, Union
 
 import demisto_client
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
@@ -10,6 +10,8 @@ from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    TYPE_PWSH, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
+    Readme
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -25,6 +27,10 @@ class Script(YAMLContentUnifiedObject):
     def __init__(self, path: Union[Path, str], base: BaseValidator = None):
         super().__init__(path, FileType.SCRIPT, SCRIPT)
         self.base = base if base else BaseValidator()
+
+    @property
+    def readme(self) -> Optional[Readme]:
+        return None
 
     def upload(self, client: demisto_client):
         """
@@ -136,10 +142,10 @@ class Script(YAMLContentUnifiedObject):
         # type: () -> bool
         # dockers should not be checked when running on all files
         # dockers should not be checked when running on ApiModules scripts
-        if self.base.skip_docker_check or API_MODULES_PACK in self.path:
+        if self.base.skip_docker_check or API_MODULES_PACK in str(self.path):
             return True
 
-        docker_image_validator = DockerImageValidator(self.path, is_modified_file=True, is_integration=False,
+        docker_image_validator = DockerImageValidator(str(self.path), is_modified_file=True, is_integration=False,
                                                       ignored_errors=self.base.ignored_errors,
                                                       print_as_warnings=self.base.print_as_warnings,
                                                       suppress_print=self.base.suppress_print)

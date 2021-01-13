@@ -139,7 +139,6 @@ class Pack:
             name: Optional[str] = None,
             yml: Optional[dict] = None,
             code: str = '',
-            readme: str = '',
             description: str = '',
             changelog: str = '',
             image: bytes = b''
@@ -150,12 +149,11 @@ class Pack:
             yml = {}
         script = Script(self._scripts_path, name, self._repo)
         script.build(
-            code,
-            yml,
-            readme,
-            description,
-            changelog,
-            image
+            code=code,
+            yml=yml,
+            description=description,
+            changelog=changelog,
+            image=image
         )
         self.scripts.append(script)
         return script

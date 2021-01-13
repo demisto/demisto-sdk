@@ -329,7 +329,7 @@ class Integration(YAMLContentUnifiedObject):
         if self.base.skip_docker_check:
             return True
 
-        docker_image_validator = DockerImageValidator(self.path, is_modified_file=True, is_integration=True,
+        docker_image_validator = DockerImageValidator(str(self.path), is_modified_file=True, is_integration=True,
                                                       ignored_errors=self.base.ignored_errors,
                                                       print_as_warnings=self.base.print_as_warnings)
         if docker_image_validator.is_docker_image_valid():

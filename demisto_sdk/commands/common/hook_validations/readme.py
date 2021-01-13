@@ -96,7 +96,6 @@ class ReadMeValidator(BaseValidator):
         retry = Retry(total=2)
         adapter = HTTPAdapter(max_retries=retry)
         session = requests.Session()
-
         session.mount('http://', adapter)
         response = session.request(
             'POST',

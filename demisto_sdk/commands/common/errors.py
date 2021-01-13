@@ -61,6 +61,8 @@ ERROR_CODE = {
     "removed_integration_parameters": "IN129",
     "integration_not_runnable": "IN130",
     "missing_get_mapping_fields_command": "IN131",
+    "integration_non_existent_classifier": "IN132",
+    "integration_non_existent_mapper": "IN133",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -185,11 +187,13 @@ ERROR_CODE = {
     "missing_to_version_in_old_classifiers": "CL105",
     "from_version_higher_to_version": "CL106",
     "invalid_type_in_new_classifiers": "CL107",
+    "classifier_non_existent_incident_types": "CL108",
     "invalid_from_version_in_mapper": "MP100",
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
+    "mapper_non_existent_incident_types": "MP105",
     "invalid_incident_field_in_mapper": "MP105",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
@@ -425,6 +429,16 @@ class Errors:
     def missing_get_mapping_fields_command():
         return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
                'field is set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_non_existent_classifier(integration_classifier):
+        return f"The integration has a classifier {integration_classifier} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_non_existent_mapper(integration_mapper):
+        return f"The integration has a mapper {integration_mapper} which does not exist."
 
     @staticmethod
     @error_code_decorator
@@ -1199,6 +1213,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def classifier_non_existent_incident_types(incident_types):
+        return f"The Classifiers related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_from_version_in_mapper():
         return 'fromVersion field in mapper needs to be higher or equal to 6.0.0'
 
@@ -1221,6 +1240,11 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def mapper_non_existent_incident_types(incident_types):
+        return f"The Mapper related incident types: {incident_types} where not found."
 
     @staticmethod
     @error_code_decorator

@@ -39,6 +39,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.are_tests_configured(),
                 self.is_valid_as_deprecated(),
                 self.is_script_id_valid(id_set_file),
+                self.are_playbook_entities_versions_valid(id_set_file),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -53,6 +54,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
                 self.is_script_id_valid(id_set_file),
+                self.are_playbook_entities_versions_valid(id_set_file),
             ]
             answers = all(modified_playbook_checks)
 
@@ -366,12 +368,12 @@ class PlaybookValidator(ContentEntityValidator):
             return is_valid
 
         current_playbook_name = self.current_file.get('name')
-        all_scripts = id_set_file.get("scripts")
-        all_playbooks = id_set_file.get("playbooks")
-        all_integrations = id_set_file.get("integrations")
+        all_scripts_from_is_set = id_set_file.get("scripts")
+        all_playbooks_from_is_set = id_set_file.get("playbooks")
+        all_integrations_from_is_set = id_set_file.get("integrations")
 
         playbook_entities = {}
-        for playbook in all_playbooks:
+        for playbook in all_playbooks_from_is_set:
             for name, playbook_data in playbook.items():
                 if name == current_playbook_name:
                     playbook_entities = playbook_data
@@ -381,12 +383,16 @@ class PlaybookValidator(ContentEntityValidator):
         playbook_scripts_list = playbook_entities.get("implementing_scripts")
         sub_playbooks_list = playbook_entities.get("implementing_playbooks")
         playbook_integration_commands = playbook_entities.get("command_to_integration")
-        # add also for integrations
 
-        is_valid = self.is_sub_playbook_version_valid(sub_playbooks_list, all_playbooks, playbook_version)
-        is_valid = self.is_playbook_script_version_valid(playbook_scripts_list, all_scripts, playbook_version)
-        is_valid = self.is_playbook_integration_version_valid(playbook_integration_commands, all_integrations,
+        is_valid = self.is_sub_playbook_version_valid(sub_playbooks_list, all_playbooks_from_is_set, playbook_version)
+        is_valid = self.is_playbook_script_version_valid(playbook_scripts_list, all_scripts_from_is_set,
+                                                         playbook_version)
+
+        is_valid = self.is_playbook_integration_version_valid(playbook_integration_commands,
+                                                              all_integrations_from_is_set,
                                                               playbook_version)
+        print("HERE", is_valid)
+        return is_valid
 
     def is_sub_playbook_version_valid(self, sub_playbooks_list, all_playbooks, main_playbook_version):
         is_valid = True
@@ -409,6 +415,8 @@ class PlaybookValidator(ContentEntityValidator):
                 script_name = script_data.get("name")
                 if script_name in playbook_scripts_list:
                     script_version = script_data.get("fromversion")
+                    print(f"script {script_name} version is: {script_version}")
+                    print(f" main playbook version is: {main_playbook_version}")
                     if script_version:
                         is_script_version_valid = LooseVersion(script_version) <= LooseVersion(main_playbook_version)
                         if not is_script_version_valid:
@@ -426,21 +434,31 @@ class PlaybookValidator(ContentEntityValidator):
                     # in this case the playbook uses current command from a specific integration
                     specific_integration = playbook_integration_commands[command]
                     integration_version = integrations_to_version_map[specific_integration]
-                    # todo make sure this is right
-                    is_integration_version_valid = LooseVersion(integration_version) <= LooseVersion(playbook_version)
-                    if not is_integration_version_valid:
-                        is_valid = False
-                        return is_valid
+                    print(f"specific integration is {specific_integration} with version: {integration_version}")
+                    print(f"main playbook version is {playbook_version}")
+                    if integration_version:
+                        is_integration_version_valid = LooseVersion(integration_version) <= \
+                                                       LooseVersion(playbook_version)
+                        if not is_integration_version_valid:
+                            is_valid = False
+                            return is_valid
                 else:
                     # in this case the playbook does not use current command from a specific integration,
                     # we should check if an integration that implements current command exists with in a valid version
+                    integration_with_valid_version_found = False
+                    print(f"all integration to check: {commands_to_integrations_map[command]}")
                     for integration_name in commands_to_integrations_map[command]:
                         integration_version = integrations_to_version_map[integration_name]
-                        # todo make sure this is right
-                        is_integration_version_valid = LooseVersion(integration_version) <= LooseVersion(
-                            playbook_version)
-                        if is_integration_version_valid:
-                            return is_valid
+                        print(f"NOT specific integration is {integration_name} with version: {integration_version}")
+                        print(f"main playbook version is {playbook_version}")
+                        if integration_version:
+                            is_integration_version_valid = LooseVersion(integration_version) <= LooseVersion(
+                                playbook_version)
+                            if is_integration_version_valid:
+                                integration_with_valid_version_found = True
+                                break
+                    if not integration_with_valid_version_found:
+                        return False
         return is_valid
 
     def create_integration_commands_and_versions_maps(self, all_integrations):
@@ -451,10 +469,11 @@ class PlaybookValidator(ContentEntityValidator):
                 integration_commands = integration_data.get("commands")
                 integration_name = integration_data.get("name")
                 integration_version = integration_data.get("fromversion")
-                for command in integration_commands:
-                    if command in commands_to_integrations_map:
-                        commands_to_integrations_map[command] += [integration_name]
-                    else:
-                        commands_to_integrations_map[command] = [integration_name]
+                if integration_commands:
+                    for command in integration_commands:
+                        if command in commands_to_integrations_map:
+                            commands_to_integrations_map[command] += [integration_name]
+                        else:
+                            commands_to_integrations_map[command] = [integration_name]
                 integrations_to_version_map[integration_name] = integration_version
         return commands_to_integrations_map, integrations_to_version_map

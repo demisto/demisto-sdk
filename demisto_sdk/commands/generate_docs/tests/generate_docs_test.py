@@ -311,6 +311,7 @@ def test_get_input_data_complex():
 
     assert _value == 'File.Name'
 
+
 # script tests
 
 
@@ -443,6 +444,41 @@ def test_generate_commands_with_permissions_section():
         'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
         '#### Human Readable Output', '\n', '']
 
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_commands_with_permissions_section_command_doesnt_exist():
+    """
+        Given
+            - Integration commands from yml file with command permission flag on.
+            - The commands from yml file do not exist in the given command permissions dict.
+        When
+            - Running the generate_table_section command.
+        Then
+            - Validate that in the #### Required Permissions section empty string is returned
+            - Validate that an error is returned in error list which indicated that for this command no permission were found.
+    """
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}]}}
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
+        '!non-deprecated-cmd': 'SUPERUSER'})
+
+    expected_section = [
+        '## Commands',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        '', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
+
+    assert 'Error! Command Permissions were not found for command non-deprecated-cmd' in errors
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 

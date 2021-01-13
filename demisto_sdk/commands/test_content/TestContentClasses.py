@@ -1564,6 +1564,8 @@ class TestContext:
             test_message += f' with integration(s): {self.playbook.integrations}'
         else:
             test_message += ' with no integrations'
+        if not self.is_instance_using_docker:
+            test_message += ', RedHat instance'
         return test_message
 
     def __repr__(self):

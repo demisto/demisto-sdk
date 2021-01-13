@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP105']
+                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -194,7 +194,7 @@ ERROR_CODE = {
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
     "mapper_non_existent_incident_types": "MP105",
-    "invalid_incident_field_in_mapper": "MP105",
+    "invalid_incident_field_in_mapper": "MP106",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",

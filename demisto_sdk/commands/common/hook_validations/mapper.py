@@ -16,13 +16,15 @@ VALID_TYPE_OUTGOING = 'mapping-outgoing'
 
 
 class MapperValidator(ContentEntityValidator):
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, suppress_print=False,
+                 is_circle=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.from_version = ''
         self.to_version = ''
+        self.is_circle = is_circle
 
-    def is_valid_mapper(self, validate_rn=True, id_set_file=None):
+    def is_valid_mapper(self, validate_rn=True, id_set_file=None, is_circle=False):
         """Checks whether the mapper is valid or not.
 
         Returns:
@@ -35,7 +37,7 @@ class MapperValidator(ContentEntityValidator):
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
             self.is_valid_type(),
-            self.is_incident_field_exist(id_set_file)
+            self.is_incident_field_exist(id_set_file, is_circle)
         ])
 
     def is_valid_version(self):
@@ -105,7 +107,9 @@ class MapperValidator(ContentEntityValidator):
                 return False
         return True
 
-    def is_incident_field_exist(self, id_set_file) -> bool:
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        if not is_circle:
+            return True
         if not id_set_file:
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True

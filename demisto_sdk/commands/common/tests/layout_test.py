@@ -36,12 +36,13 @@ class TestLayoutValidator:
                                      "IndicatorFields": [{"fields": {"name": "name"}}]}
 
     IS_INCIDENT_FIELD_EXIST = [
-        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
+        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False)
     ]
 
-    @pytest.mark.parametrize("layout_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_layout_is_incident_field_exist_in_content(self, repo, layout_json, id_set_json, expected_result):
+    @pytest.mark.parametrize("layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_layout_is_incident_field_exist_in_content(self, repo, layout_json, id_set_json, is_circle,
+                                                       expected_result):
         """
         Given
         - A layout with incident fields
@@ -54,15 +55,16 @@ class TestLayoutValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", layout_json)
         validator = LayoutValidator(structure)
-        assert validator.is_incident_field_exist(id_set_json) == expected_result
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
     IS_INCIDENT_FIELD_EXIST = [
-        (LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
+        (LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False)
     ]
 
-    @pytest.mark.parametrize("mapper_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_layout_container_is_incident_field_exist_in_content(self, repo, mapper_json, id_set_json, expected_result):
+    @pytest.mark.parametrize("layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_layout_container_is_incident_field_exist_in_content(self, repo, layout_json, id_set_json, is_circle,
+                                                                 expected_result):
         """
         Given
         - A layout container with incident fields
@@ -73,6 +75,6 @@ class TestLayoutValidator:
         - validating that incident fields exist in id_set.
         """
         repo.id_set.write_json(id_set_json)
-        structure = mock_structure("", mapper_json)
+        structure = mock_structure("", layout_json)
         validator = LayoutsContainerValidator(structure)
-        assert validator.is_incident_field_exist(id_set_json) == expected_result
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result

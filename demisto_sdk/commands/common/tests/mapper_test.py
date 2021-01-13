@@ -20,13 +20,15 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 class TestMapperValidator:
 
-    INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD = {
+    INCOMING_MAPPER = {
         "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
-        "type": "mapping-incoming"}
+        "type": "mapping-incoming"
+    }
 
-    OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD = {
+    OUTGOING_MAPPER = {
         "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
-        "type": "mapping-outgoing"}
+        "type": "mapping-outgoing"
+    }
 
     ID_SET_WITH_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "Incident Field"}}],
                                   "IndicatorFields": [{"name": {"name": "Incident Field"}}]}
@@ -35,14 +37,14 @@ class TestMapperValidator:
                                      "IndicatorFields": [{"name": {"name": "name"}}]}
 
     IS_INCIDENT_FIELD_EXIST = [
-        (INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (INCOMING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False),
-        (OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (OUTGOING_MAPPER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
+        (INCOMING_MAPPER, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (INCOMING_MAPPER, ID_SET_WITHOUT_INCIDENT_FIELD, True, False),
+        (OUTGOING_MAPPER, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (OUTGOING_MAPPER, ID_SET_WITHOUT_INCIDENT_FIELD, True, False)
     ]
 
-    @pytest.mark.parametrize("mapper_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_is_incident_field_exist(self, repo, mapper_json, id_set_json, expected_result):
+    @pytest.mark.parametrize("mapper_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_is_incident_field_exist(self, repo, mapper_json, id_set_json, is_circle, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -55,4 +57,4 @@ class TestMapperValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", mapper_json)
         validator = MapperValidator(structure)
-        assert validator.is_incident_field_exist(id_set_json) == expected_result
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result

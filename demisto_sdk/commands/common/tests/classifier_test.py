@@ -30,12 +30,12 @@ class TestClassifierValidator:
                                      "IndicatorFields": [{"name": {"name": "name"}}]}
 
     IS_INCIDENT_FIELD_EXIST = [
-        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True),
-        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, False)
+        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False)
     ]
 
-    @pytest.mark.parametrize("classifier_json, id_set_json, expected_result", IS_INCIDENT_FIELD_EXIST)
-    def test_is_incident_field_exist(self, repo, classifier_json, id_set_json, expected_result):
+    @pytest.mark.parametrize("classifier_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_is_incident_field_exist(self, repo, classifier_json, id_set_json, is_circle, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -48,4 +48,4 @@ class TestClassifierValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", classifier_json)
         validator = ClassifierValidator(structure)
-        assert validator.is_incident_field_exist(id_set_json) == expected_result
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result

@@ -130,7 +130,8 @@ def generate_env_results_content(
         'Server 5.0': 'Demisto-Circle-CI-Content-AMI-GA-5.0-62071-2021-01-03'
     }
     env_results = [{'AmiName': role_to_ami_name_mapping[role],
-                    'Role': role} for _ in range(number_of_instances)]
+                    'Role': role,
+                    'InstanceDNS': '1.1.1.1'} for _ in range(number_of_instances)]
     return env_results
 
 

@@ -3,6 +3,8 @@
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
 * Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

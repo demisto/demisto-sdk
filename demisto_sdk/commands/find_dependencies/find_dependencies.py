@@ -764,9 +764,11 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
+            # classifiers dependencies from incident types should be marked as optional,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
+                    _label_as_optional(packs_found_from_incident_types)
                 classifier_dependencies.update(pack_dependencies_data)
 
             if classifier_dependencies:
@@ -806,18 +808,22 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
+            # mappers dependencies from incident types should be marked as optional,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
+                    _label_as_optional(packs_found_from_incident_types)
                 mapper_dependencies.update(pack_dependencies_data)
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
 
+            # mappers dependencies from incident fields should be marked as optional,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_fields)
+                    _label_as_optional(packs_found_from_incident_fields)
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:

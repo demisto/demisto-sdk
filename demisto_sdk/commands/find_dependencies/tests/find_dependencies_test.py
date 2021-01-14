@@ -998,9 +998,9 @@ class TestDependsOnClassifiers:
         When
             - Building dependency graph for pack.
         Then
-            - Extracting the packs that the classifier depends on.
+            - Extracting the packs that the classifier depends on as optional dependencies.
         """
-        expected_result = {("Claroty", True), ("PAN-OS", True), ("Logzio", True)}
+        expected_result = {("Claroty", False), ("PAN-OS", False), ("Logzio", False)}
 
         test_input = [
             {
@@ -1034,10 +1034,10 @@ class TestDependsOnMappers:
         When
             - Building dependency graph for pack.
         Then
-            - Extracting the packs that the mapper depends on.
+            - Extracting the packs that the mapper depends on as optional dependencies.
         """
-        expected_result = {("AccessInvestigation", True), ("CommonTypes", True), ("PrismaCloud", True),
-                           ("BruteForce", True)}
+        expected_result = {("AccessInvestigation", False), ("CommonTypes", False), ("PrismaCloud", False),
+                           ("BruteForce", False)}
 
         test_input = [
             {

@@ -101,7 +101,8 @@ class BaseUpdate:
             extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
-        self.recursive_remove_unnecessary_keys(extended_schema.get('mapping'), self.data)
+        if isinstance(extended_schema, dict):
+            self.recursive_remove_unnecessary_keys(extended_schema.get('mapping', {}), self.data)
 
     @staticmethod
     def recursive_extend_schema(current_schema: Union[str, bool, list, dict],

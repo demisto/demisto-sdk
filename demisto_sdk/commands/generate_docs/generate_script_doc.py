@@ -210,7 +210,7 @@ def get_used_in(id_set, script_id):
 
 
 def generate_script_example(script_name, example=None):
-    errors = []
+    errors: list = []
     if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]

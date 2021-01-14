@@ -4,6 +4,7 @@ bandit>=1.6.2
 bs4>=0.0.1
 click>=7.0
 colorama==0.4.1
+coloredlogs>=15.0
 configparser>=5.0.0
 dateparser>=0.7.2
 demisto-py>=2.0.19
@@ -12,6 +13,7 @@ docker==4.3.0  # Issue #27819
 flake8>=3.8.3
 flatten_dict>=0.3.0
 gitpython>=3.1.0
+google-cloud-storage==1.29.0
 inflection==0.5.1
 isort>=4.3.21
 jinja2>=2.11.1
@@ -22,12 +24,14 @@ packaging>=20.1
 pandas>=1.0.3
 Pebble>=4.5.3
 pipenv>=2020.8.13
+prettytable==0.7.2
 pykwalify>=1.7.0
 pylint>=2.6.0
 PyPDF2>=1.26.0
 PyYAML>=5.3.1
 requests>=2.22.0
 ruamel.yaml>=0.16.5
+slackclient==2.9.3
 tabulate>=0.8.7
 tabulate>=0.8.7
 ujson>=3.0.0

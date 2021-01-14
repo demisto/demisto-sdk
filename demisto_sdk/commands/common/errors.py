@@ -61,8 +61,11 @@ ERROR_CODE = {
     "removed_integration_parameters": "IN129",
     "integration_not_runnable": "IN130",
     "missing_get_mapping_fields_command": "IN131",
+    "integration_non_existent_classifier": "IN132",
+    "integration_non_existent_mapper": "IN133",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
+    "invalid_command_name_in_script": "SC102",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -79,7 +82,6 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": "DO106",
     "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
-    "id_set_not_updated": "ID101",
     "duplicated_id": "ID102",
     "remove_field_from_dashboard": "DA100",
     "include_field_in_dashboard": "DA101",
@@ -132,8 +134,12 @@ ERROR_CODE = {
     "new_incident_field_required": "IF109",
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
+    "indicator_field_type_grid_minimal_version": "IF112",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
+    "incident_type_auto_extract_fields_invalid": "IT102",
+    "incident_type_invalid_auto_extract_mode": "IT103",
+    "incident_type_non_existent_playbook_id": "IT104",
     "pack_file_does_not_exist": "PA100",
     "cant_open_pack_file": "PA101",
     "cant_read_pack_file": "PA102",
@@ -182,15 +188,18 @@ ERROR_CODE = {
     "missing_to_version_in_old_classifiers": "CL105",
     "from_version_higher_to_version": "CL106",
     "invalid_type_in_new_classifiers": "CL107",
+    "classifier_non_existent_incident_types": "CL108",
     "invalid_from_version_in_mapper": "MP100",
     "invalid_to_version_in_mapper": "MP101",
     "invalid_mapper_file_name": "MP102",
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
+    "mapper_non_existent_incident_types": "MP105",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
     "invalid_file_path_layoutscontainer": "LO103",
+
 }
 
 
@@ -259,6 +268,11 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def indicator_field_type_grid_minimal_version(fromversion):
+        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
     @staticmethod
     @error_code_decorator
@@ -423,6 +437,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def integration_non_existent_classifier(integration_classifier):
+        return f"The integration has a classifier {integration_classifier} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_non_existent_mapper(integration_mapper):
+        return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_integration_name():
         return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                "e.g: Kenna v2, Jira v2"
@@ -553,12 +577,6 @@ class Errors:
     def id_set_conflicts():
         return "You probably merged from master and your id_set.json has " \
                "conflicts. Run `demisto-sdk create-id-set`, it should reindex your id_set.json"
-
-    @staticmethod
-    @error_code_decorator
-    def id_set_not_updated(file_path):
-        return f"You have failed to update id_set.json with the data of {file_path} " \
-               f"please run `demisto-sdk create-id-set`"
 
     @staticmethod
     @error_code_decorator
@@ -779,6 +797,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the comamnd {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
@@ -875,6 +903,38 @@ class Errors:
     @error_code_decorator
     def incident_type_invalid_playbook_id_field():
         return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_auto_extract_fields_invalid(incident_fields):
+        return f"The following incident fields are not formatted correctly under " \
+               f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
+               f"Please format them in one of the following ways:\n" \
+               f"1. To extract all indicators from the field: \n" \
+               f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"2. To extract the incident field to a specific indicator without using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"<INDICATOR_TYPE>\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"3. To extract indicators from the field using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_auto_extract_mode():
+        return 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_non_existent_playbook_id(incident_type, playbook):
+        return f"in incident type {incident_type} the playbook {playbook} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right playbook name is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1149,6 +1209,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def classifier_non_existent_incident_types(incident_types):
+        return f"The Classifiers related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_from_version_in_mapper():
         return 'fromVersion field in mapper needs to be higher or equal to 6.0.0'
 
@@ -1171,6 +1236,11 @@ class Errors:
     @error_code_decorator
     def invalid_type_in_mapper():
         return 'Mappers type must be mapping-incoming or mapping-outgoing'
+
+    @staticmethod
+    @error_code_decorator
+    def mapper_non_existent_incident_types(incident_types):
+        return f"The Mapper related incident types: {incident_types} where not found."
 
     @staticmethod
     @error_code_decorator

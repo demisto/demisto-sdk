@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
                                                run_command_os)
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -91,7 +93,16 @@ class ReadMeValidator(BaseValidator):
         with open(self.file_path, 'r') as f:
             readme_content = f.read()
         readme_content = self.fix_mdx(readme_content)
-        response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=10)
+        retry = Retry(total=2)
+        adapter = HTTPAdapter(max_retries=retry)
+        session = requests.Session()
+        session.mount('http://', adapter)
+        response = session.request(
+            'POST',
+            'http://localhost:6161',
+            data=readme_content.encode('utf-8'),
+            timeout=20
+        )
         if response.status_code != 200:
             error_message, error_code = Errors.readme_error(response.text)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -245,7 +256,7 @@ class ReadMeValidator(BaseValidator):
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
                 ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                                        stdout=subprocess.PIPE, text=True)
-                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()
+                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
                     raise Exception(f'Failed starting mdx server. stdout: {line}.')

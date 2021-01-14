@@ -1,4 +1,31 @@
 # Changelog
+* Added a validation that the classifier of an integration exists.
+* Added a validation that the mapper of an integration exists.
+* Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
+* Added cache for get_remote_file to reducing failures from accessing the remote repo.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the id of old playbooks.
+
+# 1.2.16
+* Added allowed ignore errors to the *IDSetValidator*.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
+
+# 1.2.15
+* Added the *ID101* to the allowed ignored errors.
+
+# 1.2.14
+* SDK repository is now mypy check_untyped_defs complaint.
+* The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
+* Added an option for **format** to run on a whole pack.
+* Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
+* Fixed an issue where Auto-Extract fields were only checked for newly added incident types in the **validate** command.
+* Added a new warning validation of direct access to args/params dicts to `XSOAR-linter`.
+
+# 1.2.13
 * Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.
@@ -11,9 +38,13 @@
 * Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
 * Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
 * Added validation for support types in the pack metadata file.
-* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the id of old playbooks.
+* Added support for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
 * Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
+* Added support for Auto-Extract feature validation in incident types in the **validate** command.
+* Fixed an issue in the **lint** command where the *-i* flag was ignored.
+* Improved **merge-id-sets** command to support merge between two ID sets that contain the same pack.
+* Fixed an issue in the **lint** command where flake8 ran twice.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

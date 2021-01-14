@@ -439,19 +439,23 @@ class PackDependencies:
             ))
 
             # ---- incident fields packs ----
+            # playbook dependencies from incident fields should be marked as optional,
+            # as customers do not have to use the OOTB inputs.
             incident_fields = playbook_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
+                pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
+            # playbook dependencies from incident fields should be marked as optional,
+            # as customers do not have to use the OOTB inputs.
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
             if packs_found_from_indicator_fields:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
+                pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
             if playbook_dependencies:

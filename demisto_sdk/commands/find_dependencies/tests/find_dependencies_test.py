@@ -646,7 +646,18 @@ class TestDependsOnPlaybook:
             assert not found_result[1]  # validate that mandatory is set to False
 
     def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
-        expected_result = {("DigitalGuardian", True), ("EmployeeOffboarding", True)}
+        """
+        Given
+            - A playbook entry in the id_set.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The incident fields from the DigitalGuardian and EmployeeOffboarding packs
+             should result in an optional dependency.
+        """
+        expected_result = {("DigitalGuardian", False), ("EmployeeOffboarding", False)}
         test_input = [
             {
                 "Dummy Playbook": {
@@ -669,6 +680,89 @@ class TestDependsOnPlaybook:
                     ]
                 }
             }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The incident fields from the Phishing pack should result in an optional dependency.
+        """
+        expected_result = {("Phishing", False)}
+        test_input = [
+            {
+                "search_and_delete_emails_-_ews": {
+                    "name": "Search And Delete Emails - EWS",
+                    "file_path": "Packs/EWS/Playbooks/playbook-Search_And_Delete_Emails_-_EWS.yml",
+                    "fromversion": "5.0.0",
+                    "tests": [
+                        "No test"
+                    ],
+                    "pack": "EWS",
+                    "incident_fields": [
+                        "attachmentname",
+                        "emailfrom",
+                        "emailsubject"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_indicator_fields(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The indicator field accounttype should result in an optional dependency.
+        """
+        expected_result = {('CommonScripts', True), ('SafeBreach', True)}, {('CommonTypes', False)}
+        test_input = [
+            {
+                "SafeBreach - Compare and Validate Insight Indicators": {
+                    "name": "SafeBreach - Compare and Validate Insight Indicators",
+                    "file_path": "Packs/SafeBreach/Playbooks/SafeBreach_Compare_and_Validate_Insight_Indicators.yml",
+                    "fromversion": "5.5.0",
+                    "implementing_scripts": [
+                        "ChangeContext",
+                        "Set",
+                        "SetAndHandleEmpty"
+                    ],
+                    "command_to_integration": {
+                        "safebreach-get-remediation-data": ""
+                    },
+                    "tests": [
+                        "No tests (auto formatted)"
+                    ],
+                    "pack": "SafeBreach",
+                    "indicator_fields": [
+                        "accounttype",
+                        "safebreachremediationstatus"
+                    ]
+                }
+            },
         ]
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,

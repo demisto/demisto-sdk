@@ -1021,18 +1021,6 @@ def process_packs(file_path: str, print_logs: bool) -> list:
         raise
 
 
-def get_integrations_paths(pack_to_create):
-    if pack_to_create:
-        path_list = [
-            [pack_to_create, 'Integrations', '*']
-        ]
-
-    else:
-        path_list = [
-            ['Packs', '*', 'Integrations', '*']
-        ]
-
-
 def get_playbooks_paths(pack_to_create):
     if pack_to_create:
         path_list = [

@@ -692,7 +692,7 @@ class TestDependsOnPlaybook:
     def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(self, id_set):
         """
         Given
-            - A playbook entry in the id_set.
+            - A playbook entry in the id_set which is using incident fields from the Phishing pack.
 
         When
             - Collecting playbook dependencies.
@@ -727,18 +727,54 @@ class TestDependsOnPlaybook:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    def test_collect_playbooks_dependencies_on_indicator_fields(self, id_set):
+    def test_collect_playbooks_dependencies_on_incident_fields__commontypes_pack(self, id_set):
         """
         Given
-            - A playbook entry in the id_set.
+            - A playbook entry in the id_set which is using incident fields from the CommonTYpes pack.
 
         When
             - Collecting playbook dependencies.
 
         Then
-            - The indicator field accounttype should result in an optional dependency.
+            - The incident fields from the Phishing pack should result in an mandatory dependency.
         """
-        expected_result = {('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', False)}
+        expected_result = {("CommonTypes", True)}
+        test_input = [
+            {
+                "search_and_delete_emails_-_ews": {
+                    "name": "Search And Delete Emails - EWS",
+                    "file_path": "Packs/EWS/Playbooks/playbook-Search_And_Delete_Emails_-_EWS.yml",
+                    "fromversion": "5.0.0",
+                    "tests": [
+                        "No test"
+                    ],
+                    "pack": "EWS",
+                    "incident_fields": [
+                        "accountid"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose_file=VerboseFile(),
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_indicator_fields(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set which is using Indicator fields from the CommonTypes pack.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The indicator field accounttype should result in a mandatory dependency to the CommonTypes pack.
+        """
+        expected_result = {('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', True)}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {
@@ -1119,6 +1155,38 @@ class TestDependsOnClassifiers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_classifier_dependencies__commontypes_pack(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set with an incident type from the CommonTypes pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Network"
+                    ],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnMappers:
     def test_collect_mapper_dependencies(self, id_set):
@@ -1130,8 +1198,7 @@ class TestDependsOnMappers:
         Then
             - Extracting the packs that the mapper depends on as optional dependencies.
         """
-        expected_result = {("AccessInvestigation", False), ("CommonTypes", False), ("PrismaCloud", False),
-                           ("BruteForce", False)}
+        expected_result = {("AccessInvestigation", False), ("PrismaCloud", False), ("BruteForce", False)}
 
         test_input = [
             {
@@ -1141,13 +1208,44 @@ class TestDependsOnMappers:
                     "pack": "dummy_pack",
                     "incident_types": [
                         "Access",
-                        "Authentication",
                         "AWS CloudTrail Misconfiguration"
                     ],
                     "incident_fields": [
                         "incident_accountgroups",
                         "incident_accountid"
                     ],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input,
+            id_set=id_set,
+            verbose_file=VerboseFile(),
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_mapper_dependencies__commontypes_pack(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set with an incident type from the CommonTypes pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Authentication"
+                    ]
                 }
             }
         ]

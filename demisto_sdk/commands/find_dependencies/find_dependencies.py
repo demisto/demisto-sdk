@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
+COMMON_TYPES_PACK = 'CommonTypes'
 
 
 class VerboseFile:
@@ -439,23 +440,35 @@ class PackDependencies:
             ))
 
             # ---- incident fields packs ----
-            # playbook dependencies from incident fields should be marked as optional,
+            # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
             incident_fields = playbook_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
+                common_types_pack_dependency = False
+                if COMMON_TYPES_PACK in packs_found_from_incident_fields:
+                    common_types_pack_dependency = True
+                    packs_found_from_incident_fields.remove(COMMON_TYPES_PACK)
                 pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields)
+                if common_types_pack_dependency:
+                    pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
                 playbook_dependencies.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
-            # playbook dependencies from incident fields should be marked as optional,
+            # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
             if packs_found_from_indicator_fields:
+                common_types_pack_dependency = False
+                if COMMON_TYPES_PACK in packs_found_from_indicator_fields:
+                    packs_found_from_indicator_fields.remove(COMMON_TYPES_PACK)
+                    common_types_pack_dependency = True
                 pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_indicator_fields)
+                if common_types_pack_dependency:
+                    pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
                 playbook_dependencies.update(pack_dependencies_data)
 
             if playbook_dependencies:
@@ -768,11 +781,16 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
-            # classifiers dependencies from incident types should be marked as optional,
+            # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_optional(packs_found_from_incident_types)
+                common_types_pack_dependency = False
+                if COMMON_TYPES_PACK in packs_found_from_incident_types:
+                    packs_found_from_incident_types.remove(COMMON_TYPES_PACK)
+                    common_types_pack_dependency = True
+                pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_types)
+                if common_types_pack_dependency:
+                    pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
                 classifier_dependencies.update(pack_dependencies_data)
 
             if classifier_dependencies:
@@ -812,22 +830,32 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
-            # mappers dependencies from incident types should be marked as optional,
+            # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
             # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_optional(packs_found_from_incident_types)
+                common_types_pack_dependency = False
+                if COMMON_TYPES_PACK in packs_found_from_incident_types:
+                    packs_found_from_incident_types.remove(COMMON_TYPES_PACK)
+                    common_types_pack_dependency = True
+                pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_types)
+                if common_types_pack_dependency:
+                    pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
                 mapper_dependencies.update(pack_dependencies_data)
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
 
-            # mappers dependencies from incident fields should be marked as optional,
+            # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_fields:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_optional(packs_found_from_incident_fields)
+                common_types_pack_dependency = False
+                if COMMON_TYPES_PACK in packs_found_from_incident_fields:
+                    packs_found_from_incident_fields.remove(COMMON_TYPES_PACK)
+                    common_types_pack_dependency = True
+                if common_types_pack_dependency:
+                    pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
+                pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields)
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:

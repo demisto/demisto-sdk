@@ -1,5 +1,4 @@
 import argparse
-import functools
 import glob
 import io
 import json
@@ -9,7 +8,7 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
@@ -161,7 +160,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-@functools.lru_cache(maxsize=8)
+@lru_cache(maxsize=8)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:

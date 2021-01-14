@@ -7,9 +7,9 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
-    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES, PACKS_DIR,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
+    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
 from demisto_sdk.commands.common.content import (Content,
                                                  path_to_object_validate)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
@@ -40,7 +40,6 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
-from packaging import version
 
 
 class ValidateManager:
@@ -79,13 +78,15 @@ class ValidateManager:
 
         try:
             self.git_util = GitUtil(repo=Content.git())
+            self.branch_name = self.git_util.get_current_working_branch()
         except InvalidGitRepositoryError:
             if self.use_git:
                 raise
             else:
+                self.git_util = None  # type: ignore
+                self.branch_name = ''
                 pass
 
-        self.branch_name = self.git_util.get_current_working_branch()
         self.changes_in_schema = False
         self.check_only_schema = False
         self.always_valid = False
@@ -288,7 +289,7 @@ class ValidateManager:
         """
         file_type = find_type(file_path)
 
-        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
+        if file_type in self.skipped_file_types or str(file_path).endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
 
@@ -874,48 +875,3 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
         return id_set
-
-    def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
-                                      validator):
-        """If file is deprecated, validate it. Return None otherwise.
-
-        Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
-
-        Args:
-            file_type: (FileType) Type of file to validate.
-            file_path: (str) file path to validate.
-            current_file: (dict) file in json format to validate.
-            is_modified: (boolean) for whether the file was modified.
-            is_backward_check: (boolean) for whether to preform backwards compatibility validation.
-            validator: (ContentEntityValidator) validator object to run backwards compatibility validation from.
-
-        Returns:
-            True if current_file is deprecated and valid.
-            False if current_file is deprecated and invalid.
-            None if current_file is not deprecated.
-        """
-        if file_type == FileType.PLAYBOOK:
-            is_deprecated = "hidden" in current_file and current_file["hidden"]
-        else:
-            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
-
-        toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file.get("toversion", "99.99.99")) < \
-                           version.parse(OLDEST_SUPPORTED_VERSION)
-
-        if is_deprecated or toversion_is_old:
-            click.echo(f"Validating deprecated file: {file_path}")
-
-            is_valid_as_deprecated = True
-            if hasattr(validator, "is_valid_as_deprecated"):
-                is_valid_as_deprecated = validator.is_valid_as_deprecated()
-
-            if is_modified and is_backward_check:
-                return all([is_valid_as_deprecated, validator.is_backward_compatible()])
-
-            self.ignored_files.add(file_path)
-            if self.print_ignored_files:
-                click.echo(f"Skipping validation for: {file_path}")
-
-            return is_valid_as_deprecated
-        return None

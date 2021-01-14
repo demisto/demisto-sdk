@@ -81,7 +81,6 @@ class Image:
                 error_message, error_code = Errors.no_image_given()
                 if self.base.handle_error(error_message, error_code, file_path=self.path):
                     return False
-
         integration = get_yaml(str(self.integration_path))
         image_path = Path(str(self.path).replace('.yml', '_image.png'))
 

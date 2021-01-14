@@ -83,7 +83,15 @@ class Integration(YAMLContentUnifiedObject):
                         return client.integration_upload(file=file)  # type: ignore
 
     def validate(self):
-        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver, suppress_print=True)
+
+        if self.check_if_integration_is_deprecated():
+            click.echo(f"Validating deprecated file: {self.path}")
+            valid_deprecated = self.is_valid_as_deprecated()
+            if self.base.check_bc:
+                return all([valid_deprecated, self.is_backward_compatible(old_file)])
+            else:
+                return valid_deprecated
 
         if self.base.file_type == FileType.BETA_INTEGRATION:
             return self.is_valid_beta_integration(old_file)
@@ -146,6 +154,22 @@ class Integration(YAMLContentUnifiedObject):
 
         if not self.base.skip_test_conf:
             answers.append(self.are_tests_configured())
+        return all(answers)
+
+    def check_if_integration_is_deprecated(self):
+        is_deprecated = self.get('deprecated', False)
+
+        toversion_is_old = self.to_version < Version(OLDEST_SUPPORTED_VERSION)
+
+        return is_deprecated or toversion_is_old
+
+    def is_valid_as_deprecated(self):
+        """Check if the integration is valid as a deprecated integration."""
+
+        answers = [
+            self.is_valid_deprecated_integration_display_name(),
+            self.is_valid_deprecated_integration_description(),
+        ]
         return all(answers)
 
     def is_valid_version(self):

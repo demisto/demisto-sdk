@@ -294,6 +294,7 @@ class BaseUpdate:
                 file_type = find_type(self.output_file)
 
                 # validates on the output file generated from the format
+
                 structure_validator = StructureValidator(self.output_file,
                                                          predefined_scheme=file_type, suppress_print=not self.verbose)
                 validator = validator_type(structure_validator, suppress_print=not self.verbose)

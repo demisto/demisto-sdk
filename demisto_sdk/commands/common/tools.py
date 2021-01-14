@@ -1479,8 +1479,8 @@ def is_v2_file(current_file, check_in_display=False):
     return True
 
 
-def get_old_file(file_path, old_file_path, prev_ver):
+def get_old_file(file_path, old_file_path, prev_ver, suppress_print=False):
     if old_file_path:
-        return get_remote_file(old_file_path, tag=prev_ver)
+        return get_remote_file(old_file_path, tag=prev_ver, suppress_print=suppress_print)
     else:
-        return get_remote_file(file_path, tag=prev_ver)
+        return get_remote_file(file_path, tag=prev_ver, suppress_print=suppress_print)

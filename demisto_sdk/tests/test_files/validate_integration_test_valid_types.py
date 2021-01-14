@@ -83,6 +83,8 @@ DASHBOARD = {
         "fromValue": 7,
         "field": ""
     },
+    "fromDate": "0001-01-01T00:00:00Z",
+    "toDate": "0001-01-01T00:00:00Z",
     "fromDateLicense": "0001-01-01T00:00:00Z",
     "name": "my-dashboard",
     "layout": [
@@ -218,7 +220,7 @@ INCIDENT_TYPE = {
     "reputationCalc": 0,
     "fromVersion": "5.5.0",
     "extractSettings": {
-        "mode": "specific",
+        "mode": "Specific",
         "fieldCliNameToExtractSettings": {
             "incident_field_1": {
                 "extractAsIsIndicatorTypeId": "",

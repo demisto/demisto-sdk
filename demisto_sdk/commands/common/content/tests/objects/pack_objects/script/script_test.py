@@ -251,16 +251,16 @@ class TestNotUnifiedScript:
         ]
     }
     INPUTS_DUPLICATES = [
-        (DUP_1, True),
-        (NO_DUP, False)
+        (DUP_1, False),
+        (NO_DUP, True)
     ]
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_DUPLICATES)
-    def test_is_there_duplicates_args(self, current_file, answer, repo):
+    def test_no_duplicates_args(self, current_file, answer, repo):
         script = mock_script(repo)
         script.yml.write_dict(current_file)
         script_obj = Script(script.yml.path)
-        assert script_obj.is_there_duplicates_args() is answer
+        assert script_obj.no_duplicates_args() is answer
 
     REQUIRED_ARGS_BASE = {
         'args': [

@@ -1,6 +1,7 @@
 import tempfile
 from typing import Optional, Union
 
+import click
 import demisto_client
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    DEFAULT_VERSION,
@@ -53,7 +54,15 @@ class Script(YAMLContentUnifiedObject):
                         return client.import_script(file=file)
 
     def validate(self):
-        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver)
+        old_file = get_old_file(self.path, self.base.old_file_path, self.base.prev_ver, suppress_print=True)
+
+        if self.check_if_integration_is_deprecated():
+            click.echo(f"Validating deprecated file: {self.path}")
+            valid_deprecated = self.is_valid_as_deprecated()
+            if self.base.check_bc:
+                return all([valid_deprecated, self.is_backward_compatible(old_file)])
+            else:
+                return valid_deprecated
 
         if self.base.file_type == FileType.TEST_SCRIPT:
             return self.is_valid_test_script()
@@ -93,15 +102,17 @@ class Script(YAMLContentUnifiedObject):
     def is_valid_file(self, old_file):
         # type: (dict) -> bool
         """Check whether the script is valid or not"""
-        is_script_valid = all([
+        is_script_valid = [
             self.is_valid_version(),
             self.is_valid_fromversion(),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
-            self.is_there_duplicates_args()
-        ])
+            self.no_duplicates_args()
+        ]
+        print(is_script_valid)
+        is_script_valid = all(is_script_valid)
         # check only on added files
         if not old_file:
             is_script_valid = all([
@@ -109,6 +120,22 @@ class Script(YAMLContentUnifiedObject):
                 self.is_valid_name()
             ])
         return is_script_valid
+
+    def check_if_integration_is_deprecated(self):
+        is_deprecated = self.get('deprecated', False)
+
+        toversion_is_old = self.to_version < Version(OLDEST_SUPPORTED_VERSION)
+
+        return is_deprecated or toversion_is_old
+
+    def is_valid_as_deprecated(self) -> bool:
+        is_valid = True
+        comment = self.get('comment', '')
+        if self.get('deprecated', False) and not comment.startswith('Deprecated.'):
+            error_message, error_code = Errors.invalid_deprecated_script()
+            if self.base.handle_error(error_message, error_code, file_path=self.path):
+                is_valid = False
+        return is_valid
 
     def is_valid_subtype(self):
         """Validate that the subtype is python2 or python3."""
@@ -278,13 +305,18 @@ class Script(YAMLContentUnifiedObject):
 
         return False
 
-    def is_there_duplicates_args(self):
+    def no_duplicates_args(self):
         # type: () -> bool
         """Check if there are duplicated arguments."""
+        is_valid = True
         args = [arg['name'] for arg in self.get('args', [])]
-        if len(args) != len(set(args)):
-            return True
-        return False
+        for arg in args:
+            if args.count(arg) > 1:
+                error_message, error_code = Errors.breaking_backwards_arg_changed()
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
+                    is_valid = False
+
+        return is_valid
 
     def is_changed_subtype(self, old_file):
         """Validate that the subtype was not changed."""

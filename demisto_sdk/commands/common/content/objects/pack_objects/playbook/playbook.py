@@ -35,6 +35,10 @@ class Playbook(YAMLContentObject):
         if self.base.file_type == FileType.TEST_PLAYBOOK:
             return self.is_valid_test_playbook()
 
+        if self.check_if_integration_is_deprecated():
+            click.echo(f"Validating deprecated file: {self.path}")
+            return self.is_valid_as_deprecated()
+
         return self.is_valid_playbook()
 
     def is_valid_test_playbook(self):
@@ -326,6 +330,13 @@ class Playbook(YAMLContentObject):
                 return False
 
         return True
+
+    def check_if_integration_is_deprecated(self):
+        is_deprecated = self.get('hidden', False)
+
+        toversion_is_old = self.to_version < Version(OLDEST_SUPPORTED_VERSION)
+
+        return is_deprecated or toversion_is_old
 
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True

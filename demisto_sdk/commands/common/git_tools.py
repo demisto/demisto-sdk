@@ -22,7 +22,7 @@ def git_path() -> str:
     return git_path.replace('\n', '')
 
 
-def get_current_working_branch() -> str:
+def get_current_working_branch_manual() -> str:
     branches = run_command('git branch')
     branch_name_reg = re.search(r'\* (.*)', branches)
     if branch_name_reg:
@@ -100,7 +100,7 @@ def get_modified_and_added_files(compare_type,
         tuple. 3 sets representing modified files, added files and files of old format who have changed.
     """
     if not branch_name:
-        branch_name = get_current_working_branch()
+        branch_name = get_current_working_branch_manual()
     base_validator = BaseValidator(ignored_errors=ignored_errors)
     if not no_configuration_prints:
         if staged:

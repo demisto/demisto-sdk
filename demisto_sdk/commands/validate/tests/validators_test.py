@@ -9,6 +9,7 @@ import demisto_sdk.commands.validate.validate_manager
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -52,11 +53,10 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_PLAYBOOK_PATH,
+    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
     VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
@@ -345,37 +345,6 @@ class TestValidators:
             assert StructureValidator(file_path=source, predefined_scheme=file_type).is_valid_file()
         finally:
             os.remove(target)
-
-    FILES_PATHS_FOR_ALL_VALIDATIONS = [
-        VALID_INTEGRATION_ID_PATH,
-        VALID_TEST_PLAYBOOK_PATH,
-        VALID_SCRIPT_PATH,
-        VALID_DASHBOARD_PATH,
-        VALID_INCIDENT_FIELD_PATH,
-        VALID_REPUTATION_PATH,
-        VALID_INCIDENT_TYPE_PATH,
-        VALID_BETA_INTEGRATION,
-        VALID_INDICATOR_FIELD_PATH,
-        VALID_LAYOUT_PATH,
-        VALID_MD
-    ]
-
-    @pytest.mark.parametrize('file_path', FILES_PATHS_FOR_ALL_VALIDATIONS)
-    def test_run_all_validations_on_file(self, mocker, file_path):
-        """
-        Given
-        - A file in packs or beta integration
-
-        When
-        - running run_all_validations_on_file on that file
-
-        Then
-        -  The file will be validated
-        """
-        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
-        mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
-        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
-        assert validate_manager.run_validation_on_specific_files()
 
     INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS = [
         INVALID_DASHBOARD_PATH,
@@ -924,20 +893,20 @@ class TestValidators:
     def test_setup_git_params(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='20.0.7')
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 
         assert validate_manager.always_valid
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
         # resetting always_valid flag
         validate_manager.always_valid = False
         validate_manager.setup_git_params()
         assert not validate_manager.always_valid
         assert validate_manager.prev_ver == 'HEAD~1'
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='not-master-branch')
         validate_manager.setup_git_params()
         assert not validate_manager.always_valid
 

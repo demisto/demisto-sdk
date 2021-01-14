@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import find_type
 from wcmatch.pathlib import Path
 
 from .errors import ContentFactoryError
+from .objects.pack_objects.image.image import Image
 
 TYPE_CONVERSION_BY_FileType = {
     FileType.INTEGRATION: Integration,
@@ -111,6 +112,7 @@ TYPE_CONVERSION_BY_FileType_validators = {
     FileType.INCIDENT_TYPE: IncidentType,
     FileType.README: Readme,
     FileType.CONNECTION: Connection,
+    FileType.IMAGE: Image
 }
 
 

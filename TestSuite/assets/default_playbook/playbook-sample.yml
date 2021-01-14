@@ -46,7 +46,7 @@ tasks:
       brand: ""
     scriptarguments:
       all:
-        simple: "yes"
+        simple: "no"
       index: {}
       key: {}
       keysToKeep: {}

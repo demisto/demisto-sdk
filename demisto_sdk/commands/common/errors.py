@@ -65,6 +65,7 @@ ERROR_CODE = {
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
+    "duplicated_argument_in_script": "SC103",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -791,6 +792,11 @@ class Errors:
                f" Do not use 'dev' in it or suffix it with 'copy'\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def duplicated_argument_in_script(arg_name):
+        return f"Duplicated argument {arg_name} in script - remove one."
 
     @staticmethod
     @error_code_decorator

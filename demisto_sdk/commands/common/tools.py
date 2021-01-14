@@ -1,5 +1,5 @@
 import argparse
-import ast
+import functools
 import glob
 import io
 import json
@@ -12,7 +12,7 @@ from distutils.version import LooseVersion
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -161,6 +161,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
+@functools.lru_cache(maxsize=8)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:

@@ -738,7 +738,7 @@ class TestDependsOnPlaybook:
         Then
             - The indicator field accounttype should result in an optional dependency.
         """
-        expected_result = {('CommonScripts', True), ('SafeBreach', True)}, {('CommonTypes', False)}
+        expected_result = {('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', False)}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {

@@ -531,7 +531,7 @@ def get_file_description(path, file_type):
     return '%%UPDATE_RN%%'
 
 
-def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None):
+def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None, text=''):
     print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
     if not id_set_path:
         if not os.path.isfile('./Tests/id_set.json'):
@@ -549,7 +549,7 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
         integration_pack = integration.get('pack')
         update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
                                   modified_files_in_pack={integration_path}, pre_release=pre_release,
-                                  added_files=set(), pack=integration_pack)
+                                  added_files=set(), pack=integration_pack, text=text)
         update_pack_rn.execute_update()
 
 

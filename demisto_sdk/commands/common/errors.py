@@ -134,6 +134,7 @@ ERROR_CODE = {
     "new_incident_field_required": "IF109",
     "from_version_modified_after_rename": "IF110",
     "incident_field_type_change": "IF111",
+    "indicator_field_type_grid_minimal_version": "IF112",
     "incident_type_integer_field": "IT100",
     "incident_type_invalid_playbook_id_field": "IT101",
     "incident_type_auto_extract_fields_invalid": "IT102",
@@ -198,6 +199,7 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
     "invalid_file_path_layoutscontainer": "LO103",
+
 }
 
 
@@ -266,6 +268,11 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def indicator_field_type_grid_minimal_version(fromversion):
+        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
     @staticmethod
     @error_code_decorator

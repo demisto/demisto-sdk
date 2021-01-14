@@ -1067,9 +1067,12 @@ def sign_pack(pack: Pack, dumped_pack_dir: Path, signature_string: str):
         with open('keyfile', 'wb') as keyfile:
             keyfile.write(signature_string.encode())
         arg = f'./signDirectory {dumped_pack_dir} keyfile base64'
+
         signing_process = subprocess.Popen(arg, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, err = signing_process.communicate()
         signing_process.wait()
+
+        os.remove('keyfile')
 
         if err:
             logger.error(f'Failed to sign pack for {pack.path.name} - {str(err)}')

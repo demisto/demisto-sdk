@@ -1,3 +1,4 @@
+from collections import namedtuple
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -30,7 +31,7 @@ def test_build_xsoar_linter_py3_command(files):
     output = build_xsoar_linter_command(files, 3.8, "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -42,7 +43,7 @@ def test_build_xsoar_linter_py2_command(files):
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007, --load-plugins " \
+               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -106,6 +107,16 @@ def test_build_pylint_command(files):
                "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output
+
+
+def test_build_pylint_command_3_9_docker():
+    """Build Pylint command"""
+    from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    NamedFile = namedtuple('File', 'name')
+    files = [NamedFile('file1')]
+    output = build_pylint_command(files, 3.9)
+    assert output.endswith(files[0].name)
+    assert 'disable=bad-option-value,unsubscriptable-object' in output
 
 
 def test_build_pytest_command_1():

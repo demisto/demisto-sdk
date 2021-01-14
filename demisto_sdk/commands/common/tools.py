@@ -160,7 +160,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=64)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:

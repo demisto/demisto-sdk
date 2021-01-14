@@ -30,6 +30,16 @@ def flow():
     return flow
 
 
+TIMESTAMP_FORMATS = [
+    '2021-01-11T13:18:12+00:00',
+    '2021-01-14 17:44:00.571043',
+    '1610639147',
+    'Thu, 14 Jan 2021 15:45:47',
+    'Thursday, 14-Jan-21 15:45:47 UTC',
+    '2021-01-14T15:45:47+00:00'
+]
+
+
 class TestTimeStampReplacer:
     DEFAULT_OPTIONS_MAPPING = {
         'detect_timestamps': False,
@@ -81,7 +91,8 @@ class TestTimeStampReplacer:
         assert time_stamp_replacer.form_keys == {'payload_key2', 'payload_key1'}
         assert time_stamp_replacer.json_keys == {'key_to_replace2', 'key_to_replace1'}
 
-    def test_finding_problematic_keys_in_url_query(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_finding_problematic_keys_in_url_query(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -94,13 +105,14 @@ class TestTimeStampReplacer:
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
-        flow.request._set_query([('key1', 'value1'), ('timestamp_key', '2021-01-11T13:18:12+00:00')])
+        flow.request._set_query([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.query_keys
         assert 'key1' not in time_stamp_replacer.query_keys
 
-    def test_finding_problematic_keys_in_form_keys(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_finding_problematic_keys_in_form_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -119,7 +131,8 @@ class TestTimeStampReplacer:
         assert 'timestamp_key' in time_stamp_replacer.form_keys
         assert 'key1' not in time_stamp_replacer.form_keys
 
-    def test_finding_problematic_keys_in_json_keys(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_finding_problematic_keys_in_json_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -231,3 +244,22 @@ class TestTimeStampReplacer:
                 assert val == time_stamp_replacer.constant
             elif key == 'dict1':
                 assert time_stamp_replacer.constant in val['list']
+
+    def test_url_query_is_sorted(self, mocker, flow):
+        """
+        Given:
+            - A timestamp replacer instance
+        When:
+            - searching a request for problematic keys that has timestamp values in the query params
+        Then:
+            - Ensure that the request query params are sorted
+        """
+        mocker.patch('builtins.open', mock_open())
+        mitmproxy.ctx.options.detect_timestamps = True
+        mitmproxy.ctx.options.script_mode = 'clean'
+        flow.request._set_query([('key2', 'value2'), ('key1', 'value1')])
+        time_stamp_replacer = TimestampReplacer()
+        time_stamp_replacer.request(flow)
+        updated_request = flow.request._get_query()
+        assert updated_request[0] == ('key1', 'value1')
+        assert updated_request[1] == ('key2', 'value2')

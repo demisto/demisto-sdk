@@ -787,9 +787,12 @@ class ValidateManager:
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             if not os.path.isfile(self.id_set_path):
-                IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
+                id_set = IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
+            else:
+                with open(self.id_set_path, 'r') as conf_file:
+                    id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, self.id_set.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(

@@ -688,3 +688,32 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual_two_trie
     assert 'Version format is not valid' in format_result.stdout
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
+
+
+def test_format_playbook_copy_removed_from_name_and_id(repo):
+    """
+    Given:
+        - A playbook with name and id ending in `_copy`
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format removes `_copy` from both name and id.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    playbook_id = playbook_content['id']
+    playbook_name = playbook_content['name']
+    playbook_content['id'] = playbook_id + '_copy'
+    playbook_content['name'] = playbook_name + '_copy'
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('id') == playbook_id
+    assert playbook.yml.read_dict().get('name') == playbook_name

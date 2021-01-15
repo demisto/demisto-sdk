@@ -235,16 +235,16 @@ class IDSetValidator(BaseValidator):
             bool. if all scripts ids of this playbook are valid.
         """
         is_valid = True
-        playbook_data_2nd_level = list(playbook_data.values())[0]
+        playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
         implemented_scripts_in_playbook = set(playbook_data_2nd_level.get('implementing_scripts', []))
         if implemented_scripts_in_playbook:
             # setting initially to false, if the incident types is in the id_set, it will be valid
             is_valid = False
             for script in self.script_set:
-                script_name = list(script.keys())[0]
+                script_id = list(script.keys())[0]
                 # remove a related incident types if exists in the id_set
-                if script_name in implemented_scripts_in_playbook:
-                    implemented_scripts_in_playbook.remove(script_name)
+                if script_id in implemented_scripts_in_playbook:
+                    implemented_scripts_in_playbook.remove(script_id)
                     if not implemented_scripts_in_playbook:
                         break
 

@@ -1198,7 +1198,8 @@ class TestDependsOnMappers:
         Then
             - Extracting the packs that the mapper depends on as optional dependencies.
         """
-        expected_result = {("AccessInvestigation", False), ("PrismaCloud", False), ("BruteForce", False)}
+        expected_result = {("AccessInvestigation", False), ("CommonTypes", True), ("PrismaCloud", False),
+                           ("BruteForce", False)}
 
         test_input = [
             {

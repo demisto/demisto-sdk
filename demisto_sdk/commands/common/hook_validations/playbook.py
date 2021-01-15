@@ -34,7 +34,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
-                self.is_valid_as_deprecated()
+                self.is_valid_as_deprecated(),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -47,7 +47,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_using_instance(),
                 self.is_condition_branches_handled(),
                 self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured()
+                self.are_tests_configured(),
             ]
             answers = all(modified_playbook_checks)
 

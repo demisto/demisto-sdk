@@ -1474,9 +1474,10 @@ class TestContext:
             self._handle_status(status, is_playback_run=True)
             if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                 return True
+            self.build_context.logging_module.warning(
+                "Test failed with mock, recording new mock file. (Mock: Recording)")
 
         # Running on record mode since playback has failed or mock file was not found
-        self.build_context.logging_module.warning("Test failed with mock, recording new mock file. (Mock: Recording)")
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
         with acquire_test_lock(self.playbook) as lock:
             if lock:

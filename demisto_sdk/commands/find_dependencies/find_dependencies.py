@@ -286,22 +286,25 @@ class PackDependencies:
         return [(p, False) for p in pack_ids]
 
     @staticmethod
-    def _update_optional_commontypes_pack_dependencies(packs_found_from: set) -> list:
+    def _update_optional_commontypes_pack_dependencies(packs_found_from_incident_fields_or_types: set) -> list:
         """
         Updates pack_dependencies_data for optional dependencies, excluding the CommonTypes pack.
+        The reason being when releasing a new pack with e.g, incident fields in the CommonTypes pack,
+        only a mandatory dependency will coerce the users to update it to have the necessary content entities.
 
         Args:
-            packs_found_from (set): pack names.
+            packs_found_from_incident_fields_or_types (set): pack names found by a dependency to an incident field,
+            indicator field or an incident type.
 
         Returns:
-            packs_found_from (list): representing the dependencies.
+            pack_dependencies_data (list): representing the dependencies.
 
         """
         common_types_pack_dependency = False
-        if COMMON_TYPES_PACK in packs_found_from:
-            packs_found_from.remove(COMMON_TYPES_PACK)
+        if COMMON_TYPES_PACK in packs_found_from_incident_fields_or_types:
+            packs_found_from_incident_fields_or_types.remove(COMMON_TYPES_PACK)
             common_types_pack_dependency = True
-        pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from)
+        pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields_or_types)
         if common_types_pack_dependency:
             pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
         return pack_dependencies_data

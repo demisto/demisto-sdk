@@ -227,10 +227,10 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
-      - create-id-set:
+      - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - validate-files:
+      - create-id-set:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - create-content-artifacts:

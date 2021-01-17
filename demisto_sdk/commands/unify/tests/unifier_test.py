@@ -628,7 +628,6 @@ PACK_METADATA_PARTNER = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": PARTNER_EMAIL,
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -644,7 +643,6 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": "support1@test.com,support2@test.com",
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -660,7 +658,6 @@ PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": "['support1@test.com', 'support2@test.com']",
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -676,7 +673,6 @@ PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": '',
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -692,7 +688,6 @@ PACK_METADATA_PARTNER_NO_URL = json.dumps({
     "author": "bar",
     "url": '',
     "email": PARTNER_EMAIL,
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -708,7 +703,6 @@ PACK_METADATA_XSOAR = json.dumps({
     "author": "Cortex XSOAR",
     "url": "https://www.paloaltonetworks.com/cortex",
     "email": "",
-    "created": "2020-04-14T00:00:00Z",
     "categories": [
         "Endpoint"
     ],
@@ -725,7 +719,6 @@ PACK_METADATA_COMMUNITY = json.dumps({
     "author": "Community Contributor",
     "url": "",
     "email": "",
-    "created": "2020-04-14T00:00:00Z",
     "categories": [
         "Endpoint"
     ],

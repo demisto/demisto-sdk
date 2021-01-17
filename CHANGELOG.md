@@ -10,6 +10,8 @@
 * Playbook dependencies from incident and indicator fields are now marked as optional.
 * Mappers dependencies from incident types and incident fields are now marked as optional.
 * Classifier dependencies from incident types are now marked as optional.
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
+
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.
 * Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.

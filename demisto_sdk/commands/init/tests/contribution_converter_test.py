@@ -83,40 +83,36 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    pack = repo.create_pack('TestPack')
+    integration = pack.create_integration('integration0')
+    integration.create_default_integration()
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
     contrib_zip.create_zip(contribution_zip_dir)
-
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
-
-    name = 'Contrib Test Pack'
+    name = 'Test Pack'
     contribution_path = contrib_zip.created_zip_filepath
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
         name=name, contribution=contribution_path, description=description, author=author, create_new=False)
     contrib_converter_inst.convert_contribution_to_pack()
-    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
+    converted_pack_path = repo_dir / 'Packs' / 'TestPack'
     assert converted_pack_path.exists()
-
     integrations_path = converted_pack_path / 'Integrations'
-    sample_integration_path = integrations_path / 'Sample'
-    integration_yml = sample_integration_path / 'Sample.yml'
-    integration_py = sample_integration_path / 'Sample.py'
-    integration_description = sample_integration_path / 'Sample_description.md'
-    integration_image = sample_integration_path / 'Sample_image.png'
+    sample_integration_path = integrations_path / 'integration0'
+    integration_yml = sample_integration_path / 'integration0.yml'
+    integration_py = sample_integration_path / 'integration0.py'
+    integration_description = sample_integration_path / 'integration0_description.md'
+    integration_image = sample_integration_path / 'integration0_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
     unified_yml = integrations_path / 'integration-integration0.yml'
     unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
-
     integration_files = [integration_yml, integration_py, integration_description, integration_image,
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
     # In a new pack that part will exist.
-    with open(integration_readme_md, 'r') as f:
-        readme_file = f.read()
-        assert 'This integration was integrated and tested with version xx of Sample' not in readme_file
 
     assert not unified_yml.exists()
     assert not unified_yml_in_sample.exists()

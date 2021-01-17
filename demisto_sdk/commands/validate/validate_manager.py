@@ -460,7 +460,7 @@ class ValidateManager:
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
                                                         ignored_errors=pack_error_ignore_list,
                                                         print_as_warnings=self.print_ignored_errors)
-        return test_playbook_validator.is_valid_file(validate_rn=False)
+        return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)

@@ -125,7 +125,7 @@ class TestTimeStampReplacer:
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
-        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', '2021-01-11T13:18:12+00:00')])
+        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.form_keys
@@ -148,8 +148,8 @@ class TestTimeStampReplacer:
         mitmproxy.ctx.options.script_mode = 'record'
         flow.request.method = 'POST'
         flow.request.set_content(json.dumps({'key1': 'value1',
-                                             'timestamp_key': '2021-01-11T13:18:12+00:00',
-                                             'dict1': {'list': ['test', '2021-01-11T13:18:12+00:00']}}).encode())
+                                             'timestamp_key': time,
+                                             'dict1': {'list': ['test', time]}}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.json_keys
@@ -175,20 +175,20 @@ class TestTimeStampReplacer:
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.json_keys
 
-    def test_cleaning_problematic_keys_from_url_query(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_cleaning_problematic_keys_from_url_query(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
         When:
-            - searching a request for problematic keys that has timestamp values in the query params
+            - digesting a request in playback mode
         Then:
-            - Ensure the problematic key is loaded into query_keys
-            - Ensure the valid key is not loaded into query_keys
+            - Ensure the problematic key passed as query param is replaced with constant value
         """
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'playback'
-        flow.request._set_query([('key1', 'value1'), ('timestamp_key', '2021-01-11T13:18:12+00:00')])
+        flow.request._set_query([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.query_keys = ['timestamp_key']
         time_stamp_replacer.request(flow)
@@ -196,20 +196,20 @@ class TestTimeStampReplacer:
             if key == 'timestamp_key':
                 assert val == time_stamp_replacer.constant
 
-    def test_cleaning_problematic_keys_from_form_keys(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_cleaning_problematic_keys_from_form_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
         When:
-            - searching a request for problematic keys that has timestamp values
+            - digesting a request in playback mode
         Then:
-            - Ensure the problematic key is loaded into form_keys
-            - Ensure the valid key is not loaded into form_keys
+            - Ensure the problematic key passed as form key is replaced with constant value
         """
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'playback'
-        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', '2021-01-11T13:18:12+00:00')])
+        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.form_keys = ['timestamp_key']
         time_stamp_replacer.request(flow)
@@ -217,24 +217,23 @@ class TestTimeStampReplacer:
             if key == 'timestamp_key':
                 assert val == time_stamp_replacer.constant
 
-    def test_cleaning_problematic_keys_from_json_keys(self, mocker, flow):
+    @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
+    def test_cleaning_problematic_keys_from_json_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
         When:
-            - searching a request for problematic keys that has timestamp values
+            - digesting a request in playback mode
         Then:
-            - Ensure the problematic key is loaded into json_keys
-            - Ensure the problematic key is loaded into json_keys even when it's nested
-            - Ensure the valid key is not loaded into json_keys
+            - Ensure the problematic keys passed in json body are replaced with constant value
         """
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'playback'
         flow.request.method = 'POST'
         flow.request.set_content(json.dumps({'key1': 'value1',
-                                             'timestamp_key': '2021-01-11T13:18:12+00:00',
-                                             'dict1': {'list': ['test', '2021-01-11T13:18:12+00:00']}}).encode())
+                                             'timestamp_key': time,
+                                             'dict1': {'list': ['test', time]}}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.json_keys = ['timestamp_key', 'dict1.list.1']
         time_stamp_replacer.request(flow)

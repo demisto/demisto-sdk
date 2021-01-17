@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
-                                                   PACK_METADATA_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -34,11 +33,11 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'packs_metadata']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'packs_metadata']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -915,6 +914,28 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
+def process_pack_metadata(file_path: str, print_logs: bool) -> list:
+    """
+    Process a indicator types JSON file
+    Args:
+        file_path: The file path from indicator type folder
+        print_logs: Whether to print logs to stdout
+
+    Returns:
+        a list of indicator type data.
+    """
+    res = []
+    try:
+        if find_type(file_path) == FileType.PACK_METADATA:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_pack_metadata_paths(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+    return res
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
@@ -1206,7 +1227,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
-    pack_metadata_list = []
+    packs_metadata_list = []
 
     pool = Pool(processes=int(cpu_count() * 1.5))
 
@@ -1221,8 +1242,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         expected_file_types=(FileType.PACK_METADATA,),
                                         data_extraction_func=get_pack_metadata_data,
                                         ),
-                                get_general_paths(PACK_METADATA_DIR, pack_to_create)):
-                pack_metadata_list.extend(arr)
+                                get_pack_metadata_paths(pack_to_create)):
+                packs_metadata_list.extend(arr)
 
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
@@ -1413,7 +1434,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['pack_metadata'] = sort(pack_metadata_list)
+    new_ids_dict['pack_metadata'] = sort(packs_metadata_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

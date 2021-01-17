@@ -134,7 +134,7 @@ class Readme(TextObject):
         return valid
 
     def mdx_verify(self) -> bool:
-        mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
+        mdx_parse = Path(__file__).parent.parent.parent.parent.parent / 'mdx-parse.js'
         with open(str(self.path), 'r') as f:
             readme_content = f.read()
         readme_content = self.fix_mdx(readme_content)
@@ -236,7 +236,7 @@ class Readme(TextObject):
     def start_mdx_server():
         with Readme._MDX_SERVER_LOCK:
             if not Readme._MDX_SERVER_PROCESS:
-                mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
+                mdx_parse_server = Path(__file__).parent.parent.parent.parent.parent / 'mdx-parse-server.js'
                 Readme._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                               stdout=subprocess.PIPE, text=True)
                 line = Readme._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore

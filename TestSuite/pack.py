@@ -48,6 +48,7 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
+        self.packs_metadata: List[JSONBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / name
@@ -247,6 +248,15 @@ class Pack:
         incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
+
+    def create_pack_metadata(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'pack_metadata'
+        pack_metadata = self._create_json_based(name, prefix, content, dir_path=self._pack_path)
+        self.packs_metadata.append(pack_metadata)
+        return pack_metadata
 
     def create_indicator_field(
             self,

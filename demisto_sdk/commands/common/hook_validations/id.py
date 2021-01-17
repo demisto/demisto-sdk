@@ -9,7 +9,10 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.update_id_set import (get_incident_type_data,
+from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
+                                                       get_incident_type_data,
+                                                       get_integration_data,
+                                                       get_mapper_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
@@ -33,6 +36,10 @@ class IDSetValidator(BaseValidator):
     PLAYBOOK_SECTION = "playbooks"
     INTEGRATION_SECTION = "integrations"
     TEST_PLAYBOOK_SECTION = "TestPlaybooks"
+    CLASSIFIERS_SECTION = "Classifiers"
+    LAYOUTS_SECTION = "Layouts"
+    MAPPERS_SECTION = "Mappers"
+    INCIDENT_TYPES_SECTION = "IncidentTypes"
 
     ID_SET_PATH = "./Tests/id_set.json"
 
@@ -49,6 +56,10 @@ class IDSetValidator(BaseValidator):
             self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
             self.integration_set = self.id_set[self.INTEGRATION_SECTION]
             self.test_playbook_set = self.id_set[self.TEST_PLAYBOOK_SECTION]
+            self.classifiers_set = self.id_set[self.CLASSIFIERS_SECTION]
+            self.layouts_set = self.id_set[self.LAYOUTS_SECTION]
+            self.mappers_set = self.id_set[self.MAPPERS_SECTION]
+            self.incident_types_set = self.id_set[self.INCIDENT_TYPES_SECTION]
 
     def load_id_set(self):
         with open(self.ID_SET_PATH, 'r') as id_set_file:
@@ -66,8 +77,8 @@ class IDSetValidator(BaseValidator):
 
             return id_set
 
-    def _is_playbook_found(self, incident_type_data):
-        """Check if the playbook is in the id_set
+    def _is_incident_type_default_playbook_found(self, incident_type_data):
+        """Check if the default playbook of an incident type is in the id_set
 
         Args:
             incident_type_data (dict): Dictionary that holds the extracted details from the given incident type.
@@ -114,6 +125,105 @@ class IDSetValidator(BaseValidator):
                         return not is_valid
         return is_valid
 
+    def _is_integration_classifier_and_mapper_found(self, integration_data):
+        """Check if the integration classifier and mapper are found
+
+        Args:
+            integration_data (dict): Dictionary that holds the extracted details from the given integration.
+
+        Returns:
+            bool. Whether the integration fetch incident classifier is found.
+        """
+        is_valid_classifier = True
+        integration_classifier = integration_data.get('classifiers', '')  # there is only 1 classifier per integration
+        if integration_classifier:
+            # setting initially to false, if the classifier is in the id_set, it will be valid
+            is_valid_classifier = False
+            for classifier in self.classifiers_set:
+                checked_classifier_name = list(classifier.keys())[0]
+                if integration_classifier == checked_classifier_name:
+                    is_valid_classifier = True
+                    break
+            if not is_valid_classifier:  # add error message if not valid
+                error_message, error_code = Errors.integration_non_existent_classifier(integration_classifier)
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        is_valid_mapper = True
+        integration_mapper = integration_data.get('mappers', [''])[0]  # there is only 1 mapper per integration
+        if integration_mapper:
+            # setting initially to false, if the mapper is in the id_set, it will be valid
+            is_valid_mapper = False
+            for mapper in self.mappers_set:
+                checked_mapper_name = list(mapper.keys())[0]
+                if integration_mapper == checked_mapper_name:
+                    is_valid_mapper = True
+                    break
+            if not is_valid_mapper:  # add error message if not valid
+                error_message, error_code = Errors.integration_non_existent_mapper(integration_mapper)
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid_classifier and is_valid_mapper
+
+    def _is_classifier_incident_types_found(self, classifier_data):
+        """Check if the classifier incident types were found
+
+        Args:
+            classifier_data (dict): Dictionary that holds the extracted details from the given classfier.
+
+        Returns:
+            bool. Whether the classifier related incident types are found.
+        """
+        is_valid = True
+        classifier_incident_types = set(classifier_data.get('incident_types', set()))
+        if classifier_incident_types:
+            # setting initially to false, if the incident types is in the id_set, it will be valid
+            is_valid = False
+            for incident_type in self.incident_types_set:
+                incident_type_name = list(incident_type.keys())[0]
+                # remove a related incident types if exists in the id_set
+                if incident_type_name in classifier_incident_types:
+                    classifier_incident_types.remove(incident_type_name)
+                    if not classifier_incident_types:
+                        break
+
+            if not classifier_incident_types:  # if nothing remains, these incident types were all found
+                is_valid = True
+            else:  # there are missing incident types in the id_set, classifier is invalid
+                error_message, error_code = Errors.classifier_non_existent_incident_types(str(classifier_incident_types))
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid
+
+    def _is_mapper_incident_types_found(self, mapper_data):
+        """Check if the classifier incident types were found
+
+        Args:
+            mapper_data (dict): Dictionary that holds the extracted details from the given mapper.
+
+        Returns:
+            bool. Whether the classifier related incident types are found.
+        """
+        is_valid = True
+        mapper_incident_types = set(mapper_data.get('incident_types', set()))
+        if mapper_incident_types:
+            # setting initially to false, if the incident types is in the id_set, it will be valid
+            is_valid = False
+            for incident_type in self.incident_types_set:
+                incident_type_name = list(incident_type.keys())[0]
+                # remove a related incident types if exists in the id_set
+                if incident_type_name in mapper_incident_types:
+                    mapper_incident_types.remove(incident_type_name)
+                    if not mapper_incident_types:
+                        break
+
+            if not mapper_incident_types:  # if nothing remains, these incident types were all found
+                is_valid = True
+            else:  # there are missing incident types in the id_set, mapper is invalid
+                error_message, error_code = Errors.mapper_non_existent_incident_types(str(mapper_incident_types))
+                self.handle_error(error_message, error_code, file_path="id_set.json")
+
+        return is_valid
+
     def is_file_valid_in_set(self, file_path, file_type):
         """Check if the file is valid in the id_set
 
@@ -135,6 +245,15 @@ class IDSetValidator(BaseValidator):
                 is_valid = self._is_non_real_command_found(script_data)
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))
-                is_valid = self._is_playbook_found(incident_type_data)
+                is_valid = self._is_incident_type_default_playbook_found(incident_type_data)
+            elif file_type == constants.FileType.INTEGRATION:
+                integration_data = get_integration_data(file_path)
+                is_valid = self._is_integration_classifier_and_mapper_found(integration_data)
+            elif file_type == constants.FileType.CLASSIFIER:
+                classifier_data = get_classifier_data(file_path)
+                is_valid = self._is_classifier_incident_types_found(classifier_data)
+            elif file_type == constants.FileType.MAPPER:
+                mapper_data = get_mapper_data(file_path)
+                is_valid = self._is_mapper_incident_types_found(mapper_data)
 
         return is_valid

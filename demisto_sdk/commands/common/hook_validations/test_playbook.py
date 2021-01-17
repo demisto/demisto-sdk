@@ -34,10 +34,6 @@ class TestPlaybookValidator(ContentEntityValidator):
         return self._is_valid_version()
 
     def _is_id_uuid(self):
-        """
-        Check that taskid field and id field under task field are both from uuid type
-        Returns: True if the ids are uuid
-        """
         is_valid = True
         tasks: dict = self.current_file.get('tasks', {})
         for task_key, task in tasks.items():
@@ -52,11 +48,6 @@ class TestPlaybookValidator(ContentEntityValidator):
         return is_valid
 
     def _is_taskid_equals_id(self):
-        """
-        Check that taskid field and id field under task field contains equal values
-        Returns: True if the values are equal
-
-        """
         is_valid = True
         tasks: dict = self.current_file.get('tasks', {})
         for task_key, task in tasks.items():

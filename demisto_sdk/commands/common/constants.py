@@ -1005,18 +1005,18 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
-    SCRIPTS_KEY = 'automation'
-    PLAYBOOKS_KEY = 'playbook'
-    INTEGRATIONS_KEY = 'integration'
-    INCIDENT_FIELDS_KEY = 'incidentfield'
-    INCIDENT_TYPES_KEY = 'incidenttype'
-    DASHBOARDS_KEY = 'dashboard'
-    INDICATOR_FIELDS_KEY = 'indicatorfield'
-    REPORTS_KEY = 'report'
-    INDICATOR_TYPES_KEY = 'reputation'
-    LAYOUTS_KEY = 'layoutscontainer'
-    CLASSIFIERS_KEY = 'classifier'
-    WIDGETS_KEY = 'widget'
+    SCRIPTS = 'automation'
+    PLAYBOOKS = 'playbook'
+    INTEGRATIONS = 'integration'
+    INCIDENT_FIELDS = 'incidentfield'
+    INCIDENT_TYPES = 'incidenttype'
+    DASHBOARDS = 'dashboard'
+    INDICATOR_FIELDS = 'indicatorfield'
+    REPORTS = 'report'
+    INDICATOR_TYPES = 'reputation'
+    LAYOUTS = 'layoutscontainer'
+    CLASSIFIERS = 'classifier'
+    WIDGETS = 'widget'
 
 
 YML_SUPPORTED_FOLDERS = {

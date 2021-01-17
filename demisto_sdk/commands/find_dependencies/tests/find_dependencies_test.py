@@ -1000,7 +1000,6 @@ class TestDependsOnIncidentType:
             pack_incidents_types=test_input,
             id_set=id_set,
             verbose_file=VerboseFile(),
-
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -1253,7 +1252,7 @@ class TestDependencyGraph:
 
         mocker.patch(
             'demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies._find_pack_dependencies',
-            side_effect=mock_find_pack_dependencies
+            side_effect=mock_find_pack_dependencies,
         )
         pack_ids = ['pack1', 'pack2', 'pack3', 'pack4']
         dependency_graph = PackDependencies.build_all_dependencies_graph(pack_ids, {}, VerboseFile(''))
@@ -1337,7 +1336,7 @@ class TestPackMetadataParsing:
             dependency_graph=graph,
             graph_root=self.PACK_NAME,
             complete_data=True,
-            id_set_data=id_set
+            id_set_data=id_set,
         )
 
         values = metadata_dependencies.get('CommonPlaybooks')
@@ -1365,7 +1364,7 @@ class TestPackMetadataParsing:
         graph = PackDependencies.build_dependency_graph(pack_id=self.PACK_NAME,
                                                         id_set=id_set,
                                                         verbose_file=VerboseFile(),
-                                                        exclude_ignored_dependencies=False
+                                                        exclude_ignored_dependencies=False,
                                                         )
 
         # Since Hunting depends only on "Common Playbooks" pack
@@ -1377,7 +1376,7 @@ class TestPackMetadataParsing:
             dependency_graph=graph,
             graph_root=self.PACK_NAME,
             complete_data=True,
-            id_set_data=id_set
+            id_set_data=id_set,
         )
 
         values = metadata_dependencies.get('CommonPlaybooks')
@@ -1413,7 +1412,7 @@ class TestPackMetadataParsing:
             dependency_graph=graph,
             graph_root=self.PACK_NAME,
             complete_data=False,
-            id_set_data=id_set
+            id_set_data=id_set,
         )
 
         values = metadata_dependencies.get('CommonPlaybooks')

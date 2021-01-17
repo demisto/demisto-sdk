@@ -36,7 +36,7 @@ class VerboseFile:
 
 
 def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, complete_data: bool = False,
-                            id_set_data: dict = {}) -> tuple:
+                            id_set_data=None) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -52,6 +52,9 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, compl
         list: all level pack dependencies ids (is used for displaying dependencies images).
 
     """
+    if id_set_data is None:
+        id_set_data = {}
+
     first_level_dependencies = {}
     parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
                                dependency_graph.has_edge(graph_root, k)]
@@ -1146,7 +1149,8 @@ class PackDependencies:
             dependency_graph = PackDependencies.build_dependency_graph(
                 pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,
                 exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, complete_data, id_set)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name,
+                                                              complete_data=complete_data, id_set_data=id_set)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

@@ -15,6 +15,7 @@ from typing import Callable, Dict, Optional, Tuple
 
 import click
 import networkx
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    DASHBOARDS_DIR,
                                                    INCIDENT_FIELDS_DIR,
@@ -760,11 +761,9 @@ def get_metadata_data(path):
         'certification': 'certified' if metadata_data.get('support', '').lower() in ['xsoar', 'partner'] else ''
     }
 
-    try:
-        id_ = path.split('/')[-2]
-        data['id'] = id_
-    except Exception:
-        pass
+    pack_id = tools.get_pack_name(path)
+    if pack_id:
+        data['id'] = pack_id
 
     return {data['name']: data}
 

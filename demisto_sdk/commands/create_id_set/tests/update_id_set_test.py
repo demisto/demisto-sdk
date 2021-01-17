@@ -1315,7 +1315,7 @@ class TestPacksMetadata:
         """
         import demisto_sdk.commands.common.update_id_set as uid
         # mocking some exception
-        mocker.patch.object(uid, 'get_metadata_data', side_effect=lambda x: 1 / 0)
+        mocker.patch.object(uid, 'get_metadata_data', side_effect=Exception())
 
         with pytest.raises(Exception):
             process_packs('Pack_Path', True)

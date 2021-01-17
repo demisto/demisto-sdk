@@ -12,8 +12,6 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
-logger: logging.Logger
-
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
@@ -410,12 +408,12 @@ class PackMetaData(JSONObject):
         Returns:
             List[str]: pack categories.
         """
-        return [category.title() for category in self._categories]
+        return self._categories
 
     @categories.setter
     def categories(self, new_pack_categories: List[str]):
         """Setter for the categories attribute"""
-        self._categories = new_pack_categories
+        self._categories = [category.title() for category in new_pack_categories]
 
     @property
     def content_items(self) -> Dict[str, List]:
@@ -424,7 +422,7 @@ class PackMetaData(JSONObject):
         Returns:
             Dict[str, List]: pack content_items.
         """
-        return {key.value: value for key, value in self._contentItems.items()}
+        return {content_entity.value: content_items for content_entity, content_items in self._contentItems.items()}
 
     @content_items.setter
     def content_items(self, new_pack_content_items: Dict[ContentItems, List]):

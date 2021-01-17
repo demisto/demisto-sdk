@@ -25,9 +25,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, PackMetaData, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import logging_setup
-####################
-# Global variables #
-####################
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -37,6 +34,9 @@ from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
+####################
+# Global variables #
+####################
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
@@ -131,18 +131,18 @@ class ContentItemsHandler:
     def __init__(self, metadata: PackMetaData):
         self.server_min_version = metadata.server_min_version
         self.content_items: Dict[ContentItems, List] = {
-            ContentItems.SCRIPTS_KEY: [],
-            ContentItems.PLAYBOOKS_KEY: [],
-            ContentItems.INTEGRATIONS_KEY: [],
-            ContentItems.INCIDENT_FIELDS_KEY: [],
-            ContentItems.INCIDENT_TYPES_KEY: [],
-            ContentItems.DASHBOARDS_KEY: [],
-            ContentItems.INDICATOR_FIELDS_KEY: [],
-            ContentItems.REPORTS_KEY: [],
-            ContentItems.INDICATOR_TYPES_KEY: [],
-            ContentItems.LAYOUTS_KEY: [],
-            ContentItems.CLASSIFIERS_KEY: [],
-            ContentItems.WIDGETS_KEY: []
+            ContentItems.SCRIPTS: [],
+            ContentItems.PLAYBOOKS: [],
+            ContentItems.INTEGRATIONS: [],
+            ContentItems.INCIDENT_FIELDS: [],
+            ContentItems.INCIDENT_TYPES: [],
+            ContentItems.DASHBOARDS: [],
+            ContentItems.INDICATOR_FIELDS: [],
+            ContentItems.REPORTS: [],
+            ContentItems.INDICATOR_TYPES: [],
+            ContentItems.LAYOUTS: [],
+            ContentItems.CLASSIFIERS: [],
+            ContentItems.WIDGETS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -160,14 +160,17 @@ class ContentItemsHandler:
         }
 
     def handle_content_item(self, content_object: ContentObject):
+        """Verifies the validity of the content object and parses it to the correct entities list.
+
+        Args:
+            content_object (ContentObject): The object to add to entities list.
+
+        """
         global logger
 
         content_object_directory = content_object.path.parts[-3]
         if content_object_directory not in self.content_folder_name_to_func.keys():
             content_object_directory = content_object.path.parts[-2]
-
-        # if content_object.path.suffix not in CUSTOM_CONTENT_FILE_ENDINGS:
-        #     return
 
         if content_object.to_version < FIRST_MARKETPLACE_VERSION:
             return
@@ -181,48 +184,47 @@ class ContentItemsHandler:
         if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
             return
 
-        logging.debug(
-            f"Iterating over {content_object.path} file and collecting items of {content_object.path.parts[-4]} pack")
+        logger.debug(f"Adding {content_object.path} file.")
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
 
         self.content_folder_name_to_func[content_object_directory](content_object)
 
     def add_script_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.SCRIPTS_KEY].append({
+        self.content_items[ContentItems.SCRIPTS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('comment', ''),
             'tags': content_object.get('tags', [])
         })
 
     def add_playbook_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.PLAYBOOKS_KEY].append({
+        self.content_items[ContentItems.PLAYBOOKS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', ''),
         })
 
     def add_integration_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INTEGRATIONS_KEY].append({
+        self.content_items[ContentItems.INTEGRATIONS].append({
             'name': content_object.get('display', ""),
             'description': content_object.get('description', ''),
             'category': content_object.get('category', ''),
             'commands': [
                 {
-                    'name': c.get('name', ''),
-                    'description': c.get('description', '')
+                    'name': command.get('name', ''),
+                    'description': command.get('description', '')
                 }
-                for c in content_object.script.get('commands', [])]
+                for command in content_object.script.get('commands', [])]
         })
 
     def add_incident_field_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INCIDENT_FIELDS_KEY].append({
+        self.content_items[ContentItems.INCIDENT_FIELDS].append({
             'name': content_object.get('name', ''),
             'type': content_object.get('type', ''),
             'description': content_object.get('description', '')
         })
 
     def add_incident_type_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INCIDENT_TYPES_KEY].append({
+        self.content_items[ContentItems.INCIDENT_TYPES].append({
             'name': content_object.get('name', ''),
             'playbook': content_object.get('playbookId', ''),
             'closureScript': content_object.get('closureScript', ''),
@@ -232,49 +234,49 @@ class ContentItemsHandler:
         })
 
     def add_dashboard_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.DASHBOARDS_KEY].append({
+        self.content_items[ContentItems.DASHBOARDS].append({
             'name': content_object.get('name', '')
         })
 
     def add_indicator_field_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INDICATOR_FIELDS_KEY].append({
+        self.content_items[ContentItems.INDICATOR_FIELDS].append({
             'name': content_object.get('name', ''),
             'type': content_object.get('type', ''),
             'description': content_object.get('description', '')
         })
 
     def add_indicator_type_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INDICATOR_TYPES_KEY].append({
+        self.content_items[ContentItems.INDICATOR_TYPES].append({
             'details': content_object.get('details', ''),
             'reputationScriptName': content_object.get('reputationScriptName', ''),
             'enhancementScriptNames': content_object.get('enhancementScriptNames', [])
         })
 
     def add_report_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.REPORTS_KEY].append({
+        self.content_items[ContentItems.REPORTS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', '')
         })
 
     def add_layout_as_content_item(self, content_object: ContentObject):
         if content_object.get('description') is not None:
-            self.content_items[ContentItems.LAYOUTS_KEY].append({
+            self.content_items[ContentItems.LAYOUTS].append({
                 'name': content_object.get('name', ''),
                 'description': content_object.get('description')
             })
         else:
-            self.content_items[ContentItems.LAYOUTS_KEY].append({
+            self.content_items[ContentItems.LAYOUTS].append({
                 'name': content_object.get('name', '')
             })
 
     def add_classifier_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.CLASSIFIERS_KEY].append({
+        self.content_items[ContentItems.CLASSIFIERS].append({
             'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', '')
         })
 
     def add_widget_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.WIDGETS_KEY].append({
+        self.content_items[ContentItems.WIDGETS].append({
             'name': content_object.get('name', ''),
             'dataType': content_object.get('dataType', ''),
             'widgetType': content_object.get('widgetType', '')
@@ -1090,15 +1092,17 @@ def encrypt_packs(artifact_manager: ArtifactsManager):
 
         with ProcessPoolHandler(artifact_manager) as pool:
             for pack_name, pack in artifact_manager.content.packs.items():
-                if pack_name in artifact_manager.pack_names:
-                    dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
-                                                   f'{pack.id}_not_encrypted.zip')
-                    pool.schedule(encrypt_pack, args=(artifact_manager, pack, dumped_pack_zip,
-                                                      artifact_manager.encryption_key))
+                if pack_name not in artifact_manager.pack_names:
+                    continue
+
+                dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
+                                               f'{pack.id}_not_encrypted.zip')
+                pool.schedule(encrypt_pack, args=(artifact_manager, pack, dumped_pack_zip,
+                                                  artifact_manager.encryption_key))
 
     elif artifact_manager.encryptor or artifact_manager.encryption_key:
-        logger.exception('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '
-                         'encryptor arguments.')
+        logger.error('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '
+                     'encryptor arguments.')
 
 
 def encrypt_pack(artifact_manager: ArtifactsManager, pack: Pack, zip_pack_path: Path, encryption_key: str):
@@ -1114,7 +1118,6 @@ def encrypt_pack(artifact_manager: ArtifactsManager, pack: Pack, zip_pack_path: 
     current_working_dir = os.getcwd()
 
     try:
-        os.chdir(artifact_manager.content_uploadable_zips_path)
         output_file = str(zip_pack_path).replace('_not_encrypted.zip', '.zip')
         full_command = f'{artifact_manager.encryptor} {zip_pack_path} {output_file} "{encryption_key}"'
         encryption_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

@@ -846,7 +846,7 @@ class Integration:
             }
         if is_mockable:
             self.build_context.logging_module.debug(f'configuring {self} with proxy params')
-            for param in ('proxy', 'useProxy', 'insecure', 'unsecure'):
+            for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
         return True
 

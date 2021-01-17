@@ -663,7 +663,8 @@ class IntegrationValidator(ContentEntityValidator):
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
                                                       ignored_errors=self.ignored_errors,
                                                       print_as_warnings=self.print_as_warnings,
-                                                      suppress_print=self.suppress_print)
+                                                      suppress_print=self.suppress_print,
+                                                      json_file_path=self.json_file_path)
         if docker_image_validator.is_docker_image_valid():
             return True
 
@@ -834,7 +835,8 @@ class IntegrationValidator(ContentEntityValidator):
             bool. True if integration image/logo is valid, False otherwise.
         """
         image_validator = ImageValidator(self.file_path, ignored_errors=self.ignored_errors,
-                                         print_as_warnings=self.print_as_warnings)
+                                         print_as_warnings=self.print_as_warnings,
+                                         json_file_path=self.json_file_path)
         if not image_validator.is_valid():
             return False
         return True
@@ -846,7 +848,8 @@ class IntegrationValidator(ContentEntityValidator):
             bool: True if description is valid, False otherwise.
         """
         description_validator = DescriptionValidator(self.file_path, ignored_errors=self.ignored_errors,
-                                                     print_as_warnings=self.print_as_warnings)
+                                                     print_as_warnings=self.print_as_warnings,
+                                                     json_file_path=self.json_file_path)
         if beta_integration:
             if not description_validator.is_valid_beta_description():
                 return False

@@ -21,6 +21,14 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
+# these are errors which can be fixed through the UI
+UI_APPLICABLE_ERROR = [
+    'IN100', 'IN101', 'IN102', 'IN103', 'IN104', 'IN105', 'IN106', 'IN107', 'IN113', 'IN114', 'IN115', 'IN117', 'IN118',
+    'IN121', 'IN122', 'IN123', 'SC100', 'DB100', 'DB101', 'DO100', 'DO101', 'DO102', 'DO103', 'DO104', 'DO105', 'DO106',
+    'DO107', 'IM100', 'IM101', 'IM104', 'IM105', 'IM106', 'PB100', 'PB101', 'PB102', 'PB103', 'PB105', 'PB106', 'IF100',
+    'IF103', 'IF106', 'IF107', 'IF109', 'IT100', 'IT101', 'IT102', 'IT103', 'RP101'
+]
+
 ERROR_CODE = {
     "wrong_version": "BA100",
     "id_should_equal_name": "BA101",
@@ -286,11 +294,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def no_default_value_in_parameter(param_name):
-        return 'The {} parameter should have a default value'.format(param_name)
-
-    @staticmethod
-    @error_code_decorator
     def wrong_required_value(param_name):
         return 'The required field of the {} parameter should be False'.format(param_name)
 
@@ -379,11 +382,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def removed_integration_parameters(field):
-        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
-
-    @staticmethod
-    @error_code_decorator
     def not_used_display_name(field_name):
         return "The display details for {} will not be used " \
                "due to the type of the parameter".format(field_name)
@@ -414,6 +412,29 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def parameter_missing_for_feed(name, correct_format):
+        return f'Feed Integration was detected A required ' \
+               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
+               f'The correct format of the parameter should be as follows:\n{correct_format}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_v2_integration_name():
+        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
+               "e.g: Kenna v2, Jira v2"
+
+    @staticmethod
+    @error_code_decorator
+    def found_hidden_param(parameter_name):
+        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+
+    @staticmethod
+    @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
     def parameter_missing_from_yml_not_community_contributor(name, correct_format):
         """
             This error is ignored if the contributor is community
@@ -424,10 +445,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_for_feed(name, correct_format):
-        return f'Feed Integration was detected A required ' \
-               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
-               f'The correct format of the parameter should be as follows:\n{correct_format}'
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should start with "Deprecated.".'
+
+    @staticmethod
+    @error_code_decorator
+    def removed_integration_parameters(field):
+        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     @error_code_decorator
@@ -447,27 +482,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_integration_name():
-        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               "e.g: Kenna v2, Jira v2"
-
-    @staticmethod
-    @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_deprecated_integration_display_name():
-        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should start with "Deprecated.".'
-
-    @staticmethod
-    @error_code_decorator
     def invalid_v2_script_name():
         return "The name of this v2 script is incorrect , should be **name**V2." \
                " e.g: DBotTrainTextClassifierV2"
@@ -476,6 +490,16 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_script():
         return "Every deprecated script's comment has to start with 'Deprecated.'"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the comamnd {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -553,12 +577,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def non_existing_docker(docker_image):
-        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
-               f'DockerHub: https://hub.docker.com/u/demisto/.'
-
-    @staticmethod
-    @error_code_decorator
     def docker_not_formatted_correctly(docker_image):
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
@@ -571,6 +589,12 @@ class Errors:
                f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
                f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+
+    @staticmethod
+    @error_code_decorator
+    def non_existing_docker(docker_image):
+        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
+               f'DockerHub: https://hub.docker.com/u/demisto/.'
 
     @staticmethod
     @error_code_decorator
@@ -792,16 +816,6 @@ class Errors:
         return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
                f"Please make sure:\n" \
                f"1 - The right script id is set and the spelling is correct.\n" \
-               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command."
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_command_name_in_script(script_name, command):
-        return f"in script {script_name} the comamnd {command} has an invalid name. " \
-               f"Please make sure:\n" \
-               f"1 - The right command name is set and the spelling is correct." \
-               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
 
@@ -1241,12 +1255,6 @@ class Errors:
     @error_code_decorator
     def mapper_non_existent_incident_types(incident_types):
         return f"The Mapper related incident types: {incident_types} where not found."
-
-    @staticmethod
-    @error_code_decorator
-    def integration_not_runnable():
-        return "Could not find any runnable command in the integration." \
-               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
 
     @staticmethod
     def wrong_filename(file_type):

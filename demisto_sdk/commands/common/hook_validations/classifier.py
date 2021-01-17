@@ -12,9 +12,9 @@ CLASSIFICATION_TYPE = 'classification'
 class ClassifierValidator(ContentEntityValidator):
 
     def __init__(self, structure_validator, new_classifier_version=True, ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False):
+                 print_as_warnings=False, suppress_print=False, json_file_path=''):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.new_classifier_version = new_classifier_version
         self.from_version = ''
         self.to_version = ''

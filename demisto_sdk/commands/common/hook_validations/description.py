@@ -17,9 +17,10 @@ class DescriptionValidator(BaseValidator):
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
+                 json_file_path: str = ''):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
 
         self.file_path = file_path

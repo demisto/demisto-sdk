@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
@@ -351,7 +352,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {pack.pack_metadata.path}, set()))
-    mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value="branch_name")
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.git_tools.get_packs', return_value={'FeedAzureValid'})

@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   PACK_METADATA_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -33,11 +34,11 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -687,6 +688,20 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
+def get_pack_metadata_data(path):
+    json_data = get_json(path)
+    return {
+        json_data.get('name', ''): {
+            "current_version": json_data.get('currentVersion', ''),
+            "author": json_data.get('author', ''),
+            "tags": json_data.get('tags', ''),
+            "usecases": json_data.get('usecases', ''),
+            "categories": json_data.get('categories', ''),
+            "keywords": json_data.get('keywords', '')
+        }
+    }
+
+
 def get_mapper_data(path):
     json_data = get_json(path)
 
@@ -1000,6 +1015,22 @@ def get_playbooks_paths(pack_to_create):
     return playbook_files
 
 
+def get_pack_metadata_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, 'pack_metadata.json']
+        ]
+
+    else:
+        path_list = [
+            ['Packs', '*', 'pack_metadata.json']
+        ]
+
+    metadata_files = list(pack_to_create)
+    for path in path_list:
+        metadata_files.extend(glob.glob(os.path.join(*path)))
+
+
 def get_general_paths(path, pack_to_create):
     if pack_to_create:
         path_list = [
@@ -1175,12 +1206,24 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    pack_metadata_list = []
 
     pool = Pool(processes=int(cpu_count() * 1.5))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+
+        if 'pack_metadata.json' in objects_to_create:
+            print_color("\nStarting iteration over pack_metadata.json", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.PACK_METADATA,),
+                                        data_extraction_func=get_pack_metadata_data,
+                                        ),
+                                get_general_paths(PACK_METADATA_DIR, pack_to_create)):
+                pack_metadata_list.extend(arr)
+
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
@@ -1370,6 +1413,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
+    new_ids_dict['pack_metadata'] = sort(pack_metadata_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

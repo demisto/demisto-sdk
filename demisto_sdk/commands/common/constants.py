@@ -26,6 +26,7 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+PACK_METADATA_DIR = 'pack_metadata.json'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -81,6 +82,7 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    PACK_METADATA = 'pack_metadata'
 
 
 ENTITY_TYPE_TO_DIR = {

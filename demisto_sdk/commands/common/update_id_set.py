@@ -1050,6 +1050,7 @@ def get_pack_metadata_paths(pack_to_create):
     metadata_files = list(pack_to_create)
     for path in path_list:
         metadata_files.extend(glob.glob(os.path.join(*path)))
+    return metadata_files
 
 
 def get_general_paths(path, pack_to_create):
@@ -1237,10 +1238,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'pack_metadata.json' in objects_to_create:
             print_color("\nStarting iteration over pack_metadata.json", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.PACK_METADATA,),
-                                        data_extraction_func=get_pack_metadata_data,
+            for arr in pool.map(partial(process_pack_metadata,
+                                        print_logs=print_logs
                                         ),
                                 get_pack_metadata_paths(pack_to_create)):
                 packs_metadata_list.extend(arr)

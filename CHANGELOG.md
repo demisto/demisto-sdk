@@ -1,5 +1,12 @@
 # Changelog
-* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
+* Added a validation that the classifier of an integration exists.
+* Added a validation that the mapper of an integration exists.
+* Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
+* Added cache for get_remote_file to reducing failures from accessing the remote repo.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the `id` of the given playbooks.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

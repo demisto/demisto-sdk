@@ -310,20 +310,11 @@ class ContributionConverter:
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
-                        pack_subdir, del_unified=False, source_mapping=files_to_source_mapping
+                        pack_subdir, del_unified=(not self.create_new), source_mapping=files_to_source_mapping
                     )
 
                     if self.create_new:
                         self.generate_reamdes_for_new_content_pack()
-                    else:
-                        # Removing unified file for contribution pack update flow.
-                        directories = get_child_directories(pack_subdir)
-                        for directory in directories:
-                            files = get_child_files(directory)
-                            for file in files:
-                                file_name = os.path.basename(file)
-                                if file_name.startswith('integration') or file_name.startswith('script'):
-                                    os.remove(file)
 
             # format
             self.format_converted_pack()
@@ -368,7 +359,6 @@ class ContributionConverter:
                 file_type = file_type.value if file_type else file_type
                 try:
                     child_file_name = os.path.basename(child_file)
-                    print(child_file_name)
                     if source_mapping and child_file_name in source_mapping.keys():
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get('base_name', '')
@@ -392,7 +382,8 @@ class ContributionConverter:
                     extractor.extract_to_package_format()
                     output_path = extractor.get_output_path()
                     # Moving the unified file to its package.
-                    shutil.move(content_item_file_path, output_path)
+                    if self.create_new:
+                        shutil.move(content_item_file_path, output_path)
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'

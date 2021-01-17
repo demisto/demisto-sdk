@@ -6,7 +6,7 @@ from typing import Callable
 import pytest
 import yaml
 from _pytest import tmpdir
-from demisto_sdk.commands.common.tools import get_content_file_type_dump
+from demisto_sdk.commands.common.tools import get_content_file_type_dump, is_string_uuid
 
 
 def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str = 'file.txt') -> str:
@@ -49,3 +49,18 @@ def test_get_content_file_type_dump(file_path: str, expected: Callable[[str], st
     """
     assert get_content_file_type_dump(file_path) == expected or \
         get_content_file_type_dump(file_path).func == expected.func
+
+
+def test_is_string_uuid():
+    """
+
+    Given
+    - A string to check
+
+    When
+    - Running the method 'is_id_uuid' on 'is_valid_playbook'
+
+    Then
+    -  Ensure the method return True or False if the string match uuid or not
+
+    """

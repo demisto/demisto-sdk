@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, WIDGETS_DIR, FileType, UUID_REGEX)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -1468,3 +1468,16 @@ def is_v2_file(current_file, check_in_display=False):
     if suffix != "v2":
         return False
     return True
+
+
+def is_string_uuid(string_to_check: str):
+    """
+    Check if a given string is from uuid type
+    Args:
+        string_to_check: string
+
+    Returns:
+        bool. True if the string match uuid type, else False
+
+    """
+    return bool(re.fullmatch(UUID_REGEX, string_to_check))

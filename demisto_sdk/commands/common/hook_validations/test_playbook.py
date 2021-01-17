@@ -1,11 +1,21 @@
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.tools import is_string_uuid
 
 
 class TestPlaybookValidator(ContentEntityValidator):
     """TestPlaybookValidator is designed to validate the correctness of the file structure we enter to content repo for
     both test playbooks and scripts.
     """
+
+    def is_valid_test_playbook(self, validate_rn: bool = True):
+        test_playbooks_check = [
+            self.is_valid_file(validate_rn),
+            self._is_id_uuid(),
+            self._is_taskid_equals_id()
+        ]
+        return all(test_playbooks_check)
 
     def is_valid_file(self, validate_rn=True):
         """Check whether the test playbook or script file is valid or not
@@ -22,3 +32,31 @@ class TestPlaybookValidator(ContentEntityValidator):
             bool. whether the version is valid or not
         """
         return self._is_valid_version()
+
+    def _is_id_uuid(self):
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            taskid = task.get('taskid', '')
+            inner_id = task.get('task', {}).get('id', '')
+            is_valid = is_string_uuid(taskid) and is_string_uuid(inner_id)
+
+            if not is_valid:
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return is_valid
+        return is_valid
+
+    def _is_taskid_equals_id(self):
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            taskid = task.get('taskid', '')
+            inner_id = task.get('task', {}).get('id', '')
+            is_valid = (taskid == inner_id)
+
+            if not is_valid:
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return is_valid
+        return is_valid

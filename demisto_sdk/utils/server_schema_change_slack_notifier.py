@@ -7,6 +7,7 @@ import os
 from pprint import pformat
 from typing import Any, Dict, List, Tuple
 
+from git import Repo
 from slack_sdk import WebClient
 
 SCHEMA_UPDATE_CHANNEL = "dmst-schema-change"
@@ -36,16 +37,24 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
         commit_author: Author of commit.
     """
     commit_github_url = os.path.join(GITHUB_BASE_URL, commit_hash)
-    output_stream = os.popen("git log -1 --pretty=format:'%an'")
-    commit_author = output_stream.read()
-    output_stream = os.popen(f"git diff-tree --no-commit-id --name-only -r HEAD^ {commit_hash}")
-    changed_files = output_stream.read().split('\n')
+    output_stream = os.popen("git rev-parse --show-toplevel")
+    repo_path = output_stream.read()
+    repo = Repo(repo_path)
+    current_commit = next(repo.iter_commits())
+    commit_author = repo.git.log("-1", "--pretty=format:'%an'")
+    changed_files_raw = repo.git.diff('--no-commit-id', '--name-only', '-r', 'HEAD^',
+                                      f'{current_commit.hexsha}')
+    changed_files = changed_files_raw.split('\n')
     print(f"all Changed files: {changed_files}")
     change_diffs = {}
     for changed_file in changed_files:
         if changed_file.startswith(PREFIX) and changed_file.endswith(SUFFIX):
-            output_stream = os.popen(f"git diff HEAD^ -- {changed_file} | grep '^[+|-][^+|-]'")
-            change_diffs[changed_file] = output_stream.read()
+            lines = repo.git.diff("HEAD^", "--", f"{changed_file}").split('\n')
+            changes = ""
+            for line in lines:
+                if line.startswith("+") or line.startswith("-"):
+                    changes = f"{changes}\n{line}"
+            change_diffs[changed_file] = changes
 
     relevant_changed_files = list(change_diffs.keys())
     return commit_github_url, relevant_changed_files, change_diffs, commit_author
@@ -85,12 +94,12 @@ def build_message(commit: str,
     """
 
     title = f"Commit {commit[0:7]} Modified Schema Struct Files"
-    changes = [{"value": f"Changed by: {commit_author}"}]
+    changes: List[Dict[str, Any]] = [{"value": f"Changed by: {commit_author}"}]
     for changed_file in changed_files:
         changes.append({
             "title": f"{changed_file}",
             "value": f"```{diffs[changed_file]}```",
-            "short": False  # type: ignore
+            "short": False
         })
 
     message = [{

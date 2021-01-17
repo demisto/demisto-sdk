@@ -255,5 +255,8 @@ class IDSetValidator(BaseValidator):
             elif file_type == constants.FileType.MAPPER:
                 mapper_data = get_mapper_data(file_path)
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
+            elif file_type == constants.FileType.PLAYBOOK:
+                playbook_data = get_playbook_data(file_path)
+                is_valid = self._is_playbook_scripts_found(playbook_data)
 
         return is_valid

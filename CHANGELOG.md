@@ -7,6 +7,7 @@
 * Added a validation for the minimal version of an indicator field of type grid.
 * Added cache for get_remote_file to reducing failures from accessing the remote repo.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the `id` of the given playbooks.
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

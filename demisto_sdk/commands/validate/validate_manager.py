@@ -620,7 +620,8 @@ class ValidateManager:
     """ ######################################## Git Tools and filtering ####################################### """
 
     def setup_git_params(self):
-        self.branch_name = self.git_util.get_current_working_branch()
+        self.branch_name = self.git_util.get_current_working_branch() if \
+            (self.git_util and not self.branch_name) else self.branch_name
 
         # if running on release branch or master - check against last release.
         if self.branch_name == 'master' or self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):

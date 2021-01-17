@@ -45,13 +45,12 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
     ReadMeValidator.stop_mdx_server()
 
 
-def test_are_modules_installed_for_verify_false_res(tmp_path):
-    r = str(tmp_path / "README.md")
-    with open(r, 'w') as f:
-        f.write('Test readme')
-    readme_validator = ReadMeValidator(r)
+def test_are_modules_installed_for_verify_false_res(repo):
+    pack = repo.create_pack('Temp')
+    integration = pack.create_integration('integration')
+    readme_validator = ReadMeValidator(integration.readme.path)
     # modules will be missing in tmp_path
-    assert not readme_validator.are_modules_installed_for_verify(tmp_path)
+    assert not readme_validator.are_modules_installed_for_verify(repo.path)
 
 
 def test_is_image_path_valid():

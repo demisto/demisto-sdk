@@ -229,7 +229,7 @@ class Unifier:
         integration_doc_link = self.get_integration_doc_link(yml_data)
         if integration_doc_link:
             if detailed_description:
-                detailed_description += '\n---\n' + integration_doc_link
+                detailed_description += '\n\n---\n' + integration_doc_link
             else:
                 detailed_description += integration_doc_link
         if detailed_description:

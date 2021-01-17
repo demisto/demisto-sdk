@@ -213,15 +213,19 @@ def generate_commands_section(
 
 
 def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
+    errors = []
     cmd_example = example_dict.get(cmd['name'])
     if command_permissions_dict:
-        cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        if command_permissions_dict.get(cmd['name']):
+            cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        else:
+            errors.append(f"Error! Command Permissions were not found for command {cmd['name']}")
+            cmd_permission_example = ['#### Required Permissions', '']
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
         cmd_permission_example = ['#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
     else:  # no permissions for this command
         cmd_permission_example = ['', '']
 
-    errors = []
     section = [
         '### {}'.format(cmd['name']),
         '***',

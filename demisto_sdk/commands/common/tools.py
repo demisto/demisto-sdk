@@ -1,5 +1,4 @@
 import argparse
-import ast
 import glob
 import io
 import json
@@ -9,10 +8,10 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -161,6 +160,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
+@lru_cache(maxsize=64)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
@@ -1428,9 +1428,12 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     Returns:
         the server version of the Demisto instance.
     """
-    resp = demisto_client.generic_request('/about', 'GET')
-    about_data = json.loads(resp[0].replace("'", '"'))
-    return parse(about_data.get('demistoVersion'))
+    try:
+        resp = demisto_client.generic_request('/about', 'GET')
+        about_data = json.loads(resp[0].replace("'", '"'))
+        return parse(about_data.get('demistoVersion'))
+    except Exception:
+        return "0"
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

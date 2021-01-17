@@ -397,7 +397,7 @@ class TestPlaybookValidator:
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        validator._is_ids_uuid() is expected_result
+        validator._is_id_uuid() is expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_TASK_ID_EQUALS_ID)
     def test_is_taskid_equals_id(self, playbook_json, expected_result):

@@ -915,17 +915,9 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
 
 
 def process_pack_metadata(file_path: str, print_logs: bool) -> list:
-    """
-    Process a indicator types JSON file
-    Args:
-        file_path: The file path from indicator type folder
-        print_logs: Whether to print logs to stdout
-
-    Returns:
-        a list of indicator type data.
-    """
     res = []
     try:
+        print(file_path)
         if find_type(file_path) == FileType.PACK_METADATA:
             if print_logs:
                 print(f'adding {file_path} to id_set')

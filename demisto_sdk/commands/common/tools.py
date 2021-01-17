@@ -905,6 +905,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.py'):
         return FileType.PYTHON_FILE
 
+    if path.endswith('metadata.json'):
+        return FileType.PACK_METADATA
+
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)
 

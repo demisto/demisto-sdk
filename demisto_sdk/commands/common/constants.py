@@ -26,7 +26,6 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
-PACK_METADATA_DIR = 'pack_metadata.json'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'

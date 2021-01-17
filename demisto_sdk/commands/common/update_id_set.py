@@ -33,11 +33,11 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'pack_metadata']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1219,7 +1219,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
-    packs_metadata_list = []
+    packs_list = []
 
     pool = Pool(processes=int(cpu_count() * 1.5))
 
@@ -1233,7 +1233,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs
                                         ),
                                 get_pack_metadata_paths(pack_to_create)):
-                packs_metadata_list.extend(arr)
+                packs_list.extend(arr)
 
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
@@ -1424,7 +1424,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['pack_metadata'] = sort(packs_metadata_list)
+    new_ids_dict['Packs'] = sort(packs_list)
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

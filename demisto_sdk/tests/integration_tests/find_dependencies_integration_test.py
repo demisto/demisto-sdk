@@ -1,6 +1,5 @@
 import os
 
-from click import secho
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
@@ -48,6 +47,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
         )
         mocker.patch("click.secho")
+        from click import secho
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -58,12 +58,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             import demisto_sdk.commands.common.update_id_set as uis
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
-                                          '--verbose']
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i',
+                                          'Packs/' + os.path.basename(repo.packs[0].path), '--verbose'
+                                          ]
                                    )
 
-        assert secho.call_args_list[0][0][0] == '# Pack ID: FindDependencyPack'
+        assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'
         assert result.exit_code == 0
         assert result.stderr == ""
 

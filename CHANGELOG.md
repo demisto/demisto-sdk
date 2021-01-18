@@ -1,10 +1,22 @@
 # Changelog
-* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
-* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
-* Improved a **validate** command message for missing release notes of api module dependencies.
+* Added a validation that the classifier of an integration exists.
+* Added a validation that the mapper of an integration exists.
+* Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
+* Added cache for get_remote_file to reducing failures from accessing the remote repo.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the `id` of the given playbooks.
+* Playbook dependencies from incident and indicator fields are now marked as optional.
+* Mappers dependencies from incident types and incident fields are now marked as optional.
+* Classifier dependencies from incident types are now marked as optional.
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
 
 # 1.2.15
 * Added the *ID101* to the allowed ignored errors.

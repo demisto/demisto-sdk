@@ -47,7 +47,7 @@ __all__ = ['BuildContext',
            'TestContext',
            'TestPlaybook',
            'TestResults',
-           'TestsExecution']
+           'ServerContext']
 
 
 class IntegrationConfiguration:
@@ -96,6 +96,7 @@ class TestConfiguration:
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.is_mockable = test_configuration.get('is_mockable')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -513,7 +514,11 @@ class BuildContext:
                                             integration_name in unmockable_integrations]
             if test_name and (not test_record.test_integrations or unmockable_integrations_used) or not self.isAMI:
                 unmockable_tests.append(test_record)
-
+                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
+                # it will be added twice if we don't continue.
+                continue
+            if test_record.is_mockable is False:
+                unmockable_tests.append(test_record)
         return unmockable_tests
 
     @staticmethod
@@ -841,7 +846,7 @@ class Integration:
             }
         if is_mockable:
             self.build_context.logging_module.debug(f'configuring {self} with proxy params')
-            for param in ('proxy', 'useProxy', 'insecure', 'unsecure'):
+            for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
         return True
 
@@ -1145,7 +1150,17 @@ class Integration:
 
 
 class TestContext:
-    def __init__(self, build_context: BuildContext, playbook: TestPlaybook, client: DefaultApi):
+    def __init__(self,
+                 build_context: BuildContext,
+                 playbook: TestPlaybook,
+                 client: DefaultApi):
+        """
+        Initializes the TestContext class
+        Args:
+            build_context: The context of the current build
+            playbook: The TestPlaybook instance to run in the current test execution
+            client: A demisto client instance to use for communication with the server
+        """
         self.build_context = build_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
@@ -1349,6 +1364,7 @@ class TestContext:
         """
         Adds the playbook to the succeeded playbooks list
         """
+        self.build_context.logging_module.error(f'Test failed: {self}')
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
@@ -1394,7 +1410,7 @@ class TestContext:
             The result of the test.
         """
         playbook_state = self._run_incident_test()
-        if playbook_state:
+        if playbook_state == PB_Status.COMPLETED:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1432,7 +1448,6 @@ class TestContext:
             self._add_to_succeeded_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
-            self.build_context.logging_module.error(f'Failed: {self} failed')
             self._add_to_failed_playbooks()
 
         else:
@@ -1459,9 +1474,10 @@ class TestContext:
             self._handle_status(status, is_playback_run=True)
             if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                 return True
+            self.build_context.logging_module.warning(
+                "Test failed with mock, recording new mock file. (Mock: Recording)")
 
         # Running on record mode since playback has failed or mock file was not found
-        self.build_context.logging_module.warning("Test failed with mock, recording new mock file. (Mock: Recording)")
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
         with acquire_test_lock(self.playbook) as lock:
             if lock:
@@ -1477,7 +1493,7 @@ class TestContext:
         # Running playback after successful record to verify the record is valid for future runs
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.info(
-                'Running another playback attempt on the new record to verify that the record is valid')
+                f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
@@ -1486,17 +1502,38 @@ class TestContext:
                 self.build_context.logging_module.warning(
                     'Playback on newly created record has failed, see the following confluence page for help:\n'
                     'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
+            else:
+                self.build_context.logging_module.success(f'PASS: {self} succeed')
+
         return True
 
-    def execute_test(self, proxy: Optional[MITMProxy] = None):
-        self._send_circle_memory_and_pid_stats_on_slack()
-        if self.playbook.is_mockable:
-            test_executed = self._execute_mockable_test(proxy)  # type: ignore
-        else:
-            test_executed = self._execute_unmockable_test()
-        self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
-        self.build_context.logging_module.execute_logs()
-        return test_executed
+    def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
+        """
+        Executes the test and return a boolean that indicates whether the test was executed or not.
+        In case the test was not executed - it will be returned to the queue and will be collected later in the future
+        by some other ServerContext instance.
+        Args:
+            proxy: The MITMProxy instance to use in the current test
+
+        Returns:
+            True if the test was executed by the instance else False
+        """
+        try:
+            self._send_circle_memory_and_pid_stats_on_slack()
+            if self.playbook.is_mockable:
+                test_executed = self._execute_mockable_test(proxy)  # type: ignore
+            else:
+                test_executed = self._execute_unmockable_test()
+            return test_executed
+        except Exception:
+            self.build_context.logging_module.exception(
+                f'Unexpected error while running test on playbook {self.playbook}')
+            self._add_to_failed_playbooks()
+            self.build_context.tests_data_keeper.failed_playbooks.add(self.playbook.configuration.playbook_id)
+            return True
+        finally:
+            self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
+            self.build_context.logging_module.execute_logs()
 
     def __str__(self):
         test_message = f'playbook: {self.playbook}'
@@ -1510,7 +1547,7 @@ class TestContext:
         return str(self)
 
 
-class TestsExecution:
+class ServerContext:
 
     def __init__(self, build_context: BuildContext, server_ip: str):
         self.build_context = build_context
@@ -1533,10 +1570,16 @@ class TestsExecution:
 
     def _execute_tests(self, queue: Queue) -> None:
         """
-        Iterates the tests queue and executes them as long as there are tests to execute
+        Iterates the tests queue and executes them as long as there are tests to execute.
+        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
+        - We need it before the mockable tests because the server starts the python2 default container when it starts
+            and it has no proxy configurations.
+        - We need it before the unmockable tests because at that point all containers will have the proxy configured
+            and we want to clean those configurations when testing unmockable playbooks
         Args:
             queue: The queue to fetch tests to execute from
         """
+        self._reset_containers()
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
@@ -1615,7 +1658,6 @@ class TestsExecution:
         try:
             self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
             self._execute_mockable_tests()
-            self._reset_containers()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',

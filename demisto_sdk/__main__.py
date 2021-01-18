@@ -905,7 +905,8 @@ def update_pack_releasenotes(**kwargs):
 
     if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
-        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path)
+        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified,
+                                         id_set_path=id_set_path, text=text)
 
     # create release notes:
     if _pack:
@@ -981,7 +982,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
         pack_name = str(input_path).replace("Packs/", "")
         assert "/" not in str(pack_name)
     except AssertionError:
-        print_error("Input path is not a pack. For example: Pack/HelloWorld")
+        print_error("Input path is not a pack. For example: Packs/HelloWorld")
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,

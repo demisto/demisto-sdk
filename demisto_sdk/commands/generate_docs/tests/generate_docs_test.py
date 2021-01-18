@@ -582,7 +582,7 @@ yml_data_cases = [(
      '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
      '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |', '    | test2 | True |',
      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-    ),
+),
     (
         {"name": "test", "configuration": [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -593,7 +593,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-    ),
+),
     (
         {"name": "test", "configuration": [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -604,7 +604,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-    )
+)
 
 ]
 
@@ -612,5 +612,4 @@ yml_data_cases = [(
 @pytest.mark.parametrize("yml_input, expected_results", yml_data_cases)
 def test_generate_setup_section_with_additional_info(yml_input, expected_results):
     section = generate_setup_section(yml_input)
-
     assert section == expected_results

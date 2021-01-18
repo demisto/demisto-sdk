@@ -1,6 +1,7 @@
 import ast
 import logging
 from pprint import pformat
+from subprocess import STDOUT, CalledProcessError, check_output
 
 import demisto_client
 
@@ -61,3 +62,22 @@ def update_server_configuration(client, server_configuration, error_msg, logging
         else:
             logging.error(f'{error_msg} {status_code}\n{message}')
     return response_data, status_code
+
+
+def is_redhat_instance(instance_ip: str) -> bool:
+    """
+    As part of the AMI creation - in case the AMI is RHEL a file named '/home/ec2-user/rhel_ami' is created as
+    an indication.
+    If not
+    Args:
+        instance_ip: The instance IP to check.
+
+    Returns:
+        True if the file '/home/ec2-user/rhel_ami' exists on the instance, else False
+    """
+    try:
+        check_output(f'ssh -o StrictHostKeyChecking=no ec2-user@{instance_ip} ls -l /home/ec2-user/rhel_ami'.split(),
+                     stderr=STDOUT)
+        return True
+    except CalledProcessError:
+        return False

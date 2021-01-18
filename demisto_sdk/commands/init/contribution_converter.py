@@ -380,22 +380,22 @@ class ContributionConverter:
                         extractor = Extractor(input=content_item_file_path, file_type=file_type,
                                               output=content_item_dir)
                     extractor.extract_to_package_format()
-                    output_path = extractor.get_output_path()
-                    # Moving the unified file to its package.
-                    if self.create_new:
-                        shutil.move(content_item_file_path, output_path)
+
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'
                     self.contrib_conversion_errs.append(err_msg)
                 finally:
+                    output_path = extractor.get_output_path()
+                    if self.create_new:
+                        # Moving the unified file to its package.
+                        shutil.move(content_item_file_path, output_path)
                     if del_unified:
                         if os.path.exists(content_item_file_path):
                             os.remove(content_item_file_path)
                         moved_unified_dst = os.path.join(output_path, child_file_name)
                         if os.path.exists(moved_unified_dst):
                             os.remove(moved_unified_dst)
-                        os.remove(content_item_file_path)
 
     def create_pack_base_files(self):
         """

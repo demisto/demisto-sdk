@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
     DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
@@ -35,7 +34,6 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
-CORE_PACKS_LIST = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger: logging.Logger
@@ -124,7 +122,7 @@ class ArtifactsManager:
 
 class ContentItemsHandler:
     def __init__(self):
-        self.server_min_version = '1.0.0'
+        self.server_min_version = parse('1.0.0')
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
             ContentItems.PLAYBOOKS: [],
@@ -955,7 +953,9 @@ def sign_packs(artifact_manager: ArtifactsManager):
             for pack_name, pack in artifact_manager.content.packs.items():
                 if pack_name in artifact_manager.pack_names:
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
-                    pool.schedule(pack.sign_pack, args=(dumped_pack_dir, artifact_manager.signature_key))
+                    pool.schedule(pack.sign_pack, args=(dumped_pack_dir, artifact_manager.signDirectory,
+                                                        artifact_manager.signature_key,
+                                                        ))
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
@@ -972,7 +972,7 @@ def encrypt_packs(artifact_manager: ArtifactsManager):
 
                 dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
                                                f'{pack.id}_not_encrypted.zip')
-                pool.schedule(pack.encrypt_pack, args=(artifact_manager, dumped_pack_zip,
+                pool.schedule(pack.encrypt_pack, args=(dumped_pack_zip, artifact_manager.encryptor,
                                                        artifact_manager.encryption_key,
                                                        ))
 

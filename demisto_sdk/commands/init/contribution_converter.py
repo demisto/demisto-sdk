@@ -380,7 +380,6 @@ class ContributionConverter:
                         extractor = Extractor(input=content_item_file_path, file_type=file_type,
                                               output=content_item_dir)
                     extractor.extract_to_package_format()
-
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'

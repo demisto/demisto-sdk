@@ -179,7 +179,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     script_py = sample_script_path / 'SampleScript.py'
     script_readme_md = sample_script_path / 'README.md'
     unified_script_in_sample = sample_script_path / 'script-script0.yml'
-    unified_script = converted_pack_path / 'script-script0.yml'
+    unified_script = scripts_path / 'script-script0.yml'
 
     assert scripts_path.exists()
     assert sample_script_path.exists()

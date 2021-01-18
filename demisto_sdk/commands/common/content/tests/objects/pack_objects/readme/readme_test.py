@@ -88,7 +88,7 @@ def test_are_modules_installed_for_verify_false_res(tmp_path, repo):
     readme.write('Test readme')
     readme_obj = Readme(readme.path)
     # modules will be missing in tmp_path
-    assert not readme_obj.are_modules_installed_for_verify(readme_obj.content_path)
+    assert not readme_obj.are_modules_installed_for_verify(repo.path)
 
 
 def test_is_image_path_valid():

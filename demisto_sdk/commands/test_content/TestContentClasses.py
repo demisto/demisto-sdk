@@ -1336,7 +1336,7 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        if self.incident_id:
+        if not self.incident_id:
             text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                    f' {self.client.api_client.configuration.host}'
         else:

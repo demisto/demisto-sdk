@@ -695,6 +695,7 @@ def get_pack_metadata_data(path):
             "name": json_data.get('name', ''),
             "current_version": json_data.get('currentVersion', ''),
             "author": json_data.get('author', ''),
+            'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', ''),
             "usecases": json_data.get('usecases', ''),
             "categories": json_data.get('categories', '')

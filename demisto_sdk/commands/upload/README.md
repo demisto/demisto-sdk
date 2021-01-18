@@ -1,6 +1,6 @@
 ## Upload
 
-**Upload a content entity to Demisto.**
+**Upload a content entity to Cortex XSOAR.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
 To set the environment variables, run the following shell commands:

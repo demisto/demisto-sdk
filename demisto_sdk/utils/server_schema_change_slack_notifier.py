@@ -39,10 +39,12 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
     # Getting Commit Author ('%an') from last (-1) git log entry. Last git log entry is the current commit.
     output_stream = os.popen("git log -1 --pretty=format:'%an'")
     commit_author = output_stream.read()
+
     # Getting changed file names between last commit on branch (HEAD^) and current commit.
     output_stream = os.popen(f"git diff-tree --no-commit-id --name-only -r HEAD^ {commit_hash}")
     changed_files = output_stream.read().split('\n')
     print(f"all Changed files: {changed_files}")
+
     change_diffs = {}
     for changed_file in changed_files:
         if changed_file.startswith(PREFIX) and changed_file.endswith(SUFFIX):

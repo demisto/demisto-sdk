@@ -16,7 +16,7 @@ MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
 
 
-def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tuple:
+def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: int = 1) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -24,6 +24,7 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
     Args:
         dependency_graph (DiGraph): dependency direct graph.
         graph_root (str): graph root pack id.
+        verbose(int): verbosity level - 1-3.
 
     Returns:
         dict: first level dependencies parsed data.
@@ -39,6 +40,11 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
+
+    if verbose == 3:
+        click.secho(f'All level dependencies are: {all_level_dependencies}', fg='white')
+    elif verbose == 2:
+        click.secho(f'First level dependencies are: {first_level_dependencies}', fg='white')
 
     return first_level_dependencies, all_level_dependencies
 
@@ -1125,7 +1131,7 @@ class PackDependencies:
 
     @staticmethod
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
-                          update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
+                          update_pack_metadata: bool = True, silent_mode: bool = False, verbose: int = 0,
                           skip_id_set_creation: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
@@ -1136,7 +1142,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             silent_mode (bool): Determines whether to echo the dependencies or not.
-            verbose (bool): Whether to log the dependencies to the console.
+            verbose(int): verbosity level - 1-3
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
 
         Returns:
@@ -1153,9 +1159,9 @@ class PackDependencies:
                 id_set = json.load(id_set_file)
 
         dependency_graph = PackDependencies.build_dependency_graph(
-            pack_id=pack_name, id_set=id_set, verbose=verbose,
+            pack_id=pack_name, id_set=id_set, verbose=True if verbose == 3 else False,
             exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

@@ -9,15 +9,23 @@ class TestPlaybookValidator(ContentEntityValidator):
     both test playbooks and scripts.
     """
 
-    def is_valid_test_playbook(self, validate_rn: bool = True):
+    def is_valid_test_playbook(self, validate_rn: bool = False) -> bool:
+        """Check whether the test playbook is valid or not.
+
+         Args:
+            validate_rn (bool):  whether we need to validate release notes or not
+
+        Returns:
+            bool. Whether the playbook is valid or not
+        """
         test_playbooks_check = [
             self.is_valid_file(validate_rn),
             self._is_id_uuid(),
-            self._is_taskid_equals_id()
+            self._is_taskid_equals_id(),
         ]
         return all(test_playbooks_check)
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self, validate_rn):
         """Check whether the test playbook or script file is valid or not
         """
 
@@ -48,7 +56,7 @@ class TestPlaybookValidator(ContentEntityValidator):
             if not is_valid:
                 error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
+                    break
         return is_valid
 
     def _is_taskid_equals_id(self):
@@ -67,5 +75,5 @@ class TestPlaybookValidator(ContentEntityValidator):
             if not is_valid:
                 error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
+                    break
         return is_valid

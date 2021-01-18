@@ -39,7 +39,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid_as_deprecated(),
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
-                self._is_taskid_equals_id()
+                self._is_taskid_equals_id(),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -55,7 +55,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.are_tests_configured(),
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
-                self._is_taskid_equals_id()
+                self._is_taskid_equals_id(),
             ]
             answers = all(modified_playbook_checks)
 
@@ -363,7 +363,7 @@ class PlaybookValidator(ContentEntityValidator):
 
     def _is_id_uuid(self):
         """
-        Check that taskid field and id field under task field are both from uuid type
+        Check that the taskid field and the id field under the task field are both on from uuid format
         Returns: True if the ids are uuid
         """
         is_valid = True
@@ -376,7 +376,7 @@ class PlaybookValidator(ContentEntityValidator):
             if not is_valid:
                 error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
+                    break
         return is_valid
 
     def _is_taskid_equals_id(self):
@@ -395,5 +395,5 @@ class PlaybookValidator(ContentEntityValidator):
             if not is_valid:
                 error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
+                    break
         return is_valid

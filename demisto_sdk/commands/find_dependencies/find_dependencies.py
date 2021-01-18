@@ -956,7 +956,8 @@ class PackDependencies:
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
-        click.secho(f'\n# Pack ID: {pack_id}', fg='white')
+        if verbose:
+            click.secho(f'\n# Pack ID: {pack_id}', fg='white')
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
         scripts_dependencies = PackDependencies._collect_scripts_dependencies(

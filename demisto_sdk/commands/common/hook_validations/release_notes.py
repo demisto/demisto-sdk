@@ -33,7 +33,7 @@ class ReleaseNotesValidator(BaseValidator):
         self.release_notes_path = get_release_notes_file_path(self.release_notes_file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
         self.file_types_that_should_not_appear_in_rn = {FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README,
-                                                        FileType.RELEASE_NOTES, None}
+                                                        FileType.RELEASE_NOTES, FileType.PACK_METADATA, None}
 
     def are_release_notes_complete(self):
         is_valid = True

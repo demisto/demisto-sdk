@@ -894,6 +894,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         return FileType.CHANGELOG
 
+    # pack_metadata
+    if str(path).endswith('pack_metadata.json'):
+        return FileType.PACK_METADATA
+
     # integration image
     if path.endswith('_image.png'):
         return FileType.IMAGE

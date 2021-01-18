@@ -102,7 +102,7 @@ class Script(YAMLContentUnifiedObject):
     def is_valid_file(self, old_file):
         # type: (dict) -> bool
         """Check whether the script is valid or not"""
-        is_script_valid = [
+        is_script_valid = all([
             self.is_valid_version(),
             self.is_valid_fromversion(),
             self.is_valid_subtype(),
@@ -110,9 +110,7 @@ class Script(YAMLContentUnifiedObject):
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
             self.no_duplicates_args()
-        ]
-        print(is_script_valid)
-        is_script_valid = all(is_script_valid)
+        ])
         # check only on added files
         if not old_file:
             is_script_valid = all([

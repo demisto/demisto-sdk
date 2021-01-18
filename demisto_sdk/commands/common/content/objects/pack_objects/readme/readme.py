@@ -225,9 +225,14 @@ class Readme(TextObject):
         with open(str(self.path), 'r') as f:
             readme_content = f.read()
         readme_content = self.fix_mdx(readme_content)
-        response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=10)
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
+        try:
+            response = requests.post('http://localhost:6161', data=readme_content.encode('utf-8'), timeout=30)
+            if response.status_code != 200:
+                error_message, error_code = Errors.readme_error(response.text)
+                if self.base.handle_error(error_message, error_code, file_path=self.path):
+                    return False
+        except Exception as e:
+            error_message, error_code = Errors.readme_error(e)
             if self.base.handle_error(error_message, error_code, file_path=self.path):
                 return False
         return True

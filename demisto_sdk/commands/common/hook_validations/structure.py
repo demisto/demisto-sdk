@@ -267,7 +267,6 @@ class StructureValidator(BaseValidator):
         return {}
 
     def get_file_type(self):
-        # type: () -> Optional[str]
         """Gets file type based on regex or scheme_name
 
         Returns:
@@ -277,7 +276,7 @@ class StructureValidator(BaseValidator):
         if self.scheme_name:
             if isinstance(self.scheme_name, str):
                 return self.scheme_name
-            return self.scheme_name.value
+            return str(self.scheme_name.value)
 
         for file_type, regexes in FILE_TYPES_PATHS_TO_VALIDATE.items():
             for regex in regexes:

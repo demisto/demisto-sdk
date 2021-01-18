@@ -119,7 +119,7 @@ class TestDeprecatedIntegration:
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated. Please use the ServiceNow v2 integration instead.'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)

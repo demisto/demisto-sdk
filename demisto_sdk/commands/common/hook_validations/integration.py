@@ -124,8 +124,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
         if is_deprecated:
-            if not description.startswith(
-                    'Deprecated.') or 'Use the' not in description or 'integration instead' not in description:
+            if not description.startswith('Deprecated.') or \
+                    'use the' not in description.lower() or 'integration instead' not in description.lower():
                 error_message, error_code = Errors.invalid_deprecated_integration_description()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False

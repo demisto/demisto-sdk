@@ -48,7 +48,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/
 ```
-This will create a **integration** YML file and will upload it to the Cortex XSOAR instance.
+This will create a unified **integration** YML file and will upload it to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript

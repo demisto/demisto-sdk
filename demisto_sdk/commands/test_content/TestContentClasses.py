@@ -1579,7 +1579,6 @@ class ServerContext:
         Args:
             queue: The queue to fetch tests to execute from
         """
-
         self._reset_containers()
         while queue.unfinished_tasks:
             try:

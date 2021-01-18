@@ -158,9 +158,15 @@ def generate_setup_section(yaml_data: dict):
 
     for conf in yaml_data['configuration']:
         access_data.append(
-            {'Parameter': conf.get('name', ''),
-             'Description': string_escape_md(conf.get('display', '')),
+            {'Parameter': conf.get('display'),
+             'Description': string_escape_md(conf.get('additionalinfo', '')),
              'Required': conf.get('required', '')})
+
+    # Check if at least one parameter has additional info field.
+    # If not, remove the description column from the access data table section.
+    access_data_with_description = list(filter(lambda x: x.get('Description', '') != '', access_data))
+    if len(access_data_with_description) == 0:
+        list(map(lambda x: x.pop('Description'), access_data))
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False, numbered_section=True))
     section.append('4. Click **Test** to validate the URLs, token, and connection.')

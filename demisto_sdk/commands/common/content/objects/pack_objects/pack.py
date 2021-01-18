@@ -1,3 +1,6 @@
+import logging
+import os
+import subprocess
 from typing import Any, Iterator, Optional, Union
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -22,7 +25,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+    ArtifactsManager
 from wcmatch.pathlib import Path
+
+logger: logging.Logger
 
 
 class Pack:
@@ -201,3 +208,61 @@ class Pack:
             obj = AuthorImage(file)
 
         return obj
+
+    def sign_pack(self, dumped_pack_dir: Path, signature_string: str):
+        """ Signs pack folder and creates signature file.
+
+        Args:
+            dumped_pack_dir (Path): Path to the updated pack to sign.
+            signature_string (str): Base64 encoded string used to sign the pack.
+
+        """
+        global logger
+
+        try:
+            with open('keyfile', 'wb') as keyfile:
+                keyfile.write(signature_string.encode())
+            command = f'./signDirectory {dumped_pack_dir} keyfile base64'
+
+            signing_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            output, err = signing_process.communicate()
+            signing_process.wait()
+
+            os.remove('keyfile')
+
+            if err:
+                logger.error(f'Failed to sign pack for {self.path.name} - {str(err)}')
+                return
+
+            logger.info(f'Signed {self.path.name} pack successfully')
+        except Exception as error:
+            logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
+
+    def encrypt_pack(self, artifact_manager: ArtifactsManager, zip_pack_path: Path, encryption_key: str):
+        """ Encrypt pack zip.
+
+        Args:
+            artifact_manager (ArtifactsManager): Artifacts manager object.
+            zip_pack_path (Path): Path to the pack not encrypted script.
+            encryption_key (str): The encryption key for the packs.
+
+        """
+        try:
+            output_file = str(zip_pack_path).replace('_not_encrypted.zip', '.zip')
+            full_command = f'{artifact_manager.encryptor} {zip_pack_path} {output_file} "{encryption_key}"'
+            encryption_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                                  shell=True)
+            output, err = encryption_process.communicate()
+            encryption_process.wait()
+
+            if err:
+                logger.error(f'Failed to encrypt pack for {self.path.name} - {str(err)}')
+                return
+
+            os.remove(zip_pack_path)
+
+        except Exception as error:
+            logger.error(f'Error while trying to encrypt pack {self.path.name}.\n {error}')
+            return
+
+        logger.info(f'Encrypted {self.path.name} pack successfully')

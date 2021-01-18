@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 import os
 import re
-import subprocess
 import sys
 import time
 from concurrent.futures import as_completed
@@ -16,27 +14,26 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
     DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKS_DIR, PACKS_PACK_META_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR,
-    ContentItems)
+    PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, PackMetaData, Script, TextObject, YAMLContentObject,
+    JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
+####################
+# Global variables #
+####################
+from demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata import \
+    PackMetaData
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
-####################
-# Global variables #
-####################
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
@@ -128,8 +125,8 @@ class ArtifactsManager:
 
 
 class ContentItemsHandler:
-    def __init__(self, metadata: PackMetaData):
-        self.server_min_version = metadata.server_min_version
+    def __init__(self):
+        self.server_min_version = '1.0.0'
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
             ContentItems.PLAYBOOKS: [],
@@ -166,10 +163,9 @@ class ContentItemsHandler:
             content_object (ContentObject): The object to add to entities list.
 
         """
-        global logger
-
         content_object_directory = content_object.path.parts[-3]
         if content_object_directory not in self.content_folder_name_to_func.keys():
+            # In the case where the content object is nested directly in the entities directory (Playbooks for example).
             content_object_directory = content_object.path.parts[-2]
 
         if content_object.to_version < FIRST_MARKETPLACE_VERSION:
@@ -183,8 +179,6 @@ class ContentItemsHandler:
         # skip content items that are not displayed in contentItems
         if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
             return
-
-        logger.debug(f"Adding {content_object.path} file.")
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
 
@@ -512,10 +506,17 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
         List[ProcessFuture]: List of pebble futures to wait for.
     """
     futures = []
-    for pack_name, pack in artifact_manager.content.packs.items():
-        if (pack_name in artifact_manager.pack_names or 'all' in artifact_manager.pack_names) and \
-                pack_name not in IGNORED_PACKS:
-            futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
+    if 'all' in artifact_manager.pack_names:
+        for pack_name, pack in artifact_manager.content.packs.items():
+            if pack_name not in IGNORED_PACKS:
+                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
+
+    else:
+        for pack_name in artifact_manager.pack_names:
+            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.content.packs:
+                futures.append(pool.schedule(dump_pack,
+                                             args=(artifact_manager, artifact_manager.content.packs[pack_name])
+                                             ))
 
     return futures
 
@@ -545,8 +546,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack.metadata = load_user_metadata(pack)
-    content_items_handler = ContentItemsHandler(pack.metadata)
+    pack.metadata = PackMetaData.load_user_metadata(pack)
+    content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
     for integration in pack.integrations:
@@ -606,12 +607,12 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     if pack.metadata:
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
-        pack.metadata.server_min_version = content_items_handler.server_min_version
+        pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
         if artifact_manager.id_set_path:
             # Dependencies can only be done when id_set file is given.
-            pack.metadata.dependencies = handle_dependencies(pack, artifact_manager.id_set_path)
+            pack.metadata.dependencies = PackMetaData.handle_dependencies(pack, artifact_manager.id_set_path)
         else:
-            logger.info('Skipping dependencies extraction since no id_set file was provided.')
+            logger.warning('Skipping dependencies extraction since no id_set file was provided.')
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump(artifact_manager.content_packs_path / pack.id)
@@ -854,8 +855,11 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
         3. If any error occurred -> Delete artifacts directories -> Exit.
         4. If finish successfully:
             a. If zip:
-                1. Zip artifacts zip.
-                2. Delete artifacts directories.
+                1. Sign packs if needed.
+                2. Zip artifacts zip.
+                3. Encrypt packs if needed.
+                4. Zip packs for uploading.
+                5. Delete artifacts directories.
         5. log report.
 
     Args:
@@ -869,12 +873,13 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
     else:
-        sign_packs(artifact_manager)
-        zip_packs(artifact_manager)
-        encrypt_packs(artifact_manager)
         if artifact_manager.zip_artifacts:
+            sign_packs(artifact_manager)
+            zip_packs(artifact_manager)
+            encrypt_packs(artifact_manager)
             zip_dirs(artifact_manager)
             delete_dirs(artifact_manager)
+
         report_artifacts_paths(artifact_manager)
 
 
@@ -941,103 +946,6 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
 
 ###############################
-# Metadata handling functions #
-###############################
-
-
-def load_user_metadata(pack: Pack) -> Optional[PackMetaData]:
-    """Loads user defined metadata and stores part of it's data in defined properties fields.
-
-    Args:
-        pack (Pack): current pack object.
-    """
-    global logger
-
-    metadata = pack.metadata
-    user_metadata_path = os.path.join(pack.path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
-
-    if not os.path.exists(user_metadata_path):
-        logger.error(f'{pack.path.name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
-        return None
-
-    try:
-        with open(user_metadata_path, "r") as user_metadata_file:
-            user_metadata = json.load(user_metadata_file)  # loading user metadata
-            # part of old packs are initialized with empty list
-            if isinstance(user_metadata, list):
-                user_metadata = {}
-
-        metadata.id = pack.id
-        metadata.name = user_metadata.get('name', '')
-        metadata.description = user_metadata.get('description', '')
-        metadata.created = user_metadata.get('created')
-        try:
-            metadata.price = int(user_metadata.get('price', 0))
-        except Exception:
-            logger.error(f'{metadata.name} pack price is not valid. The price was set to 0.')
-        metadata.support = user_metadata.get('support', '')
-        metadata.url = user_metadata.get('url', '')
-        metadata.email = user_metadata.get('email', '')
-        metadata.certification = user_metadata.get('certification', '')
-        metadata.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
-        metadata.author = user_metadata.get('author', '')
-        metadata.hidden = user_metadata.get('hidden', False)
-        metadata.tags = user_metadata.get('tags', [])
-        metadata.keywords = user_metadata.get('keywords', [])
-        metadata.categories = user_metadata.get('categories', [])
-        metadata.use_cases = user_metadata.get('useCases', [])
-        metadata.dependencies = user_metadata.get('dependencies', {})
-
-        if metadata.price > 0:
-            metadata.premium = True
-            metadata.vendor_id = user_metadata.get('vendorId', '')
-            metadata.vendor_name = user_metadata.get('vendorName', '')
-            metadata.preview_only = user_metadata.get('previewOnly', False)
-        if metadata.use_cases and 'Use Case' not in metadata.tags:
-            metadata.tags.append('Use Case')
-
-        return pack.metadata
-
-    except Exception:
-        logger.error(f'Failed loading {pack.path.name} user metadata.')
-        return None
-
-
-def handle_dependencies(pack: Pack, id_set_path: str):
-    """Updates pack's dependencies using the find_dependencies command.
-
-    Args:
-        pack (Pack): current pack object.
-        id_set_path: the id_set file path.
-
-    Returns:
-        dict. All dependencies for the pack.
-    """
-    global logger
-
-    calculated_dependencies = PackDependencies.find_dependencies(pack.path.name,
-                                                                 id_set_path=id_set_path,
-                                                                 update_pack_metadata=False,
-                                                                 silent_mode=True,
-                                                                 complete_data=True)
-
-    # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
-    # They can be overridden in the user metadata to be not mandatory so we need to check there as well
-    if pack.path.name in CORE_PACKS_LIST:
-        mandatory_dependencies = [k for k, v in calculated_dependencies.items()
-                                  if v.get('mandatory', False) is True and
-                                  k not in CORE_PACKS_LIST and
-                                  k not in pack.metadata.dependencies.keys()]
-        if mandatory_dependencies:
-            logger.error(f'New mandatory dependencies {mandatory_dependencies} were '
-                         f'found in the core pack {pack.path.name}')
-
-    calculated_dependencies.update(pack.metadata.dependencies)
-
-    return calculated_dependencies
-
-
-###############################
 # Pack signing and encryption #
 ###############################
 
@@ -1049,47 +957,16 @@ def sign_packs(artifact_manager: ArtifactsManager):
             for pack_name, pack in artifact_manager.content.packs.items():
                 if pack_name in artifact_manager.pack_names:
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
-                    pool.schedule(sign_pack, args=(pack, dumped_pack_dir, artifact_manager.signature_key))
+                    pool.schedule(pack.sign_pack, args=(dumped_pack_dir, artifact_manager.signature_key))
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
                      'sign_directory arguments.')
 
 
-def sign_pack(pack: Pack, dumped_pack_dir: Path, signature_string: str):
-    """ Signs pack folder and creates signature file.
-
-    Args:
-        pack (Pack): The pack to sign.
-        dumped_pack_dir (Path): Path to the updated pack to sign.
-        signature_string (str): Base64 encoded string used to sign the pack.
-
-    """
-    try:
-        with open('keyfile', 'wb') as keyfile:
-            keyfile.write(signature_string.encode())
-        arg = f'./signDirectory {dumped_pack_dir} keyfile base64'
-
-        signing_process = subprocess.Popen(arg, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        output, err = signing_process.communicate()
-        signing_process.wait()
-
-        os.remove('keyfile')
-
-        if err:
-            logger.error(f'Failed to sign pack for {pack.path.name} - {str(err)}')
-            return
-
-        logger.info(f'Signed {pack.path.name} pack successfully')
-    except Exception as error:
-        logger.error(f'Error while trying to sign pack {pack.path.name}.\n {error}')
-
-
 def encrypt_packs(artifact_manager: ArtifactsManager):
     """Encrypt packs zips"""
     if artifact_manager.encryptor and artifact_manager.encryption_key:
-        subprocess.call(f'chmod +x {artifact_manager.encryptor}', shell=True)
-
         with ProcessPoolHandler(artifact_manager) as pool:
             for pack_name, pack in artifact_manager.content.packs.items():
                 if pack_name not in artifact_manager.pack_names:
@@ -1097,44 +974,10 @@ def encrypt_packs(artifact_manager: ArtifactsManager):
 
                 dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
                                                f'{pack.id}_not_encrypted.zip')
-                pool.schedule(encrypt_pack, args=(artifact_manager, pack, dumped_pack_zip,
-                                                  artifact_manager.encryption_key))
+                pool.schedule(pack.encrypt_pack, args=(artifact_manager, dumped_pack_zip,
+                                                       artifact_manager.encryption_key,
+                                                       ))
 
     elif artifact_manager.encryptor or artifact_manager.encryption_key:
         logger.error('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '
                      'encryptor arguments.')
-
-
-def encrypt_pack(artifact_manager: ArtifactsManager, pack: Pack, zip_pack_path: Path, encryption_key: str):
-    """ Encrypt pack zip.
-
-    Args:
-        artifact_manager (ArtifactsManager): Artifacts manager object.
-        pack (Pack): The pack to sign.
-        zip_pack_path (Path): Path to the pack not encrypted script.
-        encryption_key (str): The encryption key for the packs.
-
-    """
-    current_working_dir = os.getcwd()
-
-    try:
-        output_file = str(zip_pack_path).replace('_not_encrypted.zip', '.zip')
-        full_command = f'{artifact_manager.encryptor} {zip_pack_path} {output_file} "{encryption_key}"'
-        encryption_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        output, err = encryption_process.communicate()
-        encryption_process.wait()
-
-        if err:
-            logger.error(f'Failed to encrypt pack for {pack.path.name} - {str(err)}')
-            return
-
-        os.remove(zip_pack_path)
-
-    except Exception as error:
-        logger.error(f'Error while trying to encrypt pack {pack.path.name}.\n {error}')
-        return
-
-    finally:
-        os.chdir(current_working_dir)
-
-    logger.info(f'Encrypted {pack.path.name} pack successfully')

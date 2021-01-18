@@ -11,7 +11,6 @@
 * Mappers dependencies from incident types and incident fields are now marked as optional.
 * Classifier dependencies from incident types are now marked as optional.
 * Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file.
-* Improved the deprecated message validation required from integrations.
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console with verbosity levels.
 
 # 1.2.16

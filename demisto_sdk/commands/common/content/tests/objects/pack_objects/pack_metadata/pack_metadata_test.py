@@ -203,21 +203,22 @@ def test_load_user_metadata_basic(repo):
                                                 cpus=1,
                                                 packs=True)
 
-    artifact_manager.content.packs['Pack1'].metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
-    result = artifact_manager.content.packs['Pack1'].metadata
-    assert result.id == 'Pack1'
-    assert result.name == 'Pack Number 1'
-    assert result.description == 'A description for the pack'
-    assert result.created == datetime(2020, 6, 8, 15, 37, 54)
-    assert result.price == 0
-    assert result.support == 'xsoar'
-    assert result.url == 'some url'
-    assert result.email == 'some email'
-    assert result.certification == 'certified'
-    assert result.current_version == parse('1.1.1')
-    assert result.author == 'Cortex XSOAR'
-    assert result.tags == ['tag1']
-    assert result.dependencies == [{'dependency': {'dependency': '1'}}]
+    pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+
+    assert pack_1_metadata.id == 'Pack1'
+    assert pack_1_metadata.name == 'Pack Number 1'
+    assert pack_1_metadata.description == 'A description for the pack'
+    assert pack_1_metadata.created == datetime(2020, 6, 8, 15, 37, 54)
+    assert pack_1_metadata.price == 0
+    assert pack_1_metadata.support == 'xsoar'
+    assert pack_1_metadata.url == 'some url'
+    assert pack_1_metadata.email == 'some email'
+    assert pack_1_metadata.certification == 'certified'
+    assert pack_1_metadata.current_version == parse('1.1.1')
+    assert pack_1_metadata.author == 'Cortex XSOAR'
+    assert pack_1_metadata.tags == ['tag1']
+    assert pack_1_metadata.dependencies == [{'dependency': {'dependency': '1'}}]
 
 
 def test_load_user_metadata_advanced(repo):
@@ -255,14 +256,15 @@ def test_load_user_metadata_advanced(repo):
                                                 cpus=1,
                                                 packs=True)
 
-    artifact_manager.content.packs['Pack1'].metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
-    result = artifact_manager.content.packs['Pack1'].metadata
-    assert result.id == 'Pack1'
-    assert result.name == 'Pack Number 1'
-    assert result.price == 10
-    assert result.vendor_id == 'vendorId'
-    assert result.vendor_name == 'vendorName'
-    assert result.tags == ['tag1', 'Use Case']
+    pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+
+    assert pack_1_metadata.id == 'Pack1'
+    assert pack_1_metadata.name == 'Pack Number 1'
+    assert pack_1_metadata.price == 10
+    assert pack_1_metadata.vendor_id == 'vendorId'
+    assert pack_1_metadata.vendor_name == 'vendorName'
+    assert pack_1_metadata.tags == ['tag1', 'Use Case']
 
 
 def test_load_user_metadata_no_metadata_file(repo, capsys):
@@ -304,7 +306,8 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
                                                 cpus=1,
                                                 packs=True)
 
-    artifact_manager.content.packs['Pack1'].metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
 
     captured = capsys.readouterr()
     assert 'Pack1 pack is missing pack_metadata.json file.' in captured.err
@@ -366,24 +369,17 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
         - Verify that exceptions are written to the logger.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_as_text('Invalid of course {')
+    content_object_pack = Pack(pack_1.path)
 
-    with ChangeCWD(repo.path):
-        with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
-
-    artifact_manager.content.packs['Pack1'].metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata = content_object_pack.metadata
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
 
     captured = capsys.readouterr()
     assert 'Failed loading Pack1 user metadata.' in captured.err

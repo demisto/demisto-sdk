@@ -205,7 +205,7 @@ def test_encrypt_pack_exception_thrown(repo, capsys, fake_process):
     assert 'Error while trying to encrypt pack Pack1.' in captured.err
 
 
-def test_encrypt_pack_error_from_subprocess(repo, capsys, fake_process, mocker):
+def test_encrypt_pack_error_from_subprocess(repo, capsys, fake_process):
     """
     When:
         - Encrypting a pack.

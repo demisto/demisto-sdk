@@ -1570,10 +1570,17 @@ class ServerContext:
 
     def _execute_tests(self, queue: Queue) -> None:
         """
-        Iterates the tests queue and executes them as long as there are tests to execute
+        Iterates the tests queue and executes them as long as there are tests to execute.
+        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
+        - We need it before the mockable tests because the server starts the python2 default container when it starts
+            and it has no proxy configurations.
+        - We need it before the unmockable tests because at that point all containers will have the proxy configured
+            and we want to clean those configurations when testing unmockable playbooks
         Args:
             queue: The queue to fetch tests to execute from
         """
+
+        self._reset_containers()
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
@@ -1652,7 +1659,6 @@ class ServerContext:
         try:
             self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
             self._execute_mockable_tests()
-            self._reset_containers()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',

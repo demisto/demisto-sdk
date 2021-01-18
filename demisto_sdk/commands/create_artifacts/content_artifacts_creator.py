@@ -24,8 +24,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 ####################
 # Global variables #
 ####################
-from demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata import \
-    PackMetaData
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
@@ -546,7 +544,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack.metadata = PackMetaData.load_user_metadata(pack)
+    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path)
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
@@ -610,7 +608,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
         if artifact_manager.id_set_path:
             # Dependencies can only be done when id_set file is given.
-            pack.metadata.dependencies = PackMetaData.handle_dependencies(pack, artifact_manager.id_set_path)
+            pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path)
         else:
             logger.warning('Skipping dependencies extraction since no id_set file was provided.')
         if is_feed_pack and 'TIM' not in pack.metadata.tags:

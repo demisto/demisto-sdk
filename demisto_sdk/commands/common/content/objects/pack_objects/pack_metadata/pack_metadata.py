@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    ContentItems)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     CORE_PACKS_LIST
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -516,20 +515,20 @@ class PackMetaData(JSONObject):
 
         return [Path(new_metadata_path)]
 
-    @staticmethod
-    def load_user_metadata(pack: Pack) -> Optional[PackMetadata]:  # type: ignore[name-defined]  # noqa: F821
+    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
-            pack (Pack): current pack object.
+            pack_id (str): The pack's id.
+            pack_name (str): The pack's name.
+            pack_path (Path): The pack's path.
         """
         global logger
 
-        metadata = pack.metadata
-        user_metadata_path = os.path.join(pack.path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
+        user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
 
         if not os.path.exists(user_metadata_path):
-            logger.error(f'{pack.path.name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
+            logger.error(f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
             return None
 
         try:
@@ -539,55 +538,49 @@ class PackMetaData(JSONObject):
                 if isinstance(user_metadata, list):
                     user_metadata = {}
 
-            metadata.id = pack.id
-            metadata.name = user_metadata.get('name', '')
-            metadata.description = user_metadata.get('description', '')
-            metadata.created = user_metadata.get('created')
+            self.id = pack_id
+            self.name = user_metadata.get('name', '')
+            self.description = user_metadata.get('description', '')
+            self.created = user_metadata.get('created')
             try:
-                metadata.price = int(user_metadata.get('price', 0))
+                self.price = int(user_metadata.get('price', 0))
             except Exception:
-                logger.error(f'{metadata.name} pack price is not valid. The price was set to 0.')
-            metadata.support = user_metadata.get('support', '')
-            metadata.url = user_metadata.get('url', '')
-            metadata.email = user_metadata.get('email', '')
-            metadata.certification = user_metadata.get('certification', '')
-            metadata.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
-            metadata.author = user_metadata.get('author', '')
-            metadata.hidden = user_metadata.get('hidden', False)
-            metadata.tags = user_metadata.get('tags', [])
-            metadata.keywords = user_metadata.get('keywords', [])
-            metadata.categories = user_metadata.get('categories', [])
-            metadata.use_cases = user_metadata.get('useCases', [])
-            metadata.dependencies = user_metadata.get('dependencies', {})
+                logger.error(f'{self.name} pack price is not valid. The price was set to 0.')
+            self.support = user_metadata.get('support', '')
+            self.url = user_metadata.get('url', '')
+            self.email = user_metadata.get('email', '')
+            self.certification = user_metadata.get('certification', '')
+            self.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
+            self.author = user_metadata.get('author', '')
+            self.hidden = user_metadata.get('hidden', False)
+            self.tags = user_metadata.get('tags', [])
+            self.keywords = user_metadata.get('keywords', [])
+            self.categories = user_metadata.get('categories', [])
+            self.use_cases = user_metadata.get('useCases', [])
+            self.dependencies = user_metadata.get('dependencies', {})
 
-            if metadata.price > 0:
-                metadata.premium = True
-                metadata.vendor_id = user_metadata.get('vendorId', '')
-                metadata.vendor_name = user_metadata.get('vendorName', '')
-                metadata.preview_only = user_metadata.get('previewOnly', False)
-            if metadata.use_cases and 'Use Case' not in metadata.tags:
-                metadata.tags.append('Use Case')
-
-            return pack.metadata
+            if self.price > 0:
+                self.premium = True
+                self.vendor_id = user_metadata.get('vendorId', '')
+                self.vendor_name = user_metadata.get('vendorName', '')
+                self.preview_only = user_metadata.get('previewOnly', False)
+            if self.use_cases and 'Use Case' not in self.tags:
+                self.tags.append('Use Case')
 
         except Exception:
-            logger.error(f'Failed loading {pack.path.name} user metadata.')
+            logger.error(f'Failed loading {pack_name} user metadata.')
             return None
 
-    @staticmethod
-    def handle_dependencies(pack: Pack, id_set_path: str):
+    def handle_dependencies(self, pack_name: str, id_set_path: str) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
-            pack (Pack): current pack object.
-            id_set_path: the id_set file path.
-
-        Returns:
-            dict. All dependencies for the pack.
+            pack_name (str): The pack's name.
+            id_set_path (str): the id_set file path.
         """
         global logger
 
-        calculated_dependencies = PackDependencies.find_dependencies(pack.path.name,
+        calculated_dependencies = PackDependencies.find_dependencies(pack_name,
                                                                      id_set_path=id_set_path,
                                                                      update_pack_metadata=False,
                                                                      silent_mode=True,
@@ -595,15 +588,13 @@ class PackMetaData(JSONObject):
 
         # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
         # They can be overridden in the user metadata to be not mandatory so we need to check there as well
-        if pack.path.name in CORE_PACKS_LIST:
+        if pack_name in CORE_PACKS_LIST:
             mandatory_dependencies = [k for k, v in calculated_dependencies.items()
                                       if v.get('mandatory', False) is True and
                                       k not in CORE_PACKS_LIST and
-                                      k not in pack.metadata.dependencies.keys()]
+                                      k not in self.dependencies.keys()]
             if mandatory_dependencies:
                 logger.error(f'New mandatory dependencies {mandatory_dependencies} were '
-                             f'found in the core pack {pack.path.name}')
+                             f'found in the core pack {pack_name}')
 
-        calculated_dependencies.update(pack.metadata.dependencies)
-
-        return calculated_dependencies
+        self.dependencies.update(calculated_dependencies)

@@ -269,11 +269,13 @@ class BaseUpdate:
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
         if self.verbose:
-            click.echo('Removing _dev and _copy suffixes from name and display tags')
+            click.echo('Removing _dev and _copy suffixes from name, id and display tags')
         if self.data['name']:
             self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.data.get('display'):
             self.data['display'] = self.data.get('display', '').replace('_copy', '').replace('_dev', '')
+        if self.data.get('id'):
+            self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
     def initiate_file_validator(self, validator_type):
         """ Run schema validate and file validate of file

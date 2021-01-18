@@ -194,11 +194,13 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_description = sample_integration_path / 'Sample_description.md'
     integration_image = sample_integration_path / 'Sample_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
     unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
     integration_files = [integration_yml, integration_py, integration_description, integration_image,
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    assert not unified_yml.exists()
     assert not unified_yml_in_sample.exists()
 
     playbooks_path = converted_pack_path / 'Playbooks'

@@ -255,7 +255,7 @@ class ContributionConverter:
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
 
-    def generate_reamdes_for_new_content_pack(self):
+    def generate_readmes_for_new_content_pack(self):
         """
         Generate the readme files for a new content pack.
         """
@@ -314,7 +314,7 @@ class ContributionConverter:
                     )
 
                     if self.create_new:
-                        self.generate_reamdes_for_new_content_pack()
+                        self.generate_readmes_for_new_content_pack()
 
             # format
             self.format_converted_pack()

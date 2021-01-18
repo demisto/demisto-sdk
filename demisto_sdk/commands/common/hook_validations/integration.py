@@ -124,11 +124,12 @@ class IntegrationValidator(ContentEntityValidator):
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
         if is_deprecated:
-            if not description.startswith('Deprecated.') or \
-                    'use the' not in description.lower() or 'integration instead' not in description.lower():
-                error_message, error_code = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
+            if not description.startswith('Deprecated.') or description.endswith('Deprecated.'):
+                if ('use' not in description.lower() and 'instead' not in description.lower()) or \
+                        'No available replacement' not in description.lower():
+                    error_message, error_code = Errors.invalid_deprecated_integration_description()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
         return is_valid
 
     def are_tests_configured(self) -> bool:

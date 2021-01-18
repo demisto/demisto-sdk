@@ -497,6 +497,9 @@ class TestIntegrationValidator:
 
     DEPRECATED_VALID = {"deprecated": True, "display": "ServiceNow (Deprecated)",
                         "description": "Deprecated. Use the XXXX integration instead."}
+    DEPRECATED_VALID2 = {"deprecated": True, "display": "Feodo Tracker Hashes Feed (Deprecated)",
+                         "description": "Deprecated. Feodo Tracker no longer supports this feed. "
+                                        "No available replacement."}
     DEPRECATED_INVALID_DISPLAY = {"deprecated": True, "display": "ServiceNow (Old)",
                                   "description": "Deprecated. Use the XXXX integration instead."}
     DEPRECATED_INVALID_DESC = {"deprecated": True, "display": "ServiceNow (Deprecated)", "description": "Deprecated."}
@@ -504,6 +507,7 @@ class TestIntegrationValidator:
                                 "description": "Use the ServiceNow integration to manage..."}
     DEPRECATED_INPUTS = [
         (DEPRECATED_VALID, True),
+        (DEPRECATED_VALID2, True),
         (DEPRECATED_INVALID_DISPLAY, False),
         (DEPRECATED_INVALID_DESC, False),
         (DEPRECATED_INVALID_DESC2, False)

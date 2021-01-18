@@ -377,8 +377,8 @@ class ContributionConverter:
                                               no_auto_create_dir=(not autocreate_dir))
 
                     else:
-                        extractor = Extractor(input=content_item_file_path,
-                                              file_type=file_type, output=content_item_dir)
+                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
+                                              output=content_item_dir)
                     extractor.extract_to_package_format()
                     output_path = extractor.get_output_path()
                     # Moving the unified file to its package.
@@ -388,8 +388,14 @@ class ContributionConverter:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'
                     self.contrib_conversion_errs.append(err_msg)
-                if del_unified:
-                    os.remove(content_item_file_path)
+                finally:
+                    if del_unified:
+                        if os.path.exists(content_item_file_path):
+                            os.remove(content_item_file_path)
+                        moved_unified_dst = os.path.join(output_path, child_file_name)
+                        if os.path.exists(moved_unified_dst):
+                            os.remove(moved_unified_dst)
+                        os.remove(content_item_file_path)
 
     def create_pack_base_files(self):
         """

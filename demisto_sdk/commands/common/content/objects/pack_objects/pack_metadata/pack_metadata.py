@@ -517,7 +517,7 @@ class PackMetaData(JSONObject):
         return [Path(new_metadata_path)]
 
     @staticmethod
-    def load_user_metadata(pack: Pack) -> Optional[PackMetadata]:  # type: ignore  # noqa: F821
+    def load_user_metadata(pack: Pack) -> Optional[PackMetadata]:  # type: ignore[name-defined]  # noqa: F821
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:

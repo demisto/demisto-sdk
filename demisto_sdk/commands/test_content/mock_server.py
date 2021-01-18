@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import ast
-import json
 import os
 import string
 import time
@@ -10,6 +9,7 @@ from contextlib import contextmanager
 from pprint import pformat
 from subprocess import (STDOUT, CalledProcessError, call, check_call,
                         check_output)
+from threading import Lock
 from typing import Dict, Iterator
 
 import demisto_client.demisto_api
@@ -170,6 +170,7 @@ class MITMProxy:
     MOCKS_TMP_PATH = '/tmp/Mocks/'
     MOCKS_GIT_PATH = f'{AMIConnection.REMOTE_HOME}content-test-data/'
     TIME_TO_WAIT_FOR_PROXY_SECONDS = 30
+    content_data_lock = Lock()
 
     def __init__(self,
                  public_ip,
@@ -223,6 +224,7 @@ class MITMProxy:
 
     def push_mock_files(self):
         self.logging_module.debug('Pushing new/updated mock files to mock git repo.', real_time=True)
+        self.content_data_lock.acquire()
         try:
             output = self.ami.check_output(
                 'cd content-test-data && git reset --hard && git pull -r -Xtheirs && git push -f'.split(),
@@ -230,6 +232,10 @@ class MITMProxy:
             self.logging_module.debug(f'Pushing mock files output:\n{output.decode()}', real_time=True)
         except CalledProcessError as exc:
             self.logging_module.debug(f'Pushing mock files output:\n{exc.output.decode()}', real_time=True)
+        except Exception as exc:
+            self.logging_module.debug(f'Failed pushing mock files with error: {exc}', real_time=True)
+        finally:
+            self.content_data_lock.release()
 
     def configure_proxy_in_demisto(self, username, password, server, proxy=''):
         client = demisto_client.configure(base_url=server, username=username,
@@ -312,8 +318,24 @@ class MITMProxy:
             self.ami.call(['mkdir', '--parents', dst_folder])
             self.ami.call(['mv', src_files, dst_folder])
 
-    def clean_mock_file(self, playbook_or_integration_id, path=None):
-        self.logging_module.debug(f'clean_mock_file was called for test "{playbook_or_integration_id}"')
+    def normalize_mock_file(self, playbook_or_integration_id: str, path: str = None):
+        """Normalize the mock file of a test playbook
+
+        Normalizes a mock file by doing the following:
+        1. Replaces the timestamp/variable data in a mock file as identified by
+        the keys provided in the mock file's associated 'problematic_keys.json'
+        file, with constant values.
+        2. Standardizes the query parameter data order for all requests.
+
+        Args:
+            playbook_or_integration_id: ID of the test playbook or
+                integration for which the associated mock file will be
+                normalized.
+            path: Path to the directory in which to search
+                for the required data (temp directory or repo). If not
+                provided, method will use the current directory.
+        """
+        self.logging_module.debug(f'normalize_mock_file was called for test "{playbook_or_integration_id}"')
         path = path or self.current_folder
         problem_keys_filepath = os.path.join(path, get_folder_path(playbook_or_integration_id), 'problematic_keys.json')
         self.logging_module.debug(f'problem_keys_filepath="{problem_keys_filepath}"')
@@ -323,65 +345,44 @@ class MITMProxy:
                                       f' "{problem_keys_filepath}" when recording '
                                       f'the "{playbook_or_integration_id}" test playbook')
             return
-        problem_keys = json.loads(self.ami.check_output(['cat', problem_keys_filepath]))
 
-        # is there data in problematic_keys.json that needs whitewashing?
-        self.logging_module.debug('checking if there is data to whitewash')
-        needs_whitewashing = False
-        for val in problem_keys.values():
-            if val:
-                needs_whitewashing = True
-                break
-
-        if problem_keys and needs_whitewashing:
-            mock_file_path = os.path.join(path, get_mock_file_path(playbook_or_integration_id))
-            cleaned_mock_filepath = mock_file_path.strip('.mock') + '_cleaned.mock'
-            # rewrite mock file with problematic key values replaced
-            command = 'mitmdump -ns ~/timestamp_replacer.py '
-            log_file = os.path.join(path, get_log_file_path(playbook_or_integration_id, record=True))
-            # Handle proxy log output
-            debug_opt = f' | sudo tee -a {log_file}'
-            options = f'--set script_mode=clean --set keys_filepath={problem_keys_filepath}'
-            if options.strip():
-                command += options
-            command += ' -r {} -w {}{}'.format(mock_file_path, cleaned_mock_filepath, debug_opt)
-            command = "source .bash_profile && {}".format(command)
-            self.logging_module.debug(f'command to clean mockfile:\n\t{command}')
-            split_command = command.split()
-            self.logging_module.debug('Let\'s try and clean the mockfile from timestamp data!')
-            try:
-                check_output(self.ami.add_ssh_prefix(split_command, ssh_options='-t'), stderr=STDOUT)
-            except CalledProcessError as e:
-                self.logging_module.debug(
-                    'There may have been a problem when filtering timestamp data from the mock file.')
-                err_msg = f'command `{command}` exited with return code [{e.returncode}]'
-                err_msg = f'{err_msg} and the output of "{e.output}"' if e.output else err_msg
-                if e.stderr:
-                    err_msg += f'STDERR: {e.stderr}'
-                self.logging_module.debug(err_msg)
-            else:
-                self.logging_module.debug('Success!')
-
-            # verify cleaned mock is different than original
-            self.logging_module.debug('verifying cleaned mock file is different than the original mock file')
-            diff_cmd = f'diff -sq {cleaned_mock_filepath} {mock_file_path}'
-            try:
-                diff_cmd_output = self.ami.check_output(diff_cmd.split()).decode().strip()
-                self.logging_module.debug(f'diff_cmd_output={diff_cmd_output}')
-                if diff_cmd_output.endswith('are identical'):
-                    self.logging_module.debug('cleaned mock file and original mock file are identical')
-                else:
-                    self.logging_module.debug('looks like the cleaning process did something!')
-
-            except CalledProcessError:
-                self.logging_module.debug('looks like the cleaning process did something!')
-
-            self.logging_module.debug('Replace old mock with cleaned one.')
-            mv_cmd = f'mv {cleaned_mock_filepath} {mock_file_path}'
-            self.ami.call(mv_cmd.split())
+        mock_file_path = os.path.join(path, get_mock_file_path(playbook_or_integration_id))
+        cleaned_mock_filepath = mock_file_path.strip('.mock') + '_cleaned.mock'
+        log_file = os.path.join(path, get_log_file_path(playbook_or_integration_id, record=True))
+        command = '/home/ec2-user/.local/bin/mitmdump -ns ~/timestamp_replacer.py ' \
+                  f'--set script_mode=clean --set keys_filepath={problem_keys_filepath}' \
+                  f' -r {mock_file_path} -w {cleaned_mock_filepath} | sudo tee -a {log_file}'
+        self.logging_module.debug(f'command to normalize mockfile:\n\t{command}')
+        self.logging_module.debug('Let\'s try and normalize the mockfile')
+        try:
+            check_output(self.ami.add_ssh_prefix(command.split(), ssh_options='-t'), stderr=STDOUT)
+        except CalledProcessError as e:
+            self.logging_module.debug(
+                'There may have been a problem while normalizing the mock file.')
+            err_msg = f'command `{command}` exited with return code [{e.returncode}]'
+            err_msg = f'{err_msg} and the output of "{e.output}"' if e.output else err_msg
+            if e.stderr:
+                err_msg += f'STDERR: {e.stderr}'
+            self.logging_module.debug(err_msg)
         else:
-            self.logging_module.debug('"problematic_keys.json" dictionary values were empty - '
-                                      'no data to whitewash from the mock file.')
+            self.logging_module.debug('Success!')
+
+        # verify cleaned mock is different than original
+        diff_cmd = f'diff -sq {cleaned_mock_filepath} {mock_file_path}'
+        try:
+            diff_cmd_output = self.ami.check_output(diff_cmd.split()).decode().strip()
+            self.logging_module.debug(f'diff_cmd_output={diff_cmd_output}')
+            if diff_cmd_output.endswith('are identical'):
+                self.logging_module.debug('normalized mock file and original mock file are identical')
+            else:
+                self.logging_module.debug('the normalized mock file differs from the original')
+
+        except CalledProcessError:
+            self.logging_module.debug('the normalized mock file differs from the original')
+
+        self.logging_module.debug('Replacing original mock file with the normalized one.')
+        mv_cmd = f'mv {cleaned_mock_filepath} {mock_file_path}'
+        self.ami.call(mv_cmd.split())
 
     def start(self, playbook_or_integration_id, path=None, record=False) -> None:
         """Start the proxy process and direct traffic through it.
@@ -565,7 +566,7 @@ def run_with_mock(proxy_instance: MITMProxy,
         proxy_instance.stop()
         if record:
             if result_holder.get(RESULT):
-                proxy_instance.clean_mock_file(playbook_or_integration_id)
+                proxy_instance.normalize_mock_file(playbook_or_integration_id)
                 proxy_instance.move_mock_file_to_repo(playbook_or_integration_id)
                 proxy_instance.successful_rerecord_count += 1
                 proxy_instance.rerecorded_tests.append(playbook_or_integration_id)
@@ -582,4 +583,3 @@ def run_with_mock(proxy_instance: MITMProxy,
                 proxy_instance.successful_tests_count += 1
             else:
                 proxy_instance.failed_tests_count += 1
-                proxy_instance.get_mitmdump_service_status()

@@ -228,7 +228,6 @@ class Contribution:
             "name": self.name,
             "description": "",
             "updated": "0001-01-01T00:00:00Z",
-            "created": "2020-06-30T10:35:51.24973515Z",
             "support": "internalContribution",
             "author": "Who Cares",
             "authorImage": "",

@@ -711,8 +711,8 @@ class ValidateManager:
     def format_file_path(self, file_path, old_path, old_format_files):
         file_type = find_type(file_path)
 
-        # ignore unrecognized file types
-        if not file_type or file_type in self.skipped_file_types:
+        # ignore unrecognized file types and pack metadata
+        if not file_type or file_type == FileType.PACK_METADATA:
             self.ignored_files.add(file_path)
             return None
 

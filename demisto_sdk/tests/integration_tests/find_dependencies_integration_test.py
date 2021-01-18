@@ -58,13 +58,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                           '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
-                                          '-v', os.path.join(repo.path, 'debug.md'),
-                                          ])
+                                          '--verbose']
+                                   )
         assert "{}" in result.output
         assert 'Found dependencies result for FindDependencyPack pack:' in result.output
         assert result.exit_code == 0
         assert result.stderr == ""
-        assert os.path.isfile(os.path.join(repo.path, 'debug.md'))
 
     def test_integration_find_dependencies__sanity_with_id_set(self, repo):
         """

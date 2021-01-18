@@ -611,5 +611,14 @@ yml_data_cases = [(
 
 @pytest.mark.parametrize("yml_input, expected_results", yml_data_cases)
 def test_generate_setup_section_with_additional_info(yml_input, expected_results):
+    """
+        Given
+            - A yml file with parameters in configuration section
+        When
+            - Running the generate_setup_section command.
+        Then
+            - Validate that the generated table has the 'Description' column iff
+            at least one parameter has the additionalinfo field.
+    """
     section = generate_setup_section(yml_input)
     assert section == expected_results

@@ -310,7 +310,7 @@ class Script(YAMLContentUnifiedObject):
         args = [arg['name'] for arg in self.get('args', [])]
         for arg in args:
             if args.count(arg) > 1:
-                error_message, error_code = Errors.breaking_backwards_arg_changed()
+                error_message, error_code = Errors.duplicated_argument_in_script(arg)
                 if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_valid = False
 

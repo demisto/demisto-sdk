@@ -87,6 +87,7 @@ class TestIDSetCreator:
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
         assert 'Mappers' in id_set.keys()
+        assert 'Packs' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -147,7 +148,10 @@ class TestIDSetCreator:
         with open(self.file_path, 'r') as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
-            assert len(content_entity_value_list) == 0
+            if content_entity != 'Packs':
+                assert len(content_entity_value_list) == 0
+            else:
+                assert len(content_entity_value_list) == 1
 
 
 class TestDuplicates:

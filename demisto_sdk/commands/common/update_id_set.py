@@ -11,7 +11,7 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import click
 import networkx
@@ -916,15 +916,13 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
 
 
 def process_pack_metadata(file_path: str, print_logs: bool) -> list:
-    res = []
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
-        res.append(get_pack_metadata_data(file_path))
+        return [get_pack_metadata_data(file_path)]
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
-    return res
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
@@ -1029,19 +1027,12 @@ def get_playbooks_paths(pack_to_create):
 
 def get_pack_metadata_paths(pack_to_create):
     if pack_to_create:
-        path_list = [
-            [pack_to_create, 'pack_metadata.json']
-        ]
+        path_list = [pack_to_create, 'pack_metadata.json']
 
     else:
-        path_list = [
-            ['Packs', '*', 'pack_metadata.json']
-        ]
+        path_list = ['Packs', '*', 'pack_metadata.json']
 
-    metadata_files = list(pack_to_create)
-    for path in path_list:
-        metadata_files.extend(glob.glob(os.path.join(*path)))
-    return metadata_files
+    return glob.glob(os.path.join(*path_list))
 
 
 def get_general_paths(path, pack_to_create):
@@ -1219,7 +1210,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
-    packs_list = []
+    packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count() * 1.5))
 
@@ -1233,7 +1224,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs
                                         ),
                                 get_pack_metadata_paths(pack_to_create)):
-                packs_list.extend(arr)
+                packs_dict.update(arr[0])
+
+        progress_bar.update(1)
 
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
@@ -1424,7 +1417,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['Packs'] = sort(packs_list)
+    new_ids_dict['Packs'] = {key: packs_dict[key] for key in sorted(packs_dict.keys())}
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

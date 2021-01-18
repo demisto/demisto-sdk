@@ -794,7 +794,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_command_name_in_script(script_name, command):
-        return f"in script {script_name} the comamnd {command} has an invalid name. " \
+        return f"in script {script_name} the command {command} has an invalid name. " \
                f"Please make sure:\n" \
                f"1 - The right command name is set and the spelling is correct." \
                f" Do not use 'dev' in it or suffix it with 'copy'\n" \

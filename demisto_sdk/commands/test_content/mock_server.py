@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pprint import pformat
 from subprocess import (STDOUT, CalledProcessError, call, check_call,
                         check_output)
+from threading import Lock
 from typing import Dict, Iterator
 
 import demisto_client.demisto_api
@@ -169,6 +170,7 @@ class MITMProxy:
     MOCKS_TMP_PATH = '/tmp/Mocks/'
     MOCKS_GIT_PATH = f'{AMIConnection.REMOTE_HOME}content-test-data/'
     TIME_TO_WAIT_FOR_PROXY_SECONDS = 30
+    content_data_lock = Lock()
 
     def __init__(self,
                  public_ip,
@@ -222,6 +224,7 @@ class MITMProxy:
 
     def push_mock_files(self):
         self.logging_module.debug('Pushing new/updated mock files to mock git repo.', real_time=True)
+        self.content_data_lock.acquire()
         try:
             output = self.ami.check_output(
                 'cd content-test-data && git reset --hard && git pull -r -Xtheirs && git push -f'.split(),
@@ -229,6 +232,10 @@ class MITMProxy:
             self.logging_module.debug(f'Pushing mock files output:\n{output.decode()}', real_time=True)
         except CalledProcessError as exc:
             self.logging_module.debug(f'Pushing mock files output:\n{exc.output.decode()}', real_time=True)
+        except Exception as exc:
+            self.logging_module.debug(f'Failed pushing mock files with error: {exc}', real_time=True)
+        finally:
+            self.content_data_lock.release()
 
     def configure_proxy_in_demisto(self, username, password, server, proxy=''):
         client = demisto_client.configure(base_url=server, username=username,

@@ -92,8 +92,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
-            self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description(),
+            self.is_valid_as_deprecated(),
             self.is_mapping_fields_command_exist()
         ]
 
@@ -103,12 +102,34 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_as_deprecated(self):
         """Check if the integration is valid as a deprecated integration."""
-
         answers = [
-            self.is_valid_deprecated_integration_display_name(),
-            self.is_valid_deprecated_integration_description(),
+            self._is_valid_deprecated_integration_display_name(),
+            self._is_valid_deprecated_integration_description(),
         ]
         return all(answers)
+
+    def _is_valid_deprecated_integration_display_name(self) -> bool:
+        is_valid = True
+        is_deprecated = self.current_file.get('deprecated', False)
+        display_name = self.current_file.get('display', '')
+        if is_deprecated:
+            if not display_name.endswith('(Deprecated)'):
+                error_message, error_code = Errors.invalid_deprecated_integration_display_name()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+        return is_valid
+
+    def _is_valid_deprecated_integration_description(self) -> bool:
+        is_valid = True
+        is_deprecated = self.current_file.get('deprecated', False)
+        description = self.current_file.get('description', '')
+        if is_deprecated:
+            if not description.startswith(
+                    'Deprecated.') or 'Use the' not in description or 'integration instead' not in description:
+                error_message, error_code = Errors.invalid_deprecated_integration_description()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+        return is_valid
 
     def are_tests_configured(self) -> bool:
         """
@@ -805,28 +826,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         return ans
 
-    def is_valid_deprecated_integration_display_name(self) -> bool:
-        is_valid = True
-        is_deprecated = self.current_file.get('deprecated', False)
-        display_name = self.current_file.get('display', '')
-        if is_deprecated:
-            if not display_name.endswith('(Deprecated)'):
-                error_message, error_code = Errors.invalid_deprecated_integration_display_name()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-        return is_valid
-
-    def is_valid_deprecated_integration_description(self) -> bool:
-        is_valid = True
-        is_deprecated = self.current_file.get('deprecated', False)
-        description = self.current_file.get('description', '')
-        if is_deprecated:
-            if not description.startswith('Deprecated.'):
-                error_message, error_code = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-        return is_valid
-
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.
 
@@ -869,7 +868,8 @@ class IntegrationValidator(ContentEntityValidator):
         script = self.current_file.get('script', {})
 
         if not any([
-            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"), script.get('longRunning')]
+            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"),
+            script.get('longRunning')]
         ):
             self.is_valid = False
             error, code = Errors.integration_not_runnable()

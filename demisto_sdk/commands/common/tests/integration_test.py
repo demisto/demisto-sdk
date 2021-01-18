@@ -495,6 +495,37 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_description() is True
 
+    DEPRECATED_VALID = {"deprecated": True, "display": "ServiceNow (Deprecated)",
+                        "description": "Deprecated. Use the XXXX integration instead."}
+    DEPRECATED_INVALID_DISPLAY = {"deprecated": True, "display": "ServiceNow (Old)",
+                                  "description": "Deprecated. Use the XXXX integration instead."}
+    DEPRECATED_INVALID_DESC = {"deprecated": True, "display": "ServiceNow (Deprecated)", "description": "Deprecated."}
+    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "display": "ServiceNow (Deprecated)",
+                                "description": "Use the ServiceNow integration to manage..."}
+    DEPRECATED_INPUTS = [
+        (DEPRECATED_VALID, True),
+        (DEPRECATED_INVALID_DISPLAY, False),
+        (DEPRECATED_INVALID_DESC, False),
+        (DEPRECATED_INVALID_DESC2, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
+    def test_is_valid_deprecated_integration(self, current, answer):
+        """
+        Given
+            - A deprecated integration with a display and description.
+
+        When
+            - running is_valid_as_deprecated.
+
+        Then
+            - an integration with an invalid display name or invalid description will be errored.
+        """
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_as_deprecated() is answer
+
 
 class TestIsFetchParamsExist:
     def setup(self):
@@ -571,7 +602,7 @@ class TestIsValidMaxFetchAndFirstFetch:
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'max_fetch']
-        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False, \
             'is_valid_fetch() returns True instead False'
 
     def test_missing_default_value_in_max_fetch(self):
@@ -579,20 +610,20 @@ class TestIsValidMaxFetchAndFirstFetch:
         for param in self.validator.current_file['configuration']:
             if param.get('name') == 'max_fetch':
                 param.pop('defaultvalue')
-        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False, \
             'is_valid_fetch() returns True instead False'
 
     def test_missing_fetch_time(self):
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'first_fetch']
-        assert self.validator.is_valid_max_fetch_and_first_fetch() is False,\
+        assert self.validator.is_valid_max_fetch_and_first_fetch() is False, \
             'is_valid_fetch() returns True instead False'
 
     def test_not_fetch(self):
         self.validator.is_valid = True
         self.validator.current_file['script']['isfetch'] = False
-        assert self.validator.is_valid_max_fetch_and_first_fetch(),\
+        assert self.validator.is_valid_max_fetch_and_first_fetch(), \
             'is_valid_fetch() returns False instead True'
 
 
@@ -647,7 +678,8 @@ class TestIsFeedParamsExist:
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}
     HIDDEN_TRUE_AND_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"ty": "0", "r": "true", "hidden": True}]}
     HIDDEN_ALLOWED_TRUE = {"configuration": [{"name": "longRunning", "required": "false", "hidden": True}]}
-    HIDDEN_ALLOWED_FEED_REPUTATION = {"configuration": [{"name": "feedReputation", "required": "false", "hidden": True}]}
+    HIDDEN_ALLOWED_FEED_REPUTATION = {
+        "configuration": [{"name": "feedReputation", "required": "false", "hidden": True}]}
 
     IS_VALID_HIDDEN_PARAMS = [
         (NO_HIDDEN, True),

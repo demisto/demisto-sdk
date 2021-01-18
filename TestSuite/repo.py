@@ -64,8 +64,7 @@ class Repo:
             'Layouts': [],
             'Reports': [],
             'Widgets': [],
-            'Mappers': [],
-            'Packs': []
+            'Mappers': []
         })
 
     def __del__(self):
@@ -161,11 +160,6 @@ class Repo:
         test_playbook.create_default_playbook()
         test_playbook.yml.update({'id': f'{name}_test_playbook'})
         test_playbook.yml.update({'name': f'{name}_test_playbook'})
-
-        pack_metadata = pack.create_pack_metadata(f'{name}_pack_metadata')
-        pack_metadata.write_json({'id': f'{name} - pack metadata'})
-        pack_metadata.update({'name': f'{name} - pack_metadata'})
-        pack_metadata.update({'current_version': f'{name} - pack_metadata'})
 
     def setup_content_repo(self, number_of_packs):
         """Creates a fully constructed content repository, where packs names will pack_<index>.

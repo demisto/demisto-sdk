@@ -37,7 +37,7 @@ CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Cl
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -688,9 +688,10 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
 
 
 def get_pack_metadata_data(path):
+    pack_name = get_pack_name(path)
     json_data = get_json(path)
     return {
-        get_pack_name(path): {
+        pack_name: {
             "name": json_data.get('name', ''),
             "current_version": json_data.get('currentVersion', ''),
             "author": json_data.get('author', ''),
@@ -917,10 +918,9 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
 def process_pack_metadata(file_path: str, print_logs: bool) -> list:
     res = []
     try:
-        if find_type(file_path) == FileType.PACK_METADATA:
-            if print_logs:
-                print(f'adding {file_path} to id_set')
-            res.append(get_pack_metadata_data(file_path))
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+        res.append(get_pack_metadata_data(file_path))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise

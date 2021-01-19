@@ -12,6 +12,7 @@
 * Classifier dependencies from incident types are now marked as optional.
 * Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 * Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
+* Using the *verbose* argument in the **find-dependencies** command will now log to the console.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

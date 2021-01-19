@@ -114,6 +114,9 @@ def main():
         options = options_handler()
         print("Collecting data...")
         commit_github_url, changed_files, diffs, commit_author = extract_changes_from_commit(options.commit)
+        if len(changed_files) == 0:
+            print("Found no relevant schema files in commit. Not sending slack message.")
+            return
         message = build_message(options.commit, commit_github_url, changed_files, diffs, commit_author)
         print(f"Posting message...\n{pformat(message)}")
         notify_slack(options.slack_token, SCHEMA_UPDATE_CHANNEL, message)

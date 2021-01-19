@@ -104,17 +104,15 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 'pack': 'FindDependencyPack',
             }
         })
-
         repo.id_set.write_json(id_set)
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
+                                          '-idp', repo.id_set.path, '--no-update',
                                           ])
+
         assert 'Found dependencies result for FindDependencyPack pack:' in result.output
         assert "{}" in result.output
         assert result.exit_code == 0
@@ -151,15 +149,13 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/NotValidPack',
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', 'Packs/NotValidPack',
+                                          '-idp', repo.id_set.path, '--no-update',
                                           ])
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
-    def test_integration_find_dependencies_with_dependency(self, repo):
+    def test_integration_find_dependencies_with_dependency(self, repo, mocker):
         """
         Given
         - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -201,15 +197,20 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         })
 
         repo.id_set.write_json(id_set)
+        mocker.patch("click.secho")
+        from click import secho
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                           '-i', 'Packs/' + os.path.basename(pack2.path),
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+                                          '-idp', repo.id_set.path, '-v'
                                           ])
+
+        assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
+        assert secho.call_args_list[2][0][0] == "script1 depends on: {('FindDependencyPack1', True)}"
+        assert secho.call_args_list[-1][0][0] == "All level dependencies are: ['FindDependencyPack1']"
         assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output
         assert '"display_name": "FindDependencyPack1"' in result.output
         assert result.exit_code == 0

@@ -7,9 +7,12 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -701,6 +704,7 @@ class TestClassifierValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ClassifierValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -816,6 +820,7 @@ class TestMapperValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(MapperValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):

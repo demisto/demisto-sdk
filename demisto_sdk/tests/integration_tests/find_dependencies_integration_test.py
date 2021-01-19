@@ -59,11 +59,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i',
-                                          'Packs/' + os.path.basename(repo.packs[0].path), '-vv'
+                                          'Packs/' + os.path.basename(repo.packs[0].path), '-v'
                                           ]
                                    )
 
-        assert secho.call_args_list[0][0][0] == 'First level dependencies are: {}'
+        assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'  # first log line is the pack name
+        assert secho.call_args_list[-1][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 

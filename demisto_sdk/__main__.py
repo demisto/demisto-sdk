@@ -971,8 +971,8 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
-@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / -vvv",
-              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
+              is_flag=True)
 def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`

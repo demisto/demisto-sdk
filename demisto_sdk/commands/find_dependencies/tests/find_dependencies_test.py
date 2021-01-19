@@ -790,7 +790,7 @@ class TestDependsOnPlaybook:
         Then
             - The indicator field accounttype should result in a mandatory dependency to the CommonTypes pack.
         """
-        expected_result = {('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', True)}
+        expected_result = {('SafeBreach', False), ('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', True)}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {

@@ -209,7 +209,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                                           ])
 
         assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
-        assert secho.call_args_list[2][0][0] == "script1 depends on: {('FindDependencyPack1', True)}"
         assert secho.call_args_list[-1][0][0] == "All level dependencies are: ['FindDependencyPack1']"
         assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output
         assert '"display_name": "FindDependencyPack1"' in result.output

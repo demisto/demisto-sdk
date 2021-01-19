@@ -371,12 +371,14 @@ class PlaybookValidator(ContentEntityValidator):
         for task_key, task in tasks.items():
             taskid = task.get('taskid', '')
             inner_id = task.get('task', {}).get('id', '')
-            is_valid = is_string_uuid(taskid) and is_string_uuid(inner_id)
+            is_valid_task = is_string_uuid(taskid) and is_string_uuid(inner_id)
 
-            if not is_valid:
+            if not is_valid_task:
+                is_valid = is_valid_task
                 error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    break
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
+                # invalid task in order to raise error for all the invalid tasks at the file
+
         return is_valid
 
     def _is_taskid_equals_id(self):
@@ -390,10 +392,12 @@ class PlaybookValidator(ContentEntityValidator):
         for task_key, task in tasks.items():
             taskid = task.get('taskid', '')
             inner_id = task.get('task', {}).get('id', '')
-            is_valid = (taskid == inner_id)
+            is_valid_task = (taskid == inner_id)
 
-            if not is_valid:
+            if not is_valid_task:
+                is_valid = is_valid_task
                 error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    break
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
+                # invalid task in order to raise error for all the invalid tasks at the file
+
         return is_valid

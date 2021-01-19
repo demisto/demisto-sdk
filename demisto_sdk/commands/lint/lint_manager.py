@@ -739,7 +739,7 @@ class LintManager:
             self.add_to_json_outputs(output, file_path, json_contents)
 
     def mypy_error_formatter(self, errors, json_contents):
-        mypy_errors = []
+        mypy_errors: list = []
         gather_error: list = []
         for line in errors.get('messages').split('\n'):
             if os.path.isfile(line.split(':')[0]):

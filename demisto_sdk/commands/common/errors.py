@@ -465,7 +465,7 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_integration_description():
         return 'The description of all deprecated integrations should follow one of the formats:' \
-               '1. "Deprecated. Use the <INTEGRATION_DISPLAY_NAME> integration instead."' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
                '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod

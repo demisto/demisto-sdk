@@ -125,7 +125,7 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r'Deprecated\. Use the .+ integration instead\.'
+        deprecated_v2_regex = r'Deprecated\. Use .+ instead\.'
         deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
         if is_deprecated:
             is_valid = False  # initially it is false, if deprecation desc matches one of the templates, will be valid.

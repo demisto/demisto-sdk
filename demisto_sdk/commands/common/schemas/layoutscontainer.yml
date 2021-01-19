@@ -22,6 +22,8 @@ mapping:
     type: str
   system:
     type: bool
+  detached:
+    type: bool
   edit:
     type: map
     mapping:

@@ -207,6 +207,24 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
     assert 'test_that_should_run' not in build_context.tests_data_keeper.skipped_tests
 
 
+def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
+    """
+    Given:
+        - A build context with empty filtered tests list
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that all tests that are skipped
+    """
+    tests = [generate_test_configuration(playbook_id='test_that_should_be_skipped')]
+    content_conf_json = generate_content_conf_json(tests=tests)
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             filtered_tests_content=[])
+    assert 'test_that_should_be_skipped' in build_context.tests_data_keeper.skipped_tests
+
+
 def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
     """
     Given:

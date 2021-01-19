@@ -617,7 +617,7 @@ def test_generate_setup_section_with_additional_info(yml_input, expected_results
         When
             - Running the generate_setup_section command.
         Then
-            - Validate that the generated table has the 'Description' column iff
+            - Validate that the generated table has the 'Description' column if
             at least one parameter has the additionalinfo field.
     """
     section = generate_setup_section(yml_input)

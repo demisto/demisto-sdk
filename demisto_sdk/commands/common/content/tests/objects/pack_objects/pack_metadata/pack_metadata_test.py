@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (PACKS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     PackMetaData
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.logger import logging_setup
@@ -279,8 +280,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
         - Verify that exceptions are written to the logger.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata as metadata_class
+    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
 
@@ -295,22 +295,14 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
             'vendorName': 'vendorName'
         }
     )
+    os.remove(pack_1.pack_metadata.path)
 
-    with ChangeCWD(repo.path):
-        os.remove(pack_1.pack_metadata.path)
-        with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
-
-    pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
+    content_object_pack = Pack(pack_1.path)
+    pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
 
     captured = capsys.readouterr()
-    assert 'Pack1 pack is missing pack_metadata.json file.' in captured.err
+    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.err
 
 
 def test_load_user_metadata_invalid_price(repo, capsys):
@@ -325,8 +317,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
         - Verify that exceptions are written to the logger.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata as metadata_class
+    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
 
@@ -342,18 +333,11 @@ def test_load_user_metadata_invalid_price(repo, capsys):
         }
     )
 
-    with ChangeCWD(repo.path):
-        with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
-
-    artifact_manager.content.packs['Pack1'].metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
-
+    content_object_pack = Pack(pack_1.path)
+    pack_1_metadata = content_object_pack.metadata
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
     captured = capsys.readouterr()
+
     assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.err
 
 
@@ -369,8 +353,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
         - Verify that exceptions are written to the logger.
 
     """
-    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata as metadata_class
+    import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
 
@@ -382,4 +365,4 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
 
     captured = capsys.readouterr()
-    assert 'Failed loading Pack1 user metadata.' in captured.err
+    assert 'Failed loading Pack Number 1 user metadata.' in captured.err

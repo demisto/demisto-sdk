@@ -1234,7 +1234,7 @@ class TestPacksMetadata:
 
     @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
-    def test_process_metadata(repo, metadata_file_content, author, certification):
+    def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
         """
         Given
             - A pack_metadata file for Pack1
@@ -1245,6 +1245,10 @@ class TestPacksMetadata:
         Then
             - parsing all the data from file successfully
         """
+        import demisto_sdk.commands.common.tools as tools
+
+        mocker.patch.object(tools, 'get_pack_name', return_value='Pack1')
+
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
 

@@ -1,3 +1,5 @@
+import re
+
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
@@ -123,13 +125,17 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
+        deprecated_v2_regex = r'Deprecated\. Use the .+ integration instead\.'
+        deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
         if is_deprecated:
-            if not description.startswith('Deprecated.') or description.endswith('Deprecated.'):
-                if ('use' not in description.lower() and 'instead' not in description.lower()) or \
-                        'No available replacement' not in description.lower():
-                    error_message, error_code = Errors.invalid_deprecated_integration_description()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
-                        is_valid = False
+            is_valid = False  # initially it is false, if deprecation desc matches one of the templates, will be valid.
+            if re.search(deprecated_v2_regex, description):
+                is_valid = True
+            elif re.search(deprecated_no_replace_regex, description):
+                is_valid = True
+            else:
+                error_message, error_code = Errors.invalid_deprecated_integration_description()
+                self.handle_error(error_message, error_code, file_path=self.file_path)
         return is_valid
 
     def are_tests_configured(self) -> bool:

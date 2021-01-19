@@ -71,7 +71,7 @@ def build_bandit_command(files: List[Path]) -> str:
     """
     command = "python3 -m bandit"
     # Reporting only issues with high and medium severity level
-    command += " -ll"
+    # command += " -ll"
     # Reporting only issues of a high confidence level
     command += " -iii"
     # Skip the following tests: Pickle usage, Use of insecure hash func, Audit url open,
@@ -83,6 +83,9 @@ def build_bandit_command(files: List[Path]) -> str:
     command += f" --exclude={','.join(excluded_files)}"
     # Only show output in the case of an error
     command += " -q"
+    # Setting error format
+    command += " --format custom --msg-template '{abspath}:{line}: {test_id} " \
+               "[Severity: {severity} Confidence: {confidence}] {msg}'"
     # Generating path patterns - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"

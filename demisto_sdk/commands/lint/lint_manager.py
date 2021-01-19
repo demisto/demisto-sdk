@@ -14,12 +14,12 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (find_file, find_type, get_json,
+                                               is_external_repository,
                                                print_error, print_v,
                                                print_warning)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
@@ -100,7 +100,7 @@ class LintManager:
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = 'content' in remote_url
-            is_external_repo = tools.is_external_repository()
+            is_external_repo = is_external_repository()
 
             if not is_fork_repo and not is_external_repo:
                 raise git.InvalidGitRepositoryError
@@ -748,6 +748,11 @@ class LintManager:
                     gather_error = []
             gather_error.append(line)
 
+        # handle final error
+        # last line is irrelevant
+        if gather_error:
+            mypy_errors.append('\n'.join(gather_error[:-1]))
+
         for message in mypy_errors:
             file_path = message.split(':')[0]
             output = {
@@ -760,19 +765,18 @@ class LintManager:
             self.add_to_json_outputs(output, file_path, json_contents)
 
     def bandit_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages').split('Issue:')
+        error_messages = errors.get('messages').split('\n')
         for message in error_messages:
-            if 'Location:' not in message:
-                continue
-            file_path = message.split('Location:')[1].split(':')[0].lstrip()
-            output = {
-                'linter': 'bandit',
-                'severity': errors.get('type'),
-                'code': message.split(':')[0][2:],
-                'message': message.split(':')[1].split('\n')[0].replace(']', '-'),
-                'line-number': message.split('Location:')[1].split(':')[1].split('\n')[0],
-            }
-            self.add_to_json_outputs(output, file_path, json_contents)
+            if message:
+                file_path = message.split(':')[0]
+                output = {
+                    'linter': 'bandit',
+                    'severity': errors.get('type'),
+                    'code': message.split(' ')[1],
+                    'message': message.split('[')[1].replace(']', ' -'),
+                    'line-number': message.split(':')[1],
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
 
     def vulture_error_formatter(self, errors, json_contents):
         error_messages = errors.get('messages').split('\n')

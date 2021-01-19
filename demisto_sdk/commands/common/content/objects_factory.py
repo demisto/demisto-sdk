@@ -117,4 +117,7 @@ TYPE_CONVERSION_BY_FileType_validators = {
 
 
 def path_to_object_validate(path: Union[str, Path], base: BaseValidator, file_type: FileType = FileType.INTEGRATION):
+    if file_type not in TYPE_CONVERSION_BY_FileType_validators.keys():
+        return None
+
     return TYPE_CONVERSION_BY_FileType_validators.get(file_type)(path, base)  # type: ignore

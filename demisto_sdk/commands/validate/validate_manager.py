@@ -328,6 +328,8 @@ class ValidateManager:
             if not self.skip_pack_rn_validation:
                 return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list,
                                                    is_modified)
+            else:
+                return True
 
         base = BaseValidator(ignored_errors=pack_error_ignore_list,
                              print_as_warnings=self.print_ignored_errors,
@@ -337,7 +339,16 @@ class ValidateManager:
                              skip_test_conf=self.skip_conf_json, suppress_print=self.no_configuration_prints,
                              is_modified=is_modified, id_set_file=self.id_set_file, old_file_path=old_file_path)
 
-        return path_to_object_validate(path=file_path, file_type=file_type, base=base).validate()
+        file_validator = path_to_object_validate(path=file_path, file_type=file_type, base=base)
+
+        # A second catch for non-supported file types which are not listed.
+        if not file_validator:
+            error_message, error_code = Errors.file_type_not_supported(given_type=file_type.value)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
+
+        return file_validator.validate()
 
     def run_validation_using_git(self):
         """Runs validation on only changed packs/files (g)

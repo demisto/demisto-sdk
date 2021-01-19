@@ -71,7 +71,7 @@ class LintManager:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
-        self.json_outputs: list = []
+        self.linters_error_list: list = []
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -445,7 +445,7 @@ class LintManager:
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
-                    self.json_outputs.append({
+                    self.linters_error_list.append({
                         'linter': check,
                         'pack': fail_pack,
                         'type': 'error',
@@ -483,7 +483,7 @@ class LintManager:
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
                         print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
-                        self.json_outputs.append({
+                        self.linters_error_list.append({
                             'linter': check,
                             'pack': fail_pack,
                             'type': 'warning',
@@ -706,7 +706,7 @@ class LintManager:
         else:
             json_contents = {}
 
-        for check in self.json_outputs:
+        for check in self.linters_error_list:
             if check.get('linter') == 'flake8':
                 self.flake8_error_formatter(check, json_contents)
             elif check.get('linter') == 'mypy':

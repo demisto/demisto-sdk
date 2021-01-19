@@ -1250,7 +1250,7 @@ class TestMappers:
         assert mapper_data.get('fromversion') == '6.0.0'
         assert mapper_data.get('incident_types') == ['ServiceNow Ticket']
         assert set(mapper_data.get('incident_fields')) == {
-            'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
+            '', 'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
             'servicenowcategory', 'remediationsla.dueDate', 'servicenowstate', 'timetoassignment.startDate',
             'servicenowimpact', 'servicenowpriority'}
 

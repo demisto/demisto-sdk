@@ -715,8 +715,6 @@ def get_mapper_data(path):
             internal_mapping = value.get('internalMapping')  # get the mapping
             incident_fields_set = {  # incident fields are in the simple key of each key
                 internal_mapping.get(key, {}).get('simple') for key in internal_mapping.keys()}
-            if incident_fields_set:
-                incident_fields_set.remove('')  # remove empty fields
             incidents_fields = incidents_fields.union(incident_fields_set)
         else:  # pre 6.0 no type field in the mapper and default is an incoming mapper
             # all the incident fields are the keys of the mapping

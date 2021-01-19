@@ -420,7 +420,7 @@ PACK_METADATA_DEPENDENCIES = 'dependencies'
 
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT,
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
-                        PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
+                        PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
 API_MODULES_PACK = 'ApiModules'
 API_MODULE_PY_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.py'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR)
@@ -1001,6 +1001,10 @@ FEATURE_BRANCHES = ['v4.5.0']
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
+
+LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
+                                     'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
+                                     'short_description', 'description', 'Tags', 'blocked']
 
 
 class ContentItems(Enum):

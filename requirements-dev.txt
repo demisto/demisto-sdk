@@ -1,5 +1,7 @@
 deprecated
+mitmproxy==5.1.0
 mock
+munch
 pre-commit
 pytest
 pytest-cov

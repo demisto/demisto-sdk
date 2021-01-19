@@ -74,7 +74,13 @@ BUILT_IN_FIELDS = [
     "droppedCount",
     "linkedCount",
     "feedBased",
-    "id"
+    "id",
+    "xsoarReadOnlyRoles",
+    "dbotMirrorId",
+    "dbotMirrorInstance",
+    "dbotMirrorDirection",
+    "dbotMirrorTags",
+    "dbotMirrorLastSync"
 ]
 
 

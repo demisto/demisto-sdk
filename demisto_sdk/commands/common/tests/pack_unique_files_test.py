@@ -26,7 +26,6 @@ PACK_METADATA_PARTNER = {
     "support": "partner",
     "currentVersion": "1.0.1",
     "author": "bar",
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],

@@ -1471,3 +1471,19 @@ def is_v2_file(current_file, check_in_display=False):
     if suffix != "v2":
         return False
     return True
+
+
+def find_file(root_path, file_name):
+    """Find a file with a given file name under a given root path.
+    Returns:
+        str: The full file path from root path if exists, else return empty string.
+    """
+    for file in os.listdir(root_path):
+        file_path = os.path.join(root_path, file)
+        if file_path.endswith(file_name):
+            return file_path
+        elif os.path.isdir(file_path):
+            found_file = find_file(file_path, file_name)
+            if found_file:
+                return found_file
+    return ''

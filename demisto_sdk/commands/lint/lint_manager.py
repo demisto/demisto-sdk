@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import (print_error, print_v,
+from demisto_sdk.commands.common.tools import (find_file, find_type, get_json,
+                                               print_error, print_v,
                                                print_warning)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
@@ -43,7 +44,8 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str):
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str,
+                 json_file_path: str = ''):
         # Set logging level and file handler if required
         global logger
         logger = logging_setup(verbose=verbose,
@@ -65,6 +67,11 @@ class LintManager:
                                                     git=git,
                                                     all_packs=all_packs,
                                                     base_branch=self._prev_ver)
+        if json_file_path:
+            if os.path.isdir(json_file_path):
+                json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
+        self.json_file_path = json_file_path
+        self.json_outputs: list = []
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -393,6 +400,7 @@ class LintManager:
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
+        self.create_json_output()
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -420,8 +428,7 @@ class LintManager:
             elif check != 'image':
                 print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
 
-    @staticmethod
-    def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
+    def report_failed_lint_checks(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed lint log if exsits
 
         Args:
@@ -438,6 +445,12 @@ class LintManager:
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
+                    self.json_outputs.append({
+                        'linter': check,
+                        'pack': fail_pack,
+                        'type': 'error',
+                        'messages': pkgs_status[fail_pack][f"{check}_errors"]
+                    })
 
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
@@ -451,8 +464,7 @@ class LintManager:
                     for image in pkgs_status[fail_pack]["images"]:
                         print(image[f"{check}_errors"])
 
-    @staticmethod
-    def report_warning_lint_checks(lint_status: dict, pkgs_status: dict, return_warning_code: int, all_packs: bool):
+    def report_warning_lint_checks(self, lint_status: dict, pkgs_status: dict, return_warning_code: int, all_packs: bool):
         """ Log warnings lint log if exists
 
         Args:
@@ -471,6 +483,12 @@ class LintManager:
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
                         print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
+                        self.json_outputs.append({
+                            'linter': check,
+                            'pack': fail_pack,
+                            'type': 'warning',
+                            'messages': pkgs_status[fail_pack][f"{check}_errors"]
+                        })
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed unit-tests , if verbosity specified will log also success unit-tests
@@ -677,3 +695,129 @@ class LintManager:
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))
+
+    def create_json_output(self):
+        if not self.json_file_path:
+            return
+
+        if os.path.exists(self.json_file_path):
+            json_contents = get_json(self.json_file_path)
+
+        else:
+            json_contents = {}
+
+        for check in self.json_outputs:
+            if check.get('linter') == 'flake8':
+                self.flake8_error_formatter(check, json_contents)
+            elif check.get('linter') == 'mypy':
+                self.mypy_error_formatter(check, json_contents)
+            elif check.get('linter') == 'bandit':
+                self.bandit_error_formatter(check, json_contents)
+            elif check.get('linter') == 'vulture':
+                self.vulture_error_formatter(check, json_contents)
+            elif check.get('linter') == 'XSOAR_linter':
+                self.xsoar_linter_error_formatter(check, json_contents)
+
+        with open(self.json_file_path, 'w') as f:
+            json.dump(json_contents, f, indent=4)
+
+    def flake8_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages').split('\n')
+        for message in error_messages:
+            if not message:
+                continue
+            file_path = message.split(':')[0]
+            code = message.split()[1]
+            output = {
+                'linter': 'flake8',
+                'severity': errors.get('type'),
+                'code': code,
+                'message': message.split(code)[1].lstrip(),
+                'line-number': message.split(':')[1],
+                'column-number': message.split(':')[2]
+            }
+            self.add_to_json_outputs(output, file_path, json_contents)
+
+    def mypy_error_formatter(self, errors, json_contents):
+        mypy_errors = []
+        gather_error: list = []
+        for line in errors.get('messages').split('\n'):
+            if os.path.isfile(line.split(':')[0]):
+                if gather_error:
+                    mypy_errors.append('\n'.join(gather_error))
+                    gather_error = []
+            gather_error.append(line)
+
+        for message in mypy_errors:
+            file_path = message.split(':')[0]
+            output = {
+                'linter': 'mypy',
+                'severity': errors.get('type'),
+                'message': message.split('error:')[1].lstrip(),
+                'line-number': message.split(':')[1],
+                'column-number': message.split(':')[2]
+            }
+            self.add_to_json_outputs(output, file_path, json_contents)
+
+    def bandit_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages').split('Issue:')
+        for message in error_messages:
+            if 'Location:' not in message:
+                continue
+            file_path = message.split('Location:')[1].split(':')[0].lstrip()
+            output = {
+                'linter': 'bandit',
+                'severity': errors.get('type'),
+                'code': message.split(':')[0][2:],
+                'message': message.split(':')[1].split('\n')[0].replace(']', '-'),
+                'line-number': message.split('Location:')[1].split(':')[1].split('\n')[0],
+            }
+            self.add_to_json_outputs(output, file_path, json_contents)
+
+    def vulture_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages').split('\n')
+        content_path = os.path.abspath('')
+        pack_path = os.path.join(content_path, 'Packs', errors.get('pack'))
+        for message in error_messages:
+            if message:
+                file_name = message.split(':')[0]
+                file_path = find_file(pack_path, file_name)
+                output = {
+                    'linter': 'vulture',
+                    'severity': errors.get('type'),
+                    'message': message.split(':')[-1].lstrip(),
+                    'line-number': message.split(':')[1],
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    def xsoar_linter_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages').split('\n')
+        for message in error_messages:
+            file_path = message.split(':')[0]
+            code = message.split(' ')[1]
+            output = {
+                'linter': 'xsoar_linter',
+                'severity': errors.get('type'),
+                'code': code,
+                'message': message.split(code)[-1].lstrip(),
+                'line-number': message.split(':')[1],
+                'column-number': message.split(':')[2]
+            }
+            self.add_to_json_outputs(output, file_path, json_contents)
+
+    @staticmethod
+    def add_to_json_outputs(output, file_path, json_contents):
+        file_type = find_type(file_path.replace('.py', '.yml').replace('.pws', '.yml'))
+        if file_path in json_contents:
+            if output in json_contents[file_path]['outputs']:
+                return
+            json_contents[file_path]['outputs'].append(output)
+
+        else:
+            json_contents[file_path] = {
+                'file-type': os.path.splitext(file_path)[1].replace('.', ''),
+                'entity-type': file_type.value,
+                'outputs': [
+                    output
+                ]
+            }

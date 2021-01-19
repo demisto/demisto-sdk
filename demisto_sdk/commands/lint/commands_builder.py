@@ -137,6 +137,8 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     command += " -E --disable=all"
     # Enable only Demisto Plugins errors.
     command += f" --enable={message_enable}"
+    # Message format
+    command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # Load plugins
     if checker_path:
         command += f" --load-plugins {checker_path}"
@@ -173,6 +175,8 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --pretty"
     # This flag enables redefinion of a variable with an arbitrary type in some contexts.
     command += " --allow-redefinition"
+    # Get the full path to the file.
+    command += " --show-absolute-path"
     # Disable cache creation
     command += " --cache-dir=/dev/null"
     # Generating path patterns - file1 file2 file3,..
@@ -229,6 +233,8 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
+    # Message format
+    command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"

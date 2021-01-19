@@ -62,9 +62,20 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                                           'Packs/' + os.path.basename(repo.packs[0].path), '-v'
                                           ]
                                    )
-
         assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'  # first log line is the pack name
-        assert secho.call_args_list[-1][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
+        assert secho.call_args_list[1][0][0] == '### Scripts'
+        assert secho.call_args_list[2][0][0] == '### Playbooks'
+        assert secho.call_args_list[3][0][0] == '### Layouts'
+        assert secho.call_args_list[4][0][0] == '### Incident Fields'
+        assert secho.call_args_list[5][0][0] == '### Indicator Types'
+        assert secho.call_args_list[6][0][0] == '### Integrations'
+        assert secho.call_args_list[7][0][0] == '### Incident Types'
+        assert secho.call_args_list[8][0][0] == '### Classifiers'
+        assert secho.call_args_list[9][0][0] == '### Mappers'
+        assert secho.call_args_list[10][0][0] == '### Widgets'
+        assert secho.call_args_list[11][0][0] == '### Dashboards'
+        assert secho.call_args_list[12][0][0] == '### Reports'
+        assert secho.call_args_list[13][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 

@@ -128,12 +128,13 @@ class IntegrationValidator(ContentEntityValidator):
         deprecated_v2_regex = r'Deprecated\. Use .+ instead\.'
         deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
         if is_deprecated:
-            is_valid = False  # initially it is false, if deprecation desc matches one of the templates, will be valid.
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
-                is_valid = True
+                pass
             else:
                 error_message, error_code = Errors.invalid_deprecated_integration_description()
-                self.handle_error(error_message, error_code, file_path=self.file_path)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
         return is_valid
 
     def are_tests_configured(self) -> bool:

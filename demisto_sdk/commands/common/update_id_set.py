@@ -712,9 +712,14 @@ def get_mapper_data(path):
     for key, value in mapping.items():
         incidents_types.add(key)
         if type_ == 'mapping-outgoing':
-            incidents_fields = incidents_fields.union(
-                {key.get('simple') for key in value.get('internalMapping').keys()})
-        else:  # pre 6.0 no type field and default is an incoming mapper
+            internal_mapping = value.get('internalMapping')  # get the mapping
+            incident_fields_set = {  # incident fields are in the simple key of each key
+                internal_mapping.get(key, {}).get('simple') for key in internal_mapping.keys()}
+            if incident_fields_set:
+                incident_fields_set.remove('')  # remove empty fields
+            incidents_fields = incidents_fields.union(incident_fields_set)
+        else:  # pre 6.0 no type field in the mapper and default is an incoming mapper
+            # all the incident fields are the keys of the mapping
             incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}

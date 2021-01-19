@@ -14,6 +14,7 @@
 * Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 * Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console.
+* Added support for the incident fields in outgoing mappers in the ID set.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

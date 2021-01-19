@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-from datetime import datetime
 from distutils.dir_util import copy_tree
 from typing import Dict, List
 
@@ -272,7 +271,6 @@ class Initiator:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],

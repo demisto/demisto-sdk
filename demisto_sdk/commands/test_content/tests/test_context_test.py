@@ -2,7 +2,7 @@ from functools import partial
 
 from demisto_sdk.commands.test_content.TestContentClasses import (
     TestConfiguration, TestContext, TestPlaybook)
-from demisto_sdk.commands.test_content.tests.BuildContext_test import \
+from demisto_sdk.commands.test_content.tests.build_context_test import \
     generate_test_configuration
 
 

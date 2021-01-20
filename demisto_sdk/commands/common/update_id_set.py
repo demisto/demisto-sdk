@@ -1226,7 +1226,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
 
         if 'Packs' in objects_to_create:
-            print_color("\nStarting iteration over pack_metadata.json", LOG_COLORS.GREEN)
+            print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_pack_metadata,
                                         print_logs=print_logs
                                         ),

@@ -8,8 +8,11 @@ from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -118,8 +121,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -202,8 +205,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -212,7 +215,6 @@ class TestDeprecatedIntegration:
                                           '--print-ignored-files'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
-        print(result.stdout)
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -236,8 +238,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
@@ -761,6 +763,7 @@ class TestClassifierValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ClassifierValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -876,6 +879,7 @@ class TestMapperValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(MapperValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):
@@ -1854,7 +1858,6 @@ class TestScriptValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        print(result.stdout)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -2028,7 +2031,6 @@ class TestScriptDeprecatedValidation:
                                     '--print-ignored-files'],
                                    catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
-        print(result.stdout)
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -2137,7 +2139,6 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
-        print(result.stdout)
         assert f'Validating {image_path} as image' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -2217,8 +2218,6 @@ class TestAllFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
                                    catch_exceptions=False)
-
-        print(result.stdout)
 
         assert 'Validating all files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
@@ -2315,7 +2314,6 @@ class TestValidationUsingGit:
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
                                           '--skip-pack-release-notes'],
                                    catch_exceptions=False)
-        print(result.stdout)
         assert 'Running validation on branch' in result.stdout
         assert 'Running validation on modified files' in result.stdout
         assert 'Running validation on newly added files' in result.stdout

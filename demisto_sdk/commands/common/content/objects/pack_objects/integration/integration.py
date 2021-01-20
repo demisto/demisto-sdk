@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import tempfile
 from typing import Optional, Union
 
@@ -541,11 +542,16 @@ class Integration(YAMLContentUnifiedObject):
         is_valid = True
         is_deprecated = self.get('deprecated', False)
         description = self.get('description', '')
+        deprecated_v2_regex = r'Deprecated\. Use .+ instead\.'
+        deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
         if is_deprecated:
-            if not description.startswith('Deprecated.'):
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_integration_description()
                 if self.base.handle_error(error_message, error_code, file_path=self.path):
                     is_valid = False
+
         return is_valid
 
     def is_mapping_fields_command_exist(self) -> bool:

@@ -28,7 +28,8 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
                                                            run_with_mock)
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
-from demisto_sdk.commands.test_content.tools import update_server_configuration
+from demisto_sdk.commands.test_content.tools import (
+    is_redhat_instance, update_server_configuration)
 from slack import WebClient as SlackClient
 
 ENV_RESULTS_PATH = './env_results.json'
@@ -96,6 +97,7 @@ class TestConfiguration:
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
         self.is_mockable = test_configuration.get('is_mockable')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
@@ -846,7 +848,7 @@ class Integration:
             }
         if is_mockable:
             self.build_context.logging_module.debug(f'configuring {self} with proxy params')
-            for param in ('proxy', 'useProxy', 'insecure', 'unsecure'):
+            for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
         return True
 
@@ -1153,19 +1155,22 @@ class TestContext:
     def __init__(self,
                  build_context: BuildContext,
                  playbook: TestPlaybook,
-                 client: DefaultApi):
+                 client: DefaultApi,
+                 is_instance_using_docker: bool):
         """
         Initializes the TestContext class
         Args:
             build_context: The context of the current build
             playbook: The TestPlaybook instance to run in the current test execution
             client: A demisto client instance to use for communication with the server
+            is_instance_using_docker: Indication whether the current instance is using docker or podman
         """
         self.build_context = build_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
+        self.is_instance_using_docker = is_instance_using_docker
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1336,7 +1341,7 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        if self.incident_id:
+        if not self.incident_id:
             text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                    f' {self.client.api_client.configuration.host}'
         else:
@@ -1410,7 +1415,9 @@ class TestContext:
             The result of the test.
         """
         playbook_state = self._run_incident_test()
-        if playbook_state == PB_Status.COMPLETED:
+        # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
+        # the threshold configurations.
+        if playbook_state == PB_Status.COMPLETED and self.is_instance_using_docker:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1507,6 +1514,21 @@ class TestContext:
 
         return True
 
+    def _is_runnable_on_current_server_instance(self) -> bool:
+        """
+        Nightly builds can have RHEL instances that uses podman instead of docker as well as the regular LINUX instance.
+        In such case - if the test in runnable on docker instances **only** and the current instance uses podman -
+        we will not execute the test under this instance and instead will will return it to the queue in order to run
+        it under some other instance
+        Returns:
+            True if this instance can be run on the current instance else False
+        """
+        if self.playbook.configuration.runnable_on_docker_only and not self.is_instance_using_docker:
+            self.build_context.logging_module.debug(
+                f'Skipping test {self.playbook} since it\'s not runnable on podman instances')
+            return False
+        return True
+
     def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
         """
         Executes the test and return a boolean that indicates whether the test was executed or not.
@@ -1519,6 +1541,8 @@ class TestContext:
             True if the test was executed by the instance else False
         """
         try:
+            if not self._is_runnable_on_current_server_instance():
+                return False
             self._send_circle_memory_and_pid_stats_on_slack()
             if self.playbook.is_mockable:
                 test_executed = self._execute_mockable_test(proxy)  # type: ignore
@@ -1529,7 +1553,6 @@ class TestContext:
             self.build_context.logging_module.exception(
                 f'Unexpected error while running test on playbook {self.playbook}')
             self._add_to_failed_playbooks()
-            self.build_context.tests_data_keeper.failed_playbooks.add(self.playbook.configuration.playbook_id)
             return True
         finally:
             self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
@@ -1541,6 +1564,8 @@ class TestContext:
             test_message += f' with integration(s): {self.playbook.integrations}'
         else:
             test_message += ' with no integrations'
+        if not self.is_instance_using_docker:
+            test_message += ', RedHat instance'
         return test_message
 
     def __repr__(self):
@@ -1559,6 +1584,7 @@ class ServerContext:
                                self.build_context.logging_module,
                                build_number=self.build_context.build_number,
                                branch_name=self.build_context.build_name)
+        self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
 
@@ -1570,10 +1596,16 @@ class ServerContext:
 
     def _execute_tests(self, queue: Queue) -> None:
         """
-        Iterates the tests queue and executes them as long as there are tests to execute
+        Iterates the tests queue and executes them as long as there are tests to execute.
+        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
+        - We need it before the mockable tests because the server starts the python2 default container when it starts
+            and it has no proxy configurations.
+        - We need it before the unmockable tests because at that point all containers will have the proxy configured
+            and we want to clean those configurations when testing unmockable playbooks
         Args:
             queue: The queue to fetch tests to execute from
         """
+        self._reset_containers()
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
@@ -1581,7 +1613,10 @@ class ServerContext:
             except Empty:
                 continue
             self._configure_new_client()
-            test_executed = TestContext(self.build_context, test_playbook, self.client).execute_test(self.proxy)
+            test_executed = TestContext(self.build_context,
+                                        test_playbook,
+                                        self.client,
+                                        self.is_instance_using_docker).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -1592,7 +1627,7 @@ class ServerContext:
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.docker_ip + ':' + self.proxy.PROXY_PORT,
+        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
                                               server=self.server_url)
@@ -1652,7 +1687,6 @@ class ServerContext:
         try:
             self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
             self._execute_mockable_tests()
-            self._reset_containers()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',

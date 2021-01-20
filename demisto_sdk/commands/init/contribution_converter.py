@@ -21,6 +21,12 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                get_child_files,
                                                get_content_path)
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+    generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import \
+    generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
 
 
@@ -234,6 +240,44 @@ class ContributionConverter:
             input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
         )
 
+    def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
+        """ Runs the demisto-sdk's generate-docs command on a pack content item
+
+        Args:
+            yml_path: str: Content item yml path.
+        """
+        file_type = find_type(yml_path)
+        file_type = file_type.value if file_type else file_type
+        if file_type == 'integration':
+            generate_integration_doc(yml_path)
+        if file_type == 'script':
+            generate_script_doc(input=yml_path, examples=[])
+        if file_type == 'playbook':
+            generate_playbook_doc(yml_path)
+
+    def generate_readmes_for_new_content_pack(self):
+        """
+        Generate the readme files for a new content pack.
+        """
+        for pack_subdir in get_child_directories(self.pack_dir_path):
+            basename = os.path.basename(pack_subdir)
+            if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
+                directories = get_child_directories(pack_subdir)
+                for directory in directories:
+                    files = get_child_files(directory)
+                    for file in files:
+                        file_name = os.path.basename(file)
+                        if file_name.startswith('integration') or file_name.startswith('script'):
+                            unified_file = file
+                            self.generate_readme_for_pack_content_item(unified_file)
+                            os.remove(unified_file)
+            elif basename == 'Playbooks':
+                files = get_child_files(pack_subdir)
+                for file in files:
+                    file_name = os.path.basename(file)
+                    if file_name.startswith('playbook') and file_name.endswith('.yml'):
+                        self.generate_readme_for_pack_content_item(file)
+
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
@@ -266,8 +310,12 @@ class ContributionConverter:
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
-                        pack_subdir, del_unified=True, source_mapping=files_to_source_mapping
+                        pack_subdir, del_unified=(not self.create_new), source_mapping=files_to_source_mapping
                     )
+
+                    if self.create_new:
+                        self.generate_readmes_for_new_content_pack()
+
             # format
             self.format_converted_pack()
         except Exception as e:
@@ -329,15 +377,24 @@ class ContributionConverter:
                                               no_auto_create_dir=(not autocreate_dir))
 
                     else:
-                        extractor = Extractor(input=content_item_file_path,
-                                              file_type=file_type, output=content_item_dir)
+                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
+                                              output=content_item_dir)
                     extractor.extract_to_package_format()
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'
                     self.contrib_conversion_errs.append(err_msg)
-                if del_unified:
-                    os.remove(content_item_file_path)
+                finally:
+                    output_path = extractor.get_output_path()
+                    if self.create_new:
+                        # Moving the unified file to its package.
+                        shutil.move(content_item_file_path, output_path)
+                    if del_unified:
+                        if os.path.exists(content_item_file_path):
+                            os.remove(content_item_file_path)
+                        moved_unified_dst = os.path.join(output_path, child_file_name)
+                        if os.path.exists(moved_unified_dst):
+                            os.remove(moved_unified_dst)
 
     def create_pack_base_files(self):
         """

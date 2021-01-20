@@ -9,33 +9,14 @@ from typing import Union
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.tools import print_error, print_warning
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
+COMMON_TYPES_PACK = 'CommonTypes'
 
 
-class VerboseFile:
-    def __init__(self, file_path=''):
-        self.file_path = file_path
-        self.fd = None
-
-    def __enter__(self):
-        if self.file_path:
-            self.fd = open(self.file_path, 'w')
-        return self
-
-    def write(self, message, ending='\n'):
-        if self.fd:
-            self.fd.write(f'{message}{ending}')
-
-    def __exit__(self, type_, value, traceback):
-        if self.fd:
-            self.fd.close()
-        self.fd = None
-
-
-def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tuple:
+def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: bool = False) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -43,6 +24,7 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
     Args:
         dependency_graph (DiGraph): dependency direct graph.
         graph_root (str): graph root pack id.
+        verbose(bool): Whether to print the log to the console.
 
     Returns:
         dict: first level dependencies parsed data.
@@ -58,6 +40,9 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str) -> tu
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
+
+    if verbose:
+        click.secho(f'All level dependencies are: {all_level_dependencies}', fg='white')
 
     return first_level_dependencies, all_level_dependencies
 
@@ -251,7 +236,7 @@ class PackDependencies:
             pack_ids (set): pack ids list.
 
         Returns:
-            list: collection of packs and mandatory flag set to True if more than 2 packs found.
+            list: collection of packs and mandatory flag set to False if more than 2 packs found.
 
         """
         return [(p, False) if len(pack_ids) > 1 else (p, True) for p in pack_ids]
@@ -285,9 +270,33 @@ class PackDependencies:
         return [(p, False) for p in pack_ids]
 
     @staticmethod
+    def _update_optional_commontypes_pack_dependencies(packs_found_from_incident_fields_or_types: set) -> list:
+        """
+        Updates pack_dependencies_data for optional dependencies, excluding the CommonTypes pack.
+        The reason being when releasing a new pack with e.g, incident fields in the CommonTypes pack,
+        only a mandatory dependency will coerce the users to update it to have the necessary content entities.
+
+        Args:
+            packs_found_from_incident_fields_or_types (set): pack names found by a dependency to an incident field,
+            indicator field or an incident type.
+
+        Returns:
+            pack_dependencies_data (list): representing the dependencies.
+
+        """
+        common_types_pack_dependency = False
+        if COMMON_TYPES_PACK in packs_found_from_incident_fields_or_types:
+            packs_found_from_incident_fields_or_types.remove(COMMON_TYPES_PACK)
+            common_types_pack_dependency = True
+        pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields_or_types)
+        if common_types_pack_dependency:
+            pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
+        return pack_dependencies_data
+
+    @staticmethod
     def _collect_scripts_dependencies(pack_scripts: list,
                                       id_set: dict,
-                                      verbose_file: VerboseFile,
+                                      verbose: bool,
                                       exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects script pack dependencies.
@@ -295,7 +304,7 @@ class PackDependencies:
         Args:
             pack_scripts (list): pack scripts collection.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -303,7 +312,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Scripts')
+        if verbose:
+            click.secho('### Scripts', fg='white')
 
         for script_mapping in pack_scripts:
             script = next(iter(script_mapping.values()))
@@ -334,10 +344,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
                     script_dependencies.update(pack_dependencies_data)
 
-            verbose_file.write(
-                f'{os.path.basename(script.get("file_path", ""))} depends on: '
-                f'{script_dependencies}  '
-            )
+            if verbose:
+                click.secho(f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}',
+                            fg='white')
             dependencies_packs.update(script_dependencies)
 
         return dependencies_packs
@@ -379,7 +388,7 @@ class PackDependencies:
         return dependencies
 
     @staticmethod
-    def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
                                         exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects playbook pack dependencies.
@@ -387,7 +396,7 @@ class PackDependencies:
         Args:
             pack_playbooks (list): collection of pack playbooks data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -395,7 +404,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Playbooks')
+        if verbose:
+            click.secho('### Playbooks', fg='white')
 
         for playbook in pack_playbooks:
             playbook_data = next(iter(playbook.values()))
@@ -439,27 +449,34 @@ class PackDependencies:
             ))
 
             # ---- incident fields packs ----
+            # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
+            # as customers do not have to use the OOTB inputs.
             incident_fields = playbook_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_incident_fields)
+                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                    packs_found_from_incident_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
+            # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
+            # as customers do not have to use the OOTB inputs.
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies)
             if packs_found_from_indicator_fields:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_indicator_fields)
+                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                    packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: '
-                    f'{playbook_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: {playbook_dependencies}',
+                        fg='white'
+                    )
             dependencies_packs.update(playbook_dependencies)
 
         return dependencies_packs
@@ -467,7 +484,7 @@ class PackDependencies:
     @staticmethod
     def _collect_layouts_dependencies(pack_layouts: list,
                                       id_set: dict,
-                                      verbose_file: VerboseFile,
+                                      verbose: bool,
                                       exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects layouts pack dependencies.
@@ -475,7 +492,7 @@ class PackDependencies:
         Args:
             pack_layouts (list): collection of pack playbooks data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -483,7 +500,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Layouts')
+        if verbose:
+            click.secho('### Layouts', fg='white')
 
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
@@ -511,16 +529,17 @@ class PackDependencies:
 
             if layout_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(layout_data.get("file_path", ""))} depends on: '
-                    f'{layout_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(layout_data.get("file_path", ""))} depends on: {layout_dependencies}',
+                        fg='white'
+                    )
             dependencies_packs.update(layout_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in incidents fields dependencies.
@@ -528,7 +547,7 @@ class PackDependencies:
         Args:
             pack_incidents_fields (list): collection of pack incidents fields data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -536,20 +555,20 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Incident Fields')
+        if verbose:
+            click.secho('### Incident Fields', fg='white')
 
         for incident_field in pack_incidents_fields:
             incident_field_data = next(iter(incident_field.values()))
             incident_field_dependencies = set()
 
-            # related_incident_types = incident_field_data.get('incident_types', [])
-            # packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-            #     related_incident_types, id_set['IncidentTypes'])
-            #
-            # if packs_found_from_incident_types:
-            #     pack_dependencies_data = PackDependencies. \
-            #         _label_as_mandatory(packs_found_from_incident_types)
-            #     dependencies_packs.update(pack_dependencies_data)
+            # If an incident field is used in a specific incident type than it does not depend on it.
+            # e.g:
+            # 1. deviceid in CommonTypes pack is being used in the Zimperium pack.
+            #    The CommonTypes pack is not dependent on the Zimperium Pack, but vice versa.
+            # 2. emailfrom in the Phishing pack is being used in the EWS pack.
+            #    Phishing pack does not depend on EWS but vice versa.
+            # The opposite dependencies are calculated in: _collect_playbook_dependencies, _collect_mapper_dependencies
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
@@ -562,16 +581,16 @@ class PackDependencies:
 
             if incident_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: '
-                    f'{incident_field_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(incident_field_data.get("file_path", ""))} '
+                        f'depends on: {incident_field_dependencies}', fg='white')
             dependencies_packs.update(incident_field_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in indicators types dependencies.
@@ -579,7 +598,7 @@ class PackDependencies:
         Args:
             pack_indicators_types (list): collection of pack indicators types data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -587,7 +606,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Indicator Types')
+        if verbose:
+            click.secho('### Indicator Types', fg='white')
 
         for indicator_type in pack_indicators_types:
             indicator_type_data = next(iter(indicator_type.values()))
@@ -613,30 +633,31 @@ class PackDependencies:
 
             if indicator_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: '
-                    f'{indicator_type_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: {indicator_type_dependencies}',
+                        fg='white')
             dependencies_packs.update(indicator_type_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
                                            exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects integrations dependencies.
         Args:
             pack_integrations (list): collection of pack integrations data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Integrations')
+        if verbose:
+            click.secho('### Integrations', fg='white')
 
         for integration in pack_integrations:
             integration_data = next(iter(integration.values()))
@@ -678,16 +699,16 @@ class PackDependencies:
 
             if integration_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(integration_data.get("file_path", ""))} depends on: '
-                    f'{integration_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(integration_data.get("file_path", ""))} depends on: {integration_dependencies}',
+                        fg='white')
             dependencies_packs.update(integration_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in incidents types dependencies.
@@ -695,7 +716,7 @@ class PackDependencies:
         Args:
             pack_incidents_types (list): collection of pack incidents types data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -703,7 +724,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Incident Types')
+        if verbose:
+            click.secho('### Incident Types', fg='white')
 
         for incident_type in pack_incidents_types:
             incident_type_data = next(iter(incident_type.values()))
@@ -729,16 +751,16 @@ class PackDependencies:
 
             if incident_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: '
-                    f'{incident_type_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: {incident_type_dependencies}',
+                        fg='white')
             dependencies_packs.update(incident_type_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
                                           exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in classifiers dependencies.
@@ -746,7 +768,7 @@ class PackDependencies:
         Args:
             pack_classifiers (list): collection of pack classifiers data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -754,7 +776,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Classifiers')
+        if verbose:
+            click.secho('### Classifiers', fg='white')
 
         for classifier in pack_classifiers:
             classifier_data = next(iter(classifier.values()))
@@ -764,23 +787,25 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
+            # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
+                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                    packs_found_from_incident_types)
                 classifier_dependencies.update(pack_dependencies_data)
 
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: '
-                    f'{classifier_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: {classifier_dependencies}',
+                        fg='white')
             dependencies_packs.update(classifier_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
                                       exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in mappers dependencies.
@@ -788,7 +813,7 @@ class PackDependencies:
         Args:
             pack_mappers (list): collection of pack mappers data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -796,7 +821,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write('\n### Mappers')
+        if verbose:
+            click.secho('### Mappers', fg='white')
 
         for mapper in pack_mappers:
             mapper_data = next(iter(mapper.values()))
@@ -806,32 +832,36 @@ class PackDependencies:
             packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
                 related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
+            # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
+                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                    packs_found_from_incident_types)
                 mapper_dependencies.update(pack_dependencies_data)
 
             related_incident_fields = mapper_data.get('incident_fields', [])
             packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
 
+            # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
+            # as customers do not have to use the OOTB mapping.
             if packs_found_from_incident_fields:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_fields)
+                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                    packs_found_from_incident_fields)
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: '
-                    f'{mapper_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: {mapper_dependencies}',
+                        fg='white')
             dependencies_packs.update(mapper_dependencies)
 
         return dependencies_packs
 
     @staticmethod
-    def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose_file: VerboseFile,
+    def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
                                      exclude_ignored_dependencies: bool = True, header: str = "Widgets") -> set:
         """
         Collects widget dependencies.
@@ -839,7 +869,7 @@ class PackDependencies:
         Args:
             pack_widgets (list): collection of pack widget data.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -847,7 +877,8 @@ class PackDependencies:
 
         """
         dependencies_packs = set()
-        verbose_file.write(f'\n### {header}')
+        if verbose:
+            click.secho(f'### {header}', fg='white')
 
         for widget in pack_widgets:
             widget_data = next(iter(widget.values()))
@@ -864,10 +895,10 @@ class PackDependencies:
 
             if widget_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                verbose_file.write(
-                    f'{os.path.basename(widget_data.get("file_path", ""))} depends on: '
-                    f'{widget_dependencies}  '
-                )
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(widget_data.get("file_path", ""))} depends on: {widget_dependencies}',
+                        fg='white')
             dependencies_packs.update(widget_dependencies)
 
         return dependencies_packs
@@ -900,15 +931,15 @@ class PackDependencies:
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
 
         if not sum(pack_items.values(), []):
-            print_warning(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
-                          f"1 - The spelling is correct.\n"
-                          f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
-                          f"Tests/id_set.json` and rerun the command.")
+            click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+                        f"1 - The spelling is correct.\n"
+                        f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
+                        f"Tests/id_set.json` and rerun the command.", fg='yellow')
 
         return pack_items
 
     @staticmethod
-    def _find_pack_dependencies(pack_id: str, id_set: dict, verbose_file: VerboseFile,
+    def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
                                 exclude_ignored_dependencies: bool = True) -> set:
         """
         Searches for specific pack dependencies.
@@ -916,86 +947,87 @@ class PackDependencies:
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
-        verbose_file.write(f'\n\n# Pack ID: {pack_id}')
+        if verbose:
+            click.secho(f'\n# Pack ID: {pack_id}', fg='white')
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
         scripts_dependencies = PackDependencies._collect_scripts_dependencies(
             pack_items['scripts'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         playbooks_dependencies = PackDependencies._collect_playbooks_dependencies(
             pack_items['playbooks'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         layouts_dependencies = PackDependencies._collect_layouts_dependencies(
             pack_items['layouts'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         incidents_fields_dependencies = PackDependencies._collect_incidents_fields_dependencies(
             pack_items['incidents_fields'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         indicators_types_dependencies = PackDependencies._collect_indicators_types_dependencies(
             pack_items['indicators_types'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         integrations_dependencies = PackDependencies._collect_integrations_dependencies(
             pack_items['integrations'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         incidents_types_dependencies = PackDependencies._collect_incidents_types_dependencies(
             pack_items['incidents_types'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         classifiers_dependencies = PackDependencies._collect_classifiers_dependencies(
             pack_items['classifiers'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         mappers_dependencies = PackDependencies._collect_mappers_dependencies(
             pack_items['mappers'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         widget_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['widgets'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies
         )
         dashboards_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['dashboards'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies,
             header='Dashboards'
         )
         reports_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['reports'],
             id_set,
-            verbose_file,
+            verbose,
             exclude_ignored_dependencies,
             header='Reports'
         )
@@ -1010,17 +1042,19 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_all_dependencies_graph(pack_ids: list,
-                                     id_set: dict,
-                                     verbose_file: VerboseFile,
-                                     exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
+    def build_all_dependencies_graph(
+            pack_ids: list,
+            id_set: dict,
+            verbose: bool = False,
+            exclude_ignored_dependencies: bool = True
+    ) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph for all packs
 
         Args:
             pack_ids (list): pack ids, currently pack folder names is in use.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -1031,7 +1065,7 @@ class PackDependencies:
             dependency_graph.add_node(pack, mandatory_for_packs=[])
         for pack in pack_ids:
             dependencies = PackDependencies._find_pack_dependencies(
-                pack, id_set, verbose_file=verbose_file, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
@@ -1059,9 +1093,7 @@ class PackDependencies:
         return deepcopy(subgraph_from_edges)
 
     @staticmethod
-    def build_dependency_graph(pack_id: str,
-                               id_set: dict,
-                               verbose_file: VerboseFile,
+    def build_dependency_graph(pack_id: str, id_set: dict, verbose: bool,
                                exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
@@ -1069,7 +1101,7 @@ class PackDependencies:
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
-            verbose_file (VerboseFile): path to dependency explanations file.
+            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
@@ -1085,7 +1117,7 @@ class PackDependencies:
 
             for leaf in leaf_nodes:
                 leaf_dependencies = PackDependencies._find_pack_dependencies(
-                    leaf, id_set, verbose_file=verbose_file, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
@@ -1099,8 +1131,7 @@ class PackDependencies:
 
     @staticmethod
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
-                          update_pack_metadata: bool = True,
-                          silent_mode: bool = False, debug_file_path: str = '',
+                          update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
                           skip_id_set_creation: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
@@ -1108,10 +1139,10 @@ class PackDependencies:
         Args:
             pack_name (str): pack id, currently pack folder name is in use.
             id_set_path (str): id set json.
-            debug_file_path (str): path to dependency explanations file.
-            silent_mode (bool): Determines whether to echo the dependencies or not.
-            update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            update_pack_metadata (bool): Determines whether to update to pack metadata or not.
+            silent_mode (bool): Determines whether to echo the dependencies or not.
+            verbose(bool): Whether to print the log to the console.
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
 
         Returns:
@@ -1127,11 +1158,10 @@ class PackDependencies:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
 
-        with VerboseFile(debug_file_path) as verbose_file:
-            dependency_graph = PackDependencies.build_dependency_graph(
-                pack_id=pack_name, id_set=id_set, verbose_file=verbose_file,
-                exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name)
+        dependency_graph = PackDependencies.build_dependency_graph(
+            pack_id=pack_name, id_set=id_set, verbose=verbose,
+            exclude_ignored_dependencies=exclude_ignored_dependencies)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

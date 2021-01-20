@@ -11,7 +11,7 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
 
 def _handle_github_response(response, logging_module) -> dict:
     res_dict = response.json()
-    if not res_dict.ok:
+    if not response.ok:
         logging_module.error(f'Add pull request comment failed: {res_dict.get("message")}', real_time=True)
     return res_dict
 

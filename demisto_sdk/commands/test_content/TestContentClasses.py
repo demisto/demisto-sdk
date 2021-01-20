@@ -174,8 +174,11 @@ class TestPlaybook:
             return False
         # nightly test in a non nightly build
         if self.configuration.nightly_test and not self.build_context.is_nightly:
-            self.build_context.logging_module.debug(
-                f'Skipping {self} because it\'s a nightly test in a non nightly build')
+            log_message = f'Skipping {self} because it\'s a nightly test in a non nightly build'
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
+                self.build_context.logging_module.warning(log_message)
+            else:
+                self.build_context.logging_module.debug(log_message)
             skipped_tests_collected[self.configuration.playbook_id] = \
                 'nightly test in a non nightly build'
             return False

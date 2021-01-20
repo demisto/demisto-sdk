@@ -1,8 +1,8 @@
 import re
+from typing import List
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import PB_Status
-from munch import Munch
 
 
 class DemistoClientMock:
@@ -15,19 +15,34 @@ class DemistoClientMock:
     INSTANCES = []
     CONFIGURATIONS = []
     api_client = MagicMock()
+    demisto_api = MagicMock()
     api_client.configuration.host = 'https://1.1.1.1'
 
+    def __init__(self, integrations: List[str] = None):
+        """
+        Configures the integrations known by the server which will be returned by the search integration request.
+        Args:
+            integrations: A list of integration names to be returned.
+        """
+        if integrations:
+            for integration in integrations:
+                self.add_integration_configuration(integration)
+
     @staticmethod
-    def create_incident(create_incident_request):
+    def configure(*_, **__):
+        return DemistoClientMock
+
+    @staticmethod
+    def create_incident(**_):
         DemistoClientMock.INCIDNET_NUMNER += 1
-        return Munch(id=DemistoClientMock.INCIDNET_NUMNER,
-                     investigation_id=DemistoClientMock.INCIDNET_NUMNER)
+        return MagicMock(id=DemistoClientMock.INCIDNET_NUMNER,
+                         investigation_id=DemistoClientMock.INCIDNET_NUMNER)
 
     @staticmethod
     def search_incidents(filter):
         incident_id = DemistoClientMock.INCIDENT_QUERY_PATTERN.findall(filter.filter.query)[0]
-        return Munch(total=1,
-                     data=[Munch(id=incident_id, investigation_id=incident_id)])
+        return MagicMock(total=1,
+                         data=[MagicMock(id=incident_id, investigation_id=incident_id)])
         pass
 
     @classmethod

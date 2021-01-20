@@ -14,7 +14,8 @@ def generate_test_configuration(playbook_id: str,
                                 timeout: int = None,
                                 memory_threshold: int = None,
                                 pid_threshold: int = None,
-                                is_mockable: bool = None
+                                is_mockable: bool = None,
+                                runnable_on_docker_only: bool = None
                                 ) -> dict:
     playbook_config = {
         'playbookID': playbook_id,
@@ -35,6 +36,8 @@ def generate_test_configuration(playbook_id: str,
         playbook_config['memory_threshold'] = memory_threshold
     if pid_threshold:
         playbook_config['pid_threshold'] = pid_threshold
+    if runnable_on_docker_only is not None:
+        playbook_config['runnable_on_docker_only'] = runnable_on_docker_only
     if is_mockable is not None:
         playbook_config['is_mockable'] = is_mockable
     return playbook_config

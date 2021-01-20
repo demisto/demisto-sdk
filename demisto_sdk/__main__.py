@@ -978,9 +978,8 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
-@click.option(
-    "-v", "--verbose", help="Path to debug md file. will state pack dependency per item.",
-    hidden=True, required=False)
+@click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
+              is_flag=True)
 def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     update_pack_metadata = not no_update
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
@@ -994,7 +993,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
                                            id_set_path=id_set_path,
-                                           debug_file_path=verbose,
+                                           verbose=verbose,
                                            update_pack_metadata=update_pack_metadata,
                                            )
     except ValueError as exp:

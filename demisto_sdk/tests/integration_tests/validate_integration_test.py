@@ -7,9 +7,12 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -118,8 +121,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -202,8 +205,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -235,8 +238,8 @@ class TestDeprecatedIntegration:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         valid_integration_yml['deprecated'] = True
-        valid_integration_yml['display'] = '(Deprecated)'
-        valid_integration_yml['description'] = 'Deprecated.'
+        valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
+        valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
@@ -701,6 +704,7 @@ class TestClassifierValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ClassifierValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         classifier = pack.create_classifier('old_classifier', OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
@@ -816,6 +820,7 @@ class TestMapperValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(MapperValidator, 'is_incident_field_exist', return_value=True)
         pack = repo.create_pack('PackName')
         mapper = pack.create_mapper('mapper', MAPPER)
         with ChangeCWD(pack.repo_path):

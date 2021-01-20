@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122']
+                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -196,10 +196,12 @@ ERROR_CODE = {
     "missing_from_version_in_mapper": {'code': "MP103", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "invalid_type_in_mapper": {'code': "MP104", 'ui_applicable': False, 'related_field': 'type'},
     "mapper_non_existent_incident_types": {'code': "MP105", 'ui_applicable': False, 'related_field': 'incident_types'},
+    "invalid_incident_field_in_mapper": {'code': "MP106", 'ui_applicable': False, 'related_field': 'mapping'},
     "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -457,7 +459,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should start with "Deprecated.".'
+        return 'The description of all deprecated integrations should follow one of the formats:' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -1189,6 +1193,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_incident_field_in_layout(invalid_inc_fields_list):
+        return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+            "Please make sure:\n" \
+            "1 - The right incident field is set and the spelling is correct.\n" \
+            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+            " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_to_version_in_new_classifiers():
         return 'toVersion field in new classifiers needs to be higher than 6.0.0'
 
@@ -1261,6 +1274,15 @@ class Errors:
     @error_code_decorator
     def mapper_non_existent_incident_types(incident_types):
         return f"The Mapper related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_mapper(invalid_inc_fields_list):
+        return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+            "Please make sure:\n" \
+            "1 - The right incident field is set and the spelling is correct.\n" \
+            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+            " rerun the command."
 
     @staticmethod
     def wrong_filename(file_type):

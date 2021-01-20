@@ -596,13 +596,15 @@ class ValidateManager:
         layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
         layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      json_file_path=self.json_file_path)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -624,7 +626,8 @@ class ValidateManager:
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
-        return mapper_validator.is_valid_mapper(validate_rn=False)
+        return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
         if file_type == FileType.CLASSIFIER:
@@ -637,7 +640,8 @@ class ValidateManager:
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    json_file_path=self.json_file_path)
-        return classifier_validator.is_valid_classifier(validate_rn=False)
+        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file,
+                                                        is_circle=self.is_circle)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
         widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -709,7 +713,7 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
-    @staticmethod
+    @ staticmethod
     def should_raise_pack_version(pack: str) -> bool:
         """
         Args:
@@ -918,9 +922,8 @@ class ValidateManager:
         all_committed_files_string = run_command(
             f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
 
-        modified_files, added_files, _, old_format_files, changed_meta_files = \
-            self.filter_changed_files(all_committed_files_string, prev_ver,
-                                      print_ignored_files=self.print_ignored_files)
+        modified_files, added_files, _, old_format_files, changed_meta_files = self.filter_changed_files(all_committed_files_string, prev_ver,
+                                                                                                         print_ignored_files=self.print_ignored_files)
 
         if not self.is_circle:
             remote_configured = has_remote_configured()
@@ -938,13 +941,13 @@ class ValidateManager:
 
                 all_changed_files_string = run_command(
                     f'git diff --name-status {repo}/master...HEAD')
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = self.filter_changed_files(
+                    all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
                 # all local non-committed changes and changes against prev_ver
                 outer_changes_files_string = run_command(f'git diff --name-status --no-merges {repo}/master...HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = self.filter_changed_files(
+                    outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             else:
                 if (not is_origin_demisto and not remote_configured) and not self.no_configuration_prints:
@@ -957,13 +960,13 @@ class ValidateManager:
 
                 # only changes against prev_ver (without local changes)
                 all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = self.filter_changed_files(
+                    all_changed_files_string, print_ignored_files=self.print_ignored_files)
 
                 # all local non-committed changes and changes against prev_ver
                 outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = self.filter_changed_files(
+                    outer_changes_files_string, print_ignored_files=self.print_ignored_files)
 
             old_format_files = old_format_files.union(nc_old_format_files)
             modified_files = modified_files.union(
@@ -980,8 +983,8 @@ class ValidateManager:
             changed_meta_files = changed_meta_files - set(nc_deleted_files)
 
         if self.staged:
-            modified_files, added_files, old_format_files, changed_meta_files = \
-                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
+            modified_files, added_files, old_format_files, changed_meta_files = self.filter_staged_only(
+                modified_files, added_files, old_format_files, changed_meta_files)
 
         modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
             self.get_packs(added_files))
@@ -1108,7 +1111,7 @@ class ValidateManager:
 
     """ ######################################## Validate Tools ############################################### """
 
-    @staticmethod
+    @ staticmethod
     def create_ignored_errors_list(errors_to_check):
         ignored_error_list = []
         all_errors = get_all_error_codes()
@@ -1119,7 +1122,7 @@ class ValidateManager:
 
         return ignored_error_list
 
-    @staticmethod
+    @ staticmethod
     def get_allowed_ignored_errors_from_list(error_list):
         allowed_ignore_list = []
         for error in error_list:
@@ -1162,7 +1165,7 @@ class ValidateManager:
 
         return ignored_errors_list
 
-    @staticmethod
+    @ staticmethod
     def get_current_working_branch() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
@@ -1173,7 +1176,7 @@ class ValidateManager:
     def get_content_release_identifier(self) -> Optional[str]:
         return tools.get_content_release_identifier(self.branch_name)
 
-    @staticmethod
+    @ staticmethod
     def _is_py_script_or_integration(file_path):
         file_yml = get_yaml(file_path)
         if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
@@ -1189,7 +1192,7 @@ class ValidateManager:
 
         return False
 
-    @staticmethod
+    @ staticmethod
     def get_packs_with_added_release_notes(added_files):
         added_rn = set()
         for file in added_files:
@@ -1226,7 +1229,7 @@ class ValidateManager:
 
         return modified_packs_that_should_have_version_raised
 
-    @staticmethod
+    @ staticmethod
     def get_packs(changed_files):
         packs = set()
         for changed_file in changed_files:
@@ -1238,7 +1241,7 @@ class ValidateManager:
 
         return packs
 
-    @staticmethod
+    @ staticmethod
     def get_id_set_file(skip_id_set_creation, id_set_path):
         """
 
@@ -1283,8 +1286,8 @@ class ValidateManager:
             is_deprecated = "deprecated" in current_file and current_file["deprecated"]
 
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file.get("toversion", "99.99.99")) < \
-                           version.parse(OLDEST_SUPPORTED_VERSION)
+            version.parse(current_file.get("toversion", "99.99.99")) < \
+            version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
             click.echo(f"Validating deprecated file: {file_path}")

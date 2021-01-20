@@ -46,6 +46,8 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         mocker.patch(
             "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
         )
+        mocker.patch("click.secho")
+        from click import secho
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -56,15 +58,26 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             import demisto_sdk.commands.common.update_id_set as uis
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
-                                          '-v', os.path.join(repo.path, 'debug.md'),
-                                          ])
-        assert "{}" in result.output
-        assert 'Found dependencies result for FindDependencyPack pack:' in result.output
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i',
+                                          'Packs/' + os.path.basename(repo.packs[0].path), '-v'
+                                          ]
+                                   )
+        assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'  # first log line is the pack name
+        assert secho.call_args_list[1][0][0] == '### Scripts'
+        assert secho.call_args_list[2][0][0] == '### Playbooks'
+        assert secho.call_args_list[3][0][0] == '### Layouts'
+        assert secho.call_args_list[4][0][0] == '### Incident Fields'
+        assert secho.call_args_list[5][0][0] == '### Indicator Types'
+        assert secho.call_args_list[6][0][0] == '### Integrations'
+        assert secho.call_args_list[7][0][0] == '### Incident Types'
+        assert secho.call_args_list[8][0][0] == '### Classifiers'
+        assert secho.call_args_list[9][0][0] == '### Mappers'
+        assert secho.call_args_list[10][0][0] == '### Widgets'
+        assert secho.call_args_list[11][0][0] == '### Dashboards'
+        assert secho.call_args_list[12][0][0] == '### Reports'
+        assert secho.call_args_list[13][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
-        assert os.path.isfile(os.path.join(repo.path, 'debug.md'))
 
     def test_integration_find_dependencies__sanity_with_id_set(self, repo):
         """
@@ -91,17 +104,15 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 'pack': 'FindDependencyPack',
             }
         })
-
         repo.id_set.write_json(id_set)
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', 'Packs/' + os.path.basename(repo.packs[0].path),
+                                          '-idp', repo.id_set.path, '--no-update',
                                           ])
+
         assert 'Found dependencies result for FindDependencyPack pack:' in result.output
         assert "{}" in result.output
         assert result.exit_code == 0
@@ -138,15 +149,13 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
-                                          '-i', 'Packs/NotValidPack',
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', 'Packs/NotValidPack',
+                                          '-idp', repo.id_set.path, '--no-update',
                                           ])
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
-    def test_integration_find_dependencies_with_dependency(self, repo):
+    def test_integration_find_dependencies_with_dependency(self, repo, mocker):
         """
         Given
         - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -188,15 +197,19 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         })
 
         repo.id_set.write_json(id_set)
+        mocker.patch("click.secho")
+        from click import secho
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD,
                                           '-i', 'Packs/' + os.path.basename(pack2.path),
-                                          '-idp', repo.id_set.path,
-                                          '--no-update',
+                                          '-idp', repo.id_set.path, '-v'
                                           ])
+
+        assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
+        assert "All level dependencies are:" in secho.call_args_list[-1][0][0]
         assert 'Found dependencies result for FindDependencyPack2 pack:' in result.output
         assert '"display_name": "FindDependencyPack1"' in result.output
         assert result.exit_code == 0

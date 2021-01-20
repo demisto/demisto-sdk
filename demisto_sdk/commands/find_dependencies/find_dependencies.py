@@ -1042,9 +1042,7 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_all_dependencies_graph(pack_ids: list,
-                                     id_set: dict,
-                                     verbose: bool,
+    def build_all_dependencies_graph(pack_ids: list, id_set: dict, verbose: bool = False,
                                      exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph for all packs

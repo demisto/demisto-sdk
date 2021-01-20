@@ -577,12 +577,14 @@ class ValidateManager:
     def validate_layout(self, structure_validator, pack_error_ignore_list):
         layout_validator = LayoutValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
         layout_validator = LayoutsContainerValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors)
-        return layout_validator.is_valid_layout(validate_rn=False)
+        return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -601,7 +603,8 @@ class ValidateManager:
     def validate_mapper(self, structure_validator, pack_error_ignore_list):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors)
-        return mapper_validator.is_valid_mapper(validate_rn=False)
+        return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                is_circle=self.is_circle)
 
     def validate_classifier(self, structure_validator, pack_error_ignore_list, file_type):
         if file_type == FileType.CLASSIFIER:
@@ -613,7 +616,8 @@ class ValidateManager:
         classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False)
+        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file,
+                                                        is_circle=self.is_circle)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
         widget_validator = WidgetValidator(structure_validator, ignored_errors=pack_error_ignore_list,

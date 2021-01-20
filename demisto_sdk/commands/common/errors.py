@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122']
+                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -195,11 +195,12 @@ ERROR_CODE = {
     "missing_from_version_in_mapper": "MP103",
     "invalid_type_in_mapper": "MP104",
     "mapper_non_existent_incident_types": "MP105",
+    "invalid_incident_field_in_mapper": "MP106",
     "invalid_version_in_layout": "LO100",
     "invalid_version_in_layoutscontainer": "LO101",
     "invalid_file_path_layout": "LO102",
     "invalid_file_path_layoutscontainer": "LO103",
-
+    "invalid_incident_field_in_layout": "LO104"
 }
 
 
@@ -464,7 +465,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should start with "Deprecated.".'
+        return 'The description of all deprecated integrations should follow one of the formats:' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -1165,6 +1168,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_incident_field_in_layout(invalid_inc_fields_list):
+        return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+            "Please make sure:\n" \
+            "1 - The right incident field is set and the spelling is correct.\n" \
+            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+            " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_to_version_in_new_classifiers():
         return 'toVersion field in new classifiers needs to be higher than 6.0.0'
 
@@ -1237,6 +1249,15 @@ class Errors:
     @error_code_decorator
     def mapper_non_existent_incident_types(incident_types):
         return f"The Mapper related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_mapper(invalid_inc_fields_list):
+        return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+            "Please make sure:\n" \
+            "1 - The right incident field is set and the spelling is correct.\n" \
+            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+            " rerun the command."
 
     @staticmethod
     @error_code_decorator

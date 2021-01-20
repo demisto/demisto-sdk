@@ -275,7 +275,8 @@ def test_json_output(repo):
                     "severity": "error",
                     "code": ui_applicable_error_code,
                     "message": ui_applicable_error_message,
-                    "ui": True
+                    "ui": True,
+                    'related-field': 'display'
                 }
             ]
         }
@@ -290,13 +291,15 @@ def test_json_output(repo):
                     "severity": "error",
                     "code": ui_applicable_error_code,
                     "message": ui_applicable_error_message,
-                    "ui": True
+                    "ui": True,
+                    'related-field': 'display'
                 },
                 {
                     "severity": "warning",
                     "code": non_ui_applicable_error_code,
                     "message": non_ui_applicable_error_message,
-                    "ui": False
+                    "ui": False,
+                    'related-field': 'subtype'
                 }
             ]
         }

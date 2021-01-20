@@ -12,11 +12,11 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
-                                                ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors)
+                                                PRESET_ERROR_TO_IGNORE, Errors,
+                                                get_all_error_codes)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -91,7 +91,8 @@ class ValidateManager:
         self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
-        self.json_file_path = json_file_path
+        self.json_file_path = json_file_path if os.path.isfile(json_file_path) else \
+            os.path.join(json_file_path, 'validate_outputs.json')
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
@@ -1110,7 +1111,7 @@ class ValidateManager:
     @staticmethod
     def create_ignored_errors_list(errors_to_check):
         ignored_error_list = []
-        all_errors = ERROR_CODE.values()
+        all_errors = get_all_error_codes()
         for error_code in all_errors:
             error_type = error_code[:2]
             if error_code not in errors_to_check and error_type not in errors_to_check:

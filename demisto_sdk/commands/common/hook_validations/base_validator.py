@@ -7,12 +7,12 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
-                                                FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
-                                                UI_APPLICABLE_ERROR)
+                                                get_all_data_from_error_code,
+                                                get_all_error_codes)
 from demisto_sdk.commands.common.tools import (find_type, get_json,
                                                get_pack_name, get_yaml)
 
@@ -25,8 +25,7 @@ class BaseValidator:
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
-        self.json_file_path = json_file_path if os.path.isfile(json_file_path) else \
-            os.path.join(json_file_path, 'validate_outputs.json')
+        self.json_file_path = json_file_path
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -132,7 +131,7 @@ class BaseValidator:
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):
         ignored_error_list = []
-        all_errors = ERROR_CODE.values()
+        all_errors = get_all_error_codes()
         for error_code in all_errors:
             error_type = error_code[:2]
             if error_code not in errors_to_check and error_type not in errors_to_check:
@@ -165,11 +164,14 @@ class BaseValidator:
         if not self.json_file_path:
             return
 
+        error_data = get_all_data_from_error_code(error_code)
+
         output = {
             "severity": "warning" if warning else "error",
             "code": error_code,
             "message": error_message,
-            "ui": error_code in UI_APPLICABLE_ERROR
+            "ui": error_data.get('ui_applicable'),
+            'related-field': error_data.get('related_field')
         }
 
         if os.path.exists(self.json_file_path):

@@ -64,7 +64,7 @@ class Repo:
             'Layouts': [],
             'Reports': [],
             'Widgets': [],
-            'Mappers': []
+            'Mappers': [],
         })
 
     def __del__(self):

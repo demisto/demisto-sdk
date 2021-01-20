@@ -71,7 +71,7 @@ def build_bandit_command(files: List[Path]) -> str:
     """
     command = "python3 -m bandit"
     # Reporting only issues with high and medium severity level
-    # command += " -ll"
+    command += " -ll"
     # Reporting only issues of a high confidence level
     command += " -iii"
     # Skip the following tests: Pickle usage, Use of insecure hash func, Audit url open,

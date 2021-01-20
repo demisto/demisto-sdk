@@ -6,8 +6,6 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
-from demisto_sdk.commands.common.content import \
-    TYPE_CONVERSION_BY_FileType_validators
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -236,9 +234,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_type_not_supported(given_type=None):
-        supported_file_types = [file_type.value for file_type in TYPE_CONVERSION_BY_FileType_validators.keys()]
-        error = f"The file type is not supported in validate command\n " \
-                f"validate' command supports: {', '.join(supported_file_types)}"
+        error = "The file type is not supported in validate command\n " \
+                "validate' command supports: integrations, scripts, beta-integrations, playbooks, test-playbooks, " \
+                "test-scripts, dashboards, widgets, classifiers, reports, mappers, layouts, layoutscontainers, " \
+                "indicator-types, indicator-fields, incident-types, incident-fields, readmes, descriptions, " \
+                "connections and images"
         if given_type:
             error += f'\nThe given file type was {given_type}'
 

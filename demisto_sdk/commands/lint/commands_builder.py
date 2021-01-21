@@ -138,10 +138,10 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
     command += " -E --disable=all"
-    # Enable only Demisto Plugins errors.
-    command += f" --enable={message_enable}"
     # Message format
     command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
+    # Enable only Demisto Plugins errors.
+    command += f" --enable={message_enable}"
     # Load plugins
     if checker_path:
         command += f" --load-plugins {checker_path}"

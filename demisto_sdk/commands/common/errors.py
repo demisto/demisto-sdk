@@ -206,9 +206,9 @@ ERROR_CODE = {
 
 
 def get_all_error_codes():
-    error_codes = set()
+    error_codes = []
     for error in ERROR_CODE:
-        error_codes.add(ERROR_CODE[error].get('code'))
+        error_codes.append(ERROR_CODE[error].get('code'))
 
     return error_codes
 

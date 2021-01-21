@@ -22,6 +22,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
         FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README, FileType.RELEASE_NOTES, None}
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
+    release_notes_validator.json_file_path = ''
     return release_notes_validator
 
 

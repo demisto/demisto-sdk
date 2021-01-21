@@ -95,7 +95,8 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, create_new=False)
+        name=name, contribution=contribution_path, description=description, author=author, create_new=False,
+        no_pipenv=True)
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'
     assert converted_pack_path.exists()
@@ -167,7 +168,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author)
+        name=name, contribution=contribution_path, description=description, author=author, no_pipenv=True)
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
@@ -279,7 +280,8 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     author = 'Octocat Smith'
     gh_user = 'octocat'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user)
+        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user,
+        no_pipenv=True)
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'

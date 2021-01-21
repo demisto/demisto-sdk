@@ -38,6 +38,7 @@ jobs:
               pip install tox
         - run:
             name: Tox build
+            no_output_timeout: 30m
             command: |
               tox -e py37 -v
         - save_cache:
@@ -63,6 +64,7 @@ jobs:
               pip install tox
         - run:
             name: Tox build
+            no_output_timeout: 30m
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - store_artifacts:

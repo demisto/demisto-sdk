@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.2.17
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
@@ -14,6 +16,7 @@
 * Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
 * Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console.
+* Improved the deprecated message validation required from integrations.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

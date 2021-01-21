@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106']
+                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -467,7 +467,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should start with "Deprecated.".'
+        return 'The description of all deprecated integrations should follow one of the formats:' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator

@@ -168,7 +168,7 @@ class TestPlaybook:
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
         # If There are a list of filtered tests and the playbook is not in them
-        if self.build_context.filtered_tests and self.configuration.playbook_id not in self.build_context.filtered_tests:
+        if not self.build_context.filtered_tests or self.configuration.playbook_id not in self.build_context.filtered_tests:
             self.build_context.logging_module.debug(f'Skipping {self} because it\'s not in filtered tests')
             skipped_tests_collected[self.configuration.playbook_id] = 'not in filtered tests'
             return False
@@ -183,7 +183,7 @@ class TestPlaybook:
         # skipped test
         if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
             # If the playbook supposed to run according to the filters but it's skipped - warning log
-            if self.build_context.filtered_tests and self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
                 self.build_context.logging_module.warning(f'Skipping test {self} because it\'s in skipped test list')
             else:
                 self.build_context.logging_module.debug(f'Skipping test {self} because it\'s in skipped test list')
@@ -1341,7 +1341,7 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        if self.incident_id:
+        if not self.incident_id:
             text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                    f' {self.client.api_client.configuration.host}'
         else:

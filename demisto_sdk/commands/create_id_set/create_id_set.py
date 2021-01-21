@@ -1,7 +1,11 @@
+import json
+
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
 class IDSetCreator:
+    DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+
     def __init__(self, output: str = '', input: str = '', print_logs: bool = True):
         """IDSetCreator
 
@@ -14,6 +18,43 @@ class IDSetCreator:
         self.output = output
         self.input = input
         self.print_logs = print_logs
+        self.id_set = {}
 
     def create_id_set(self):
-        return re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
+        self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
+        self.modify_command_to_integration_of_playbook()
+        return self.id_set
+
+    def modify_command_to_integration_of_playbook(self):
+        command_name_to_implemented_integration_map = self.create_command_to_implemented_integration_map()
+
+        playbooks_list = self.id_set['playbooks']
+        for playbook_dict in playbooks_list:
+            playbook_name = list(playbook_dict.keys())[0]
+            playbook_data = playbook_dict[playbook_name]
+            commands_to_integration = playbook_data.get("command_to_integration", {})
+            for command in commands_to_integration:
+                if command in command_name_to_implemented_integration_map:
+                    commands_to_integration[command] = command_name_to_implemented_integration_map[command]
+
+        self.save_id_set()
+
+    def create_command_to_implemented_integration_map(self):
+        command_name_to_implemented_integration_map = {}
+        integrations_list = self.id_set['integrations']
+        for integration_dict in integrations_list:
+            integration_name = list(integration_dict.keys())[0]
+            integration_data = integration_dict[integration_name]
+            commands = integration_data.get("commands", {})
+            for command in commands:
+                if command in command_name_to_implemented_integration_map:
+                    command_name_to_implemented_integration_map[command] += [integration_name]
+                else:
+                    command_name_to_implemented_integration_map[command] = [integration_name]
+        return command_name_to_implemented_integration_map
+
+    def save_id_set(self):
+        if not self.output:
+            self.output = IDSetCreator.DEFAULT_ID_SET_PATH
+            with open(self.output, 'w+') as id_set_file:
+                json.dump(self.id_set, id_set_file, indent=4)

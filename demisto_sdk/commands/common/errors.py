@@ -117,6 +117,8 @@ ERROR_CODE = {
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
     "invalid_script_id": "PB107",
+    "content_entity_version_not_match_playbook_version": "PB108",
+    "integration_version_not_match_playbook_version": "PB109",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -794,6 +796,21 @@ class Errors:
                f"1 - The right script id is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_version_not_match_playbook_version(main_playbook, entity_name, main_playbook_version,
+                                                          entity_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entity_name} " \
+               f"with a version of {entity_version} that does not match the main playbook version. The version of" \
+               f" {entity_name} version should be at most {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
+               f"that not implemented in integration that match the main playbook version. This command should be " \
+               f"implemented in an integration from version {main_playbook_version} at most."
 
     @staticmethod
     @error_code_decorator

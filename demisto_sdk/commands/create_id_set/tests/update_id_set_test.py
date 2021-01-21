@@ -259,7 +259,7 @@ class TestPacksMetadata:
         assert ('adding Pack_Path to id_set' in captured.out) == print_logs
 
     @staticmethod
-    def test_process_packs_exception_thrown(capsys, mocker):
+    def test_process_packs_exception_thrown(capsys):
         """
         Given
             - A pack metadata file path.
@@ -268,11 +268,8 @@ class TestPacksMetadata:
         Then
             - Handle the exceptions gracefully.
         """
-        import demisto_sdk.commands.common.update_id_set as uid
-        # mocking some exception
-        mocker.patch.object(uid, 'get_pack_metadata_data', side_effect=lambda x: 1 / 0)
 
-        with pytest.raises(Exception):
+        with pytest.raises(FileNotFoundError):
             process_pack_metadata('Pack_Path', True)
         captured = capsys.readouterr()
 

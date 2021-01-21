@@ -926,11 +926,11 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_pack_metadata(file_path: str, print_logs: bool) -> list:
+def process_pack_metadata(file_path: str, print_logs: bool):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
-        return [get_pack_metadata_data(file_path)]
+        return get_pack_metadata_data(file_path)
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
@@ -1235,7 +1235,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs
                                         ),
                                 get_pack_metadata_paths(pack_to_create)):
-                packs_dict.update(arr[0])
+                packs_dict.update(arr)
 
         progress_bar.update(1)
 

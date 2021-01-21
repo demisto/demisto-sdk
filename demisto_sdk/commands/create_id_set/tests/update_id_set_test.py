@@ -161,9 +161,9 @@ class TestPacksMetadata:
         'support': 'xsoar',
         'currentVersion': '1.0.0',
         'author': 'Cortex XSOAR',
-        'tags': 'Alerts',
-        'useCases': 'Case Management',
-        'categories': 'Endpoint'
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
     }
 
     METADATA_WITH_PARTNER_SUPPORT = {
@@ -171,9 +171,9 @@ class TestPacksMetadata:
         'support': 'partner',
         'currentVersion': '1.0.0',
         'author': 'Some Partner',
-        'tags': 'Alerts',
-        'useCases': 'Case Management',
-        'categories': 'Endpoint'
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
     }
 
     METADATA_WITH_COMMUNITY_SUPPORT = {
@@ -181,9 +181,9 @@ class TestPacksMetadata:
         'support': 'community',
         'currentVersion': '1.0.0',
         'author': 'Someone',
-        'tags': 'Alerts',
-        'useCases': 'Case Management',
-        'categories': 'Endpoint'
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
     }
 
     TEST_PACK = [
@@ -214,9 +214,9 @@ class TestPacksMetadata:
         assert result.get('current_version') == '1.0.0'
         assert result.get('author') == author
         assert result.get('certification') == certification
-        assert result.get('tags') == 'Alerts'
-        assert result.get('use_cases') == 'Case Management'
-        assert result.get('categories') == 'Endpoint'
+        assert result.get('tags') == ['Alerts']
+        assert result.get('use_cases') == ['Case Management']
+        assert result.get('categories') == ['Endpoint']
 
     @staticmethod
     def test_get_metadata_bad_path(repo, mocker):

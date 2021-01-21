@@ -66,7 +66,7 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_test_specific_pack_creation(repo, mocker):
+def test_specific_pack_creation(repo):
     """Test the -p flag for specific packs creation
     """
     pack_1 = repo.setup_one_pack('Pack1')

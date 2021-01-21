@@ -160,21 +160,30 @@ class TestPacksMetadata:
         'name': 'Pack1',
         'support': 'xsoar',
         'currentVersion': '1.0.0',
-        'author': 'Cortex XSOAR'
+        'author': 'Cortex XSOAR',
+        'tags': 'Alerts',
+        'useCases': 'Case Management',
+        'categories': 'Endpoint'
     }
 
     METADATA_WITH_PARTNER_SUPPORT = {
         'name': 'Pack1',
         'support': 'partner',
         'currentVersion': '1.0.0',
-        'author': 'Some Partner'
+        'author': 'Some Partner',
+        'tags': 'Alerts',
+        'useCases': 'Case Management',
+        'categories': 'Endpoint'
     }
 
     METADATA_WITH_COMMUNITY_SUPPORT = {
         'name': 'Pack1',
         'support': 'community',
         'currentVersion': '1.0.0',
-        'author': 'Someone'
+        'author': 'Someone',
+        'tags': 'Alerts',
+        'useCases': 'Case Management',
+        'categories': 'Endpoint'
     }
 
     TEST_PACK = [
@@ -198,13 +207,16 @@ class TestPacksMetadata:
         pack.pack_metadata.write_json(metadata_file_content)
 
         res = get_pack_metadata_data(pack.pack_metadata.path)
-        result = res.get(list(res.keys())[0])
+        result = res.get('Pack1')
 
         assert 'name' in result.keys()
         assert result.get('name') == 'Pack1'
         assert result.get('current_version') == '1.0.0'
         assert result.get('author') == author
         assert result.get('certification') == certification
+        assert result.get('tags') == 'Alerts'
+        assert result.get('use_cases') == 'Case Management'
+        assert result.get('categories') == 'Endpoint'
 
     @staticmethod
     def test_get_metadata_bad_path(repo, mocker):
@@ -220,7 +232,7 @@ class TestPacksMetadata:
         mocker.patch.object(uid, 'get_json', return_value={'name': 'Pack1'})
 
         res = get_pack_metadata_data('Pack1')
-        result = res.get(list(res.keys())[0])
+        result = res.get('Pack1')
 
         assert 'name' in result.keys()
         assert not result.get('id')

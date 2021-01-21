@@ -694,19 +694,23 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
 
 
 def get_pack_metadata_data(path):
-    pack_name = get_pack_name(path)
     json_data = get_json(path)
-    return {
-        pack_name: {
-            "name": json_data.get('name', ''),
-            "current_version": json_data.get('currentVersion', ''),
-            "author": json_data.get('author', ''),
-            'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
-            "tags": json_data.get('tags', ''),
-            "use_cases": json_data.get('usecases', ''),
-            "categories": json_data.get('categories', '')
-        }
+
+    data = {
+        "name": json_data.get('name', ''),
+        "current_version": json_data.get('currentVersion', ''),
+        "author": json_data.get('author', ''),
+        'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
+        "tags": json_data.get('tags', ''),
+        "use_cases": json_data.get('useCases', ''),
+        "categories": json_data.get('categories', '')
     }
+
+    pack_id = get_pack_name(path)
+    if pack_id:
+        data['id'] = pack_id
+
+    return {data['name']: data}
 
 
 def get_mapper_data(path):

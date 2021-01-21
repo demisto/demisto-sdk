@@ -1274,14 +1274,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_uuid(task_key, id, taskid):
-        return f"On task with the following key: {task_key}, the field of taskid: {taskid} and the feild of id: " \
-               f"{id} must be from uuid type."
+        return f"On task: {task_key},  the field 'taskid': {taskid} and 'id' under the 'task' field: {id}, " \
+               f"must be from uuid format."
 
     @staticmethod
     @error_code_decorator
     def taskid_different_from_id(task_key, id, taskid):
-        return f"On task with the following key: {task_key}, the field of taskid: {taskid} and the feild of id: " \
-               f"{id} must be with equal value. "
+        return f"On task: {task_key},  the field 'taskid': {taskid} and 'id' under the 'task' field: {id}, " \
+               f"must be with equal value. "
 
     @staticmethod
     def wrong_filename(file_type):

@@ -255,7 +255,7 @@ class TestPacksMetadata:
         res = process_pack_metadata('Pack_Path', print_logs)
         captured = capsys.readouterr()
 
-        assert res == [{'name': 'Pack'}]
+        assert res == {'name': 'Pack'}
         assert ('adding Pack_Path to id_set' in captured.out) == print_logs
 
     @staticmethod

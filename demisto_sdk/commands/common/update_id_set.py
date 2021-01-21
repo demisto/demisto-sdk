@@ -701,9 +701,9 @@ def get_pack_metadata_data(path):
         "current_version": json_data.get('currentVersion', ''),
         "author": json_data.get('author', ''),
         'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
-        "tags": json_data.get('tags', ''),
-        "use_cases": json_data.get('useCases', ''),
-        "categories": json_data.get('categories', '')
+        "tags": json_data.get('tags', []),
+        "use_cases": json_data.get('useCases', []),
+        "categories": json_data.get('categories', [])
     }
 
     pack_id = get_pack_name(path)

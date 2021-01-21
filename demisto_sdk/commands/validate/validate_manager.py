@@ -72,7 +72,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False, json_file_path=''
+            skip_id_set_creation=False, json_file_path=None
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -91,8 +91,12 @@ class ValidateManager:
         self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
-        self.json_file_path = json_file_path if os.path.isfile(json_file_path) else \
-            os.path.join(json_file_path, 'validate_outputs.json')
+
+        if json_file_path:
+            self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
+                os.path.isdir(json_file_path) else json_file_path
+        else:
+            self.json_file_path = ''
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,

@@ -1,4 +1,5 @@
 import json
+import os
 from os.path import join
 
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
@@ -263,7 +264,8 @@ def test_json_output(repo):
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('MyInt')
     integration.create_default_integration()
-    base = BaseValidator(json_file_path=repo.path)
+    json_path = os.path.join(repo.path, 'valid_json.json')
+    base = BaseValidator(json_file_path=json_path)
     ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
     non_ui_applicable_error_message, non_ui_applicable_error_code = Errors.wrong_subtype()
     expected_json_1 = {
@@ -276,7 +278,7 @@ def test_json_output(repo):
                     "code": ui_applicable_error_code,
                     "message": ui_applicable_error_message,
                     "ui": True,
-                    'related-field': 'display'
+                    'related-field': '<parameter-name>.display'
                 }
             ]
         }
@@ -292,7 +294,7 @@ def test_json_output(repo):
                     "code": ui_applicable_error_code,
                     "message": ui_applicable_error_message,
                     "ui": True,
-                    'related-field': 'display'
+                    'related-field': '<parameter-name>.display'
                 },
                 {
                     "severity": "warning",

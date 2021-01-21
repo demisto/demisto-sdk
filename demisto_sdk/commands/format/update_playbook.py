@@ -94,9 +94,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         for task_key, task in self.data.get('tasks', {}).items():
             taskid = task.get('taskid', '')
             in_under_task = task.get('task', {}).get('id', '')
-            UUID_REGEX = r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'  # TODO: delete
-            if not bool(re.fullmatch(UUID_REGEX, taskid)) or not bool(re.fullmatch(UUID_REGEX, in_under_task)):  # TODO: delete
-            # if not is_string_uuid(taskid) or not is_string_uuid(in_under_task):
+            if not is_string_uuid(taskid) or not is_string_uuid(in_under_task):
                 click.echo(f"Taskid field and id under task field must be from uuid format. Generating uuid for those "
                            f"fields under task key: {task_key}")
                 generated_uuid = str(uuid.uuid4())  # uuid1 creates  a uuid containing computer's network.

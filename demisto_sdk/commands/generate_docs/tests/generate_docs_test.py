@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
-    generate_integration_doc, generate_setup_section, generate_single_command_section)
+    generate_integration_doc, generate_setup_section,
+    generate_single_command_section)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -392,7 +393,7 @@ def test_generate_commands_section():
 
 def test_generate_command_section_with_empty_cotext_example():
     """
-    When an string representד an empty dict '{}' is the context output
+    When an string represents an empty dict '{}' is the context output
     the 'Context Example' sections should be empty
     """
     example_dict = {

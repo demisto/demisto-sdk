@@ -392,7 +392,7 @@ def test_generate_commands_section():
 
 def test_generate_command_section_with_empty_cotext_example():
     """
-    When an string represent an emmpty dict '{}' is the context output
+    When an string representד an empty dict '{}' is the context output
     the 'Context Example' sections should be empty
     """
     example_dict = {

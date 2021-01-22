@@ -1,4 +1,5 @@
 # Changelog
+* Added support for the incident fields in outgoing mappers in the ID set.
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.
@@ -17,7 +18,7 @@
 * Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console.
 * Improved the deprecated message validation required from integrations.
-* Added support for the incident fields in outgoing mappers in the ID set.
+* Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

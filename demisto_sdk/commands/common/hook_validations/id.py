@@ -235,6 +235,7 @@ class IDSetValidator(BaseValidator):
             bool. Whether the file is valid in the id_set or not.
         """
         is_valid = True
+
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

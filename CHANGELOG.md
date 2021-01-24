@@ -2,6 +2,7 @@
 * Added support for the incident fields in outgoing mappers in the ID set.
 
 # 1.2.17
+* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.

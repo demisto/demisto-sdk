@@ -1,8 +1,8 @@
+import json
+
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import (BuildContext,
-                                                                  Conf,
-                                                                  SecretConf)
+from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
 
 
 def generate_test_configuration(playbook_id: str,
@@ -130,7 +130,8 @@ def generate_env_results_content(
         'Server 5.0': 'Demisto-Circle-CI-Content-AMI-GA-5.0-62071-2021-01-03'
     }
     env_results = [{'AmiName': role_to_ami_name_mapping[role],
-                    'Role': role} for _ in range(number_of_instances)]
+                    'Role': role,
+                    'InstanceDNS': '1.1.1.1'} for _ in range(number_of_instances)]
     return env_results
 
 
@@ -157,13 +158,20 @@ def get_mocked_build_context(
         server_version: The server version to run the instance on
     """
     logging_manager = ParallelLoggingManager(tmp_file / 'log_file.log')
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._load_conf_files',
-                 return_value=(Conf(content_conf_json or generate_content_conf_json()),
-                               SecretConf(secret_conf_json or generate_secret_conf_json()),))
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._load_env_results_json',
-                 return_value=env_results_content or generate_env_results_content())
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._extract_filtered_tests',
-                 return_value=filtered_tests_content or [])
+    conf_path = tmp_file / 'conf_path'
+    conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
+
+    secret_conf_path = tmp_file / 'secret_conf_path'
+    secret_conf_path.write_text(json.dumps(secret_conf_json or generate_secret_conf_json()))
+
+    env_results_path = tmp_file / 'env_results_path'
+    env_results_path.write_text(json.dumps(env_results_content or generate_env_results_content()))
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH', str(env_results_path))
+
+    filtered_tests_path = tmp_file / 'filtered_tests_path'
+    filtered_tests_path.write_text('\n'.join(filtered_tests_content or []))
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF', str(filtered_tests_path))
+
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id',
                  return_value='some_user_id')
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._get_all_integration_config',
@@ -171,8 +179,8 @@ def get_mocked_build_context(
     kwargs = {
         'api_key': 'api_key',
         'server': None,
-        'conf': 'conf_path',
-        'secret': 'secret_conf_path',
+        'conf': conf_path,
+        'secret': secret_conf_path,
         'slack': 'slack_token',
         'nightly': nightly,
         'is_ami': True,

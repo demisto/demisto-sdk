@@ -1,6 +1,7 @@
 """
 
 """
+import os
 import shutil
 from pathlib import Path
 from typing import List, Optional
@@ -180,3 +181,10 @@ class Repo:
 
     def working_dir(self):
         return self.path
+
+    def make_dir(self, dir_name: str = ''):
+        if not dir_name:
+            dir_name = "NewDir"
+        dir_path = os.path.join(self.path, dir_name)
+        os.mkdir(dir_path)
+        return dir_path

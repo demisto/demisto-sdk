@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
@@ -18,7 +19,7 @@ class IDSetCreator:
         self.output = output
         self.input = input
         self.print_logs = print_logs
-        self.id_set = {}
+        self.id_set = OrderedDict()  # type: ignore
 
     def create_id_set(self):
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
@@ -42,7 +43,7 @@ class IDSetCreator:
         self.save_id_set()
 
     def create_command_to_implemented_integration_map(self):
-        command_name_to_implemented_integration_map = {}
+        command_name_to_implemented_integration_map = {}  # type: ignore
         integrations_list = self.id_set['integrations']
         for integration_dict in integrations_list:
             integration_name = list(integration_dict.keys())[0]

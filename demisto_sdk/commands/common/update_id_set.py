@@ -1113,9 +1113,8 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,
-                     objects_to_create: list = None,  # noqa: C901
-                     print_logs: bool = True):
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
+                     objects_to_create: list = None, print_logs: bool = True):
     """Re create the id set
 
     Args:

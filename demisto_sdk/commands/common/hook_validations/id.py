@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
                                                        get_mapper_data,
-                                                       get_script_data,
-                                                       get_playbook_data)
+                                                       get_playbook_data,
+                                                       get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 

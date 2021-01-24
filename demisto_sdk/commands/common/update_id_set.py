@@ -718,13 +718,13 @@ def get_mapper_data(path):
             for internal_mapping_key in internal_mapping.keys():
                 fields_mapper = internal_mapping.get(internal_mapping_key, {})
                 if isinstance(fields_mapper, dict):
-                    incident_field = fields_mapper.get('simple')
-                    if incident_field:
-                        incident_fields_set.add(incident_field)
+                    incident_field_simple = fields_mapper.get('simple')
+                    if incident_field_simple:
+                        incident_fields_set.add(incident_field_simple)
                     else:
-                        incident_field = fields_mapper.get('complex', {}).get('root')
-                        if incident_field:
-                            incident_fields_set.add(incident_field)
+                        incident_field_complex = fields_mapper.get('complex', {})
+                        if isinstance(incident_field_complex, dict) and 'root' in incident_field_complex:
+                            incident_fields_set.add(incident_field_complex.get('root'))
             incidents_fields = incidents_fields.union(incident_fields_set)
         elif type_ == 'mapping-incoming':
             # all the incident fields are the keys of the mapping

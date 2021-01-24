@@ -144,6 +144,10 @@ jobs:
         - attach_workspace:
             at: ~/project
         - run:
+            name: gsutil install
+            command: |
+              pip install gsutil
+        - run:
             name: Test validate files and yaml
             when: always
             command: |
@@ -153,6 +157,13 @@ jobs:
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
+
+              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
+
+              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
+
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
   create-id-set:

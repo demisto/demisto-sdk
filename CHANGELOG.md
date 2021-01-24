@@ -4,9 +4,6 @@
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.
-
-
-# 1.2.17
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
 * Added a validation that the incident types of a mapper exist.

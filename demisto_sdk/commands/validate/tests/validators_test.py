@@ -898,23 +898,23 @@ class TestValidators:
         validate_manager.setup_git_params()
 
         assert validate_manager.always_valid
+        assert validate_manager.skip_pack_rn_validation
 
     def test_setup_git_params_master_branch(self, mocker):
-        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
         validate_manager = ValidateManager()
-        # resetting always_valid flag
-        validate_manager.always_valid = False
         validate_manager.setup_git_params()
+
         assert not validate_manager.always_valid
-        assert validate_manager.prev_ver == 'HEAD~1'
+        assert validate_manager.skip_pack_rn_validation
 
     def test_setup_git_params_non_master_branch(self, mocker):
-        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='not-master-branch')
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
+
         assert not validate_manager.always_valid
+        assert not validate_manager.skip_pack_rn_validation
 
     def test_get_packs(self):
         modified_files = {'Packs/CortexXDR/Integrations/XDR_iocs/XDR_iocs.py',

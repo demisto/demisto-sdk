@@ -1182,7 +1182,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     widgets_list = []
     mappers_list = []
 
-    pool = Pool(processes=int(cpu_count() * 1.5))
+    pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 

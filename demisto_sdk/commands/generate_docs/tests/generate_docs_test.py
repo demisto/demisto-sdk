@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
-    generate_integration_doc, generate_setup_section)
+    generate_integration_doc, generate_setup_section,
+    generate_single_command_section)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -386,6 +387,27 @@ def test_generate_commands_section():
         'There are no input arguments for this command.', '', '#### Context Output', '',
         'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
         '#### Human Readable Output', '\n', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_command_section_with_empty_cotext_example():
+    """
+    When an string represents an empty dict '{}' is the context output
+    the 'Context Example' sections should be empty
+    """
+    example_dict = {
+        'test1': (None, None, '{}')
+    }
+    command = {'deprecated': False, 'name': 'test1'}
+
+    section, errors = generate_single_command_section(command, example_dict=example_dict, command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.', '', '#### Command Example', '```None```', '',
+                        '#### Human Readable Output', '\n>None', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 

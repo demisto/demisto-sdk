@@ -633,7 +633,7 @@ class MapperDependencies:
         }
 
         mapping.update(updates_to_map)
-        mapper.update({'mapping': mapping})
+        mapper.update({'mapping': mapping, 'type': 'mapping-incoming'})
 
 
 class IncidentTypeDependencies:

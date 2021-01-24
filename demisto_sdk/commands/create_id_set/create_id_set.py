@@ -1,5 +1,4 @@
 import json
-import os
 from collections import OrderedDict
 
 from demisto_sdk.commands.common.update_id_set import re_create_id_set

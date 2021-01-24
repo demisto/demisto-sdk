@@ -22,10 +22,10 @@ class IDSetCreator:
 
     def create_id_set(self):
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
-        self.modify_command_to_integration_of_playbook()
+        self.modify_id_set_command_to_integration_of_playbook()
         return self.id_set
 
-    def modify_command_to_integration_of_playbook(self):
+    def modify_id_set_command_to_integration_of_playbook(self):
         command_name_to_implemented_integration_map = self.create_command_to_implemented_integration_map()
 
         playbooks_list = self.id_set['playbooks']
@@ -34,8 +34,10 @@ class IDSetCreator:
             playbook_data = playbook_dict[playbook_name]
             commands_to_integration = playbook_data.get("command_to_integration", {})
             for command in commands_to_integration:
-                if command in command_name_to_implemented_integration_map:
-                    commands_to_integration[command] = command_name_to_implemented_integration_map[command]
+                is_command_implemented_in_integration = command in command_name_to_implemented_integration_map
+                if is_command_implemented_in_integration:
+                    implemented_integration = command_name_to_implemented_integration_map[command]
+                    commands_to_integration[command] = implemented_integration
 
         self.save_id_set()
 

@@ -568,7 +568,7 @@ class PackDependencies:
             #    The CommonTypes pack is not dependent on the Zimperium Pack, but vice versa.
             # 2. emailfrom in the Phishing pack is being used in the EWS pack.
             #    Phishing pack does not depend on EWS but vice versa.
-            # The opposite dependencies are calculated in: _collect_playbook_dependencies, _collect_mapper_dependencies
+            # The opposite dependencies are calculated in: _collect_playbook_dependencies, _collect_mappers_dependencies
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(

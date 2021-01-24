@@ -711,22 +711,24 @@ def get_mapper_data(path):
     mapping = json_data.get('mapping', {})
     for key, value in mapping.items():
         incidents_types.add(key)
+        internal_mapping = value.get('internalMapping')  # get the mapping
         if type_ == 'mapping-outgoing':
-            internal_mapping = value.get('internalMapping')  # get the mapping
             incident_fields_set = set()
             # incident fields are in the simple key or in complex.root key of each key
             for internal_mapping_key in internal_mapping.keys():
-                incident_field = internal_mapping_key.get(key, {}).get('simple')
-                if incident_field:
-                    incident_fields_set.add(incident_field)
-                else:
-                    incident_field = internal_mapping_key.get(key, {}).get('complex', {}).get('root')
+                fields_mapper = internal_mapping.get(internal_mapping_key, {})
+                if isinstance(fields_mapper, dict):
+                    incident_field = fields_mapper.get('simple')
                     if incident_field:
                         incident_fields_set.add(incident_field)
+                    else:
+                        incident_field = fields_mapper.get('complex', {}).get('root')
+                        if incident_field:
+                            incident_fields_set.add(incident_field)
             incidents_fields = incidents_fields.union(incident_fields_set)
         elif type_ == 'mapping-incoming':
             # all the incident fields are the keys of the mapping
-            incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
+            incidents_fields = incidents_fields.union(set(internal_mapping.keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)

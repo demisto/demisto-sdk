@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
-    generate_integration_doc)
+    generate_integration_doc, generate_setup_section,
+    generate_single_command_section)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -390,6 +391,27 @@ def test_generate_commands_section():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_command_section_with_empty_cotext_example():
+    """
+    When an string represents an empty dict '{}' is the context output
+    the 'Context Example' sections should be empty
+    """
+    example_dict = {
+        'test1': (None, None, '{}')
+    }
+    command = {'deprecated': False, 'name': 'test1'}
+
+    section, errors = generate_single_command_section(command, example_dict=example_dict, command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.', '', '#### Command Example', '```None```', '',
+                        '#### Human Readable Output', '\n>None', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
 def test_generate_commands_section_human_readable():
     yml_data = {
         'script': {
@@ -571,3 +593,54 @@ def test_generate_table_section_numbered_section():
     section = generate_table_section(data=[{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
                                      title='', horizontal_rule=False, numbered_section=True)
     assert section == expected_section
+
+
+yml_data_cases = [(
+    {"name": "test", "configuration": [
+        {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
+        {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
+    ]},  # case no param with additional info field
+    ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+     '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+     '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |', '    | test2 | True |',
+     '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
+        ]},  # case some params with additional info field
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | test1 | More info | True |', '    | test2 |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
+        ]},  # case all params with additional info field
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+)
+
+]
+
+
+@pytest.mark.parametrize("yml_input, expected_results", yml_data_cases)
+def test_generate_setup_section_with_additional_info(yml_input, expected_results):
+    """
+        Given
+            - A yml file with parameters in configuration section
+        When
+            - Running the generate_setup_section command.
+        Then
+            - Validate that the generated table has the 'Description' column if
+            at least one parameter has the additionalinfo field.
+    """
+    section = generate_setup_section(yml_input)
+    assert section == expected_results

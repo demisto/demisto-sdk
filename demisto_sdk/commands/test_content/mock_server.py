@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import ast
 import os
+import re
 import string
 import time
 import unicodedata
@@ -78,7 +79,7 @@ class AMIConnection:
 
     Attributes:
         public_ip (string): The public IP of the AMI instance.
-        docker_ip (string): The IP of the AMI on the docker bridge (to direct traffic from docker to the AMI).
+        internal_ip (string): The  internal IP of the instance.
     """
 
     REMOTE_MACHINE_USER = 'ec2-user'
@@ -87,22 +88,23 @@ class AMIConnection:
 
     def __init__(self, public_ip):
         self.public_ip = public_ip
-        self.docker_ip = self._get_docker_ip()
+        self.internal_ip = self._get_internal_ip()
 
-    def _get_docker_ip(self):
-        """Get the IP of the AMI on the docker bridge.
-        Used to configure the docker host (AMI machine, in this case) as the proxy server.
+    def _get_internal_ip(self):
+        """Get the internal IP of the instance.
+        Used to configure the host (AMI machine, in this case) as the proxy server.
 
         Returns:
-            string. The IP of the AMI on the docker bridge.
+            string. The internal IP of the instance.
         """
-        out = self.check_output(['/usr/sbin/ip', 'addr', 'show', 'docker0']).decode().split('\n')
-        lines_of_words = map(lambda y: y.strip().split(' '), out)  # Split output to lines[words[]]
-        address_lines = list(filter(lambda x: x[0] == 'inet', lines_of_words))  # Take only lines with ipv4 addresses
-        if len(address_lines) != 1:
-            raise Exception("docker bridge interface has {} ipv4 addresses, should only have one."
-                            .format(len(address_lines)))
-        return address_lines[0][1].split('/')[0]  # Return only the IP Address (without mask)
+        out = self.check_output("/usr/sbin/ifconfig eth0".split()).decode()
+        pattern = re.compile(r'inet ([^ ]+)')
+        pattern_findall_result = pattern.findall(out)
+        if not pattern_findall_result:
+            raise Exception(f'Could not find internal IP for instance {self.public_ip}')
+        internal_ip = pattern.findall(out)[0]
+
+        return internal_ip
 
     def add_ssh_prefix(self, command, ssh_options=""):
         """Add necessary text before a command in order to run it on the AMI instance via SSH.
@@ -412,23 +414,12 @@ class MITMProxy:
             self.logging_module.debug(f'Proxy service started in {self.get_script_mode(is_record)} mode')
         else:
             self.logging_module.error(f'Proxy failed to start after {self.TIME_TO_WAIT_FOR_PROXY_SECONDS} seconds')
-            self.get_mitmdump_service_status()
 
     def _start_mitmdump_service(self) -> None:
         """
         Starts mitmdump service on the remote service
         """
         self.ami.call(['sudo', 'systemctl', 'start', 'mitmdump'])
-
-    def get_mitmdump_service_status(self) -> None:
-        """
-        Safely extract the current mitmdump status and last 50 log lines
-        """
-        try:
-            output = self.ami.check_output('systemctl status mitmdump -n 50 -l'.split(), stderr=STDOUT)
-            self.logging_module.debug(f'mitmdump service status output:\n{output.decode()}')
-        except CalledProcessError as exc:
-            self.logging_module.debug(f'mitmdump service status output:\n{exc.output.decode()}')
 
     def prepare_proxy_start(self,
                             path: str,
@@ -523,7 +514,6 @@ class MITMProxy:
         self.logging_module.debug('Stopping mitmdump service')
         if not self.is_proxy_listening():
             self.logging_module.debug('proxy service was already down.')
-            self.get_mitmdump_service_status()
         else:
             self.ami.call(['sudo', 'systemctl', 'stop', 'mitmdump'])
         self.ami.call(["rm", "-rf", "/tmp/_MEI*"])  # Clean up temp files

@@ -1,8 +1,8 @@
+import json
+
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import (BuildContext,
-                                                                  Conf,
-                                                                  SecretConf)
+from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
 
 
 def generate_test_configuration(playbook_id: str,
@@ -14,7 +14,8 @@ def generate_test_configuration(playbook_id: str,
                                 timeout: int = None,
                                 memory_threshold: int = None,
                                 pid_threshold: int = None,
-                                is_mockable: bool = None
+                                is_mockable: bool = None,
+                                runnable_on_docker_only: bool = None
                                 ) -> dict:
     playbook_config = {
         'playbookID': playbook_id,
@@ -35,6 +36,8 @@ def generate_test_configuration(playbook_id: str,
         playbook_config['memory_threshold'] = memory_threshold
     if pid_threshold:
         playbook_config['pid_threshold'] = pid_threshold
+    if runnable_on_docker_only is not None:
+        playbook_config['runnable_on_docker_only'] = runnable_on_docker_only
     if is_mockable is not None:
         playbook_config['is_mockable'] = is_mockable
     return playbook_config
@@ -127,7 +130,8 @@ def generate_env_results_content(
         'Server 5.0': 'Demisto-Circle-CI-Content-AMI-GA-5.0-62071-2021-01-03'
     }
     env_results = [{'AmiName': role_to_ami_name_mapping[role],
-                    'Role': role} for _ in range(number_of_instances)]
+                    'Role': role,
+                    'InstanceDNS': '1.1.1.1'} for _ in range(number_of_instances)]
     return env_results
 
 
@@ -154,13 +158,20 @@ def get_mocked_build_context(
         server_version: The server version to run the instance on
     """
     logging_manager = ParallelLoggingManager(tmp_file / 'log_file.log')
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._load_conf_files',
-                 return_value=(Conf(content_conf_json or generate_content_conf_json()),
-                               SecretConf(secret_conf_json or generate_secret_conf_json()),))
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._load_env_results_json',
-                 return_value=env_results_content or generate_env_results_content())
-    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._extract_filtered_tests',
-                 return_value=filtered_tests_content or [])
+    conf_path = tmp_file / 'conf_path'
+    conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
+
+    secret_conf_path = tmp_file / 'secret_conf_path'
+    secret_conf_path.write_text(json.dumps(secret_conf_json or generate_secret_conf_json()))
+
+    env_results_path = tmp_file / 'env_results_path'
+    env_results_path.write_text(json.dumps(env_results_content or generate_env_results_content()))
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH', str(env_results_path))
+
+    filtered_tests_path = tmp_file / 'filtered_tests_path'
+    filtered_tests_path.write_text('\n'.join(filtered_tests_content or []))
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF', str(filtered_tests_path))
+
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id',
                  return_value='some_user_id')
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._get_all_integration_config',
@@ -168,8 +179,8 @@ def get_mocked_build_context(
     kwargs = {
         'api_key': 'api_key',
         'server': None,
-        'conf': 'conf_path',
-        'secret': 'secret_conf_path',
+        'conf': conf_path,
+        'secret': secret_conf_path,
         'slack': 'slack_token',
         'nightly': nightly,
         'is_ami': True,
@@ -202,6 +213,24 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
                                              filtered_tests_content=filtered_tests)
     assert 'test_that_should_be_skipped' in build_context.tests_data_keeper.skipped_tests
     assert 'test_that_should_run' not in build_context.tests_data_keeper.skipped_tests
+
+
+def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
+    """
+    Given:
+        - A build context with empty filtered tests list
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that all tests that are skipped
+    """
+    tests = [generate_test_configuration(playbook_id='test_that_should_be_skipped')]
+    content_conf_json = generate_content_conf_json(tests=tests)
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             filtered_tests_content=[])
+    assert 'test_that_should_be_skipped' in build_context.tests_data_keeper.skipped_tests
 
 
 def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):

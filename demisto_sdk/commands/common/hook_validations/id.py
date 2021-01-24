@@ -49,7 +49,6 @@ class IDSetValidator(BaseValidator):
                  print_as_warnings=False, suppress_print=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
-        self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set = self.load_id_set()

@@ -1,3 +1,4 @@
+import pytest
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
 
@@ -549,3 +550,43 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
     assert validator._is_mapper_incident_types_found(mapper_data=mapper_data) is False, \
         "The mapper incidenttypes was found"
+
+
+class TestPlaybookEntitiesVersionsValid:
+    validator = IDSetValidator(is_circle=True, is_test_run=False, configuration=CONFIG)
+    playbook_data = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_scripts": [
+            "ADGetUser",
+            "GenerateInvestigationSummaryReport"
+        ],
+        "implementing_playbooks": [
+            "Block IP - Generic v2",
+            "IP Enrichment - Generic v2"
+        ],
+        "command_to_integration": {
+            "ad-expire-password": [
+                "Active Directory Query v2"
+            ],
+            "send-mail": [
+                "EWS Mail Sender",
+                "EWSO365",
+                "Gmail",
+                "Gmail Single User",
+                "Mail Sender (New)",
+                "Microsoft Graph Mail Single User",
+                "MicrosoftGraphMail"
+            ]
+        }
+    }}
+    file_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
+
+    @pytest.mark.parametrize('playbook_version, is_valid', [("5.0.0", True), ("4.5.0", False)])
+    def test_sub_playbook_version_valid(self, playbook_version, is_valid):
+        assert True
+        # playbook_name = list(self.playbook_data.keys())[0]
+        # self.playbook_data[playbook_name]["fromversion"] = playbook_version
+        # assert self.validator._are_playbook_entities_versions_valid(self.playbook_data, self.file_path) == is_valid

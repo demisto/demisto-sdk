@@ -723,7 +723,7 @@ def get_mapper_data(path):
                         incident_fields_set.add(incident_field_simple)
                     else:
                         incident_field_complex = fields_mapper.get('complex', {})
-                        if isinstance(incident_field_complex, dict) and 'root' in incident_field_complex:
+                        if 'root' in incident_field_complex:
                             incident_fields_set.add(incident_field_complex.get('root'))
             incidents_fields = incidents_fields.union(incident_fields_set)
         elif type_ == 'mapping-incoming':

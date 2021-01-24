@@ -4,7 +4,7 @@ import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS
+from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -38,6 +38,8 @@ class PlaybookValidator(ContentEntityValidator):
                 self.are_tests_configured(),
                 self.is_valid_as_deprecated(),
                 self.is_script_id_valid(id_set_file),
+                self._is_id_uuid(),
+                self._is_taskid_equals_id(),
             ]
             answers = all(new_playbook_checks)
         else:
@@ -52,6 +54,8 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_delete_context_all_in_playbook(),
                 self.are_tests_configured(),
                 self.is_script_id_valid(id_set_file),
+                self._is_id_uuid(),
+                self._is_taskid_equals_id(),
             ]
             answers = all(modified_playbook_checks)
 
@@ -356,3 +360,44 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
+
+    def _is_id_uuid(self):
+        """
+        Check that the taskid field and the id field under the task field are both on from uuid format
+        Returns: True if the ids are uuid
+        """
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            taskid = task.get('taskid', '')
+            inner_id = task.get('task', {}).get('id', '')
+            is_valid_task = is_string_uuid(taskid) and is_string_uuid(inner_id)
+
+            if not is_valid_task:
+                is_valid = is_valid_task
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
+                # invalid task in order to raise error for all the invalid tasks at the file
+
+        return is_valid
+
+    def _is_taskid_equals_id(self):
+        """
+        Check that taskid field and id field under task field contains equal values
+        Returns: True if the values are equal
+
+        """
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            taskid = task.get('taskid', '')
+            inner_id = task.get('task', {}).get('id', '')
+            is_valid_task = (taskid == inner_id)
+
+            if not is_valid_task:
+                is_valid = is_valid_task
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
+                # invalid task in order to raise error for all the invalid tasks at the file
+
+        return is_valid

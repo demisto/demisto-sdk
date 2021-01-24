@@ -21,7 +21,6 @@
 * Improved the deprecated message validation required from integrations.
 * Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
 
-
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.
 * Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.

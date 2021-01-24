@@ -1274,13 +1274,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_uuid(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and 'id' under the 'task' field: {id}, " \
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
                f"must be from uuid format."
 
     @staticmethod
     @error_code_decorator
     def taskid_different_from_id(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and 'id' under the 'task' field: {id}, " \
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
                f"must be with equal value. "
 
     @staticmethod

@@ -251,9 +251,6 @@ def unify(**kwargs):
     '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
-    '--no-auto-stage', is_flag=True, help='Do not auto-stage un-tracked files.'
-)
-@click.option(
     '--skip-pack-release-notes', is_flag=True,
     help='Skip validation of pack release notes.')
 @click.option(
@@ -306,7 +303,6 @@ def validate(config, **kwargs):
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
             skip_id_set_creation=kwargs.get('skip_id_set_creation'),
-            no_auto_stage=kwargs['no_auto_stage']
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

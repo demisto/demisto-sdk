@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
@@ -351,7 +352,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {pack.pack_metadata.path}, set()))
-    mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value="branch_name")
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.git_tools.get_packs', return_value={'FeedAzureValid'})
@@ -364,7 +365,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
            'please commit the changes and rerun the command' in result.stdout
 
 
-def test_update_release_notes_master_ahead_of_current(demisto_client, mocker):
+def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, repo):
     """
     Given
     - Azure feed pack path.
@@ -376,7 +377,6 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker):
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from master and not from local metadata file.
     """
-    runner = CliRunner(mix_stderr=False)
     modified_files = {join(AZURE_FEED_PACK_PATH, 'IncidentFields', 'incidentfield-city.json')}
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
@@ -385,14 +385,16 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker):
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='2.0.0')
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 2.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
 
-def test_update_release_notes_master_unavailable(demisto_client, mocker):
+def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     """
     Given
     - Azure feed pack path.
@@ -404,7 +406,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker):
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from local metadata file.
     """
-    runner = CliRunner(mix_stderr=False)
+
     modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
@@ -412,8 +414,9 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker):
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.1.1' in result.stdout

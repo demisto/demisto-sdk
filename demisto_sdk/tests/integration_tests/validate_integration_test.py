@@ -5,6 +5,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -243,11 +244,14 @@ class TestDeprecatedIntegration:
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
-                                                                                         set(), set()))
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files,
+                                                                                         set(), set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks',
                                           '--print-ignored-files', '--skip-pack-release-notes'],
                                    catch_exceptions=False)
 
@@ -307,11 +311,14 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
 
         modified_files = {integration.yml.rel_path}
-        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-g', '-i', integration.yml.rel_path, '--no-docker-checks',
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks',
                                           '--print-ignored-files', '--skip-pack-release-notes'],
                                    catch_exceptions=False)
         assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
@@ -1606,6 +1613,9 @@ class TestPlaybookValidateDeprecated:
         modified_files = {playbook.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -1669,6 +1679,9 @@ class TestPlaybookValidateDeprecated:
         modified_files = {playbook.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -1929,6 +1942,9 @@ class TestScriptDeprecatedValidation:
         modified_files = {script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -1990,6 +2006,9 @@ class TestScriptDeprecatedValidation:
         modified_files = {script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2236,6 +2255,8 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2288,6 +2309,8 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2333,6 +2356,8 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -2371,6 +2396,9 @@ class TestValidationUsingGit:
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
                                                                                          set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',

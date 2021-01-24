@@ -9,6 +9,7 @@ import demisto_sdk.commands.validate.validate_manager
 import pytest
 from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
 from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -921,25 +922,31 @@ class TestValidators:
         assert validate_manager.validate_no_old_format(old_format_file)
         assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
-    def test_setup_git_params(self, mocker):
+    def test_setup_git_params_release_branch(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='20.0.7')
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 
         assert validate_manager.always_valid
+        assert validate_manager.skip_pack_rn_validation
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
-        # resetting always_valid flag
-        validate_manager.always_valid = False
+    def test_setup_git_params_master_branch(self, mocker):
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
+        validate_manager = ValidateManager()
         validate_manager.setup_git_params()
-        assert not validate_manager.always_valid
-        assert validate_manager.prev_ver == 'HEAD~1'
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
-        validate_manager.setup_git_params()
         assert not validate_manager.always_valid
+        assert validate_manager.skip_pack_rn_validation
+
+    def test_setup_git_params_non_master_branch(self, mocker):
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert not validate_manager.always_valid
+        assert not validate_manager.skip_pack_rn_validation
 
     def test_get_packs(self):
         modified_files = {'Packs/CortexXDR/Integrations/XDR_iocs/XDR_iocs.py',

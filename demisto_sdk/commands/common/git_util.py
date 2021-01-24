@@ -18,12 +18,10 @@ class GitUtil:
     def modified_files(self, prev_ver: str = 'master', committed_only: bool = False,
                        staged_only: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as modified against the prev_ver.
-
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
-
         Returns:
             Set: A set of Paths to the modified files.
         """
@@ -76,12 +74,10 @@ class GitUtil:
     def added_files(self, prev_ver: str = 'master', committed_only: bool = False,
                     staged_only: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as added against the prev_ver.
-
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
-
         Returns:
             Set: A set of Paths to the added files.
         """
@@ -132,12 +128,10 @@ class GitUtil:
     def deleted_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as deleted against the prev_ver.
-
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
-
         Returns:
             Set: A set of Paths to the deleted files.
         """
@@ -175,12 +169,10 @@ class GitUtil:
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False) -> Set[Tuple[Path, Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
-
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
-
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
@@ -220,10 +212,8 @@ class GitUtil:
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
-
         Args:
             requested_status (str): M, A, R, D - the git status to return
-
         Returns:
             Set: of path strings which include the untracked files of a certain status.
         """
@@ -247,10 +237,8 @@ class GitUtil:
 
     def _get_all_changed_files(self, prev_ver: str) -> Set[Path]:
         """Get all the files changed in the current branch without status distinction.
-
         Args:
             prev_ver (str): The base branch against which the comparison is made.
-
         Returns:
             Set: of Paths to files changed in the current branch.
         """
@@ -258,3 +246,6 @@ class GitUtil:
         return {Path(os.path.join(item)) for item
                 in self.repo.git.diff('--name-only',
                                       f'{origin_prev_ver}...{self.repo.active_branch}').split('\n')}
+
+    def get_current_working_branch(self) -> str:
+        return str(self.repo.active_branch)

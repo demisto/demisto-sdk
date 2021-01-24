@@ -10,7 +10,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
     OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX, FileType)
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
@@ -63,6 +64,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_yaml, open_id_set_file,
                                                run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from git import InvalidGitRepositoryError
 from packaging import version
 
 
@@ -72,7 +74,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False, no_auto_stage=False
+            skip_id_set_creation=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -91,7 +93,6 @@ class ValidateManager:
         self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
-        self.no_auto_stage = no_auto_stage
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
@@ -99,7 +100,18 @@ class ValidateManager:
         if not id_set_path:
             id_set_path = 'Tests/id_set.json'
         self.id_set_path = id_set_path
-        self.branch_name = ''
+
+        try:
+            self.git_util = GitUtil(repo=Content.git())
+            self.branch_name = self.git_util.get_current_working_branch()
+        except InvalidGitRepositoryError:
+            if self.use_git:
+                raise
+            else:
+                self.git_util = None  # type: ignore
+                self.branch_name = ''
+                pass
+
         self.changes_in_schema = False
         self.check_only_schema = False
         self.always_valid = False
@@ -793,7 +805,8 @@ class ValidateManager:
             integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
-            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(packs_that_should_have_new_rn_api_module_related)
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
+                packs_that_should_have_new_rn_api_module_related)
 
             # APIModules pack is without a version and should not have RN
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)
@@ -833,18 +846,23 @@ class ValidateManager:
     """ ######################################## Git Tools and filtering ####################################### """
 
     def setup_git_params(self):
-        self.branch_name = self.get_current_working_branch()
+        """Setting up the git relevant params"""
+        self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
+            else self.branch_name
 
-        # if running on release branch or master - check against last release.
-        if self.branch_name == 'master' or self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
+        # if running on release branch check against last release.
+        if self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
             self.skip_pack_rn_validation = True
 
-            self.prev_ver = 'HEAD~1' if self.branch_name == 'master' else \
-                get_content_release_identifier(self.branch_name)
+            self.prev_ver = get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
+
+        # on master dont check RN
+        elif self.branch_name == 'master':
+            self.skip_pack_rn_validation = True
 
     def git_config_prints(self):
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
@@ -862,24 +880,31 @@ class ValidateManager:
                 click.echo("Running on committed and staged files")
 
     def get_changed_files_from_git(self):
-        git_util = GitUtil(repo=Content.git())
-        modified_files = git_util.modified_files(prev_ver=self.prev_ver,
-                                                 committed_only=self.is_circle, staged_only=self.staged)
-        added_files = git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                           staged_only=self.staged)
-        renamed_files = git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                               staged_only=self.staged)
+        """Get the added and modified after file filtration to only relevant files for validate"""
+        # get files from git by status identification against prev-ver
+        modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
+                                                      committed_only=self.is_circle, staged_only=self.staged)
+        added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                staged_only=self.staged)
+        renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged)
 
+        # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
         filtered_added, _ = self.filter_to_relevant_files(added_files)
 
+        # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
 
         return filtered_modified, filtered_added, changed_meta, old_format_files
 
     def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
+        """Extract pack metadata files from the modified and added files
+
+        Return all modified metadata file paths
+        and get all newly added packs from the added metadata files."""
         changed_metadata_files = set()
         for path in modified_files.union(renamed_files):
             file_path = str(path[1]) if isinstance(path, tuple) else str(path)
@@ -894,6 +919,7 @@ class ValidateManager:
         return changed_metadata_files
 
     def filter_to_relevant_files(self, file_set):
+        """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
         for path in file_set:
@@ -918,19 +944,24 @@ class ValidateManager:
         return filtered_set, old_format_files
 
     def format_file_path(self, file_path, old_path, old_format_files):
+        """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
         file_type = find_type(file_path)
 
-        # ignore unrecognized file types
-        if not file_type:
+        # ignore unrecognized file types, pack metadata and test_data
+        if not file_type or file_type == FileType.PACK_METADATA or any(test_dir in str(file_path) for
+                                                                       test_dir in TESTS_DIRECTORIES):
             self.ignored_files.add(file_path)
             return None
 
-        # redirect code files to the associated yml file
+        # redirect non-test code files to the associated yml file
         if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE]:
-            file_path = file_path.replace('.py', '.yml').replace('.pws', '.yml')
+            if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1')):
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml')
 
-            if old_path:
-                old_path = old_path.replace('.py', '.yml').replace('.pws', ',yml')
+                if old_path:
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml')
+            else:
+                return None
 
         # check for old file format
         if self._is_old_file_format(file_path):
@@ -1000,14 +1031,6 @@ class ValidateManager:
                     pass
 
         return ignored_errors_list
-
-    @staticmethod
-    def get_current_working_branch() -> str:
-        branches = run_command('git branch')
-        branch_name_reg = re.search(r'\* (.*)', branches)
-        if not branch_name_reg:
-            return ''
-        return branch_name_reg.group(1)
 
     def get_content_release_identifier(self) -> Optional[str]:
         return tools.get_content_release_identifier(self.branch_name)

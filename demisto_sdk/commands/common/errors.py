@@ -272,11 +272,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def indicator_field_type_grid_minimal_version(fromversion):
-        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
-
-    @staticmethod
-    @error_code_decorator
     def wrong_display_name(param_name, param_display):
         return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
 
@@ -896,6 +891,11 @@ class Errors:
     @error_code_decorator
     def incident_field_type_change():
         return 'Changing incident field type is not allowed.'
+
+    @staticmethod
+    @error_code_decorator
+    def indicator_field_type_grid_minimal_version(fromversion):
+        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
     @staticmethod
     @error_code_decorator

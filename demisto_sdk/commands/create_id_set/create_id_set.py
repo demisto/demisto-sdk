@@ -58,8 +58,8 @@ class IDSetCreator:
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
-        if not self.output:
+        if self.output == "":
             self.output = IDSetCreator.DEFAULT_ID_SET_PATH
-        if os.path.exists(self.output):
+        if self.output:
             with open(self.output, 'w+') as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)

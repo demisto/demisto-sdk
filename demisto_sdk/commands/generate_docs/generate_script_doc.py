@@ -11,7 +11,8 @@ from demisto_sdk.commands.generate_docs.common import (
 
 
 def generate_script_doc(input, examples, output: str = None, permissions: str = None,
-                        limitations: str = None, insecure: bool = False, verbose: bool = False):
+                        limitations: str = None, insecure: bool = False, verbose: bool = False,
+                        include_used_in: bool = True):
     try:
         doc: list = []
         errors: list = []
@@ -43,9 +44,12 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
         dependencies, _ = get_depends_on(script)
 
         # get the script usages by the id set
-        id_set_creator = IDSetCreator(output='', print_logs=False)
-        id_set = id_set_creator.create_id_set()
-        used_in = get_used_in(id_set, script_id)
+        if include_used_in:
+            id_set_creator = IDSetCreator(output='', print_logs=False)
+            id_set = id_set_creator.create_id_set()
+            used_in = get_used_in(id_set, script_id)
+        else:
+            used_in = ''
 
         description = script.get('comment', '')
         # get inputs/outputs

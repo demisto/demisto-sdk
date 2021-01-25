@@ -25,7 +25,7 @@ def test_is_runnable_on_this_instance(mocker):
                                                          test_playbook_configuration),
                                    client=mocker.MagicMock())
 
-    test_context = test_context_builder(is_instance_using_docker=False)
+    test_context = test_context_builder(server_context=mocker.MagicMock(is_instance_using_docker=False))
     assert not test_context._is_runnable_on_current_server_instance()
-    test_context = test_context_builder(is_instance_using_docker=True)
+    test_context = test_context_builder(server_context=mocker.MagicMock(is_instance_using_docker=True))
     assert test_context._is_runnable_on_current_server_instance()

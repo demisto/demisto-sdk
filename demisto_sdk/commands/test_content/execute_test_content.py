@@ -44,8 +44,8 @@ def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager('Run_Tests.log', real_time_logs_only=not kwargs['nightly'])
     build_context = BuildContext(kwargs, logging_manager)
     threads_list = []
-    for server_ip in build_context.instances_ips:
-        tests_execution_instance = ServerContext(build_context, server_ip)
+    for server_ip, port in build_context.instances_ips.items():
+        tests_execution_instance = ServerContext(build_context, server_private_ip=server_ip, tunnel_port=port)
         threads_list.append(Thread(target=tests_execution_instance.execute_tests))
 
     for thread in threads_list:

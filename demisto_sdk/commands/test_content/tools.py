@@ -4,6 +4,7 @@ from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
 
 import demisto_client
+from demisto_sdk.commands.test_content.constants import SSH_USER
 
 
 def update_server_configuration(client, server_configuration, error_msg, logging_manager=None):
@@ -76,7 +77,7 @@ def is_redhat_instance(instance_ip: str) -> bool:
         True if the file '/home/ec2-user/rhel_ami' exists on the instance, else False
     """
     try:
-        check_output(f'ssh -o StrictHostKeyChecking=no ec2-user@{instance_ip} ls -l /home/ec2-user/rhel_ami'.split(),
+        check_output(f'ssh {SSH_USER}@{instance_ip} ls -l /home/ec2-user/rhel_ami'.split(),
                      stderr=STDOUT)
         return True
     except CalledProcessError:

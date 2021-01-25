@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_pack_metadata,
+    process_incident_fields, process_integration,
     process_script, re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
@@ -206,7 +206,7 @@ class TestPacksMetadata:
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
 
-        res = get_pack_metadata_data(pack.pack_metadata.path)
+        res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
         result = res.get('Pack1')
 
         assert 'name' in result.keys()
@@ -219,27 +219,8 @@ class TestPacksMetadata:
         assert result.get('categories') == ['Endpoint']
 
     @staticmethod
-    def test_get_metadata_bad_path(repo, mocker):
-        """
-        Given
-            - A bad path for a pack.
-        When
-            - Parsing pack metadata files.
-        Then
-            - Handle the exceptions gracefully.
-        """
-        import demisto_sdk.commands.common.update_id_set as uid
-        mocker.patch.object(uid, 'get_json', return_value={'name': 'Pack1'})
-
-        res = get_pack_metadata_data('Pack1')
-        result = res.get('Pack1')
-
-        assert 'name' in result.keys()
-        assert not result.get('id')
-
-    @staticmethod
     @pytest.mark.parametrize('print_logs', [True, False])
-    def test_process_packs_success(capsys, mocker, print_logs):
+    def test_process_packs_success(capsys, repo, print_logs):
         """
         Given
             - A pack metadata file path.
@@ -249,14 +230,16 @@ class TestPacksMetadata:
         Then
             - Verify output to logs.
         """
-        import demisto_sdk.commands.common.update_id_set as uid
-        mocker.patch.object(uid, 'get_pack_metadata_data', return_value={'name': 'Pack'})
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json({'name': 'Pack'})
+        pack_metadata_path = pack.pack_metadata.path
 
-        res = process_pack_metadata('Pack_Path', print_logs)
+        res = get_pack_metadata_data(pack_metadata_path, print_logs)
+
         captured = capsys.readouterr()
 
-        assert res == {'name': 'Pack'}
-        assert ('adding Pack_Path to id_set' in captured.out) == print_logs
+        assert res['Pack']['name'] == 'Pack'
+        assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
 
     @staticmethod
     def test_process_packs_exception_thrown(capsys):
@@ -270,7 +253,7 @@ class TestPacksMetadata:
         """
 
         with pytest.raises(FileNotFoundError):
-            process_pack_metadata('Pack_Path', True)
+            get_pack_metadata_data('Pack_Path', True)
         captured = capsys.readouterr()
 
         assert 'failed to process Pack_Path, Error:' in captured.out

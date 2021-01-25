@@ -693,24 +693,32 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
-def get_pack_metadata_data(path):
-    json_data = get_json(path)
+def get_pack_metadata_data(file_path, print_logs: bool):
+    try:
+        if print_logs:
+            print(f'adding {file_path} to id_set')
 
-    data = {
-        "name": json_data.get('name', ''),
-        "current_version": json_data.get('currentVersion', ''),
-        "author": json_data.get('author', ''),
-        'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
-        "tags": json_data.get('tags', []),
-        "use_cases": json_data.get('useCases', []),
-        "categories": json_data.get('categories', [])
-    }
+        json_data = get_json(file_path)
+        pack_data = {
+            "name": json_data.get('name'),
+            "current_version": json_data.get('currentVersion'),
+            "author": json_data.get('author', ''),
+            'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
+            "tags": json_data.get('tags', []),
+            "use_cases": json_data.get('useCases', []),
+            "categories": json_data.get('categories', [])
+        }
 
-    pack_id = get_pack_name(path)
-    if pack_id:
-        data['id'] = pack_id
+        pack_id = get_pack_name(file_path)
+        if pack_id:
+            pack_data['id'] = pack_id
 
-    return {data['name']: data}
+        pack_name = pack_data['name']
+        return {pack_name: pack_data}
+
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
 
 
 def get_mapper_data(path):
@@ -924,16 +932,6 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         raise
 
     return res
-
-
-def process_pack_metadata(file_path: str, print_logs: bool):
-    try:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        return get_pack_metadata_data(file_path)
-    except Exception as exp:  # noqa
-        print_error(f'failed to process {file_path}, Error: {str(exp)}')
-        raise
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
@@ -1231,7 +1229,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_pack_metadata,
+            for arr in pool.map(partial(get_pack_metadata_data,
                                         print_logs=print_logs
                                         ),
                                 get_pack_metadata_paths(pack_to_create)):
@@ -1428,7 +1426,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['Packs'] = {key: packs_dict[key] for key in sorted(packs_dict.keys())}
+    new_ids_dict['Packs'] = packs_dict
 
     if id_set_path:
         with open(id_set_path, 'w+') as id_set_file:

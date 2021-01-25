@@ -9,6 +9,7 @@ from typing import Union
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
@@ -320,11 +321,21 @@ class PackDependencies:
             script_dependencies = set()
 
             # depends on list can have both scripts and integration commands
-            depends_on = script.get('depends_on', [])
-            command_to_integration = list(script.get('command_to_integration', {}).keys())
-            script_executions = script.get('script_executions', [])
+            all_depends_on = script.get('depends_on', [])
+            depends_on = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES, all_depends_on))
+            all_command_to_integration = list(script.get('command_to_integration', {}).keys())
+            command_to_integration = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
+                                                 all_command_to_integration))
+
+            all_script_executions = script.get('script_executions', [])
+            script_executions = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
+                                            all_script_executions))
 
             dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
+            print("depends_on:" + str(depends_on))
+            print("command_to_integration:" + str(command_to_integration))
+            print("script_executions:" + str(script_executions))
+            print("dependencies_commands:" + str(dependencies_commands))
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first

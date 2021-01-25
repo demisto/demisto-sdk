@@ -841,6 +841,8 @@ ACCEPTED_FILE_EXTENSIONS = [
 
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip'}
 
+GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification'})
+
 DBOT_SCORES_DICT = {
     'DBotScore.Indicator': 'The indicator that was tested.',
     'DBotScore.Type': 'The indicator type.',

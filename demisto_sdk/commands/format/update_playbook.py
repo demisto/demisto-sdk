@@ -6,11 +6,11 @@ import click
 from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
-from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 import uuid
 

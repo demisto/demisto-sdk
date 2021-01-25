@@ -116,7 +116,7 @@ class Repo:
         mapper.write_json({'id': f'{name} - mapper'})
         mapper.update({'name': f'{name} - mapper'})
         mapper.update({'mapping': {}})
-        mapper.update({'type': 'mapping'})
+        mapper.update({'type': 'mapping-incoming'})  # can also be mapping-outgoing, but this is the more common usage
 
         incident_type = pack.create_incident_type(f'{name}_incident-type')
         incident_type.write_json({'id': f'{name} - incident_type'})

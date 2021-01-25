@@ -1,8 +1,8 @@
 # Changelog
-
+* Added support for the incident fields in outgoing mappers in the ID set.
+* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 
 # 1.2.17
-* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
@@ -20,7 +20,6 @@
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console.
 * Improved the deprecated message validation required from integrations.
 * Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
-
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

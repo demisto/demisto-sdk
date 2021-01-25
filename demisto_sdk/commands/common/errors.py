@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
+    "multiple_default_arg": "IN134",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -117,8 +118,6 @@ ERROR_CODE = {
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
     "invalid_script_id": "PB107",
-    "invalid_uuid": "PB108",
-    "taskid_different_from_id": "PB109",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -447,6 +446,11 @@ class Errors:
     @error_code_decorator
     def integration_non_existent_mapper(integration_mapper):
         return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_default_arg(command_name, default_args):
+        return f"The integration command: {command_name} has multiple default arguments: {default_args}."
 
     @staticmethod
     @error_code_decorator
@@ -1270,18 +1274,6 @@ class Errors:
     def integration_not_runnable():
         return "Could not find any runnable command in the integration." \
                "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_uuid(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
-               f"must be from uuid format."
-
-    @staticmethod
-    @error_code_decorator
-    def taskid_different_from_id(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
-               f"must be with equal value. "
 
     @staticmethod
     def wrong_filename(file_type):

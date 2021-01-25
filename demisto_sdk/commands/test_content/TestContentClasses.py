@@ -21,6 +21,8 @@ import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
+from demisto_sdk.commands.test_content.constants import (LOAD_BALANCER_DNS,
+                                                         SSH_USER)
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import \
     acquire_test_lock
@@ -403,23 +405,23 @@ class BuildContext:
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
         self.slack_user_id = self._retrieve_slack_user_id()
-        self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips[0])
+        self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
-    def _get_all_integration_config(self, server_ip: str) -> Optional[list]:
+    def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server
         Since in all packs are installed the data returned from this request is very heavy and we want to avoid
         running it in multiple threads.
         Args:
-            server_ip: The url of the server to create integration in
+            instances_ips: The mapping of the urls to the ports used to tunnel it's traffic
 
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
         if not self.is_nightly:
             return []
-
-        server_url = f'https://{server_ip}'
+        url, port = list(instances_ips.items())[0]
+        server_url = f'https://localhost:{port}' if port else f'https://{url}'
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -551,16 +553,15 @@ class BuildContext:
         tests_records = self.conf.tests
         return [test for test in tests_records if test.playbook_id]
 
-    def _get_instances_ips(self) -> List[str]:
+    def _get_instances_ips(self) -> Dict[str, Any]:
         """
         Parses the env_results.json and extracts the instance ip from each server configured in it.
         Returns:
-            A list containing tuple with the following:
-                - The server IP
+            A dict contains a mapping from server internal ip to the port used to tunnel it.
         """
         if self.server:
-            return [self.server]
-        instances_ips = [env.get('InstanceDNS') for env in self.env_json if env.get('Role') == self.server_version]
+            return {self.server: None}
+        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
         return instances_ips
 
     @staticmethod
@@ -1159,21 +1160,24 @@ class TestContext:
                  build_context: BuildContext,
                  playbook: TestPlaybook,
                  client: DefaultApi,
-                 is_instance_using_docker: bool):
+                 server_context: 'ServerContext'):
         """
         Initializes the TestContext class
         Args:
             build_context: The context of the current build
             playbook: The TestPlaybook instance to run in the current test execution
             client: A demisto client instance to use for communication with the server
-            is_instance_using_docker: Indication whether the current instance is using docker or podman
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         self.build_context = build_context
+        self.server_context = server_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        self.is_instance_using_docker = is_instance_using_docker
+        self.tunnel_command = \
+            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{SSH_USER}@{LOAD_BALANCER_DNS}" ' \
+            f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1298,6 +1302,8 @@ class TestContext:
                 return ''
 
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
+            self.build_context.logging_module.info(
+                f'ssh tunnel command: {self.tunnel_command}')
             playbook_state = self._poll_for_playbook_state()
             self.playbook.disable_integrations(self.client)
             return playbook_state
@@ -1320,7 +1326,7 @@ class TestContext:
         self._collect_docker_images()
         if self.test_docker_images:
             error_message = Docker.check_resource_usage(
-                server_url=self.client.api_client.configuration.host,
+                server_url=self.server_context.server_ip,
                 docker_images=self.test_docker_images,
                 def_memory_threshold=self.playbook.configuration.memory_threshold,
                 def_pid_threshold=self.playbook.configuration.pid_threshold,
@@ -1344,13 +1350,10 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        if not self.incident_id:
-            text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
-                   f' {self.client.api_client.configuration.host}'
-        else:
-            text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
-                   f' {self.client.api_client.configuration.host}/#/WorkPlan/{self.incident_id}'
-
+        text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
+               f'for more details run: `{self.tunnel_command}` and browse into the following link\n' \
+               f'{self.client.api_client.configuration.host}'
+        text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
@@ -1420,7 +1423,7 @@ class TestContext:
         playbook_state = self._run_incident_test()
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
-        if playbook_state == PB_Status.COMPLETED and self.is_instance_using_docker:
+        if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1526,7 +1529,7 @@ class TestContext:
         Returns:
             True if this instance can be run on the current instance else False
         """
-        if self.playbook.configuration.runnable_on_docker_only and not self.is_instance_using_docker:
+        if self.playbook.configuration.runnable_on_docker_only and not self.server_context.is_instance_using_docker:
             self.build_context.logging_module.debug(
                 f'Skipping test {self.playbook} since it\'s not runnable on podman instances')
             return False
@@ -1567,7 +1570,7 @@ class TestContext:
             test_message += f' with integration(s): {self.playbook.integrations}'
         else:
             test_message += ' with no integrations'
-        if not self.is_instance_using_docker:
+        if not self.server_context.is_instance_using_docker:
             test_message += ', RedHat instance'
         return test_message
 
@@ -1577,13 +1580,14 @@ class TestContext:
 
 class ServerContext:
 
-    def __init__(self, build_context: BuildContext, server_ip: str):
+    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None):
         self.build_context = build_context
-        self.server_ip = server_ip
-        self.server_url = f'https://{self.server_ip}'
+        self.server_ip = server_private_ip
+        self.tunnel_port = tunnel_port
+        self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
-        self.proxy = MITMProxy(server_ip,
+        self.proxy = MITMProxy(server_private_ip,
                                self.build_context.logging_module,
                                build_number=self.build_context.build_number,
                                branch_name=self.build_context.build_name)
@@ -1619,7 +1623,7 @@ class ServerContext:
             test_executed = TestContext(self.build_context,
                                         test_playbook,
                                         self.client,
-                                        self.is_instance_using_docker).execute_test(self.proxy)
+                                        self).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:

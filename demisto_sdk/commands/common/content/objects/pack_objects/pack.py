@@ -27,8 +27,6 @@ from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
 
-logger: logging.Logger
-
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
@@ -207,27 +205,21 @@ class Pack:
 
         return obj
 
-    def sign_pack(self, dumped_pack_dir: Path, sign_directory: Path, signature_string: str):
+    def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
         """ Signs pack folder and creates signature file.
 
         Args:
+            logger (logging.Logger): System logger already initialized.
             dumped_pack_dir (Path): Path to the updated pack to sign.
             sign_directory (Path): Path to the signDirectory executable file.
-            signature_string (str): Base64 encoded string used to sign the pack.
 
         """
-        global logger
-
         try:
-            with open('keyfile', 'wb') as keyfile:
-                keyfile.write(signature_string.encode())
             full_command = f'{sign_directory} {dumped_pack_dir} keyfile base64'
 
             signing_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             output, err = signing_process.communicate()
             signing_process.wait()
-
-            os.remove('keyfile')
 
             if err:
                 logger.error(f'Failed to sign pack for {self.path.name} - {str(err)}')
@@ -237,10 +229,11 @@ class Pack:
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
 
-    def encrypt_pack(self, zip_pack_path: Path, encryptor: Path, encryption_key: str):
+    def encrypt_pack(self, logger: logging.Logger, zip_pack_path: Path, encryptor: Path, encryption_key: str):
         """ Encrypt pack zip.
 
         Args:
+            logger (logging.Logger): System logger already initialized.
             zip_pack_path (Path): Path to the pack not encrypted script.
             encryptor (Path): Path to the encryptor executable file.
             encryption_key (str): The encryption key for the packs.

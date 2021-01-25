@@ -16,8 +16,6 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import \
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
-logger: logging.Logger
-
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
@@ -515,16 +513,16 @@ class PackMetaData(JSONObject):
 
         return [Path(new_metadata_path)]
 
-    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path) -> None:
+    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
             pack_id (str): The pack's id.
             pack_name (str): The pack's name.
             pack_path (Path): The pack's path.
-        """
-        global logger
+            logger (logging.Logger): System logger already initialized.
 
+        """
         user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
 
         if not os.path.exists(user_metadata_path):
@@ -570,15 +568,14 @@ class PackMetaData(JSONObject):
         except Exception:
             logger.error(f'Failed loading {pack_name} user metadata.')
 
-    def handle_dependencies(self, pack_name: str, id_set_path: str) -> None:
+    def handle_dependencies(self, pack_name: str, id_set_path: str, logger: logging.Logger) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
             pack_name (str): The pack's name.
             id_set_path (str): the id_set file path.
+            logger (logging.Logger): System logger already initialized.
         """
-        global logger
-
         calculated_dependencies = PackDependencies.find_dependencies(pack_name,
                                                                      id_set_path=id_set_path,
                                                                      update_pack_metadata=False,

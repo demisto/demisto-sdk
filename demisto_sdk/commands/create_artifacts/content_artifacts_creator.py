@@ -542,7 +542,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path)
+    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
@@ -606,7 +606,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
         if artifact_manager.id_set_path:
             # Dependencies can only be done when id_set file is given.
-            pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path)
+            pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, logger)
         else:
             logger.warning('Skipping dependencies extraction since no id_set file was provided.')
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
@@ -949,13 +949,27 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 def sign_packs(artifact_manager: ArtifactsManager):
     """Sign packs directories"""
     if artifact_manager.signDirectory and artifact_manager.signature_key:
+        with open('keyfile', 'wb') as keyfile:
+            keyfile.write(artifact_manager.signature_key.encode())
+
         with ProcessPoolHandler(artifact_manager) as pool:
-            for pack_name, pack in artifact_manager.content.packs.items():
-                if pack_name in artifact_manager.pack_names:
+            futures: List[ProcessFuture] = []
+            if 'all' in artifact_manager.pack_names:
+                for pack_name, pack in artifact_manager.content.packs.items():
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
-                    pool.schedule(pack.sign_pack, args=(dumped_pack_dir, artifact_manager.signDirectory,
-                                                        artifact_manager.signature_key,
-                                                        ))
+                    futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
+                                                                       artifact_manager.signDirectory,
+                                                                       )))
+            else:
+                for pack_name in artifact_manager.pack_names:
+                    if pack_name in artifact_manager.content.packs:
+                        pack = artifact_manager.content.packs[pack_name]
+                        dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
+                        futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
+                                                                           artifact_manager.signDirectory,
+                                                                           )))
+        wait_futures_complete(futures, artifact_manager)
+        os.remove('keyfile')
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
@@ -966,15 +980,27 @@ def encrypt_packs(artifact_manager: ArtifactsManager):
     """Encrypt packs zips"""
     if artifact_manager.encryptor and artifact_manager.encryption_key:
         with ProcessPoolHandler(artifact_manager) as pool:
-            for pack_name, pack in artifact_manager.content.packs.items():
-                if pack_name not in artifact_manager.pack_names:
-                    continue
+            futures: List[ProcessFuture] = []
+            if 'all' in artifact_manager.pack_names:
+                for pack_name, pack in artifact_manager.content.packs.items():
+                    dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
+                                                   f'{pack.id}_not_encrypted.zip')
+                    futures.append(pool.schedule(pack.encrypt_pack, args=(logger, dumped_pack_zip,
+                                                                          artifact_manager.encryptor,
+                                                                          artifact_manager.encryption_key,
+                                                                          )))
+            else:
+                for pack_name in artifact_manager.pack_names:
+                    if pack_name in artifact_manager.content.packs:
+                        pack = artifact_manager.content.packs[pack_name]
+                        dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
+                                                       f'{pack.id}_not_encrypted.zip')
+                        futures.append(pool.schedule(pack.encrypt_pack, args=(logger, dumped_pack_zip,
+                                                                              artifact_manager.encryptor,
+                                                                              artifact_manager.encryption_key,
+                                                                              )))
 
-                dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
-                                               f'{pack.id}_not_encrypted.zip')
-                pool.schedule(pack.encrypt_pack, args=(dumped_pack_zip, artifact_manager.encryptor,
-                                                       artifact_manager.encryption_key,
-                                                       ))
+        wait_futures_complete(futures, artifact_manager)
 
     elif artifact_manager.encryptor or artifact_manager.encryption_key:
         logger.error('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '

@@ -105,7 +105,7 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker):
     content_object_pack = Pack(pack.path)
     signer_path = Path('./signer')
 
-    content_object_pack.sign_pack(content_object_pack.path, signer_path, 'key')
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
 
     captured = capsys.readouterr()
     assert 'Error while trying to sign pack Pack1' in captured.err
@@ -137,7 +137,7 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
         f'{signer_path} {pack.path} keyfile base64', stderr=["error"]
     )
 
-    content_object_pack.sign_pack(content_object_pack.path, signer_path, 'key')
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
 
     captured = capsys.readouterr()
     assert 'Failed to sign pack for Pack1 -' in captured.err
@@ -168,7 +168,7 @@ def test_sign_pack_success(repo, capsys, fake_process):
         f'{signer_path} {pack.path} keyfile base64', stdout=["success"]
     )
 
-    content_object_pack.sign_pack(content_object_pack.path, signer_path, 'key')
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
 
     captured = capsys.readouterr()
     assert f'Signed {content_object_pack.path.name} pack successfully' in captured.err
@@ -199,7 +199,7 @@ def test_encrypt_pack_exception_thrown(repo, capsys, fake_process):
     content_object_pack = Pack(pack.path)
     encryptor_path = Path('./encryptor')
 
-    content_object_pack.encrypt_pack(content_object_pack.path, encryptor_path, 'key')
+    content_object_pack.encrypt_pack(pack_class.logger, content_object_pack.path, encryptor_path, 'key')
 
     captured = capsys.readouterr()
     assert 'Error while trying to encrypt pack Pack1.' in captured.err
@@ -231,7 +231,7 @@ def test_encrypt_pack_error_from_subprocess(repo, capsys, fake_process):
         f'{encryptor_path} {pack.path} {pack.path} "key"', stderr=["error"]
     )
 
-    content_object_pack.encrypt_pack(content_object_pack.path, encryptor_path, 'key')
+    content_object_pack.encrypt_pack(pack_class.logger, content_object_pack.path, encryptor_path, 'key')
 
     captured = capsys.readouterr()
     assert 'Failed to encrypt pack for Pack1 -' in captured.err
@@ -265,7 +265,7 @@ def test_encrypt_pack_success(repo, capsys, fake_process, mocker):
         f'{encryptor_path} {pack.path} {pack.path} "key"', stdout=['success']
     )
 
-    content_object_pack.encrypt_pack(content_object_pack.path, encryptor_path, 'key')
+    content_object_pack.encrypt_pack(pack_class.logger, content_object_pack.path, encryptor_path, 'key')
 
     captured = capsys.readouterr()
     assert f'Encrypted {content_object_pack.path.name} pack successfully' in captured.err

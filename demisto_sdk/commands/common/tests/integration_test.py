@@ -253,6 +253,13 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
     def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+        """
+        Given: Integration reputation command with arguments.
+
+        When: running is_valid_default_argument_in_reputation command.
+
+        Then: Validate that matching default arg name yields True, else yields False.
+        """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
@@ -276,6 +283,13 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
     def test_is_valid_default_argument(self, current, answer):
+        """
+        Given: Integration command with arguments.
+
+        When: running is_valid_default_argument command.
+
+        Then: Validate that up to 1 default arg name yields True, else yields False.
+        """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)

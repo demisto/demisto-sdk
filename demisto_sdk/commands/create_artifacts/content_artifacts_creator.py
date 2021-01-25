@@ -930,15 +930,15 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
     else:
         template = "\n\t - {}"
 
-    if artifact_manager.only_content_packs:
-        logger.info(template.format(artifact_manager.content_packs_path))
-
     logger.info(template.format(artifact_manager.content_packs_path))
 
     if not artifact_manager.only_content_packs:
         for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
                              artifact_manager.content_all_path]:
             logger.info(template.format(artifact_dir))
+
+    if artifact_manager.zip_artifacts:
+        logger.info(f'\n\t - {artifact_manager.content_uploadable_zips_path}')
 
 
 ###############################

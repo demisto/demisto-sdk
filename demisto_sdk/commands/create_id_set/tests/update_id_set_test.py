@@ -18,7 +18,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_script, re_create_id_set)
+    process_incident_fields, process_integration, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 

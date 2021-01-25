@@ -10,7 +10,7 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
-# from demisto_sdk.commands.common.tools import is_string_uuid  # TODO: add
+from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 import uuid
 
@@ -90,16 +90,15 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     click.secho('Version format is not valid', fg='red')
 
     def update_task_uuid(self):
-        """If taskid field and id under task field are not from uuid type, generate uuid instead"""
+        """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""
         for task_key, task in self.data.get('tasks', {}).items():
             taskid = task.get('taskid', '')
             in_under_task = task.get('task', {}).get('id', '')
-            UUID_REGEX = r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'  # TODO: delete
-            if not bool(re.fullmatch(UUID_REGEX, taskid)) or not bool(re.fullmatch(UUID_REGEX, in_under_task)):  # TODO: delete
-            # if not is_string_uuid(taskid) or not is_string_uuid(in_under_task):
-                click.echo(f"Taskid field and id under task field must be from uuid format. Generating uuid for those "
-                           f"fields with task key: {task_key}")
-                generated_uuid = str(uuid.uuid4())  # uuid1 creates  a uuid containing computer's network.
+            if not is_string_uuid(taskid) or not is_string_uuid(in_under_task):
+                if self.verbose:
+                    click.echo(f"Taskid field and the id under task field must be from uuid format. Generating uuid for "
+                               f"those fields under task key: {task_key}")
+                generated_uuid = str(uuid.uuid4())
                 task['taskid'] = generated_uuid
                 task['task']['id'] = generated_uuid
 

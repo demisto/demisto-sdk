@@ -6,11 +6,11 @@ import click
 from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
-from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 import uuid
 
@@ -96,8 +96,8 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             task_id_under_task = str(task.get('task', {}).get('id', ''))
             if not is_string_uuid(taskid) or not is_string_uuid(task_id_under_task):
                 if self.verbose:
-                    click.echo(f"Taskid field and the id under task field must be from uuid format. Generating uuid for "
-                               f"those fields under task key: {task_key}")
+                    click.secho(f"Taskid field and the id under task field must be from uuid format. Generating uuid "
+                                f"for those fields under task key: {task_key}", fg='white')
                 generated_uuid = str(uuid.uuid4())
                 task['taskid'] = generated_uuid
                 task['task']['id'] = generated_uuid

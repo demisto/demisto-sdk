@@ -221,6 +221,11 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     assert script_yml.exists()
     assert script_py.exists()
     assert script_readme_md.exists()
+
+    # generated script readme should not be empty
+    script_statinfo = os.stat(script_readme_md)
+    assert script_statinfo and script_statinfo.st_size > 0
+    # unified yaml of the script should have been deleted
     assert not unified_script_in_sample.exists()
     assert not unified_script.exists()
 
@@ -237,6 +242,11 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
                          integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    # generated integration readme should not be empty
+    statinfo = os.stat(integration_readme_md)
+    assert statinfo and statinfo.st_size > 0
+
+    # unified yaml of the integration should have been deleted
     assert not unified_yml.exists()
     assert not unified_yml_in_sample.exists()
 

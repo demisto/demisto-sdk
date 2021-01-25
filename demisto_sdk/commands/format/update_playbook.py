@@ -92,9 +92,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
     def update_task_uuid(self):
         """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""
         for task_key, task in self.data.get('tasks', {}).items():
-            taskid = task.get('taskid', '')
-            in_under_task = task.get('task', {}).get('id', '')
-            if not is_string_uuid(taskid) or not is_string_uuid(in_under_task):
+            taskid = str(task.get('taskid', ''))
+            task_id_under_task = str(task.get('task', {}).get('id', ''))
+            if not is_string_uuid(taskid) or not is_string_uuid(task_id_under_task):
                 if self.verbose:
                     click.echo(f"Taskid field and the id under task field must be from uuid format. Generating uuid for "
                                f"those fields under task key: {task_key}")

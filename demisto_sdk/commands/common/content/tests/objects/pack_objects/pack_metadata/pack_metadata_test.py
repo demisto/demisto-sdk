@@ -205,7 +205,7 @@ def test_load_user_metadata_basic(repo):
                                                 packs=True)
 
     pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     assert pack_1_metadata.id == 'Pack1'
     assert pack_1_metadata.name == 'Pack Number 1'
@@ -258,7 +258,7 @@ def test_load_user_metadata_advanced(repo):
                                                 packs=True)
 
     pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     assert pack_1_metadata.id == 'Pack1'
     assert pack_1_metadata.name == 'Pack Number 1'
@@ -299,7 +299,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
     assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.err
@@ -335,7 +335,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
     captured = capsys.readouterr()
 
     assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.err
@@ -362,7 +362,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     content_object_pack = Pack(pack_1.path)
 
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path)
+    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
     assert 'Failed loading Pack Number 1 user metadata.' in captured.err

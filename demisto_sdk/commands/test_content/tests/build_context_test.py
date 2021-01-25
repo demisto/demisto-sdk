@@ -131,7 +131,8 @@ def generate_env_results_content(
     }
     env_results = [{'AmiName': role_to_ami_name_mapping[role],
                     'Role': role,
-                    'InstanceDNS': '1.1.1.1'} for _ in range(number_of_instances)]
+                    'InstanceDNS': '1.1.1.1',
+                    'TunnelPort': 4445} for _ in range(number_of_instances)]
     return env_results
 
 
@@ -367,3 +368,17 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
                                              content_conf_json=content_conf_json,
                                              filtered_tests_content=filtered_tests)
     assert 'mockable_playbook' not in build_context.unmockable_test_ids
+
+
+def test_get_instances_ips(mocker, tmp_path):
+    """
+    Given:
+        - A build context
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that the instance ips are parsed as a dict that maps the IPs to the tunnel port.
+    """
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path)
+    assert build_context.instances_ips == {'1.1.1.1': 4445}

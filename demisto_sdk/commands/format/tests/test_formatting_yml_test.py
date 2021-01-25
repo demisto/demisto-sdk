@@ -726,12 +726,12 @@ class TestFormatting:
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
 
     TEST_UUID_FORMAT_OBJECT = [
-            PlaybookYMLFormat,
-            TestPlaybookYMLFormat
-        ]
+        PlaybookYMLFormat,
+        TestPlaybookYMLFormat
+    ]
 
     @pytest.mark.parametrize('format_object', TEST_UUID_FORMAT_OBJECT)
-    def test_update_task_uuid_(self, format_object, mocker):
+    def test_update_task_uuid_(self, format_object):
         """
         Given
             - A test playbook file
@@ -756,7 +756,7 @@ class TestFormatting:
                 "2": {
                     "taskid": '2',
                     "task": {
-                         'id': 'some_name'
+                        'id': 'some_name'
                     }
                 }
             }

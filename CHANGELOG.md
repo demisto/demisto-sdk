@@ -1,5 +1,5 @@
 # Changelog
-* Filter generic and reputation command from scripts dependencies calculation.
+* Filter out generic and reputation command from scripts and playbooks dependencies calculation.
 * Added support for the incident fields in outgoing mappers in the ID set.
 * Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 

@@ -321,21 +321,13 @@ class PackDependencies:
             script_dependencies = set()
 
             # depends on list can have both scripts and integration commands
-            all_depends_on = script.get('depends_on', [])
-            depends_on = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES, all_depends_on))
-            all_command_to_integration = list(script.get('command_to_integration', {}).keys())
-            command_to_integration = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
-                                                 all_command_to_integration))
+            depends_on = script.get('depends_on', [])
+            command_to_integration = list(script.get('command_to_integration', {}).keys())
+            script_executions = script.get('script_executions', [])
 
-            all_script_executions = script.get('script_executions', [])
-            script_executions = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
-                                            all_script_executions))
-
-            dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
-            print("depends_on:" + str(depends_on))
-            print("command_to_integration:" + str(command_to_integration))
-            print("script_executions:" + str(script_executions))
-            print("dependencies_commands:" + str(dependencies_commands))
+            all_dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
+            dependencies_commands = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
+                                                all_dependencies_commands))  # filter out generic commands
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first
@@ -428,10 +420,11 @@ class PackDependencies:
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
+                packs_found_from_integration = set()
                 if integration_name:
                     packs_found_from_integration = PackDependencies._search_packs_by_items_names(
                         integration_name, id_set['integrations'], exclude_ignored_dependencies)
-                else:
+                elif command not in GENERIC_COMMANDS_NAMES:  # do not collect deps on generic command in Pbs
                     packs_found_from_integration = PackDependencies._search_packs_by_integration_command(
                         command, id_set, exclude_ignored_dependencies)
 

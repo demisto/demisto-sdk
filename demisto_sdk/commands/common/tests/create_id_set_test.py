@@ -47,6 +47,19 @@ playbook2 = {
 
 
 def test_create_command_to_implemented_integration_map(repo):
+    """
+
+    Given
+        - a list of integrations
+
+    When
+        - create_command_to_implemented_integration_map is called
+
+    Then
+        - Validates that a dictionary between command name and list of all integration that implement this command
+        was returned.
+
+    """
     pack = repo.create_pack("Pack1")
     integration_list = [integration1, integration2]
 
@@ -58,6 +71,19 @@ def test_create_command_to_implemented_integration_map(repo):
 
 
 def test_modify_id_set_command_to_integration_of_playbook(repo, mocker):
+    """
+
+    Given
+        - an id_set file includes integrations and playbooks
+
+    When
+        - modify_id_set_command_to_integration_of_playbook is called
+
+    Then
+        - Validates that each command_to_integration in playbook is a dictionary between command name and list of all
+        integration that implement this command.
+
+    """
     pack = repo.create_pack("Pack1")
     integration_list = [integration1, integration2]
     playbook_list = [playbook1, playbook2]

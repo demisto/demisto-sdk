@@ -30,7 +30,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -1488,3 +1489,16 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                 elif entity_type == 'layout':
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
+
+
+def is_string_uuid(string_to_check: str):
+    """
+    Check if a given string is from uuid type
+    Args:
+        string_to_check: string
+
+    Returns:
+        bool. True if the string match uuid type, else False
+
+    """
+    return bool(re.fullmatch(UUID_REGEX, string_to_check))

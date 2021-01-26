@@ -612,7 +612,7 @@ class TestDependsOnPlaybook:
         assert found_result[0] == pack_name
         assert found_result[1]
 
-    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url", "cve"])
     def test_collect_detection_of_optional_dependencies_in_playbooks(self, integration_command, id_set):
         """
         Given

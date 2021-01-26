@@ -264,7 +264,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_default_arguments(self):
         # type: () -> bool
-        """Check if a reputation command (domain/email/file/ip/url)
+        """Check if a reputation command (domain/email/file/ip/url/cve)
             has a default non required argument with the same name
 
         Returns:

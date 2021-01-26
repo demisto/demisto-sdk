@@ -1,8 +1,10 @@
 import os
 import re
+import uuid
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator

@@ -31,6 +31,12 @@ def _add_pr_comment(comment, logging_module):
         if res and res.get('total_count', 0) == 1:
             issue_url = res['items'][0].get('comments_url') if res.get('items', []) else None
             if issue_url:
+                # Check if the comment already exists. If it does, don't add another comment to avoid spamming PRs:
+                response = requests.get(issue_url, headers=headers, verify=False)
+                issue_comments = _handle_github_response(response, logging_module)
+                for existing_comment in issue_comments:
+                    if comment == existing_comment.get('body'):
+                        return
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
                 _handle_github_response(response, logging_module)
         else:

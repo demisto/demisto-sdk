@@ -50,7 +50,6 @@ class IDSetValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_circle = is_circle
-        # self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set_path = id_set_path or self.ID_SET_PATH
@@ -372,7 +371,6 @@ class IDSetValidator(BaseValidator):
             bool. Whether the file is valid in the id_set or not.
         """
         is_valid = True
-        #  self.is_circle = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

@@ -79,7 +79,6 @@ class ValidateManager:
         self.no_configuration_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
-        self.id_set_validations = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
         self.use_git = use_git
@@ -95,9 +94,14 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        if not id_set_path:
-            id_set_path = 'Tests/id_set.json'
-        self.id_set_path = id_set_path
+        self.id_set_path = id_set_path or IDSetValidator.ID_SET_PATH
+        # create the id_set only once per run.
+        self.id_set_validator = IDSetValidator(is_circle=self.is_circle,
+                                               configuration=Configuration(),
+                                               ignored_errors=None,
+                                               print_as_warnings=self.print_ignored_errors,
+                                               id_set_path=self.id_set_path) \
+            if validate_id_set else None
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -333,12 +337,9 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.id_set_validations:
-            id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
-                                              ignored_errors=pack_error_ignore_list,
-                                              print_as_warnings=self.print_ignored_errors)
-            if not id_set_validator.is_file_valid_in_set(file_path, file_type):
-                return False
+        if self.id_set_validator and not \
+                self.id_set_validator.is_file_valid_in_set(file_path, file_type):
+            return False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
@@ -793,7 +794,8 @@ class ValidateManager:
             integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
-            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(packs_that_should_have_new_rn_api_module_related)
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
+                packs_that_should_have_new_rn_api_module_related)
 
             # APIModules pack is without a version and should not have RN
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)

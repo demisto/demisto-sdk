@@ -442,7 +442,8 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    @pytest.mark.parametrize("generic_command", ["ip", "domain", "url", 'send-mail', 'send-notification'])
+    @pytest.mark.parametrize("generic_command", ['ip', 'domain', 'url', 'file', 'email', 'cve', 'cve-latest',
+                                                 'cve-search', 'send-mail', 'send-notification'])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
         """
         Given

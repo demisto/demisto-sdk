@@ -268,7 +268,9 @@ class ContributionConverter:
                     files = get_child_files(directory)
                     for file in files:
                         file_name = os.path.basename(file)
-                        if file_name.startswith('integration') or file_name.startswith('script'):
+                        if file_name.startswith('integration-') \
+                           or file_name.startswith('script-') \
+                           or file_name.startswith('automation-'):
                             unified_file = file
                             self.generate_readme_for_pack_content_item(unified_file)
                             os.remove(unified_file)
@@ -314,8 +316,8 @@ class ContributionConverter:
                         pack_subdir, del_unified=(not self.create_new), source_mapping=files_to_source_mapping
                     )
 
-                    if self.create_new:
-                        self.generate_readmes_for_new_content_pack()
+            if self.create_new:
+                self.generate_readmes_for_new_content_pack()
 
             # format
             self.format_converted_pack()

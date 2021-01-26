@@ -414,23 +414,12 @@ class MITMProxy:
             self.logging_module.debug(f'Proxy service started in {self.get_script_mode(is_record)} mode')
         else:
             self.logging_module.error(f'Proxy failed to start after {self.TIME_TO_WAIT_FOR_PROXY_SECONDS} seconds')
-            self.get_mitmdump_service_status()
 
     def _start_mitmdump_service(self) -> None:
         """
         Starts mitmdump service on the remote service
         """
         self.ami.call(['sudo', 'systemctl', 'start', 'mitmdump'])
-
-    def get_mitmdump_service_status(self) -> None:
-        """
-        Safely extract the current mitmdump status and last 50 log lines
-        """
-        try:
-            output = self.ami.check_output('systemctl status mitmdump -n 50 -l'.split(), stderr=STDOUT)
-            self.logging_module.debug(f'mitmdump service status output:\n{output.decode()}')
-        except CalledProcessError as exc:
-            self.logging_module.debug(f'mitmdump service status output:\n{exc.output.decode()}')
 
     def prepare_proxy_start(self,
                             path: str,
@@ -525,7 +514,6 @@ class MITMProxy:
         self.logging_module.debug('Stopping mitmdump service')
         if not self.is_proxy_listening():
             self.logging_module.debug('proxy service was already down.')
-            self.get_mitmdump_service_status()
         else:
             self.ami.call(['sudo', 'systemctl', 'stop', 'mitmdump'])
         self.ami.call(["rm", "-rf", "/tmp/_MEI*"])  # Clean up temp files

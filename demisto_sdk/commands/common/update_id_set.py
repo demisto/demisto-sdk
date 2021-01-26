@@ -700,6 +700,7 @@ def get_mapper_data(path):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    type_ = json_data.get('type', '')  # can be 'mapping-outgoing' or 'mapping-incoming'
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -712,7 +713,24 @@ def get_mapper_data(path):
     mapping = json_data.get('mapping', {})
     for key, value in mapping.items():
         incidents_types.add(key)
-        incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
+        internal_mapping = value.get('internalMapping')  # get the mapping
+        if type_ == 'mapping-outgoing':
+            incident_fields_set = set()
+            # incident fields are in the simple key or in complex.root key of each key
+            for internal_mapping_key in internal_mapping.keys():
+                fields_mapper = internal_mapping.get(internal_mapping_key, {})
+                if isinstance(fields_mapper, dict):
+                    incident_field_simple = fields_mapper.get('simple')
+                    if incident_field_simple:
+                        incident_fields_set.add(incident_field_simple)
+                    else:
+                        incident_field_complex = fields_mapper.get('complex', {})
+                        if incident_field_complex and 'root' in incident_field_complex:
+                            incident_fields_set.add(incident_field_complex.get('root'))
+            incidents_fields = incidents_fields.union(incident_fields_set)
+        elif type_ == 'mapping-incoming':
+            # all the incident fields are the keys of the mapping
+            incidents_fields = incidents_fields.union(set(internal_mapping.keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
@@ -1231,7 +1249,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     mappers_list = []
     packs_dict: Dict[str, Dict] = {}
 
-    pool = Pool(processes=int(cpu_count() * 1.5))
+    pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 

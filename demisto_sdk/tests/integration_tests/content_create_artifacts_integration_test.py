@@ -26,26 +26,29 @@ def mock_git(mocker):
     yield
 
 
-def test_integration_create_content_artifacts_no_zip(mock_git):
+def test_integration_create_content_artifacts_no_zip(repo):
     expected_artifacts_path = ARTIFACTS_EXPEXTED_RESULTS / 'content'
 
-    with temp_dir() as temp:
+    with ChangeCWD(repo.path):
+        dir_path = repo.make_dir()
         runner = CliRunner()
-        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '--no-zip'])
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip'])
 
-        assert same_folders(temp, expected_artifacts_path)
+        assert same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0
 
 
-def test_integration_create_content_artifacts_zip(mock_git):
-    with temp_dir() as temp:
+def test_integration_create_content_artifacts_zip(mock_git, repo):
+    with ChangeCWD(repo.path):
+        dir_path = repo.make_dir()
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp])
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path])
+        dir_path = Path(dir_path)
 
-        assert Path(temp / 'content_new.zip').exists()
-        assert Path(temp / 'all_content.zip').exists()
-        assert Path(temp / 'content_packs.zip').exists()
-        assert Path(temp / 'content_test.zip').exists()
+        assert Path(dir_path / 'content_new.zip').exists()
+        assert Path(dir_path / 'all_content.zip').exists()
+        assert Path(dir_path / 'content_packs.zip').exists()
+        assert Path(dir_path / 'content_test.zip').exists()
         assert result.exit_code == 0
 
 

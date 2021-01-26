@@ -579,14 +579,13 @@ class PackDependencies:
             incident_field_data = next(iter(incident_field.values()))
             incident_field_dependencies = set()
 
-            # related_incident_types = incident_field_data.get('incident_types', [])
-            # packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-            #     related_incident_types, id_set['IncidentTypes'])
-            #
-            # if packs_found_from_incident_types:
-            #     pack_dependencies_data = PackDependencies. \
-            #         _label_as_mandatory(packs_found_from_incident_types)
-            #     dependencies_packs.update(pack_dependencies_data)
+            # If an incident field is used in a specific incident type than it does not depend on it.
+            # e.g:
+            # 1. deviceid in CommonTypes pack is being used in the Zimperium pack.
+            #    The CommonTypes pack is not dependent on the Zimperium Pack, but vice versa.
+            # 2. emailfrom in the Phishing pack is being used in the EWS pack.
+            #    Phishing pack does not depend on EWS but vice versa.
+            # The opposite dependencies are calculated in: _collect_playbook_dependencies, _collect_mappers_dependencies
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
@@ -601,8 +600,8 @@ class PackDependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
                     click.secho(
-                        f'{os.path.basename(incident_field_data.get("file_path", ""))} depends on: {incident_field_dependencies}',
-                        fg='white')
+                        f'{os.path.basename(incident_field_data.get("file_path", ""))} '
+                        f'depends on: {incident_field_dependencies}', fg='white')
             dependencies_packs.update(incident_field_dependencies)
 
         return dependencies_packs
@@ -1060,10 +1059,12 @@ class PackDependencies:
         return pack_dependencies
 
     @staticmethod
-    def build_all_dependencies_graph(pack_ids: list,
-                                     id_set: dict,
-                                     verbose: bool,
-                                     exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
+    def build_all_dependencies_graph(
+            pack_ids: list,
+            id_set: dict,
+            verbose: bool = False,
+            exclude_ignored_dependencies: bool = True
+    ) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph for all packs
 

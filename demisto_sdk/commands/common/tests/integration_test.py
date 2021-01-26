@@ -239,7 +239,7 @@ class TestIntegrationValidator:
         assert validator.is_valid_subtype() is answer
 
     DEFUALT_ARGS_1 = [
-        {"name": "cve", "arguments": [{"name": "cve", "required": False, "default": True}]}]
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
     DEFUALT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
     DEFUALT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]

@@ -280,7 +280,7 @@ class IntegrationValidator(ContentEntityValidator):
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == command_name:
+                    if arg_name == command_name or (command_name == 'cve' and arg_name == 'cve_id'):
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,

@@ -306,7 +306,6 @@ def validate(config, **kwargs):
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
             skip_id_set_creation=kwargs.get('skip_id_set_creation'),
-            no_auto_stage=kwargs['no_auto_stage']
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

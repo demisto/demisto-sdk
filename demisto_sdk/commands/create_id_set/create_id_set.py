@@ -29,6 +29,11 @@ class IDSetCreator:
         return self.id_set
 
     def modify_id_set_command_to_integration_of_playbook(self):
+        """
+        Modifies playbook set in id_set dictionary once it was created, and finally saves it to a file.
+        Each playbook that has "command_to_integration" field will be modified :
+        - command name value will be a list of all integrations that implements this command (instead of use "" ).
+        """
         command_name_to_implemented_integration_map = self.create_command_to_implemented_integration_map()
 
         playbooks_list = self.id_set['playbooks']

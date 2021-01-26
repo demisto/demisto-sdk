@@ -187,7 +187,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
                     "Claroty Security Incident"
                 ]
             }
-         }
+        }
     ]
 
     integration_data = {
@@ -557,110 +557,139 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
 
 class TestPlaybookEntitiesVersionsValid:
+
     validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
-    playbook_data = {"Example Playbook": {
+    playbook_with_valid_versions = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "fromversion": "5.5.0",
+        "pack": "Example",
+        "implementing_scripts": [
+            "Script_version_5",
+            "Script_no_version",
+            "Script_version_5_5"
+        ],
+        "implementing_playbooks": [
+            "SubPlaybook_version_5",
+            "SubPlaybook_no_version",
+            "SubPlaybook_version_5_5"
+        ],
+        "command_to_integration": {
+            "test-command": [
+                "Integration_version_5",
+                "Integration_version_4"
+            ]
+        }
+    }}
+
+    playbook_with_invalid_scripts_version = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
         "fromversion": "5.0.0",
         "pack": "Example",
         "implementing_scripts": [
-            "Script1"
-        ],
+            "Script_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_sub_playbook_version = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "fromversion": "5.0.0",
+        "pack": "Example",
         "implementing_playbooks": [
-            "SubPlaybook1"
-        ],
+            "SubPlaybook_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_integration_version = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "fromversion": "3.0.0",
+        "pack": "Example",
         "command_to_integration": {
             "test-command": [
-                "Integration1",
-                "Integration2"
+                "Integration_version_4",
+                "Integration_version_5"
             ]
         }
     }}
-    id_set_file_path = os.path.join(mkdtemp(), 'id_set.json')
-    playbook_file_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
+    id_set = {
+        'playbooks': [
+            {
+                'SubPlaybook_version_5': {
+                    'fromversion': "5.0.0"
+                }
+            },
+            {
+                'SubPlaybook_no_version': {
+                    'fromversion': ""
+                }
+            },
+            {
+                'SubPlaybook_version_5_5': {
+                    'fromversion': "5.5.0"
+                }
+            },
+            {
+                'Example Playbook': {
+                    'fromversion': "5.5.0",
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            }
+        ],
+        'integrations': [
+            {
+                'Integration_version_5': {
+                    'fromversion': "5.0.0"
+                }
+            },
+            {
+                'Integration_version_4': {
+                    'fromversion': "4.0.0"
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_version_5': {
+                    'fromversion': "5.0.0"
+                }
+            },
+            {
+                'Script_no_version': {
+                    'fromversion': ""
+                }
+            },
+            {
+                'Script_version_5_5': {
+                    'fromversion': "5.5.0"
+                }
+            }
+        ],
+    }
 
-    def create_id_set_with_script(self, repo, script_version):
+    def test_are_playbook_entities_versions_valid(self, repo):
         pack = repo.create_pack("Pack1")
-        script = pack.create_script("Script1")
-        script.create_default_script()
-        script.yml.update({'name': "Script1"})
-        script.yml.update({'id': "Script1"})
-        script.yml.update({'fromversion': script_version})
-        script.yml.update({'commonfields': {'id': "Script1"}})
+        self.validator.playbook_set = self.id_set["playbooks"]
+        self.validator.integration_set = self.id_set["integrations"]
+        self.validator.script_set = self.id_set["scripts"]
 
-        return pack
+        is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_valid_versions, pack.path)
+        assert is_playbook_version_valid
 
-    def create_id_set_with_sub_playbook(self, repo, sub_playbook_version):
-        pack = repo.create_pack("Pack1")
-        sub_playbook = pack.create_playbook("SubPlaybook1")
-        sub_playbook.create_default_playbook()
-        sub_playbook.yml.update({'name': "SubPlaybook1"})
-        sub_playbook.yml.update({'id': "SubPlaybook1"})
-        sub_playbook.yml.update({'fromversion': sub_playbook_version})
+        is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_scripts_version, pack.path)
+        assert not is_script_version_invalid
 
-        return pack
+        is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_sub_playbook_version, pack.path)
+        assert not is_sub_playbook_version_invalid
 
-    def create_id_set_with_integrations(self, repo, first_integration_version, second_integration_version):
-        pack = repo.create_pack("Pack1")
-        integration_1 = pack.create_integration("Integration1")
-        integration_1.create_default_integration()
-        integration_1.yml.update({'name': "Integration1"})
-        integration_1.yml.update({'id': "Integration1"})
-        integration_1.yml.update({'fromversion': first_integration_version})
-        integration_1.yml.update({'commonfields': {'id': "Integration1"}})
-
-        integration_2 = pack.create_integration("Integration2")
-        integration_2.create_default_integration()
-        integration_2.yml.update({'name': "Integration2"})
-        integration_2.yml.update({'id': "Integration2"})
-        integration_2.yml.update({'fromversion': second_integration_version})
-        integration_2.yml.update({'commonfields': {'id': "Integration2"}})
-
-        playbook = pack.create_playbook("Example Playbook")
-        playbook.create_default_playbook()
-        playbook.yml.update({'name': "Example Playbook"})
-        playbook.yml.update({'id': "Example Playbook"})
-        playbook.yml.update({'fromversion': "5.0.0"})
-        playbook.yml.update({"tasks": {"0": {"task": {"script": "test-command"}}}})
-
-        return pack
-
-    def create_id_set(self, pack):
-        id_set = IDSetCreator(input=pack.path, output=self.id_set_file_path)
-        id_set = id_set.create_id_set()
-
-        self.validator.id_set = id_set
-        self.validator.playbook_set = id_set["playbooks"]
-        self.validator.script_set = id_set["scripts"]
-        self.validator.integration_set = id_set["integrations"]
-
-    @pytest.mark.parametrize('script_version, is_valid',
-                             [("5.0.0", True), ("4.5.0", True), ("", True), ("5.5.0", False), ("5.0.1", False)])
-    def test_script_version_valid(self, script_version, is_valid, repo):
-        pack = self.create_id_set_with_script(repo, script_version)
-        self.create_id_set(pack)
-        is_script_version_valid = self.validator._are_playbook_entities_versions_valid(self.playbook_data,
-                                                                                       pack.path)
-        assert is_script_version_valid == is_valid
-
-    @pytest.mark.parametrize('sub_playbook_version, is_valid',
-                             [("5.0.0", True), ("4.5.0", True), ("", True), ("5.5.0", False), ("5.0.1", False)])
-    def test_sub_playbook_version_valid(self, sub_playbook_version, is_valid, repo):
-        pack = self.create_id_set_with_sub_playbook(repo, sub_playbook_version)
-        self.create_id_set(pack)
-        is_sub_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(self.playbook_data,
-                                                                                             pack.path)
-        assert is_sub_playbook_version_valid == is_valid
-
-    @pytest.mark.parametrize('first_integration_version, second_integration_version, is_valid',
-                             [("5.0.0", "5.0.0", True),
-                              ("", "", True),
-                              ("4.5.0", "", True),
-                              ("", "6.0.0", True),
-                              ("5.5.0", "5.0.1", False)])
-    def test_integration_version_valid(self, first_integration_version, second_integration_version, is_valid, repo):
-        pack = self.create_id_set_with_integrations(repo, first_integration_version, second_integration_version)
-        self.create_id_set(pack)
-        is_integration_version_valid = self.validator._are_playbook_entities_versions_valid(self.playbook_data,
-                                                                                            pack.path)
-        assert is_integration_version_valid == is_valid
+        is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_integration_version, pack.path)
+        assert not is_integration_version_invalid

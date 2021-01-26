@@ -119,6 +119,8 @@ ERROR_CODE = {
     "playbook_cant_have_deletecontext_all": "PB105",
     "using_instance_in_playbook": "PB106",
     "invalid_script_id": "PB107",
+    "invalid_uuid": "PB108",
+    "taskid_different_from_id": "PB109",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -1279,6 +1281,18 @@ class Errors:
     def integration_not_runnable():
         return "Could not find any runnable command in the integration." \
                "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_uuid(task_key, id, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+               f"must be from uuid format."
+
+    @staticmethod
+    @error_code_decorator
+    def taskid_different_from_id(task_key, id, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+               f"must be with equal value. "
 
     @staticmethod
     def wrong_filename(file_type):

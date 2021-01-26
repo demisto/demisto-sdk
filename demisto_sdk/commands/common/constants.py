@@ -1012,5 +1012,7 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
 
+UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
+
 DEFAULT_VERSION = -1
 CONF_PATH = "./Tests/conf.json"

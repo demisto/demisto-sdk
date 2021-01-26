@@ -755,7 +755,7 @@ class ValidateManager:
                 return None
 
         # check for old file format
-        if self._is_old_file_format(file_path):
+        if self.is_old_file_format(file_path, file_type):
             old_format_files.add(file_path)
             return None
 
@@ -827,19 +827,19 @@ class ValidateManager:
         return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
-    def _is_old_file_format(file_path):
+    def is_old_file_format(file_path, file_type):
         file_yml = get_yaml(file_path)
-        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
+        # check for unified integration
+        if file_type == FileType.INTEGRATION and file_yml.get('script', {}).get('script', '-') not in ['-', '']:
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
             return True
 
-        if re.match(PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
+        # check for unified script
+        if file_type == FileType.SCRIPT and file_yml.get('script', '-') not in ['-', '']:
             if file_yml.get('type', 'javascript') != 'python':
                 return False
-
             return True
-
         return False
 
     @staticmethod

@@ -4,7 +4,6 @@ from typing import Callable, List
 
 import click
 from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES,
-                                                   PACKS_PACK_META_FILE_NAME,
                                                    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -219,10 +218,11 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
             file_status = 'r'
             file_path = file_data[2]
         try:
+            file_type = find_type(file_path)
             # if the file is a code file - change path to
             # the associated yml path to trigger release notes validation.
             if file_status.lower() != 'd' and \
-                    find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
+                    file_type in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
                     not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
@@ -255,19 +255,21 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
 
             # changes in old scripts and integrations - unified python scripts/integrations
             elif file_status.lower() in ['m', 'a', 'r'] and \
-                    find_type(file_path) in [FileType.INTEGRATION, FileType.SCRIPT] and \
-                    ValidateManager._is_old_file_format(file_path):
+                    file_type in [FileType.INTEGRATION, FileType.SCRIPT] and \
+                    ValidateManager.is_old_file_format(file_path, file_type):
                 old_format_files.add(file_path)
             # identify modified files
-            elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'm' and file_type not in \
+                    [FileType.PACK_METADATA, None] and not file_path.startswith('.'):
                 modified_files_list.add(file_path)
             # identify added files
-            elif file_status.lower() == 'a' and find_type(file_path) and not file_path.startswith('.'):
+            elif file_status.lower() == 'a' and file_type not in \
+                    [FileType.PACK_METADATA, None] and not file_path.startswith('.'):
                 added_files_list.add(file_path)
             # identify renamed files
-            elif file_status.lower().startswith('r') and find_type(file_path):
+            elif file_status.lower().startswith('r') and file_type not in [FileType.PACK_METADATA, None]:
                 # if a code file changed, take the associated yml file.
-                if find_type(file_data[2]) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
+                if file_type in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
                     modified_files_list.add(file_path)
 
                 else:
@@ -277,7 +279,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
             # handle meta data file changes
-            elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
+            elif file_type == FileType.PACK_METADATA:
                 if file_status.lower() == 'a':
                     new_packs.add(get_pack_name(file_path))
                 elif file_status.lower() == 'm':

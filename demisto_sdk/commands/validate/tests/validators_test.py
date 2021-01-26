@@ -7,7 +7,8 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
-from demisto_sdk.commands.common.constants import CONF_PATH, TEST_PLAYBOOK
+from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -606,39 +607,39 @@ class TestValidators:
             finally:
                 sys.stdout = saved_stdout
 
-    def test_is_py_or_yml(self):
+    def test_is_old_file_format_non_unified(self):
         """
             Given:
-                - A file path which contains a python script
+                - A file path which contains a non unified python script
             When:
-                - validating the associated yml file
+                - running is_old_file_format on the file
             Then:
-                - return a False validation response
+                - return a False
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_old_file_format(test_file)
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
         assert res is False
 
-    def test_is_py_or_yml_invalid(self):
+    def test_is_old_file_format_unified(self):
         """
             Given:
                 - A file path which contains a python script in a legacy yml schema
             When:
-                - verifying the yml is valid using validate manager
+                - running is_old_file_format on the file
             Then:
-                - return a False validation response
+                - return a True
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path,
                                  'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_old_file_format(test_file)
-        assert res is False
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
+        assert res is True
 
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
         """

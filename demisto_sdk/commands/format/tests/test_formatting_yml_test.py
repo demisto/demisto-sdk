@@ -764,8 +764,8 @@ class TestFormatting:
 
         playbook_yml.update_task_uuid()
         assert is_string_uuid(playbook_yml.data['tasks']['1']['task']['id']) and \
-               is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
+            is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
         assert playbook_yml.data['tasks']['1']['task']['id'] == playbook_yml.data['tasks']['1']['taskid']
         assert is_string_uuid(playbook_yml.data['tasks']['2']['task']['id']) and \
-               is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
+            is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
         assert playbook_yml.data['tasks']['2']['task']['id'] == playbook_yml.data['tasks']['2']['taskid']

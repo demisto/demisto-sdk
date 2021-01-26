@@ -11,7 +11,7 @@ class GitUtil:
             try:
                 self.repo = Repo(Path.cwd(), search_parent_directories=True)
             except InvalidGitRepositoryError:
-                raise InvalidGitRepositoryError("Unable to find Repository from current working directory - aboring")
+                raise InvalidGitRepositoryError("Unable to find Repository from current working directory - aborting")
         else:
             self.repo = repo
 

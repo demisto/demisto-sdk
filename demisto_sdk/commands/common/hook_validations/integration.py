@@ -1,3 +1,4 @@
+import os
 import re
 
 import yaml
@@ -95,7 +96,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
-            self.is_mapping_fields_command_exist()
+            self.is_mapping_fields_command_exist(),
+            self.is_context_change_in_readme()
+
         ]
 
         if not skip_test_conf:
@@ -898,3 +901,36 @@ class IntegrationValidator(ContentEntityValidator):
                     self.is_valid = False
                     return False
         return True
+
+    def is_context_change_in_readme(self) -> bool:
+        """
+        Checks if there has been a corresponding change to the integration's README
+        when changing the context paths of an integration.
+        Returns:
+            True if there has been a corresponding change to README file when context is changed in integration
+        """
+        dir_path = os.path.dirname(self.file_path)
+        if not os.path.exists(os.path.join(dir_path, 'README.md')):
+            return True
+        f = open(os.path.join(dir_path, 'README.md'), 'rb')
+        s = f.read()
+        f.close()
+        p = re.compile(r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|(.*?)#####")
+        re.search(p, s, re.DOTALL)
+        existing_context_in_readme = set()
+        existing_context_in_yml = set(self._gen_dict_extract("contextPath", self.current_file))
+
+        res = []
+
+    def _gen_dict_extract(self, key, var):
+        if hasattr(var, 'items'):
+            for k, v in var.items():
+                if k == key:
+                    yield v
+                if isinstance(v, dict):
+                    for result in self._gen_dict_extract(key, v):
+                        yield result
+                elif isinstance(v, list):
+                    for d in v:
+                        for result in self._gen_dict_extract(key, d):
+                            yield result

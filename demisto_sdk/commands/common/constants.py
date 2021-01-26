@@ -1012,3 +1012,5 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'short_description', 'description', 'Tags', 'blocked']
 
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
+
+CONTEXT_OUTPUT_TABLE_HEADER = '| **Path** | **Type** | **Description** |'

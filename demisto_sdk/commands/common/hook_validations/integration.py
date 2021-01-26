@@ -912,12 +912,17 @@ class IntegrationValidator(ContentEntityValidator):
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
-        f = open(os.path.join(dir_path, 'README.md'), 'rb')
-        s = f.read()
+        f = open(os.path.join(dir_path, 'README.md'), 'r')
+        readme_content = f.read()
         f.close()
-        p = re.compile(r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|(.*?)#####")
-        re.search(p, s, re.DOTALL)
-        existing_context_in_readme = set()
+        context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#####"
+        context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+        context_section = re.findall(context_section_pattern, readme_content, re.DOTALL)
+        if not context_section:
+            return True
+        context_path_in_readme = [re.findall(context_path_pattern, command_context, re.DOTALL)
+                                  for command_context in context_section]
+        existing_context_in_readme = set(context_path_in_readme.pop('---'))
         existing_context_in_yml = set(self._gen_dict_extract("contextPath", self.current_file))
 
         res = []

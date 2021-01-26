@@ -94,12 +94,13 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        if not id_set_path:
-            id_set_path = 'Tests/id_set.json'
-        self.id_set_path = id_set_path
+        self.id_set_path = id_set_path or IDSetValidator.ID_SET_PATH
         # create the id_set only once per run.
-        self.id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
-                                               ignored_errors=None, print_as_warnings=self.print_ignored_errors) \
+        self.id_set_validator = IDSetValidator(is_circle=self.is_circle,
+                                               configuration=Configuration(),
+                                               ignored_errors=None,
+                                               print_as_warnings=self.print_ignored_errors,
+                                               id_set_path=self.id_set_path) \
             if validate_id_set else None
         self.branch_name = ''
         self.changes_in_schema = False

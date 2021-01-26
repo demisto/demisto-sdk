@@ -667,23 +667,43 @@ class TestPlaybookEntitiesVersionsValid:
     }
 
     def test_are_playbook_entities_versions_valid(self, repo):
+        """
+
+        Given
+            - an id_set file
+            - a Playbook those entities:
+                * implementing_scripts
+                * implementing_playbooks
+                * command_to_integration
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that each entity version match the playbook version.
+
+        """
         pack = repo.create_pack("Pack1")
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
+        # all playbook's entities has valid versions
         is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
             self.playbook_with_valid_versions, pack.path)
         assert is_playbook_version_valid
 
+        # playbook uses scripts with invalid versions
         is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
             self.playbook_with_invalid_scripts_version, pack.path)
         assert not is_script_version_invalid
 
+        # playbook uses sub playbooks with invalid versions
         is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
             self.playbook_with_invalid_sub_playbook_version, pack.path)
         assert not is_sub_playbook_version_invalid
 
+        # playbook uses integration's commands with invalid versions
         is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
             self.playbook_with_invalid_integration_version, pack.path)
         assert not is_integration_version_invalid

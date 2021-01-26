@@ -1,4 +1,3 @@
-import json
 import os
 from tempfile import mkdtemp
 
@@ -188,7 +187,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
                     "Claroty Security Incident"
                 ]
             }
-        }
+         }
     ]
 
     integration_data = {

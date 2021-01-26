@@ -1,10 +1,5 @@
-import os
-from tempfile import mkdtemp
-
-import pytest
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 CONFIG = Configuration()
 
@@ -187,7 +182,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
                     "Claroty Security Incident"
                 ]
             }
-        }
+         }
     ]
 
     integration_data = {
@@ -557,7 +552,6 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
 
 class TestPlaybookEntitiesVersionsValid:
-
     validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
     playbook_with_valid_versions = {"Example Playbook": {
         "name": "Example Playbook",

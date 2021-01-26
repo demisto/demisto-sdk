@@ -1,5 +1,7 @@
 import json
+import os
 from collections import OrderedDict
+from os.path import exists
 
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
@@ -60,5 +62,8 @@ class IDSetCreator:
         if self.output == "":
             self.output = IDSetCreator.DEFAULT_ID_SET_PATH
         if self.output:
+            if not exists(self.output):
+                intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
+                os.makedirs(intermediate_dirs, exist_ok=True)
             with open(self.output, 'w+') as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)

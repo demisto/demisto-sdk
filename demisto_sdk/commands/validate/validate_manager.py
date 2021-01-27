@@ -72,7 +72,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=True
+            create_id_set=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,7 +87,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
@@ -128,7 +128,6 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.skip_id_set_creation = skip_id_set_creation
             self.print_percent = True
 
         if no_docker_checks:

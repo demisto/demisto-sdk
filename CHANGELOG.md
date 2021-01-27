@@ -3,6 +3,7 @@
 * Filter out generic and reputation command from scripts and playbooks dependencies calculation.
 * Added support for the incident fields in outgoing mappers in the ID set.
 * Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
+* Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.

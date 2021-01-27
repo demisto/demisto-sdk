@@ -288,16 +288,22 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             yield pool
         except KeyboardInterrupt:
             logger.info("\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt...")
+            if os.path.exists('keyfile'):
+                os.remove('keyfile')
             pool.stop()
             pool.join()
             raise
         except Exception as e:
             logger.exception(e)
             logger.error("Gracefully release all resources due to Error...")
+            if os.path.exists('keyfile'):
+                os.remove('keyfile')
             pool.stop()
             pool.join()
             raise
         else:
+            if os.path.exists('keyfile'):
+                os.remove('keyfile')
             pool.close()
             pool.join()
 
@@ -969,7 +975,6 @@ def sign_packs(artifact_manager: ArtifactsManager):
                                                                            artifact_manager.signDirectory,
                                                                            )))
         wait_futures_complete(futures, artifact_manager)
-        os.remove('keyfile')
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '

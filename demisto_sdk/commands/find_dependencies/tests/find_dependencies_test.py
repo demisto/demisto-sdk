@@ -442,7 +442,8 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    @pytest.mark.parametrize("generic_command", ["ip", "domain", "url", 'send-mail', 'send-notification'])
+    @pytest.mark.parametrize("generic_command", ['ip', 'domain', 'url', 'file', 'email', 'cve', 'cve-latest',
+                                                 'cve-search', 'send-mail', 'send-notification'])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
         """
         Given
@@ -612,7 +613,7 @@ class TestDependsOnPlaybook:
         assert found_result[0] == pack_name
         assert found_result[1]
 
-    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url", "cve"])
     def test_collect_detection_of_optional_dependencies_in_playbooks(self, integration_command, id_set):
         """
         Given

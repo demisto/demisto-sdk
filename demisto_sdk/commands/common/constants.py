@@ -839,9 +839,9 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip'}
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
 
-GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification'})
+GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
 DBOT_SCORES_DICT = {
     'DBotScore.Indicator': 'The indicator that was tested.',

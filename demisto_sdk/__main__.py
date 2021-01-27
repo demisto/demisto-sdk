@@ -330,19 +330,20 @@ def validate(config, **kwargs):
 @click.option('--cpus',
               help='Number of cpus/vcpus availble - only required when os not reflect number of cpus (CircleCI'
                    'allways show 32, but medium has 3.', hidden=True, default=os.cpu_count())
-@click.option('-idp', '--id_set_path', help='The full path of id_set.json')
+@click.option('-idp', '--id_set_path', help='The full path of id_set.json', hidden=True)
 @click.option('-p', '--pack_names',
               help=("Packs to create artifacts for. Optional values are: `all` or "
                     "csv list of packs. "
                     "Default is set to `all`"),
-              default="all")
-@click.option('-e', '--encryptor', help='Path to the encryptor executable file.', type=click.Path(resolve_path=True))
-@click.option('-ek', '--encryption_key', help='The encryption key for the packs')
-@click.option('-sk', '--signature_key', help='Base64 encoded signature key used for signing packs.')
+              default="all", hidden=True)
+@click.option('-e', '--encryptor', help='Path to the encryptor executable file.', type=click.Path(resolve_path=True),
+              hidden=True)
+@click.option('-ek', '--encryption_key', help='The encryption key for the packs.', hidden=True)
+@click.option('-sk', '--signature_key', help='Base64 encoded signature key used for signing packs.', hidden=True)
 @click.option('-sd', '--sign_directory', help='Path to the signDirectory executable file.',
-              type=click.Path(resolve_path=True))
+              type=click.Path(resolve_path=True), hidden=True)
 @click.option('-rt', '--remove_test_playbooks', is_flag=True,
-              help='Should remove test playbooks from content packs or not.', default=True)
+              help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
 def create_artifacts(**kwargs) -> int:
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()

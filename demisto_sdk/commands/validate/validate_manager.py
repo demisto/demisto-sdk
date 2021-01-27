@@ -432,14 +432,14 @@ class ValidateManager:
     def run_validation_using_git(self):
         """Runs validation on only changed packs/files (g)
         """
-        self.setup_git_params()
+        valid_git_setup = self.setup_git_params()
         if not self.no_configuration_prints:
             self.git_config_prints()
 
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git()
 
-        validation_results = set()
+        validation_results = {valid_git_setup}
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -865,9 +865,13 @@ class ValidateManager:
             if self.branch_name.startswith('20.'):
                 self.always_valid = True
 
-        # on master dont check RN
+        # on master don't check RN
         elif self.branch_name == 'master':
             self.skip_pack_rn_validation = True
+            error_message, error_code = Errors.running_on_master_with_git()
+            if self.handle_error(error_message, error_code, file_path='General', warning=not self.is_external_repo):
+                return False
+        return True
 
     def git_config_prints(self):
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',

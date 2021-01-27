@@ -29,6 +29,7 @@ ERROR_CODE = {
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
     "no_minimal_fromversion_in_file": "BA106",
+    "running_on_master_with_git": "BA107",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -271,6 +272,12 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
 
     @staticmethod
     @error_code_decorator

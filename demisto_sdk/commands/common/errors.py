@@ -452,7 +452,6 @@ class Errors:
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
 
-
     @staticmethod
     @error_code_decorator
     def integration_non_existent_classifier(integration_classifier):

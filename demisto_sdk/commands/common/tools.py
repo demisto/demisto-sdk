@@ -1519,4 +1519,3 @@ def extract_multiple_keys_from_dict(key: str, var: dict):
                 for d in v:
                     for result in extract_multiple_keys_from_dict(key, d):
                         yield result
-

@@ -11,7 +11,8 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH,
+                                                   CONTEXT_OUTPUT_TABLE_HEADER)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -911,7 +912,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         valid = True
         # the pattern to get the context part out of command section:
-        context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#{3,5}"
+        context_section_pattern = CONTEXT_OUTPUT_TABLE_HEADER.replace('|', '\\|').replace('*', '\*') + ".(.*?)#{3,5}"
         # the pattern to get the value in the first column under the outputs table:
         context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
 
@@ -946,11 +947,11 @@ class IntegrationValidator(ContentEntityValidator):
             only_in_yml_paths = existing_context_in_yml - context_path_in_command
             only_in_readme_paths = context_path_in_command - existing_context_in_yml
             if only_in_yml_paths:
-                error, code = Errors.readme_missing_output_context(command, ", ".join(only_in_yml_paths))
+                error, code = Errors.readme_missing_output_context(command_name, ", ".join(only_in_yml_paths))
                 if self.handle_error(error, code, file_path=readme_path):
                     valid = False
             if only_in_readme_paths:
-                error, code = Errors.missing_output_context(command, ", ".join(only_in_readme_paths))
+                error, code = Errors.missing_output_context(command_name, ", ".join(only_in_readme_paths))
                 if self.handle_error(error, code, file_path=self.file_path):
                     valid = False
         return valid

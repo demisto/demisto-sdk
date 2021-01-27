@@ -717,7 +717,7 @@ def get_pack_metadata_data(file_path, print_logs: bool):
         return {pack_name: pack_data}
 
     except Exception as exp:  # noqa
-        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        print_error(f'Failed to process {file_path}, Error: {str(exp)}')
         raise
 
 
@@ -1229,11 +1229,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(get_pack_metadata_data,
-                                        print_logs=print_logs
-                                        ),
-                                get_pack_metadata_paths(pack_to_create)):
-                packs_dict.update(arr)
+            for pack_data in pool.map(partial(get_pack_metadata_data,
+                                              print_logs=print_logs
+                                              ),
+                                      get_pack_metadata_paths(pack_to_create)):
+                packs_dict.update(pack_data)
 
         progress_bar.update(1)
 

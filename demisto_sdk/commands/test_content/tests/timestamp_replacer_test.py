@@ -9,7 +9,6 @@ from demisto_sdk.commands.test_content.timestamp_replacer import \
     TimestampReplacer
 from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.net.http import Headers
-from munch import Munch
 
 
 @pytest.fixture()
@@ -50,7 +49,7 @@ class TestTimeStampReplacer:
 
     @classmethod
     def setup_class(cls):
-        mitmproxy.ctx.options = Munch(**cls.DEFAULT_OPTIONS_MAPPING)
+        mitmproxy.ctx.options = MagicMock(**cls.DEFAULT_OPTIONS_MAPPING)
 
     def test_loader_defaults(self, mocker):
         """

@@ -53,7 +53,7 @@ class ContributionConverter:
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
                  gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
-                 base_dir: Union[str] = None):
+                 base_dir: Union[str] = None, no_pipenv: bool = False):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -81,6 +81,7 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
+        self.no_pipenv = no_pipenv
         base_dir = base_dir or get_content_path()
         self.packs_dir_path = os.path.join(base_dir, 'Packs')
         if not os.path.isdir(self.packs_dir_path):
@@ -267,7 +268,9 @@ class ContributionConverter:
                     files = get_child_files(directory)
                     for file in files:
                         file_name = os.path.basename(file)
-                        if file_name.startswith('integration') or file_name.startswith('script'):
+                        if file_name.startswith('integration-') \
+                           or file_name.startswith('script-') \
+                           or file_name.startswith('automation-'):
                             unified_file = file
                             self.generate_readme_for_pack_content_item(unified_file)
                             os.remove(unified_file)
@@ -313,8 +316,8 @@ class ContributionConverter:
                         pack_subdir, del_unified=(not self.create_new), source_mapping=files_to_source_mapping
                     )
 
-                    if self.create_new:
-                        self.generate_readmes_for_new_content_pack()
+            if self.create_new:
+                self.generate_readmes_for_new_content_pack()
 
             # format
             self.format_converted_pack()
@@ -374,11 +377,11 @@ class ContributionConverter:
                         os.makedirs(output_dir, exist_ok=True)
                         extractor = Extractor(input=content_item_file_path, file_type=file_type, output=output_dir,
                                               no_readme=True, base_name=base_name,
-                                              no_auto_create_dir=(not autocreate_dir))
+                                              no_auto_create_dir=(not autocreate_dir), no_pipenv=self.no_pipenv)
 
                     else:
                         extractor = Extractor(input=content_item_file_path, file_type=file_type,
-                                              output=content_item_dir)
+                                              output=content_item_dir, no_pipenv=self.no_pipenv)
                     extractor.extract_to_package_format()
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \

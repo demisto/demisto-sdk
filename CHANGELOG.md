@@ -1,4 +1,12 @@
 # Changelog
+* Changed the *skip-id-set-creation* flag to *create-id-set* in the **validate** command. Its default value will be False.
+* Added support for the 'cve' reputation command in default arg validation.
+* Filter out generic and reputation command from scripts and playbooks dependencies calculation.
+* Added support for the incident fields in outgoing mappers in the ID set.
+* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
+* Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
+
+# 1.2.17
 * Added a validation that the classifier of an integration exists.
 * Added a validation that the mapper of an integration exists.
 * Added a validation that the incident types of a classifier exist.
@@ -15,6 +23,7 @@
 * Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
 * Using the *verbose* argument in the **find-dependencies** command will now log to the console.
 * Improved the deprecated message validation required from integrations.
+* Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.

@@ -1066,6 +1066,303 @@ class TestMappers:
         assert 'incident_types' not in result.keys()
         assert 'incident_fields' not in result.keys()
 
+    @staticmethod
+    def test_process_mappers__outgoing_mapper(mocker):
+        """
+        Given
+            - A mapper file called ServiceNow-outgoing-mapper with incident fields related to it
+
+        When
+            - running get_mapper_data
+
+        Then
+            - Validating parsing all the incident fields from the simple key.
+        """
+        outgoing_mapper_snow = {
+            "defaultIncidentType": "ServiceNow Ticket",
+            "description": "Maps outgoing ServiceNow incident Fields.",
+            "feed": False,
+            "fromVersion": "6.0.0",
+            "id": "ServiceNow-outgoing-mapper",
+            "mapping": {
+                "ServiceNow Ticket": {
+                    "dontMapEventToLabels": False,
+                    "internalMapping": {
+                        "category": {
+                            "complex": None,
+                            "simple": "servicenowcategory"
+                        },
+                        "closed_at": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [
+                                    [
+                                        {
+                                            "ignoreCase": False,
+                                            "left": {
+                                                "isContext": True,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "closed"
+                                                }
+                                            },
+                                            "operator": "isAfter",
+                                            "right": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0001-01-01T00:00:00Z"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                ],
+                                "root": "closed",
+                                "transformers": []
+                            },
+                            "simple": ""
+                        },
+                        "description": {
+                            "complex": None,
+                            "simple": "details"
+                        },
+                        "escalation": {
+                            "complex": None,
+                            "simple": "servicenowescalation"
+                        },
+                        "impact": {
+                            "complex": None,
+                            "simple": "servicenowimpact"
+                        },
+                        "notify": {
+                            "complex": None,
+                            "simple": "servicenownotify"
+                        },
+                        "priority": {
+                            "complex": None,
+                            "simple": "servicenowpriority"
+                        },
+                        "resolved_at": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [
+                                    [
+                                        {
+                                            "ignoreCase": False,
+                                            "left": {
+                                                "isContext": True,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "closed"
+                                                }
+                                            },
+                                            "operator": "isAfter",
+                                            "right": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0001-01-01T00:00:00Z"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                ],
+                                "root": "closed",
+                                "transformers": []
+                            },
+                            "simple": ""
+                        },
+                        "severity": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [],
+                                "root": "severity",
+                                "transformers": [
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0.5"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "2 - Medium"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "2"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1 - High"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1 - High"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "4"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    }
+                                ]
+                            },
+                            "simple": ""
+                        },
+                        "short_description": {
+                            "complex": None,
+                            "simple": "name"
+                        },
+                        "sla_due": {
+                            "complex": None,
+                            "simple": "remediationsla.dueDate"
+                        },
+                        "state": {
+                            "complex": None,
+                            "simple": "servicenowstate"
+                        },
+                        "subcategory": {
+                            "complex": None,
+                            "simple": "subcategory"
+                        },
+                        "urgency": {
+                            "complex": None,
+                            "simple": "servicenowurgency"
+                        },
+                        "work_start": {
+                            "complex": None,
+                            "simple": "timetoassignment.startDate"
+                        }
+                    }
+                }
+            },
+            "name": "ServiceNow - Outgoing Mapper",
+            "type": "mapping-outgoing",
+            "version": -1
+        }
+        mocker.patch("demisto_sdk.commands.common.tools.get_file", return_value=outgoing_mapper_snow)
+
+        mapper = get_mapper_data('')
+        mapper_data = mapper.get('ServiceNow-outgoing-mapper')
+        assert mapper_data.get('name') == 'ServiceNow - Outgoing Mapper'
+        assert mapper_data.get('fromversion') == '6.0.0'
+        assert mapper_data.get('incident_types') == ['ServiceNow Ticket']
+        assert set(mapper_data.get('incident_fields')) == {
+            'closed', 'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
+            'servicenowcategory', 'remediationsla.dueDate', 'servicenowstate', 'timetoassignment.startDate',
+            'servicenowimpact', 'servicenowpriority'}
+
 
 class TestWidget:
     @staticmethod

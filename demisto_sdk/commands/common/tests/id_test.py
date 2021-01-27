@@ -552,7 +552,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
 
 class TestPlaybookEntitiesVersionsValid:
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
     playbook_with_valid_versions = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",

@@ -5,6 +5,7 @@
 * Added support for the incident fields in outgoing mappers in the ID set.
 * Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 * Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
+* Added a validation that the integration parameters display name is capitalized and spaced using whitespace and not underscores.
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.

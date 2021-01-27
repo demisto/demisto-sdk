@@ -4,7 +4,8 @@ from typing import Callable, List
 
 import click
 from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES,
-                                                   TESTS_DIRECTORIES, FileType)
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -236,7 +237,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                 continue
 
             # ignore changes in TESTS_DIRECTORIES files.
-            elif any(test_dir in file_path for test_dir in TESTS_DIRECTORIES):
+            elif any(test_dir in file_path for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:

@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    OLDEST_SUPPORTED_VERSION,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
-                                                   TESTS_DIRECTORIES, FileType)
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
@@ -951,9 +952,9 @@ class ValidateManager:
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
         file_type = find_type(file_path)
 
-        # ignore unrecognized file types, pack metadata and test_data
+        # ignore unrecognized file types, pack metadata, doc data and test_data
         if not file_type or file_type == FileType.PACK_METADATA or any(test_dir in str(file_path) for
-                                                                       test_dir in TESTS_DIRECTORIES):
+                                                                       test_dir in TESTS_AND_DOC_DIRECTORIES):
             self.ignored_files.add(file_path)
             return None
 

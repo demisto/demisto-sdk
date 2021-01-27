@@ -727,11 +727,12 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: '.ps1'
 }
 
-TESTS_DIRECTORIES = [
+TESTS_AND_DOC_DIRECTORIES = [
     'testdata',
     'test_data',
     'data_test',
-    'tests_data'
+    'tests_data',
+    'doc_files'
 ]
 
 FILE_TYPES_FOR_TESTING = [

@@ -55,11 +55,12 @@ from demisto_sdk.tests.constants_test import (
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
     SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
     VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
-    VALID_DESCRIPTION_PATH, VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_JSON_FILE_FOR_UNIT_TESTING, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_METADATA1_PATH, VALID_METADATA2_PATH,
+    VALID_DESCRIPTION_PATH, VALID_DOC_FILES_PATH_FOR_UNIT_TESTING,
+    VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_JSON_FILE_FOR_UNIT_TESTING,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
@@ -969,6 +970,7 @@ class TestValidators:
                       f"A	{VALID_METADATA2_PATH}\n" \
                       f"D	{VALID_SCRIPT_PATH}\n" \
                       f"D	{VALID_DASHBOARD_PATH}\n" \
+                      f"D	{VALID_DOC_FILES_PATH_FOR_UNIT_TESTING}\n" \
                       f"A	{VALID_JSON_FILE_FOR_UNIT_TESTING}"
 
         validate_manager = ValidateManager()
@@ -1008,7 +1010,7 @@ class TestValidators:
         assert VALID_PYTHON_INTEGRATION_TEST_PATH not in added_files
         assert VALID_METADATA1_PATH not in added_files
 
-        # check that non-image, pipfile, description or schema are in the ignored files and the rest are
+        # check that non-image, pipfile, description, doc files or schema are in the ignored files and the rest are
         assert VALID_PIPEFILE_PATH not in validate_manager.ignored_files
         assert VALID_PIPEFILE_LOCK_PATH not in validate_manager.ignored_files
         assert VALID_DESCRIPTION_PATH not in validate_manager.ignored_files
@@ -1016,6 +1018,7 @@ class TestValidators:
         assert VALID_SECRETS_IGNORE_PATH in validate_manager.ignored_files
         assert VALID_PYTHON_INTEGRATION_TEST_PATH in validate_manager.ignored_files
         assert VALID_PACK_IGNORE_PATH in validate_manager.ignored_files
+        assert VALID_DOC_FILES_PATH_FOR_UNIT_TESTING in validate_manager.ignored_files
 
         # check recognized deleted file
         assert VALID_SCRIPT_PATH in deleted_files

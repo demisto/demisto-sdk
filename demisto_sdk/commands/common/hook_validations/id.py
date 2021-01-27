@@ -45,14 +45,14 @@ class IDSetValidator(BaseValidator):
     ID_SET_PATH = "./Tests/id_set.json"
 
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False):
+                 print_as_warnings=False, suppress_print=False, id_set_path: str = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:
+            self.id_set_path = id_set_path or self.ID_SET_PATH
             self.id_set = self.load_id_set()
-            self.id_set_path = os.path.join(self.configuration.env_dir, 'configs', 'id_set.json')
             self.script_set = self.id_set[self.SCRIPTS_SECTION]
             self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
             self.integration_set = self.id_set[self.INTEGRATION_SECTION]
@@ -63,7 +63,7 @@ class IDSetValidator(BaseValidator):
             self.incident_types_set = self.id_set[self.INCIDENT_TYPES_SECTION]
 
     def load_id_set(self):
-        with open(self.ID_SET_PATH, 'r') as id_set_file:
+        with open(self.id_set_path, 'r') as id_set_file:
             try:
                 id_set = json.load(id_set_file)
             except ValueError as ex:
@@ -238,6 +238,7 @@ class IDSetValidator(BaseValidator):
         if isinstance(file_path, Path):
             file_path = str(file_path)
         is_valid = True
+
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

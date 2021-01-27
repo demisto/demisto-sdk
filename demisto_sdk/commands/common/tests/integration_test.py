@@ -238,6 +238,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
+    DEFUALT_ARGS_1 = [
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
     DEFUALT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
     DEFUALT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
@@ -245,6 +247,7 @@ class TestIntegrationValidator:
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
     DEFUALT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_INPUTS = [
+        (DEFUALT_ARGS_1, True),
         (DEFUALT_ARGS_2, True),
         (DEFUALT_ARGS_INVALID_1, False),
         (DEFUALT_ARGS_INVALID_2, False),

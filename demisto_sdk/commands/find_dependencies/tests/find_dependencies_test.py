@@ -366,18 +366,10 @@ class TestDependsOnScriptAndIntegration:
 
         Then
             - Extracting the packs that the script depends on.
-            - Should recognize the mandatory pack and the non mandatory packs.
+            - Should recognize the mandatory pack and ignore the packs that implement the file command.
         """
         expected_result = {
-            ('Active_Directory_Query', True), ('Recorded_Future', False), ('illuminate', False), ('ThreatQ', False),
-            ('Anomali_ThreatStream', False), ('URLHaus', False), ('Symantec_Deepsight', False),
-            ('XForceExchange', False), ('Active_Directory_Query', True), ('XFE', False), ('MISP', False),
-            ('AlienVault_OTX', False), ('ThreatMiner', False), ('isight', False), ('CrowdStrikeIntel', False),
-            ('ReversingLabs_A1000', False), ('PolySwarm', False), ('TruSTAR', False),
-            ('ReversingLabs_Titanium_Cloud', False), ('ThreatExchange', False), ('EclecticIQ', False),
-            ('AutoFocus', False), ('McAfee-TIE', False), ('Maltiverse', False), ('Palo_Alto_Networks_WildFire', False),
-            ('Polygon', False), ('Cofense-Intelligence', False), ('Lastline', False), ('ThreatConnect', False),
-            ('VirusTotal', False), ('Flashpoint', False)
+            ('Active_Directory_Query', True)
         }
 
         test_input = [
@@ -450,8 +442,20 @@ class TestDependsOnScriptAndIntegration:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    @pytest.mark.parametrize("generic_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("generic_command", ['ip', 'domain', 'url', 'file', 'email', 'cve', 'cve-latest',
+                                                 'cve-search', 'send-mail', 'send-notification'])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
+        """
+        Given
+            - Scripts that depends on generic commands
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should NOT recognize packs.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -470,10 +474,7 @@ class TestDependsOnScriptAndIntegration:
                                                                           verbose=False,
                                                                           )
 
-        assert len(dependencies_set) > 0
-
-        for dependency_data in dependencies_set:
-            assert not dependency_data[1]  # validate that mandatory is set to False
+        assert len(dependencies_set) == 0
 
 
 class TestDependsOnPlaybook:
@@ -612,8 +613,19 @@ class TestDependsOnPlaybook:
         assert found_result[0] == pack_name
         assert found_result[1]
 
-    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url", "cve"])
     def test_collect_detection_of_optional_dependencies_in_playbooks(self, integration_command, id_set):
+        """
+        Given
+            - Playbooks that are using generic commands
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should NOT recognize packs.
+        """
         test_input = [
             {
                 "Dummy Playbook": {
@@ -640,10 +652,7 @@ class TestDependsOnPlaybook:
                                                                             verbose=False,
                                                                             )
 
-        assert len(found_result_set) > 0
-
-        for found_result in found_result_set:
-            assert not found_result[1]  # validate that mandatory is set to False
+        assert len(found_result_set) == 0
 
     def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
         """

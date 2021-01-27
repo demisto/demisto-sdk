@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -72,7 +72,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False
+            create_id_set=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,20 +87,22 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        self.id_set_path = id_set_path or IDSetValidator.ID_SET_PATH
+        self.id_set_path = id_set_path or "./Tests/id_set.json"
         # create the id_set only once per run.
-        self.id_set_validator = IDSetValidator(is_circle=self.is_circle,
-                                               configuration=Configuration(),
-                                               ignored_errors=None,
-                                               print_as_warnings=self.print_ignored_errors,
-                                               id_set_path=self.id_set_path) \
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+
+        self.id_set_validations = IDSetValidations(is_circle=self.is_circle,
+                                                   configuration=Configuration(),
+                                                   ignored_errors=None,
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   id_set_file=self.id_set_file) \
             if validate_id_set else None
         self.branch_name = ''
         self.changes_in_schema = False
@@ -126,10 +128,7 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.skip_id_set_creation = skip_id_set_creation
             self.print_percent = True
-
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if no_docker_checks:
             self.skip_docker_checks = True
@@ -337,8 +336,7 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.id_set_validator and not \
-                self.id_set_validator.is_file_valid_in_set(file_path, file_type):
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type):
             return False
 
         # Note: these file are not ignored but there are no additional validators for connections
@@ -619,7 +617,8 @@ class ValidateManager:
         classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file,
+        return classifier_validator.is_valid_classifier(validate_rn=False,
+                                                        id_set_file=self.id_set_file,
                                                         is_circle=self.is_circle)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
@@ -791,7 +790,8 @@ class ValidateManager:
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set,
+                                                           self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(

@@ -2362,8 +2362,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
-                                          '--skip-pack-release-notes', '--skip-pack-dependencies',
-                                          '--skip-id-set-creation'],
+                                          '--skip-pack-release-notes', '--skip-pack-dependencies'],
                                    catch_exceptions=False)
         assert 'Running validation on branch' in result.stdout
         assert 'Running validation on modified files' in result.stdout

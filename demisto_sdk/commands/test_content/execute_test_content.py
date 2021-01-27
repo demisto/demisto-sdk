@@ -8,6 +8,8 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext, ServerContext)
 
+SKIPPED_INTEGRATION_COMMENT = 'The following integrations are skipped and critical for the test'
+
 
 def _handle_github_response(response, logging_module) -> dict:
     res_dict = response.json()
@@ -31,12 +33,15 @@ def _add_pr_comment(comment, logging_module):
         if res and res.get('total_count', 0) == 1:
             issue_url = res['items'][0].get('comments_url') if res.get('items', []) else None
             if issue_url:
-                # Check if the comment already exists. If it does, don't add another comment to avoid spamming PRs:
+                # Check if a comment about skipped tests already exists. If there is delete it first and then post a
+                # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
-                    if comment == existing_comment.get('body'):
-                        return
+                    if SKIPPED_INTEGRATION_COMMENT in existing_comment.get('body'):
+                        comment_url = existing_comment.get('utl')
+                        response = requests.delete(comment_url, headers=headers, verify=False)
+                        _handle_github_response(response, logging_module)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
                 _handle_github_response(response, logging_module)
         else:
@@ -63,7 +68,7 @@ def execute_test_content(**kwargs):
     if not build_context.unmockable_tests_to_run.empty() or not build_context.mockable_tests_to_run.empty():
         raise Exception('Not all tests have been executed')
     if build_context.tests_data_keeper.playbook_skipped_integration and build_context.build_name != 'master':
-        comment = 'The following integrations are skipped and critical for the test:\n {}'. \
+        comment = SKIPPED_INTEGRATION_COMMENT + ':\n {}'. \
             format('\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration))
         _add_pr_comment(comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)

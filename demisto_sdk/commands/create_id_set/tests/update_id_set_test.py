@@ -256,7 +256,7 @@ class TestPacksMetadata:
             get_pack_metadata_data('Pack_Path', True)
         captured = capsys.readouterr()
 
-        assert 'failed to process Pack_Path, Error:' in captured.out
+        assert 'Failed to process Pack_Path, Error:' in captured.out
 
 
 class TestDuplicates:

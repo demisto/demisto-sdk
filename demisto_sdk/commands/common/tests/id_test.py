@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 
 CONFIG = Configuration()
 
@@ -16,7 +16,7 @@ def test_is_incident_type_using_real_playbook__happy_flow():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_type_data = {
         "Zimperium Event": {
@@ -45,7 +45,7 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_type_data = {
         "Zimperium Event": {
@@ -72,7 +72,7 @@ def test_is_non_real_command_found__happy_flow():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         'name': 'OktaUpdateUser',
@@ -96,7 +96,7 @@ def test_is_non_real_command_found__bad_command_name():
     Then
         - Ensure that the scripts depend-on commands are non valid.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         'name': 'OktaUpdateUser',
@@ -120,7 +120,7 @@ def test_is_non_real_command_found__no_depend_on_name():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         'name': 'OktaUpdateUser',
@@ -144,7 +144,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
     Then
         - Ensure that the integration classifier and mapper were found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [{
         "Claroty-mapper":
@@ -218,7 +218,7 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
     Then
         - Ensure that the integration mapper was not found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [{
         "Claroty-mapper_wrong":
@@ -292,7 +292,7 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
     Then
         - Ensure that the integration classifier was not found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [{
         "Claroty-mapper":
@@ -366,7 +366,7 @@ def test_is_classifier_incident_types_found__exists():
     Then
         - Ensure that the classifier incident types were found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -415,7 +415,7 @@ def test_is_classifier_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -455,7 +455,7 @@ def test_is_mapper_incident_types_found__exists():
     Then
         - Ensure that the mapper incident types were found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -513,7 +513,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidator(is_circle=False, is_test_run=True, configuration=CONFIG)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {

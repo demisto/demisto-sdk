@@ -909,25 +909,55 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             True if there has been a corresponding change to README file when context is changed in integration
         """
+        only_in_yml = {}
+        only_in_readme = {}
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
         f = open(os.path.join(dir_path, 'README.md'), 'r')
         readme_content = f.read()
         f.close()
-        context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#####"
-        context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
-        context_section = re.findall(context_section_pattern, readme_content, re.DOTALL)
-        if not context_section:
-            return True
-        context_path_in_readme = [re.findall(context_path_pattern, command_context, re.DOTALL)
-                                  for command_context in context_section]
-        existing_context_in_readme = set(context_path_in_readme.pop('---'))
-        existing_context_in_yml = set(self._gen_dict_extract("contextPath", self.current_file))
+        readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+        commands = self.current_file.get("script")
+        commands = commands.get('commands')
+        for command in commands:
+            command_name = command.get('name')
+            command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "
+            command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
+            context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#{3,5}"
+            if not command_section:
+                print()
+            context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
+            if not context_section:
+                context_path_in_command = set()
+            else:
+                context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+                context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
+                context_path_in_command.remove('---')
 
+            existing_context_in_yml = set(self._gen_dict_extract("contextPath", command))
+            only_in_yml_paths = existing_context_in_yml - context_path_in_command
+            only_in_readme_paths = context_path_in_command - existing_context_in_yml
+            if only_in_yml_paths:
+                only_in_yml[command_name] = list(only_in_yml_paths)
+            if only_in_readme_paths:
+                only_in_readme[command_name] = list(only_in_readme_paths)
+
+        error, code = Errors.missing_get_mapping_fields_command()
+        if self.handle_error(error, code, file_path=self.file_path):
+            self.is_valid = False
+            return False
         res = []
 
-    def _gen_dict_extract(self, key, var):
+    def _gen_dict_extract(self, key: str, var: dict):
+        """
+        Args:
+            key: string representing a re-occuring field in dictionary
+            var: nested dictionary (can contain both nested lists and nested dictionary)
+
+        Returns:
+            generates value in an occurrence of the nested key in var
+        """
         if hasattr(var, 'items'):
             for k, v in var.items():
                 if k == key:

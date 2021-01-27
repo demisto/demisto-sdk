@@ -440,6 +440,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def command_context_not_found_in_readme(command, context_paths):
+        return f'The Following context paths for command {command} are found in YML file ' \
+               f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def command_context_not_found_in_yml(command, context_paths):
+        return f'The Following context paths for command {command} are found in the README file ' \
+               f'but are missing from the YML file: {context_paths}'
+
+
+    @staticmethod
+    @error_code_decorator
     def integration_non_existent_classifier(integration_classifier):
         return f"The integration has a classifier {integration_classifier} which does not exist."
 

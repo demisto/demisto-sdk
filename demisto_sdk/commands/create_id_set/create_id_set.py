@@ -26,7 +26,6 @@ class IDSetCreator:
     def create_id_set(self):
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
         self.modify_id_set_command_to_integration_of_playbook()
-        print(self.id_set)
         return self.id_set
 
     def modify_id_set_command_to_integration_of_playbook(self):

@@ -237,6 +237,7 @@ class IDSetValidator(BaseValidator):
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
+        print(self.id_set)
         playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
         playbook_name = playbook_data_2nd_level.get("name")
         playbook_version = playbook_data_2nd_level.get("fromversion")

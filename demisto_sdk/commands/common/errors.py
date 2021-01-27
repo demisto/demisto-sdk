@@ -453,8 +453,8 @@ class Errors:
     @error_code_decorator
     def invalid_integration_parameters_display_name(invalid_display_names):
         return f"The integration display names: {invalid_display_names} are invalid, " \
-               "Integration parameters display name should be capitalized and spaced using whitespace " \
-               "and not underscores."
+               "Integration parameters display name should be capitalized and spaced using whitespaces " \
+               "and not underscores ( _ )."
 
     @staticmethod
     @error_code_decorator

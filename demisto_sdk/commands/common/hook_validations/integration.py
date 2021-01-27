@@ -900,8 +900,8 @@ class IntegrationValidator(ContentEntityValidator):
                 else None
 
         if invalid_display_names:
-            error, code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
-            if self.handle_error(error, code, file_path=self.file_path):
+            error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True

@@ -927,7 +927,7 @@ class IntegrationValidator(ContentEntityValidator):
             readme_content = readme.read()
             readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
 
-        commands = self.current_file.get("script", {}).get('commands')
+        commands = self.current_file.get("script", {}).get('commands', [])
 
         for command in commands:
             command_name = command.get('name')

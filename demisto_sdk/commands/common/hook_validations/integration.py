@@ -934,6 +934,8 @@ class IntegrationValidator(ContentEntityValidator):
             # Gets all context path in the relevant command section from README file
             command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
             command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
+            if not command_section:
+                continue
             context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
             if not context_section:
                 context_path_in_command = set()

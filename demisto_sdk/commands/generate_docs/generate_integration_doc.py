@@ -319,7 +319,7 @@ def generate_command_example(cmd, cmd_example=None):
         '```{}```'.format(cmd_example),
         '',
     ]
-    if context_example:
+    if context_example and context_example != '{}':
         example.extend([
             '#### Context Example',
             '```json',

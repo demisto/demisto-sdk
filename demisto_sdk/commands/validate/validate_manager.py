@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -26,7 +25,7 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -62,7 +61,7 @@ from demisto_sdk.commands.common.tools import (filter_packagify_changes,
                                                get_pack_names_from_files,
                                                get_yaml, has_remote_configured,
                                                is_origin_content_repo,
-                                               run_command)
+                                               open_id_set_file, run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from packaging import version
 
@@ -73,14 +72,13 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False
+            create_id_set=False
     ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
-        self.id_set_validations = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
         self.use_git = use_git
@@ -89,16 +87,23 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        if not id_set_path:
-            id_set_path = 'Tests/id_set.json'
-        self.id_set_path = id_set_path
+        self.id_set_path = id_set_path or "./Tests/id_set.json"
+        # create the id_set only once per run.
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+
+        self.id_set_validations = IDSetValidations(is_circle=self.is_circle,
+                                                   configuration=Configuration(),
+                                                   ignored_errors=None,
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   id_set_file=self.id_set_file) \
+            if validate_id_set else None
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -123,7 +128,6 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.skip_id_set_creation = skip_id_set_creation
             self.print_percent = True
 
         if no_docker_checks:
@@ -332,12 +336,8 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.id_set_validations:
-            id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
-                                              ignored_errors=pack_error_ignore_list,
-                                              print_as_warnings=self.print_ignored_errors)
-            if not id_set_validator.is_file_valid_in_id_set(file_path, file_type):
-                return False
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type):
+            return False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
@@ -458,7 +458,7 @@ class ValidateManager:
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
                                                         ignored_errors=pack_error_ignore_list,
                                                         print_as_warnings=self.print_ignored_errors)
-        return test_playbook_validator.is_valid_file(validate_rn=False)
+        return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
@@ -616,7 +616,8 @@ class ValidateManager:
         classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file,
+        return classifier_validator.is_valid_classifier(validate_rn=False,
+                                                        id_set_file=self.id_set_file,
                                                         is_circle=self.is_circle)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
@@ -712,9 +713,6 @@ class ValidateManager:
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
-        if not os.path.isfile(self.id_set_path) and not self.skip_dependencies:
-            IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-
         for pack in changed_packs:
             raise_version = False
             pack_path = tools.pack_name_to_path(pack)
@@ -790,13 +788,9 @@ class ValidateManager:
                                                                                    FileType.TEST_SCRIPT,
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
-            if not os.path.isfile(self.id_set_path):
-                id_set = IDSetCreator(print_logs=False, output=self.id_set_path).create_id_set()
-            else:
-                with open(self.id_set_path, 'r') as conf_file:
-                    id_set = json.load(conf_file)
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set,
+                                                           self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
@@ -1223,6 +1217,26 @@ class ValidateManager:
                 packs.add(pack)
 
         return packs
+
+    @staticmethod
+    def get_id_set_file(skip_id_set_creation, id_set_path):
+        """
+
+        Args:
+            skip_id_set_creation (bool): whether should skip id set validation or not
+            this will also determine whether a new id_set can be created by validate.
+            id_set_path (str): id_set.json path file
+
+        Returns:
+            str: is_set file path
+        """
+        id_set = {}
+        if not os.path.isfile(id_set_path):
+            if not skip_id_set_creation:
+                id_set = IDSetCreator(print_logs=False).create_id_set()
+        else:
+            id_set = open_id_set_file(id_set_path)
+        return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
                                       validator):

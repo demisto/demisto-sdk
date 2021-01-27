@@ -287,8 +287,44 @@ class TestPlaybookValidator:
 
         Then
         - Ensure validation fails if it's a not test playbook
-        - Ensure that the validataion passes if no using usage.
+        - Ensure that the validation passes if no using usage.
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_using_instance() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_ID_UUID)
+    def test_is_id_uuid(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook include taskid and inside task field an id that are both from uuid type.
+        - The playbook include taskid and inside task field an id that are not both from uuid type.
+
+        Then
+        - Ensure validation passes if the taskid field and the id inside task field are both from uuid type
+        - Ensure validation fails if the taskid field and the id inside task field are one of them not from uuid type
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        validator._is_id_uuid() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_TASK_ID_EQUALS_ID)
+    def test_is_taskid_equals_id(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook include taskid and inside task field an id that are both have the same value.
+        - The playbook include taskid and inside task field an id that are different values.
+
+        Then
+        - Ensure validation passes if the taskid field and the id inside task field have the same value
+        - Ensure validation fails if the taskid field and the id inside task field are have different value
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        validator._is_taskid_equals_id() is expected_result

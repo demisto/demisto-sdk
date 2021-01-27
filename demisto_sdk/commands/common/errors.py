@@ -10,7 +10,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
+                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128', 'IN134']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
+    "invalid_integration_parameters_display_name": "IN134",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -447,6 +448,13 @@ class Errors:
     @error_code_decorator
     def integration_non_existent_mapper(integration_mapper):
         return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_parameters_display_name(invalid_display_names):
+        return f"The integration display names: {invalid_display_names} are invalid, " \
+               "Integration parameters display name should be capitalized and spaced using whitespace " \
+               "and not underscores."
 
     @staticmethod
     @error_code_decorator

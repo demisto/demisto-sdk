@@ -338,7 +338,7 @@ class ValidateManager:
 
         # id_set validation
         if self.id_set_validator and not \
-                self.id_set_validator.is_file_valid_in_set(file_path, file_type):
+                self.id_set_validator.is_file_valid_in_set(file_path, file_type, pack_error_ignore_list):
             return False
 
         # Note: these file are not ignored but there are no additional validators for connections

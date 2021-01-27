@@ -50,6 +50,7 @@ class IDSetValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_circle = is_circle
+        self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set_path = id_set_path or self.ID_SET_PATH
@@ -309,8 +310,8 @@ class IDSetValidator(BaseValidator):
                 if not is_version_valid:
                     error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
                         playbook_name, name, main_playbook_version, entity_version)
-                    self.handle_error(error_message, error_code, file_path)
-                    return False
+                    if self.handle_error(error_message, error_code, file_path):
+                        return False
         return True
 
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
@@ -346,8 +347,8 @@ class IDSetValidator(BaseValidator):
                 error_message, error_code = Errors.integration_version_not_match_playbook_version(playbook_name,
                                                                                                   command,
                                                                                                   playbook_version)
-                self.handle_error(error_message, error_code, file_path)
-                return False
+                if self.handle_error(error_message, error_code, file_path):
+                    return False
 
         return True
 
@@ -360,7 +361,7 @@ class IDSetValidator(BaseValidator):
                 return integration_data.get("fromversion", "")
         return general_version
 
-    def is_file_valid_in_set(self, file_path, file_type):
+    def is_file_valid_in_set(self, file_path, file_type, pack_error_ignore_list):
         """Check if the file is valid in the id_set
 
         Args:
@@ -370,7 +371,9 @@ class IDSetValidator(BaseValidator):
         Returns:
             bool. Whether the file is valid in the id_set or not.
         """
+        self.ignored_errors = pack_error_ignore_list
         is_valid = True
+        self.is_circle = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

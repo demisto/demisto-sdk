@@ -49,8 +49,8 @@ class TestPlaybookValidator(ContentEntityValidator):
         is_valid = True
         tasks: dict = self.current_file.get('tasks', {})
         for task_key, task in tasks.items():
-            taskid = task.get('taskid', '')
-            inner_id = task.get('task', {}).get('id', '')
+            taskid = str(task.get('taskid', ''))
+            inner_id = str(task.get('task', {}).get('id', ''))
             is_valid_task = is_string_uuid(taskid) and is_string_uuid(inner_id)
 
             if not is_valid_task:

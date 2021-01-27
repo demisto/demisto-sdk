@@ -1027,7 +1027,7 @@ class ValidateManager:
                     if file_path not in self.ignored_files:
                         self.ignored_files.add(file_path)
                         if print_ignored_files:
-                            click.secho('Ignoring file path: {} - code file'.format(file_path), fg="yellow")
+                            click.secho('Ignoring file path: {} - doc files'.format(file_path), fg="yellow")
                     continue
 
                 # identify deleted files

@@ -7,7 +7,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DOC_FILES_DIR, IGNORED_PACK_NAMES,
     KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
@@ -1022,6 +1022,14 @@ class ValidateManager:
                             click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
                     continue
 
+                # ignore changes in doc_files directory
+                elif DOC_FILES_DIR in file_path:
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {} - code file'.format(file_path), fg="yellow")
+                    continue
+
                 # identify deleted files
                 if file_status.lower() == 'd' and not file_path.startswith('.'):
                     deleted_files.add(file_path)
@@ -1195,7 +1203,7 @@ class ValidateManager:
     def get_packs_that_should_have_version_raised(self, modified_files, added_files):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DOC_IMAGE
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
@@ -1203,7 +1211,7 @@ class ValidateManager:
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT, FileType.DOC_IMAGE}) - self.new_packs)
+                FileType.TEST_SCRIPT}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

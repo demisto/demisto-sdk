@@ -27,6 +27,7 @@ def _add_pr_comment(comment, logging_module):
     url = 'https://api.github.com/search/issues'
     headers = {'Authorization': 'Bearer ' + token}
     try:
+        raise Exception('raise exception to check logs')
         response = requests.get(url + query, headers=headers, verify=False)
         res = _handle_github_response(response, logging_module)
 

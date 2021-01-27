@@ -885,6 +885,12 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def is_valid_parameters_display_name(self) -> bool:
+        """Verifies integration parameters display name is valid.
+
+        Returns:
+            bool: True if description is valid - capitalized and spaced using whitespace and not underscores,
+            False otherwise.
+        """
         configuration = self.current_file.get('configuration', {})
         parameters_display_name = [param.get('display') for param in configuration if param.get('display')]
 

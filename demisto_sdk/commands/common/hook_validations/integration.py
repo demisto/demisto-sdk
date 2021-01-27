@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (is_v2_file, print_error,
-                                               server_version_compare)
+                                               server_version_compare, extract_multiple_keys_from_dict)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -909,60 +909,52 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             True if there has been a corresponding change to README file when context is changed in integration
         """
-        only_in_yml = {}
-        only_in_readme = {}
+        valid = True
+        # the pattern to get the context part out of command section:
+        context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#{3,5}"
+        # the pattern to get the value in the first column under the outputs table:
+        context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
-        f = open(os.path.join(dir_path, 'README.md'), 'r')
-        readme_content = f.read()
-        f.close()
-        readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+
+        # get README file's content
+        readme_path = os.path.join(dir_path, 'README.md')
+        with open(readme_path, 'r') as readme:
+            readme_content = readme.read()
+            readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+
         commands = self.current_file.get("script", {}).get('commands')
+
         for command in commands:
             command_name = command.get('name')
-            command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "
+
+            # Gets all context path in the relevant command section from README file
+            command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
             command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
-            context_section_pattern = r"\| \*\*Path\*\* \| \*\*Type\*\* \| \*\*Description\*\* \|.(.*?)#{3,5}"
             context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
             if not context_section:
                 context_path_in_command = set()
             else:
-                context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
                 context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
                 context_path_in_command.remove('---')
 
-            existing_context_in_yml = set(self._gen_dict_extract("contextPath", command))
+            existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
+
+            # finds diff between YML and README
             only_in_yml_paths = existing_context_in_yml - context_path_in_command
             only_in_readme_paths = context_path_in_command - existing_context_in_yml
             if only_in_yml_paths:
-                only_in_yml[command_name] = list(only_in_yml_paths)
+                error, code = Errors.readme_missing_output_context(command, ", ".join(only_in_yml_paths))
+                if self.handle_error(error, code, file_path=readme_path):
+                    valid = False
             if only_in_readme_paths:
-                only_in_readme[command_name] = list(only_in_readme_paths)
+                error, code = Errors.missing_output_context(command, ", ".join(only_in_readme_paths))
+                if self.handle_error(error, code, file_path=self.file_path):
+                    valid = False
+        return valid
 
-        error, code = Errors.missing_get_mapping_fields_command()
-        if self.handle_error(error, code, file_path=self.file_path):
-            self.is_valid = False
-            return False
-        res = []
 
-    def _gen_dict_extract(self, key: str, var: dict):
-        """
-        Args:
-            key: string representing a re-occuring field in dictionary
-            var: nested dictionary (can contain both nested lists and nested dictionary)
 
-        Returns:
-            generates value in an occurrence of the nested key in var
-        """
-        if hasattr(var, 'items'):
-            for k, v in var.items():
-                if k == key:
-                    yield v
-                if isinstance(v, dict):
-                    for result in self._gen_dict_extract(key, v):
-                        yield result
-                elif isinstance(v, list):
-                    for d in v:
-                        for result in self._gen_dict_extract(key, d):
-                            yield result
+

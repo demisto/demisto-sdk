@@ -63,6 +63,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
+    "missing_output_context": "IN134",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -166,6 +167,7 @@ ERROR_CODE = {
     "pack_metadata_price_change": "PA121",
     "readme_error": "RM100",
     "image_path_error": "RM101",
+    "readme_missing_output_context": "RM102",
     "wrong_version_reputations": "RP100",
     "reputation_expiration_should_be_numeric": "RP101",
     "reputation_id_and_details_not_equal": "RP102",
@@ -440,13 +442,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def command_context_not_found_in_readme(command, context_paths):
+    def readme_missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in YML file ' \
                f'but are missing from the README file: {context_paths}'
 
     @staticmethod
     @error_code_decorator
-    def command_context_not_found_in_yml(command, context_paths):
+    def missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
 

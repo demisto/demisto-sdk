@@ -1498,3 +1498,25 @@ def is_string_uuid(string_to_check: str):
 
     """
     return bool(re.fullmatch(UUID_REGEX, string_to_check))
+
+
+def extract_multiple_keys_from_dict(key: str, var: dict):
+    """
+    Args:
+        key: string representing a re-occurring field in dictionary
+        var: nested dictionary (can contain both nested lists and nested dictionary)
+
+    Returns: A generator that generates value in an occurrence of the nested key in var.
+    """
+    if hasattr(var, 'items'):
+        for k, v in var.items():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in extract_multiple_keys_from_dict(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    for result in extract_multiple_keys_from_dict(key, d):
+                        yield result
+

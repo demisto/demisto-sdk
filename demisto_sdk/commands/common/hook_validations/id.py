@@ -229,16 +229,18 @@ class IDSetValidator(BaseValidator):
 
         return is_valid
 
-    def is_file_valid_in_set(self, file_path, file_type):
+    def is_file_valid_in_set(self, file_path, file_type, ignored_errors=None):
         """Check if the file is valid in the id_set
 
         Args:
             file_path (string): Path to the file.
             file_type (string): The file type.
+            ignored_errors (list): a list of ignored errors for the specific file
 
         Returns:
             bool. Whether the file is valid in the id_set or not.
         """
+        self.ignored_errors = ignored_errors
         is_valid = True
 
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit

@@ -301,17 +301,24 @@ class IDSetValidator(BaseValidator):
             bool. Whether the playbook's version match playbook's entities.
         """
         for entity_data_dict in entity_set_from_id_set:
-            name = list(entity_data_dict.keys())[0]
-            is_entity_exist_in_playbook = name in implemented_entity_list_from_playbook
+            if not implemented_entity_list_from_playbook:
+                return True
+
+            entity_name = list(entity_data_dict.keys())[0]
+            is_entity_exist_in_playbook = entity_name in implemented_entity_list_from_playbook
             if is_entity_exist_in_playbook:
-                entity_version = entity_data_dict[name].get("fromversion", "")
+                entity_version = entity_data_dict[entity_name].get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
-                if not is_version_valid:
-                    error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
-                        playbook_name, name, main_playbook_version, entity_version)
-                    if self.handle_error(error_message, error_code, file_path):
-                        return False
+                if is_version_valid:
+                    implemented_entity_list_from_playbook.remove(entity_name)
+
+        if implemented_entity_list_from_playbook:
+            error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
+                playbook_name, implemented_entity_list_from_playbook, main_playbook_version)
+            if self.handle_error(error_message, error_code, file_path):
+                return False
+
         return True
 
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,

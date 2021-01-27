@@ -804,11 +804,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def content_entity_version_not_match_playbook_version(main_playbook, entity_name, main_playbook_version,
-                                                          entity_version):
-        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entity_name} " \
-               f"with a version of {entity_version} that does not match the main playbook version. The version of" \
-               f" {entity_name} version should be at most {main_playbook_version}."
+    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
+               f"with a version that does not match the main playbook version. The version of" \
+               f" {entities_names} should be at most {main_playbook_version}."
 
     @staticmethod
     @error_code_decorator

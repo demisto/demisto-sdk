@@ -154,6 +154,7 @@ class GitUtil:
             return last_commit
 
         committed = set()
+        print("HERE")
 
         if not staged_only:
             # get all committed files identified as added which are changed from prev_ver.
@@ -161,7 +162,6 @@ class GitUtil:
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.remote('demisto').refs[prev_ver].commit.diff(
                 self.repo.active_branch).iter_change_type('D')}
-            print("HERE")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.

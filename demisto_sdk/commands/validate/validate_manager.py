@@ -7,7 +7,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DOC_FILES_DIR, IGNORED_PACK_NAMES,
     KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
@@ -336,7 +336,8 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type):
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
+                                                                                        pack_error_ignore_list):
             return False
 
         # Note: these file are not ignored but there are no additional validators for connections
@@ -1020,6 +1021,14 @@ class ValidateManager:
                         self.ignored_files.add(file_path)
                         if print_ignored_files:
                             click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
+                    continue
+
+                # ignore changes in doc_files directory
+                elif DOC_FILES_DIR in file_path:
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {} - doc files'.format(file_path), fg="yellow")
                     continue
 
                 # identify deleted files

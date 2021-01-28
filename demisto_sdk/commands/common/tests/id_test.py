@@ -553,9 +553,10 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
 class TestPlaybookEntitiesVersionsValid:
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    playbook_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
     playbook_with_valid_versions = {"Example Playbook": {
         "name": "Example Playbook",
-        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "file_path": playbook_path,
         "fromversion": "5.5.0",
         "pack": "Example",
         "implementing_scripts": [
@@ -578,7 +579,7 @@ class TestPlaybookEntitiesVersionsValid:
 
     playbook_with_invalid_scripts_version = {"Example Playbook": {
         "name": "Example Playbook",
-        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "file_path": playbook_path,
         "fromversion": "5.0.0",
         "pack": "Example",
         "implementing_scripts": [
@@ -587,7 +588,7 @@ class TestPlaybookEntitiesVersionsValid:
     }}
     playbook_with_invalid_sub_playbook_version = {"Example Playbook": {
         "name": "Example Playbook",
-        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "file_path": playbook_path,
         "fromversion": "5.0.0",
         "pack": "Example",
         "implementing_playbooks": [
@@ -596,7 +597,7 @@ class TestPlaybookEntitiesVersionsValid:
     }}
     playbook_with_invalid_integration_version = {"Example Playbook": {
         "name": "Example Playbook",
-        "file_path": "Packs/Example/Playbooks/playbook-Example_Playbook.yml",
+        "file_path": playbook_path,
         "fromversion": "3.0.0",
         "pack": "Example",
         "command_to_integration": {
@@ -610,22 +611,26 @@ class TestPlaybookEntitiesVersionsValid:
         'playbooks': [
             {
                 'SubPlaybook_version_5': {
-                    'fromversion': "5.0.0"
+                    'fromversion': "5.0.0",
+                    "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_no_version': {
-                    'fromversion': ""
+                    'fromversion': "",
+                    "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_version_5_5': {
-                    'fromversion': "5.5.0"
+                    'fromversion': "5.5.0",
+                    "file_path": playbook_path,
                 }
             },
             {
                 'Example Playbook': {
                     'fromversion': "5.5.0",
+                    "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
                             "Integration_version_4",
@@ -666,7 +671,7 @@ class TestPlaybookEntitiesVersionsValid:
         ],
     }
 
-    def test_are_playbook_entities_versions_valid(self, repo):
+    def test_are_playbook_entities_versions_valid(self, repo, mocker):
         """
 
         Given
@@ -704,6 +709,7 @@ class TestPlaybookEntitiesVersionsValid:
         assert not is_sub_playbook_version_invalid
 
         # playbook uses integration's commands with invalid versions
+        mocker.patch.object(self.validator, 'handle_error', return_value=True)
         is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_integration_version, pack.path)
+            self.playbook_with_invalid_integration_version, self.playbook_path)
         assert not is_integration_version_invalid

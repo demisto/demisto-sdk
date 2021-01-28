@@ -159,8 +159,9 @@ class GitUtil:
             # get all committed files identified as added which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote().refs[prev_ver].commit.diff(
+                         in self.repo.remote('demisto').refs[prev_ver].commit.diff(
                 self.repo.active_branch).iter_change_type('D')}
+            print("HERE")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.

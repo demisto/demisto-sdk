@@ -5,19 +5,19 @@ import conftest  # noqa: F401
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
 
 UPDATE_RN_COMMAND = "update-release-notes"
-DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
+GIT_UTIL = GitUtil()
+DEMISTO_SDK_PATH = join(GIT_UTIL.git_path(), "demisto_sdk")
+TEST_FILES_PATH = join(GIT_UTIL.git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
-RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
+RN_FOLDER = join(GIT_UTIL.git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
-VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
+VMWARE_RN_PACK_PATH = join(GIT_UTIL.git_path(), 'Packs', 'VMware', 'ReleaseNotes')
 
 
 @pytest.fixture
@@ -355,7 +355,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-    mocker.patch('demisto_sdk.commands.common.git_tools.get_packs', return_value={'FeedAzureValid'})
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.get_packs', return_value={'FeedAzureValid'})
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)

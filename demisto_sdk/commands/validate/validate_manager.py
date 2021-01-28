@@ -872,8 +872,8 @@ class ValidateManager:
         elif self.branch_name == 'master':
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
-            if self.handle_error(error_message, error_code, file_path='General', warning=not self.is_external_repo,
-                                 drop_line=True):
+            if self.handle_error(error_message, error_code, file_path='General',
+                                 warning=(not self.is_external_repo or self.is_circle), drop_line=True):
                 return False
         return True
 

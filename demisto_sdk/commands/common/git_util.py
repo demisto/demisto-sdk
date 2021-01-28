@@ -288,3 +288,7 @@ class GitUtil:
 
     def get_current_working_branch(self) -> str:
         return str(self.repo.active_branch)
+
+    def git_path(self) -> str:
+        git_path = self.repo.git.rev_parse('--show-toplevel')
+        return git_path.replace('\n', '')

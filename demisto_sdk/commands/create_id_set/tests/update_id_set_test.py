@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument, get_general_data,

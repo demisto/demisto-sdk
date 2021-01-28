@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
 @patch('builtins.print')

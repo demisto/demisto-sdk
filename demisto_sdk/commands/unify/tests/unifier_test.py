@@ -11,7 +11,7 @@ import yaml
 import yamlordereddictloader
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.unify.unifier import Unifier
 from mock import patch

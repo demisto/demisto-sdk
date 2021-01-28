@@ -9,7 +9,6 @@ import demisto_sdk.commands.validate.validate_manager
 import pytest
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -36,6 +35,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
@@ -576,7 +576,7 @@ class TestValidators:
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106",
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107",
                                 "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
@@ -714,13 +714,15 @@ class TestValidators:
         id_set_content = {'integrations':
                           [
                               {'ApiDependent':
-                               {'name': integration2.name,
-                                'file_path': integration2.path,
-                                'pack': pack2_name,
-                                'api_modules': api_script1.name
-                                }
+                               {
+                                   'name': integration2.name,
+                                   'file_path': integration2.path,
+                                   'pack': pack2_name,
+                                   'api_modules': api_script1.name
                                }
-                          ]}
+                               }
+                          ]
+                          }
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -1074,3 +1076,57 @@ def test_mapping_fields_command_dont_exist(integration):
     validator = IntegrationValidator(structure_validator)
 
     assert not validator.is_mapping_fields_command_exist()
+
+
+def test_get_packs_that_should_have_version_raised(repo):
+    """
+       Given
+       - Different files from different packs in several statuses:
+         1. Modified integration
+         2. Modified test-playbook
+         3. Added script to new pack
+         4. Added script to existing pack
+         5. Modified old format script
+
+       When
+       - Running get_packs_that_should_have_version_raised.
+
+       Then
+       -  The returning set includes the packs for 1, 4 & 5 and does not include the packs for 2 & 3.
+   """
+    existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
+    moodified_integration = existing_pack1.create_integration('MyIn')
+    moodified_integration.create_default_integration()
+
+    existing_pack2 = repo.create_pack('ExistingPackWithAddedScript')
+    added_script_existing_pack = existing_pack2.create_script('MyScript')
+    added_script_existing_pack.create_default_script()
+
+    new_pack = repo.create_pack('NewPack')
+    added_script_new_pack = new_pack.create_script('MyNewScript')
+    added_script_new_pack.create_default_script()
+
+    existing_pack3 = repo.create_pack('PackWithModifiedOldFile')
+    modified_old_format_script = existing_pack3.create_script('OldScript')
+    modified_old_format_script.create_default_script()
+
+    existing_pack4 = repo.create_pack('PackWithModifiedTestPlaybook')
+    moodified_test_playbook = existing_pack4.create_test_playbook('TestBook')
+    moodified_test_playbook.create_default_test_playbook()
+
+    validate_manager = ValidateManager()
+    validate_manager.new_packs = {'NewPack'}
+
+    modified_files = {moodified_integration.yml.rel_path, moodified_test_playbook.yml.rel_path}
+    added_files = {added_script_existing_pack.yml.rel_path, added_script_new_pack.yml.rel_path}
+    old_files = {modified_old_format_script.yml.rel_path}
+
+    with ChangeCWD(repo.path):
+        packs_that_should_have_version_raised = validate_manager.get_packs_that_should_have_version_raised(
+            modified_files=modified_files, added_files=added_files, old_format_files=old_files)
+
+        assert 'PackWithModifiedIntegration' in packs_that_should_have_version_raised
+        assert 'ExistingPackWithAddedScript' in packs_that_should_have_version_raised
+        assert 'PackWithModifiedOldFile' in packs_that_should_have_version_raised
+        assert 'PackWithModifiedTestPlaybook' not in packs_that_should_have_version_raised
+        assert 'NewPack' not in packs_that_should_have_version_raised

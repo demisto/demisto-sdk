@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                filter_files_by_type,
                                                filter_files_on_pack,

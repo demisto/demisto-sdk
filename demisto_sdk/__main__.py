@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
-from demisto_sdk.commands.common.git_tools import get_packs
+from demisto_sdk.commands.common.legacy_git_tools import get_packs
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
@@ -214,7 +214,7 @@ def unify(**kwargs):
     default=False, show_default=True, help='Skip conf.json validation')
 @click.option(
     '-s', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Validate the id_set file.')
+    default=False, show_default=True, help='Perform validations using the id_set file.')
 @click.option(
     "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True))
@@ -272,8 +272,8 @@ def unify(**kwargs):
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
 @click.option(
-    '--skip-id-set-creation', is_flag=True,
-    help='Skip id_set.json file creation.')
+    '--create-id-set', is_flag=True,
+    help='Whether to create the id_set.json file.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -305,7 +305,7 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            skip_id_set_creation=kwargs.get('skip_id_set_creation'),
+            create_id_set=kwargs.get('create-id-set')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -890,7 +890,7 @@ def update_pack_releasenotes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, skip_id_set_creation=True)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, create_id_set=False)
         validate_manager.setup_git_params()
         modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
         _packs = get_packs(modified).union(get_packs(old)).union(

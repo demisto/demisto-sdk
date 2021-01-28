@@ -30,6 +30,7 @@ ERROR_CODE = {
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
     "no_minimal_fromversion_in_file": "BA106",
+    "running_on_master_with_git": "BA107",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -64,6 +65,7 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
+    "multiple_default_arg": "IN134",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -280,6 +282,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def indicator_field_type_grid_minimal_version(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
@@ -453,6 +461,11 @@ class Errors:
     @error_code_decorator
     def integration_non_existent_mapper(integration_mapper):
         return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_default_arg(command_name, default_args):
+        return f"The integration command: {command_name} has multiple default arguments: {default_args}."
 
     @staticmethod
     @error_code_decorator

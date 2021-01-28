@@ -1,6 +1,6 @@
 import os
 
-from demisto_sdk.commands.common.git_tools import filter_changed_files
+from demisto_sdk.commands.common.legacy_git_tools import filter_changed_files
 from demisto_sdk.tests.constants_test import *
 
 

@@ -1445,7 +1445,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    # new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['Packs'] = packs_dict
 
     if id_set_path:
         if not exists(id_set_path):

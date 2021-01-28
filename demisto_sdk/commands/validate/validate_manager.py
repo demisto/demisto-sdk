@@ -370,6 +370,8 @@ class ValidateManager:
             if not self.skip_pack_rn_validation:
                 return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list,
                                                    is_modified)
+            else:
+                click.secho('Skipping release notes validation', fg='yellow')
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -870,7 +872,8 @@ class ValidateManager:
         elif self.branch_name == 'master':
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
-            if self.handle_error(error_message, error_code, file_path='General', warning=not self.is_external_repo):
+            if self.handle_error(error_message, error_code, file_path='General', warning=not self.is_external_repo,
+                                 drop_line=True):
                 return False
         return True
 
@@ -880,7 +883,10 @@ class ValidateManager:
         if not self.no_configuration_prints:
             click.echo(f"Validating against {self.prev_ver}")
 
-            if self.is_circle:
+            if self.branch_name == self.prev_ver or self.branch_name == self.prev_ver.replace('origin/', ''):
+                click.echo("Running only on last commit")
+
+            elif self.is_circle:
                 click.echo("Running only on committed files")
 
             elif self.staged:
@@ -888,6 +894,18 @@ class ValidateManager:
 
             else:
                 click.echo("Running on committed and staged files")
+
+            if self.skip_pack_rn_validation:
+                click.echo("Skipping release notes validation")
+
+            if self.skip_docker_checks:
+                click.echo("Skipping Docker checks")
+
+            if not self.is_backward_check:
+                click.echo("Skipping backwards compatibility checks")
+
+            if self.skip_dependencies:
+                click.echo("Skipping pack dependencies check")
 
     def get_changed_files_from_git(self):
         """Get the added and modified after file filtration to only relevant files for validate"""

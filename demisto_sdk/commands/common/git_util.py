@@ -27,6 +27,11 @@ class GitUtil:
         """
         prev_ver = prev_ver.replace('origin/', '')
 
+        # when checking branch against itself only return the last commit.
+        last_commit = self._only_last_commit(prev_ver, requested_status='M')
+        if last_commit:
+            return last_commit
+
         # get all renamed files - some of these can be identified as modified by git,
         # but we want to identify them as renamed - so will remove them from the returned files.
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
@@ -83,6 +88,11 @@ class GitUtil:
         """
         prev_ver = prev_ver.replace('origin/', '')
 
+        # when checking branch against itself only return the last commit.
+        last_commit = self._only_last_commit(prev_ver, requested_status='A')
+        if last_commit:
+            return last_commit
+
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
         # get all committed files identified as added which are changed from prev_ver.
@@ -137,6 +147,11 @@ class GitUtil:
         """
         prev_ver = prev_ver.replace('origin/', '')
 
+        # when checking branch against itself only return the last commit.
+        last_commit = self._only_last_commit(prev_ver, requested_status='D')
+        if last_commit:
+            return last_commit
+
         committed = set()
 
         if not staged_only:
@@ -178,6 +193,11 @@ class GitUtil:
             first element being the old file path and the second is the new.
         """
         prev_ver = prev_ver.replace('origin/', '')
+
+        # when checking branch against itself only return the last commit.
+        last_commit = self._only_last_commit(prev_ver, requested_status='R')
+        if last_commit:
+            return last_commit
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
         committed = set()
@@ -246,6 +266,25 @@ class GitUtil:
         return {Path(os.path.join(item)) for item
                 in self.repo.git.diff('--name-only',
                                       f'{origin_prev_ver}...{self.repo.active_branch}').split('\n')}
+
+    def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
+        """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            requested_status (str): M, A, R, D - the git status to return
+        Returns:
+            Set: of Paths to files changed in the the last commit or an empty set if not
+            running on master against master.
+        """
+        # when checking branch against itself only return the last commit.
+        if self.get_current_working_branch() == prev_ver:
+            if requested_status != 'R':
+                return {Path(os.path.join(item.a_path)) for item in
+                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+            else:
+                return {(Path(item.a_path), Path(item.b_path)) for item in
+                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+        return set()
 
     def get_current_working_branch(self) -> str:
         return str(self.repo.active_branch)

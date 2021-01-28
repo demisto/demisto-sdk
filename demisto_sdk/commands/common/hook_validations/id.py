@@ -227,7 +227,7 @@ class IDSetValidations(BaseValidator):
         playbook_version = playbook_data_2nd_level.get("fromversion")
         playbook_scripts_list = playbook_data_2nd_level.get("implementing_scripts", [])
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
-        playbook_integration_commands = self.get_commands_to_integration(playbook_name)
+        playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
 
         if not self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version, self.playbook_set,
                                                              playbook_name, file_path):
@@ -243,11 +243,12 @@ class IDSetValidations(BaseValidator):
 
         return True
 
-    def get_commands_to_integration(self, file_name):
+    def get_commands_to_integration(self, file_name, file_path):
         """ gets playbook's 'command_to_integration' dict from playbook set in id_set file.
 
         Args:
             file_name (string): Name of current playbook.
+            file_path (string): : Path to the playbook file.
 
         Returns:
             dictionary. Playbook's 'command_to_integration' dict.
@@ -255,7 +256,8 @@ class IDSetValidations(BaseValidator):
         commands_to_integration = {}
         for playbook_dict in self.playbook_set:
             playbook_name = list(playbook_dict.keys())[0]
-            is_this_the_playbook = playbook_name == file_name
+            playbook_path = playbook_dict[playbook_name].get("file_path")
+            is_this_the_playbook = playbook_name == file_name and file_path == playbook_path
             if is_this_the_playbook:
                 playbook_data = playbook_dict[playbook_name]
                 commands_to_integration = playbook_data.get("command_to_integration", {})

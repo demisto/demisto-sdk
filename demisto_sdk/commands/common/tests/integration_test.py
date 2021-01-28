@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
+from mock import patch, mock_open
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -768,3 +768,87 @@ class TestIsFeedParamsExist:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_there_a_runnable() is False
+
+
+class TestisContextChanged:
+    invalid_readme = """
+#### Base Command
+
+`test-command`
+#### Input
+| **Argument Name** | **Description** | **Required** |
+| --- | --- | --- |
+| arg | arg | Required | 
+
+#### Context Output
+
+| **Path** | **Type** | **Description** |
+| --- | --- | --- |
+| Test | - | - |
+
+#### Command Example
+
+```
+!test-command
+```
+
+#### Human Readable Output
+"""
+    valid_readme = """
+#### Base Command
+
+`test-command`
+#### Input
+| **Argument Name** | **Description** | **Required** |
+| --- | --- | --- |
+| arg | arg | Required | 
+
+#### Context Output
+
+| **Path** | **Type** | **Description** |
+| --- | --- | --- |
+| Test.test | - | - |
+
+#### Command Example
+
+```
+!test-command
+```
+
+#### Human Readable Output
+"""
+    TEST_CASE = [
+        (valid_readme, {"script": {'commands': [{
+                'name': 'test-command',
+                'outputs': [{'contextPath': 'Test.test', 'description': '-', 'type': '-'}]}]
+        }},  # case README and YML are synced
+         True  # expected results
+         ),
+
+        (invalid_readme, {"script": {'commands': [{
+                'name': 'test-command',
+                'outputs': [{'contextPath': 'Test.test', 'description': '-', 'type': '-'}]}]
+        }},  # case context missing from README
+         False  # expected results
+         ),
+        (valid_readme, {"script": {'commands': [{
+            'name': 'test-command',
+            'outputs': [{'contextPath': 'Test', 'description': '-', 'type': '-'}]}]
+        }},  # case context missing from YML
+         False  # expected results
+         ),
+    ]
+
+    @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
+    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+        patcher = patch('os.path.exists')
+        mock_thing = patcher.start()
+        mock_thing.side_effect = lambda x: True
+        with patch("builtins.open", mock_open(read_data=readme)) as mock_file:
+            current = {"script": {}}
+            structure = mock_structure("Pack/Test", current)
+            validator = IntegrationValidator(structure)
+            validator.current_file = current_yml
+
+            res = validator.is_context_change_in_readme()
+            assert res == expected

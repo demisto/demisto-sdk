@@ -878,6 +878,13 @@ class TestisContextChanged:
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
     def test_is_context_change_in_readme(self, readme, current_yml, expected):
+        """
+        Given: a changed YML file
+
+        When: running validate on integration with at least one command
+
+        Then: Validate it's synced with the README.
+        """
         patcher = patch('os.path.exists')
         mock_thing = patcher.start()
         mock_thing.side_effect = lambda x: True

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Set, Tuple
 
+import gitdb
 from git import InvalidGitRepositoryError, Repo
 
 
@@ -278,12 +279,16 @@ class GitUtil:
         """
         # when checking branch against itself only return the last commit.
         if self.get_current_working_branch() == prev_ver:
-            if requested_status != 'R':
-                return {Path(os.path.join(item.a_path)) for item in
-                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
-            else:
-                return {(Path(item.a_path), Path(item.b_path)) for item in
-                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+            try:
+                if requested_status != 'R':
+                    return {Path(os.path.join(item.a_path)) for item in
+                            self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+                else:
+                    return {(Path(item.a_path), Path(item.b_path)) for item in
+                            self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+            except gitdb.exc.BadName:
+                # in case no last commit exists - just pass
+                pass
         return set()
 
     def get_current_working_branch(self) -> str:

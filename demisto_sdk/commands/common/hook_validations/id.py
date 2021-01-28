@@ -47,7 +47,6 @@ class IDSetValidations(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_circle = is_circle
-        self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set_file = id_set_file
@@ -310,7 +309,6 @@ class IDSetValidations(BaseValidator):
 
         return True
 
-
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):
         """Check if the playbook's version match playbook's used integrations.
@@ -371,7 +369,6 @@ class IDSetValidations(BaseValidator):
         """
         self.ignored_errors = ignored_errors
         is_valid = True
-        self.is_circle = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

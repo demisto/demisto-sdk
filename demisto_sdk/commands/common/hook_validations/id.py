@@ -82,7 +82,8 @@ class IDSetValidations(BaseValidator):
             if not is_valid:  # add error message if not valid
                 error_message, error_code = Errors.incident_type_non_existent_playbook_id(incident_type_name,
                                                                                           incident_type_playbook)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
@@ -103,8 +104,8 @@ class IDSetValidations(BaseValidator):
                     if command.endswith('dev') or command.endswith('copy'):
                         error_message, error_code = Errors.invalid_command_name_in_script(script_data.get('name'),
                                                                                           command)
-                        self.handle_error(error_message, error_code, file_path="id_set.json")
-                        return not is_valid
+                        if self.handle_error(error_message, error_code, file_path="id_set.json"):
+                            return not is_valid
         return is_valid
 
     def _is_integration_classifier_and_mapper_found(self, integration_data):
@@ -128,7 +129,8 @@ class IDSetValidations(BaseValidator):
                     break
             if not is_valid_classifier:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_classifier(integration_classifier)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid_classifier = True
 
         is_valid_mapper = True
         integration_mapper = integration_data.get('mappers', [''])[0]  # there is only 1 mapper per integration
@@ -142,7 +144,8 @@ class IDSetValidations(BaseValidator):
                     break
             if not is_valid_mapper:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_mapper(integration_mapper)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid_mapper = True
 
         return is_valid_classifier and is_valid_mapper
 
@@ -173,7 +176,8 @@ class IDSetValidations(BaseValidator):
             else:  # there are missing incident types in the id_set, classifier is invalid
                 error_message, error_code = Errors.classifier_non_existent_incident_types(
                     str(classifier_incident_types))
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
@@ -203,7 +207,8 @@ class IDSetValidations(BaseValidator):
                 is_valid = True
             else:  # there are missing incident types in the id_set, mapper is invalid
                 error_message, error_code = Errors.mapper_non_existent_incident_types(str(mapper_incident_types))
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
@@ -352,18 +357,20 @@ class IDSetValidations(BaseValidator):
                 return integration_data.get("fromversion", "")
         return general_version
 
-    def is_file_valid_in_set(self, file_path, file_type, pack_error_ignore_list):
+    def is_file_valid_in_set(self, file_path, file_type, ignored_errors=None):
         """Check if the file is valid in the id_set
 
         Args:
             file_path (string): Path to the file.
             file_type (string): The file type.
+            ignored_errors (list): a list of ignored errors for the specific file
 
         Returns:
             bool. Whether the file is valid in the id_set or not.
         """
-        self.ignored_errors = pack_error_ignore_list
+        self.ignored_errors = ignored_errors
         is_valid = True
+
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 

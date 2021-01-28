@@ -196,7 +196,7 @@ def get_used_in(id_set, script_id):
 
     id_set_sections = list(id_set.keys())
     id_set_sections.remove('TestPlaybooks')
-    id_set_sections.remove('Packs')
+    id_set_sections.remove('Packs') if 'Packs' in id_set_sections else None
 
     for key in id_set_sections:
         items = id_set[key]

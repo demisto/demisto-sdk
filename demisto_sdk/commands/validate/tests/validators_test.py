@@ -750,13 +750,15 @@ class TestValidators:
         id_set_content = {'integrations':
                           [
                               {'ApiDependent':
-                               {'name': integration2.name,
-                                'file_path': integration2.path,
-                                'pack': pack2_name,
-                                'api_modules': api_script1.name
-                                }
+                               {
+                                   'name': integration2.name,
+                                   'file_path': integration2.path,
+                                   'pack': pack2_name,
+                                   'api_modules': api_script1.name
                                }
-                          ]}
+                               }
+                          ]
+                          }
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -1119,6 +1121,7 @@ class TestValidators:
             - Validate checks for the staged files using git diff.
             - get_modified_and_added_files returns a list of only staged files.
         """
+
         def run_command_effect(arg):
             # if the call is to check the staged files only - return the HelloWorld integration.
             if arg == 'git diff --name-only --staged':
@@ -1148,6 +1151,7 @@ class TestValidators:
         Then
             - Validate that not a git diff staged command runs
         """
+
         def run_command_effect(arg):
             assert 'staged' not in arg
             return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
@@ -1283,3 +1287,53 @@ def test_mapping_fields_command_dont_exist(integration):
     validator = IntegrationValidator(structure_validator)
 
     assert not validator.is_mapping_fields_command_exist()
+
+
+def test_get_packs_that_should_have_version_raised(repo):
+    """
+       Given
+       - Different files from different packs in several statuses:
+         1. Modified integration
+         2. Modified test-playbook
+         3. Added script to new pack
+         4. Added script to existing pack
+         5. Modified old format script
+
+       When
+       - Running get_packs_that_should_have_version_raised.
+
+       Then
+       -  The returning set includes the packs for 1, 4 & 5 and does not include the packs for 2 & 3.
+   """
+    existing_pack1 = repo.create_pack('MyPack')
+    moodified_integration = existing_pack1.create_integration('MyIn')
+    moodified_integration.create_default_integration()
+    existing_pack2 = repo.create_pack('MySecondPack')
+    added_script_existing_pack = existing_pack2.create_script('MyScript')
+    added_script_existing_pack.create_default_script()
+    new_pack = repo.create_pack('MyNewPack')
+    added_script_new_pack = new_pack.create_script('MyNewScript')
+    added_script_new_pack.create_default_script()
+    existing_pack3 = repo.create_pack('MyThirdPack')
+    modified_old_format_script = existing_pack3.create_script('OldScript')
+    modified_old_format_script.create_default_script()
+    existing_pack4 = repo.create_pack('MyForthPack')
+    moodified_test_playbook = existing_pack4.create_test_playbook('TestBook')
+    moodified_test_playbook.create_default_test_playbook()
+
+    validate_manager = ValidateManager()
+    validate_manager.new_packs = {'MyNewPack'}
+
+    modified_files = {moodified_integration.yml.rel_path, moodified_test_playbook.yml.rel_path}
+    added_files = {added_script_existing_pack.yml.rel_path, added_script_new_pack.yml.rel_path}
+    old_files = {modified_old_format_script.yml.rel_path}
+
+    with ChangeCWD(repo.path):
+        packs_that_should_have_version_raised = validate_manager.get_packs_that_should_have_version_raised(
+            modified_files=modified_files, added_files=added_files, old_format_files=old_files)
+
+        assert 'MyPack' in packs_that_should_have_version_raised
+        assert 'MySecondPack' in packs_that_should_have_version_raised
+        assert 'MyThirdPack' in packs_that_should_have_version_raised
+        assert 'MyForthPack' not in packs_that_should_have_version_raised
+        assert 'MyNewPack' not in packs_that_should_have_version_raised

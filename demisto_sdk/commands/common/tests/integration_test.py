@@ -893,6 +893,5 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-
             res = validator.is_context_change_in_readme()
             assert res == expected

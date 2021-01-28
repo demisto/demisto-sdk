@@ -1308,24 +1308,28 @@ def test_get_packs_that_should_have_version_raised(repo):
        Then
        -  The returning set includes the packs for 1, 4 & 5 and does not include the packs for 2 & 3.
    """
-    existing_pack1 = repo.create_pack('MyPack')
+    existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()
-    existing_pack2 = repo.create_pack('MySecondPack')
+
+    existing_pack2 = repo.create_pack('ExistingPackWithAddedScript')
     added_script_existing_pack = existing_pack2.create_script('MyScript')
     added_script_existing_pack.create_default_script()
-    new_pack = repo.create_pack('MyNewPack')
+
+    new_pack = repo.create_pack('NewPack')
     added_script_new_pack = new_pack.create_script('MyNewScript')
     added_script_new_pack.create_default_script()
-    existing_pack3 = repo.create_pack('MyThirdPack')
+
+    existing_pack3 = repo.create_pack('PackWithModifiedOldFile')
     modified_old_format_script = existing_pack3.create_script('OldScript')
     modified_old_format_script.create_default_script()
-    existing_pack4 = repo.create_pack('MyForthPack')
+
+    existing_pack4 = repo.create_pack('PackWithModifiedTestPlaybook')
     moodified_test_playbook = existing_pack4.create_test_playbook('TestBook')
     moodified_test_playbook.create_default_test_playbook()
 
     validate_manager = ValidateManager()
-    validate_manager.new_packs = {'MyNewPack'}
+    validate_manager.new_packs = {'NewPack'}
 
     modified_files = {moodified_integration.yml.rel_path, moodified_test_playbook.yml.rel_path}
     added_files = {added_script_existing_pack.yml.rel_path, added_script_new_pack.yml.rel_path}
@@ -1335,8 +1339,8 @@ def test_get_packs_that_should_have_version_raised(repo):
         packs_that_should_have_version_raised = validate_manager.get_packs_that_should_have_version_raised(
             modified_files=modified_files, added_files=added_files, old_format_files=old_files)
 
-        assert 'MyPack' in packs_that_should_have_version_raised
-        assert 'MySecondPack' in packs_that_should_have_version_raised
-        assert 'MyThirdPack' in packs_that_should_have_version_raised
-        assert 'MyForthPack' not in packs_that_should_have_version_raised
-        assert 'MyNewPack' not in packs_that_should_have_version_raised
+        assert 'PackWithModifiedIntegration' in packs_that_should_have_version_raised
+        assert 'ExistingPackWithAddedScript' in packs_that_should_have_version_raised
+        assert 'PackWithModifiedOldFile' in packs_that_should_have_version_raised
+        assert 'PackWithModifiedTestPlaybook' not in packs_that_should_have_version_raised
+        assert 'NewPack' not in packs_that_should_have_version_raised

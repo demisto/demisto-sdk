@@ -283,10 +283,15 @@ class IDSetValidations(BaseValidator):
             if not implemented_entity_list_from_playbook:
                 return True
 
-            entity_name = list(entity_data_dict.keys())[0]
+            entity_id = list(entity_data_dict.keys())[0]
+
+            # handle old playbooks when their id not equal their name
+            entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else entity_data_dict[
+                entity_id].get("name")
             is_entity_exist_in_playbook = entity_name in implemented_entity_list_from_playbook
+
             if is_entity_exist_in_playbook:
-                entity_version = entity_data_dict[entity_name].get("fromversion", "")
+                entity_version = entity_data_dict[entity_id].get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
                 if is_version_valid:

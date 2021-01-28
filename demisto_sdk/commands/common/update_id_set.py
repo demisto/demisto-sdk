@@ -1455,7 +1455,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
-    print('111111111111111111111')
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
         print_error(
@@ -1472,7 +1471,6 @@ def find_duplicates(id_set, print_logs):
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
-        print('222222222222222222222222222')
         ids = {list(specific_item.keys())[0] for specific_item in objects}
 
         dup_list = []
@@ -1480,13 +1478,11 @@ def find_duplicates(id_set, print_logs):
             if has_duplicate(objects, id_to_check, object_type, print_logs):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
-    print('33333333333333333333333333')
     if print_logs:
         print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 
     fields = id_set['IncidentFields'] + id_set['IndicatorFields']
     field_ids = {list(field.keys())[0] for field in fields}
-    print('44444444444444444444444')
 
     field_list = []
     for field_to_check in field_ids:

@@ -7,6 +7,7 @@
 * Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
 * Exclude changes from doc_files directory on validation.
 * Added a validation that an integration command has at most one default argument.
+* Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.

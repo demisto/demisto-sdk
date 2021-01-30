@@ -7,7 +7,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DOC_FILES_DIR, IGNORED_PACK_NAMES,
     KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
@@ -426,7 +426,7 @@ class ValidateManager:
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
-        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
+        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
 
         if old_format_files:
@@ -701,17 +701,18 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
-    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
+    def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
         valid_pack_files = set()
 
         added_packs = get_pack_names_from_files(added_files)
-        modified_packs = get_pack_names_from_files(modified_files)
+        modified_packs = get_pack_names_from_files(modified_files).union(get_pack_names_from_files(old_format_files))
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files)
+                                                                                               added_files,
+                                                                                               old_format_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
@@ -1023,6 +1024,14 @@ class ValidateManager:
                             click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
                     continue
 
+                # ignore changes in doc_files directory
+                elif DOC_FILES_DIR in file_path:
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {} - doc files'.format(file_path), fg="yellow")
+                    continue
+
                 # identify deleted files
                 if file_status.lower() == 'd' and not file_path.startswith('.'):
                     deleted_files.add(file_path)
@@ -1193,9 +1202,10 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files, old_format_files):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
-        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
+        all_modified_files = modified_files.union(old_format_files)
+        modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
 

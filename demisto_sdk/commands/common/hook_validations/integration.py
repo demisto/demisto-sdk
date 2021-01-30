@@ -78,7 +78,8 @@ class IntegrationValidator(ContentEntityValidator):
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            self.is_valid_default_arguments(),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_argument(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_checkbox_param_configured_correctly(),
@@ -155,7 +156,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
-            self.is_valid_default_arguments(),
+            self.is_valid_default_argument_in_reputation_command(),
             self.is_valid_beta(),
             self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
@@ -262,7 +263,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_default_arguments(self):
+    def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
             has a default non required argument with the same name
@@ -297,6 +298,30 @@ class IntegrationValidator(ContentEntityValidator):
         if not flag:
             print_error(Errors.suggest_fix(self.file_path))
         return flag
+
+    def is_valid_default_argument(self):
+        # type: () -> bool
+        """Check if a  command has at most 1 default argument.
+
+        Returns:
+            bool. Whether a command holds at most 1 default argument.
+        """
+        is_valid = True
+        commands = self.current_file.get('script', {}).get('commands', [])
+        if commands is None:
+            commands = []
+
+        for command in commands:
+            default_args = set()
+            for arg in command.get('arguments', []):
+                if arg.get('default'):
+                    default_args.add(arg.get('name'))
+            if len(default_args) > 1:  # if more than one default arg, command is faulty
+                error_message, error_code = Errors.multiple_default_arg(command.get('name'), str(default_args))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False  # do not break the main loop as there can be multiple invalid commands
+
+        return is_valid
 
     def is_outputs_for_reputations_commands_valid(self):
         # type: () -> bool

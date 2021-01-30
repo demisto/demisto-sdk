@@ -5,6 +5,9 @@
 * Added support for the incident fields in outgoing mappers in the ID set.
 * Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
 * Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
+* Exclude changes from doc_files directory on validation.
+* Added a validation that an integration command has at most one default argument.
+* Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
 * Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
 
 # 1.2.17

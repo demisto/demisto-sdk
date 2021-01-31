@@ -1,4 +1,6 @@
 # Changelog
+
+# 9.9.9
 * Changed the *skip-id-set-creation* flag to *create-id-set* in the **validate** command. Its default value will be False.
 * Added support for the 'cve' reputation command in default arg validation.
 * Filter out generic and reputation command from scripts and playbooks dependencies calculation.

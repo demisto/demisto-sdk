@@ -9,6 +9,7 @@
 * Added a validation that an integration command has at most one default argument.
 * Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
 * Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
+*  Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
 
 # 1.2.17
 * Added a validation that the classifier of an integration exists.

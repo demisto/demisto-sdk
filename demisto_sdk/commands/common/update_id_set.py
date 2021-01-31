@@ -10,12 +10,12 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
+from genericpath import exists
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, Optional, Tuple
 
 import click
 import networkx
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    DASHBOARDS_DIR,
                                                    INCIDENT_FIELDS_DIR,
@@ -23,7 +23,6 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -695,6 +694,34 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
+def get_pack_metadata_data(file_path, print_logs: bool):
+    try:
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+
+        json_data = get_json(file_path)
+        pack_data = {
+            "name": json_data.get('name'),
+            "current_version": json_data.get('currentVersion'),
+            "author": json_data.get('author', ''),
+            'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
+            "tags": json_data.get('tags', []),
+            "use_cases": json_data.get('useCases', []),
+            "categories": json_data.get('categories', [])
+        }
+
+        pack_id = get_pack_name(file_path)
+        if pack_id:
+            pack_data['id'] = pack_id
+
+        pack_name = pack_data['name']
+        return {pack_name: pack_data}
+
+    except Exception as exp:  # noqa
+        print_error(f'Failed to process {file_path}, Error: {str(exp)}')
+        raise
+
+
 def get_mapper_data(path):
     json_data = get_json(path)
 
@@ -773,23 +800,6 @@ def get_report_data(path):
     report_data = get_json(path)
     layouts = report_data.get('dashboard', {}).get('layout')
     return parse_dashboard_or_report_data(layouts, report_data, path)
-
-
-def get_metadata_data(path):
-    metadata_data = get_json(path)
-
-    data = {
-        'name': metadata_data.get('name'),
-        'minVersion': metadata_data.get('currentVersion', ''),
-        'author': metadata_data.get('author', ''),
-        'certification': 'certified' if metadata_data.get('support', '').lower() in ['xsoar', 'partner'] else ''
-    }
-
-    pack_id = tools.get_pack_name(path)
-    if pack_id:
-        data['id'] = pack_id
-
-    return {data['name']: data}
 
 
 def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
@@ -1025,25 +1035,6 @@ def get_integrations_paths(pack_to_create):
     return integration_files
 
 
-def process_packs(file_path: str, print_logs: bool) -> list:
-    """
-    Process a pack metadata file.
-    Args:
-        file_path: pack_metadata file path
-        print_logs: Whether to print logs to stdout
-
-    Returns:
-        a dict of packs data.
-    """
-    try:
-        if print_logs:
-            print(f'adding {file_path} to id_set')
-        return [get_metadata_data(file_path)]
-    except Exception as exp:  # noqa
-        print_error(f'failed to process {file_path}, Error: {str(exp)}')
-        raise
-
-
 def get_playbooks_paths(pack_to_create):
     if pack_to_create:
         path_list = [
@@ -1060,6 +1051,16 @@ def get_playbooks_paths(pack_to_create):
         playbook_files.extend(glob.glob(os.path.join(*path)))
 
     return playbook_files
+
+
+def get_pack_metadata_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [pack_to_create, 'pack_metadata.json']
+
+    else:
+        path_list = ['Packs', '*', 'pack_metadata.json']
+
+    return glob.glob(os.path.join(*path_list))
 
 
 def get_general_paths(path, pack_to_create):
@@ -1079,16 +1080,6 @@ def get_general_paths(path, pack_to_create):
         files.extend(glob.glob(os.path.join(*path)))
 
     return files
-
-
-def get_pack_metadata_path(pack_to_create):
-    if pack_to_create:
-        path = [pack_to_create, PACKS_PACK_META_FILE_NAME]
-
-    else:
-        path = ['Packs', '*', PACKS_PACK_META_FILE_NAME]
-
-    return glob.glob(os.path.join(*path))
 
 
 class IDSetType(Enum):
@@ -1179,8 +1170,8 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa: C901
-                     objects_to_create: list = None, print_logs: bool = True):
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
+                     print_logs: bool = True):
     """Re create the id set
 
     Args:
@@ -1254,6 +1245,17 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+
+        if 'Packs' in objects_to_create:
+            print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
+            for pack_data in pool.map(partial(get_pack_metadata_data,
+                                              print_logs=print_logs
+                                              ),
+                                      get_pack_metadata_paths(pack_to_create)):
+                packs_dict.update(pack_data)
+
+        progress_bar.update(1)
+
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
@@ -1426,15 +1428,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
-        for arr in pool.map(partial(process_packs,
-                                    print_logs=print_logs,
-                                    ),
-                            get_pack_metadata_path(pack_to_create)):
-            packs_dict.update(arr[0])
-
-        progress_bar.update(1)
-
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1452,14 +1445,16 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['Packs'] = {key: packs_dict[key] for key in sorted(packs_dict.keys())}
+    new_ids_dict['Packs'] = packs_dict
 
     if id_set_path:
+        if not exists(id_set_path):
+            intermediate_dirs = os.path.dirname(os.path.abspath(id_set_path))
+            os.makedirs(intermediate_dirs, exist_ok=True)
         with open(id_set_path, 'w+') as id_set_file:
             json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
-
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
         print_error(
@@ -1483,7 +1478,6 @@ def find_duplicates(id_set, print_logs):
             if has_duplicate(objects, id_to_check, object_type, print_logs):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
-
     if print_logs:
         print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 

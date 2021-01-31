@@ -7,7 +7,7 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, IGNORED_PACK_NAMES,
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DOC_FILES_DIR, IGNORED_PACK_NAMES,
     KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
     PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidator
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -72,14 +72,13 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            skip_id_set_creation=False
+            create_id_set=False
     ):
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints
         self.skip_conf_json = skip_conf_json
         self.is_backward_check = is_backward_check
-        self.id_set_validations = validate_id_set
         self.is_circle = only_committed_files
         self.validate_all = validate_all
         self.use_git = use_git
@@ -88,16 +87,23 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = skip_id_set_creation or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        if not id_set_path:
-            id_set_path = 'Tests/id_set.json'
-        self.id_set_path = id_set_path
+        self.id_set_path = id_set_path or "./Tests/id_set.json"
+        # create the id_set only once per run.
+        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+
+        self.id_set_validations = IDSetValidations(is_circle=self.is_circle,
+                                                   configuration=Configuration(),
+                                                   ignored_errors=None,
+                                                   print_as_warnings=self.print_ignored_errors,
+                                                   id_set_file=self.id_set_file) \
+            if validate_id_set else None
         self.branch_name = ''
         self.changes_in_schema = False
         self.check_only_schema = False
@@ -122,10 +128,7 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.skip_id_set_creation = skip_id_set_creation
             self.print_percent = True
-
-        self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
         if no_docker_checks:
             self.skip_docker_checks = True
@@ -333,12 +336,9 @@ class ValidateManager:
             return True
 
         # id_set validation
-        if self.id_set_validations:
-            id_set_validator = IDSetValidator(is_circle=self.is_circle, configuration=Configuration(),
-                                              ignored_errors=pack_error_ignore_list,
-                                              print_as_warnings=self.print_ignored_errors)
-            if not id_set_validator.is_file_valid_in_set(file_path, file_type):
-                return False
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
+                                                                                        pack_error_ignore_list):
+            return False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
@@ -426,7 +426,7 @@ class ValidateManager:
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
-        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
+        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
 
         if old_format_files:
@@ -618,7 +618,8 @@ class ValidateManager:
         classifier_validator = ClassifierValidator(structure_validator, new_classifier_version=new_classifier_version,
                                                    ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors)
-        return classifier_validator.is_valid_classifier(validate_rn=False, id_set_file=self.id_set_file,
+        return classifier_validator.is_valid_classifier(validate_rn=False,
+                                                        id_set_file=self.id_set_file,
                                                         is_circle=self.is_circle)
 
     def validate_widget(self, structure_validator, pack_error_ignore_list):
@@ -700,17 +701,18 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
-    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
+    def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
         valid_pack_files = set()
 
         added_packs = get_pack_names_from_files(added_files)
-        modified_packs = get_pack_names_from_files(modified_files)
+        modified_packs = get_pack_names_from_files(modified_files).union(get_pack_names_from_files(old_format_files))
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files)
+                                                                                               added_files,
+                                                                                               old_format_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
@@ -790,10 +792,12 @@ class ValidateManager:
                                                                                    FileType.DOC_IMAGE})
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(api_module_set, self.id_set_file.get('integrations', []))
+            integrations = get_api_module_integrations_set(api_module_set,
+                                                           self.id_set_file.get('integrations', []))
             packs_that_should_have_new_rn_api_module_related = set(map(lambda integration: integration.get('pack'),
                                                                        integrations))
-            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(packs_that_should_have_new_rn_api_module_related)
+            packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
+                packs_that_should_have_new_rn_api_module_related)
 
             # APIModules pack is without a version and should not have RN
             packs_that_should_have_new_rn.remove(API_MODULES_PACK)
@@ -1020,6 +1024,14 @@ class ValidateManager:
                             click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
                     continue
 
+                # ignore changes in doc_files directory
+                elif DOC_FILES_DIR in file_path:
+                    if file_path not in self.ignored_files:
+                        self.ignored_files.add(file_path)
+                        if print_ignored_files:
+                            click.secho('Ignoring file path: {} - doc files'.format(file_path), fg="yellow")
+                    continue
+
                 # identify deleted files
                 if file_status.lower() == 'd' and not file_path.startswith('.'):
                     deleted_files.add(file_path)
@@ -1190,9 +1202,10 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files, old_format_files):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
-        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
+        all_modified_files = modified_files.union(old_format_files)
+        modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
 

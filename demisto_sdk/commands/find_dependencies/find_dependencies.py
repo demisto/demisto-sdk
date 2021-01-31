@@ -9,6 +9,7 @@ from typing import Union
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
@@ -341,7 +342,9 @@ class PackDependencies:
             command_to_integration = list(script.get('command_to_integration', {}).keys())
             script_executions = script.get('script_executions', [])
 
-            dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
+            all_dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
+            dependencies_commands = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
+                                                all_dependencies_commands))  # filter out generic commands
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first
@@ -434,10 +437,11 @@ class PackDependencies:
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
+                packs_found_from_integration = set()
                 if integration_name:
                     packs_found_from_integration = PackDependencies._search_packs_by_items_names(
                         integration_name, id_set['integrations'], exclude_ignored_dependencies)
-                else:
+                elif command not in GENERIC_COMMANDS_NAMES:  # do not collect deps on generic command in Pbs
                     packs_found_from_integration = PackDependencies._search_packs_by_integration_command(
                         command, id_set, exclude_ignored_dependencies)
 

@@ -238,26 +238,66 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
-    DEFUALT_ARGS_2 = [
+    DEFUALT_ARGS_1 = [
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
+    DEFAULT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
-    DEFUALT_ARGS_INVALID_2 = [
+    DEFAULT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_INPUTS = [
-        (DEFUALT_ARGS_2, True),
-        (DEFUALT_ARGS_INVALID_1, False),
-        (DEFUALT_ARGS_INVALID_2, False),
-        (DEFUALT_ARGS_INVALID_3, False),
+        (DEFUALT_ARGS_1, True),
+        (DEFAULT_ARGS_2, True),
+        (DEFAULT_ARGS_INVALID_1, False),
+        (DEFAULT_ARGS_INVALID_2, False),
+        (DEFAULT_ARGS_INVALID_3, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
-    def test_is_valid_default_arguments(self, current, answer):
+    def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+        """
+        Given: Integration reputation command with arguments.
+
+        When: running is_valid_default_argument_in_reputation command.
+
+        Then: Validate that matching default arg name yields True, else yields False.
+        """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_arguments() is answer
+        assert validator.is_valid_default_argument_in_reputation_command() is answer
+
+    MULTIPLE_DEFAULT_ARGS_1 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": False}, {"name": "verbose"}]}]
+    MULTIPLE_DEFAULT_ARGS_2 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose"}]}]
+    MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+    DEFAULT_ARGS_INPUTS = [
+        (MULTIPLE_DEFAULT_ARGS_1, True),
+        (MULTIPLE_DEFAULT_ARGS_2, True),
+        (MULTIPLE_DEFAULT_ARGS_INVALID_1, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
+    def test_is_valid_default_argument(self, current, answer):
+        """
+        Given: Integration command with arguments.
+
+        When: running is_valid_default_argument command.
+
+        Then: Validate that up to 1 default arg name yields True, else yields False.
+        """
+        current = {"script": {"commands": current}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_default_argument() is answer
 
     MOCK_REPUTATIONS_1 = [{"contextPath": "Int.lol", "description": "desc", "type": "number"},
                           {"contextPath": "DBotScore.lives.matter"}]
@@ -730,7 +770,7 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_arguments() is True
+        assert validator.is_valid_default_argument_in_reputation_command() is True
 
     @pytest.mark.parametrize('param', [
         {'commands': ['something']},

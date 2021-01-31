@@ -213,7 +213,7 @@ def unify(**kwargs):
     default=False, show_default=True, help='Skip conf.json validation')
 @click.option(
     '-s', '--id-set', is_flag=True,
-    default=False, show_default=True, help='Validate the id_set file.')
+    default=False, show_default=True, help='Perform validations using the id_set file.')
 @click.option(
     "-idp", "--id-set-path", help="The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True))
@@ -268,8 +268,8 @@ def unify(**kwargs):
     '--skip-pack-dependencies', is_flag=True,
     help='Skip validation of pack dependencies.')
 @click.option(
-    '--skip-id-set-creation', is_flag=True,
-    help='Skip id_set.json file creation.')
+    '--create-id-set', is_flag=True,
+    help='Whether to create the id_set.json file.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -301,7 +301,7 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            skip_id_set_creation=kwargs.get('skip_id_set_creation')
+            create_id_set=kwargs.get('create-id-set')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

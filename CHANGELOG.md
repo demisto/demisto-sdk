@@ -9,6 +9,8 @@
 * Added a validation that an integration command has at most one default argument.
 * Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
 * Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
+* Fixed an issue where beta integrations where not running deprecation validations.
+* Allowed adding additional information to the deprecated description.
 * Fixing an issue when escaping less and greater signs in integration params did not work as expected.
 
 # 1.2.17

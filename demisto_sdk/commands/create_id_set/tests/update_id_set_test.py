@@ -231,14 +231,22 @@ class TestPacksMetadata:
             - Verify output to logs.
         """
         pack = repo.create_pack("Pack1")
-        pack.pack_metadata.write_json({'name': 'Pack'})
+        pack.pack_metadata.write_json({
+            'name': 'Pack',
+            'currentVersion': '1.0.0',
+            'author': 'Cortex XSOAR',
+            'support': 'xsoar',
+        })
         pack_metadata_path = pack.pack_metadata.path
-
         res = get_pack_metadata_data(pack_metadata_path, print_logs)
 
         captured = capsys.readouterr()
 
         assert res['Pack']['name'] == 'Pack'
+        assert res['Pack']['current_version'] == '1.0.0'
+        assert res['Pack']['author'] == 'Cortex XSOAR'
+        assert res['Pack']['certification'] == 'certified'
+
         assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
 
     @staticmethod

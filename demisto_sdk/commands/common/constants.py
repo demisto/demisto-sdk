@@ -61,7 +61,7 @@ class FileType(Enum):
     BETA_INTEGRATION = 'betaintegration'
     INCIDENT_FIELD = 'incidentfield'
     INDICATOR_FIELD = 'indicatorfield'
-    REPUTATION = 'reputation'
+    INDICATOR_TYPE = 'indicatortype'
     LAYOUT = 'layout'
     LAYOUTS_CONTAINER = 'layoutscontainer'
     DASHBOARD = 'dashboard'
@@ -83,6 +83,30 @@ class FileType(Enum):
     POWERSHELL_FILE = 'powershellfile'
 
 
+RN_HEADER_FOR_FILE_TYPE = {
+    FileType.PLAYBOOK: 'Playbooks',
+    FileType.INTEGRATION: "Integrations",
+    FileType.SCRIPT: 'Scripts',
+    FileType.INCIDENT_FIELD: 'Incident Fields',
+    FileType.INDICATOR_FIELD: 'Indicator Fields',
+    FileType.INDICATOR_TYPE: 'Indicator Types',
+    FileType.INCIDENT_TYPE: 'Incident Types',
+    FileType.CLASSIFIER: 'Classifiers',
+    FileType.LAYOUT: 'Layouts',
+    FileType.REPORT: 'Reports',
+    FileType.WIDGET: 'Widgets',
+    FileType.DASHBOARD: 'Dashboards',
+    FileType.CONNECTION: 'Connections',
+    FileType.README: 'Readme*',
+    FileType.RELEASE_NOTES: 'Release Notes*',
+    FileType.DESCRIPTION: 'Description*',
+    FileType.IMAGE: 'Image*',
+    FileType.DOC_IMAGE: 'Doc Image*',
+    FileType.MAPPER: 'Mapper*',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Container*'
+}
+
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -96,7 +120,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
-    FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
+    FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,

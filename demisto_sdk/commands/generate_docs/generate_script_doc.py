@@ -10,7 +10,7 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_section, generate_table_section, save_output, string_escape_md)
 
 
-def generate_script_doc(input, examples, output: str = None, permissions: str = None,
+def generate_script_doc(input_path: str, examples: str, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc: list = []
@@ -18,7 +18,7 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
         example_section: list = []
 
         if not output:  # default output dir will be the dir of the input file
-            output = os.path.dirname(os.path.realpath(input))
+            output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
             if not examples.startswith('!'):
@@ -33,10 +33,10 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
             errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
                           'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
-        script = get_yaml(input)
+        script = get_yaml(input_path)
 
         # get script data
-        secript_info = get_script_info(input)
+        script_info = get_script_info(input_path)
         script_id = script.get('commonfields')['id']
 
         # get script dependencies
@@ -60,7 +60,7 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
 
         doc.append(description + '\n')
 
-        doc.extend(generate_table_section(secript_info, 'Script Data'))
+        doc.extend(generate_table_section(script_info, 'Script Data'))
 
         if dependencies:
             doc.extend(generate_list_section('Dependencies', dependencies, True,

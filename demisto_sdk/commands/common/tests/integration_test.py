@@ -584,6 +584,44 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
 
+    def test_valid_integration_parameters_display_name(self, integration):
+        """
+        Given
+            - An integration with valid parameters display names.
+        When
+            - running is_valid_parameters_display_name.
+        Then
+            - an integration with a valid parameters display name is valid.
+        """
+
+        integration.yml.write_dict({'configuration': [
+            {'display': 'Token'},
+            {'display': 'Username'}
+        ]})
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.is_valid_parameters_display_name()
+
+    def test_invalid_integration_parameters_display_name(self, integration):
+        """
+        Given
+            - An integration with invalid parameters display names.
+        When
+            - running is_valid_parameters_display_name.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+
+        integration.yml.write_dict({'configuration': [
+            {'display': 'token'},
+            {'display': 'User_name'}
+        ]})
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.is_valid_parameters_display_name()
+
 
 class TestIsFetchParamsExist:
     def setup(self):

@@ -96,6 +96,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
+            self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist()
         ]
 
@@ -910,6 +911,28 @@ class IntegrationValidator(ContentEntityValidator):
             error, code = Errors.integration_not_runnable()
             self.handle_error(error, code, file_path=self.file_path)
             return False
+        return True
+
+    def is_valid_parameters_display_name(self) -> bool:
+        """Verifies integration parameters display name is valid.
+
+        Returns:
+            bool: True if description is valid - capitalized and spaced using whitespace and not underscores,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_display_name = [param.get('display') for param in configuration if param.get('display')]
+
+        invalid_display_names = []
+        for parameter in parameters_display_name:
+            invalid_display_names.append(parameter) if parameter and not parameter[0].isupper() or '_' in parameter \
+                else None
+
+        if invalid_display_names:
+            error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def is_mapping_fields_command_exist(self) -> bool:

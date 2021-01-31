@@ -21,7 +21,8 @@ from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (find_file, find_type, get_json,
                                                is_external_repository,
                                                print_error, print_v,
-                                               print_warning)
+                                               print_warning,
+                                               retrieve_file_ending)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -722,7 +723,8 @@ class LintManager:
             json.dump(json_contents, f, indent=4)
 
     def flake8_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages').split('\n')
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             if not message:
                 continue
@@ -739,9 +741,11 @@ class LintManager:
             self.add_to_json_outputs(output, file_path, json_contents)
 
     def mypy_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
         mypy_errors: list = []
         gather_error: list = []
-        for line in errors.get('messages').split('\n'):
+        for line in error_messages:
             if os.path.isfile(line.split(':')[0]):
                 if gather_error:
                     mypy_errors.append('\n'.join(gather_error))
@@ -765,7 +769,8 @@ class LintManager:
             self.add_to_json_outputs(output, file_path, json_contents)
 
     def bandit_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages').split('\n')
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             if message:
                 file_path = message.split(':')[0]
@@ -779,13 +784,17 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     def vulture_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages').split('\n')
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
         content_path = os.path.abspath('')
-        pack_path = os.path.join(content_path, 'Packs', errors.get('pack'))
         for message in error_messages:
             if message:
                 file_name = message.split(':')[0]
-                file_path = find_file(pack_path, file_name)
+                if not retrieve_file_ending(file_name):
+                    file_name = f'{file_name}.py'
+                elif retrieve_file_ending(file_name) != 'py':
+                    file_name = file_name.replace(retrieve_file_ending(file_name), 'py')
+                file_path = find_file(content_path, file_name)
                 output = {
                     'linter': 'vulture',
                     'severity': errors.get('type'),
@@ -795,7 +804,8 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     def xsoar_linter_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages').split('\n')
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             file_path = message.split(':')[0]
             code = message.split(' ')[1]

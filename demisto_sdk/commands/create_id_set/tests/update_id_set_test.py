@@ -236,6 +236,9 @@ class TestPacksMetadata:
             'currentVersion': '1.0.0',
             'author': 'Cortex XSOAR',
             'support': 'xsoar',
+            'tags': ['Alerts'],
+            'useCases': ['Case Management'],
+            'categories': ['Endpoint']
         })
         pack_metadata_path = pack.pack_metadata.path
         res = get_pack_metadata_data(pack_metadata_path, print_logs)
@@ -245,6 +248,9 @@ class TestPacksMetadata:
         assert res['Pack']['name'] == 'Pack'
         assert res['Pack']['current_version'] == '1.0.0'
         assert res['Pack']['author'] == 'Cortex XSOAR'
+        assert res['Pack']['tags'] == ['Alerts']
+        assert res['Pack']['use_cases'] == ['Case Management']
+        assert res['Pack']['categories'] == ['Endpoint']
         assert res['Pack']['certification'] == 'certified'
 
         assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs

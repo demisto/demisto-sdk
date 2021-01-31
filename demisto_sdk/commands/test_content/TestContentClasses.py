@@ -1368,14 +1368,22 @@ class TestContext:
         """
         self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
 
-    def _add_to_failed_playbooks(self) -> None:
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
         Adds the playbook to the succeeded playbooks list
+
+        Args:
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
-        self.build_context.logging_module.error(f'Test failed: {self}')
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
+        if is_second_playback_run:
+            self.build_context.logging_module.error(
+                'Playback on newly created record has failed, see the following confluence page for help:\n'
+                'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
+            playbook_name_to_add += ' (Second Playback)'
+        self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
     @staticmethod
@@ -1444,14 +1452,17 @@ class TestContext:
                 return False
         return True
 
-    def _handle_status(self, status: str, is_playback_run: bool = False) -> None:
+    def _handle_status(self, status: str,
+                       is_first_playback_run: bool = False,
+                       is_second_playback_run: bool = False) -> None:
         """
         Handles the playbook execution run
         - Logs according to the results
         - Adds the test to the test results
         Args:
-            is_playback_run:
-            status:
+            status: The string representation of the playbook execution
+            is_first_playback_run: Is the playbook runs in playback mode
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.success(f'PASS: {self} succeed')
@@ -1461,7 +1472,10 @@ class TestContext:
             self._add_to_failed_playbooks()
 
         else:
-            if is_playback_run:
+            if is_first_playback_run:
+                return
+            if is_second_playback_run:
+                self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
             self._add_to_failed_playbooks()
             if not self.build_context.is_local_run:
@@ -1481,7 +1495,7 @@ class TestContext:
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._incident_and_docker_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_playback_run=True)
+            self._handle_status(status, is_first_playback_run=True)
             if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                 return True
             self.build_context.logging_module.warning(
@@ -1501,20 +1515,13 @@ class TestContext:
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if status == PB_Status.COMPLETED:
+        if succeed:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-                self._clean_incident_if_successful(status)
-            if status != PB_Status.COMPLETED:
-                self.build_context.logging_module.warning(
-                    'Playback on newly created record has failed, see the following confluence page for help:\n'
-                    'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
-            else:
-                self.build_context.logging_module.success(f'PASS: {self} succeed')
-
+            self._handle_status(status, is_second_playback_run=True)
         return True
 
     def _is_runnable_on_current_server_instance(self) -> bool:

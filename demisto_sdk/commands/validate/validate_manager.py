@@ -859,6 +859,13 @@ class ValidateManager:
         self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
             else self.branch_name
 
+        # check remote validity
+        if '/' in self.prev_ver and not self.git_util.check_if_remote_exists(self.prev_ver):
+            non_existing_remote = self.prev_ver.split("/")[0]
+            click.secho(f'Could not find remote {non_existing_remote} reverting to '
+                        f'{str(self.git_util.repo.remote())}', fg='bright_red')
+            self.prev_ver = self.prev_ver.replace(non_existing_remote, str(self.git_util.repo.remote()))
+
         # if running on release branch check against last release.
         if self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
             self.skip_pack_rn_validation = True

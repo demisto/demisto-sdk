@@ -26,7 +26,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the modified files.
         """
-        prev_ver = prev_ver.replace('origin/', '')
+        remote, branch = self._handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='M')
@@ -45,7 +45,7 @@ class GitUtil:
             # get all committed files identified as modified which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote().refs[prev_ver].commit.diff(
+                         in self.repo.remote(name=remote).refs[branch].commit.diff(
                 self.repo.active_branch).iter_change_type('M')}
 
             # identify all files that were touched on this branch regardless of status
@@ -67,8 +67,9 @@ class GitUtil:
         # and is then modified locally after being committed - it is identified as modified
         # but we want to identify the file as Added (its actual status against prev_ver) -
         # so will remove it from the staged modified files.
-        committed_added = {Path(os.path.join(item.a_path)) for item in self.repo.remote().refs[prev_ver].commit.diff(
-            self.repo.active_branch).iter_change_type('A')}
+        committed_added = {Path(os.path.join(item.a_path)) for item in
+                           self.repo.remote(name=remote).refs[branch].commit.
+                           diff(self.repo.active_branch).iter_change_type('A')}
 
         staged = staged - committed_added
 
@@ -87,7 +88,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the added files.
         """
-        prev_ver = prev_ver.replace('origin/', '')
+        remote, branch = self._handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='A')
@@ -99,7 +100,7 @@ class GitUtil:
         # get all committed files identified as added which are changed from prev_ver.
         # this can result in extra files identified which were not touched on this branch.
         committed = {Path(os.path.join(item.a_path)) for item
-                     in self.repo.remote().refs[prev_ver].commit.diff(
+                     in self.repo.remote(name=remote).refs[branch].commit.diff(
             self.repo.active_branch).iter_change_type('A')}
 
         # identify all files that were touched on this branch regardless of status
@@ -146,7 +147,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
-        prev_ver = prev_ver.replace('origin/', '')
+        remote, branch = self._handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='D')
@@ -159,7 +160,7 @@ class GitUtil:
             # get all committed files identified as added which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote().refs[prev_ver].commit.diff(
+                         in self.repo.remote(name=remote).refs[branch].commit.diff(
                 self.repo.active_branch).iter_change_type('D')}
 
             # identify all files that were touched on this branch regardless of status
@@ -193,7 +194,7 @@ class GitUtil:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
         """
-        prev_ver = prev_ver.replace('origin/', '')
+        remote, branch = self._handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='R')
@@ -207,7 +208,7 @@ class GitUtil:
             # get all committed files identified as renamed which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             committed = {(Path(item.a_path), Path(item.b_path)) for item
-                         in self.repo.remote().refs[prev_ver].commit.diff(
+                         in self.repo.remote(name=remote).refs[branch].commit.diff(
                 self.repo.active_branch).iter_change_type('R')}
 
             # identify all files that were touched on this branch regardless of status
@@ -263,10 +264,11 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
-        origin_prev_ver = prev_ver if prev_ver.startswith('origin/') else f"origin/{prev_ver}"
+        remote, branch = self._handle_prev_ver(prev_ver)
+
         return {Path(os.path.join(item)) for item
                 in self.repo.git.diff('--name-only',
-                                      f'{origin_prev_ver}...{self.repo.active_branch}').split('\n')}
+                                      f'{remote}/{branch}...{self.repo.active_branch}').split('\n')}
 
     def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
@@ -290,6 +292,24 @@ class GitUtil:
                 # in case no last commit exists - just pass
                 pass
         return set()
+
+    def check_if_remote_exists(self, remote):
+        if '/' in remote:
+            remote = remote.split('/')[0]
+
+        return remote in self.repo.remotes
+
+    def _handle_prev_ver(self, prev_ver):
+        if '/' in prev_ver:
+            remote = prev_ver.split('/')[0]
+            remote = remote if self.check_if_remote_exists(remote) else str(self.repo.remote())
+            branch = prev_ver.split('/')[1]
+
+        else:
+            remote = str(self.repo.remote())
+            branch = prev_ver
+
+        return remote, branch
 
     def get_current_working_branch(self) -> str:
         return str(self.repo.active_branch)

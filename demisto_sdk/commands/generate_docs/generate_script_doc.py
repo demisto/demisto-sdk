@@ -10,7 +10,7 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_section, generate_table_section, save_output, string_escape_md)
 
 
-def generate_script_doc(input_path: str, examples: str, output: str = None, permissions: str = None,
+def generate_script_doc(input_path, examples, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc: list = []

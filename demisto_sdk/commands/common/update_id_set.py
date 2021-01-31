@@ -711,11 +711,7 @@ def get_pack_metadata_data(file_path, print_logs: bool):
         }
 
         pack_id = get_pack_name(file_path)
-        if pack_id:
-            pack_data['id'] = pack_id
-
-        pack_name = pack_data['name']
-        return {pack_name: pack_data}
+        return {pack_id: pack_data}
 
     except Exception as exp:  # noqa
         print_error(f'Failed to process {file_path}, Error: {str(exp)}')

@@ -49,9 +49,12 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbo
             additional_data['display_name'] = pack_name
 
         else:
-            dependency_data = id_set_data.get('Packs', {}).get(pack_name)
+            dependency_data = id_set_data.get('Packs', {}).get(dependency_id)
             if dependency_data:
-                additional_data.update(dependency_data)
+                additional_data['name'] = dependency_data['name']
+                additional_data['author'] = dependency_data['author']
+                additional_data['minVersion'] = dependency_data['current_version']
+                additional_data['certification'] = dependency_data['certification']
             else:
                 additional_data['display_name'] = pack_name
 

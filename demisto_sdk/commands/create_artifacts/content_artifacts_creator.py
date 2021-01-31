@@ -115,6 +115,8 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
+        if os.path.exists('keyfile'):
+            os.remove('keyfile')
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
@@ -288,24 +290,21 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             yield pool
         except KeyboardInterrupt:
             logger.info("\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt...")
-            if os.path.exists('keyfile'):
-                os.remove('keyfile')
             pool.stop()
             pool.join()
             raise
         except Exception as e:
             logger.exception(e)
             logger.error("Gracefully release all resources due to Error...")
-            if os.path.exists('keyfile'):
-                os.remove('keyfile')
             pool.stop()
             pool.join()
             raise
         else:
-            if os.path.exists('keyfile'):
-                os.remove('keyfile')
             pool.close()
             pool.join()
+        finally:
+            if os.path.exists('keyfile'):
+                os.remove('keyfile')
 
 
 def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: ArtifactsManager):
@@ -955,10 +954,10 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 def sign_packs(artifact_manager: ArtifactsManager):
     """Sign packs directories"""
     if artifact_manager.signDirectory and artifact_manager.signature_key:
-        with open('keyfile', 'wb') as keyfile:
-            keyfile.write(artifact_manager.signature_key.encode())
-
         with ProcessPoolHandler(artifact_manager) as pool:
+            with open('keyfile', 'wb') as keyfile:
+                keyfile.write(artifact_manager.signature_key.encode())
+
             futures: List[ProcessFuture] = []
             if 'all' in artifact_manager.pack_names:
                 for pack_name, pack in artifact_manager.content.packs.items():
@@ -974,6 +973,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
                         futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                            artifact_manager.signDirectory,
                                                                            )))
+
         wait_futures_complete(futures, artifact_manager)
 
     elif artifact_manager.signDirectory or artifact_manager.signature_key:

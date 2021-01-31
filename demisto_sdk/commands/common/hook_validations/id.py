@@ -268,20 +268,20 @@ class IDSetValidations(BaseValidator):
                                                  main_playbook_version, entity_set_from_id_set,
                                                  playbook_name, file_path):
         """Check if the playbook's version match playbook's entities (script or sub-playbook)
-        Goes over the relevant entity set from id_set and check if the version of this entity match (at most) the main
-        playbook version.
+        Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
+        to the main playbook's version.
         For example, for given scripts list : implemented_entity_list_from_playbook = ["script1", "script2"],
         main playbook version = "5.0.0".
         This code searches for script1 version in the scripts set (in id_set) and returns True only if
         script1 version <= "5.0.0." (main playbook version), otherwise returns False. Does the same for "script2".
 
         Args:
-            implemented_entity_list_from_playbook (list): Dictionary that holds the extracted details from the given
-            playbook.
-            main_playbook_version (str): Playbook's from version .
-            entity_set_from_id_set (dict) : Entity's data set (scripts or playbooks) from id_set file .
-            playbook_name (str) : Playbook's name .
-            file_path (string): Path to the file (current playbook) .
+            implemented_entity_list_from_playbook (list): List of relevant entities yo check from playbook. For example,
+            list of implementing_scripts or list of implementing_playbooks.
+            main_playbook_version (str): Playbook's from version.
+            entity_set_from_id_set (dict) : Entity's data set (scripts or playbooks) from id_set file.
+            playbook_name (str) : Playbook's name.
+            file_path (string): Path to the file (current playbook).
 
         Returns:
             bool. Whether the playbook's version match playbook's entities.
@@ -291,13 +291,14 @@ class IDSetValidations(BaseValidator):
                 return True
 
             entity_id = list(entity_data_dict.keys())[0]
-            entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else entity_data_dict[
-                entity_id].get("name")
+            all_entity_fields = entity_data_dict[entity_id]
+            entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
+                "name")
 
-            is_entity_exist_in_playbook = entity_name in implemented_entity_list_from_playbook
+            is_entity_used_in_playbook = entity_name in implemented_entity_list_from_playbook
 
-            if is_entity_exist_in_playbook:
-                entity_version = entity_data_dict[entity_id].get("fromversion", "")
+            if is_entity_used_in_playbook:
+                entity_version = all_entity_fields.get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
                 if is_version_valid:
@@ -314,7 +315,7 @@ class IDSetValidations(BaseValidator):
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):
         """Check if the playbook's version match playbook's used integrations.
-        Goes over all the integrations' commands that used in the current playbook. For each command, checks it's
+        Goes over all the integrations' commands that used in the current playbook. For each command, checks its
         integration's from version.
         If at least one existing integration was found that integration version <= playbook version, True is returned.
         If no such integration was found, False returned.

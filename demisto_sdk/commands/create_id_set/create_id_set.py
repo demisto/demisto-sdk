@@ -25,12 +25,13 @@ class IDSetCreator:
 
     def create_id_set(self):
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
-        self.modify_id_set_command_to_integration_of_playbook()
+        self.add_command_to_implementing_integrations_mapping()
+        self.save_id_set()
         return self.id_set
 
-    def modify_id_set_command_to_integration_of_playbook(self):
+    def add_command_to_implementing_integrations_mapping(self):
         """
-        Modifies playbook set in id_set dictionary once it was created, and finally saves it to a file.
+        Modifies playbook set in id_set dictionary once it was created.
         Each playbook that has "command_to_integration" field will be modified :
         - command name value will be a list of all integrations that implements this command (instead of use "" ).
         """
@@ -47,14 +48,12 @@ class IDSetCreator:
                     implemented_integration = command_name_to_implemented_integration_map[command]
                     commands_to_integration[command] = implemented_integration
 
-        self.save_id_set()
-
     def create_command_to_implemented_integration_map(self):
         command_name_to_implemented_integration_map = {}  # type: ignore
         integrations_list = self.id_set['integrations']
-        for integration_dict in integrations_list:
-            integration_name = list(integration_dict.keys())[0]
-            integration_data = integration_dict[integration_name]
+        for integration_data in integrations_list:
+            integration_name = list(integration_data.keys())[0]
+            integration_data = integration_data[integration_name]
             commands = integration_data.get("commands", {})
             for command in commands:
                 if command in command_name_to_implemented_integration_map:

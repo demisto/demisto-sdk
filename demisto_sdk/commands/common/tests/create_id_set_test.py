@@ -70,7 +70,7 @@ def test_create_command_to_implemented_integration_map(repo):
     assert command_to_implemented_integration_map == expected_output_map
 
 
-def test_modify_id_set_command_to_integration_of_playbook(repo, mocker):
+def test_add_command_to_implementing_integrations_mapping(repo):
     """
 
     Given
@@ -92,8 +92,7 @@ def test_modify_id_set_command_to_integration_of_playbook(repo, mocker):
     id_set_creator.id_set["integrations"] = integration_list
     id_set_creator.id_set["playbooks"] = playbook_list
 
-    mocker.patch.object(id_set_creator, 'save_id_set', side_effect=None)
-    id_set_creator.modify_id_set_command_to_integration_of_playbook()
+    id_set_creator.add_command_to_implementing_integrations_mapping()
 
     playbook_set = id_set_creator.id_set["playbooks"]
     assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command'] == ['Integration1', 'Integration2']

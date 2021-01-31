@@ -103,6 +103,26 @@ class IntegrationValidator(ContentEntityValidator):
             answers.append(self.are_tests_configured())
         return all(answers)
 
+    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
+        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
+            Args:
+                validate_rn (bool): Whether to validate release notes (changelog) or not.
+
+            Returns:
+                bool: True if integration is valid, False otherwise.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_subtype(),
+            self.is_valid_category(),
+            self.is_valid_beta(),
+            self.is_valid_image(),
+            self.is_valid_description(beta_integration=True),
+            self.is_valid_as_deprecated(),
+        ]
+        return all(answers)
+
     def is_valid_as_deprecated(self):
         """Check if the integration is valid as a deprecated integration."""
         answers = [
@@ -126,8 +146,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r'Deprecated\. Use .+ instead\.'
-        deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
+        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass
@@ -145,23 +165,6 @@ class IntegrationValidator(ContentEntityValidator):
         """
         tests = self.current_file.get('tests', [])
         return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
-
-    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
-        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
-            Args:
-                validate_rn (bool): Whether to validate release notes (changelog) or not.
-
-            Returns:
-                bool: True if integration is valid, False otherwise.
-        """
-        answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_beta(),
-            self.is_valid_image(),
-            self.is_valid_description(beta_integration=True),
-        ]
-        return all(answers)
 
     def is_valid_param(self, param_name, param_display):
         # type: (str, str) -> bool
@@ -459,11 +462,12 @@ class IntegrationValidator(ContentEntityValidator):
     def _is_display_contains_beta(self):
         # type: () -> bool
         """Checks that 'display' field includes the substring 'beta'"""
-        display = self.current_file.get('display', '')
-        if 'beta' not in display.lower():
-            error_message, error_code = Errors.no_beta_in_display()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+        if not self.current_file.get('deprecated'):  # this validation is not needed for deprecated beta integrations
+            display = self.current_file.get('display', '')
+            if 'beta' not in display.lower():
+                error_message, error_code = Errors.no_beta_in_display()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
 
         return True
 

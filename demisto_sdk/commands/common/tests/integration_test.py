@@ -238,7 +238,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
-    DEFUALT_ARGS_1 = [
+    DEFAULT_ARGS_1 = [
         {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
     DEFAULT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
@@ -247,7 +247,7 @@ class TestIntegrationValidator:
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
     DEFAULT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_INPUTS = [
-        (DEFUALT_ARGS_1, True),
+        (DEFAULT_ARGS_1, True),
         (DEFAULT_ARGS_2, True),
         (DEFAULT_ARGS_INVALID_1, False),
         (DEFAULT_ARGS_INVALID_2, False),
@@ -338,6 +338,12 @@ class TestIntegrationValidator:
 
     VALID_BETA = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                   "display": "newIntegration (Beta)", "beta": True}
+    VALID_BETA_DEPRECATED = {"commonfields": {"id": "Proofpoint Server Protection"},
+                             "name": "Proofpoint Server Protection",
+                             "display": "Proofpoint Protection Server (Deprecated)",
+                             "beta": True, "deprecated": True,
+                             "description": "Deprecated. The integration uses an unsupported scraping API. "
+                                            "Use Proofpoint Protection Server v2 instead."}
     INVALID_BETA_DISPLAY = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                             "display": "newIntegration", "beta": True}
     INVALID_BETA_ID = {"commonfields": {"id": "newIntegration-beta"}, "name": "newIntegration",
@@ -351,6 +357,7 @@ class TestIntegrationValidator:
                                                "display": "newIntegration changed (Beta)"}
     IS_VALID_BETA_INPUTS = [
         (VALID_BETA, True, True),
+        (VALID_BETA_DEPRECATED, False, True),
         (INVALID_BETA_DISPLAY, True, False),
         (INVALID_BETA_ID, True, False),
         (INVALID_BETA_NAME, True, False),
@@ -540,17 +547,24 @@ class TestIntegrationValidator:
     DEPRECATED_VALID2 = {"deprecated": True, "display": "Feodo Tracker Hashes Feed (Deprecated)",
                          "description": "Deprecated. Feodo Tracker no longer supports this feed. "
                                         "No available replacement."}
+    DEPRECATED_VALID3 = {"deprecated": True, "display": "Proofpoint Protection Server (Deprecated)",
+                         "description": "Deprecated. The integration uses an unsupported scraping API. "
+                                        "Use Proofpoint Protection Server v2 instead."}
     DEPRECATED_INVALID_DISPLAY = {"deprecated": True, "display": "ServiceNow (Old)",
                                   "description": "Deprecated. Use the XXXX integration instead."}
     DEPRECATED_INVALID_DESC = {"deprecated": True, "display": "ServiceNow (Deprecated)", "description": "Deprecated."}
     DEPRECATED_INVALID_DESC2 = {"deprecated": True, "display": "ServiceNow (Deprecated)",
                                 "description": "Use the ServiceNow integration to manage..."}
+    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "display": "Proofpoint Protection Server (Deprecated)",
+                                "description": "Deprecated. The integration uses an unsupported scraping API."}
     DEPRECATED_INPUTS = [
         (DEPRECATED_VALID, True),
         (DEPRECATED_VALID2, True),
+        (DEPRECATED_VALID3, True),
         (DEPRECATED_INVALID_DISPLAY, False),
         (DEPRECATED_INVALID_DESC, False),
-        (DEPRECATED_INVALID_DESC2, False)
+        (DEPRECATED_INVALID_DESC2, False),
+        (DEPRECATED_INVALID_DESC3, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)

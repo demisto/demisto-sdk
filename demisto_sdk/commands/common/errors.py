@@ -9,8 +9,9 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128', 'PB110', 'PB111']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
+                         'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'PB110',
+                         'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -1198,10 +1199,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1282,10 +1283,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_mapper(invalid_inc_fields_list):
         return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator

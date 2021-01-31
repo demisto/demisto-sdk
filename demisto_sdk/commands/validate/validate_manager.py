@@ -426,7 +426,7 @@ class ValidateManager:
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
-        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files,
+        validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
 
         if old_format_files:
@@ -701,17 +701,18 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
-    def validate_changed_packs_unique_files(self, modified_files, added_files, changed_meta_files):
+    def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
         valid_pack_files = set()
 
         added_packs = get_pack_names_from_files(added_files)
-        modified_packs = get_pack_names_from_files(modified_files)
+        modified_packs = get_pack_names_from_files(modified_files).union(get_pack_names_from_files(old_format_files))
         changed_meta_packs = get_pack_names_from_files(changed_meta_files)
 
         packs_that_should_have_version_raised = self.get_packs_that_should_have_version_raised(modified_files,
-                                                                                               added_files)
+                                                                                               added_files,
+                                                                                               old_format_files)
 
         changed_packs = modified_packs.union(added_packs).union(changed_meta_packs)
 
@@ -1201,9 +1202,10 @@ class ValidateManager:
             click.secho(f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                         fg="yellow")
 
-    def get_packs_that_should_have_version_raised(self, modified_files, added_files):
+    def get_packs_that_should_have_version_raised(self, modified_files, added_files, old_format_files):
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
-        modified_packs_that_should_have_version_raised = get_pack_names_from_files(modified_files, skip_file_types={
+        all_modified_files = modified_files.union(old_format_files)
+        modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
         })
 

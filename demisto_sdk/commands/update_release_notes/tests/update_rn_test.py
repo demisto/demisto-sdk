@@ -5,6 +5,7 @@ import unittest
 
 import mock
 import pytest
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
@@ -25,8 +26,8 @@ class TestRNUpdate(unittest.TestCase):
                 - return a markdown string
         """
         expected_result = \
-            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
             "\n#### Connections\n- **Hello World Connection**\n" \
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
             "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
             "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
             "\n#### Incident Types\n- **Hello World Incident Type**\n" \
@@ -44,21 +45,21 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
-            "Hello World Playbook": {"type": "Playbook", "description": "", "is_new_file": False},
-            "Hello World Script": {"type": "Script", "description": "", "is_new_file": False},
-            "Hello World IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
-            "Hello World Classifier": {"type": "Classifiers", "description": "", "is_new_file": False},
-            "N/A": {"type": "Integration", "description": "", "is_new_file": False},
-            "Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
-            "Hello World Incident Type": {"type": "Incident Types", "description": "", "is_new_file": False},
-            "Hello World Indicator Type": {"type": "Indicator Types", "description": "", "is_new_file": False},
-            "Hello World Indicator Field": {"type": "Indicator Fields", "description": "", "is_new_file": False},
-            "Second Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
-            "Hello World Widget": {"type": "Widgets", "description": "", "is_new_file": False},
-            "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
-            "Hello World Connection": {"type": "Connections", "description": "", "is_new_file": False},
-            "Hello World Report": {"type": "Reports", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
+            "Hello World Playbook": {"type": FileType.PLAYBOOK, "description": "", "is_new_file": False},
+            "Hello World Script": {"type": FileType.SCRIPT, "description": "", "is_new_file": False},
+            "Hello World IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+            "Hello World Classifier": {"type": FileType.CLASSIFIER, "description": "", "is_new_file": False},
+            "N/A": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
+            "Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
+            "Hello World Incident Type": {"type": FileType.INCIDENT_TYPE, "description": "", "is_new_file": False},
+            "Hello World Indicator Type": {"type": FileType.INDICATOR_TYPE, "description": "", "is_new_file": False},
+            "Hello World Indicator Field": {"type": FileType.INDICATOR_FIELD, "description": "", "is_new_file": False},
+            "Second Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
+            "Hello World Widget": {"type": FileType.WIDGET, "description": "", "is_new_file": False},
+            "Hello World Dashboard": {"type": FileType.DASHBOARD, "description": "", "is_new_file": False},
+            "Hello World Connection": {"type": FileType.CONNECTION, "description": "", "is_new_file": False},
+            "Hello World Report": {"type": FileType.REPORT, "description": "", "is_new_file": False},
             "N/A2": {"type": None, "description": "", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -80,7 +81,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Playbook": {"type": "Playbook",
+            "Hello World Playbook": {"type": FileType.PLAYBOOK,
                                      "description": "Hello World Playbook description", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -102,7 +103,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Playbook": {"type": "Playbook",
+            "Hello World Playbook": {"type": FileType.PLAYBOOK,
                                      "description": "Hello World Playbook description", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -125,7 +126,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
+            "Hello World IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -149,7 +150,7 @@ class TestRNUpdate(unittest.TestCase):
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -173,7 +174,7 @@ class TestRNUpdate(unittest.TestCase):
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -510,7 +511,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -528,7 +529,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -544,11 +545,11 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         changed_items = {
-            'Hello World Integration': {'type': 'Integration', 'description': "", 'is_new_file': True,
+            'Hello World Integration': {'type': FileType.INTEGRATION, 'description': "", 'is_new_file': True,
                                         'fromversion': '5.0.0'},
-            'Hello World Playbook': {'type': 'Playbook', 'description': '', 'is_new_file': True,
+            'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': 'Script', 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -570,12 +571,12 @@ class TestRNUpdateUnit:
 - **XDR Alerts**
 """
     CHANGED_FILES = {
-        "Cortex XDR Incident": {"type": "Incident Types", "description": "", "is_new_file": False},
-        "XDR Alerts": {"type": "Incident Fields", "description": "", "is_new_file": False},
-        "Sample IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
-        "Cortex XDR - IR": {"type": "Integration", "description": "", "is_new_file": False},
+        "Cortex XDR Incident": {"type": FileType.INCIDENT_TYPE, "description": "", "is_new_file": False},
+        "XDR Alerts": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+        "Sample IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+        "Cortex XDR - IR": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         "Nothing": {"type": None, "description": "", "is_new_file": False},
-        "Sample": {"type": "Integration", "description": "", "is_new_file": False},
+        "Sample": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
     }
     EXPECTED_RN_RES = """
 #### Incident Types

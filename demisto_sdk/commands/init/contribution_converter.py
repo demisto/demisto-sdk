@@ -53,7 +53,7 @@ class ContributionConverter:
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
                  gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
-                 base_dir: Union[str] = None, no_pipenv: bool = False):
+                 base_dir: Union[str] = None, no_pipenv: bool = False, readme_files: List[str] = []):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -95,7 +95,7 @@ class ContributionConverter:
         self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
-        self.readme_files: List[str] = []
+        self.readme_files = readme_files
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:

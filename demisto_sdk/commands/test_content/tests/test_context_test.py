@@ -39,11 +39,20 @@ def test_is_runnable_on_this_instance(mocker):
 
 
 def test_second_playback_enforcement(mocker, tmp_path):
+    """
+    Given:
+        - A mockable test
+    When:
+        - The mockable test fails on the second playback
+    Then:
+        - Ensure that it exists in the failed_playbooks set
+        - Ensure that it does not exists in the succeeded_playbooks list
+    """
     class RunIncidentTestMock:
         call_count = 0
         count_response_mapping = {
             1: PB_Status.FAILED,  # The first playback run
-            2: PB_Status.COMPLETED,  # The first record run
+            2: PB_Status.COMPLETED,  # The record run
             3: PB_Status.FAILED  # The second playback run
         }
 
@@ -70,3 +79,4 @@ def test_second_playback_enforcement(mocker, tmp_path):
                  RunIncidentTestMock.run_incident_test)
     server_context.execute_tests()
     assert 'mocked_playbook (Second Playback)' in build_context.tests_data_keeper.failed_playbooks
+    assert 'mocked_playbook' not in build_context.tests_data_keeper.succeeded_playbooks

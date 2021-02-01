@@ -1300,6 +1300,7 @@ class TestContext:
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
             self.playbook.disable_integrations(self.client)
+            self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
             self.build_context.logging_module.exception(f'Failed to run incident test for {self.playbook}')
@@ -1454,7 +1455,8 @@ class TestContext:
 
     def _handle_status(self, status: str,
                        is_first_playback_run: bool = False,
-                       is_second_playback_run: bool = False) -> None:
+                       is_second_playback_run: bool = False,
+                       is_record_run: bool = False) -> None:
         """
         Handles the playbook execution run
         - Logs according to the results
@@ -1466,6 +1468,10 @@ class TestContext:
         """
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.success(f'PASS: {self} succeed')
+            # It's not enough that the record run will pass to declare the test as successful,
+            # we need the second playback to pass as well.
+            if is_record_run:
+                return
             self._add_to_succeeded_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
@@ -1507,15 +1513,15 @@ class TestContext:
             if lock:
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
-                    self._handle_status(status)
-                    succeed = status == PB_Status.COMPLETED
-                    result_holder[RESULT] = succeed
+                    self._handle_status(status, is_record_run=True)
+                    completed = status == PB_Status.COMPLETED
+                    result_holder[RESULT] = completed
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if succeed:
+        if completed:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:

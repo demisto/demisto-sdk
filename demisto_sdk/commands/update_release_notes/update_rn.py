@@ -308,7 +308,8 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         for content_name, data in sorted(changed_items.items(),
-                                         key=lambda x: x[1].get('type', '').value if x[1].get('type') is not None else ''):
+                                         key=lambda x: x[1].get('type', '').value if x[1].get('type') is not None
+                                         else ''):
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')

@@ -95,6 +95,7 @@ class ContributionConverter:
         self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
+        self.readme_files: List[str] = []
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -249,12 +250,17 @@ class ContributionConverter:
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
+        dir_output = os.path.dirname(os.path.realpath(yml_path))
+        readme_path = os.path.join(dir_output, 'README.md')
         if file_type == 'integration':
             generate_integration_doc(yml_path)
+            self.readme_files.append(readme_path)
         if file_type == 'script':
             generate_script_doc(input=yml_path, examples=[])
+            self.readme_files.append(readme_path)
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
+            self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self):
         """

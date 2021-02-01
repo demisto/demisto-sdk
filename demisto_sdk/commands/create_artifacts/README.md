@@ -26,10 +26,6 @@ Number of cpus/vcpus availble - only required when os not reflect number of cpus
 The full path of id_set.json.
 * **-p CSV_PACKS_LIST, --pack_names CSV_PACKS_LIST**
 Packs to create artifacts for. Optional values are: `all` or csv list of packs. Default is set to `all`.
-* **-e ENCRYPTOR_PATH, --encryptor ENCRYPTOR_PATH**
-Path to the encryptor executable file.
-* **-ek ENCRYPTION_KEY, --encryption_key ENCRYPTION_KEY**
-The encryption key for the packs.
 * **-sd SIGN_DIRECTORY_PATH, --sign_directory SIGN_DIRECTORY_PATH**
 Path to the signDirectory executable file.
 * **-sk SIGNATURE_KEY, --signature_key SIGNATURE_KEY**

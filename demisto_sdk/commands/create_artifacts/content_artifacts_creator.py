@@ -48,8 +48,7 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, id_set_path: str = '', pack_names: str = 'all', encryptor: Path = None,
-                 encryption_key: str = '', signature_key: str = '',
+                 cpus: int, id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
                  sign_directory: Path = None, remove_test_playbooks: bool = True):
         """ Content artifacts configuration
 
@@ -62,8 +61,6 @@ class ArtifactsManager:
             cpus: available cpus in the computer.
             id_set_path: the full path of id_set.json.
             pack_names: Packs to create artifacts for.
-            encryptor: Path to the encryptor executable file.
-            encryption_key: The encryption key for the packs.
             signature_key: Base64 encoded signature key used for signing packs.
             sign_directory: Path to the signDirectory executable file.
             remove_test_playbooks: Should remove test playbooks from content packs or not.
@@ -77,8 +74,6 @@ class ArtifactsManager:
         self.cpus = cpus
         self.id_set_path = id_set_path
         self.pack_names = arg_to_list(pack_names)
-        self.encryptor = encryptor
-        self.encryption_key = encryption_key
         self.signature_key = signature_key
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
@@ -858,9 +853,8 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
             a. If zip:
                 1. Sign packs if needed.
                 2. Zip artifacts zip.
-                3. Encrypt packs if needed.
-                4. Zip packs for uploading.
-                5. Delete artifacts directories.
+                3. Zip packs for uploading.
+                4. Delete artifacts directories.
         5. log report.
 
     Args:
@@ -877,7 +871,6 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
         if artifact_manager.zip_artifacts:
             sign_packs(artifact_manager)
             zip_packs(artifact_manager)
-            encrypt_packs(artifact_manager)
             zip_dirs(artifact_manager)
             delete_dirs(artifact_manager)
 
@@ -918,11 +911,7 @@ def zip_packs(artifact_manager: ArtifactsManager):
     with ProcessPoolHandler(artifact_manager) as pool:
         for pack_name, pack in artifact_manager.content.packs.items():
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
-
-            if artifact_manager.encryption_key and artifact_manager.encryptor:
-                zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, f'{pack.id}_not_encrypted')
-            else:
-                zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
+            zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 
             pool.schedule(make_archive, args=(zip_path, 'zip', dumped_pack_dir))
 
@@ -944,11 +933,6 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
     if artifact_manager.zip_artifacts:
         logger.info(f'\n\t - {artifact_manager.content_uploadable_zips_path}')
-
-
-###############################
-# Pack signing and encryption #
-###############################
 
 
 def sign_packs(artifact_manager: ArtifactsManager):
@@ -979,34 +963,3 @@ def sign_packs(artifact_manager: ArtifactsManager):
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
                      'sign_directory arguments.')
-
-
-def encrypt_packs(artifact_manager: ArtifactsManager):
-    """Encrypt packs zips"""
-    if artifact_manager.encryptor and artifact_manager.encryption_key:
-        with ProcessPoolHandler(artifact_manager) as pool:
-            futures: List[ProcessFuture] = []
-            if 'all' in artifact_manager.pack_names:
-                for pack_name, pack in artifact_manager.content.packs.items():
-                    dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
-                                                   f'{pack.id}_not_encrypted.zip')
-                    futures.append(pool.schedule(pack.encrypt_pack, args=(logger, dumped_pack_zip,
-                                                                          artifact_manager.encryptor,
-                                                                          artifact_manager.encryption_key,
-                                                                          )))
-            else:
-                for pack_name in artifact_manager.pack_names:
-                    if pack_name in artifact_manager.content.packs:
-                        pack = artifact_manager.content.packs[pack_name]
-                        dumped_pack_zip = os.path.join(artifact_manager.content_uploadable_zips_path,
-                                                       f'{pack.id}_not_encrypted.zip')
-                        futures.append(pool.schedule(pack.encrypt_pack, args=(logger, dumped_pack_zip,
-                                                                              artifact_manager.encryptor,
-                                                                              artifact_manager.encryption_key,
-                                                                              )))
-
-        wait_futures_complete(futures, artifact_manager)
-
-    elif artifact_manager.encryptor or artifact_manager.encryption_key:
-        logger.error('Failed to encrypt packs. In order to do so, you need to provide both encryption_key and '
-                     'encryptor arguments.')

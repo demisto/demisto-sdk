@@ -1,5 +1,4 @@
 import logging
-import os
 import subprocess
 from typing import Any, Iterator, Optional, Union
 
@@ -228,33 +227,3 @@ class Pack:
             logger.info(f'Signed {self.path.name} pack successfully')
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
-
-    def encrypt_pack(self, logger: logging.Logger, zip_pack_path: Path, encryptor: Path, encryption_key: str):
-        """ Encrypt pack zip.
-
-        Args:
-            logger (logging.Logger): System logger already initialized.
-            zip_pack_path (Path): Path to the pack not encrypted script.
-            encryptor (Path): Path to the encryptor executable file.
-            encryption_key (str): The encryption key for the packs.
-
-        """
-        try:
-            output_file = str(zip_pack_path).replace('_not_encrypted.zip', '.zip')
-            full_command = f'{encryptor} {zip_pack_path} {output_file} "{encryption_key}"'
-            encryption_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                                  shell=True)
-            output, err = encryption_process.communicate()
-            encryption_process.wait()
-
-            if err:
-                logger.error(f'Failed to encrypt pack for {self.path.name} - {str(err)}')
-                return
-
-            os.remove(zip_pack_path)
-
-        except Exception as error:
-            logger.error(f'Error while trying to encrypt pack {self.path.name}.\n {error}')
-            return
-
-        logger.info(f'Encrypted {self.path.name} pack successfully')

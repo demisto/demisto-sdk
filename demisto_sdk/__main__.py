@@ -337,10 +337,6 @@ def validate(config, **kwargs):
                     "csv list of packs. "
                     "Default is set to `all`"),
               default="all", hidden=True)
-@click.option('-e', '--encryptor', help='Path to the encryptor executable file.', type=click.Path(exists=True,
-                                                                                                  resolve_path=True),
-              hidden=True)
-@click.option('-ek', '--encryption_key', help='The encryption key for the packs.', hidden=True)
 @click.option('-sk', '--signature_key', help='Base64 encoded signature key used for signing packs.', hidden=True)
 @click.option('-sd', '--sign_directory', help='Path to the signDirectory executable file.',
               type=click.Path(exists=True, resolve_path=True), hidden=True)

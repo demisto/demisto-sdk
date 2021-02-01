@@ -93,7 +93,7 @@ class UpdateRN:
             is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == 'Integration':
+                if 'yml' in packfile and file_type == FileType.INTEGRATION:
                     is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
@@ -228,36 +228,7 @@ class UpdateRN:
         if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
             file_name = self.get_display_name(_file_path)
-            file_path = file_path.replace(self.pack_path, '')
             _file_type = find_type(_file_path)
-
-            # if 'Playbooks' in file_path:
-            #     _file_type = 'Playbook'
-            # elif 'Integrations' in file_path:
-            #     _file_type = 'Integration'
-            # elif 'Scripts' in file_path:
-            #     _file_type = 'Script'
-            # # incident fields and indicator fields are using the same scheme.
-            # elif 'IncidentFields' in file_path:
-            #     _file_type = 'Incident Fields'
-            # elif 'IndicatorFields' in file_path:
-            #     _file_type = 'Indicator Fields'
-            # elif 'IndicatorTypes' in file_path:
-            #     _file_type = 'Indicator Types'
-            # elif 'IncidentTypes' in file_path:
-            #     _file_type = 'Incident Types'
-            # elif 'Classifiers' in file_path:
-            #     _file_type = 'Classifiers'
-            # elif 'Layouts' in file_path:
-            #     _file_type = 'Layouts'
-            # elif 'Reports' in file_path:
-            #     _file_type = 'Reports'
-            # elif 'Widgets' in file_path:
-            #     _file_type = 'Widgets'
-            # elif 'Dashboards' in file_path:
-            #     _file_type = 'Dashboards'
-            # elif 'Connections' in file_path:
-            #     _file_type = 'Connections'
 
         return file_name, _file_type
 
@@ -331,23 +302,11 @@ class UpdateRN:
 
     def build_rn_template(self, changed_items: dict):
         rn_string = ''
-        # integration_header = False
-        # playbook_header = False
-        # script_header = False
-        # inc_flds_header = False
-        # classifier_header = False
-        # layout_header = False
-        # inc_types_header = False
-        # ind_types_header = False
-        # rep_types_header = False
-        # widgets_header = False
-        # dashboards_header = False
-        # connections_header = False
-        # ind_fld_header = False
 
         if self.pack_metadata_only:
             rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
             return rn_string
+        rn_template_as_dict: dict = {}
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: x[1].get('type', '').value if x[1].get('type') is not None else ''):
             desc = data.get('description', '')
@@ -359,86 +318,18 @@ class UpdateRN:
                 continue
             rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
                                          text=self.text, from_version=from_version)
-            rn_string_dict: dict = {}
 
             header = f'\n#### {RN_HEADER_FOR_FILE_TYPE[_type]}\n'
-            rn_string_dict[header] = rn_string_dict.get(header, '') + rn_desc
-            rn_string_tal = ''
-            for key, val in rn_string_dict.items():
-                rn_string_tal += key + val
+            rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
-            # if _type == 'Integration':
-            #     if not integration_header:
-            #         rn_string += '\n#### Integrations\n'
-            #         integration_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Playbook':
-            #     if not playbook_header:
-            #         rn_string += '\n#### Playbooks\n'
-            #         playbook_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Script':
-            #     if not script_header:
-            #         rn_string += '\n#### Scripts\n'
-            #         script_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Incident Fields':
-            #     if not inc_flds_header:
-            #         rn_string += '\n#### Incident Fields\n'
-            #         inc_flds_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Classifiers':
-            #     if not classifier_header:
-            #         rn_string += '\n#### Classifiers\n'
-            #         classifier_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Layouts':
-            #     if not layout_header:
-            #         rn_string += '\n#### Layouts\n'
-            #         layout_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Incident Types':
-            #     if not inc_types_header:
-            #         rn_string += '\n#### Incident Types\n'
-            #         inc_types_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Indicator Types':
-            #     if not ind_types_header:
-            #         rn_string += '\n#### Indicator Types\n'
-            #         ind_types_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Reports':
-            #     if not rep_types_header:
-            #         rn_string += '\n#### Reports\n'
-            #         rep_types_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Widgets':
-            #     if not widgets_header:
-            #         rn_string += '\n#### Widgets\n'
-            #         widgets_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Dashboards':
-            #     if not dashboards_header:
-            #         rn_string += '\n#### Dashboards\n'
-            #         dashboards_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Connections':
-            #     if not connections_header:
-            #         rn_string += '\n#### Connections\n'
-            #         connections_header = True
-            #     rn_string += rn_desc
-            # elif _type == 'Indicator Fields':
-            #     if not ind_fld_header:
-            #         rn_string += '\n#### Indicator Fields\n'
-            #         ind_fld_header = True
-            #     rn_string += rn_desc
+        for key, val in rn_template_as_dict.items():
+            rn_string += key + val
 
-        rn_string = rn_string_tal
         return rn_string
 
     def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
-        if _type in ('Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields',
-                     'Indicator Fields'):
+        if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.INDICATOR_TYPE, FileType.LAYOUT,
+                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD]:
             rn_desc = f'- **{content_name}**\n'
         else:
             if is_new_file:
@@ -529,15 +420,15 @@ def get_file_description(path, file_type):
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in ('Playbook', 'Integration'):
+    elif file_type in [FileType.PLAYBOOK, FileType.INTEGRATION]:
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
-    elif file_type == 'Script':
+    elif file_type == FileType.SCRIPT:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in ('Classifiers', 'Reports', 'Widgets', 'Dashboards'):
+    elif file_type in [FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD]:
         json_file = get_json(path)
         return json_file.get('description', '')
 

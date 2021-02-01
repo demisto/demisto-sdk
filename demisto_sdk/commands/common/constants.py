@@ -97,13 +97,8 @@ RN_HEADER_FOR_FILE_TYPE = {
     FileType.WIDGET: 'Widgets',
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
-    FileType.README: 'Readme*',
-    FileType.RELEASE_NOTES: 'Release Notes*',
-    FileType.DESCRIPTION: 'Description*',
-    FileType.IMAGE: 'Image*',
-    FileType.DOC_IMAGE: 'Doc Image*',
-    FileType.MAPPER: 'Mapper*',
-    FileType.LAYOUTS_CONTAINER: 'Layouts Container*'
+    FileType.MAPPER: 'Mapper',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Container'
 }
 
 

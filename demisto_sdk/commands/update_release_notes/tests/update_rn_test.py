@@ -653,6 +653,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
         result = update_rn.identify_changed_file_type(filepath)
+        result = result.value
         assert expected_result == result
 
     def test_check_rn_directory(self, mocker):
@@ -972,6 +973,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('N/A', None))
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')

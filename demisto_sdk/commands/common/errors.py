@@ -747,7 +747,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
-        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+        return f"No release note entry was found for the {file_type.value.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
                f"generate an updated template. If you are trying to exclude an item from the release " \
                f"notes, please refer to the documentation found here - " \

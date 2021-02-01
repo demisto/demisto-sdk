@@ -8,6 +8,9 @@
 * Exclude changes from doc_files directory on validation.
 * Added a validation that an integration command has at most one default argument.
 * Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
+* Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
+* Fixed an issue where beta integrations where not running deprecation validations.
+* Allowed adding additional information to the deprecated description.
 * Added a validation that makes sure outputs in integration are matching the README file.
 
 # 1.2.17

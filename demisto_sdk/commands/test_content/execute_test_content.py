@@ -39,9 +39,8 @@ def _add_pr_comment(comment, logging_module):
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
                     if SKIPPED_INTEGRATION_COMMENT in existing_comment.get('body'):
-                        comment_url = existing_comment.get('utl')
-                        response = requests.delete(comment_url, headers=headers, verify=False)
-                        _handle_github_response(response, logging_module)
+                        comment_url = existing_comment.get('url')
+                        requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
                 _handle_github_response(response, logging_module)
         else:

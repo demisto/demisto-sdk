@@ -127,7 +127,7 @@ def generate_table_section(data: list, title: str, empty_message: str = '', text
 
     for item in data:
         tmp_item = '    |' if numbered_section else '|'
-        escape_less_greater_signs = True if 'First fetch time' in item else False  # instead of html escaping
+        escape_less_greater_signs = 'First fetch time' in item  # instead of html escaping
         for key in item:
             escaped_string = string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True,
                                               escape_less_greater_signs=escape_less_greater_signs)

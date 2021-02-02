@@ -166,7 +166,7 @@ ERROR_CODE = {
     "pack_metadata_non_approved_usecases": "PA119",
     "pack_metadata_non_approved_tags": "PA120",
     "pack_metadata_price_change": "PA121",
-    "pack_name_already_exist": "PA122",
+    "pack_name_already_exists": "PA122",
     "readme_error": "RM100",
     "image_path_error": "RM101",
     "wrong_version_reputations": "RP100",
@@ -1063,7 +1063,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_already_exist(new_pack_name) -> str:
+    def pack_name_already_exists(new_pack_name) -> str:
         return f"The name of your pack: {new_pack_name} already exists in our repo for another pack, " \
                f"please rename the pack name in the metadata file."
 

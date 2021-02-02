@@ -213,7 +213,7 @@ class IDSetValidations(BaseValidator):
         return is_valid
 
     def _is_pack_display_name_already_exist(self, pack_metadata_data):
-        """Check if the pack display name already exist
+        """Check if the pack display name already exists
         Args:
             pack_metadata_data (dict): Dictionary that holds the extracted details from the given metadata file.
         Returns:
@@ -223,7 +223,7 @@ class IDSetValidations(BaseValidator):
         new_pack_name = pack_metadata_data[new_pack_id]['name']
         for pack_id, pack_data in self.packs_set.items():
             if new_pack_name == pack_data['name'] and new_pack_id != pack_id:
-                return False, Errors.pack_name_already_exist(new_pack_name)
+                return False, Errors.pack_name_already_exists(new_pack_name)
         return True, None
 
     def is_unique_file_valid_in_set(self, pack_path, ignored_errors=None):

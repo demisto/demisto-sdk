@@ -375,7 +375,7 @@ class TestPlaybookValidator:
 
         Then
         - Ensure validation fails if it's a not test playbook
-        - Ensure that the validataion passes if no using usage.
+        - Ensure that the validation passes if no using usage.
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)

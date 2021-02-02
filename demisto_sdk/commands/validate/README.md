@@ -22,7 +22,9 @@ Whether to check backward compatibility or not.
 * **-j, --conf-json**
 Validate the conf.json file.
 * **-s, --id-set**
-Validate the id_set.json file.
+Perform validations using the id_set file.
+* **-idp, --id-set-path**
+The path of the id-set.json used for validations.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
@@ -43,6 +45,8 @@ The path of a pack or a file to validate specifically.
 Validation will not not be performed using the updated pack release notes format.
 * **--print-ignored-errors**
 Whether to print ignored errors as warnings.
+* **create-id-set**
+Whether to create the id_set.json file.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

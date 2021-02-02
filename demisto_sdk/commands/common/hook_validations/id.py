@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from collections import OrderedDict
@@ -17,8 +16,8 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
-class IDSetValidator(BaseValidator):
-    """IDSetValidator was designed to make sure we create the id_set.json in the correct way so we can use it later on.
+class IDSetValidations(BaseValidator):
+    """IDSetValidations was designed to make sure all the inter connected content entities are valid.
 
     The id_set.json file is created using the update_id_set.py script. It contains all the data from the various
     executables we have in Content repository - Playbooks/Scripts/Integration. The script extracts the command and
@@ -41,41 +40,22 @@ class IDSetValidator(BaseValidator):
     MAPPERS_SECTION = "Mappers"
     INCIDENT_TYPES_SECTION = "IncidentTypes"
 
-    ID_SET_PATH = "./Tests/id_set.json"
-
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, id_set_path: str = None):
+                 print_as_warnings=False, suppress_print=False, id_set_file=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:
-            self.id_set_path = id_set_path or self.ID_SET_PATH
-            self.id_set = self.load_id_set()
-            self.script_set = self.id_set[self.SCRIPTS_SECTION]
-            self.playbook_set = self.id_set[self.PLAYBOOK_SECTION]
-            self.integration_set = self.id_set[self.INTEGRATION_SECTION]
-            self.test_playbook_set = self.id_set[self.TEST_PLAYBOOK_SECTION]
-            self.classifiers_set = self.id_set[self.CLASSIFIERS_SECTION]
-            self.layouts_set = self.id_set[self.LAYOUTS_SECTION]
-            self.mappers_set = self.id_set[self.MAPPERS_SECTION]
-            self.incident_types_set = self.id_set[self.INCIDENT_TYPES_SECTION]
-
-    def load_id_set(self):
-        with open(self.id_set_path, 'r') as id_set_file:
-            try:
-                id_set = json.load(id_set_file)
-            except ValueError as ex:
-                if "Expecting property name" in str(ex):
-                    error_message, error_code = Errors.id_set_conflicts()
-                    if self.handle_error(error_message, error_code, file_path="id_set.json"):
-                        raise
-                    else:
-                        pass
-
-                raise
-
-            return id_set
+            self.id_set_file = id_set_file
+            self.script_set = self.id_set_file[self.SCRIPTS_SECTION]
+            self.playbook_set = self.id_set_file[self.PLAYBOOK_SECTION]
+            self.integration_set = self.id_set_file[self.INTEGRATION_SECTION]
+            self.test_playbook_set = self.id_set_file[self.TEST_PLAYBOOK_SECTION]
+            self.classifiers_set = self.id_set_file[self.CLASSIFIERS_SECTION]
+            self.layouts_set = self.id_set_file[self.LAYOUTS_SECTION]
+            self.mappers_set = self.id_set_file[self.MAPPERS_SECTION]
+            self.incident_types_set = self.id_set_file[self.INCIDENT_TYPES_SECTION]
 
     def _is_incident_type_default_playbook_found(self, incident_type_data):
         """Check if the default playbook of an incident type is in the id_set
@@ -100,7 +80,8 @@ class IDSetValidator(BaseValidator):
             if not is_valid:  # add error message if not valid
                 error_message, error_code = Errors.incident_type_non_existent_playbook_id(incident_type_name,
                                                                                           incident_type_playbook)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
@@ -121,8 +102,8 @@ class IDSetValidator(BaseValidator):
                     if command.endswith('dev') or command.endswith('copy'):
                         error_message, error_code = Errors.invalid_command_name_in_script(script_data.get('name'),
                                                                                           command)
-                        self.handle_error(error_message, error_code, file_path="id_set.json")
-                        return not is_valid
+                        if self.handle_error(error_message, error_code, file_path="id_set.json"):
+                            return not is_valid
         return is_valid
 
     def _is_integration_classifier_and_mapper_found(self, integration_data):
@@ -146,7 +127,8 @@ class IDSetValidator(BaseValidator):
                     break
             if not is_valid_classifier:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_classifier(integration_classifier)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid_classifier = True
 
         is_valid_mapper = True
         integration_mapper = integration_data.get('mappers', [''])[0]  # there is only 1 mapper per integration
@@ -160,7 +142,8 @@ class IDSetValidator(BaseValidator):
                     break
             if not is_valid_mapper:  # add error message if not valid
                 error_message, error_code = Errors.integration_non_existent_mapper(integration_mapper)
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid_mapper = True
 
         return is_valid_classifier and is_valid_mapper
 
@@ -190,7 +173,8 @@ class IDSetValidator(BaseValidator):
                 is_valid = True
             else:  # there are missing incident types in the id_set, classifier is invalid
                 error_message, error_code = Errors.classifier_non_existent_incident_types(str(classifier_incident_types))
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
@@ -220,20 +204,23 @@ class IDSetValidator(BaseValidator):
                 is_valid = True
             else:  # there are missing incident types in the id_set, mapper is invalid
                 error_message, error_code = Errors.mapper_non_existent_incident_types(str(mapper_incident_types))
-                self.handle_error(error_message, error_code, file_path="id_set.json")
+                if not self.handle_error(error_message, error_code, file_path="id_set.json"):
+                    is_valid = True
 
         return is_valid
 
-    def is_file_valid_in_set(self, file_path, file_type):
+    def is_file_valid_in_set(self, file_path, file_type, ignored_errors=None):
         """Check if the file is valid in the id_set
 
         Args:
             file_path (string): Path to the file.
             file_type (string): The file type.
+            ignored_errors (list): a list of ignored errors for the specific file
 
         Returns:
             bool. Whether the file is valid in the id_set or not.
         """
+        self.ignored_errors = ignored_errors
         is_valid = True
 
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit

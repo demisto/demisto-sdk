@@ -9,8 +9,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
+                         'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -63,6 +63,8 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": "IN131",
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
+    "multiple_default_arg": "IN134",
+    "invalid_integration_parameters_display_name": "IN135",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -447,6 +449,18 @@ class Errors:
     @error_code_decorator
     def integration_non_existent_mapper(integration_mapper):
         return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_default_arg(command_name, default_args):
+        return f"The integration command: {command_name} has multiple default arguments: {default_args}."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_parameters_display_name(invalid_display_names):
+        return f"The integration display names: {invalid_display_names} are invalid, " \
+               "Integration parameters display name should be capitalized and spaced using whitespaces " \
+               "and not underscores ( _ )."
 
     @staticmethod
     @error_code_decorator

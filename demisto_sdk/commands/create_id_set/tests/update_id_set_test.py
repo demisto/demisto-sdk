@@ -15,10 +15,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_fields_by_script_argument, get_general_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_playbook_data, get_report_data, get_script_data,
-    get_values_for_keys_recursively, get_widget_data, has_duplicate,
-    merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_script, re_create_id_set)
+    get_mapper_data, get_pack_metadata_data, get_playbook_data,
+    get_report_data, get_script_data, get_values_for_keys_recursively,
+    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -87,6 +88,7 @@ class TestIDSetCreator:
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
         assert 'Mappers' in id_set.keys()
+        assert 'Packs' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -147,7 +149,128 @@ class TestIDSetCreator:
         with open(self.file_path, 'r') as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
-            assert len(content_entity_value_list) == 0
+            if content_entity != 'Packs':
+                assert len(content_entity_value_list) == 0
+            else:
+                assert len(content_entity_value_list) == 1
+
+
+class TestPacksMetadata:
+    METADATA_WITH_XSOAR_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'xsoar',
+        'currentVersion': '1.0.0',
+        'author': 'Cortex XSOAR',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    METADATA_WITH_PARTNER_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'partner',
+        'currentVersion': '1.0.0',
+        'author': 'Some Partner',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    METADATA_WITH_COMMUNITY_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'community',
+        'currentVersion': '1.0.0',
+        'author': 'Someone',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    TEST_PACK = [
+        (METADATA_WITH_XSOAR_SUPPORT, 'Cortex XSOAR', 'certified'),
+        (METADATA_WITH_PARTNER_SUPPORT, 'Some Partner', 'certified'),
+        (METADATA_WITH_COMMUNITY_SUPPORT, 'Someone', ''),
+    ]
+
+    @staticmethod
+    @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
+    def test_process_metadata(repo, metadata_file_content, author, certification):
+        """
+        Given
+            - A pack_metadata file for Pack1
+        When
+            - parsing pack metadata files
+        Then
+            - parsing all the data from file successfully
+        """
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json(metadata_file_content)
+
+        res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
+        result = res.get('Pack1')
+
+        assert 'name' in result.keys()
+        assert result.get('name') == 'Pack1'
+        assert result.get('current_version') == '1.0.0'
+        assert result.get('author') == author
+        assert result.get('certification') == certification
+        assert result.get('tags') == ['Alerts']
+        assert result.get('use_cases') == ['Case Management']
+        assert result.get('categories') == ['Endpoint']
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', [True, False])
+    def test_process_packs_success(capsys, repo, print_logs):
+        """
+        Given
+            - A pack metadata file path.
+            - Whether to print information to log.
+        When
+            - Parsing pack metadata files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json({
+            'name': 'Pack',
+            'currentVersion': '1.0.0',
+            'author': 'Cortex XSOAR',
+            'support': 'xsoar',
+            'tags': ['Alerts'],
+            'useCases': ['Case Management'],
+            'categories': ['Endpoint']
+        })
+        pack_metadata_path = pack.pack_metadata.path
+        res = get_pack_metadata_data(pack_metadata_path, print_logs)
+
+        captured = capsys.readouterr()
+
+        assert res['Pack']['name'] == 'Pack'
+        assert res['Pack']['current_version'] == '1.0.0'
+        assert res['Pack']['author'] == 'Cortex XSOAR'
+        assert res['Pack']['tags'] == ['Alerts']
+        assert res['Pack']['use_cases'] == ['Case Management']
+        assert res['Pack']['categories'] == ['Endpoint']
+        assert res['Pack']['certification'] == 'certified'
+
+        assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
+
+    @staticmethod
+    def test_process_packs_exception_thrown(capsys):
+        """
+        Given
+            - A pack metadata file path.
+        When
+            - Parsing pack metadata files.
+        Then
+            - Handle the exceptions gracefully.
+        """
+
+        with pytest.raises(FileNotFoundError):
+            get_pack_metadata_data('Pack_Path', True)
+        captured = capsys.readouterr()
+
+        assert 'Failed to process Pack_Path, Error:' in captured.out
 
 
 class TestDuplicates:

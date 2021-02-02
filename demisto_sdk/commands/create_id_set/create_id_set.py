@@ -3,11 +3,11 @@ import os
 from collections import OrderedDict
 from genericpath import exists
 
+from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
 class IDSetCreator:
-    DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
     def __init__(self, output: str = '', input: str = '', print_logs: bool = True):
         """IDSetCreator
@@ -64,7 +64,7 @@ class IDSetCreator:
 
     def save_id_set(self):
         if self.output == "":
-            self.output = IDSetCreator.DEFAULT_ID_SET_PATH
+            self.output = DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))

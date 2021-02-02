@@ -17,6 +17,7 @@ import click
 import networkx
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    DASHBOARDS_DIR,
+                                                   DEFAULT_ID_SET_PATH,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -1164,9 +1165,6 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
         return None, duplicates
 
     return united_id_set, []
-
-
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901

@@ -398,7 +398,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self) -> str:
+    def validate_pack_unique_files(self, id_set_validations, pack_error_ignore_list) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -408,6 +408,11 @@ class PackUniqueFilesValidator(BaseValidator):
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
             self.validate_pack_dependencies(id_set_path=self.id_set_path)
+        if id_set_validations:
+            is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, pack_error_ignore_list)
+            if not is_valid:
+                self._add_error(error, self.pack_path)
+
         return self.get_errors()
 
     # pack dependencies validation

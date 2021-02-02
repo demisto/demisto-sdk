@@ -653,7 +653,8 @@ class ValidateManager:
                                                                id_set_path=id_set_path,
                                                                private_repo=self.is_external_repo,
                                                                skip_id_set_creation=self.skip_id_set_creation)
-        pack_errors = pack_unique_files_validator.validate_pack_unique_files()
+        pack_errors = pack_unique_files_validator.validate_pack_unique_files(self.id_set_validations,
+                                                                             pack_error_ignore_list)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
             return False

@@ -1015,8 +1015,7 @@ class TestRNUpdateUnit:
             - A new record with the updated docker image is added.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('/Users/tlieber/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
-            # with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')

@@ -364,7 +364,6 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                                                         str(script_readme_md)}
 
 
-
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):

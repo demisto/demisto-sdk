@@ -274,6 +274,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Converting the zipfile to a valid Pack structure
     Then
     - Ensure script and integration are componentized and in valid directory structure
+    - Ensure readme_files is not empty and the generated docs exists.
     """
     # Create all Necessary Temporary directories
     # create temp directory for the repo

@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -650,6 +650,8 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
+    if isinstance(file_path, Path):
+        file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
     match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
@@ -670,7 +672,6 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
             pack = get_pack_name(path)
             if pack and is_file_path_in_pack(path):
                 packs.add(pack)
-
     return packs
 
 
@@ -1485,6 +1486,19 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                 elif entity_type == 'layout':
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
+
+
+def is_string_uuid(string_to_check: str):
+    """
+    Check if a given string is from uuid type
+    Args:
+        string_to_check: string
+
+    Returns:
+        bool. True if the string match uuid type, else False
+
+    """
+    return bool(re.fullmatch(UUID_REGEX, string_to_check))
 
 
 def find_file(root_path, file_name):

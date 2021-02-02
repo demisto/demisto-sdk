@@ -252,6 +252,44 @@ class TestPlaybookValidator:
         (PLAYBOOK_JSON_INVALID_SCRIPT_NAME, ID_SET_INVALID_SCRIPT_NAME, False),
     ]
 
+    PlAYBOOK_JSON_VALID_TASKID = {
+        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+    }
+
+    PlAYBOOK_JSON_INVALID_TASKID = {
+        "0": {"task": {"id": "1"},
+              "taskid": "1"},
+        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+    }
+
+    PLAYBOOK_JSON_ID_EQUALS_TASKID = {
+        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"}
+    }
+
+    PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID = {
+        "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
+              "taskid": "106b8f2e-5106-4857-82ac-122450af4893"},
+        "1": {"task": {"id": "106b8f2e-5106-4857-82ac-122450af4893"},
+              "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"}
+    }
+
+    IS_ID_UUID = [
+        (PlAYBOOK_JSON_VALID_TASKID, True),
+        (PlAYBOOK_JSON_INVALID_TASKID, False)
+    ]
+
+    IS_TASK_ID_EQUALS_ID = [
+        (PLAYBOOK_JSON_ID_EQUALS_TASKID, True),
+        (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
+    ]
+
     @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
     def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
         """
@@ -337,8 +375,44 @@ class TestPlaybookValidator:
 
         Then
         - Ensure validation fails if it's a not test playbook
-        - Ensure that the validataion passes if no using usage.
+        - Ensure that the validation passes if no using usage.
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_using_instance() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_ID_UUID)
+    def test_is_id_uuid(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook include taskid and inside task field an id that are both from uuid type.
+        - The playbook include taskid and inside task field an id that are not both from uuid type.
+
+        Then
+        - Ensure validation passes if the taskid field and the id inside task field are both from uuid type
+        - Ensure validation fails if the taskid field and the id inside task field are one of them not from uuid type
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        validator._is_id_uuid() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_TASK_ID_EQUALS_ID)
+    def test_is_taskid_equals_id(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook include taskid and inside task field an id that are both have the same value.
+        - The playbook include taskid and inside task field an id that are different values.
+
+        Then
+        - Ensure validation passes if the taskid field and the id inside task field have the same value
+        - Ensure validation fails if the taskid field and the id inside task field are have different value
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        validator._is_taskid_equals_id() is expected_result

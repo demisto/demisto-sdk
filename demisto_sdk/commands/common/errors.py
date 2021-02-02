@@ -9,8 +9,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122', 'MP106', 'IN128']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
+                         'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -64,6 +64,8 @@ ERROR_CODE = {
     "missing_get_mapping_fields_command": {'code': "IN131", 'ui_applicable': False, 'related_field': 'ismappable'},
     "integration_non_existent_classifier": {'code': "IN132", 'ui_applicable': False, 'related_field': 'classifiers'},
     "integration_non_existent_mapper": {'code': "IN133", 'ui_applicable': False, 'related_field': 'mappers'},
+    "multiple_default_arg": {'code': "IN134", "ui_applicable": True, 'related_field': "arguments"},
+    "invalid_integration_parameters_display_name": {'code': "IN135", 'ui_applicable': True, 'related_field': 'display'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -118,6 +120,8 @@ ERROR_CODE = {
     "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
     "using_instance_in_playbook": {'code': "PB106", 'ui_applicable': True, 'related_field': 'tasks'},
     "invalid_script_id": {'code': "PB107", 'ui_applicable': False, 'related_field': 'tasks'},
+    "invalid_uuid": {'code': "PB108", 'ui_applicable': False, 'related_field': 'taskid'},
+    "taskid_different_from_id": {'code': "PB109", 'ui_applicable': False, 'related_field': 'taskid'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -302,6 +306,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def no_default_value_in_parameter(param_name):
+        return 'The {} parameter should have a default value'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
     def wrong_required_value(param_name):
         return 'The required field of the {} parameter should be False'.format(param_name)
 
@@ -390,6 +399,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def removed_integration_parameters(field):
+        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
     def not_used_display_name(field_name):
         return "The display details for {} will not be used " \
                "due to the type of the parameter".format(field_name)
@@ -420,29 +434,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_for_feed(name, correct_format):
-        return f'Feed Integration was detected A required ' \
-               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
-               f'The correct format of the parameter should be as follows:\n{correct_format}'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_v2_integration_name():
-        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               "e.g: Kenna v2, Jira v2"
-
-    @staticmethod
-    @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
-
-    @staticmethod
-    @error_code_decorator
-    def no_default_value_in_parameter(param_name):
-        return 'The {} parameter should have a default value'.format(param_name)
-
-    @staticmethod
-    @error_code_decorator
     def parameter_missing_from_yml_not_community_contributor(name, correct_format):
         """
             This error is ignored if the contributor is community
@@ -453,26 +444,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_deprecated_integration_display_name():
-        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should follow one of the formats:' \
-               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
-               '2. "Deprecated. <REASON> No available replacement."'
-
-    @staticmethod
-    @error_code_decorator
-    def removed_integration_parameters(field):
-        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
-
-    @staticmethod
-    @error_code_decorator
-    def integration_not_runnable():
-        return "Could not find any runnable command in the integration." \
-               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
+    def parameter_missing_for_feed(name, correct_format):
+        return f'Feed Integration was detected A required ' \
+               f'parameter "{name}" is missing or malformed in the YAML file.\n' \
+               f'The correct format of the parameter should be as follows:\n{correct_format}'
 
     @staticmethod
     @error_code_decorator
@@ -492,6 +467,41 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def multiple_default_arg(command_name, default_args):
+        return f"The integration command: {command_name} has multiple default arguments: {default_args}."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_parameters_display_name(invalid_display_names):
+        return f"The integration display names: {invalid_display_names} are invalid, " \
+               "Integration parameters display name should be capitalized and spaced using whitespaces " \
+               "and not underscores ( _ )."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_v2_integration_name():
+        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
+               "e.g: Kenna v2, Jira v2"
+
+    @staticmethod
+    @error_code_decorator
+    def found_hidden_param(parameter_name):
+        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_display_name():
+        return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecated_integration_description():
+        return 'The description of all deprecated integrations should follow one of the formats:' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_script_name():
         return "The name of this v2 script is incorrect , should be **name**V2." \
                " e.g: DBotTrainTextClassifierV2"
@@ -500,16 +510,6 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_script():
         return "Every deprecated script's comment has to start with 'Deprecated.'"
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_command_name_in_script(script_name, command):
-        return f"in script {script_name} the command {command} has an invalid name. " \
-               f"Please make sure:\n" \
-               f"1 - The right command name is set and the spelling is correct." \
-               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
-               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -587,6 +587,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def non_existing_docker(docker_image):
+        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
+               f'DockerHub: https://hub.docker.com/u/demisto/.'
+
+    @staticmethod
+    @error_code_decorator
     def docker_not_formatted_correctly(docker_image):
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
@@ -599,12 +605,6 @@ class Errors:
                f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
                f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
-
-    @staticmethod
-    @error_code_decorator
-    def non_existing_docker(docker_image):
-        return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
-               f'DockerHub: https://hub.docker.com/u/demisto/.'
 
     @staticmethod
     @error_code_decorator
@@ -826,6 +826,16 @@ class Errors:
         return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
                f"Please make sure:\n" \
                f"1 - The right script id is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the command {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
 
@@ -1283,6 +1293,24 @@ class Errors:
             "1 - The right incident field is set and the spelling is correct.\n" \
             "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
             " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_not_runnable():
+        return "Could not find any runnable command in the integration." \
+               "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_uuid(task_key, id, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+               f"must be from uuid format."
+
+    @staticmethod
+    @error_code_decorator
+    def taskid_different_from_id(task_key, id, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+               f"must be with equal value. "
 
     @staticmethod
     def wrong_filename(file_type):

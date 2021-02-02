@@ -238,26 +238,66 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
-    DEFUALT_ARGS_2 = [
+    DEFAULT_ARGS_1 = [
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
+    DEFAULT_ARGS_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
-    DEFUALT_ARGS_INVALID_2 = [
+    DEFAULT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_2 = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
-    DEFUALT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_INPUTS = [
-        (DEFUALT_ARGS_2, True),
-        (DEFUALT_ARGS_INVALID_1, False),
-        (DEFUALT_ARGS_INVALID_2, False),
-        (DEFUALT_ARGS_INVALID_3, False),
+        (DEFAULT_ARGS_1, True),
+        (DEFAULT_ARGS_2, True),
+        (DEFAULT_ARGS_INVALID_1, False),
+        (DEFAULT_ARGS_INVALID_2, False),
+        (DEFAULT_ARGS_INVALID_3, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
-    def test_is_valid_default_arguments(self, current, answer):
+    def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+        """
+        Given: Integration reputation command with arguments.
+
+        When: running is_valid_default_argument_in_reputation command.
+
+        Then: Validate that matching default arg name yields True, else yields False.
+        """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_arguments() is answer
+        assert validator.is_valid_default_argument_in_reputation_command() is answer
+
+    MULTIPLE_DEFAULT_ARGS_1 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": False}, {"name": "verbose"}]}]
+    MULTIPLE_DEFAULT_ARGS_2 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose"}]}]
+    MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
+        {"name": "msgraph-list-users",
+         "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+    DEFAULT_ARGS_INPUTS = [
+        (MULTIPLE_DEFAULT_ARGS_1, True),
+        (MULTIPLE_DEFAULT_ARGS_2, True),
+        (MULTIPLE_DEFAULT_ARGS_INVALID_1, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
+    def test_is_valid_default_argument(self, current, answer):
+        """
+        Given: Integration command with arguments.
+
+        When: running is_valid_default_argument command.
+
+        Then: Validate that up to 1 default arg name yields True, else yields False.
+        """
+        current = {"script": {"commands": current}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_default_argument() is answer
 
     MOCK_REPUTATIONS_1 = [{"contextPath": "Int.lol", "description": "desc", "type": "number"},
                           {"contextPath": "DBotScore.lives.matter"}]
@@ -298,6 +338,12 @@ class TestIntegrationValidator:
 
     VALID_BETA = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                   "display": "newIntegration (Beta)", "beta": True}
+    VALID_BETA_DEPRECATED = {"commonfields": {"id": "Proofpoint Server Protection"},
+                             "name": "Proofpoint Server Protection",
+                             "display": "Proofpoint Protection Server (Deprecated)",
+                             "beta": True, "deprecated": True,
+                             "description": "Deprecated. The integration uses an unsupported scraping API. "
+                                            "Use Proofpoint Protection Server v2 instead."}
     INVALID_BETA_DISPLAY = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                             "display": "newIntegration", "beta": True}
     INVALID_BETA_ID = {"commonfields": {"id": "newIntegration-beta"}, "name": "newIntegration",
@@ -311,6 +357,7 @@ class TestIntegrationValidator:
                                                "display": "newIntegration changed (Beta)"}
     IS_VALID_BETA_INPUTS = [
         (VALID_BETA, True, True),
+        (VALID_BETA_DEPRECATED, False, True),
         (INVALID_BETA_DISPLAY, True, False),
         (INVALID_BETA_ID, True, False),
         (INVALID_BETA_NAME, True, False),
@@ -500,17 +547,24 @@ class TestIntegrationValidator:
     DEPRECATED_VALID2 = {"deprecated": True, "display": "Feodo Tracker Hashes Feed (Deprecated)",
                          "description": "Deprecated. Feodo Tracker no longer supports this feed. "
                                         "No available replacement."}
+    DEPRECATED_VALID3 = {"deprecated": True, "display": "Proofpoint Protection Server (Deprecated)",
+                         "description": "Deprecated. The integration uses an unsupported scraping API. "
+                                        "Use Proofpoint Protection Server v2 instead."}
     DEPRECATED_INVALID_DISPLAY = {"deprecated": True, "display": "ServiceNow (Old)",
                                   "description": "Deprecated. Use the XXXX integration instead."}
     DEPRECATED_INVALID_DESC = {"deprecated": True, "display": "ServiceNow (Deprecated)", "description": "Deprecated."}
     DEPRECATED_INVALID_DESC2 = {"deprecated": True, "display": "ServiceNow (Deprecated)",
                                 "description": "Use the ServiceNow integration to manage..."}
+    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "display": "Proofpoint Protection Server (Deprecated)",
+                                "description": "Deprecated. The integration uses an unsupported scraping API."}
     DEPRECATED_INPUTS = [
         (DEPRECATED_VALID, True),
         (DEPRECATED_VALID2, True),
+        (DEPRECATED_VALID3, True),
         (DEPRECATED_INVALID_DISPLAY, False),
         (DEPRECATED_INVALID_DESC, False),
-        (DEPRECATED_INVALID_DESC2, False)
+        (DEPRECATED_INVALID_DESC2, False),
+        (DEPRECATED_INVALID_DESC3, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
@@ -529,6 +583,44 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
+
+    def test_valid_integration_parameters_display_name(self, integration):
+        """
+        Given
+            - An integration with valid parameters display names.
+        When
+            - running is_valid_parameters_display_name.
+        Then
+            - an integration with a valid parameters display name is valid.
+        """
+
+        integration.yml.write_dict({'configuration': [
+            {'display': 'Token'},
+            {'display': 'Username'}
+        ]})
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.is_valid_parameters_display_name()
+
+    def test_invalid_integration_parameters_display_name(self, integration):
+        """
+        Given
+            - An integration with invalid parameters display names.
+        When
+            - running is_valid_parameters_display_name.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+
+        integration.yml.write_dict({'configuration': [
+            {'display': 'token'},
+            {'display': 'User_name'}
+        ]})
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.is_valid_parameters_display_name()
 
 
 class TestIsFetchParamsExist:
@@ -730,7 +822,7 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_arguments() is True
+        assert validator.is_valid_default_argument_in_reputation_command() is True
 
     @pytest.mark.parametrize('param', [
         {'commands': ['something']},

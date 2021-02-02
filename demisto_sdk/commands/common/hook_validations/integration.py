@@ -78,7 +78,8 @@ class IntegrationValidator(ContentEntityValidator):
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            self.is_valid_default_arguments(),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_argument(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
             self.is_checkbox_param_configured_correctly(),
@@ -95,11 +96,32 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
+            self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist()
         ]
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
+        return all(answers)
+
+    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
+        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
+            Args:
+                validate_rn (bool): Whether to validate release notes (changelog) or not.
+
+            Returns:
+                bool: True if integration is valid, False otherwise.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_subtype(),
+            self.is_valid_category(),
+            self.is_valid_beta(),
+            self.is_valid_image(),
+            self.is_valid_description(beta_integration=True),
+            self.is_valid_as_deprecated(),
+        ]
         return all(answers)
 
     def is_valid_as_deprecated(self):
@@ -125,8 +147,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r'Deprecated\. Use .+ instead\.'
-        deprecated_no_replace_regex = r'Deprecated\. .+ No available replacement\.'
+        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass
@@ -144,23 +166,6 @@ class IntegrationValidator(ContentEntityValidator):
         """
         tests = self.current_file.get('tests', [])
         return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
-
-    def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
-        """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
-            Args:
-                validate_rn (bool): Whether to validate release notes (changelog) or not.
-
-            Returns:
-                bool: True if integration is valid, False otherwise.
-        """
-        answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_default_arguments(),
-            self.is_valid_beta(),
-            self.is_valid_image(),
-            self.is_valid_description(beta_integration=True),
-        ]
-        return all(answers)
 
     def is_valid_param(self, param_name, param_display):
         # type: (str, str) -> bool
@@ -262,9 +267,9 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_default_arguments(self):
+    def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
-        """Check if a reputation command (domain/email/file/ip/url)
+        """Check if a reputation command (domain/email/file/ip/url/cve)
             has a default non required argument with the same name
 
         Returns:
@@ -280,7 +285,7 @@ class IntegrationValidator(ContentEntityValidator):
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == command_name:
+                    if arg_name == command_name or (command_name == 'cve' and arg_name == 'cve_id'):
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
@@ -297,6 +302,30 @@ class IntegrationValidator(ContentEntityValidator):
         if not flag:
             print_error(Errors.suggest_fix(self.file_path))
         return flag
+
+    def is_valid_default_argument(self):
+        # type: () -> bool
+        """Check if a  command has at most 1 default argument.
+
+        Returns:
+            bool. Whether a command holds at most 1 default argument.
+        """
+        is_valid = True
+        commands = self.current_file.get('script', {}).get('commands', [])
+        if commands is None:
+            commands = []
+
+        for command in commands:
+            default_args = set()
+            for arg in command.get('arguments', []):
+                if arg.get('default'):
+                    default_args.add(arg.get('name'))
+            if len(default_args) > 1:  # if more than one default arg, command is faulty
+                error_message, error_code = Errors.multiple_default_arg(command.get('name'), str(default_args))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False  # do not break the main loop as there can be multiple invalid commands
+
+        return is_valid
 
     def is_outputs_for_reputations_commands_valid(self):
         # type: () -> bool
@@ -434,11 +463,12 @@ class IntegrationValidator(ContentEntityValidator):
     def _is_display_contains_beta(self):
         # type: () -> bool
         """Checks that 'display' field includes the substring 'beta'"""
-        display = self.current_file.get('display', '')
-        if 'beta' not in display.lower():
-            error_message, error_code = Errors.no_beta_in_display()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+        if not self.current_file.get('deprecated'):  # this validation is not needed for deprecated beta integrations
+            display = self.current_file.get('display', '')
+            if 'beta' not in display.lower():
+                error_message, error_code = Errors.no_beta_in_display()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
 
         return True
 
@@ -884,6 +914,28 @@ class IntegrationValidator(ContentEntityValidator):
             error, code = Errors.integration_not_runnable()
             self.handle_error(error, code, file_path=self.file_path)
             return False
+        return True
+
+    def is_valid_parameters_display_name(self) -> bool:
+        """Verifies integration parameters display name is valid.
+
+        Returns:
+            bool: True if description is valid - capitalized and spaced using whitespace and not underscores,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_display_name = [param.get('display') for param in configuration if param.get('display')]
+
+        invalid_display_names = []
+        for parameter in parameters_display_name:
+            invalid_display_names.append(parameter) if parameter and not parameter[0].isupper() or '_' in parameter \
+                else None
+
+        if invalid_display_names:
+            error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True
 
     def is_mapping_fields_command_exist(self) -> bool:

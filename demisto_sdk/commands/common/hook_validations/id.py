@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
                                                        get_mapper_data,
-                                                       get_script_data,
-                                                       get_pack_metadata_data)
+                                                       get_pack_metadata_data,
+                                                       get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 
@@ -48,8 +48,6 @@ class IDSetValidations(BaseValidator):
                          suppress_print=suppress_print)
         self.is_circle = is_circle
         self.configuration = configuration
-        self.is_circle = True
-        is_test_run = False
         if not is_test_run and self.is_circle:
             self.id_set_file = id_set_file
             self.script_set = self.id_set_file[self.SCRIPTS_SECTION]
@@ -221,9 +219,10 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the metadata file is valid or not.
         """
-        new_pack_name = list(pack_metadata_data.keys())[0]
-        for pack_name, _ in self.packs_set.items():
-            if new_pack_name == pack_name:
+        new_pack_id = list(pack_metadata_data.keys())[0]
+        new_pack_name = pack_metadata_data[new_pack_id]['name']
+        for pack_id, pack_data in self.packs_set.items():
+            if new_pack_name == pack_data['name'] and new_pack_id != pack_id:
                 return False, Errors.pack_name_already_exist(new_pack_name)
         return True, None
 

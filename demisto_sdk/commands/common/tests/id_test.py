@@ -549,3 +549,78 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
     assert validator._is_mapper_incident_types_found(mapper_data=mapper_data) is False, \
         "The mapper incidenttypes was found"
+
+
+def test_valid_is_pack_display_name_already_exist():
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert is_valid
+    assert not error
+
+
+def test_invalid_is_pack_display_name_already_exist():
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMwareV2": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert not is_valid
+    assert error == ('The name of your pack: VMware already exists in our repo for another pack, '
+                     'please rename the pack name in the metadata file.', 'PA122')

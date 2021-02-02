@@ -1065,7 +1065,7 @@ class Errors:
     @error_code_decorator
     def pack_name_already_exist(new_pack_name) -> str:
         return f"The name of your pack: {new_pack_name} already exists in our repo for another pack, " \
-               f"please rename the name in the metadata file."
+               f"please rename the pack name in the metadata file."
 
     @staticmethod
     @error_code_decorator

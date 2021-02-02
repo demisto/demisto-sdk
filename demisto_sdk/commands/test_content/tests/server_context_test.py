@@ -93,6 +93,7 @@ def generate_mocked_server_context(build_context: BuildContext,
     mocker.patch('demisto_sdk.commands.test_content.IntegrationsLock.safe_unlock_integrations')
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_docker_threshold_test')
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance', return_value=False)
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.TestContext._notify_failed_test')
     mocker.patch.object(MITMProxy, '__init__', lambda *args, **kwargs: None)
     mocker.patch('time.sleep')
     # Executing the test

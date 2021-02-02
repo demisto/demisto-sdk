@@ -255,7 +255,7 @@ class ContributionConverter:
         if file_type == 'integration':
             generate_integration_doc(yml_path)
         if file_type == 'script':
-            generate_script_doc(input=yml_path, examples=[])
+            generate_script_doc(input_path=yml_path, examples=[])
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
 

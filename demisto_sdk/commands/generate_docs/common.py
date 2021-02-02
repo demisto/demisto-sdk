@@ -127,8 +127,11 @@ def generate_table_section(data: list, title: str, empty_message: str = '', text
 
     for item in data:
         tmp_item = '    |' if numbered_section else '|'
+        escape_less_greater_signs = 'First fetch time' in item  # instead of html escaping
         for key in item:
-            tmp_item += f" {string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True)} |"
+            escaped_string = string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True,
+                                              escape_less_greater_signs=escape_less_greater_signs)
+            tmp_item += f" {escaped_string} |"
         section.append(tmp_item)
 
     section.append('')
@@ -140,7 +143,8 @@ def add_lines(line):
     return output if output else [line]
 
 
-def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True):
+def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True,
+                     escape_less_greater_signs=False):
     """
        Escape any chars that might break a markdown string
 
@@ -154,13 +158,22 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
        :param escape_multiline: Whether convert line-ending characters (optional)
 
        :type escape_html: ``bool``
-       :param escape_multiline: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
+       :param escape_html: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
             html tags. Otherwise this should be true to support MDX complaint docs.
+
+       :type escape_less_greater_signs: ``bool``
+       :param escape_less_greater_signs: Whether to escape (<,>) (default: False) with (`<,>`).
+            Set to true for first fetch time param. called instead of the escape_html.
 
        :return: A modified string
        :rtype: ``str``
     """
-    if escape_html:
+
+    if escape_less_greater_signs:
+        st = st.replace('<', '`<')
+        st = st.replace('>', '>`')
+        st = st.replace('&', '`&`')
+    elif escape_html:
         st = html.escape(st, quote=False)
 
     if escape_multiline:

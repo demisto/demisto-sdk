@@ -361,8 +361,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     assert sample_layout.exists()
 
     assert not contrib_converter_inst.readme_files == []
-    assert [f'{playbook_readme_md}', f'{integration_readme_md}',
-            f'{script_readme_md}'] == contrib_converter_inst.readme_files
+    readme_files_test = [f'{playbook_readme_md}', f'{integration_readme_md}', f'{script_readme_md}']
+    assert len(readme_files_test) == len(contrib_converter_inst.readme_files)
+
 
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')

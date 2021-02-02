@@ -162,7 +162,7 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
             html tags. Otherwise this should be true to support MDX complaint docs.
 
        :type escape_less_greater_signs: ``bool``
-       :param escape_less_greater_signs: Whether to escape (<,>) (default: True) with (`<,>`).
+       :param escape_less_greater_signs: Whether to escape (<,>) (default: False) with (`<,>`).
             Set to true for first fetch time param. called instead of the escape_html.
 
        :return: A modified string

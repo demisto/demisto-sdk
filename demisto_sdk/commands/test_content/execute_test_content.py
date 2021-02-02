@@ -67,7 +67,7 @@ def execute_test_content(**kwargs):
     if not build_context.unmockable_tests_to_run.empty() or not build_context.mockable_tests_to_run.empty():
         raise Exception('Not all tests have been executed')
     if build_context.tests_data_keeper.playbook_skipped_integration and build_context.build_name != 'master':
-        comment = SKIPPED_INTEGRATION_COMMENT + ':\n {}'. \
+        comment = SKIPPED_INTEGRATION_COMMENT + ':\n- {}'. \
             format('\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration))
         _add_pr_comment(comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)

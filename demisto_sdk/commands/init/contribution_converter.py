@@ -53,7 +53,7 @@ class ContributionConverter:
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
                  gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
-                 base_dir: Union[str] = None, no_pipenv: bool = False, readme_files: List[str] = []):
+                 base_dir: Union[str] = None, no_pipenv: bool = False):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -95,7 +95,7 @@ class ContributionConverter:
         self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
-        self.readme_files = readme_files
+        self.readme_files: List[str] = []
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -254,13 +254,12 @@ class ContributionConverter:
         readme_path = os.path.join(dir_output, 'README.md')
         if file_type == 'integration':
             generate_integration_doc(yml_path)
-            self.readme_files.append(readme_path)
         if file_type == 'script':
             generate_script_doc(input=yml_path, examples=[])
-            self.readme_files.append(readme_path)
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
-            self.readme_files.append(readme_path)
+
+        self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self):
         """

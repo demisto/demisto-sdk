@@ -359,7 +359,6 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     assert sample_layoutscontainer.exists()
     assert sample_layout.exists()
 
-    assert not contrib_converter_inst.readme_files == []
     assert set(contrib_converter_inst.readme_files) == {str(playbook_readme_md), str(integration_readme_md),
                                                         str(script_readme_md)}
 

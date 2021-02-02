@@ -379,7 +379,7 @@ class ValidateManager:
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
 
-        elif file_type == FileType.INDICATOR_TYPE:
+        elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.LAYOUT:

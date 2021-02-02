@@ -222,8 +222,6 @@ class UpdateRN:
     def identify_changed_file_type(self, file_path):
         _file_type = None
         file_name = 'N/A'
-        if 'ReleaseNotes' in file_path or 'TestPlaybooks' in file_path:
-            return file_name, _file_type
 
         if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
@@ -329,7 +327,7 @@ class UpdateRN:
         return rn_string
 
     def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
-        if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.INDICATOR_TYPE, FileType.LAYOUT,
+        if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD]:
             rn_desc = f'- **{content_name}**\n'
         else:
@@ -359,33 +357,38 @@ class UpdateRN:
             if _type is None:
                 continue
 
-            _header_by_type = f'\n#### {RN_HEADER_FOR_FILE_TYPE.get(_type)}\n'
+            # _header_by_type = f'\n#### {RN_HEADER_FOR_FILE_TYPE.get(_type)}\n'
+            _header_by_type = RN_HEADER_FOR_FILE_TYPE.get(_type)
 
-            if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.INDICATOR_TYPE, FileType.LAYOUT, FileType.INCIDENT_FIELD]:
+            if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT, FileType.INCIDENT_FIELD]:
                 rn_desc = f'\n- **{content_name}**'
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
 
             if _header_by_type in current_rn:
-                _header_by_type = _header_by_type[:-1] if _header_by_type.endswith('s') else _header_by_type
+                # _header_by_type = _header_by_type[:-1] if _header_by_type.endswith('s') else _header_by_type
                 if content_name in current_rn:
                     continue
                 else:
                     self.existing_rn_changed = True
-                    rn_parts = new_rn.split(_header_by_type + 's')
+                    # rn_parts = new_rn.split(_header_by_type + 's')
+                    rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
+                        # new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
+                        new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
                 self.existing_rn_changed = True
                 if _header_by_type in new_rn:
-                    rn_parts = new_rn.split(_header_by_type + 's')
+                    # rn_parts = new_rn.split(_header_by_type + 's' if not _header_by_type.endswith('s') else _header_by_type)
+                    rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
+                        # new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
+                        new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
                 else:

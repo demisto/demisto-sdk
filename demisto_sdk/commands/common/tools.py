@@ -941,7 +941,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
         # located in reputations.json file.
         if 'regex' in _dict or 'reputations' in _dict:
-            return FileType.INDICATOR_TYPE
+            return FileType.REPUTATION
 
         if 'brandName' in _dict and 'transformer' in _dict:
             return FileType.OLD_CLASSIFIER

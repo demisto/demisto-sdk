@@ -96,7 +96,7 @@ class TestGenericFunctions:
         (VALID_INTEGRATION_TEST_PATH, FileType.INTEGRATION),
         (VALID_LAYOUT_PATH, FileType.LAYOUT),
         (VALID_PLAYBOOK_ID_PATH, FileType.PLAYBOOK),
-        (VALID_REPUTATION_FILE, FileType.INDICATOR_TYPE),
+        (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
         (IGNORED_PNG, None),

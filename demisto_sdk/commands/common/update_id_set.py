@@ -942,7 +942,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     res = []
     try:
         # ignore old reputations.json files
-        if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.INDICATOR_TYPE:
+        if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(get_indicator_type_data(file_path, all_integrations))

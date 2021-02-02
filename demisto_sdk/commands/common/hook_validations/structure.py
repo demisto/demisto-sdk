@@ -123,7 +123,7 @@ class StructureValidator(BaseValidator):
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
             return True
         # ignore reputations.json
-        if self.scheme_name == FileType.INDICATOR_TYPE and os.path.basename(self.file_path) == OLD_REPUTATION:
+        if self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION:
             return True
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

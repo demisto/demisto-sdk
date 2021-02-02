@@ -53,7 +53,7 @@ class TestRNUpdate(unittest.TestCase):
             "N/A": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
             "Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
             "Hello World Incident Type": {"type": FileType.INCIDENT_TYPE, "description": "", "is_new_file": False},
-            "Hello World Indicator Type": {"type": FileType.INDICATOR_TYPE, "description": "", "is_new_file": False},
+            "Hello World Indicator Type": {"type": FileType.REPUTATION, "description": "", "is_new_file": False},
             "Hello World Indicator Field": {"type": FileType.INDICATOR_FIELD, "description": "", "is_new_file": False},
             "Second Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
             "Hello World Widget": {"type": FileType.WIDGET, "description": "", "is_new_file": False},
@@ -586,36 +586,52 @@ class TestRNUpdateUnit:
 - **Sample IncidentField**
 - **XDR Alerts**
 
-#### Integration
-##### Sample
+#### Integrations
+##### Cortex XDR - IR
 - %%UPDATE_RN%%
 
-##### Cortex XDR - IR
+##### Sample
 - %%UPDATE_RN%%
 """
 
-    diff_package = [('Packs/VulnDB', 'Packs/VulnDB/Layouts/VulnDB/VulnDB.json', ('VulnDB', 'layout'))  # ,
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
-                    # ('Packs/CommonTypes', 'Packs/CommonTypes/IndicatorFields/VulnDB.json',
-                    #  ('VulnDB', 'Indicator Fields')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
-                    # ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB',
-                    #                                                                                      'Playbook')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
-                    # ('Packs/CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', ('N/A', None)),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Integrations/VulnDB/VulnDB.yml', ('VulnDB', 'Integration')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Connections/VulnDB/VulnDB.yml', ('VulnDB', 'Connections')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
-                    # ('Packs/CommonScripts', 'Packs/CommonScripts/Dashboards/VulnDB/VulnDB.yml',
-                    #  ('VulnDB', 'Dashboards')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Widgets/VulnDB/VulnDB.yml', ('VulnDB', 'Widgets')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/Reports/VulnDB/VulnDB.yml', ('VulnDB', 'Reports')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/IndicatorTypes/VulnDB/VulnDB.yml', ('VulnDB', 'Indicator Types')),
-                    # ('Packs/VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
-                    # ('Packs/CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
+    diff_package = [('Packs/VulnDB', 'Packs/VulnDB/Layouts/VulnDB/VulnDB.json', FileType.LAYOUT,
+                     ('VulnDB', FileType.LAYOUT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', FileType.CLASSIFIER,
+                     ('VulnDB', FileType.CLASSIFIER)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', FileType.INCIDENT_TYPE,
+                     ('VulnDB', FileType.INCIDENT_TYPE)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', FileType.INCIDENT_FIELD,
+                     ('VulnDB', FileType.INCIDENT_FIELD)),
+                    ('Packs/CommonTypes', 'Packs/CommonTypes/IndicatorFields/VulnDB.json', FileType.INDICATOR_FIELD,
+                     ('VulnDB', FileType.INDICATOR_FIELD)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', FileType.PLAYBOOK,
+                     ('VulnDB', FileType.PLAYBOOK)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml',
+                     FileType.PLAYBOOK, ('VulnDB', FileType.PLAYBOOK)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', FileType.SCRIPT,
+                     ('VulnDB', FileType.SCRIPT)),
+                    ('Packs/CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', FileType.SCRIPT,
+                     ('VulnDB', FileType.SCRIPT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', FileType.RELEASE_NOTES,
+                     ('VulnDB', FileType.RELEASE_NOTES)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Integrations/VulnDB/VulnDB.yml', FileType.INTEGRATION,
+                     ('VulnDB', FileType.INTEGRATION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Connections/VulnDB/VulnDB.yml', FileType.CONNECTION,
+                     ('VulnDB', FileType.CONNECTION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml', FileType.DASHBOARD,
+                     ('VulnDB', FileType.DASHBOARD)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/Dashboards/VulnDB/VulnDB.yml', FileType.DASHBOARD,
+                     ('VulnDB', FileType.DASHBOARD)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Widgets/VulnDB/VulnDB.yml', FileType.WIDGET,
+                     ('VulnDB', FileType.WIDGET)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Reports/VulnDB/VulnDB.yml', FileType.REPORT,
+                     ('VulnDB', FileType.REPORT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IndicatorTypes/VulnDB/VulnDB.yml', FileType.REPUTATION,
+                     ('VulnDB', FileType.REPUTATION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', FileType.TEST_PLAYBOOK,
+                     ('VulnDB', FileType.TEST_PLAYBOOK)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml',
+                     FileType.TEST_PLAYBOOK, ('VulnDB', FileType.TEST_PLAYBOOK)),
                     ]
 
     @pytest.fixture(autouse=True)
@@ -635,8 +651,8 @@ class TestRNUpdateUnit:
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
-    @pytest.mark.parametrize('pack_name, path, expected_result', diff_package)
-    def test_ident_changed_file_type(self, pack_name, path, expected_result, mocker):
+    @pytest.mark.parametrize('pack_name, path, find_type_result, expected_result', diff_package)
+    def test_ident_changed_file_type(self, pack_name, path, find_type_result, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -652,8 +668,8 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.find_type', return_value=find_type_result)
         result = update_rn.identify_changed_file_type(filepath)
-        result = result.value
         assert expected_result == result
 
     def test_check_rn_directory(self, mocker):
@@ -999,7 +1015,8 @@ class TestRNUpdateUnit:
             - A new record with the updated docker image is added.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('/Users/tlieber/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            # with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
@@ -1011,6 +1028,7 @@ class TestRNUpdateUnit:
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_0_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
 
         client = UpdateRN(pack_path="Packs/Test", update_type='minor',
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
@@ -1047,6 +1065,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
                                                                                 '/update_release_notes/tests_data'
                                                                                 '/Packs/release_notes/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))

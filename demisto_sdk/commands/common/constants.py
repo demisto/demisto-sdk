@@ -61,7 +61,7 @@ class FileType(Enum):
     BETA_INTEGRATION = 'betaintegration'
     INCIDENT_FIELD = 'incidentfield'
     INDICATOR_FIELD = 'indicatorfield'
-    INDICATOR_TYPE = 'indicatortype'
+    REPUTATION = 'reputation'
     LAYOUT = 'layout'
     LAYOUTS_CONTAINER = 'layoutscontainer'
     DASHBOARD = 'dashboard'
@@ -89,7 +89,7 @@ RN_HEADER_FOR_FILE_TYPE = {
     FileType.SCRIPT: 'Scripts',
     FileType.INCIDENT_FIELD: 'Incident Fields',
     FileType.INDICATOR_FIELD: 'Indicator Fields',
-    FileType.INDICATOR_TYPE: 'Indicator Types',
+    FileType.REPUTATION: 'Reputation',
     FileType.INCIDENT_TYPE: 'Incident Types',
     FileType.CLASSIFIER: 'Classifiers',
     FileType.LAYOUT: 'Layouts',
@@ -115,7 +115,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
-    FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
+    FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,

@@ -29,7 +29,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.MAPPER: ClassifierMapper,
     FileType.LAYOUT: Layout,
     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
-    FileType.INDICATOR_TYPE: IndicatorType,
+    FileType.REPUTATION: IndicatorType,
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,
     FileType.INCIDENT_TYPE: IncidentType,

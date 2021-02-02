@@ -146,8 +146,6 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-@pytest.mark.skip(reason="Test is flaky and seems to fail occasionally on "
-                         "SIGTERM - https://github.com/demisto/etc/issues/33244")
 def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 

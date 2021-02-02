@@ -63,16 +63,25 @@ def test_format_md():
 
 def test_string_escape_md():
     from demisto_sdk.commands.generate_docs.common import string_escape_md
-    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
-    assert '<' not in res
-    assert '>' not in res
+
+    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)',
+                           minimal_escaping=True, escape_multiline=True, escape_less_greater_signs=True)
+    assert res == 'First fetch timestamp (`<number>` `<time unit>`, e.g., 12 hours, 7 days)'
+
+    res = string_escape_md("format: <number> <time unit>, e.g., 12 hours, 7 days.",
+                           minimal_escaping=True, escape_multiline=True, escape_less_greater_signs=True)
+    assert res == "format: `<number>` `<time unit>`, e.g., 12 hours, 7 days."
+
     res = string_escape_md("new line test \n", escape_multiline=True)
     assert '\n' not in res
     assert '<br/>' in res
+
     res = string_escape_md('Here are "Double Quotation" marks')
     assert '"' in res
+
     res = string_escape_md("Here are 'Single Quotation' marks")
     assert "'" in res
+
     res = string_escape_md('- This _sentence_ has _wrapped_with_underscore_ and _another_ words.')
     assert '\\_wrapped_with_underscore\\_' in res
     assert '\\_sentence\\_' in res

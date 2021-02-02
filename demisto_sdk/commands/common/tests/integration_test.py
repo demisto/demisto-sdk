@@ -947,3 +947,4 @@ class TestisContextChanged:
             validator.current_file = current_yml
             res = validator.is_context_change_in_readme()
             assert res == expected
+        patcher.stop()

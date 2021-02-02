@@ -72,7 +72,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            create_id_set=False, json_file_path=None
+            create_id_set=False, json_file_path=None, skip_schema_check=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -90,6 +90,7 @@ class ValidateManager:
         self.skip_id_set_creation = not create_id_set or self.skip_dependencies
         self.compare_type = '...'
         self.staged = staged
+        self.skip_schema_check = skip_schema_check
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -331,11 +332,11 @@ class ValidateManager:
                                                  print_as_warnings=self.print_ignored_errors, tag=self.prev_ver,
                                                  old_file_path=old_file_path, branch_name=self.branch_name,
                                                  is_new_file=not is_modified,
-                                                 json_file_path=self.json_file_path)
+                                                 json_file_path=self.json_file_path,
+                                                 skip_schema_check=self.skip_schema_check)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
-            click.secho(f'Validating scheme for {file_path}')
             if not structure_validator.is_valid_file():
                 return False
 

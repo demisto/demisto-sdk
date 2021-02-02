@@ -272,6 +272,9 @@ def unify(**kwargs):
     help='Whether to create the id_set.json file.')
 @click.option(
     '-j', '--json-file', help='The .json file path to which to output the command results.')
+@click.option(
+    '--skip-schema-check', is_flag=True,
+    help='Whether to skip the file schema check.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -303,8 +306,9 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            create_id_set=kwargs.get('create-id-set'),
+            create_id_set=kwargs.get('create_id_set'),
             json_file_path=kwargs.get('json_file'),
+            skip_schema_check=kwargs.get('skip_schema_check')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

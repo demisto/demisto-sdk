@@ -47,12 +47,13 @@ class StructureValidator(BaseValidator):
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
-                 suppress_print: bool = False, branch_name='', json_file_path=''):
+                 suppress_print: bool = False, branch_name='', json_file_path='', skip_schema_check=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
+        self.skip_schema_check = skip_schema_check
 
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         if isinstance(self.scheme_name, str):
@@ -120,11 +121,14 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the scheme is valid on self.file_path.
         """
-        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK]:
+        # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
+        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK] \
+                or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
+                                              os.path.basename(self.file_path) == OLD_REPUTATION):
             return True
-        # ignore reputations.json
-        if self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION:
-            return True
+
+        click.secho(f'Validating scheme for {self.file_path}')
+
         try:
             # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')

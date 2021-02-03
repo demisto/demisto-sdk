@@ -89,7 +89,7 @@ RN_HEADER_FOR_FILE_TYPE = {
     FileType.SCRIPT: 'Scripts',
     FileType.INCIDENT_FIELD: 'Incident Fields',
     FileType.INDICATOR_FIELD: 'Indicator Fields',
-    FileType.REPUTATION: 'Reputation',
+    FileType.REPUTATION: 'Indicator Types',
     FileType.INCIDENT_TYPE: 'Incident Types',
     FileType.CLASSIFIER: 'Classifiers',
     FileType.LAYOUT: 'Layouts',

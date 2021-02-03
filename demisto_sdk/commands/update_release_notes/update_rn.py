@@ -327,8 +327,8 @@ class UpdateRN:
         return rn_string
 
     def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
-        if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD]:
+        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             rn_desc = f'- **{content_name}**\n'
         else:
             if is_new_file:
@@ -359,7 +359,8 @@ class UpdateRN:
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
 
-            if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT, FileType.INCIDENT_FIELD]:
+            if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                         FileType.INCIDENT_FIELD):
                 rn_desc = f'\n- **{content_name}**'
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
@@ -418,7 +419,7 @@ def get_file_description(path, file_type):
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in [FileType.PLAYBOOK, FileType.INTEGRATION]:
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -426,7 +427,7 @@ def get_file_description(path, file_type):
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in [FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD]:
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD):
         json_file = get_json(path)
         return json_file.get('description', '')
 

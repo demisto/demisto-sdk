@@ -85,7 +85,7 @@ class FileType(Enum):
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
-    FileType.INTEGRATION: "Integrations",
+    FileType.INTEGRATION: 'Integrations',
     FileType.SCRIPT: 'Scripts',
     FileType.INCIDENT_FIELD: 'Incident Fields',
     FileType.INDICATOR_FIELD: 'Indicator Fields',
@@ -98,7 +98,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mapper',
-    FileType.LAYOUTS_CONTAINER: 'Layouts Container'
+    FileType.LAYOUTS_CONTAINER: 'Layouts Container',
 }
 
 

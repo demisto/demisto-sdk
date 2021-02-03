@@ -48,6 +48,7 @@ class ContributionConverter:
         dir_name (str): The directory name of a pack's containing folder
         create_new (bool): True if creating a new pack (default), False if updating an existing pack
         gh_user (str): The github username of the person contributing the pack
+        readme_files (List[str]): The readme files paths that is generated for new content items.
     """
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -73,6 +74,7 @@ class ContributionConverter:
             base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
                 local content repo. If no value is passed, the `get_content_path()` function is used to determine
                 the path. Defaults to None.
+
         """
         self.configuration = Configuration()
         self.contribution = contribution
@@ -95,6 +97,7 @@ class ContributionConverter:
         self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
+        self.readme_files: List[str] = []
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -252,9 +255,13 @@ class ContributionConverter:
         if file_type == 'integration':
             generate_integration_doc(yml_path)
         if file_type == 'script':
-            generate_script_doc(input=yml_path, examples=[])
+            generate_script_doc(input_path=yml_path, examples=[])
         if file_type == 'playbook':
             generate_playbook_doc(yml_path)
+
+        dir_output = os.path.dirname(os.path.realpath(yml_path))
+        readme_path = os.path.join(dir_output, 'README.md')
+        self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self):
         """

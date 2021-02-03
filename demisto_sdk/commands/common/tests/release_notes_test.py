@@ -188,6 +188,9 @@ MODIFIED_FILES_INVALID = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'TestPlaybooks/Cortex_XDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', '.secrets-ignore'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json')
 ]
 
 

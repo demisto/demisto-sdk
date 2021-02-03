@@ -384,8 +384,6 @@ class UpdateRN:
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
                         new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
-                    else:
-                        new_rn = ''.join(rn_parts) + new_rn_part
                 else:
                     new_rn_part = f'\n#### {_header_by_type}{rn_desc}'
                     new_rn += new_rn_part

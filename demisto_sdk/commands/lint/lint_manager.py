@@ -726,23 +726,21 @@ class LintManager:
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
-            if not message:
-                continue
-            file_path = message.split(':')[0]
-            code = message.split()[1]
-            output = {
-                'linter': 'flake8',
-                'severity': errors.get('type'),
-                'code': code,
-                'message': message.split(code)[1].lstrip(),
-                'line-number': message.split(':')[1],
-                'column-number': message.split(':')[2]
-            }
-            self.add_to_json_outputs(output, file_path, json_contents)
+            if message:
+                file_path = message.split(':')[0]
+                code = message.split()[1]
+                output = {
+                    'linter': 'flake8',
+                    'severity': errors.get('type'),
+                    'code': code,
+                    'message': message.split(code)[1].lstrip(),
+                    'line-number': message.split(':')[1],
+                    'column-number': message.split(':')[2]
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
 
-    def mypy_error_formatter(self, errors, json_contents):
-        error_messages = errors.get('messages', '')
-        error_messages = error_messages.split('\n') if error_messages else []
+    @staticmethod
+    def gather_mypy_errors(error_messages):
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
@@ -757,16 +755,24 @@ class LintManager:
         if gather_error:
             mypy_errors.append('\n'.join(gather_error[:-1]))
 
+        return mypy_errors
+
+    def mypy_error_formatter(self, errors, json_contents):
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        mypy_errors = self.gather_mypy_errors(error_messages)
+
         for message in mypy_errors:
-            file_path = message.split(':')[0]
-            output = {
-                'linter': 'mypy',
-                'severity': errors.get('type'),
-                'message': message.split('error:')[1].lstrip(),
-                'line-number': message.split(':')[1],
-                'column-number': message.split(':')[2]
-            }
-            self.add_to_json_outputs(output, file_path, json_contents)
+            if message:
+                file_path = message.split(':')[0]
+                output = {
+                    'linter': 'mypy',
+                    'severity': errors.get('type'),
+                    'message': message.split('error:')[1].lstrip(),
+                    'line-number': message.split(':')[1],
+                    'column-number': message.split(':')[2]
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
 
     def bandit_error_formatter(self, errors, json_contents):
         error_messages = errors.get('messages', '')
@@ -807,17 +813,18 @@ class LintManager:
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
-            file_path = message.split(':')[0]
-            code = message.split(' ')[1]
-            output = {
-                'linter': 'xsoar_linter',
-                'severity': errors.get('type'),
-                'code': code,
-                'message': message.split(code)[-1].lstrip(),
-                'line-number': message.split(':')[1],
-                'column-number': message.split(':')[2]
-            }
-            self.add_to_json_outputs(output, file_path, json_contents)
+            if message:
+                file_path = message.split(':')[0]
+                code = message.split(' ')[1]
+                output = {
+                    'linter': 'xsoar_linter',
+                    'severity': errors.get('type'),
+                    'code': code,
+                    'message': message.split(code)[-1].lstrip(),
+                    'line-number': message.split(':')[1],
+                    'column-number': message.split(':')[2]
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
     def add_to_json_outputs(output, file_path, json_contents):

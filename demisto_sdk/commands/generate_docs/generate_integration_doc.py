@@ -43,7 +43,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
 
 
 def generate_integration_doc(
-        input: str,
+        input_path: str,
         examples: Optional[str] = None,
         output: Optional[str] = None,
         use_cases: Optional[str] = None,
@@ -56,7 +56,7 @@ def generate_integration_doc(
     """ Generate integration documentation.
 
     Args:
-        input: path to the yaml integration
+        input_path: path to the yaml integration
         examples: path to the command examples
         output: path to the output documentation
         use_cases: use cases string
@@ -69,10 +69,10 @@ def generate_integration_doc(
 
     """
     try:
-        yml_data = get_yaml(input)
+        yml_data = get_yaml(input_path)
 
         if not output:  # default output dir will be the dir of the input file
-            output = os.path.dirname(os.path.realpath(input))
+            output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
         example_dict = {}
         if examples and os.path.isfile(examples):

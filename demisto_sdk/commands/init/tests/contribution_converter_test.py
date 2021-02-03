@@ -272,6 +272,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Converting the zipfile to a valid Pack structure
     Then
     - Ensure script and integration are componentized and in valid directory structure
+    - Ensure readme_files is not empty and the generated docs exists.
     """
     # Create all Necessary Temporary directories
     # create temp directory for the repo
@@ -344,7 +345,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 
     playbooks_path = converted_pack_path / 'Playbooks'
     playbook_yml = playbooks_path / 'playbook-SamplePlaybook.yml'
-    playbook_readme_md = playbooks_path / 'playbook-SamplePlaybook_README.md'
+    playbook_readme_md = playbooks_path / 'README.md'
 
     assert playbooks_path.exists()
     assert playbook_yml.exists()
@@ -357,6 +358,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     assert layouts_path.exists()
     assert sample_layoutscontainer.exists()
     assert sample_layout.exists()
+
+    assert set(contrib_converter_inst.readme_files) == {str(playbook_readme_md), str(integration_readme_md),
+                                                        str(script_readme_md)}
 
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')

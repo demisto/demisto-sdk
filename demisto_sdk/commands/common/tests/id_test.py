@@ -552,6 +552,16 @@ def test_is_mapper_incident_types_found__missing_classifier():
 
 
 def test_valid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that does not exist in our repo.
+
+    When
+        - _is_pack_display_name_already_exist is called
+
+    Then
+        - Ensure it is valid and no error is returned.
+    """
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
@@ -589,6 +599,16 @@ def test_valid_is_pack_display_name_already_exist():
 
 
 def test_invalid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that already exists in our repo.
+
+    When
+        - _is_pack_display_name_already_exist is called
+
+    Then
+        - Ensure it is invalid and the error message is returned.
+    """
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {

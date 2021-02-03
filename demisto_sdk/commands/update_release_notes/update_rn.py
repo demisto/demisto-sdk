@@ -109,7 +109,7 @@ class UpdateRN:
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
                 if is_docker_image_changed:
-                    self.update_markdown(rn_path, f'- Upgraded the Docker image to {docker_image_name}.')
+                    self.update_markdown(rn_path, f'- Updated the Docker image to: *{docker_image_name}*.')
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "

@@ -1001,7 +1001,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
         """
@@ -1033,7 +1033,7 @@ class TestRNUpdateUnit:
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
 
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
             file.write('')
@@ -1071,7 +1071,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
 
 
 def test_get_from_version_at_update_rn(integration):

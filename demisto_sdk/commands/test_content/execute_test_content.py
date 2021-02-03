@@ -54,8 +54,8 @@ def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager('Run_Tests.log', real_time_logs_only=not kwargs['nightly'])
     build_context = BuildContext(kwargs, logging_manager)
     threads_list = []
-    for server_ip in build_context.instances_ips:
-        tests_execution_instance = ServerContext(build_context, server_ip)
+    for server_ip, port in build_context.instances_ips.items():
+        tests_execution_instance = ServerContext(build_context, server_private_ip=server_ip, tunnel_port=port)
         threads_list.append(Thread(target=tests_execution_instance.execute_tests))
 
     for thread in threads_list:
@@ -66,7 +66,9 @@ def execute_test_content(**kwargs):
 
     if not build_context.unmockable_tests_to_run.empty() or not build_context.mockable_tests_to_run.empty():
         raise Exception('Not all tests have been executed')
-    if build_context.tests_data_keeper.playbook_skipped_integration and build_context.build_name != 'master':
+    if build_context.tests_data_keeper.playbook_skipped_integration \
+            and build_context.build_name != 'master' \
+            and not build_context.is_nightly:
         skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
         comment = f'{SKIPPED_INTEGRATION_COMMENT}:\n- {skipped_integrations}'
         _add_pr_comment(comment, logging_manager)

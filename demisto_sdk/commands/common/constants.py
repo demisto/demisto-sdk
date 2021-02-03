@@ -83,7 +83,7 @@ class FileType(Enum):
     POWERSHELL_FILE = 'powershellfile'
 
 
-RN_HEADER_FOR_FILE_TYPE = {
+RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
     FileType.INTEGRATION: "Integrations",
     FileType.SCRIPT: 'Scripts',

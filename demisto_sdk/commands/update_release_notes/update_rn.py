@@ -11,7 +11,7 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
-    PACKS_PACK_META_FILE_NAME, RN_HEADER_FOR_FILE_TYPE, FileType)
+    PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -306,7 +306,7 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         for content_name, data in sorted(changed_items.items(),
-                                         key=lambda x: RN_HEADER_FOR_FILE_TYPE[x[1].get('type', '')] if x[1].get('type')
+                                         key=lambda x: RN_HEADER_BY_FILE_TYPE[x[1].get('type', '')] if x[1].get('type')
                                          else ''):  # Sort RN by header
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
@@ -318,7 +318,7 @@ class UpdateRN:
             rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
                                          text=self.text, from_version=from_version)
 
-            header = f'\n#### {RN_HEADER_FOR_FILE_TYPE[_type]}\n'
+            header = f'\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n'
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
         for key, val in rn_template_as_dict.items():
@@ -357,8 +357,7 @@ class UpdateRN:
             if _type is None:
                 continue
 
-            # _header_by_type = f'\n#### {RN_HEADER_FOR_FILE_TYPE.get(_type)}\n'
-            _header_by_type = RN_HEADER_FOR_FILE_TYPE.get(_type)
+            _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
 
             if _type in [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT, FileType.INCIDENT_FIELD]:
                 rn_desc = f'\n- **{content_name}**'
@@ -367,27 +366,22 @@ class UpdateRN:
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
 
             if _header_by_type in current_rn:
-                # _header_by_type = _header_by_type[:-1] if _header_by_type.endswith('s') else _header_by_type
                 if content_name in current_rn:
                     continue
                 else:
                     self.existing_rn_changed = True
-                    # rn_parts = new_rn.split(_header_by_type + 's')
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        # new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
                         new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
                 self.existing_rn_changed = True
                 if _header_by_type in new_rn:
-                    # rn_parts = new_rn.split(_header_by_type + 's' if not _header_by_type.endswith('s') else _header_by_type)
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        # new_rn = rn_parts[0] + _header_by_type + 's' + new_rn_part + rn_parts[1]
                         new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part

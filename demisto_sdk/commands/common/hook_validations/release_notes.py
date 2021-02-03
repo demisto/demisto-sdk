@@ -3,7 +3,7 @@ from __future__ import print_function
 import itertools
 import re
 
-from demisto_sdk.commands.common.constants import (RN_HEADER_FOR_FILE_TYPE,
+from demisto_sdk.commands.common.constants import (RN_HEADER_BY_FILE_TYPE,
                                                    FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -54,7 +54,7 @@ class ReleaseNotesValidator(BaseValidator):
                                               update_type=None, added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.identify_changed_file_type(file)
                     if file_name and file_type:
-                        if (RN_HEADER_FOR_FILE_TYPE[file_type] not in self.latest_release_notes) or \
+                        if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
                                 (file_name not in self.latest_release_notes):
                             entity_name = update_rn_util.get_display_name(file)
                             error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,

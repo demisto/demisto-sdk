@@ -751,7 +751,7 @@ def generate_doc(**kwargs):
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
-    examples = kwargs.get('examples')
+    examples = str(kwargs.get('examples', ''))
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
@@ -786,15 +786,15 @@ def generate_doc(**kwargs):
     if file_type == FileType.INTEGRATION:
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
-        return generate_integration_doc(input=input_path, output=output_path, use_cases=use_cases,
+        return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
     elif file_type == FileType.SCRIPT:
-        return generate_script_doc(input=input_path, output=output_path, examples=examples, permissions=permissions,
+        return generate_script_doc(input_path=input_path, output=output_path, examples=examples, permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
-        return generate_playbook_doc(input=input_path, output=output_path, permissions=permissions,
+        return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose)
     else:
         print_error(f'File type {file_type.value} is not supported.')

@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import ast
 import os
-import re
 import string
 import time
 import unicodedata
@@ -15,6 +14,7 @@ from typing import Dict, Iterator
 
 import demisto_client.demisto_api
 import urllib3
+from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f'-_.() {string.ascii_letters}{string.digits}'
 PROXY_PROCESS_INIT_TIMEOUT = 20
@@ -78,33 +78,14 @@ class AMIConnection:
     """Wrapper for AMI communication.
 
     Attributes:
-        public_ip (string): The public IP of the AMI instance.
         internal_ip (string): The  internal IP of the instance.
     """
 
-    REMOTE_MACHINE_USER = 'ec2-user'
-    REMOTE_HOME = f'/home/{REMOTE_MACHINE_USER}/'
+    REMOTE_HOME = f'/home/{SSH_USER}/'
     LOCAL_SCRIPTS_DIR = '/home/circleci/project/Tests/scripts/'
 
-    def __init__(self, public_ip):
-        self.public_ip = public_ip
-        self.internal_ip = self._get_internal_ip()
-
-    def _get_internal_ip(self):
-        """Get the internal IP of the instance.
-        Used to configure the host (AMI machine, in this case) as the proxy server.
-
-        Returns:
-            string. The internal IP of the instance.
-        """
-        out = self.check_output("/usr/sbin/ifconfig eth0".split()).decode()
-        pattern = re.compile(r'inet ([^ ]+)')
-        pattern_findall_result = pattern.findall(out)
-        if not pattern_findall_result:
-            raise Exception(f'Could not find internal IP for instance {self.public_ip}')
-        internal_ip = pattern.findall(out)[0]
-
-        return internal_ip
+    def __init__(self, internal_ip):
+        self.internal_ip = internal_ip
 
     def add_ssh_prefix(self, command, ssh_options=""):
         """Add necessary text before a command in order to run it on the AMI instance via SSH.
@@ -120,8 +101,7 @@ class AMIConnection:
             raise TypeError("options must be string")
         if not isinstance(command, list):
             raise TypeError("command must be list")
-        prefix = "ssh {} -o StrictHostKeyChecking=no {}@{}".format(ssh_options,
-                                                                   self.REMOTE_MACHINE_USER, self.public_ip).split()
+        prefix = "ssh {} {}@{}".format(ssh_options, SSH_USER, self.internal_ip).split()
         return prefix + command
 
     def call(self, command, **kwargs):
@@ -134,8 +114,7 @@ class AMIConnection:
         return check_output(self.add_ssh_prefix(command), **kwargs)
 
     def copy_file(self, src, dst=REMOTE_HOME, **kwargs):
-        silence_output(check_call, ['scp', '-o', ' StrictHostKeyChecking=no', src,
-                                    "{}@{}:{}".format(self.REMOTE_MACHINE_USER, self.public_ip, dst)],
+        silence_output(check_call, ['scp', src, "{}@{}:{}".format(SSH_USER, self.internal_ip, dst)],
                        stdout='null', **kwargs)
         return os.path.join(dst, os.path.basename(src))
 
@@ -175,7 +154,7 @@ class MITMProxy:
     content_data_lock = Lock()
 
     def __init__(self,
-                 public_ip,
+                 internal_ip,
                  logging_module,
                  build_number,
                  branch_name,
@@ -183,12 +162,12 @@ class MITMProxy:
                  tmp_folder=MOCKS_TMP_PATH,
                  ):
         is_branch_master = branch_name == 'master'
-        self.public_ip = public_ip
+        self.internal_ip = internal_ip
         self.current_folder = self.repo_folder = repo_folder
         self.tmp_folder = tmp_folder
         self.logging_module = logging_module
         self.build_number = build_number
-        self.ami = AMIConnection(self.public_ip)
+        self.ami = AMIConnection(self.internal_ip)
         self.should_update_mock_repo = is_branch_master
         self.should_validate_playback = not is_branch_master
         self.empty_files = []
@@ -484,7 +463,7 @@ class MITMProxy:
             return True
         except CalledProcessError:
             self.logging_module.exception(
-                f'Could not copy arg file for mitmdump service to server {self.ami.public_ip},')
+                f'Could not copy arg file for mitmdump service to server {self.ami.internal_ip},')
         return False
 
     def wait_until_proxy_is_listening(self):

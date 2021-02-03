@@ -10,7 +10,8 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135']
+                         'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135',
+                         'RM102', 'IN136']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -66,6 +67,7 @@ ERROR_CODE = {
     "integration_non_existent_mapper": {'code': "IN133", 'ui_applicable': False, 'related_field': 'mappers'},
     "multiple_default_arg": {'code': "IN134", "ui_applicable": True, 'related_field': "arguments"},
     "invalid_integration_parameters_display_name": {'code': "IN135", 'ui_applicable': True, 'related_field': 'display'},
+    "missing_output_context": {'code': "IN136", 'ui_applicable': True, 'related_field': 'contextOutput'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -169,6 +171,7 @@ ERROR_CODE = {
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
+    "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},

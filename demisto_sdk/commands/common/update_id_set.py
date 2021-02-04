@@ -10,7 +10,6 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
-from genericpath import exists
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, Optional, Tuple
 
@@ -18,6 +17,7 @@ import click
 import networkx
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    DASHBOARDS_DIR,
+                                                   DEFAULT_ID_SET_PATH,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -1176,11 +1176,8 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     return united_id_set, []
 
 
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
-
-
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
-                     print_logs: bool = True):
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
+                     objects_to_create: list = None, print_logs: bool = True):
     """Re create the id set
 
     Args:
@@ -1456,12 +1453,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
 
-    if id_set_path:
-        if not exists(id_set_path):
-            intermediate_dirs = os.path.dirname(os.path.abspath(id_set_path))
-            os.makedirs(intermediate_dirs, exist_ok=True)
-        with open(id_set_path, 'w+') as id_set_file:
-            json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)

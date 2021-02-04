@@ -652,7 +652,7 @@ class TestRNUpdateUnit:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
     @pytest.mark.parametrize('pack_name, path, find_type_result, expected_result', diff_package)
-    def test_ident_changed_file_type(self, pack_name, path, find_type_result, expected_result, mocker):
+    def test_identify_changed_file_type(self, pack_name, path, find_type_result, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file

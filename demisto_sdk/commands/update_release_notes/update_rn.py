@@ -322,7 +322,7 @@ class UpdateRN:
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
         for key, val in rn_template_as_dict.items():
-            rn_string += key + val
+            rn_string = f"{rn_string}{key}{val}"
 
         return rn_string
 
@@ -374,7 +374,7 @@ class UpdateRN:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
+                        new_rn = f"{rn_parts[0]}{_header_by_type}{new_rn_part}{rn_parts[1]}"
                     else:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
@@ -383,7 +383,7 @@ class UpdateRN:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = rn_parts[0] + _header_by_type + new_rn_part + rn_parts[1]
+                        new_rn = f"{rn_parts[0]}{_header_by_type}{new_rn_part}{rn_parts[1]}"
                 else:
                     new_rn_part = f'\n#### {_header_by_type}{rn_desc}'
                     new_rn += new_rn_part

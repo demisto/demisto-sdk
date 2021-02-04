@@ -1096,7 +1096,7 @@ class IDSetType(Enum):
     INCIDENT_TYPE = 'IncidentTypes'
     INDICATOR_FIELD = 'IndicatorFields'
     INDICATOR_TYPE = 'IndicatorTypes'
-    LAYOUTS = 'Layouts',
+    LAYOUTS = 'Layouts'
     PACKS = 'Packs'
 
     @classmethod

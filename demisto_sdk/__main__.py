@@ -890,8 +890,7 @@ def update_pack_releasenotes(**kwargs):
         validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
         validate_manager.setup_git_params()
         modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
-        _packs = get_packs(modified).union(get_packs(old)).union(
-            get_packs(added))
+        _packs = get_packs(modified + old+ added)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")

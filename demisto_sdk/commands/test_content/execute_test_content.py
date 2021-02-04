@@ -8,6 +8,8 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext, ServerContext)
 
+SKIPPED_INTEGRATION_COMMENT = 'The following integrations are skipped and critical for the test'
+
 
 def _handle_github_response(response, logging_module) -> dict:
     res_dict = response.json()
@@ -31,6 +33,14 @@ def _add_pr_comment(comment, logging_module):
         if res and res.get('total_count', 0) == 1:
             issue_url = res['items'][0].get('comments_url') if res.get('items', []) else None
             if issue_url:
+                # Check if a comment about skipped tests already exists. If there is delete it first and then post a
+                # new comment:
+                response = requests.get(issue_url, headers=headers, verify=False)
+                issue_comments = _handle_github_response(response, logging_module)
+                for existing_comment in issue_comments:
+                    if SKIPPED_INTEGRATION_COMMENT in existing_comment.get('body'):
+                        comment_url = existing_comment.get('url')
+                        requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
                 _handle_github_response(response, logging_module)
         else:
@@ -59,8 +69,8 @@ def execute_test_content(**kwargs):
     if build_context.tests_data_keeper.playbook_skipped_integration \
             and build_context.build_name != 'master' \
             and not build_context.is_nightly:
-        comment = 'The following integrations are skipped and critical for the test:\n {}'. \
-            format('\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration))
+        skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
+        comment = f'{SKIPPED_INTEGRATION_COMMENT}:\n- {skipped_integrations}'
         _add_pr_comment(comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)
     build_context.tests_data_keeper.create_result_files()

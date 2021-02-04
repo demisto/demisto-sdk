@@ -13,8 +13,10 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_data_from_error_code,
                                                 get_all_error_codes)
-from demisto_sdk.commands.common.tools import (find_type, get_json,
-                                               get_pack_name, get_yaml)
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_file_displayed_name,
+                                               get_json, get_pack_name,
+                                               get_yaml)
 
 
 class BaseValidator:
@@ -189,6 +191,7 @@ class BaseValidator:
             json_contents[file_path] = {
                 "file-type": os.path.splitext(file_path)[1].replace('.', ''),
                 "entity-type": file_type.value if file_type else 'pack',
+                "display-name": get_file_displayed_name(file_path),
                 "outputs": [
                     output
                 ]

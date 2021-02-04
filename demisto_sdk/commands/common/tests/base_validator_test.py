@@ -272,6 +272,7 @@ def test_json_output(repo):
         integration.yml.path: {
             "file-type": "yml",
             "entity-type": "integration",
+            "display-name": "Sample",
             "outputs": [
                 {
                     "severity": "error",
@@ -288,6 +289,7 @@ def test_json_output(repo):
         integration.yml.path: {
             "file-type": "yml",
             "entity-type": "integration",
+            "display-name": "Sample",
             "outputs": [
                 {
                     "severity": "error",

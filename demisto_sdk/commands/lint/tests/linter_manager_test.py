@@ -364,6 +364,7 @@ def test_create_json_output_flake8(repo, mocker):
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
     check = {
         'linter': 'flake8',
         'pack': 'myPack',
@@ -378,6 +379,7 @@ def test_create_json_output_flake8(repo, mocker):
         "Packs/myPack/Integrations/INT1/INT1.py": {
             'file-type': 'py',
             'entity-type': 'integration',
+            'display-name': 'Display',
             'outputs': [{
                 'linter': 'flake8',
                 'severity': 'error',
@@ -390,6 +392,7 @@ def test_create_json_output_flake8(repo, mocker):
         "Packs/myPack/Integrations/INT2/INT2.py": {
             'file-type': 'py',
             'entity-type': 'integration',
+            'display-name': 'Display',
             'outputs': [{
                 'linter': 'flake8',
                 'severity': 'error',
@@ -410,6 +413,7 @@ def test_create_json_output_mypy(repo, mocker):
     integration = pack.create_integration(name="INT")
     integration.create_default_integration()
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
     check = {
         'linter': 'mypy',
         'pack': 'myPack',
@@ -433,6 +437,7 @@ def test_create_json_output_mypy(repo, mocker):
         f"{integration.code.path}": {
             'file-type': 'py',
             'entity-type': 'integration',
+            'display-name': 'Display',
             'outputs': [
                 {
                     'linter': 'mypy',
@@ -462,6 +467,7 @@ def test_create_json_output_bandit(repo, mocker):
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
     check = {
         'linter': 'flake8',
         'pack': 'myPack',
@@ -475,6 +481,7 @@ def test_create_json_output_bandit(repo, mocker):
     expected_format = {
         "Packs/myPack/Integrations/INT1/INT1.py": {
             'file-type': 'py',
+            'display-name': 'Display',
             'entity-type': 'integration',
             'outputs': [{
                 'linter': 'bandit',
@@ -493,6 +500,7 @@ def test_create_json_output_vulture(repo, mocker):
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
     mocker.patch.object(lint_manager, 'find_file', return_value='Packs/myPack/Integrations/INT1/INT1.py')
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
     check = {
         'linter': 'vulture',
         'pack': 'myPack',
@@ -504,6 +512,7 @@ def test_create_json_output_vulture(repo, mocker):
     expected_format = {
         "Packs/myPack/Integrations/INT1/INT1.py": {
             'file-type': 'py',
+            'display-name': 'Display',
             'entity-type': 'integration',
             'outputs': [{
                 'linter': 'vulture',
@@ -520,6 +529,7 @@ def test_create_json_output_xsoar_linter(repo, mocker):
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
     check = {
         'linter': 'xsoar_linter',
         'pack': 'myPack',
@@ -533,6 +543,7 @@ def test_create_json_output_xsoar_linter(repo, mocker):
         "Packs/myPack/Integrations/INT1/INT1.py": {
             'file-type': 'py',
             'entity-type': 'integration',
+            'display-name': 'Display',
             'outputs': [{
                 'linter': 'xsoar_linter',
                 'severity': 'error',

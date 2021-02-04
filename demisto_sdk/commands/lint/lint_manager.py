@@ -18,7 +18,9 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import (find_file, find_type, get_json,
+from demisto_sdk.commands.common.tools import (find_file, find_type,
+                                               get_file_displayed_name,
+                                               get_json,
                                                is_external_repository,
                                                print_error, print_v,
                                                print_warning,
@@ -789,6 +791,15 @@ class LintManager:
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
+    @staticmethod
+    def get_full_file_path_for_vulture(file_name, content_path):
+        file_ending = retrieve_file_ending(file_name)
+        if not file_ending:
+            file_name = f'{file_name}.py'
+        elif file_ending != 'py':
+            file_name = file_name.replace(file_ending, 'py')
+        return find_file(content_path, file_name)
+
     def vulture_error_formatter(self, errors, json_contents):
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
@@ -796,11 +807,7 @@ class LintManager:
         for message in error_messages:
             if message:
                 file_name = message.split(':')[0]
-                if not retrieve_file_ending(file_name):
-                    file_name = f'{file_name}.py'
-                elif retrieve_file_ending(file_name) != 'py':
-                    file_name = file_name.replace(retrieve_file_ending(file_name), 'py')
-                file_path = find_file(content_path, file_name)
+                file_path = self.get_full_file_path_for_vulture(file_name, content_path)
                 output = {
                     'linter': 'vulture',
                     'severity': errors.get('type'),
@@ -828,7 +835,8 @@ class LintManager:
 
     @staticmethod
     def add_to_json_outputs(output, file_path, json_contents):
-        file_type = find_type(file_path.replace('.py', '.yml').replace('.pws', '.yml'))
+        yml_file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml')
+        file_type = find_type(yml_file_path)
         if file_path in json_contents:
             if output in json_contents[file_path]['outputs']:
                 return
@@ -838,6 +846,7 @@ class LintManager:
             json_contents[file_path] = {
                 'file-type': os.path.splitext(file_path)[1].replace('.', ''),
                 'entity-type': file_type.value,
+                "display-name": get_file_displayed_name(yml_file_path),
                 'outputs': [
                     output
                 ]

@@ -319,7 +319,8 @@ def validate(config, **kwargs):
                '1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)'
                '2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).'
                '3. content_test - Contains all test scripts/playbooks (from_version < 6.0.0)'
-               '4. content_all - Contains all from content_new and content_test.')
+               '4. content_all - Contains all from content_new and content_test.'
+               '5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.')
 @click.help_option('-h', '--help')
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)

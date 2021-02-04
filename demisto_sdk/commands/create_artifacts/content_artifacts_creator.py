@@ -523,6 +523,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             2. content_new
             3. content_all
             4. content_packs
+            5. uploadable_packs
 
     Args:
         artifact_manager: Artifacts manager object.

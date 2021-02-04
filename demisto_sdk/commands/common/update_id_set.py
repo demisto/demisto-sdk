@@ -1120,9 +1120,7 @@ class IDSet:
 
         self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
 
-    def add_to_dict(self, object_type: IDSetType, obj_name, obj_value):
-        if not IDSetType.has_value(object_type):
-            raise ValueError(f'Invalid IDSetType {object_type}')
+    def add_pack_to_id_set_packs(self, object_type: IDSetType, obj_name, obj_value):
         self._id_set_dict.setdefault(object_type, {}).update({obj_name: obj_value})
 
 
@@ -1170,7 +1168,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
         else:
             for obj_name, obj_value in object_list.items():
-                united_id_set.add_to_dict(object_type, obj_name, obj_value)
+                united_id_set.add_pack_to_id_set_packs(object_type, obj_name, obj_value)
 
     if duplicates:
         return None, duplicates

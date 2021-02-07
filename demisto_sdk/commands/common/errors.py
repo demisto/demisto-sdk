@@ -65,7 +65,6 @@ ERROR_CODE = {
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
     "multiple_default_arg": "IN134",
-    "missing_output_context": "IN136",
     "invalid_integration_parameters_display_name": "IN135",
     "missing_output_context": "IN136",
     "invalid_v2_script_name": "SC100",

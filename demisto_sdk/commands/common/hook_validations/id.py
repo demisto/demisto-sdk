@@ -1,6 +1,7 @@
 import os
 import re
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 import click
 import demisto_sdk.commands.common.constants as constants
@@ -13,6 +14,7 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_integration_data,
                                                        get_mapper_data,
                                                        get_pack_metadata_data,
+                                                       get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
 
@@ -175,7 +177,8 @@ class IDSetValidations(BaseValidator):
             if not classifier_incident_types:  # if nothing remains, these incident types were all found
                 is_valid = True
             else:  # there are missing incident types in the id_set, classifier is invalid
-                error_message, error_code = Errors.classifier_non_existent_incident_types(str(classifier_incident_types))
+                error_message, error_code = Errors.classifier_non_existent_incident_types(
+                    str(classifier_incident_types))
                 if not self.handle_error(error_message, error_code, file_path="id_set.json"):
                     is_valid = True
 
@@ -239,6 +242,154 @@ class IDSetValidations(BaseValidator):
 
         return is_valid, error
 
+    def _are_playbook_entities_versions_valid(self, playbook_data, file_path):
+        """Check if the playbook's version match playbook's entities (script , sub-playbook, integration)
+
+        Args:
+            playbook_data (dict): Dictionary that holds the extracted details from the given playbook.
+            file_path (string): Path to the file (current playbook).
+
+        Returns:
+            bool. Whether the playbook's version match playbook's entities.
+        """
+        playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
+        playbook_name = playbook_data_2nd_level.get("name")
+        playbook_version = playbook_data_2nd_level.get("fromversion")
+        playbook_scripts_list = playbook_data_2nd_level.get("implementing_scripts", [])
+        sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
+        playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
+
+        if not self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version, self.playbook_set,
+                                                             playbook_name, file_path):
+            return False
+
+        if not self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version, self.script_set,
+                                                             playbook_name, file_path):
+            return False
+
+        if not self.is_playbook_integration_version_valid(playbook_integration_commands,
+                                                          playbook_version, playbook_name, file_path):
+            return False
+
+        return True
+
+    def get_commands_to_integration(self, file_name, file_path):
+        """ gets playbook's 'command_to_integration' dict from playbook set in id_set file.
+
+        Args:
+            file_name (string): Name of current playbook.
+            file_path (string): : Path to the playbook file.
+
+        Returns:
+            dictionary. Playbook's 'command_to_integration' dict.
+        """
+        commands_to_integration = {}
+        for playbook_dict in self.playbook_set:
+            playbook_name = list(playbook_dict.keys())[0]
+            playbook_path = playbook_dict[playbook_name].get("file_path")
+            is_this_the_playbook = playbook_name == file_name and file_path == playbook_path
+            if is_this_the_playbook:
+                playbook_data = playbook_dict[playbook_name]
+                commands_to_integration = playbook_data.get("command_to_integration", {})
+                return commands_to_integration
+        return commands_to_integration
+
+    def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
+                                                 main_playbook_version, entity_set_from_id_set,
+                                                 playbook_name, file_path):
+        """Check if the playbook's version match playbook's entities (script or sub-playbook)
+        Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
+        to the main playbook's version.
+        For example, for given scripts list : implemented_entity_list_from_playbook = ["script1", "script2"],
+        main playbook version = "5.0.0".
+        This code searches for script1 version in the scripts set (in id_set) and returns True only if
+        script1 version <= "5.0.0." (main playbook version), otherwise returns False. Does the same for "script2".
+
+        Args:
+            implemented_entity_list_from_playbook (list): List of relevant entities yo check from playbook. For example,
+            list of implementing_scripts or list of implementing_playbooks.
+            main_playbook_version (str): Playbook's from version.
+            entity_set_from_id_set (dict) : Entity's data set (scripts or playbooks) from id_set file.
+            playbook_name (str) : Playbook's name.
+            file_path (string): Path to the file (current playbook).
+
+        Returns:
+            bool. Whether the playbook's version match playbook's entities.
+        """
+        for entity_data_dict in entity_set_from_id_set:
+            if not implemented_entity_list_from_playbook:
+                return True
+
+            entity_id = list(entity_data_dict.keys())[0]
+            all_entity_fields = entity_data_dict[entity_id]
+            entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
+                "name")
+
+            is_entity_used_in_playbook = entity_name in implemented_entity_list_from_playbook
+
+            if is_entity_used_in_playbook:
+                entity_version = all_entity_fields.get("fromversion", "")
+                is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
+                    main_playbook_version)
+                if is_version_valid:
+                    implemented_entity_list_from_playbook.remove(entity_name)
+
+        if implemented_entity_list_from_playbook:
+            error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
+                playbook_name, implemented_entity_list_from_playbook, main_playbook_version)
+            if self.handle_error(error_message, error_code, file_path):
+                return False
+
+        return True
+
+    def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
+                                              file_path):
+        """Check if the playbook's version match playbook's used integrations.
+        Goes over all the integrations' commands that used in the current playbook. For each command, checks its
+        integration's from version.
+        If at least one existing integration was found that integration version <= playbook version, True is returned.
+        If no such integration was found, False returned.
+
+        Args:
+            playbook_integration_commands (dict): Playbook's 'command_to_integration' dict.
+            playbook_version (str): Playbook's from version .
+            playbook_name (str) : Playbook's name .
+            file_path (string): Path to the file (current playbook) .
+
+        Returns:
+            bool. Whether the playbook's version match playbook's used integrations.
+        """
+
+        for command in playbook_integration_commands:
+            implemented_integrations_list = playbook_integration_commands[command]
+            integration_from_valid_version_found = False
+            for integration in implemented_integrations_list:
+                integration_version = self.get_integration_version(integration)
+                is_version_valid = not integration_version or LooseVersion(integration_version) <= LooseVersion(
+                    playbook_version)
+                if is_version_valid:
+                    integration_from_valid_version_found = True
+                    break
+
+            if not integration_from_valid_version_found:
+                error_message, error_code = Errors.integration_version_not_match_playbook_version(playbook_name,
+                                                                                                  command,
+                                                                                                  playbook_version)
+                if self.handle_error(error_message, error_code, file_path):
+                    return False
+
+        return True
+
+    def get_integration_version(self, integration_to_search):
+        general_version = ""  # i.e integration has no specific version
+        for integration_dict in self.integration_set:
+            integration_name = list(integration_dict.keys())[0]
+            if integration_name == integration_to_search:
+                integration_data = integration_dict[integration_name]
+                return integration_data.get("fromversion", "")
+        return general_version
+
+
     def is_file_valid_in_set(self, file_path, file_type, ignored_errors=None):
         """Check if the file is valid in the id_set
 
@@ -252,7 +403,6 @@ class IDSetValidations(BaseValidator):
         """
         self.ignored_errors = ignored_errors
         is_valid = True
-
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
             click.echo(f"id set validations for: {file_path}")
 
@@ -273,5 +423,8 @@ class IDSetValidations(BaseValidator):
             elif file_type == constants.FileType.MAPPER:
                 mapper_data = get_mapper_data(file_path)
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
+            elif file_type == constants.FileType.PLAYBOOK:
+                playbook_data = get_playbook_data(file_path)
+                is_valid = self._are_playbook_entities_versions_valid(playbook_data, file_path)
 
         return is_valid

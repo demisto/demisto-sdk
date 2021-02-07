@@ -644,3 +644,166 @@ def test_invalid_is_pack_display_name_already_exist():
     assert not is_valid
     assert error == ('The name of your pack: VMware already exists in our repo for another pack, '
                      'please rename the pack name in the metadata file.', 'PA122')
+
+class TestPlaybookEntitiesVersionsValid:
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    playbook_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
+    playbook_with_valid_versions = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.5.0",
+        "pack": "Example",
+        "implementing_scripts": [
+            "Script_version_5",
+            "Script_no_version",
+            "Script_version_5_5"
+        ],
+        "implementing_playbooks": [
+            "SubPlaybook_version_5",
+            "SubPlaybook_no_version",
+            "SubPlaybook_version_5_5"
+        ],
+        "command_to_integration": {
+            "test-command": [
+                "Integration_version_5",
+                "Integration_version_4"
+            ]
+        }
+    }}
+
+    playbook_with_invalid_scripts_version = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_scripts": [
+            "Script_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_sub_playbook_version = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_integration_version = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "3.0.0",
+        "pack": "Example",
+        "command_to_integration": {
+            "test-command": [
+                "Integration_version_4",
+                "Integration_version_5"
+            ]
+        }
+    }}
+    id_set = {
+        'playbooks': [
+            {
+                'SubPlaybook_version_5': {
+                    'fromversion': "5.0.0",
+                    "file_path": playbook_path,
+                }
+            },
+            {
+                'SubPlaybook_no_version': {
+                    'fromversion': "",
+                    "file_path": playbook_path,
+                }
+            },
+            {
+                'SubPlaybook_version_5_5': {
+                    'fromversion': "5.5.0",
+                    "file_path": playbook_path,
+                }
+            },
+            {
+                'Example Playbook': {
+                    'fromversion': "5.5.0",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            }
+        ],
+        'integrations': [
+            {
+                'Integration_version_5': {
+                    'fromversion': "5.0.0"
+                }
+            },
+            {
+                'Integration_version_4': {
+                    'fromversion': "4.0.0"
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_version_5': {
+                    'fromversion': "5.0.0"
+                }
+            },
+            {
+                'Script_no_version': {
+                    'fromversion': ""
+                }
+            },
+            {
+                'Script_version_5_5': {
+                    'fromversion': "5.5.0"
+                }
+            }
+        ],
+    }
+
+    def test_are_playbook_entities_versions_valid(self, repo, mocker):
+        """
+
+        Given
+            - an id_set file
+            - a Playbook those entities:
+                * implementing_scripts
+                * implementing_playbooks
+                * command_to_integration
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that each entity version match the playbook version.
+
+        """
+        pack = repo.create_pack("Pack1")
+        self.validator.playbook_set = self.id_set["playbooks"]
+        self.validator.integration_set = self.id_set["integrations"]
+        self.validator.script_set = self.id_set["scripts"]
+
+        # all playbook's entities has valid versions
+        is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_valid_versions, pack.path)
+        assert is_playbook_version_valid
+
+        # playbook uses scripts with invalid versions
+        is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_scripts_version, pack.path)
+        assert not is_script_version_invalid
+
+        # playbook uses sub playbooks with invalid versions
+        is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_sub_playbook_version, pack.path)
+        assert not is_sub_playbook_version_invalid
+
+        # playbook uses integration's commands with invalid versions
+        mocker.patch.object(self.validator, 'handle_error', return_value=True)
+        is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_invalid_integration_version, self.playbook_path)
+        assert not is_integration_version_invalid

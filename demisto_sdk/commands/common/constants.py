@@ -1011,4 +1011,4 @@ UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
-CONTEXT_OUTPUT_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
+CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'

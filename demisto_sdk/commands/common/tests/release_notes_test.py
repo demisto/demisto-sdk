@@ -97,8 +97,12 @@ NOT_FILLED_OUT_RN = '''
 '''
 FILLED_OUT_RN = '''
 ### Classifiers
-#### 'dummy classifier'
+#### dummy classifier
 - Test
+
+### Dashboards
+#### dashboard-sample_packs_new2.json
+-Test
 
 ### Incident Types
 #### Cortex XDR Incident
@@ -144,7 +148,8 @@ MODIFIED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
-    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json')
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 ADDED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
@@ -190,7 +195,8 @@ MODIFIED_FILES_INVALID = [
     os.path.join(FILES_PATH, 'CortexXDR', '.secrets-ignore'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
-    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json')
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 
 

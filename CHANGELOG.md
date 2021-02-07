@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.
+* Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
 
 # 1.2.18
 * Changed the *skip-id-set-creation* flag to *create-id-set* in the **validate** command. Its default value will be False.

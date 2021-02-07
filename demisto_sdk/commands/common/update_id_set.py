@@ -869,8 +869,8 @@ def process_integration(file_path: str, print_logs: bool) -> list:
                 res.append(get_integration_data(file_path))
         else:
             # package integration
-            package_name = os.path.basename(file_path)
-            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            file_path = glob.glob(os.path.join(file_path, '*yml'))
+            file_path = str(file_path[0]) if file_path else ''
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:

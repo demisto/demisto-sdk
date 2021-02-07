@@ -97,8 +97,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.WIDGET: 'Widgets',
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
-    FileType.MAPPER: 'Mapper',
-    FileType.LAYOUTS_CONTAINER: 'Layouts Container',
+    FileType.MAPPER: 'Mappers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
 }
 
 

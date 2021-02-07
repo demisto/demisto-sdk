@@ -984,7 +984,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not command_section:
                 continue
             if not command_section[0].endswith('###'):
-                command_section[0] += '###'
+                command_section[0] += '###'  # mark end of file so last pattern of regex will be recognized.
             context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
             if not context_section:
                 context_path_in_command = set()

@@ -103,7 +103,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.MAPPER.value: CLASSIFIERS_DIR
 }
 
-
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
@@ -320,7 +319,6 @@ PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = fr'{INTEGRATIONS_DIR_REGEX}/integration
 PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_INTEGRATION_NON_SPLIT_README_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$'
 
-
 SCRIPTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{SCRIPTS_DIR}'
 SCRIPT_DIR_REGEX = fr'{SCRIPTS_DIR_REGEX}\/([^\\/]+)'
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
@@ -335,7 +333,6 @@ PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = fr'{SCRIPTS_DIR_REGEX}/script-([^\\/]+)'
 PACKS_SCRIPT_TEST_PLAYBOOK = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$'
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$'
-
 
 PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
 PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json'
@@ -375,7 +372,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*'
 PACKS_MAPPER_JSON_REGEX = fr'{_PACKS_MAPPER_BASE_REGEX}\.json'
 
-
 PACKS_CONNECTIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}'
 PACKS_CONNECTION_JSON_REGEX = fr'{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$'
 
@@ -388,7 +384,6 @@ PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
-
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
                                                                                      PACKS_DIR,
@@ -812,7 +807,6 @@ SCHEMA_TO_REGEX = {
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
-
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
@@ -1014,5 +1008,7 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'short_description', 'description', 'Tags', 'blocked']
 
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
+
+DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_TABLE_HEADER = '| **Path** | **Type** | **Description** |'

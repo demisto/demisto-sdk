@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where merge id_set was not updated to work with the new entity of Packs.
+* Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
 * Added a validation that makes sure outputs in integration are matching the README file.
 
 # 1.2.18

@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135',
-                         'RM102', 'IN136']
+                         'RM102', 'IN136', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -124,6 +124,8 @@ ERROR_CODE = {
     "invalid_script_id": "PB107",
     "invalid_uuid": "PB108",
     "taskid_different_from_id": "PB109",
+    "content_entity_version_not_match_playbook_version": "PB110",
+    "integration_version_not_match_playbook_version": "PB111",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -832,6 +834,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
+               f"with a version that does not match the main playbook version. The version of" \
+               f" {entities_names} should be at most {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
+               f"that not implemented in integration that match the main playbook version. This command should be " \
+               f"implemented in an integration from version {main_playbook_version} at most."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_command_name_in_script(script_name, command):
         return f"in script {script_name} the command {command} has an invalid name. " \
                f"Please make sure:\n" \
@@ -1206,10 +1222,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1290,10 +1306,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_mapper(invalid_inc_fields_list):
         return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator

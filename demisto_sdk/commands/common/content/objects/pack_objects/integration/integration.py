@@ -13,6 +13,7 @@ from wcmatch.pathlib import Path
 class Integration(YAMLContentUnifiedObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.INTEGRATION, INTEGRATION)
+        self._is_feed: bool = False
 
     @property
     def png_path(self) -> Optional[Path]:
@@ -23,6 +24,10 @@ class Integration(YAMLContentUnifiedObject):
     def description_path(self) -> Optional[Path]:
         patterns = [f"{self.path.stem}_description.md"]
         return next(self._path.parent.glob(patterns=patterns), None)
+
+    @property
+    def is_feed(self) -> bool:
+        return self.script.get('feed', False)
 
     def upload(self, client: demisto_client = None):
         """

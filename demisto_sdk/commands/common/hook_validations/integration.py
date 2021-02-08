@@ -11,9 +11,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX,
-                                                   PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

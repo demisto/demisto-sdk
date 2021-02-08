@@ -1,3 +1,5 @@
+import os
+
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
@@ -62,7 +64,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
-            self.is_valid_pwsh()
+            self.is_valid_pwsh(),
+            self.is_valid_script_file_path()
         ])
         # check only on added files
         if not self.old_file:
@@ -220,3 +223,22 @@ class ScriptValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
+
+    def is_valid_script_file_path(self) -> bool:
+        absolute_file_path = self.file_path
+        scripts_folder = os.path.dirname(absolute_file_path).split('/')[-1]
+        script_file = os.path.basename(absolute_file_path)
+
+        script_file, _ = os.path.splitext(script_file)
+
+        if scripts_folder == 'Scripts' or script_file == scripts_folder:
+            return True
+
+        valid_script_file = script_file.replace('-', '').replace('_', '')
+
+        if valid_script_file.lower() != scripts_folder.lower():
+            error_message, error_code = Errors.is_valid_integration_file_path(script_file)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True

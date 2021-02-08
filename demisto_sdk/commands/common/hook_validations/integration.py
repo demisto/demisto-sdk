@@ -1,3 +1,4 @@
+import os
 import re
 
 import yaml
@@ -10,7 +11,9 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH,
+                                                   PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX,
+                                                   PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -97,6 +100,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
+            self.is_valid_integration_file_path(),
             self.is_mapping_fields_command_exist()
         ]
 
@@ -930,6 +934,25 @@ class IntegrationValidator(ContentEntityValidator):
 
         if invalid_display_names:
             error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True
+
+    def is_valid_integration_file_path(self) -> bool:
+        absolute_file_path = self.file_path
+        integrations_folder = os.path.dirname(absolute_file_path).split('/')[-1]
+        integration_file = os.path.basename(absolute_file_path)
+
+        integration_file, _ = os.path.splitext(integration_file)
+
+        if integrations_folder == 'Integrations' or integration_file == integrations_folder:
+            return True
+
+        valid_integration_file = integration_file.replace('-', '').replace('_', '')
+
+        if valid_integration_file.lower() != integrations_folder.lower():
+            error_message, error_code = Errors.is_valid_integration_file_path(integration_file)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

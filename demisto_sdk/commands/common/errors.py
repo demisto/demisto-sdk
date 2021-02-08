@@ -67,6 +67,7 @@ ERROR_CODE = {
     "multiple_default_arg": "IN134",
     "missing_output_context": "IN136",
     "invalid_integration_parameters_display_name": "IN135",
+    "is_valid_integration_file_path": "IN136",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -466,6 +467,12 @@ class Errors:
         return f"The integration display names: {invalid_display_names} are invalid, " \
                "Integration parameters display name should be capitalized and spaced using whitespaces " \
                "and not underscores ( _ )."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_integration_file_path(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should be the same as the name of the folder that contains it."
 
     @staticmethod
     @error_code_decorator

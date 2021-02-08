@@ -412,4 +412,3 @@ class TestScriptValidator:
         mocker.patch.object(validator, "handle_error", return_value=True)
 
         assert not validator.is_valid_script_file_path()
-

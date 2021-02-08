@@ -204,12 +204,13 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_file_valid(self, source, target, answer, validator):
+    def test_is_file_valid(self, source, target, answer, validator, mocker):
         # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
+            mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)

@@ -86,7 +86,8 @@ class DockerImageValidator(BaseValidator):
                                                                             self.docker_image_latest_tag,
                                                                             self.docker_image_name,
                                                                             self.file_path)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=suggested_fix):
                 self.is_latest_tag = False
 
             else:

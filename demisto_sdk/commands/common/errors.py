@@ -600,14 +600,18 @@ class Errors:
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
+    def suggest_docker_fix(docker_image_name, file_path):
+        return f'You can check for the most updated version of {docker_image_name} ' \
+               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+
+    @staticmethod
     @error_code_decorator
     def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
-               f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
-               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+
 
     @staticmethod
     @error_code_decorator

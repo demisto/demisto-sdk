@@ -244,7 +244,7 @@ def unify(**kwargs):
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
-    help='Whether to run all validation on all files or not'
+    help='Whether to run all validation on all files or not.'
 )
 @click.option(
     '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'

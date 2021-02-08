@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where downloading indicator layoutsconatiner objects failed.
 
 # 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.

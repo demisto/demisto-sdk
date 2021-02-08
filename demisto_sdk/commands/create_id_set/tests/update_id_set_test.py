@@ -2030,7 +2030,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            }
+        }
     }
 
     second_id_set = {
@@ -2047,7 +2052,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo2': {
+
+            }
+        }
     }
 
     output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
@@ -2076,7 +2086,15 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            },
+            'pack_foo2': {
+
+            }
+        }
     }
 
     assert not duplicates

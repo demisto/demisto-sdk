@@ -17,7 +17,8 @@ MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
 
 
-def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: bool = False) -> tuple:
+def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: bool = False,
+                            complete_data: bool = False, id_set_data=None) -> tuple:
     """
     Parses calculated dependency graph and returns first and all level parsed dependency.
     Additionally returns list of displayed pack images of all graph levels.
@@ -26,18 +27,37 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbo
         dependency_graph (DiGraph): dependency direct graph.
         graph_root (str): graph root pack id.
         verbose(bool): Whether to print the log to the console.
+        complete_data (bool): whether to update complete data on the dependent packs.
+        id_set_data (dict): id set data.
 
     Returns:
         dict: first level dependencies parsed data.
         list: all level pack dependencies ids (is used for displaying dependencies images).
 
     """
+    if id_set_data is None:
+        id_set_data = {}
+
     first_level_dependencies = {}
     parsed_dependency_graph = [(k, v) for k, v in dependency_graph.nodes(data=True) if
                                dependency_graph.has_edge(graph_root, k)]
 
     for dependency_id, additional_data in parsed_dependency_graph:
-        additional_data['display_name'] = find_pack_display_name(dependency_id)
+        pack_name = find_pack_display_name(dependency_id)
+
+        if not complete_data:
+            additional_data['display_name'] = pack_name
+
+        else:
+            dependency_data = id_set_data.get('Packs', {}).get(dependency_id)
+            if dependency_data:
+                additional_data['name'] = dependency_data['name']
+                additional_data['author'] = dependency_data['author']
+                additional_data['minVersion'] = dependency_data['current_version']
+                additional_data['certification'] = dependency_data['certification']
+            else:
+                additional_data['display_name'] = pack_name
+
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
@@ -1136,7 +1156,8 @@ class PackDependencies:
     @staticmethod
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
                           update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
-                          skip_id_set_creation: bool = False) -> dict:
+                          debug_file_path: str = '', skip_id_set_creation: bool = False,
+                          complete_data: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1148,6 +1169,7 @@ class PackDependencies:
             silent_mode (bool): Determines whether to echo the dependencies or not.
             verbose(bool): Whether to print the log to the console.
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
+            complete_data (bool): Whether to update complete data on the dependent packs.
 
         Returns:
             Dict: first level dependencies of a given pack.
@@ -1165,7 +1187,9 @@ class PackDependencies:
         dependency_graph = PackDependencies.build_dependency_graph(
             pack_id=pack_name, id_set=id_set, verbose=verbose,
             exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose)
+        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose,
+                                                              complete_data=complete_data, id_set_data=id_set,
+                                                              )
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:

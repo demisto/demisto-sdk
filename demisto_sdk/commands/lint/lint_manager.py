@@ -821,15 +821,16 @@ class LintManager:
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             if message:
-                file_path = message.split(':')[0]
-                code = message.split(' ')[1]
+                split_message = message.split(':')
+                file_path = split_message[0] if len(split_message) >= 1 else ''
+                code = message.split(' ')[1] if len(message.split(' ')) >= 2 else ''
                 output = {
                     'linter': 'xsoar_linter',
                     'severity': errors.get('type'),
                     'code': code,
-                    'message': message.split(code)[-1].lstrip(),
-                    'line-number': message.split(':')[1],
-                    'column-number': message.split(':')[2]
+                    'message': message.split(code)[-1].lstrip() if len(message.split(code)) >= 1 else '',
+                    'line-number': split_message[1] if len(split_message) >= 2 else '',
+                    'column-number': split_message[2] if len(split_message) >= 3 else ''
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
@@ -845,7 +846,7 @@ class LintManager:
         else:
             json_contents[file_path] = {
                 'file-type': os.path.splitext(file_path)[1].replace('.', ''),
-                'entity-type': file_type.value,
+                'entity-type': file_type.value if file_type else '',
                 "display-name": get_file_displayed_name(yml_file_path),
                 'outputs': [
                     output

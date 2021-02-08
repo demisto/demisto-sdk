@@ -76,7 +76,7 @@ class UpdateRN:
         else:
             try:
                 if self.is_bump_required():
-                    if self.update_type:
+                    if self.update_type is None:
                         self.update_type = "revision"
                     new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
                     print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",

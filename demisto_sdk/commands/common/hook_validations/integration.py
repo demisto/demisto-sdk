@@ -944,7 +944,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         integration_file, _ = os.path.splitext(integration_file)
 
-        if integrations_folder == 'Integrations' or integration_file == integrations_folder:
+        if integrations_folder == 'Integrations':
+            if integration_file.startswith('integration-'):
+                return True
+
+        if integration_file == integrations_folder:
             return True
 
         valid_integration_file = integration_file.replace('-', '').replace('_', '')

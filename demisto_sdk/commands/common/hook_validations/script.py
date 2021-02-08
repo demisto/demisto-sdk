@@ -228,16 +228,19 @@ class ScriptValidator(ContentEntityValidator):
         absolute_file_path = self.file_path
         scripts_folder = os.path.dirname(absolute_file_path).split('/')[-1]
         script_file = os.path.basename(absolute_file_path)
-
         script_file, _ = os.path.splitext(script_file)
 
-        if scripts_folder == 'Scripts' or script_file == scripts_folder:
+        if scripts_folder == 'Scripts':
+            if script_file.startswith('script-'):
+                return True
+
+        if script_file == scripts_folder:
             return True
 
         valid_script_file = script_file.replace('-', '').replace('_', '')
 
         if valid_script_file.lower() != scripts_folder.lower():
-            error_message, error_code = Errors.is_valid_integration_file_path(script_file)
+            error_message, error_code = Errors.is_valid_script_file_path(script_file)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

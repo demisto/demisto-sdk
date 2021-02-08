@@ -372,3 +372,44 @@ class TestScriptValidator:
         validator = get_validator()
         validator.current_file = current
         assert validator.is_valid_pwsh() == res
+
+    def test_valid_script_file_path(self):
+        """
+        Given
+            - A script with valid file path.
+        When
+            - running is_valid_script_file_path.
+        Then
+            - a script with a valid file path is valid.
+        """
+
+        validator = get_validator()
+        validator.file_path = 'Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml'
+
+        assert validator.is_valid_script_file_path()
+
+        validator.file_path = 'Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/AwsEC2GetPublicSGRules.yml'
+
+        assert validator.is_valid_script_file_path()
+
+    def test_invalid_script_file_path(self, mocker):
+        """
+        Given
+            - A script with invalid file path.
+        When
+            - running is_valid_script_file_path.
+        Then
+            - a script with a invalid file path is invalid.
+        """
+
+        validator = get_validator()
+        validator.file_path = 'Packs/AbuseDB/Scripts/AbuseIPDBPopulateIndicators.yml'
+        mocker.patch.object(validator, "handle_error", return_value=True)
+
+        assert not validator.is_valid_script_file_path()
+
+        validator.file_path = 'Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/Aws.yml'
+        mocker.patch.object(validator, "handle_error", return_value=True)
+
+        assert not validator.is_valid_script_file_path()
+

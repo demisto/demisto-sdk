@@ -664,7 +664,7 @@ class TestIntegrationValidator:
 
         structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
         validator = IntegrationValidator(structure_validator)
-        validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/Virus_Total_5.yml'
+        validator.file_path = 'Packs/VirusTotal/Integrations/Virus_Total_5.yml'
 
         mocker.patch.object(validator, "handle_error", return_value=True)
 

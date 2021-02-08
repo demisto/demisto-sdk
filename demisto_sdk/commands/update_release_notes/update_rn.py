@@ -9,9 +9,11 @@ import sys
 from distutils.version import LooseVersion
 from typing import Union
 
+import click
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, IGNORED_PACK_NAMES,
-    PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE, FileType)
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
+    IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,
+    FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -32,8 +34,11 @@ class UpdateRN:
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
-        self.pack_path = pack_name_to_path(self.pack)
-
+        try:
+            self.pack_path = pack_name_to_path(self.pack)
+        except TypeError:
+            click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
+            sys.exit(1)
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
@@ -47,12 +52,8 @@ class UpdateRN:
         self.text = text
         self.prev_rn_text = prev_rn_text
         self.pack_metadata_only = pack_metadata_only
-        try:
-            self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
-        except TypeError:
-            print_error(f"pack_metadata.json was not found for the {self.pack} pack. Please verify "
-                        f"the pack path is correct.")
-            sys.exit(1)
+
+        self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
 
     @staticmethod
@@ -75,7 +76,7 @@ class UpdateRN:
         else:
             try:
                 if self.is_bump_required():
-                    if self.update_type is None:
+                    if self.update_type:
                         self.update_type = "revision"
                     new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
                     print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
@@ -84,7 +85,7 @@ class UpdateRN:
                     new_metadata = self.get_pack_metadata()
                     new_version = new_metadata.get('currentVersion', '99.99.99')
             except ValueError as e:
-                print_error(e)
+                click.secho(str(e), fg='red')
                 sys.exit(1)
             rn_path = self.return_release_notes_path(new_version)
             self.check_rn_dir(rn_path)
@@ -120,11 +121,11 @@ class UpdateRN:
                                 f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
                     return True
                 else:
-                    print_color("No changes to pack files were detected from the previous time "
+                    click.secho("No changes to pack files were detected from the previous time "
                                 "this command was run. The release notes have not been "
-                                "changed.", LOG_COLORS.GREEN)
+                                "changed.", fg='green')
             else:
-                print_warning("No changes which would belong in release notes were detected.")
+                click.secho("No changes which would belong in release notes were detected.", fg='yellow')
         return False
 
     def _does_pack_metadata_exist(self):
@@ -163,13 +164,11 @@ class UpdateRN:
             new_version = new_metadata.get('currentVersion', '99.99.99')
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 return True
-            elif LooseVersion(self.master_version) < LooseVersion(new_version):
-                return False
+            return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
                         f"Please verify the pack exists and the pack name is correct.")
             sys.exit(0)
-        return True
 
     def only_docs_changed(self):
         changed_files = self.added_files.union(self.modified_files_in_pack)
@@ -435,11 +434,11 @@ def get_file_description(path, file_type):
 def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None, text=''):
     print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
     if not id_set_path:
-        if not os.path.isfile('./Tests/id_set.json'):
+        if not os.path.isfile(DEFAULT_ID_SET_PATH):
             print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is "
                         "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
             return
-        id_set_path = './Tests/id_set.json'
+        id_set_path = DEFAULT_ID_SET_PATH
     with open(id_set_path, 'r') as conf_file:
         id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)

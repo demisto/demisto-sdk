@@ -559,6 +559,61 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
         assert '(Available from Cortex XSOAR 6.0.0).' in desc
 
+    @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
+    def test_get_pack_name_fails(self, mock_master):
+        """
+            Given
+                - Pack path for update release notes
+            When
+                - get_pack_name tool function could not extract the pack name
+            Then
+               - Pack name is None and system exit occurs
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = None
+        with pytest.raises(SystemExit) as e:
+            UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
+    @mock.patch.object(UpdateRN, 'bump_version_number')
+    @mock.patch.object(UpdateRN, 'is_bump_required')
+    def test_execute_with_bump_version_raises_error(self, mock_bump_version_number, mock_is_bump_required):
+        """
+            Given
+                - Pack path for update release notes
+            When
+                - bump_version_number function raises valueError
+            Then
+               - could not bump version number and system exit occurs
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_bump_version_number.side_effect = ValueError('Test')
+        mock_is_bump_required.return_value = True
+        with pytest.raises(SystemExit) as e:
+            client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+            client.execute_update()
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
+    @mock.patch.object(UpdateRN, 'only_docs_changed')
+    def test_only_docs_changed_bump_not_required(self, mock_master):
+        """
+            Given
+                - Pack to update release notes
+            When
+                - Only doc files have changed
+            Then
+               - bump version number is not required
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = True
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert client.is_bump_required() is False
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -1092,3 +1147,23 @@ def test_get_from_version_at_update_rn(integration):
     assert fromversion == '5.0.0'
     fromversion = get_from_version_at_update_rn('fake_path.yml')
     assert fromversion is None
+
+
+@pytest.mark.parametrize('key, val', [('brandName', 'TestBrand'), ('id', 'TestID'), ('name', 'TestName'),
+                                      ('TypeName', 'TestType'), ('display', 'TestDisplay')])
+def test_get_display_name(key, val, mocker):
+    """
+        Given
+            - Pack to update release notes
+        When
+            - get_display_name with file path is called
+        Then
+           - Returned name determined by the key of the data loaded from the file
+        """
+    from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+    mock_object = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.StructureValidator')
+    mock_structure_validator = mock_object.return_value
+    mock_structure_validator.load_data_from_file.return_value = {key: val}
+    client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+        'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+    assert client.get_display_name('Packs/Test/test.yml') == val

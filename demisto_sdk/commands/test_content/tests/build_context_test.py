@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
@@ -382,3 +383,23 @@ def test_get_instances_ips(mocker, tmp_path):
     build_context = get_mocked_build_context(mocker,
                                              tmp_path)
     assert build_context.instances_ips == {'1.1.1.1': 4445}
+
+
+def test_get_public_ip_from_server_url(mocker, tmp_path):
+    """
+    Given:
+        - A build context
+    When:
+        - Calling the method 'test_get_public_ip_from_server_url'
+    Then:
+        - Ensure it returns the internal IP with a valid port.
+        - Ensure it returns the given URL as is in case there is no port in the URL prefix.
+        - Ensure it raises an exception in case a non valid port is given.
+    """
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path)
+    assert build_context.get_public_ip_from_server_url('https://localhost:4445') == 'https://1.1.1.1'
+    assert build_context.get_public_ip_from_server_url('https://2.2.2.2') == 'https://2.2.2.2'
+    with pytest.raises(Exception) as excinfo:
+        build_context.get_public_ip_from_server_url('https://localhost:4446')
+    assert 'Could not find private ip for the server mapped to port 4446' in str(excinfo.value)

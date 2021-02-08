@@ -1,4 +1,5 @@
 # Changelog
+* Do not collect optional dependencies on indicator types reputation commands.
 
 # 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.

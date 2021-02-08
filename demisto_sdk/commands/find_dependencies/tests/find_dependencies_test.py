@@ -1022,8 +1022,6 @@ class TestDependsOnIndicatorType:
             - Extracting the packs that the indicator type depends on.
         """
         expected_result = {
-            # integration dependencies
-            ("Feedsslabusech", False), ("AbuseDB", False), ("ActiveMQ", False),
             # script dependencies
             ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
         }

@@ -1,6 +1,5 @@
 import os
 import re
-from pathlib import Path
 
 import yaml
 from demisto_sdk.commands.common.constants import (
@@ -937,9 +936,10 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_integration_file_path(self) -> bool:
         absolute_file_path = self.file_path
-        integrations_folder = os.path.dirname(absolute_file_path).split('/')[-1]
+        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
         integration_file = os.path.basename(absolute_file_path)
 
+        # drop file extension
         integration_file, _ = os.path.splitext(integration_file)
 
         if integrations_folder == 'Integrations':

@@ -657,7 +657,7 @@ class PackDependencies:
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_scripts)
+                    _label_as_optional(packs_found_from_scripts)
                 indicator_type_dependencies.update(pack_dependencies_data)
 
             if indicator_type_dependencies:

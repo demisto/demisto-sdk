@@ -1023,7 +1023,7 @@ class TestDependsOnIndicatorType:
         """
         expected_result = {
             # script dependencies
-            ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
+            ("CommonScripts", False), ("Carbon_Black_Enterprise_Response", False)
         }
 
         test_input = [

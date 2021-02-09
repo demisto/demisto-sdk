@@ -767,10 +767,12 @@ class LintManager:
         for message in mypy_errors:
             if message:
                 file_path = message.split(':')[0]
+                output_message = message.split('error:')[1].lstrip() if 'error' in message \
+                    else message.split('note:')[1].lstrip()
                 output = {
                     'linter': 'mypy',
                     'severity': errors.get('type'),
-                    'message': message.split('error:')[1].lstrip() if 'error' in message else message.split('note:')[1].lstrip(),
+                    'message': output_message,
                     'line-number': message.split(':')[1],
                     'column-number': message.split(':')[2]
                 }

@@ -564,6 +564,29 @@ class BuildContext:
         instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
         return instances_ips
 
+    def get_public_ip_from_server_url(self, server_url: str) -> str:
+        """
+        Gets a tunnel server url in the form of https://localhost:<port>, from that url checks in self.instance_ips
+        if there is a url that is mapped into that port and return that url if found.
+        Args:
+            server_url: The server url to parse the port from.
+
+        Returns:
+            A URL with the private IP of the server.
+        """
+        port_pattern = re.compile(r'https://localhost:([0-9]+)')
+        port_match = port_pattern.findall(server_url)
+        if port_match:
+            port = int(port_match[0])
+        else:
+            # If the server URL has no port in the end - it means it's a local build and we can return the
+            # server URL as is.
+            return server_url
+        for server_private_ip, tunnel_port in self.instances_ips.items():
+            if tunnel_port == port:
+                return f'https://{server_private_ip}'
+        raise Exception(f'Could not find private ip for the server mapped to port {port}')
+
     @staticmethod
     def _parse_tests_list_arg(tests_list: str):
         """
@@ -953,7 +976,8 @@ class Integration:
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
-        self._set_integration_params(client.api_client.configuration.host, playbook_id, is_mockable)
+        server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
+        self._set_integration_params(server_url, playbook_id, is_mockable)
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')

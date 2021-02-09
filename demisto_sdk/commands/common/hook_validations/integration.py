@@ -2,16 +2,11 @@ import os
 import re
 
 import yaml
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
-                                                   DBOT_SCORES_DICT,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   FIRST_FETCH,
-                                                   FIRST_FETCH_PARAM,
-                                                   INTEGRATION_CATEGORIES,
-                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
-                                                   MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    BANG_COMMAND_NAMES, CONTEXT_OUTPUT_README_TABLE_HEADER, DBOT_SCORES_DICT,
+    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
+    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
+    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -20,7 +15,8 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import (is_v2_file, print_error,
+from demisto_sdk.commands.common.tools import (extract_multiple_keys_from_dict,
+                                               is_v2_file, print_error,
                                                server_version_compare)
 
 
@@ -98,8 +94,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
-            self.is_valid_integration_file_path(),
-            self.is_mapping_fields_command_exist()
+            self.is_mapping_fields_command_exist(),
+            self.is_context_change_in_readme(),
+            self.is_valid_integration_file_path()
         ]
 
         if not skip_test_conf:
@@ -975,3 +972,60 @@ class IntegrationValidator(ContentEntityValidator):
                     self.is_valid = False
                     return False
         return True
+
+    def is_context_change_in_readme(self) -> bool:
+        """
+        Checks if there has been a corresponding change to the integration's README
+        when changing the context paths of an integration.
+        Returns:
+            True if there has been a corresponding change to README file when context is changed in integration
+        """
+        valid = True
+        # the pattern to get the context part out of command section:
+        context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*', r'\*') + ".(.*?)#{3,5}"
+        # the pattern to get the value in the first column under the outputs table:
+        context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+
+        dir_path = os.path.dirname(self.file_path)
+        if not os.path.exists(os.path.join(dir_path, 'README.md')):
+            return True
+
+        # get README file's content
+        readme_path = os.path.join(dir_path, 'README.md')
+        with open(readme_path, 'r') as readme:
+            readme_content = readme.read()
+            readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+
+        commands = self.current_file.get("script", {}).get('commands', [])
+
+        for command in commands:
+            command_name = command.get('name')
+
+            # Gets all context path in the relevant command section from README file
+            command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
+            command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
+            if not command_section:
+                continue
+            if not command_section[0].endswith('###'):
+                command_section[0] += '###'  # mark end of file so last pattern of regex will be recognized.
+            context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
+            if not context_section:
+                context_path_in_command = set()
+            else:
+                context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
+                context_path_in_command.remove('---')
+
+            existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
+
+            # finds diff between YML and README
+            only_in_yml_paths = existing_context_in_yml - context_path_in_command
+            only_in_readme_paths = context_path_in_command - existing_context_in_yml
+            if only_in_yml_paths:
+                error, code = Errors.readme_missing_output_context(command_name, ", ".join(only_in_yml_paths))
+                if self.handle_error(error, code, file_path=readme_path):
+                    valid = False
+            if only_in_readme_paths:
+                error, code = Errors.missing_output_context(command_name, ", ".join(only_in_readme_paths))
+                if self.handle_error(error, code, file_path=self.file_path):
+                    valid = False
+        return valid

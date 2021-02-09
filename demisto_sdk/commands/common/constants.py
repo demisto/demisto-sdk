@@ -1012,6 +1012,8 @@ UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
+CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future

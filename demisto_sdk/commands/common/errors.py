@@ -65,8 +65,8 @@ ERROR_CODE = {
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
     "multiple_default_arg": "IN134",
-    "missing_output_context": "IN136",
     "invalid_integration_parameters_display_name": "IN135",
+    "missing_output_context": "IN136",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -444,6 +444,18 @@ class Errors:
     def missing_get_mapping_fields_command():
         return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
                'field is set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in YML file ' \
+               f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in the README file ' \
+               f'but are missing from the YML file: {context_paths}'
 
     @staticmethod
     @error_code_decorator

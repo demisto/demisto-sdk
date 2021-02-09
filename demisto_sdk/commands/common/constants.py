@@ -83,6 +83,25 @@ class FileType(Enum):
     POWERSHELL_FILE = 'powershellfile'
 
 
+RN_HEADER_BY_FILE_TYPE = {
+    FileType.PLAYBOOK: 'Playbooks',
+    FileType.INTEGRATION: 'Integrations',
+    FileType.SCRIPT: 'Scripts',
+    FileType.INCIDENT_FIELD: 'Incident Fields',
+    FileType.INDICATOR_FIELD: 'Indicator Fields',
+    FileType.REPUTATION: 'Indicator Types',
+    FileType.INCIDENT_TYPE: 'Incident Types',
+    FileType.CLASSIFIER: 'Classifiers',
+    FileType.LAYOUT: 'Layouts',
+    FileType.REPORT: 'Reports',
+    FileType.WIDGET: 'Widgets',
+    FileType.DASHBOARD: 'Dashboards',
+    FileType.CONNECTION: 'Connections',
+    FileType.MAPPER: 'Mappers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
+}
+
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -1011,6 +1030,8 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+
+CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
 
 class ContentItems(Enum):

@@ -770,7 +770,7 @@ class LintManager:
                 output = {
                     'linter': 'mypy',
                     'severity': errors.get('type'),
-                    'message': message.split('error:')[1].lstrip(),
+                    'message': message.split('error:')[1].lstrip() if 'error' in message else message.split('note:')[1].lstrip(),
                     'line-number': message.split(':')[1],
                     'column-number': message.split(':')[2]
                 }

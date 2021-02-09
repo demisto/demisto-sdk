@@ -98,6 +98,7 @@ class ValidateManager:
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
+        print(f"self.id_set_file is : {self.id_set_file}")
 
         self.id_set_validations = IDSetValidations(is_circle=self.is_circle,
                                                    configuration=Configuration(),
@@ -1243,6 +1244,9 @@ class ValidateManager:
         Returns:
             str: is_set file path
         """
+        print("start get_id_set_file")
+        print(f"skip_id_set_creation is {skip_id_set_creation}")
+        print(f"id_set_path is {id_set_path}")
         id_set = {}
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:

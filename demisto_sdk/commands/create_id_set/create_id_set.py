@@ -27,6 +27,7 @@ class IDSetCreator:
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
         self.add_command_to_implementing_integrations_mapping()
         print(self.id_set)
+
         self.save_id_set()
         return self.id_set
 

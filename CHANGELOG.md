@@ -1,6 +1,7 @@
 # Changelog
 * Added a validation that makes sure outputs in integrations are matching the README file.
 * Fixed an issue when files were classified incorrectly when running *update-release-notes*.
+* Added a validation that the integration and script file path's compatible with our convention.
 
 # 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.

@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 
 import yaml
 from demisto_sdk.commands.common.constants import (
@@ -942,18 +943,21 @@ class IntegrationValidator(ContentEntityValidator):
         integration_file, _ = os.path.splitext(integration_file)
 
         if integrations_folder == 'Integrations':
-            if integration_file.startswith('integration-'):
-                return True
+            if not integration_file.startswith('integration-'):
 
-        if integration_file == integrations_folder:
+                error_message, error_code = \
+                    Errors.is_valid_integration_file_path_in_integrations_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
             return True
 
-        valid_integration_file = integration_file.replace('-', '').replace('_', '')
+        if integration_file != integrations_folder:
+            valid_integration_file = integration_file.replace('-', '').replace('_', '')
 
-        if valid_integration_file.lower() != integrations_folder.lower():
-            error_message, error_code = Errors.is_valid_integration_file_path(integration_file)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+            if valid_integration_file.lower() != integrations_folder.lower():
+                error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
 
         return True
 

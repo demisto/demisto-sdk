@@ -88,6 +88,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
+        print("START !!!!")
         print(f" use_git is {use_git}")
         print(f" self.skip_dependencies is {self.skip_dependencies}")
         self.skip_id_set_creation = not create_id_set or self.skip_dependencies

@@ -1,6 +1,6 @@
 # Changelog
 * Added a validation that makes sure outputs in integrations are matching the README file.
-* Fix an issue of wrong file type classification on update-release-notes
+* Fixed an issue when files were classified incorrectly when running update-release-notes.
 
 # 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.

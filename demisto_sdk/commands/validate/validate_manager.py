@@ -1,6 +1,6 @@
 import os
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Optional
+from typing import Optional, Set, Tuple
 
 import click
 from demisto_sdk.commands.common import tools
@@ -917,8 +917,16 @@ class ValidateManager:
             if self.skip_dependencies:
                 click.echo("Skipping pack dependencies check")
 
-    def get_changed_files_from_git(self):
-        """Get the added and modified after file filtration to only relevant files for validate"""
+    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
+        """Get the added and modified after file filtration to only relevant files for validate
+
+        Returns:
+            4 sets:
+            - The filtered modified files (including the renamed files)
+            - The filtered added files
+            - The changed metadata files
+            - The modified old-format files (legacy unified python files)
+        """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
                                                       committed_only=self.is_circle, staged_only=self.staged)

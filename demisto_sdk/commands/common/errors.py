@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135',
-                         'RM102', 'IN136']
+                         'RM102', 'IN136', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -65,8 +65,8 @@ ERROR_CODE = {
     "integration_non_existent_classifier": "IN132",
     "integration_non_existent_mapper": "IN133",
     "multiple_default_arg": "IN134",
-    "missing_output_context": "IN136",
     "invalid_integration_parameters_display_name": "IN135",
+    "missing_output_context": "IN136",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
@@ -123,6 +123,8 @@ ERROR_CODE = {
     "invalid_script_id": "PB107",
     "invalid_uuid": "PB108",
     "taskid_different_from_id": "PB109",
+    "content_entity_version_not_match_playbook_version": "PB110",
+    "integration_version_not_match_playbook_version": "PB111",
     "description_missing_in_beta_integration": "DS100",
     "no_beta_disclaimer_in_description": "DS101",
     "no_beta_disclaimer_in_yml": "DS102",
@@ -446,6 +448,18 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def readme_missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in YML file ' \
+               f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in the README file ' \
+               f'but are missing from the YML file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
     def integration_non_existent_classifier(integration_classifier):
         return f"The integration has a classifier {integration_classifier} which does not exist."
 
@@ -751,7 +765,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
-        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+        return f"No release note entry was found for the {file_type.value.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
                f"generate an updated template. If you are trying to exclude an item from the release " \
                f"notes, please refer to the documentation found here - " \
@@ -817,6 +831,20 @@ class Errors:
                f"1 - The right script id is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
+               f"with a version that does not match the main playbook version. The version of" \
+               f" {entities_names} should be at most {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
+               f"that not implemented in integration that match the main playbook version. This command should be " \
+               f"implemented in an integration from version {main_playbook_version} at most."
 
     @staticmethod
     @error_code_decorator
@@ -1200,10 +1228,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1284,10 +1312,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_mapper(invalid_inc_fields_list):
         return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator

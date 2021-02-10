@@ -7,10 +7,11 @@ import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DOC_FILES_DIR, IGNORED_PACK_NAMES,
-    KNOWN_FILE_STATUSES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
-    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_PACK_META_FILE_NAME,
-    PACKS_SCRIPT_NON_SPLIT_YML_REGEX, TESTS_DIRECTORIES, FileType)
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
+    DOC_FILES_DIR, IGNORED_PACK_NAMES, KNOWN_FILE_STATUSES,
+    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
+    TESTS_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
@@ -94,7 +95,7 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors).handle_error
         self.file_path = file_path
-        self.id_set_path = id_set_path or "./Tests/id_set.json"
+        self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 

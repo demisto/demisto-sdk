@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -52,7 +54,6 @@ def test_integration_create_content_artifacts_zip(mock_git, repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(mock_git, suffix: str):
-
     with destroy_by_ext(suffix), temp_dir() as temp:
         runner = CliRunner()
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '--no-zip'])
@@ -66,3 +67,57 @@ def test_duplicate_file_failure(mock_git):
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '--no-zip'])
 
     assert result.exit_code == 1
+
+
+def test_specific_pack_creation(repo):
+    """Test the -p flag for specific packs creation
+    """
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+        }
+    )
+
+    pack_2 = repo.setup_one_pack('Pack2')
+    pack_2.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 2',
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
+
+            assert result.exit_code == 0
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
+            assert not os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+
+
+def test_all_packs_creation(repo):
+    """Test the -p flag for all packs creation
+    """
+    pack_1 = repo.setup_one_pack('Pack1')
+    pack_1.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 1',
+        }
+    )
+
+    pack_2 = repo.setup_one_pack('Pack2')
+    pack_2.pack_metadata.write_json(
+        {
+            'name': 'Pack Number 2',
+        }
+    )
+
+    with ChangeCWD(repo.path):
+        with temp_dir() as temp:
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
+
+            assert result.exit_code == 0
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
+            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))

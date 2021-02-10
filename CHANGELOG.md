@@ -1,4 +1,8 @@
 # Changelog
+* Added a validation that makes sure outputs in integrations are matching the README file.
+* Fixed an issue when files were classified incorrectly when running *update-release-notes*.
+
+# 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.
 * Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
 

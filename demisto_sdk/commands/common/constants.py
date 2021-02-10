@@ -84,6 +84,25 @@ class FileType(Enum):
     PACK_METADATA = 'pack_metadata'
 
 
+RN_HEADER_BY_FILE_TYPE = {
+    FileType.PLAYBOOK: 'Playbooks',
+    FileType.INTEGRATION: 'Integrations',
+    FileType.SCRIPT: 'Scripts',
+    FileType.INCIDENT_FIELD: 'Incident Fields',
+    FileType.INDICATOR_FIELD: 'Indicator Fields',
+    FileType.REPUTATION: 'Indicator Types',
+    FileType.INCIDENT_TYPE: 'Incident Types',
+    FileType.CLASSIFIER: 'Classifiers',
+    FileType.LAYOUT: 'Layouts',
+    FileType.REPORT: 'Reports',
+    FileType.WIDGET: 'Widgets',
+    FileType.DASHBOARD: 'Dashboards',
+    FileType.CONNECTION: 'Connections',
+    FileType.MAPPER: 'Mappers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
+}
+
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -860,6 +879,7 @@ PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
+MARKETPLACE_MIN_VERSION = '6.0.0'
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1012,3 +1032,57 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+
+CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
+
+
+class ContentItems(Enum):
+    # the format is defined in issue #19786, may change in the future
+    SCRIPTS = 'automation'
+    PLAYBOOKS = 'playbook'
+    INTEGRATIONS = 'integration'
+    INCIDENT_FIELDS = 'incidentfield'
+    INCIDENT_TYPES = 'incidenttype'
+    DASHBOARDS = 'dashboard'
+    INDICATOR_FIELDS = 'indicatorfield'
+    REPORTS = 'report'
+    INDICATOR_TYPES = 'reputation'
+    LAYOUTS = 'layoutscontainer'
+    CLASSIFIERS = 'classifier'
+    WIDGETS = 'widget'
+
+
+YML_SUPPORTED_FOLDERS = {
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    PLAYBOOKS_DIR,
+    TEST_PLAYBOOKS_DIR
+}
+
+JSON_SUPPORTED_FOLDERS = {
+    CLASSIFIERS_DIR,
+    CONNECTIONS_DIR,
+    DASHBOARDS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR,
+    LAYOUTS_DIR,
+    INDICATOR_TYPES_DIR,
+    REPORTS_DIR,
+    WIDGETS_DIR
+}
+
+CONTENT_ITEMS_DISPLAY_FOLDERS = {
+    SCRIPTS_DIR,
+    DASHBOARDS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INTEGRATIONS_DIR,
+    PLAYBOOKS_DIR,
+    INDICATOR_FIELDS_DIR,
+    REPORTS_DIR,
+    INDICATOR_TYPES_DIR,
+    LAYOUTS_DIR,
+    CLASSIFIERS_DIR,
+    WIDGETS_DIR
+}

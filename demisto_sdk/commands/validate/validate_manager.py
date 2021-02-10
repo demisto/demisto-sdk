@@ -118,7 +118,8 @@ class ValidateManager:
                 raise
             # if we are not using git - simply move on.
             else:
-                self.git_util = None  # type: ignore
+                click.echo('Unable to connect to git')
+                self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
                 pass
 

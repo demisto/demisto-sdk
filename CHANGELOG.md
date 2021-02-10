@@ -1,4 +1,6 @@
 # Changelog
+
+# 9.9.10
 * Added a validation that makes sure outputs in integrations are matching the README file.
 * Fixed an issue when files were classified incorrectly when running *update-release-notes*.
 

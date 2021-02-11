@@ -302,7 +302,7 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            create_id_set=kwargs.get('create-id-set')
+            create_id_set=kwargs.get('create_id_set')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

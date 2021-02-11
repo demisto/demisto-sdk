@@ -2,7 +2,7 @@ import os
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import (
-    filter_changed_files, get_modified_and_added_files)
+    filter_changed_files, get_changed_files, get_modified_and_added_files)
 from demisto_sdk.tests.constants_test import *
 
 
@@ -130,3 +130,30 @@ def test_staged(mocker):
                                                                                  is_circle=True)
     assert modified_files == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
     assert modified_packs == {'HelloWorld'}
+
+
+def test_get_changed_files(mocker):
+    diff_string = f"M	{VALID_LAYOUT_PATH}\n" \
+                  f"R100	{VALID_INTEGRATION_TEST_PATH}	{VALID_INTEGRATION_TEST_PATH}\n" \
+                  f"A	{VALID_PACK_IGNORE_PATH}\n" \
+                  f"D	{VALID_SCRIPT_PATH}\n"
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.run_command', return_value=diff_string)
+    expected_result = [
+        {
+            'name': VALID_LAYOUT_PATH,
+            'status': 'M'
+        },
+        {
+            'name': VALID_INTEGRATION_TEST_PATH,
+            'status': 'R'
+        },
+        {
+            'name': VALID_PACK_IGNORE_PATH,
+            'status': 'A'
+        },
+        {
+            'name': VALID_SCRIPT_PATH,
+            'status': 'D'
+        }
+    ]
+    assert expected_result == get_changed_files()

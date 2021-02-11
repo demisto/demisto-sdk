@@ -1,6 +1,8 @@
 import os
 
-from demisto_sdk.commands.common.legacy_git_tools import filter_changed_files
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.legacy_git_tools import (
+    filter_changed_files, get_modified_and_added_files)
 from demisto_sdk.tests.constants_test import *
 
 
@@ -95,3 +97,36 @@ def test_filter_changed_files(mocker):
     # check recognized deleted file
     assert VALID_SCRIPT_PATH in deleted_files
     assert VALID_DASHBOARD_PATH in deleted_files
+
+
+def test_staged(mocker):
+    """
+    Given
+        - staged = True flag
+        - diff on yml file
+    When
+        - Run get_modified_and_added_files.
+    Then
+        - modified files returns only the staged files using git diff.
+        - modified packs only returns the staged packs.
+    """
+
+    def run_command_effect(arg):
+        # if the call is to check the staged files only - return the HelloWorld integration.
+        if arg == 'git diff --name-only --staged':
+            return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
+
+        # else return all the files that were changed from master and their status in comparison to the master.
+        else:
+            return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
+
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.run_command', side_effect=run_command_effect)
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.os.path.isfile', return_value=True)
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.find_type', return_value=FileType.INTEGRATION)
+    mocker.patch('demisto_sdk.commands.validate.validate_manager.ValidateManager.is_old_file_format',
+                 return_value=False)
+
+    modified_files, _, _, _, modified_packs, _, _ = get_modified_and_added_files('..', 'master', staged=True,
+                                                                                 is_circle=True)
+    assert modified_files == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
+    assert modified_packs == {'HelloWorld'}

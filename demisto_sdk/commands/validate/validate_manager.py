@@ -123,7 +123,6 @@ class ValidateManager:
                 self.branch_name = ''
 
         self.branch_name = ''
-        self.changes_in_schema = False
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -457,13 +456,6 @@ class ValidateManager:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
             validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
                                                                           added_files))
-
-        if self.changes_in_schema:
-            self.check_only_schema = True
-            click.secho(f'\n================= Detected changes in schema - Running validation on all files '
-                        f'=================',
-                        fg="bright_cyan")
-            validation_results.add(self.run_validation_on_all_packs())
 
         return all(validation_results)
 

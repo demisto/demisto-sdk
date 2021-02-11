@@ -869,7 +869,7 @@ class ValidateManager:
             self.prev_ver = self.prev_ver.replace(non_existing_remote, str(self.git_util.repo.remote()))
 
         # if running on release branch check against last release.
-        if self.branch_name.startswith('19.') or self.branch_name.startswith('20.'):
+        if self.branch_name.startswith('21.'):
             self.skip_pack_rn_validation = True
 
             self.prev_ver = get_content_release_identifier(self.branch_name)

@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
                                                get_release_notes_file_path,
-                                               get_ryaml,
+                                               get_ryaml, get_to_version,
                                                has_remote_configured,
                                                is_origin_content_repo,
                                                is_v2_file,
@@ -49,6 +49,7 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestGenericFunctions:
@@ -129,7 +130,8 @@ class TestGenericFunctions:
         assert removed == [VALID_MD]
 
     test_content_path_on_pack = [
-        ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
+        ('AbuseDB',
+         {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
     ]
 
     @pytest.mark.parametrize('pack, file_paths_list', test_content_path_on_pack)
@@ -147,7 +149,8 @@ class TestGenericFunctions:
 
     for_test_filter_files_by_type = [
         ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
-        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [], {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
+        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [],
+         {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
         (set(), [FileType.PLAYBOOK], set())
     ]
 
@@ -666,3 +669,21 @@ V2_DISPLAY_INPUTS = [
 @pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
 def test_is_v2_file_via_display(current, answer):
     assert is_v2_file(current, check_in_display=True) is answer
+
+
+def test_get_to_version_with_to_version(repo):
+    pack = repo.create_pack('Pack')
+    integration = pack.create_integration('INT', yml={'toversion': '4.5.0'})
+    with ChangeCWD(repo.path):
+        to_ver = get_to_version(integration.yml.path)
+
+        assert to_ver == '4.5.0'
+
+
+def test_get_to_version_no_to_version(repo):
+    pack = repo.create_pack('Pack')
+    integration = pack.create_integration('INT', yml={})
+    with ChangeCWD(repo.path):
+        to_ver = get_to_version(integration.yml.path)
+
+        assert to_ver == '99.99.99'

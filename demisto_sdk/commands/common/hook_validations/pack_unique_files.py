@@ -425,7 +425,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             if not first_level_dependencies:
                 if not self.suppress_print:
-                    click.secho("Unable to find id_set.json file - skipping dependencies check", fg="yellow")
+                    click.secho("No first level dependencies found - skipping dependencies check", fg="yellow")
                 return True
 
             for core_pack in core_pack_list:

@@ -928,7 +928,7 @@ class TestValidators:
     def test_setup_git_params_release_branch(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
 
-        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='20.0.7')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='21.0.7')
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 

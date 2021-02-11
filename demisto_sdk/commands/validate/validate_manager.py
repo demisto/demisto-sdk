@@ -121,7 +121,6 @@ class ValidateManager:
                 click.echo('Unable to connect to git')
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
-                pass
 
         self.branch_name = ''
         self.changes_in_schema = False
@@ -437,7 +436,7 @@ class ValidateManager:
         """
         valid_git_setup = self.setup_git_params()
         if not self.no_configuration_prints:
-            self.git_config_prints()
+            self.print_git_config()
 
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git()
@@ -870,14 +869,12 @@ class ValidateManager:
             self.prev_ver = self.prev_ver.replace(non_existing_remote, str(self.git_util.repo.remote()))
 
         # if running on release branch check against last release.
-        if self.branch_name.startswith('21.'):
+        if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
-
             self.prev_ver = get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
-            if self.branch_name.startswith('20.'):
-                self.always_valid = True
+            self.always_valid = True
 
         # on master don't check RN
         elif self.branch_name == 'master':
@@ -888,7 +885,7 @@ class ValidateManager:
                 return False
         return True
 
-    def git_config_prints(self):
+    def print_git_config(self):
         click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
                     fg="bright_cyan")
         if not self.no_configuration_prints:
@@ -1001,12 +998,13 @@ class ValidateManager:
             return None
 
         # redirect non-test code files to the associated yml file
-        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE]:
-            if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1')):
-                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml')
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVSCRIPT_FILE]:
+            if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
+                    str(file_path).endswith('_test.js')):
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml').replace('.js', '.yml')
             else:
                 return None
 

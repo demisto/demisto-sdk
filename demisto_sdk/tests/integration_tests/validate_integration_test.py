@@ -2249,12 +2249,14 @@ class TestValidationUsingGit:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=valid_script_yml)
+        old_integration = pack2.create_integration('OldIntegration', yml={'toversion': '5.0.0', 'deprecated': True})
 
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
+        old_files = {old_integration.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
-                                                                                         set(), set()))
+                                                                                         set(), old_files))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -2273,6 +2275,7 @@ class TestValidationUsingGit:
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'Validating old-format file {old_integration.yml.rel_path}'
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 

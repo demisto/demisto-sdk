@@ -748,7 +748,8 @@ class ValidateManager:
         return all(valid_pack_files)
 
     def validate_no_old_format(self, old_format_files):
-        """ Validate there are no files in the old format(unified yml file for the code and configuration).
+        """ Validate there are no files in the old format (unified yml file for the code and configuration
+        for python integration).
 
         Args:
             old_format_files(set): file names which are in the old format.

@@ -984,9 +984,9 @@ class ValidateManager:
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
         file_type = find_type(file_path)
 
-        # ignore unrecognized file types, pack metadata, doc data and test_data
-        if not file_type or file_type == FileType.PACK_METADATA or any(test_dir in str(file_path) for
-                                                                       test_dir in TESTS_AND_DOC_DIRECTORIES):
+        # ignore unrecognized file types, pack metadata, unified.yml, doc data and test_data
+        if not file_type or file_type == FileType.PACK_METADATA or file_path.endswith('_unified.yml') or \
+                any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):
             self.ignored_files.add(file_path)
             return None
 

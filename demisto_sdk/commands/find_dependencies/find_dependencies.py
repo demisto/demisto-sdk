@@ -640,6 +640,9 @@ class PackDependencies:
             #########################################################################################################
             # Do not collect integrations implementing reputation commands to not clutter CommonTypes and other packs
             # that have a indicator type using e.g `ip` command with all the reputation integrations.
+
+            # this might be an issue if an indicator field is added to an indicator in Common Types
+            # but not in the pack that implements it.
             #########################################################################################################
 
             # related_integrations = indicator_type_data.get('integrations', [])

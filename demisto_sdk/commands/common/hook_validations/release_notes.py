@@ -24,7 +24,7 @@ class ReleaseNotesValidator(BaseValidator):
     """
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, json_file_path=''):
+                 print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.release_notes_file_path = release_notes_file_path

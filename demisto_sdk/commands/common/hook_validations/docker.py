@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import lru_cache
+from typing import Optional
 
 from pkg_resources import parse_version
 
@@ -27,7 +28,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: str = ''):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True

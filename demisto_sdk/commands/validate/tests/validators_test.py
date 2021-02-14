@@ -199,12 +199,13 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_file_valid(self, source, target, answer, validator):
+    def test_is_file_valid(self, source, target, answer, validator, mocker):
         # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
+            mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -376,6 +377,8 @@ class TestValidators:
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -451,11 +454,10 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
     def test_validate_pack_dependencies__invalid(self):
@@ -467,11 +469,10 @@ class TestValidators:
             Then:
                 - return a False validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
     @staticmethod
@@ -493,6 +494,7 @@ class TestValidators:
                 - return a True validation response
         """
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)

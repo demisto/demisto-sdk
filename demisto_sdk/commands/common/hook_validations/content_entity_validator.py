@@ -2,6 +2,7 @@ import json
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
+from typing import Optional
 
 import yaml
 from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
@@ -21,8 +22,8 @@ class ContentEntityValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 suppress_print=False, json_file_path=''):
-        # type: (StructureValidator, dict, bool, bool, bool, str) -> None
+                 suppress_print=False, json_file_path=None):
+        # type: (StructureValidator, dict, bool, bool, bool, Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.structure_validator = structure_validator

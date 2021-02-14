@@ -43,7 +43,7 @@ class IDSetValidations(BaseValidator):
     INCIDENT_TYPES_SECTION = "IncidentTypes"
 
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=''):
+                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_circle = is_circle

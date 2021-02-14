@@ -451,11 +451,10 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
     def test_validate_pack_dependencies__invalid(self):
@@ -467,11 +466,10 @@ class TestValidators:
             Then:
                 - return a False validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
     @staticmethod

@@ -638,7 +638,7 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict, id_set_path=None,
+    def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict,
                                    should_version_raise=False) -> bool:
         """
         Runs validations on the following pack files:
@@ -648,7 +648,6 @@ class ValidateManager:
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:
-            id_set_path (str): Path of the id_set. Optional.
             should_version_raise: Whether we should check if the version of the metadata was raised
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
@@ -661,11 +660,11 @@ class ValidateManager:
                                                                print_as_warnings=self.print_ignored_errors,
                                                                should_version_raise=should_version_raise,
                                                                validate_dependencies=not self.skip_dependencies,
-                                                               id_set_path=id_set_path,
+                                                               id_set_path=self.id_set_path,
                                                                private_repo=self.is_external_repo,
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver)
-        pack_errors = pack_unique_files_validator.validate_pack_unique_files()
+        pack_errors = pack_unique_files_validator.are_valid_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
             return False
@@ -733,9 +732,9 @@ class ValidateManager:
             pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
                 raise_version = self.should_raise_pack_version(pack)
-            valid_pack_files.add(self.validate_pack_unique_files(
-                pack_path, self.get_error_ignore_list(pack), should_version_raise=raise_version,
-                id_set_path=self.id_set_path))
+            valid_pack_files.add(self.validate_pack_unique_files(pack_path,
+                                                                 self.get_error_ignore_list(pack),
+                                                                 should_version_raise=raise_version))
 
         return all(valid_pack_files)
 

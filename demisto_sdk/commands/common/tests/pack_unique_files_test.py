@@ -69,15 +69,15 @@ class TestPackUniqueFilesValidator:
 
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.validate_pack_unique_files()
+        assert not self.validator.are_valid_files()
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.validate_pack_unique_files()
+        assert fake_validator.are_valid_files()
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.validate_pack_unique_files()
+        assert not self.validator.are_valid_files()
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.validate_pack_unique_files()
+        assert fake_validator.are_valid_files()
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """
@@ -172,7 +172,7 @@ class TestPackUniqueFilesValidator:
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
         mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
-        assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
@@ -188,10 +188,10 @@ class TestPackUniqueFilesValidator:
         - Ensure that the validation passes and that the skipping message is printed.
         """
         self.validator.skip_id_set_creation = True
-        res = self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        res = self.validator.validate_pack_dependencies()
         self.validator.skip_id_set_creation = False  # reverting to default for next tests
         assert res
-        assert "No first level dependencies found - skipping dependencies check" in capsys.readouterr().out
+        assert "No first level dependencies found" in capsys.readouterr().out
 
     @pytest.mark.parametrize('usecases, is_valid', [
         ([], True),

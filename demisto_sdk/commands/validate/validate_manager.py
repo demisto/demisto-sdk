@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors)
+                                                PRESET_ERROR_TO_IGNORE, Errors,
+                                                get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

@@ -1140,8 +1140,7 @@ class ValidateManager:
 
         return packs
 
-    @staticmethod
-    def get_id_set_file(skip_id_set_creation, id_set_path):
+    def get_id_set_file(self, skip_id_set_creation, id_set_path):
         """
 
         Args:
@@ -1156,8 +1155,14 @@ class ValidateManager:
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
+
         else:
             id_set = open_id_set_file(id_set_path)
+
+        if not id_set:
+            error_message, error_code = Errors.no_id_set_file()
+            self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
+
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,

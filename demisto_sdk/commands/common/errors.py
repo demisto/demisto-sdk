@@ -30,6 +30,7 @@ ERROR_CODE = {
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
     "no_minimal_fromversion_in_file": "BA106",
+    "running_on_master_with_git": "BA107",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -91,6 +92,7 @@ ERROR_CODE = {
     "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
     "duplicated_id": "ID102",
+    "no_id_set_file": "ID103",
     "remove_field_from_dashboard": "DA100",
     "include_field_in_dashboard": "DA101",
     "remove_field_from_widget": "WD100",
@@ -282,6 +284,12 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -635,6 +643,11 @@ class Errors:
     def duplicated_id(obj_id):
         return f"The ID {obj_id} already exists, please update the file or update the " \
                f"id_set.json toversion field of this id to match the old occurrence of this id"
+
+    @staticmethod
+    @error_code_decorator
+    def no_id_set_file():
+        return "Unable to find id_set.json file in path - rerun the command with --create-id-set flag"
 
     @staticmethod
     @error_code_decorator

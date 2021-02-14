@@ -1,23 +1,27 @@
 import os
-import re
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Optional
+from typing import Optional, Set, Tuple
 
 import click
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
-    DOC_FILES_DIR, IGNORED_PACK_NAMES, KNOWN_FILE_STATUSES,
-    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_PACK_META_FILE_NAME, PACKS_SCRIPT_NON_SPLIT_YML_REGEX,
-    TESTS_DIRECTORIES, FileType)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   CONTENT_ENTITIES_DIRS,
+                                                   DEFAULT_ID_SET_PATH,
+                                                   IGNORED_PACK_NAMES,
+                                                   OLDEST_SUPPORTED_VERSION,
+                                                   PACKS_DIR,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
+from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -53,17 +57,16 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.commands.common.tools import (filter_packagify_changes,
-                                               find_type, get_api_module_ids,
+from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_content_release_identifier,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, has_remote_configured,
-                                               is_origin_content_repo,
-                                               open_id_set_file, run_command)
+                                               get_yaml, open_id_set_file,
+                                               run_command)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from git import InvalidGitRepositoryError
 from packaging import version
 
 
@@ -105,15 +108,29 @@ class ValidateManager:
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file) \
             if validate_id_set else None
+
+        try:
+            self.git_util = GitUtil(repo=Content.git())
+            self.branch_name = self.git_util.get_current_working_branch()
+        except InvalidGitRepositoryError:
+            # if we are using git - fail the validation by raising the exception.
+            if self.use_git:
+                raise
+            # if we are not using git - simply move on.
+            else:
+                click.echo('Unable to connect to git')
+                self.git_util = None  # type: ignore[assignment]
+                self.branch_name = ''
+
         self.branch_name = ''
-        self.changes_in_schema = False
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DESCRIPTION,
-                                   FileType.DOC_IMAGE)
+                                   FileType.DOC_IMAGE,
+                                   FileType.PACK_METADATA)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -353,6 +370,8 @@ class ValidateManager:
             if not self.skip_pack_rn_validation:
                 return self.validate_release_notes(file_path, added_files, modified_files, pack_error_ignore_list,
                                                    is_modified)
+            else:
+                click.secho('Skipping release notes validation', fg='yellow')
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -414,16 +433,14 @@ class ValidateManager:
     def run_validation_using_git(self):
         """Runs validation on only changed packs/files (g)
         """
-        self.setup_git_params()
-        click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
-                    fg="bright_cyan")
+        valid_git_setup = self.setup_git_params()
         if not self.no_configuration_prints:
-            click.echo(f"Validating against {self.prev_ver}")
+            self.print_git_config()
 
-        modified_files, added_files, old_format_files, changed_meta_files, _ = \
-            self.get_modified_and_added_files(self.compare_type, self.prev_ver)
+        modified_files, added_files, changed_meta_files, old_format_files = \
+            self.get_changed_files_from_git()
 
-        validation_results = set()
+        validation_results = {valid_git_setup}
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -439,13 +456,6 @@ class ValidateManager:
             validation_results.add(self.validate_no_duplicated_release_notes(added_files))
             validation_results.add(self.validate_no_missing_release_notes(modified_files, old_format_files,
                                                                           added_files))
-
-        if self.changes_in_schema:
-            self.check_only_schema = True
-            click.secho(f'\n================= Detected changes in schema - Running validation on all files '
-                        f'=================',
-                        fg="bright_cyan")
-            validation_results.add(self.run_validation_on_all_packs())
 
         return all(validation_results)
 
@@ -653,7 +663,8 @@ class ValidateManager:
                                                                validate_dependencies=not self.skip_dependencies,
                                                                id_set_path=id_set_path,
                                                                private_repo=self.is_external_repo,
-                                                               skip_id_set_creation=self.skip_id_set_creation)
+                                                               skip_id_set_creation=self.skip_id_set_creation,
+                                                               prev_ver=self.prev_ver)
         pack_errors = pack_unique_files_validator.validate_pack_unique_files()
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
@@ -729,7 +740,8 @@ class ValidateManager:
         return all(valid_pack_files)
 
     def validate_no_old_format(self, old_format_files):
-        """ Validate there are no files in the old format(unified yml file for the code and configuration).
+        """ Validate there are no files in the old format (unified yml file for the code and configuration
+        for python integration).
 
         Args:
             old_format_files(set): file names which are in the old format.
@@ -838,265 +850,169 @@ class ValidateManager:
     """ ######################################## Git Tools and filtering ####################################### """
 
     def setup_git_params(self):
-        self.branch_name = self.get_current_working_branch()
-        if self.branch_name != 'master' and (not self.branch_name.startswith('19.') and
-                                             not self.branch_name.startswith('20.')):
+        """Setting up the git relevant params"""
+        self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
+            else self.branch_name
 
-            # on a non-master branch - we use '...' comparison range to check changes from origin/master.
-            # if not in master or release branch use the pre-existing prev_ver (The branch against which we compare)
-            self.compare_type = '...'
-        elif self.branch_name == 'master':
-            self.compare_type == '..'
-            self.prev_ver = 'HEAD~1'
-        else:
+        # check remote validity
+        if '/' in self.prev_ver and not self.git_util.check_if_remote_exists(self.prev_ver):
+            non_existing_remote = self.prev_ver.split("/")[0]
+            click.secho(f'Could not find remote {non_existing_remote} reverting to '
+                        f'{str(self.git_util.repo.remote())}', fg='bright_red')
+            self.prev_ver = self.prev_ver.replace(non_existing_remote, str(self.git_util.repo.remote()))
+
+        # if running on release branch check against last release.
+        if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
-            # on master branch - we use '..' comparison range to check changes from the last release branch.
-            self.compare_type = '..'
             self.prev_ver = get_content_release_identifier(self.branch_name)
 
             # when running against git while on release branch - show errors but don't fail the validation
-            if self.branch_name.startswith('20.'):
-                self.always_valid = True
+            self.always_valid = True
 
-    def add_origin(self, prev_ver):
-        # If git base not provided - check against origin/prev_ver unless using release branch
-        if '/' not in prev_ver and not (self.branch_name.startswith('20.') or self.branch_name.startswith('21.')):
-            prev_ver = 'origin/' + prev_ver
-        return prev_ver
+        # on master don't check RN
+        elif self.branch_name == 'master':
+            self.skip_pack_rn_validation = True
+            error_message, error_code = Errors.running_on_master_with_git()
+            if self.handle_error(error_message, error_code, file_path='General',
+                                 warning=(not self.is_external_repo or self.is_circle), drop_line=True):
+                return False
+        return True
 
-    def filter_staged_only(self, modified_files, added_files, old_format_files, changed_meta_files):
-        """The function gets sets of files which were changed in the current branch and filters
-        out only the files that were changed in the current commit"""
-        all_changed_files = run_command(f'git diff --name-only --staged').split()
-        formatted_changed_files = set()
-
-        for file in all_changed_files:
-            if find_type(file) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
-                file = os.path.splitext(file)[0] + '.yml'
-            formatted_changed_files.add(file)
-
-        modified_files = modified_files.intersection(formatted_changed_files)
-        added_files = added_files.intersection(formatted_changed_files)
-        old_format_files = old_format_files.intersection(formatted_changed_files)
-        changed_meta_files = changed_meta_files.intersection(formatted_changed_files)
-        return modified_files, added_files, old_format_files, changed_meta_files
-
-    def get_modified_and_added_files(self, compare_type, prev_ver):
-        """Get the modified and added files from a specific branch
-
-        Args:
-            compare_type (str): whether to run diff with two dots (..) or three (...)
-            prev_ver (str): Against which branch to run the comparision - master/last release
-
-        Returns:
-            tuple. 3 sets representing modified files, added files and files of old format who have changed.
-        """
+    def print_git_config(self):
+        click.secho(f'\n================= Running validation on branch {self.branch_name} =================',
+                    fg="bright_cyan")
         if not self.no_configuration_prints:
-            if self.staged:
-                click.echo("Collecting staged files only")
-            else:
-                click.echo("Collecting all committed files")
+            click.echo(f"Validating against {self.prev_ver}")
 
-        prev_ver = self.add_origin(prev_ver)
-        # all committed changes of the current branch vs the prev_ver
-        all_committed_files_string = run_command(
-            f'git diff --name-status {prev_ver}{compare_type}refs/heads/{self.branch_name}')
+            if self.branch_name == self.prev_ver or self.branch_name == self.prev_ver.replace('origin/', ''):
+                click.echo("Running only on last commit")
 
-        modified_files, added_files, _, old_format_files, changed_meta_files = \
-            self.filter_changed_files(all_committed_files_string, prev_ver,
-                                      print_ignored_files=self.print_ignored_files)
+            elif self.is_circle:
+                click.echo("Running only on committed files")
 
-        if not self.is_circle:
-            remote_configured = has_remote_configured()
-            is_origin_demisto = is_origin_content_repo()
-
-            repo = 'upstream'
-            if self.is_external_repo:
-                repo = 'origin'
-
-            if (remote_configured and not is_origin_demisto) or self.is_external_repo:
-                if not self.no_configuration_prints:
-                    click.echo("Collecting all local changed files from fork against the content master")
-
-                # only changes against prev_ver (without local changes)
-
-                all_changed_files_string = run_command(
-                    f'git diff --name-status {repo}/master...HEAD')
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
-
-                # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command(f'git diff --name-status --no-merges {repo}/master...HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+            elif self.staged:
+                click.echo("Running only on staged files")
 
             else:
-                if (not is_origin_demisto and not remote_configured) and not self.no_configuration_prints:
-                    error_message, error_code = Errors.changes_may_fail_validation()
-                    self.handle_error(error_message, error_code, file_path="General-Error", warning=True,
-                                      drop_line=True)
+                click.echo("Running on committed and staged files")
 
-                if not self.no_configuration_prints and not self.staged:
-                    click.echo("Collecting all local changed files against the content master")
+            if self.skip_pack_rn_validation:
+                click.echo("Skipping release notes validation")
 
-                # only changes against prev_ver (without local changes)
-                all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
-                modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag = \
-                    self.filter_changed_files(all_changed_files_string, print_ignored_files=self.print_ignored_files)
+            if self.skip_docker_checks:
+                click.echo("Skipping Docker checks")
 
-                # all local non-committed changes and changes against prev_ver
-                outer_changes_files_string = run_command('git diff --name-status --no-merges HEAD')
-                nc_modified_files, nc_added_files, nc_deleted_files, nc_old_format_files, nc_changed_meta_files = \
-                    self.filter_changed_files(outer_changes_files_string, print_ignored_files=self.print_ignored_files)
+            if not self.is_backward_check:
+                click.echo("Skipping backwards compatibility checks")
 
-            old_format_files = old_format_files.union(nc_old_format_files)
-            modified_files = modified_files.union(
-                modified_files_from_tag.intersection(nc_modified_files))
+            if self.skip_dependencies:
+                click.echo("Skipping pack dependencies check")
 
-            added_files = added_files.union(
-                added_files_from_tag.intersection(nc_added_files))
-
-            changed_meta_files = changed_meta_files.union(
-                changed_meta_files_from_tag.intersection(nc_changed_meta_files))
-
-            modified_files = modified_files - set(nc_deleted_files)
-            added_files = added_files - set(nc_deleted_files)
-            changed_meta_files = changed_meta_files - set(nc_deleted_files)
-
-        if self.staged:
-            modified_files, added_files, old_format_files, changed_meta_files = \
-                self.filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
-
-        modified_packs = self.get_packs(modified_files).union(self.get_packs(old_format_files)).union(
-            self.get_packs(added_files))
-        return modified_files, added_files, old_format_files, changed_meta_files, modified_packs
-
-    def filter_changed_files(self, files_string, tag='master', print_ignored_files=False):
-        """Get lists of the modified files in your branch according to the files string.
-
-        Args:
-            files_string (string): String that was calculated by git using `git diff` command.
-            tag (string): String of git tag used to update modified files.
-            print_ignored_files (bool): should print ignored files.
+    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
+        """Get the added and modified after file filtration to only relevant files for validate
 
         Returns:
-            Tuple of sets.
+            4 sets:
+            - The filtered modified files (including the renamed files)
+            - The filtered added files
+            - The changed metadata files
+            - The modified old-format files (legacy unified python files)
         """
-        all_files = files_string.split('\n')
-        deleted_files = set()
-        added_files_list = set()
-        modified_files_list = set()
-        old_format_files = set()
-        changed_meta_files = set()
-        for f in all_files:
-            file_data: list = list(filter(None, f.split('\t')))
+        # get files from git by status identification against prev-ver
+        modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
+                                                      committed_only=self.is_circle, staged_only=self.staged)
+        added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                staged_only=self.staged)
+        renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged)
 
-            if not file_data:
-                continue
+        # filter files only to relevant files
+        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
+        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
+        filtered_modified = filtered_modified.union(filtered_renamed)
+        filtered_added, _ = self.filter_to_relevant_files(added_files)
 
-            file_status = file_data[0]
-            file_path = file_data[1]
+        # extract metadata files from the recognised changes
+        changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
 
-            if file_status.lower().startswith('r'):
-                file_status = 'r'
-                file_path = file_data[2]
+        return filtered_modified, filtered_added, changed_meta, old_format_files
+
+    def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
+        """Extract pack metadata files from the modified and added files
+
+        Return all modified metadata file paths
+        and get all newly added packs from the added metadata files."""
+        changed_metadata_files = set()
+        for path in modified_files.union(renamed_files):
+            file_path = str(path[1]) if isinstance(path, tuple) else str(path)
+
+            if file_path.endswith(PACKS_PACK_META_FILE_NAME):
+                changed_metadata_files.add(file_path)
+
+        for path in added_files:
+            if str(path).endswith(PACKS_PACK_META_FILE_NAME):
+                self.new_packs.add(get_pack_name(str(path)))
+
+        return changed_metadata_files
+
+    def filter_to_relevant_files(self, file_set):
+        """Goes over file set and returns only a filtered set of only files relevant for validation"""
+        filtered_set: set = set()
+        old_format_files: set = set()
+        for path in file_set:
+            old_path = None
+            if isinstance(path, tuple):
+                file_path = str(path[1])
+                old_path = str(path[0])
+
+            else:
+                file_path = str(path)
+
             try:
-                # if the file is a code file - change path to
-                # the associated yml path to trigger release notes validation.
-                if file_status.lower() != 'd' and \
-                        find_type(file_path) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
-                        not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
-                    # naming convention - code file and yml file in packages must have same name.
-                    file_path = os.path.splitext(file_path)[0] + '.yml'
-
-                # ignore changes in JS files and unit test files.
-                elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
-                    if file_path not in self.ignored_files:
-                        self.ignored_files.add(file_path)
-                        if print_ignored_files:
-                            click.secho('Ignoring file path: {} - code file'.format(file_path), fg="yellow")
-                    continue
-
-                # ignore changes in TESTS_DIRECTORIES files.
-                elif any(test_dir in file_path for test_dir in TESTS_DIRECTORIES):
-                    if file_path not in self.ignored_files:
-                        self.ignored_files.add(file_path)
-                        if print_ignored_files:
-                            click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
-                    continue
-
-                # ignore changes in doc_files directory
-                elif DOC_FILES_DIR in file_path:
-                    if file_path not in self.ignored_files:
-                        self.ignored_files.add(file_path)
-                        if print_ignored_files:
-                            click.secho('Ignoring file path: {} - doc files'.format(file_path), fg="yellow")
-                    continue
-
-                # identify deleted files
-                if file_status.lower() == 'd' and not file_path.startswith('.'):
-                    deleted_files.add(file_path)
-
-                # ignore directories
-                elif not os.path.isfile(file_path):
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {} - directory'.format(file_path), fg="yellow")
-                    continue
-
-                # changes in old scripts and integrations - unified python scripts/integrations
-                elif file_status.lower() in ['m', 'a', 'r'] and find_type(file_path) in [FileType.INTEGRATION,
-                                                                                         FileType.SCRIPT] and \
-                        self._is_py_script_or_integration(file_path):
-                    old_format_files.add(file_path)
-                # identify modified files
-                elif file_status.lower() == 'm' and find_type(file_path) and not file_path.startswith('.'):
-                    modified_files_list.add(file_path)
-                # identify added files
-                elif file_status.lower() == 'a' and find_type(file_path) and not file_path.startswith('.'):
-                    added_files_list.add(file_path)
-                # identify renamed files
-                elif file_status.lower().startswith('r') and find_type(file_path):
-                    # if a code file changed, take the associated yml file.
-                    if find_type(file_data[2]) in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE]:
-                        modified_files_list.add(file_path)
-
-                    else:
-                        # file_data[1] = old name, file_data[2] = new name
-                        modified_files_list.add((file_data[1], file_data[2]))
-                elif file_status.lower() not in KNOWN_FILE_STATUSES:
-                    click.secho('{} file status is an unknown one, please check. File status was: {}'
-                                .format(file_path, file_status), fg="bright_red")
-                # handle meta data file changes
-                elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
-                    if file_status.lower() == 'a':
-                        self.new_packs.add(get_pack_name(file_path))
-                    elif file_status.lower() == 'm':
-                        changed_meta_files.add(file_path)
-                else:
-                    # pipefile and pipelock files should not enter to ignore_files
-                    if 'Pipfile' not in file_path:
-                        if file_path not in self.ignored_files:
-                            self.ignored_files.add(file_path)
-                            if print_ignored_files:
-                                click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
-                        else:
-                            if print_ignored_files:
-                                click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
+                formatted_path = self.format_file_path(file_path, old_path, old_format_files)
+                if formatted_path:
+                    filtered_set.add(formatted_path)
 
             # handle a case where a file was deleted locally though recognised as added against master.
             except FileNotFoundError:
                 if file_path not in self.ignored_files:
                     self.ignored_files.add(file_path)
-                    if print_ignored_files:
-                        click.secho('Ignoring file path: {} - File not found'.format(file_path), fg="yellow")
 
-        modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
-            modified_files_list,
-            added_files_list,
-            deleted_files,
-            tag)
+        return filtered_set, old_format_files
 
-        return modified_files_list, added_files_list, deleted_files, old_format_files, changed_meta_files
+    def format_file_path(self, file_path, old_path, old_format_files):
+        """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
+        file_type = find_type(file_path)
+
+        # ignore unrecognized file types, pack metadata, unified.yml, doc data and test_data
+        if not file_type or file_type == FileType.PACK_METADATA or file_path.endswith('_unified.yml') or \
+                any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):
+            self.ignored_files.add(file_path)
+            return None
+
+        # redirect non-test code files to the associated yml file
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVSCRIPT_FILE]:
+            if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
+                    str(file_path).endswith('_test.js')):
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
+
+                if old_path:
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml').replace('.js', '.yml')
+            else:
+                return None
+
+        # check for old file format
+        if self.is_old_file_format(file_path, file_type):
+            old_format_files.add(file_path)
+            return None
+
+        # if renamed file - return a tuple
+        if old_path:
+            return old_path, file_path
+
+        # else return the file path
+        else:
+            return file_path
 
     """ ######################################## Validate Tools ############################################### """
 
@@ -1154,31 +1070,23 @@ class ValidateManager:
 
         return ignored_errors_list
 
-    @staticmethod
-    def get_current_working_branch() -> str:
-        branches = run_command('git branch')
-        branch_name_reg = re.search(r'\* (.*)', branches)
-        if not branch_name_reg:
-            return ''
-        return branch_name_reg.group(1)
-
     def get_content_release_identifier(self) -> Optional[str]:
         return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
-    def _is_py_script_or_integration(file_path):
+    def is_old_file_format(file_path, file_type):
         file_yml = get_yaml(file_path)
-        if re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
+        # check for unified integration
+        if file_type == FileType.INTEGRATION and file_yml.get('script', {}).get('script', '-') not in ['-', '']:
             if file_yml.get('script', {}).get('type', 'javascript') != 'python':
                 return False
             return True
 
-        if re.match(PACKS_SCRIPT_NON_SPLIT_YML_REGEX, file_path, re.IGNORECASE):
+        # check for unified script
+        if file_type == FileType.SCRIPT and file_yml.get('script', '-') not in ['-', '']:
             if file_yml.get('type', 'javascript') != 'python':
                 return False
-
             return True
-
         return False
 
     @staticmethod
@@ -1207,7 +1115,8 @@ class ValidateManager:
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
+            FileType.PACK_METADATA
         })
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
@@ -1215,7 +1124,7 @@ class ValidateManager:
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.PACK_METADATA}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 
@@ -1231,8 +1140,7 @@ class ValidateManager:
 
         return packs
 
-    @staticmethod
-    def get_id_set_file(skip_id_set_creation, id_set_path):
+    def get_id_set_file(self, skip_id_set_creation, id_set_path):
         """
 
         Args:
@@ -1247,8 +1155,14 @@ class ValidateManager:
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
                 id_set = IDSetCreator(print_logs=False).create_id_set()
+
         else:
             id_set = open_id_set_file(id_set_path)
+
+        if not id_set:
+            error_message, error_code = Errors.no_id_set_file()
+            self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
+
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,

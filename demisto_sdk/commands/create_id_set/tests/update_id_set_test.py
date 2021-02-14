@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument, get_general_data,
@@ -194,7 +194,7 @@ class TestPacksMetadata:
 
     @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
-    def test_process_metadata(repo, metadata_file_content, author, certification):
+    def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
         """
         Given
             - A pack_metadata file for Pack1
@@ -203,6 +203,9 @@ class TestPacksMetadata:
         Then
             - parsing all the data from file successfully
         """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
 
@@ -220,7 +223,7 @@ class TestPacksMetadata:
 
     @staticmethod
     @pytest.mark.parametrize('print_logs', [True, False])
-    def test_process_packs_success(capsys, repo, print_logs):
+    def test_process_packs_success(mocker, capsys, repo, print_logs):
         """
         Given
             - A pack metadata file path.
@@ -230,6 +233,9 @@ class TestPacksMetadata:
         Then
             - Verify output to logs.
         """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json({
             'name': 'Pack',
@@ -245,13 +251,13 @@ class TestPacksMetadata:
 
         captured = capsys.readouterr()
 
-        assert res['Pack']['name'] == 'Pack'
-        assert res['Pack']['current_version'] == '1.0.0'
-        assert res['Pack']['author'] == 'Cortex XSOAR'
-        assert res['Pack']['tags'] == ['Alerts']
-        assert res['Pack']['use_cases'] == ['Case Management']
-        assert res['Pack']['categories'] == ['Endpoint']
-        assert res['Pack']['certification'] == 'certified'
+        assert res['Pack1']['name'] == 'Pack'
+        assert res['Pack1']['current_version'] == '1.0.0'
+        assert res['Pack1']['author'] == 'Cortex XSOAR'
+        assert res['Pack1']['tags'] == ['Alerts']
+        assert res['Pack1']['use_cases'] == ['Case Management']
+        assert res['Pack1']['categories'] == ['Endpoint']
+        assert res['Pack1']['certification'] == 'certified'
 
         assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
 
@@ -2024,7 +2030,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            }
+        }
     }
 
     second_id_set = {
@@ -2041,7 +2052,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo2': {
+
+            }
+        }
     }
 
     output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
@@ -2070,7 +2086,15 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            },
+            'pack_foo2': {
+
+            }
+        }
     }
 
     assert not duplicates

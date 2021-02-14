@@ -2,7 +2,8 @@ import os.path
 import re
 from typing import Any, List, Optional, Tuple
 
-from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
+from demisto_sdk.commands.common.constants import (
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -282,7 +283,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         section.append('There is no context output for this command.')
     else:
         section.extend([
-            '| **Path** | **Type** | **Description** |',
+            CONTEXT_OUTPUT_README_TABLE_HEADER,
             '| --- | --- | --- |'
         ])
         for output in outputs:

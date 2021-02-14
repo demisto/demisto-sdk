@@ -361,6 +361,16 @@ def test_report_summary_no_warnings(capsys):
 
 
 def test_create_json_output_flake8(repo, mocker):
+    """
+    Given:
+        - flake8 error entries.
+
+    When:
+        - Running flake8_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
@@ -407,6 +417,16 @@ def test_create_json_output_flake8(repo, mocker):
 
 
 def test_create_json_output_mypy(repo, mocker):
+    """
+    Given:
+        - mypy error entries.
+
+    When:
+        - Running mypy_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     pack = repo.create_pack('Pack')
@@ -464,6 +484,16 @@ def test_create_json_output_mypy(repo, mocker):
 
 
 def test_create_json_output_bandit(repo, mocker):
+    """
+    Given:
+        - bandit error entries.
+
+    When:
+        - Running bandit_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
@@ -496,6 +526,16 @@ def test_create_json_output_bandit(repo, mocker):
 
 
 def test_create_json_output_vulture(repo, mocker):
+    """
+    Given:
+        - vulture error entries.
+
+    When:
+        - Running vulture_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
@@ -526,6 +566,16 @@ def test_create_json_output_vulture(repo, mocker):
 
 
 def test_create_json_output_xsoar_linter(repo, mocker):
+    """
+    Given:
+        - XSOAR linter error entries.
+
+    When:
+        - Running xsoar_linter_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
     mocked_lint_manager = mock_lint_manager(mocker)
     from demisto_sdk.commands.lint import lint_manager
     mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)

@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 # Local packages
 from demisto_sdk.commands.common.logger import Colors, logging_setup
 from demisto_sdk.commands.common.tools import (find_file, find_type,
+                                               get_content_path,
                                                get_file_displayed_name,
                                                get_json,
                                                is_external_repository,
@@ -699,7 +700,8 @@ class LintManager:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))
 
-    def create_json_output(self):
+    def create_json_output(self) -> None:
+        """Creates a JSON file output for lints"""
         if not self.json_file_path:
             return
 
@@ -709,6 +711,8 @@ class LintManager:
         else:
             json_contents = {}
 
+        # format all linters to JSON format -
+        # if any additional linters are added, please add a formatting function here
         for check in self.linters_error_list:
             if check.get('linter') == 'flake8':
                 self.flake8_error_formatter(check, json_contents)
@@ -724,25 +728,39 @@ class LintManager:
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
 
-    def flake8_error_formatter(self, errors, json_contents):
+    def flake8_error_formatter(self, errors: Dict, json_contents: Dict) -> None:
+        """Format flake8 error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing flake8 error strings
+            json_contents (Dict): The JSON file outputs
+        """
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             if message:
-                file_path = message.split(':')[0]
+                file_path, line_number, column_number, _ = message.split(':', 3)
                 code = message.split()[1]
                 output = {
                     'linter': 'flake8',
                     'severity': errors.get('type'),
                     'code': code,
                     'message': message.split(code)[1].lstrip(),
-                    'line-number': message.split(':')[1],
-                    'column-number': message.split(':')[2]
+                    'line-number': line_number,
+                    'column-number': column_number
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def gather_mypy_errors(error_messages):
+    def gather_mypy_errors(error_messages: List) -> List:
+        """Gather multi-line mypy errors to a single line
+
+        Args:
+            error_messages (List): A list of mypy error outputs
+
+        Returns:
+            List. A list of strings, each element is a full mypy error message
+        """
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
@@ -759,42 +777,64 @@ class LintManager:
 
         return mypy_errors
 
-    def mypy_error_formatter(self, errors, json_contents):
+    def mypy_error_formatter(self, errors: Dict, json_contents: Dict) -> None:
+        """Format mypy error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing mypy error strings
+            json_contents (Dict): The JSON file outputs
+        """
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         mypy_errors = self.gather_mypy_errors(error_messages)
 
         for message in mypy_errors:
             if message:
-                file_path = message.split(':')[0]
+                print(len(message.split(':')))
+                file_path, line_number, column_number, _ = message.split(':', 3)
                 output_message = message.split('error:')[1].lstrip() if 'error' in message \
                     else message.split('note:')[1].lstrip()
                 output = {
                     'linter': 'mypy',
                     'severity': errors.get('type'),
                     'message': output_message,
-                    'line-number': message.split(':')[1],
-                    'column-number': message.split(':')[2]
+                    'line-number': line_number,
+                    'column-number': column_number
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
-    def bandit_error_formatter(self, errors, json_contents):
+    def bandit_error_formatter(self, errors: Dict, json_contents: Dict) -> None:
+        """Format bandit error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing bandit error strings
+            json_contents (Dict): The JSON file outputs
+        """
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
             if message:
-                file_path = message.split(':')[0]
+                file_path, line_number, _ = message.split(':', 2)
                 output = {
                     'linter': 'bandit',
                     'severity': errors.get('type'),
                     'code': message.split(' ')[1],
                     'message': message.split('[')[1].replace(']', ' -'),
-                    'line-number': message.split(':')[1],
+                    'line-number': line_number,
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def get_full_file_path_for_vulture(file_name, content_path):
+    def get_full_file_path_for_vulture(file_name: str, content_path: str) -> str:
+        """Get the full file path to a file with a given name name from the content path
+
+        Args:
+            file_name (str): The file name of the file to find
+            content_path (str): The content file path
+
+        Returns:
+            str. The path to the file
+        """
         file_ending = retrieve_file_ending(file_name)
         if not file_ending:
             file_name = f'{file_name}.py'
@@ -802,23 +842,35 @@ class LintManager:
             file_name = file_name.replace(file_ending, 'py')
         return find_file(content_path, file_name)
 
-    def vulture_error_formatter(self, errors, json_contents):
+    def vulture_error_formatter(self, errors: Dict, json_contents: Dict) -> None:
+        """Format vulture error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing vulture error strings
+            json_contents (Dict): The JSON file outputs
+        """
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
-        content_path = os.path.abspath('')
+        content_path = get_content_path()
         for message in error_messages:
             if message:
-                file_name = message.split(':')[0]
+                file_name, line_number, error_contents = message.split(':', 2)
                 file_path = self.get_full_file_path_for_vulture(file_name, content_path)
                 output = {
                     'linter': 'vulture',
                     'severity': errors.get('type'),
-                    'message': message.split(':')[-1].lstrip(),
-                    'line-number': message.split(':')[1],
+                    'message': error_contents.lstrip(),
+                    'line-number': line_number,
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 
-    def xsoar_linter_error_formatter(self, errors, json_contents):
+    def xsoar_linter_error_formatter(self, errors: Dict, json_contents: Dict) -> None:
+        """Format XSOAR linter error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing XSOAR linter error strings
+            json_contents (Dict): The JSON file outputs
+        """
         error_messages = errors.get('messages', '')
         error_messages = error_messages.split('\n') if error_messages else []
         for message in error_messages:
@@ -837,7 +889,14 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def add_to_json_outputs(output, file_path, json_contents):
+    def add_to_json_outputs(output: Dict, file_path: str, json_contents: Dict) -> None:
+        """Adds an error entry to the JSON file contents
+
+        Args:
+            output (Dict): The information about an error entry
+            file_path (str): The file path where the error occurred
+            json_contents (Dict): The JSON file outputs
+        """
         yml_file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml')
         file_type = find_type(yml_file_path)
         if file_path in json_contents:

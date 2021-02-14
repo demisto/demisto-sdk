@@ -11,11 +11,11 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_README_FILE_NAME,
                                                    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
@@ -69,15 +69,15 @@ class TestPackUniqueFilesValidator:
 
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.validate_pack_unique_files(id_set_validations=False, pack_error_ignore_list=[])
+        assert not self.validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.validate_pack_unique_files(id_set_validations=False, pack_error_ignore_list=[])
+        assert fake_validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.validate_pack_unique_files(id_set_validations=False, pack_error_ignore_list=[])
+        assert not self.validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.validate_pack_unique_files(id_set_validations=False, pack_error_ignore_list=[])
+        assert fake_validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """
@@ -172,7 +172,7 @@ class TestPackUniqueFilesValidator:
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
         mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
-        assert not self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
@@ -188,10 +188,10 @@ class TestPackUniqueFilesValidator:
         - Ensure that the validation passes and that the skipping message is printed.
         """
         self.validator.skip_id_set_creation = True
-        res = self.validator.validate_pack_dependencies("fake_id_set_file_path")
+        res = self.validator.validate_pack_dependencies()
         self.validator.skip_id_set_creation = False  # reverting to default for next tests
         assert res
-        assert "Unable to find id_set.json file - skipping dependencies check" in capsys.readouterr().out
+        assert "No first level dependencies found" in capsys.readouterr().out
 
     @pytest.mark.parametrize('usecases, is_valid', [
         ([], True),

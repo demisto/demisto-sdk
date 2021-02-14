@@ -2,11 +2,11 @@ import os
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 

@@ -9,7 +9,7 @@ import demisto_sdk.commands.validate.validate_manager
 import pytest
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -35,6 +35,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.unify.unifier import Unifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
@@ -54,20 +55,14 @@ from demisto_sdk.tests.constants_test import (
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
     SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_CLASSIFIER_PATH, VALID_DASHBOARD_PATH,
-    VALID_DESCRIPTION_PATH, VALID_DOC_FILES_PATH_FOR_UNIT_TESTING,
-    VALID_IMAGE_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_JSON_FILE_FOR_UNIT_TESTING,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
     VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_METADATA1_PATH, VALID_METADATA2_PATH,
     VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PACK_IGNORE_PATH, VALID_PIPEFILE_LOCK_PATH,
-    VALID_PIPEFILE_PATH, VALID_PLAYBOOK_CONDITION,
-    VALID_PYTHON_INTEGRATION_PATH, VALID_PYTHON_INTEGRATION_TEST_PATH,
-    VALID_README_PATH, VALID_REPUTATION_PATH, VALID_SCRIPT_PATH,
-    VALID_SECRETS_IGNORE_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
+    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
@@ -204,12 +199,13 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_file_valid(self, source, target, answer, validator):
+    def test_is_file_valid(self, source, target, answer, validator, mocker):
         # type: (str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
+            mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -381,6 +377,8 @@ class TestValidators:
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -456,11 +454,10 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
     def test_validate_pack_dependencies__invalid(self):
@@ -472,11 +469,10 @@ class TestValidators:
             Then:
                 - return a False validation response
         """
-        validate_manager = ValidateManager(skip_conf_json=True)
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={},
-                                                             id_set_path=id_set_path)
+        validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
     @staticmethod
@@ -498,6 +494,7 @@ class TestValidators:
                 - return a True validation response
         """
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
@@ -613,7 +610,7 @@ class TestValidators:
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106",
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107",
                                 "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
@@ -644,39 +641,39 @@ class TestValidators:
             finally:
                 sys.stdout = saved_stdout
 
-    def test_is_py_or_yml(self):
+    def test_is_old_file_format_non_unified(self):
         """
             Given:
-                - A file path which contains a python script
+                - A file path which contains a non unified python script
             When:
-                - validating the associated yml file
+                - running is_old_file_format on the file
             Then:
-                - return a False validation response
+                - return a False
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_py_script_or_integration(test_file)
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
         assert res is False
 
-    def test_is_py_or_yml_invalid(self):
+    def test_is_old_file_format_unified(self):
         """
             Given:
                 - A file path which contains a python script in a legacy yml schema
             When:
-                - verifying the yml is valid using validate manager
+                - running is_old_file_format on the file
             Then:
-                - return a False validation response
+                - return a True
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         test_file = os.path.join(files_path,
                                  'UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml')
         validate_manager = ValidateManager()
-        res = validate_manager._is_py_script_or_integration(test_file)
-        assert res is False
+        res = validate_manager.is_old_file_format(test_file, FileType.INTEGRATION)
+        assert res is True
 
     def test_validate_no_missing_release_notes__no_missing_rn(self, repo):
         """
@@ -891,14 +888,14 @@ class TestValidators:
                 - running validate_no_old_format on the files
             Then:
                 - return a False as the files are invalid
-                - assert the handle_error function is called for each file
+                - assert the handle_error function is called for each file (and 1 for not finding the id set file)
         """
         handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
         old_format_files = {"demisto_sdk/tests/test_files/script-valid.yml",
                             "demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 2
+        assert handle_error_mock.call_count == 3
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """
@@ -930,124 +927,31 @@ class TestValidators:
         assert validate_manager.validate_no_old_format(old_format_file)
         assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
-    def test_filter_changed_files(self, mocker):
-        """
-            Given:
-                - A string of git diff results
-            When:
-                - running filter_changed_files on the string
-            Then:
-                - Ensure the modified files are recognized correctly.
-                - Ensure the added files are recognized correctly.
-                - Ensure the renamed file is in a tup;e in the modified files.
-                - Ensure modified metadata files are in the changed_meta_files and that the added one is not.
-                - Ensure the added code and meta files are not in added files.
-                - Ensure old format file is recognized correctly.
-                - Ensure deleted file is recognized correctly.
-                - Ensure ignored files are set correctly.
-        """
-
-        mocker.patch.object(os.path, 'isfile', return_value=True)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=True)
-        diff_string = f"M	{VALID_INCIDENT_FIELD_PATH}\n" \
-                      f"M	{VALID_PYTHON_INTEGRATION_PATH}\n" \
-                      f"M	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"M	{VALID_METADATA1_PATH}\n" \
-                      f"M	{VALID_CLASSIFIER_PATH}\n" \
-                      f"M	{VALID_DESCRIPTION_PATH}\n" \
-                      f"M	{VALID_LAYOUT_PATH}\n" \
-                      f"R100	{VALID_INTEGRATION_TEST_PATH}	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"A	{VALID_PACK_IGNORE_PATH}\n" \
-                      f"A	{VALID_INDICATOR_FIELD_PATH}\n" \
-                      f"A	{VALID_SECRETS_IGNORE_PATH}\n" \
-                      f"A	{VALID_PYTHON_INTEGRATION_PATH}\n" \
-                      f"A	{VALID_INTEGRATION_TEST_PATH}\n" \
-                      f"A	{VALID_DESCRIPTION_PATH}\n" \
-                      f"A	{VALID_IMAGE_PATH}\n" \
-                      f"A	{VALID_WIDGET_PATH}\n" \
-                      f"A	{VALID_PYTHON_INTEGRATION_TEST_PATH}\n" \
-                      f"A	{VALID_PIPEFILE_PATH}\n" \
-                      f"A	{VALID_PIPEFILE_LOCK_PATH}\n" \
-                      f"A	{VALID_README_PATH}\n" \
-                      f"A	{VALID_METADATA2_PATH}\n" \
-                      f"D	{VALID_SCRIPT_PATH}\n" \
-                      f"D	{VALID_DASHBOARD_PATH}\n" \
-                      f"D	{VALID_DOC_FILES_PATH_FOR_UNIT_TESTING}\n" \
-                      f"A	{VALID_JSON_FILE_FOR_UNIT_TESTING}"
-
-        validate_manager = ValidateManager()
-        modified_files, added_files, deleted_files, old_format_files, changed_meta_files = validate_manager. \
-            filter_changed_files(files_string=diff_string, print_ignored_files=True)
-
-        # checking that modified files are recognized correctly
-        assert VALID_INCIDENT_FIELD_PATH in modified_files
-        assert VALID_CLASSIFIER_PATH in modified_files
-        assert VALID_DESCRIPTION_PATH in modified_files
-        assert VALID_INTEGRATION_TEST_PATH in old_format_files
-        assert VALID_LAYOUT_PATH in modified_files
-
-        # checking that there are no unwanted files in modified files
-        assert VALID_PIPEFILE_LOCK_PATH not in modified_files
-        assert VALID_SCRIPT_PATH not in modified_files
-
-        # checking that files in tests dir are not in modified_files
-        assert VALID_JSON_FILE_FOR_UNIT_TESTING not in modified_files
-
-        # check that the modified code file is not there but the yml file is
-        assert VALID_INTEGRATION_TEST_PATH in old_format_files
-        assert VALID_PYTHON_INTEGRATION_PATH not in modified_files
-
-        # check that the modified metadata file is in the changed_meta_files but the added one is not
-        assert VALID_METADATA1_PATH in changed_meta_files
-        assert VALID_METADATA2_PATH not in changed_meta_files
-
-        # check that the added files are recognized correctly
-        assert VALID_README_PATH in added_files
-        assert VALID_INTEGRATION_TEST_PATH in old_format_files
-        assert VALID_WIDGET_PATH in added_files
-        assert VALID_INDICATOR_FIELD_PATH in added_files
-
-        # check that the added code files and meta file are not in the added_files
-        assert VALID_PYTHON_INTEGRATION_PATH not in added_files
-        assert VALID_PYTHON_INTEGRATION_TEST_PATH not in added_files
-        assert VALID_METADATA1_PATH not in added_files
-
-        # check that non-image, pipfile, description, doc files or schema are in the ignored files and the rest are
-        assert VALID_PIPEFILE_PATH not in validate_manager.ignored_files
-        assert VALID_PIPEFILE_LOCK_PATH not in validate_manager.ignored_files
-        assert VALID_DESCRIPTION_PATH not in validate_manager.ignored_files
-        assert VALID_IMAGE_PATH not in validate_manager.ignored_files
-        assert VALID_SECRETS_IGNORE_PATH in validate_manager.ignored_files
-        assert VALID_PYTHON_INTEGRATION_TEST_PATH in validate_manager.ignored_files
-        assert VALID_PACK_IGNORE_PATH in validate_manager.ignored_files
-        assert VALID_DOC_FILES_PATH_FOR_UNIT_TESTING in validate_manager.ignored_files
-
-        # check recognized deleted file
-        assert VALID_SCRIPT_PATH in deleted_files
-        assert VALID_DASHBOARD_PATH in deleted_files
-
-    def test_setup_git_params(self, mocker):
+    def test_setup_git_params_release_branch(self, mocker):
         mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='20.0.7')
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='21.0.7')
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 
         assert validate_manager.always_valid
-        assert validate_manager.compare_type == '..'
+        assert validate_manager.skip_pack_rn_validation
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='master')
-        # resetting always_valid flag
-        validate_manager.always_valid = False
+    def test_setup_git_params_master_branch(self, mocker):
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
+        validate_manager = ValidateManager()
         validate_manager.setup_git_params()
-        assert not validate_manager.always_valid
-        assert validate_manager.compare_type == '..'
-        assert validate_manager.prev_ver == 'HEAD~1'
 
-        mocker.patch.object(ValidateManager, 'get_current_working_branch', return_value='not-master-branch')
-        validate_manager.setup_git_params()
         assert not validate_manager.always_valid
-        assert validate_manager.compare_type == '...'
+        assert validate_manager.skip_pack_rn_validation
+
+    def test_setup_git_params_non_master_branch(self, mocker):
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='not-master-branch')
+        validate_manager = ValidateManager()
+        validate_manager.setup_git_params()
+
+        assert not validate_manager.always_valid
+        assert not validate_manager.skip_pack_rn_validation
 
     def test_get_packs(self):
         modified_files = {'Packs/CortexXDR/Integrations/XDR_iocs/XDR_iocs.py',
@@ -1113,62 +1017,6 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
 
-    def test_staged(self, mocker):
-        """
-        Given
-            - staged = True flag
-            - diff on yml file
-        When
-            - Run the validate command.
-        Then
-            - Validate checks for the staged files using git diff.
-            - get_modified_and_added_files returns a list of only staged files.
-        """
-
-        def run_command_effect(arg):
-            # if the call is to check the staged files only - return the HelloWorld integration.
-            if arg == 'git diff --name-only --staged':
-                return 'Packs/HelloWorld/Integrations/HelloWorld.yml'
-
-            # else return all the files that were changed from master and their status in comparison to the master.
-            else:
-                return 'M\tPacks/HelloWorld/Integrations/HelloWorld.yml\nM\tPacks/BigFix/Integrations/BigFix/BigFix.yml'
-
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
-
-        validate_manager = ValidateManager(staged=True)
-        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
-        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
-        assert modified_packs == {'HelloWorld'}
-
-    def test_not_staged(self, mocker):
-        """
-        Given
-            - staged = False flag
-            - diff on yml file
-        When
-            - Run the validate command.
-        Then
-            - Validate that not a git diff staged command runs
-        """
-
-        def run_command_effect(arg):
-            assert 'staged' not in arg
-            return "M\tPacks/HelloWorld/Integrations/HelloWorld.yml"
-
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.run_command', side_effect=run_command_effect)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.os.path.isfile', return_value=True)
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
-        mocker.patch.object(ValidateManager, '_is_py_script_or_integration', return_value=False)
-
-        validate_manager = ValidateManager(staged=False)
-        modified_files_list, _, _, _, modified_packs = validate_manager.get_modified_and_added_files('..', 'master')
-        assert modified_files_list == {'Packs/HelloWorld/Integrations/HelloWorld.yml'}
-        assert modified_packs == {'HelloWorld'}
-
 
 def test_content_release_identifier_exists():
     """
@@ -1179,34 +1027,6 @@ def test_content_release_identifier_exists():
     vm.branch_name = 'master'
     sha1 = vm.get_content_release_identifier()
     assert sha1, 'GIT_SHA1 path in config.yml has been changed. Fix the demisto-sdk or revert changes in content repo.'
-
-
-@pytest.mark.parametrize('branch_name, prev_ver, expected', [
-    ('master', 'v4.5.0', 'origin/v4.5.0'),
-    ('master', 'master', 'origin/master'),
-    ('master', '20.13.0', 'origin/20.13.0'),
-    ('master', 'origin/master', 'origin/master'),
-    ('4.5.0', 'v4.5.0', 'origin/v4.5.0'),
-    ('4.5.0', 'master', 'origin/master'),
-    ('4.5.0', 'origin/master', 'origin/master'),
-    ('20.13.0', 'master', 'master'),
-    ('20.13.0', '20.13.0', '20.13.0'),
-    ('20.13.0', 'origin/master', 'origin/master'),
-    ('20.13.0', '64cac0b349187b861c4c717951a634de52caba03', '64cac0b349187b861c4c717951a634de52caba03')
-])
-def test_add_origin(branch_name, prev_ver, expected):
-    """
-    Given
-        - Prev_ver to test on.
-    When
-        - Run the add origin command.
-    Then
-        - validate add_origin runs as expected.
-    """
-    validate_manager = ValidateManager()
-    validate_manager.branch_name = branch_name
-    res = validate_manager.add_origin(prev_ver=prev_ver)
-    assert res == expected
 
 
 @pytest.mark.parametrize('pack_name, expected', [
@@ -1238,8 +1058,8 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
         - validate That no error returns.
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
-    mocker.patch.object(ValidateManager, 'get_modified_and_added_files',
-                        return_value=(set(), set(), set(), {'Packs/TestPack/pack_metadata.json'}, {'TestPack'}))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
+                        return_value=(set(), set(), {'Packs/TestPack/pack_metadata.json'}, set()))
 
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()

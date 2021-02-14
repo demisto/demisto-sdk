@@ -2,7 +2,7 @@ import json
 import os
 
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (

@@ -81,6 +81,7 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    PACK_METADATA = 'pack_metadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -740,11 +741,12 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: '.ps1'
 }
 
-TESTS_DIRECTORIES = [
+TESTS_AND_DOC_DIRECTORIES = [
     'testdata',
     'test_data',
     'data_test',
-    'tests_data'
+    'tests_data',
+    'doc_files'
 ]
 
 FILE_TYPES_FOR_TESTING = [

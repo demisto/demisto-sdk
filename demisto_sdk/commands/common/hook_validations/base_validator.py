@@ -163,7 +163,15 @@ class BaseValidator:
         if formatted_file_and_error not in error_list:
             error_list.append(formatted_file_and_error)
 
-    def json_output(self, file_path, error_code, error_message, warning):
+    def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
+        """Adds an error's info to the output JSON file
+
+        Args:
+            file_path (str): The file path where the error ocurred.
+            error_code (str): The error code
+            error_message (str): The error message
+            warning (bool): Whether the error is defined as a warning
+        """
         if not self.json_file_path:
             return
 

@@ -272,7 +272,7 @@ def unify(**kwargs):
     '--create-id-set', is_flag=True,
     help='Whether to create the id_set.json file.')
 @click.option(
-    '-j', '--json-file', help='The .json file path to which to output the command results.')
+    '-j', '--json-file', help='The JSON file path to which to output the command results.')
 @click.option(
     '--skip-schema-check', is_flag=True,
     help='Whether to skip the file schema check.')

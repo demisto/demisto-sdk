@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -226,10 +226,11 @@ def get_all_error_codes() -> List:
     return error_codes
 
 
-def get_all_data_from_error_code(error_code: str) -> Dict:
+def get_error_object(error_code: str) -> Dict:
     for error in ERROR_CODE:
         if error_code == ERROR_CODE[error].get('code'):
             return ERROR_CODE[error]
+    return {}
 
 
 def error_code_decorator(f):

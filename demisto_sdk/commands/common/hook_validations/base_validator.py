@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from typing import Optional
 
 import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
@@ -11,8 +12,8 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
-                                                get_all_data_from_error_code,
-                                                get_all_error_codes)
+                                                get_all_error_codes,
+                                                get_error_object)
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_file_displayed_name,
                                                get_json, get_pack_name,
@@ -166,7 +167,7 @@ class BaseValidator:
         if not self.json_file_path:
             return
 
-        error_data = get_all_data_from_error_code(error_code)
+        error_data = get_error_object(error_code)
 
         output = {
             "severity": "warning" if warning else "error",

@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.git_tools import get_changed_files
+from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)

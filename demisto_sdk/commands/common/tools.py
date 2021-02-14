@@ -27,10 +27,11 @@ from demisto_sdk.commands.common.constants import (
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -897,6 +898,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('_image.png'):
         return FileType.IMAGE
 
+    if path.endswith(PACKS_PACK_META_FILE_NAME):
+        return FileType.PACK_METADATA
+
     # doc files images
     if path.endswith('.png') and DOC_FILES_DIR in path:
         return FileType.DOC_IMAGE
@@ -906,6 +910,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if path.endswith('.py'):
         return FileType.PYTHON_FILE
+
+    if path.endswith('.js'):
+        return FileType.JAVSCRIPT_FILE
 
     if not _dict and not file_type:
         _dict, file_type = get_dict_from_file(path)

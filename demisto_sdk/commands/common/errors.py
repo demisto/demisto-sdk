@@ -218,7 +218,7 @@ ERROR_CODE = {
 }
 
 
-def get_all_error_codes():
+def get_all_error_codes() -> List:
     error_codes = []
     for error in ERROR_CODE:
         error_codes.append(ERROR_CODE[error].get('code'))

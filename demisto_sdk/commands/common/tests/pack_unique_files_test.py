@@ -191,7 +191,7 @@ class TestPackUniqueFilesValidator:
         res = self.validator.validate_pack_dependencies("fake_id_set_file_path")
         self.validator.skip_id_set_creation = False  # reverting to default for next tests
         assert res
-        assert "Unable to find id_set.json file - skipping dependencies check" in capsys.readouterr().out
+        assert "No first level dependencies found - skipping dependencies check" in capsys.readouterr().out
 
     @pytest.mark.parametrize('usecases, is_valid', [
         ([], True),

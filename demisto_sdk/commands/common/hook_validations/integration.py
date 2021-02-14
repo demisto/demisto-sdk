@@ -96,7 +96,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
             self.is_context_change_in_readme(),
-
+            self.is_valid_integration_file_path()
         ]
 
         if not skip_test_conf:
@@ -931,6 +931,32 @@ class IntegrationValidator(ContentEntityValidator):
             error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+
+        return True
+
+    def is_valid_integration_file_path(self) -> bool:
+        absolute_file_path = self.file_path
+        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
+        integration_file = os.path.basename(absolute_file_path)
+
+        # drop file extension
+        integration_file, _ = os.path.splitext(integration_file)
+
+        if integrations_folder == 'Integrations':
+            if not integration_file.startswith('integration-'):
+
+                error_message, error_code = \
+                    Errors.is_valid_integration_file_path_in_integrations_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        elif integration_file != integrations_folder:
+            valid_integration_file = integration_file.replace('-', '').replace('_', '')
+
+            if valid_integration_file.lower() != integrations_folder.lower():
+                error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
 
         return True
 

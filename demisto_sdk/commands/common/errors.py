@@ -68,9 +68,13 @@ ERROR_CODE = {
     "multiple_default_arg": "IN134",
     "invalid_integration_parameters_display_name": "IN135",
     "missing_output_context": "IN136",
+    "is_valid_integration_file_path_in_folder": "IN137",
+    "is_valid_integration_file_path_in_integrations_folder": "IN138",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
+    "is_valid_script_file_path_in_folder": "SC103",
+    "is_valid_script_file_path_in_scripts_folder": "SC104",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -489,6 +493,18 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def is_valid_integration_file_path_in_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_integration_file_path_in_integrations_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should start with 'integration-'."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_integration_name():
         return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                "e.g: Kenna v2, Jira v2"
@@ -867,6 +883,18 @@ class Errors:
                f" Do not use 'dev' in it or suffix it with 'copy'\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_scripts_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should start with 'script-'."
 
     @staticmethod
     @error_code_decorator

@@ -949,9 +949,8 @@ class IntegrationValidator(ContentEntityValidator):
                     Errors.is_valid_integration_file_path_in_integrations_folder(integration_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-            return True
 
-        if integration_file != integrations_folder:
+        elif integration_file != integrations_folder:
             valid_integration_file = integration_file.replace('-', '').replace('_', '')
 
             if valid_integration_file.lower() != integrations_folder.lower():

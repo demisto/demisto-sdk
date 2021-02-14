@@ -236,9 +236,8 @@ class ScriptValidator(ContentEntityValidator):
                 error_message, error_code = Errors.is_valid_script_file_path_in_scripts_folder(script_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-            return True
 
-        if script_file != scripts_folder:
+        elif script_file != scripts_folder:
             valid_script_file = script_file.replace('-', '').replace('_', '')
 
             if valid_script_file.lower() != scripts_folder.lower():

@@ -399,7 +399,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self) -> str:
+    def are_valid_files(self) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -408,24 +408,24 @@ class PackUniqueFilesValidator(BaseValidator):
             self.validate_pack_meta_file()
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
-            self.validate_pack_dependencies(id_set_path=self.id_set_path)
+            self.validate_pack_dependencies()
         return self.get_errors()
 
     # pack dependencies validation
-    def validate_pack_dependencies(self, id_set_path=None):
+    def validate_pack_dependencies(self):
         try:
             click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                         fg="bright_cyan")
             core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
             first_level_dependencies = PackDependencies.find_dependencies(
-                self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
+                self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
                 update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
             )
 
             if not first_level_dependencies:
                 if not self.suppress_print:
-                    click.secho("No first level dependencies found - skipping dependencies check", fg="yellow")
+                    click.secho("No first level dependencies found", fg="yellow")
                 return True
 
             for core_pack in core_pack_list:

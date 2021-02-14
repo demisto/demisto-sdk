@@ -1252,7 +1252,7 @@ class ValidateManager:
             id_set = open_id_set_file(id_set_path)
 
         if not id_set:
-            error_message, error_code = Errors.no_id_set_file(id_set_path)
+            error_message, error_code = Errors.no_id_set_file()
             self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
 
         return id_set

@@ -623,8 +623,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def no_id_set_file(id_set_path):
-        return f"Unable to find id_set.json file in {id_set_path} - rerun the command with --create-id-set flag"
+    def no_id_set_file():
+        return "Unable to find id_set.json file in path - rerun the command with --create-id-set flag"
 
     @staticmethod
     @error_code_decorator

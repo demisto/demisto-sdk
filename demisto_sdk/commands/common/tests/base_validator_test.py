@@ -7,9 +7,9 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD
 

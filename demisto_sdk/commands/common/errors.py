@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'DO102', 'DO104', 'DO107', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'MP106', 'IN135',
-                         'RM102', 'IN136']
+                         'RM102', 'IN136', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -31,6 +31,7 @@ ERROR_CODE = {
     "changes_may_fail_validation": {'code': "BA104", 'ui_applicable': False, 'related_field': ''},
     "invalid_id_set": {'code': "BA105", 'ui_applicable': False, 'related_field': ''},
     "no_minimal_fromversion_in_file": {'code': "BA106", 'ui_applicable': False, 'related_field': 'fromversion'},
+    "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True, 'related_field': '<parameter-name>.default'},
     "wrong_required_value": {'code': "IN102", 'ui_applicable': True, 'related_field': '<parameter-name>.required'},
@@ -88,6 +89,7 @@ ERROR_CODE = {
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
+    "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
     "remove_field_from_dashboard": {'code': "DA100", 'ui_applicable': False, 'related_field': ''},
     "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
@@ -124,6 +126,10 @@ ERROR_CODE = {
     "invalid_script_id": {'code': "PB107", 'ui_applicable': False, 'related_field': 'tasks'},
     "invalid_uuid": {'code': "PB108", 'ui_applicable': False, 'related_field': 'taskid'},
     "taskid_different_from_id": {'code': "PB109", 'ui_applicable': False, 'related_field': 'taskid'},
+    "content_entity_version_not_match_playbook_version": {'code': "PB110", 'ui_applicable': False,
+                                                          'related_field': 'toVersion'},
+    "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
+                                                       'related_field': 'toVersion'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -294,6 +300,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def indicator_field_type_grid_minimal_version(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
@@ -457,6 +469,18 @@ class Errors:
     def missing_get_mapping_fields_command():
         return 'The command "get-mapping-fields" is missing from the YML file and is required as the ismappable ' \
                'field is set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in YML file ' \
+               f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in the README file ' \
+               f'but are missing from the YML file: {context_paths}'
 
     @staticmethod
     @error_code_decorator
@@ -627,6 +651,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def no_id_set_file():
+        return "Unable to find id_set.json file in path - rerun the command with --create-id-set flag"
+
+    @staticmethod
+    @error_code_decorator
     def remove_field_from_dashboard(field):
         return f'the field {field} needs to be removed.'
 
@@ -769,7 +798,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
-        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+        return f"No release note entry was found for the {file_type.value.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
                f"generate an updated template. If you are trying to exclude an item from the release " \
                f"notes, please refer to the documentation found here - " \
@@ -835,6 +864,20 @@ class Errors:
                f"1 - The right script id is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
+               f"with a version that does not match the main playbook version. The version of" \
+               f" {entities_names} should be at most {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
+               f"that not implemented in integration that match the main playbook version. This command should be " \
+               f"implemented in an integration from version {main_playbook_version} at most."
 
     @staticmethod
     @error_code_decorator
@@ -1212,10 +1255,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1296,10 +1339,10 @@ class Errors:
     @error_code_decorator
     def invalid_incident_field_in_mapper(invalid_inc_fields_list):
         return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
-            "Please make sure:\n" \
-            "1 - The right incident field is set and the spelling is correct.\n" \
-            "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-            " rerun the command."
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator

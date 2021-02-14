@@ -624,7 +624,7 @@ class Errors:
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
-    def suggest_docker_fix(docker_image_name, file_path):
+    def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
         return f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
                f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'

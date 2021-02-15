@@ -6,6 +6,7 @@
 * Fixed an issue where changed files were not recognised correctly on forked branches in the **validate** and the **update-release-notes** commands.
 * Fixed an issue when files were classified incorrectly when running *update-release-notes*.
 * Added a validation that integration and script file paths are compatible with our convention.
+* Fixed an issue where id_set.json file was re created whenever running the generate-docs command.
 
 # 1.2.19
 * Fixed an issue where merge id_set was not updated to work with the new entity of Packs.

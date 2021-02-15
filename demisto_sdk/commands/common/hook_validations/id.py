@@ -230,11 +230,20 @@ class IDSetValidations(BaseValidator):
         return True, None
 
     def is_unique_file_valid_in_set(self, pack_path, ignored_errors=None):
+        """Check if the unique file is valid in the id_set
+
+        Args:
+            pack_path (string): Path to the file.
+            ignored_errors (list): a list of ignored errors for the specific file
+
+        Returns:
+            bool. Whether the file is valid in the id_set or not.
+            string. Error massage if the file is invalid else None.
+        """
         self.ignored_errors = ignored_errors
         is_valid = True
-        self.is_circle = True
         error = None
-        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+        if self.is_circle:
             click.echo(f"id set validations for: {pack_path}")
 
             is_valid, error = self._is_pack_display_name_already_exist(

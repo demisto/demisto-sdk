@@ -837,7 +837,7 @@ class TestPlaybookEntitiesVersionsValid:
             }
         }
 
-        pack_metadata_data = {
+        pack_metadata_data_existing_pack = {
             "VMware": {
                 "name": "VMware",
                 "current_version": "1.1.0",
@@ -851,7 +851,28 @@ class TestPlaybookEntitiesVersionsValid:
                 "id": "VMware"
             }
         }
-        is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+
+        pack_metadata_data_new_pack = {
+            "Okta": {
+                "name": "Okta",
+                "current_version": "1.1.0",
+                "author": "Cortex XSOAR",
+                "certification": "certified",
+                "tags": [],
+                "use_cases": [],
+                "categories": [
+                    "IT Services"
+                ],
+                "id": "VMware"
+            }
+        }
+        is_valid, error = validator._is_pack_display_name_already_exist(
+            pack_metadata_data=pack_metadata_data_existing_pack)
+        assert is_valid
+        assert not error
+
+        is_valid, error = validator._is_pack_display_name_already_exist(
+            pack_metadata_data=pack_metadata_data_new_pack)
         assert is_valid
         assert not error
 

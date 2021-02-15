@@ -491,7 +491,7 @@ class LintManager:
                             'linter': check,
                             'pack': fail_pack,
                             'type': 'warning',
-                            'messages': pkgs_status[fail_pack][f"{check}_errors"]
+                            'messages': pkgs_status[fail_pack][f"{check}_warnings"]
                         })
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):

@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+from demisto_sdk.commands.common.legacy_git_tools import get_packs
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
@@ -301,7 +302,7 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            create_id_set=kwargs.get('create-id-set')
+            create_id_set=kwargs.get('create_id_set')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -901,8 +902,9 @@ def update_pack_releasenotes(**kwargs):
     try:
         validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
         validate_manager.setup_git_params()
-        modified, added, old, changed_meta_files, _packs = validate_manager.get_modified_and_added_files(
-            '...', prev_ver)
+        modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
+        _packs = get_packs(modified).union(get_packs(old)).union(
+            get_packs(added))
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
         print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                     "Please run `cd content` from your terminal and run the command again")
@@ -913,8 +915,8 @@ def update_pack_releasenotes(**kwargs):
         if 'ReleaseNotes' in file_path:
             packs_existing_rn[get_pack_name(file_path)] = file_path
 
-    filterd_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-    filterd_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
+    filtered_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
+    filtered_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
 
     if _pack and API_MODULES_PACK in _pack:
         # case: ApiModules
@@ -945,8 +947,8 @@ def update_pack_releasenotes(**kwargs):
                             f"-i {pack}` without specifying the update_type.")
                 continue
 
-            pack_modified = filter_files_on_pack(pack, filterd_modified)
-            pack_added = filter_files_on_pack(pack, filterd_added)
+            pack_modified = filter_files_on_pack(pack, filtered_modified)
+            pack_added = filter_files_on_pack(pack, filtered_added)
             pack_old = filter_files_on_pack(pack, old)
 
             # default case:
@@ -961,7 +963,7 @@ def update_pack_releasenotes(**kwargs):
                     os.unlink(packs_existing_rn[pack])
 
             else:
-                print_warning(f'Either no cahnges were found in {pack} pack '
+                print_warning(f'Either no changes were found in {pack} pack '
                               f'or the changes found should not be documented in the release notes file '
                               f'If relevant changes were made, please commit the changes and rerun the command')
     else:

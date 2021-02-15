@@ -268,7 +268,7 @@ def all_files_renamed(content_repo: ContentGitRepo):
 
     # rename all files in dir
     for file in list_files(hello_world_path):
-        new_file = file.replace('HelloWorld', 'Test')
+        new_file = file.replace('HelloWorld', 'Hello_World')
         if not file == new_file:
             content_repo.run_command(
                 f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"

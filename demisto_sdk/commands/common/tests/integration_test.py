@@ -7,11 +7,11 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
 
 
@@ -621,6 +621,54 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure_validator)
 
         assert not validator.is_valid_parameters_display_name()
+
+    def test_valid_integration_path(self, integration):
+        """
+        Given
+            - An integration with valid file path.
+        When
+            - running is_valid_integration_file_path.
+        Then
+            - an integration with a valid file path is valid.
+        """
+
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+        validator.file_path = 'Packs/VirusTotal/Integrations/integration-VirusTotal_5.5.yml'
+
+        assert validator.is_valid_integration_file_path()
+
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+        validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/Virus_Total.yml'
+
+        assert validator.is_valid_integration_file_path()
+
+    def test_invalid_integration_path(self, integration, mocker):
+        """
+        Given
+            - An integration with invalid file path.
+        When
+            - running is_valid_integration_file_path.
+        Then
+            - an integration with an invalid file path is invalid.
+        """
+
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+        validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/integration-VirusTotal_5.5.yml'
+
+        mocker.patch.object(validator, "handle_error", return_value=True)
+
+        assert not validator.is_valid_integration_file_path()
+
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+        validator.file_path = 'Packs/VirusTotal/Integrations/Virus_Total_5.yml'
+
+        mocker.patch.object(validator, "handle_error", return_value=True)
+
+        assert not validator.is_valid_integration_file_path()
 
 
 class TestIsFetchParamsExist:

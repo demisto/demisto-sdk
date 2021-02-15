@@ -83,6 +83,9 @@ def build_bandit_command(files: List[Path]) -> str:
     command += f" --exclude={','.join(excluded_files)}"
     # Only show output in the case of an error
     command += " -q"
+    # Setting error format
+    command += " --format custom --msg-template '{abspath}:{line}: {test_id} " \
+               "[Severity: {severity} Confidence: {confidence}] {msg}'"
     # Generating path patterns - path1,path2,path3,..
     files_list = [str(item) for item in files]
     command += f" -r {','.join(files_list)}"
@@ -135,6 +138,8 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
     command += " -E --disable=all"
+    # Message format
+    command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # Enable only Demisto Plugins errors.
     command += f" --enable={message_enable}"
     # Load plugins
@@ -173,6 +178,8 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --pretty"
     # This flag enables redefinion of a variable with an arbitrary type in some contexts.
     command += " --allow-redefinition"
+    # Get the full path to the file.
+    command += " --show-absolute-path"
     # Disable cache creation
     command += " --cache-dir=/dev/null"
     # Generating path patterns - file1 file2 file3,..
@@ -229,6 +236,8 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
+    # Message format
+    command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"

@@ -1,10 +1,12 @@
+import json
+import os
 from os.path import join
 
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE)
+                                                PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -237,3 +239,87 @@ def test_check_support_status_community_file(repo, mocker):
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']
+
+
+def test_json_output(repo):
+    """
+    Given
+    - Scenario 1:
+      - A ui applicable error.
+      - No pre existing json_outputs file.
+
+    - Scenario 2:
+      - A non ui applicable warning.
+      - A pre existing json_outputs file.
+
+    When
+    - Running json_output method.
+
+    Then
+    - Scenario 1:
+      - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+    - Scenario 2:
+      - Ensure the json outputs file is modified and holds the json warning in the `outputs` field.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    json_path = os.path.join(repo.path, 'valid_json.json')
+    base = BaseValidator(json_file_path=json_path)
+    ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
+    non_ui_applicable_error_message, non_ui_applicable_error_code = Errors.wrong_subtype()
+    expected_json_1 = {
+        integration.yml.path: {
+            "file-type": "yml",
+            "entity-type": "integration",
+            "display-name": "Sample",
+            "outputs": [
+                {
+                    "severity": "error",
+                    "code": ui_applicable_error_code,
+                    "message": ui_applicable_error_message,
+                    "ui": True,
+                    'related-field': '<parameter-name>.display'
+                }
+            ]
+        }
+    }
+
+    expected_json_2 = {
+        integration.yml.path: {
+            "file-type": "yml",
+            "entity-type": "integration",
+            "display-name": "Sample",
+            "outputs": [
+                {
+                    "severity": "error",
+                    "code": ui_applicable_error_code,
+                    "message": ui_applicable_error_message,
+                    "ui": True,
+                    'related-field': '<parameter-name>.display'
+                },
+                {
+                    "severity": "warning",
+                    "code": non_ui_applicable_error_code,
+                    "message": non_ui_applicable_error_message,
+                    "ui": False,
+                    'related-field': 'subtype'
+                }
+            ]
+        }
+    }
+
+    with ChangeCWD(repo.path):
+        # create new file
+        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+        with open(base.json_file_path, 'r') as f:
+            json_output = json.load(f)
+
+        assert json_output == expected_json_1
+
+        # update existing file
+        base.json_output(integration.yml.path, non_ui_applicable_error_code, non_ui_applicable_error_message, True)
+        with open(base.json_file_path, 'r') as f:
+            json_output = json.load(f)
+
+        assert json_output == expected_json_2

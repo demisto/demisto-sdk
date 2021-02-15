@@ -271,6 +271,11 @@ def unify(**kwargs):
 @click.option(
     '--create-id-set', is_flag=True,
     help='Whether to create the id_set.json file.')
+@click.option(
+    '-j', '--json-file', help='The JSON file path to which to output the command results.')
+@click.option(
+    '--skip-schema-check', is_flag=True,
+    help='Whether to skip the file schema check.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -302,7 +307,9 @@ def validate(config, **kwargs):
             skip_dependencies=kwargs['skip_pack_dependencies'],
             id_set_path=kwargs.get('id_set_path'),
             staged=kwargs['staged'],
-            create_id_set=kwargs.get('create_id_set')
+            create_id_set=kwargs.get('create_id_set'),
+            json_file_path=kwargs.get('json_file'),
+            skip_schema_check=kwargs.get('skip_schema_check')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -422,10 +429,13 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(exists=True, resolve_path=True))
+@click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
+              type=click.Path(exists=True, resolve_path=True))
 def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
          no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool,
          no_pwsh_analyze: bool,
-         no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str):
+         no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str,
+         json_file: str):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
@@ -437,7 +447,8 @@ def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, para
                                verbose=verbose,
                                quiet=quiet,
                                log_path=log_path,
-                               prev_ver=prev_ver)
+                               prev_ver=prev_ver,
+                               json_file_path=json_file)
     return lint_manager.run_dev_packages(parallel=parallel,
                                          no_flake8=no_flake8,
                                          no_bandit=no_bandit,

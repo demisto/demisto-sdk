@@ -183,7 +183,8 @@ class ScriptValidator(ContentEntityValidator):
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
                                                       ignored_errors=self.ignored_errors,
                                                       print_as_warnings=self.print_as_warnings,
-                                                      suppress_print=self.suppress_print)
+                                                      suppress_print=self.suppress_print,
+                                                      json_file_path=self.json_file_path)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False

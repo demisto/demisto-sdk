@@ -42,13 +42,13 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master'):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
         """
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.pack = pack
         self.pack_path = pack_name_to_path(self.pack) if not pack_path else pack_path
         self.secrets_file = PACKS_WHITELIST_FILE_NAME

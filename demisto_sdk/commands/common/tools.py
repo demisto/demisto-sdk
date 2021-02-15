@@ -1525,3 +1525,41 @@ def extract_multiple_keys_from_dict(key: str, var: dict):
                 for d in v:
                     for result in extract_multiple_keys_from_dict(key, d):
                         yield result
+
+
+def find_file(root_path, file_name):
+    """Find a file with a given file name under a given root path.
+    Returns:
+        str: The full file path from root path if exists, else return empty string.
+    """
+    for file in os.listdir(root_path):
+        file_path = os.path.join(root_path, file)
+        if file_path.endswith(file_name):
+            return file_path
+        elif os.path.isdir(file_path):
+            found_file = find_file(file_path, file_name)
+            if found_file:
+                return found_file
+    return ''
+
+
+def get_file_displayed_name(file_path):
+    """Gets the file name that is displayed in the UI by the file's path.
+    If there is no displayed name - returns the file name"""
+    file_type = find_type(file_path)
+    if FileType.INTEGRATION == file_type:
+        return get_yaml(file_path).get('display')
+    elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
+        return get_yaml(file_path).get('name')
+    elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.REPORT]:
+        return get_json(file_path).get('name')
+    elif file_type == FileType.OLD_CLASSIFIER:
+        return get_json(file_path).get('brandName')
+    elif file_type == FileType.LAYOUT:
+        return get_json(file_path).get('TypeName')
+    elif file_type == FileType.REPUTATION:
+        return get_json(file_path).get('id')
+    else:
+        return os.path.basename(file_path)

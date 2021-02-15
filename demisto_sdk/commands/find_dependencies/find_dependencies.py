@@ -637,14 +637,22 @@ class PackDependencies:
             indicator_type_data = next(iter(indicator_type.values()))
             indicator_type_dependencies = set()
 
-            related_integrations = indicator_type_data.get('integrations', [])
-            packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
-                related_integrations, id_set['integrations'], exclude_ignored_dependencies)
+            #########################################################################################################
+            # Do not collect integrations implementing reputation commands to not clutter CommonTypes and other packs
+            # that have a indicator type using e.g `ip` command with all the reputation integrations.
 
-            if packs_found_from_integrations:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_optional(packs_found_from_integrations)
-                indicator_type_dependencies.update(pack_dependencies_data)
+            # this might be an issue if an indicator field is added to an indicator in Common Types
+            # but not in the pack that implements it.
+            #########################################################################################################
+
+            # related_integrations = indicator_type_data.get('integrations', [])
+            # packs_found_from_integrations = PackDependencies._search_packs_by_items_names(
+            #     related_integrations, id_set['integrations'], exclude_ignored_dependencies)
+            #
+            # if packs_found_from_integrations:
+            #     pack_dependencies_data = PackDependencies. \
+            #         _label_as_optional(packs_found_from_integrations)
+            #     indicator_type_dependencies.update(pack_dependencies_data)
 
             related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
@@ -652,7 +660,7 @@ class PackDependencies:
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_scripts)
+                    _label_as_optional(packs_found_from_scripts)
                 indicator_type_dependencies.update(pack_dependencies_data)
 
             if indicator_type_dependencies:

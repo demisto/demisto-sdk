@@ -659,20 +659,6 @@ class IndicatorTypeDependencies:
         script_id = script.yml.read_dict().get('commonfields').get('id')
         indicator_type.update({'enhancementScriptNames': [script_id]})
 
-    # Optional dependency
-    @staticmethod
-    def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
-        indicator_type.update({'reputationCommand': 'ip'})
-        integration.yml.update(
-            {
-                'script': {
-                    'commands': [{
-                        'name': 'ip'
-                    }]
-                }
-            }
-        )
-
 
 class LayoutDependencies:
     @staticmethod

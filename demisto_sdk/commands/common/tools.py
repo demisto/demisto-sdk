@@ -898,9 +898,6 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('_image.png'):
         return FileType.IMAGE
 
-    if path.endswith(PACKS_PACK_META_FILE_NAME):
-        return FileType.PACK_METADATA
-
     # doc files images
     if path.endswith('.png') and DOC_FILES_DIR in path:
         return FileType.DOC_IMAGE

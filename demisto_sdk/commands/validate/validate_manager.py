@@ -138,8 +138,7 @@ class ValidateManager:
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DESCRIPTION,
-                                   FileType.DOC_IMAGE,
-                                   FileType.PACK_METADATA)
+                                   FileType.DOC_IMAGE)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -1005,6 +1004,8 @@ class ValidateManager:
             # handle a case where a file was deleted locally though recognised as added against master.
             except FileNotFoundError:
                 if file_path not in self.ignored_files:
+                    if self.print_ignored_files:
+                        click.secho(f"ignoring file {file_path}", fg='yellow')
                     self.ignored_files.add(file_path)
 
         return filtered_set, old_format_files
@@ -1013,9 +1014,11 @@ class ValidateManager:
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
         file_type = find_type(file_path)
 
-        # ignore unrecognized file types, pack metadata, unified.yml, doc data and test_data
-        if not file_type or file_type == FileType.PACK_METADATA or file_path.endswith('_unified.yml') or \
+        # ignore unrecognized file types, unified.yml, doc data and test_data
+        if not file_type or file_path.endswith('_unified.yml') or \
                 any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):
+            if self.print_ignored_files:
+                click.secho(f"ignoring file {file_path}", fg='yellow')
             self.ignored_files.add(file_path)
             return None
 
@@ -1144,16 +1147,14 @@ class ValidateManager:
         # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
-            FileType.PACK_METADATA
-        })
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT, FileType.PACK_METADATA}) - self.new_packs)
+                FileType.TEST_SCRIPT}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

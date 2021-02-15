@@ -122,10 +122,9 @@ class StructureValidator(BaseValidator):
             bool. Whether the scheme is valid on self.file_path.
         """
         # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
-        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK,
-                                FileType.PACK_METADATA] or \
-                self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
-                                           os.path.basename(self.file_path) == OLD_REPUTATION):
+        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK] \
+                or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
+                                              os.path.basename(self.file_path) == OLD_REPUTATION):
             return True
 
         click.secho(f'Validating scheme for {self.file_path}')

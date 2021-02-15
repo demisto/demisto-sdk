@@ -81,7 +81,6 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVSCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
-    PACK_METADATA = 'pack_metadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {

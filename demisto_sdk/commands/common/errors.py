@@ -30,6 +30,7 @@ ERROR_CODE = {
     "changes_may_fail_validation": "BA104",
     "invalid_id_set": "BA105",
     "no_minimal_fromversion_in_file": "BA106",
+    "running_on_master_with_git": "BA107",
     "wrong_display_name": "IN100",
     "wrong_default_parameter_not_empty": "IN101",
     "wrong_required_value": "IN102",
@@ -67,9 +68,13 @@ ERROR_CODE = {
     "multiple_default_arg": "IN134",
     "invalid_integration_parameters_display_name": "IN135",
     "missing_output_context": "IN136",
+    "is_valid_integration_file_path_in_folder": "IN137",
+    "is_valid_integration_file_path_in_integrations_folder": "IN138",
     "invalid_v2_script_name": "SC100",
     "invalid_deprecated_script": "SC101",
     "invalid_command_name_in_script": "SC102",
+    "is_valid_script_file_path_in_folder": "SC103",
+    "is_valid_script_file_path_in_scripts_folder": "SC104",
     "dbot_invalid_output": "DB100",
     "dbot_invalid_description": "DB101",
     "breaking_backwards_subtype": "BC100",
@@ -87,6 +92,7 @@ ERROR_CODE = {
     "non_existing_docker": "DO107",
     "id_set_conflicts": "ID100",
     "duplicated_id": "ID102",
+    "no_id_set_file": "ID103",
     "remove_field_from_dashboard": "DA100",
     "include_field_in_dashboard": "DA101",
     "remove_field_from_widget": "WD100",
@@ -278,6 +284,12 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -481,6 +493,18 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def is_valid_integration_file_path_in_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_integration_file_path_in_integrations_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should start with 'integration-'."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_integration_name():
         return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                "e.g: Kenna v2, Jira v2"
@@ -619,6 +643,11 @@ class Errors:
     def duplicated_id(obj_id):
         return f"The ID {obj_id} already exists, please update the file or update the " \
                f"id_set.json toversion field of this id to match the old occurrence of this id"
+
+    @staticmethod
+    @error_code_decorator
+    def no_id_set_file():
+        return "Unable to find id_set.json file in path - rerun the command with --create-id-set flag"
 
     @staticmethod
     @error_code_decorator
@@ -854,6 +883,18 @@ class Errors:
                f" Do not use 'dev' in it or suffix it with 'copy'\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_scripts_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should start with 'script-'."
 
     @staticmethod
     @error_code_decorator

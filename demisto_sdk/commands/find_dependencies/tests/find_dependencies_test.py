@@ -3,7 +3,7 @@ import os
 
 import networkx as nx
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from TestSuite.utils import IsEqualFunctions

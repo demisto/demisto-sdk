@@ -279,7 +279,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                 click.secho('{} file status is an unknown one, please check. File status was: {}'
                             .format(file_path, file_status), fg="bright_red")
             # handle meta data file changes
-            elif file_type.endswith(PACKS_PACK_META_FILE_NAME):
+            elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
                 if file_status.lower() == 'a':
                     new_packs.add(get_pack_name(file_path))
                 elif file_status.lower() == 'm':

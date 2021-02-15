@@ -790,7 +790,6 @@ class LintManager:
 
         for message in mypy_errors:
             if message:
-                print(len(message.split(':')))
                 file_path, line_number, column_number, _ = message.split(':', 3)
                 output_message = message.split('error:')[1].lstrip() if 'error' in message \
                     else message.split('note:')[1].lstrip()

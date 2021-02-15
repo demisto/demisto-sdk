@@ -442,6 +442,8 @@ def test_create_json_output_mypy(repo, mocker):
                     'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
                     f'            if incident_created_time.timestamp() > latest_created_time.tim...\n'
                     f'               ^\n'
+                    f'{integration.code.path}:11:2: note: '
+                    f'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports\n'
                     f'{integration.code.path}:284:37: error:\n'
                     f'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
                     f'            if last_fetch.timestamp() < incident_created_time.timestamp():\n'
@@ -467,6 +469,13 @@ def test_create_json_output_mypy(repo, mocker):
                                '               ^',
                     'line-number': "280",
                     'column-number': "12"
+                },
+                {
+                    'linter': 'mypy',
+                    'severity': 'error',
+                    'message': 'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports',
+                    'line-number': "11",
+                    'column-number': "2"
                 },
                 {
                     'linter': 'mypy',

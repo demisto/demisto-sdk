@@ -414,7 +414,6 @@ class PackUniqueFilesValidator(BaseValidator):
             if not is_valid:
                 self._add_error(error, self.pack_path)
 
-            self.validate_pack_dependencies()
         return self.get_errors()
 
     # pack dependencies validation

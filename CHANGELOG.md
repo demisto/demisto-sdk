@@ -1,4 +1,5 @@
 # Changelog
+* Do not collect optional dependencies on indicator types reputation commands.
 * Fixed an issue where downloading indicator layoutsconatiner objects failed.
 * Added a validation that makes sure outputs in integrations are matching the README file.
 * Fixed an issue where the *create-id-set* flag in the **validate** command did not work.

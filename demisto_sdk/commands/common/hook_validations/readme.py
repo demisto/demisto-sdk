@@ -9,6 +9,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Optional
 
+import click
 import requests
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -51,13 +52,14 @@ class ReadMeValidator(BaseValidator):
     _MDX_SERVER_LOCK = Lock()
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, is_circle=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
+        self.is_circle = is_circle
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -90,7 +92,13 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
-            ReadMeValidator.start_mdx_server()
+            started = ReadMeValidator.start_mdx_server(fail_on_error=self.is_circle)
+
+            # if the mdx server failed to start and we are running locally skip the readme validation
+            if not started and not self.is_circle:
+                click.secho('Unable to start MDX server - skipping readme MDX validation', fg='yellow')
+                return True
+
         with open(self.file_path, 'r') as f:
             readme_content = f.read()
         readme_content = self.fix_mdx(readme_content)
@@ -251,7 +259,7 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_mdx_server():
+    def start_mdx_server(fail_on_error=True):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
@@ -260,7 +268,10 @@ class ReadMeValidator(BaseValidator):
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
+                    if not fail_on_error:
+                        return False
                     raise Exception(f'Failed starting mdx server. stdout: {line}.')
+        return True
 
     @staticmethod
     def stop_mdx_server():

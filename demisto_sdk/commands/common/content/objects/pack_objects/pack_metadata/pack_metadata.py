@@ -476,7 +476,7 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
-    def dump(self, dest_dir: Union[Path, str] = '') -> List[Path]:
+    def dump_metadata_file(self, dest_dir: Union[Path, str] = '') -> List[Path]:
         file_content = {
             'name': self.name,
             'id': self.id,

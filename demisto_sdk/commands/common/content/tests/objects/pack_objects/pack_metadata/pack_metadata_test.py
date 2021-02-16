@@ -161,7 +161,7 @@ def test_dump_with_price(mocker):
     mocker.patch.object(builtins, 'open', autospec=True)
     mocker.patch.object(json, 'dump', side_effect=mock_json_dump)
 
-    obj.dump('metadata_file')
+    obj.dump_metadata_file('metadata_file')
 
 
 def test_load_user_metadata_basic(repo):

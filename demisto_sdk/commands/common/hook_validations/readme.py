@@ -268,16 +268,14 @@ class ReadMeValidator(BaseValidator):
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
+                    error_message, error_code = Errors.error_starting_mdx_server(line=line,
+                                                                                 packs=REQUIRED_MDX_PACKS)
                     if handle_error and file_path:
-                        error_message, error_code = Errors.error_starting_mdx_server(line=line,
-                                                                                     packs=REQUIRED_MDX_PACKS)
                         if handle_error(error_message, error_code, file_path=file_path):
                             return False
 
                     else:
-                        raise Exception(f'Failed starting mdx server. stdout: {line}.\n'
-                                        f'Try running the following command: `npm install '
-                                        f'{" ".join(REQUIRED_MDX_PACKS)}`')
+                        raise Exception(error_message)
         return True
 
     @staticmethod

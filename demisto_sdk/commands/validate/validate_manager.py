@@ -473,8 +473,7 @@ class ValidateManager:
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
-                                           json_file_path=self.json_file_path,
-                                           is_circle=self.is_circle)
+                                           json_file_path=self.json_file_path)
         return readme_validator.is_valid_file()
 
     def validate_test_playbook(self, structure_validator, pack_error_ignore_list):

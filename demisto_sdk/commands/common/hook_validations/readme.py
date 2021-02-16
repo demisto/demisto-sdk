@@ -53,14 +53,13 @@ class ReadMeValidator(BaseValidator):
     _MDX_SERVER_LOCK = Lock()
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None, is_circle=False):
+                 json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
-        self.is_circle = is_circle
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not

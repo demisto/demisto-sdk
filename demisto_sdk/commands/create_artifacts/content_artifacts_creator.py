@@ -603,7 +603,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += object_report
     if pack.pack_metadata:
         pack_report += ObjectReport(pack.pack_metadata, content_packs=True)
-        pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id / 'pack_metadata.json')
+        pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
     if pack.metadata:
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
@@ -615,7 +615,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             logger.warning('Skipping dependencies extraction since no id_set file was provided.')
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
-        pack.metadata.dump(artifact_manager.content_packs_path / pack.id / 'metadata.json')
+        pack.metadata.dump_new_metadata_file(artifact_manager.content_packs_path / pack.id)
     if pack.readme:
         pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)

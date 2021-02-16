@@ -183,6 +183,7 @@ ERROR_CODE = {
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
+    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -481,6 +482,12 @@ class Errors:
     def readme_missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in YML file ' \
                f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_mdx_server(line, packs):
+        return f'Failed starting mdx server. stdout: {line}.\n' \
+               f'Try running the following command: `npm install {" ".join(packs)}`'
 
     @staticmethod
     @error_code_decorator

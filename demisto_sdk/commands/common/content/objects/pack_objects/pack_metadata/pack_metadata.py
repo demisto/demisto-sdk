@@ -476,7 +476,7 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
-    def dump(self, dest_dir: Union[Path, str] = '') -> List[Path]:
+    def dump(self, dest_file: Union[Path, str] = '') -> List[Path]:
         file_content = {
             'name': self.name,
             'id': self.id,
@@ -507,11 +507,10 @@ class PackMetaData(JSONObject):
             if self.preview_only:
                 file_content['previewOnly'] = True
 
-        new_metadata_path = os.path.join(dest_dir, 'metadata.json')
-        with open(new_metadata_path, 'w') as metadata_file:
+        with open(dest_file, 'w') as metadata_file:
             json.dump(file_content, metadata_file, indent=4)
 
-        return [Path(new_metadata_path)]
+        return [Path(dest_file)]
 
     def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.

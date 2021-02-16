@@ -69,15 +69,15 @@ class TestPackUniqueFilesValidator:
 
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.are_valid_files()
+        assert not self.validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.are_valid_files()
+        assert fake_validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.are_valid_files()
+        assert not self.validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.are_valid_files()
+        assert fake_validator.are_valid_files(id_set_validations=False, pack_error_ignore_list=[])
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """

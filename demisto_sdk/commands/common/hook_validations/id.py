@@ -402,7 +402,7 @@ class IDSetValidations(BaseValidator):
         return is_valid
 
     def _is_pack_display_name_already_exist(self, pack_metadata_data):
-        """Check if the pack display name already exists
+        """Check if the pack display name already exists in our repo
         Args:
             pack_metadata_data (dict): Dictionary that holds the extracted details from the given metadata file.
         Returns:
@@ -417,13 +417,13 @@ class IDSetValidations(BaseValidator):
 
     def is_unique_file_valid_in_set(self, pack_path, ignored_errors=None):
         """Check if the unique file is valid in the id_set
-                Args:
-                    pack_path (string): Path to the file.
-                    ignored_errors (list): a list of ignored errors for the specific file
-                Returns:
-                    bool. Whether the file is valid in the id_set or not.
-                    string. Error massage if the file is invalid else None.
-                """
+        Args:
+            pack_path (string): Path to the file.
+            ignored_errors (list): a list of ignored errors for the specific file
+        Returns:
+            bool. Whether the file is valid in the id_set or not.
+            string. Error massage if the file is invalid else None.
+        """
         self.ignored_errors = ignored_errors
         is_valid = True
         error = None

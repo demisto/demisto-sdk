@@ -692,8 +692,7 @@ class ValidateManager:
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver,
                                                                json_file_path=self.json_file_path)
-        pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations,
-                                                                  pack_error_ignore_list)
+        pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
             return False

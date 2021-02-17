@@ -7,7 +7,7 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import Optional
+from typing import Callable, Optional
 
 import requests
 from demisto_sdk.commands.common.errors import Errors
@@ -32,6 +32,8 @@ USER_FILL_SECTIONS = [
     'FILL IN REQUIRED PERMISSIONS HERE',
     'version xx'
 ]
+
+REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
 
 class ReadMeValidator(BaseValidator):
@@ -90,7 +92,11 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
-            ReadMeValidator.start_mdx_server()
+            server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
+                                                              file_path=str(self.file_path))
+            if not server_started:
+                return False
+
         with open(self.file_path, 'r') as f:
             readme_content = f.read()
         readme_content = self.fix_mdx(readme_content)
@@ -112,7 +118,8 @@ class ReadMeValidator(BaseValidator):
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
-        valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get('CI') or self.are_modules_installed_for_verify(self.content_path)
+        valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
+            'CI') or self.are_modules_installed_for_verify(self.content_path)
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -156,13 +163,13 @@ class ReadMeValidator(BaseValidator):
             valid = False
         else:
             # Check npm modules exsits
-            packs = ['@mdx-js/mdx', 'fs-extra', 'commander']
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(packs)}', cwd=content_path)
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                       cwd=content_path)
             if exit_code:  # all are missinig
-                missing_module.extend(packs)
+                missing_module.extend(REQUIRED_MDX_PACKS)
             else:
                 deps = json.loads(stdout).get('dependencies', {})
-                for pack in packs:
+                for pack in REQUIRED_MDX_PACKS:
                     if pack not in deps:
                         missing_module.append(pack)
         if missing_module:
@@ -251,7 +258,7 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_mdx_server():
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
@@ -260,7 +267,14 @@ class ReadMeValidator(BaseValidator):
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()
-                    raise Exception(f'Failed starting mdx server. stdout: {line}.')
+                    error_message, error_code = Errors.error_starting_mdx_server(line=line)
+                    if handle_error and file_path:
+                        if handle_error(error_message, error_code, file_path=file_path):
+                            return False
+
+                    else:
+                        raise Exception(error_message)
+        return True
 
     @staticmethod
     def stop_mdx_server():

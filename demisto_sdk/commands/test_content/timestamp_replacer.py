@@ -135,6 +135,7 @@ class TimestampReplacer:
                 logging.info('updating problem_keys file at "{}"'.format(self.bad_keys_filepath))
                 self.update_problem_keys_file()
         elif ctx.options.script_mode in {'clean', 'playback'}:
+            logging.info(f'flow.live is: {flow.live}')
             flow.live = False
             logging.info(f'mode={ctx.options.script_mode} cleaning problematic key values from the request')
             self.clean_bad_keys(req)

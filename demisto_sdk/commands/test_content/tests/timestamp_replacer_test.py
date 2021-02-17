@@ -261,3 +261,17 @@ class TestTimeStampReplacer:
         updated_request = flow.request._get_query()
         assert updated_request[0] == ('key1', 'value1')
         assert updated_request[1] == ('key2', 'value2')
+
+    def test_live_false_when_running_in_playback_state(self, flow):
+        """
+            Given:
+                - A flow
+            When:
+                - script is in playback mode
+            Then:
+                - Ensure that the request will not go out to the real world
+        """
+        mitmproxy.ctx.options.script_mode = 'playback'
+        time_stamp_replacer = TimestampReplacer()
+        time_stamp_replacer.request(flow)
+        assert flow.live is False

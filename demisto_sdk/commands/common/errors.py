@@ -485,9 +485,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def error_starting_mdx_server(line, packs):
+    def error_starting_mdx_server(line):
         return f'Failed starting mdx server. stdout: {line}.\n' \
-               f'Try running the following command: `npm install {" ".join(packs)}`'
+               f'Try running the following command: `npm install`'
 
     @staticmethod
     @error_code_decorator

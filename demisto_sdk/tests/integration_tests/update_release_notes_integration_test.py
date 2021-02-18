@@ -15,7 +15,7 @@ UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
-RN_FOLDER = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid', 'ReleaseNotes')
+RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
 

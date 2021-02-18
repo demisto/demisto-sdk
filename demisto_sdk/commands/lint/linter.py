@@ -142,8 +142,7 @@ class Linter:
                                            no_bandit=no_bandit,
                                            no_mypy=no_mypy,
                                            no_vulture=no_vulture,
-                                           no_xsoar_linter=no_xsoar_linter,
-                                           pack_path=self._pack_abs_dir)
+                                           no_xsoar_linter=no_xsoar_linter)
 
                 # Run lint and test check on pack docker image
                 if self._facts["docker_engine"]:
@@ -288,7 +287,7 @@ class Linter:
                 self._facts["lint_files"].remove(lint_file)
 
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
-                          no_xsoar_linter: bool, pack_path: Path):
+                          no_xsoar_linter: bool):
         """ Run lint check on host
 
         Args:

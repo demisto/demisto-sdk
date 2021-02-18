@@ -1027,7 +1027,8 @@ class TestValidators:
 #     vm = ValidateManager()
 #     vm.branch_name = 'master'
 #     sha1 = vm.get_content_release_identifier()
-#     assert sha1, 'GIT_SHA1 path in config.yml has been changed. Fix the demisto-sdk or revert changes in content repo.'
+#     assert sha1, 'GIT_SHA1 path in config.yml has been changed. Fix the demisto-sdk or revert changes in content
+#     repo.'
 
 
 @pytest.mark.parametrize('pack_name, expected', [

@@ -319,9 +319,7 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                # TODO: find a fix SymantecMSS fails on python3 syntax in python2
-                #  mypy: https://github.com/demisto/etc/issues/33890
-                elif lint_check == "mypy" and not no_mypy and 'SymantecMSS' not in str(pack_path):
+                elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
                 elif lint_check == "vulture" and not no_vulture:

@@ -43,7 +43,7 @@ class Initiator:
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
-        self.is_feed = feed ######### add in click arguments
+        self.is_feed = feed
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()
@@ -402,7 +402,7 @@ class Initiator:
 
         if self.id != self.HELLO_WORLD_FEED:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.rename(current_suffix=self.HELLO_WORLD_FEED) ##########check from here
+            self.rename(current_suffix=self.HELLO_WORLD_FEED)
             self.yml_reformatting(current_suffix=self.HELLO_WORLD_FEED, integration=True)
             self.fix_test_file_import(name_to_change=self.HELLO_WORLD_FEED)
 
@@ -417,7 +417,7 @@ class Initiator:
         """Formats the given yml to fit the newly created integration/script
 
         Args:
-            current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
+            current_suffix (str): The yml file name (HelloWorld, HelloWorldScript or HelloWorldFeed)
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:

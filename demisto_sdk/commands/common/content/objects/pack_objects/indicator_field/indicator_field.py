@@ -1,5 +1,8 @@
 from typing import Union
+from tempfile import NamedTemporaryFile
+import json
 
+import demisto_client
 from demisto_sdk.commands.common.constants import (INCIDENT_FIELD,
                                                    INDICATOR_FIELD)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
@@ -37,3 +40,24 @@ class IndicatorField(JSONContentObject):
                 normalize_file_name = f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}'
 
         return normalize_file_name
+
+    def upload(self, client: demisto_client):
+        """
+        Upload the indicator field to demisto_client
+        Args:
+            client: The demisto_client object of the desired XSOAR machine to upload to.
+
+        Returns:
+            The result of the upload command from demisto_client
+        """
+
+        # The incident field import endpoint also accepts indicator fields
+        if isinstance(self._as_dict, dict):
+            indicator_fields_unified_data = {'incidentFields': [self._as_dict]}
+        else:
+            indicator_fields_unified_data = {'incidentFields': self._as_dict}
+
+        with NamedTemporaryFile(suffix='.json') as indicator_fields_unified_file:
+            indicator_fields_unified_file.write(bytes(json.dumps(indicator_fields_unified_data), 'utf-8'))
+            indicator_fields_unified_file.seek(0)
+            return client.import_incident_fields(file=indicator_fields_unified_file.name)

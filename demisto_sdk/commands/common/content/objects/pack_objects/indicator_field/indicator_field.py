@@ -1,6 +1,6 @@
-from typing import Union
-from tempfile import NamedTemporaryFile
 import json
+from tempfile import NamedTemporaryFile
+from typing import Union
 
 import demisto_client
 from demisto_sdk.commands.common.constants import (INCIDENT_FIELD,
@@ -50,7 +50,6 @@ class IndicatorField(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-
         # The incident field import endpoint also accepts indicator fields
         if isinstance(self._as_dict, dict):
             indicator_fields_unified_data = {'incidentFields': [self._as_dict]}

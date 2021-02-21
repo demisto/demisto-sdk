@@ -1,6 +1,6 @@
 category: Data Enrichment & Threat Intelligence
 commonfields:
-  id: Talos Feed
+  id: HelloWorldFeed
   version: -1
 configuration:
 - defaultvalue: 'true'
@@ -8,8 +8,8 @@ configuration:
   name: feed
   required: false
   type: 8
-- defaultvalue: https://talosintelligence.com/documents/ip-blacklist
-  display: Talos Endpoint URL
+- defaultvalue: https://openphish.com/feed.txt
+  display: Server's URL
   name: url
   required: true
   type: 0
@@ -67,11 +67,6 @@ configuration:
   name: feedFetchInterval
   required: false
   type: 19
-- additionalinfo: Supports CSV values.
-  display: Tags
-  name: feedTags
-  required: false
-  type: 0
 - additionalinfo: When selected, the exclusion list is ignored for indicators from
     this feed. This means that if an indicator from this feed is on the exclusion
     list, the indicator might still be added to the system.
@@ -89,7 +84,7 @@ configuration:
   required: false
   type: 8
 display: HelloWorldFeed
-name: Talos Feed
+name: HelloWorldFeed
 script:
   commands:
   - arguments:

@@ -27,12 +27,16 @@ class Client(BaseClient):
             A list of objects, containing the indicators.
         """
 
-        res = self._http_request('GET', url_suffix='', full_url=self._base_url, resp_type='text')
+        res = self._http_request('GET',
+                                 url_suffix='',
+                                 full_url=self._base_url,
+                                 resp_type='text',
+                                 )
 
         result = []
 
         try:
-            indicators = res.split('\n')
+            indicators = res.split('\n') ###### need to verify how the results are actually in the API i use
 
             for indicator in indicators:
                 if auto_detect_indicator_type(indicator):
@@ -61,13 +65,11 @@ def test_module(client: Client, *_) -> Tuple[str, Dict[Any, Any], Dict[Any, Any]
     return 'ok', {}, {}
 
 
-def fetch_indicators(client: Client, feed_tags: List = [], tlp_color: Optional[str] = None, limit: int = -1) \
+def fetch_indicators(client: Client, tlp_color: Optional[str] = None, limit: int = -1) \
         -> List[Dict]:
     """Retrieves indicators from the feed
     Args:
         client (Client): Client object with request
-        feed_tags (list): tags to assign fetched indicators
-        tlp_color (str): Traffic Light Protocol color
         limit (int): limit the results
     Returns:
         Indicators.
@@ -78,7 +80,7 @@ def fetch_indicators(client: Client, feed_tags: List = [], tlp_color: Optional[s
         iterator = iterator[:limit]
     for item in iterator:
         value = item.get('value')
-        type_ = item.get('type', FeedIndicatorType.IP)
+        type_ = item.get('type')
         raw_data = {
             'value': value,
             'type': type_,
@@ -88,14 +90,10 @@ def fetch_indicators(client: Client, feed_tags: List = [], tlp_color: Optional[s
         indicator_obj = {
             'value': value,
             'type': type_,
-            'service': 'Talos Feed',
+            'service': 'HelloWorld Feed',
             'fields': {},
             'rawJSON': raw_data
         }
-        if feed_tags:
-            indicator_obj['fields']['tags'] = feed_tags
-        if tlp_color:
-            indicator_obj['fields']['trafficlightprotocol'] = tlp_color
 
         indicators.append(indicator_obj)
     return indicators
@@ -113,10 +111,8 @@ def get_indicators_command(client: Client,
     Returns:
         Outputs.
     """
-    feed_tags = argToList(params.get('feedTags', ''))
-    tlp_color = params.get('tlp_color')
     limit = int(args.get('limit', '10'))
-    indicators = fetch_indicators(client, feed_tags, tlp_color, limit)
+    indicators = fetch_indicators(client, limit)
     human_readable = tableToMarkdown('Indicators from Talos Feed:', indicators,
                                      headers=['value', 'type'], removeNull=True)
 
@@ -131,9 +127,7 @@ def fetch_indicators_command(client: Client, params: Dict[str, str]) -> List[Dic
     Returns:
         Indicators.
     """
-    feed_tags = argToList(params.get('feedTags', ''))
-    tlp_color = params.get('tlp_color')
-    indicators = fetch_indicators(client, feed_tags, tlp_color)
+    indicators = fetch_indicators(client)
     return indicators
 
 
@@ -160,7 +154,7 @@ def main():
             str, Callable[[Client, Dict[str, str], Dict[str, str]], Tuple[str, Dict[Any, Any], Dict[Any, Any]]]
         ] = {
             'test-module': test_module,
-            'talos-get-indicators': get_indicators_command
+            'HelloWorldFeed-get-indicators': get_indicators_command
         }
         if command in commands:
             return_outputs(*commands[command](client, demisto.params(), demisto.args()))
@@ -175,7 +169,8 @@ def main():
 
     except Exception:
         err_msg = (f'Error in {INTEGRATION_NAME} Integration.\n\n'
-                   'Verify that the server URL parameter is correct and that you have access to the server from your host.\n')
+                   'Verify that the server URL parameter is correct and that you'
+                   ' have access to the server from your host.\n')
         return_error(err_msg)
 
 

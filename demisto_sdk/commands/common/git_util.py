@@ -39,6 +39,13 @@ class GitUtil:
         # but we want to identify them as renamed - so will remove them from the returned files.
         renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
 
+        # handle a case where a file is wrongly recognized as renamed (not 100% score) and
+        # is actually of modified status
+        untrue_rename_staged = self.handle_wrong_renamed_status(status='M', remote=remote, branch=branch,
+                                                                staged_only=True)
+        untrue_rename_committed = self.handle_wrong_renamed_status(status='M', remote=remote, branch=branch,
+                                                                   staged_only=False)
+
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
         committed = set()
@@ -48,7 +55,7 @@ class GitUtil:
             # this can result in extra files identified which were not touched on this branch.
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('M')}
+                self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
@@ -65,7 +72,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as modified.
         staged = {Path(os.path.join(item.a_path)) for item
-                  in self.repo.head.commit.diff().iter_change_type('M')}.union(untracked)
+                  in self.repo.head.commit.diff().iter_change_type('M')}.union(untracked).union(untrue_rename_staged)
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified
@@ -109,11 +116,17 @@ class GitUtil:
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
 
+        # handle a case where a file is wrongly recognized as renamed (not 100% score) and is actually of added status
+        untrue_rename_staged = self.handle_wrong_renamed_status(status='A', remote=remote, branch=branch,
+                                                                staged_only=True)
+        untrue_rename_committed = self.handle_wrong_renamed_status(status='A', remote=remote, branch=branch,
+                                                                   staged_only=False)
+
         # get all committed files identified as added which are changed from prev_ver.
         # this can result in extra files identified which were not touched on this branch.
         committed = {Path(os.path.join(item.a_path)) for item
                      in self.repo.remote(name=remote).refs[branch].commit.diff(
-            self.repo.active_branch).iter_change_type('A')}
+            self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
 
         # identify all files that were touched on this branch regardless of status
         # intersect these with all the committed files to identify the committed added files.
@@ -133,7 +146,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in
-                  self.repo.head.commit.diff().iter_change_type('A')}
+                  self.repo.head.commit.diff().iter_change_type('A')}.union(untrue_rename_staged)
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified
@@ -226,7 +239,7 @@ class GitUtil:
         committed = set()
 
         if not staged_only:
-            # get all committed files identified as renamed which are changed from prev_ver.
+            # get all committed files identified as renamed which are changed from prev_ver and are with 100% score.
             # this can result in extra files identified which were not touched on this branch.
             committed = {(Path(item.a_path), Path(item.b_path)) for item
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
@@ -245,7 +258,7 @@ class GitUtil:
         # get all untracked renamed files
         untracked = self._get_untracked_files('R')
 
-        # get all the files that are staged on the branch and identified as renamed.
+        # get all the files that are staged on the branch and identified as renamed and are with 100% score.
         staged = {(Path(item.a_path), Path(item.b_path)) for item
                   in self.repo.head.commit.diff().iter_change_type('R') if item.score == 100}.union(untracked)
 
@@ -275,7 +288,7 @@ class GitUtil:
             line = line.strip()
             file_status = line.split()[0].upper() if not line.startswith('?') else 'A'
             if file_status.startswith(requested_status):
-                if requested_status == 'R':
+                if requested_status == 'R' and file_status == 'R100':
                     extracted_paths.add((Path(line.split()[-2]), Path(line.split()[-1])))
                 else:
                     extracted_paths.add(Path(line.split()[-1]))  # type: ignore
@@ -352,3 +365,36 @@ class GitUtil:
             click.echo(staged)
             click.echo(f'######## - {status} committed:')
             click.echo(committed)
+            click.echo('\n')
+
+    def handle_wrong_renamed_status(self, status: str, remote: str, branch: str, staged_only: bool) -> Set[Path]:
+        """Get all the files that are recognized as non-100% rename in a given file status.
+        Args:
+            status (str): the requested file status
+            remote (str): the used git remote
+            branch (str): the used git branch
+            staged_only (bool): whether to bring only staged files
+        Returns:
+            Set: of Paths to non 100% renamed files which are of a given status.
+        """
+        if staged_only:
+            return {Path(item.b_path) for item
+                    in self.repo.head.commit.diff().iter_change_type('R') if item.score < 100 and
+                    self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+
+        return {Path(item.b_path) for item in self.repo.remote(name=remote).refs[branch].commit.diff(
+            self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+            self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+
+    def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
+        """Get the git status of a given file path
+        Args:
+            file_path (str): the file path to check
+            remote (str): the used git remote
+            branch (str): the used git branch
+        Returns:
+            str: the git status of the file (M, A, R, D).
+        """
+        diff_line = self.repo.git.diff('--name-status',
+                                       f'{remote}/{branch}...{self.repo.active_branch}', '--', file_path)
+        return diff_line.split()[0].upper()

@@ -408,10 +408,10 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the metadata file is valid or not.
         """
-        new_pack_id = list(pack_metadata_data.keys())[0]
-        new_pack_name = pack_metadata_data[new_pack_id]['name']
-        for pack_id, pack_data in self.packs_set.items():
-            if new_pack_name == pack_data['name'] and new_pack_id != pack_id:
+        new_pack_folder_name = list(pack_metadata_data.keys())[0]
+        new_pack_name = pack_metadata_data[new_pack_folder_name]['name']
+        for pack_folder_name, pack_data in self.packs_set.items():
+            if new_pack_name == pack_data['name'] and new_pack_folder_name != pack_folder_name:
                 return False, Errors.pack_name_already_exists(new_pack_name)
         return True, None
 

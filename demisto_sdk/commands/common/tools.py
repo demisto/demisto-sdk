@@ -916,6 +916,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             _dict, file_type = get_dict_from_file(path)
 
     except FileNotFoundError:
+        # unable to find the file - hence can't identify it
         return None
 
     if file_type == 'yml':

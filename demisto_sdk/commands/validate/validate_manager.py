@@ -121,7 +121,7 @@ class ValidateManager:
         try:
             self.git_util = GitUtil(repo=Content.git())
             self.branch_name = self.git_util.get_current_working_branch()
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
             if self.use_git:
                 raise

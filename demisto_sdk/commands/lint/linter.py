@@ -317,6 +317,7 @@ class Linter:
                                                                lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
+
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])

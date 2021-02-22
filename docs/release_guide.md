@@ -11,7 +11,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 To do so, you can do the following:\
   a. Compare the content_new.zip from nightly-sdk build and nightly-content build and see if there is any major difference between them.\
   b. If needed, trigger the nightly Content build from the Content repository by running:\
-  `./Utils/trigger_content_nightly_build.sh <branch_name> <circle_token>` and make sure to wait until the build is finished.\
+  `./Utils/trigger_content_nightly_build.sh <circle_token> <branch_name>` and make sure to wait until the build is finished.\
   circle_token is a private key, if you don't have one - you can generate your own in your circle user settings under `Personal API Tokens`. \
 6) Update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 

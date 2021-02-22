@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Set, Tuple
 
+import click
 import gitdb
 from git import InvalidGitRepositoryError, Repo
 
@@ -17,7 +18,7 @@ class GitUtil:
             self.repo = repo
 
     def modified_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                       staged_only: bool = False) -> Set[Path]:
+                       staged_only: bool = False, debug: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as modified against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -31,6 +32,7 @@ class GitUtil:
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='M')
         if last_commit:
+            self.debug_print(debug=debug, status='Modified', staged=set(), committed=last_commit)
             return last_commit
 
         # get all renamed files - some of these can be identified as modified by git,
@@ -54,7 +56,9 @@ class GitUtil:
             committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
-            return committed - renamed - deleted
+            committed = committed - renamed - deleted
+            self.debug_print(debug=debug, status='Modified', staged=set(), committed=committed)
+            return committed
 
         # get all untracked modified files
         untracked = self._get_untracked_files('M')
@@ -74,17 +78,19 @@ class GitUtil:
         staged = staged - committed_added
 
         if staged_only:
-            return staged - renamed - deleted
+            staged = staged - renamed - deleted
+            self.debug_print(debug=debug, status='Modified', staged=staged, committed=set())
+            return staged
 
-        print('######## -  modified staged:')
-        print(staged)
-        print('######## - modified committed:')
-        print(committed)
+        staged = staged - renamed - deleted
+        committed = committed - renamed - deleted
 
-        return staged.union(committed) - renamed - deleted
+        self.debug_print(debug=debug, status='Modified', staged=staged, committed=committed)
+
+        return staged.union(committed)
 
     def added_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                    staged_only: bool = False) -> Set[Path]:
+                    staged_only: bool = False, debug: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as added against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -98,6 +104,7 @@ class GitUtil:
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='A')
         if last_commit:
+            self.debug_print(debug=debug, status='Added', staged=set(), committed=last_commit)
             return last_commit
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
@@ -114,7 +121,9 @@ class GitUtil:
         committed = committed.intersection(all_branch_changed_files)
 
         if committed_only:
-            return committed - deleted
+            committed = committed - deleted
+            self.debug_print(debug=debug, status='Added', staged=set(), committed=committed)
+            return committed
 
         # get all untracked added files
         untracked_added = self._get_untracked_files('A')
@@ -138,14 +147,15 @@ class GitUtil:
         staged = staged.union(committed_added_locally_modified).union(untracked)
 
         if staged_only:
-            return staged - deleted
+            staged = staged - deleted
+            self.debug_print(debug=debug, status='Added', staged=staged, committed=set())
+            return staged
 
-        print('######## -  added staged:')
-        print(staged)
-        print('######## - added committed:')
-        print(committed)
+        staged = staged - deleted
+        committed = committed - deleted
+        self.debug_print(debug=debug, status='Added', staged=staged, committed=committed)
 
-        return staged.union(committed) - deleted
+        return staged.union(committed)
 
     def deleted_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False) -> Set[Path]:
@@ -194,7 +204,7 @@ class GitUtil:
         return staged.union(committed)
 
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                      staged_only: bool = False) -> Set[Tuple[Path, Path]]:
+                      staged_only: bool = False, debug: bool = False) -> Set[Tuple[Path, Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -209,6 +219,7 @@ class GitUtil:
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='R')
         if last_commit:
+            self.debug_print(debug=debug, status='Renamed', staged=set(), committed=last_commit)
             return last_commit
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
@@ -219,7 +230,7 @@ class GitUtil:
             # this can result in extra files identified which were not touched on this branch.
             committed = {(Path(item.a_path), Path(item.b_path)) for item
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('R')}
+                self.repo.active_branch).iter_change_type('R') if item.score == 100}
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
@@ -228,6 +239,7 @@ class GitUtil:
                          if (tuple_item[1] in all_branch_changed_files and tuple_item[1] not in deleted)}
 
         if committed_only:
+            self.debug_print(debug=debug, status='Renamed', staged=set(), committed=committed)
             return committed
 
         # get all untracked renamed files
@@ -235,15 +247,13 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as renamed.
         staged = {(Path(item.a_path), Path(item.b_path)) for item
-                  in self.repo.head.commit.diff().iter_change_type('R')}.union(untracked)
+                  in self.repo.head.commit.diff().iter_change_type('R') if item.score == 100}.union(untracked)
 
         if staged_only:
+            self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
             return staged
 
-        print('######## -  renamed staged:')
-        print(staged)
-        print('######## - renamed committed:')
-        print(committed)
+        self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
 
         return staged.union(committed)
 
@@ -264,7 +274,7 @@ class GitUtil:
         for line in git_status:
             line = line.strip()
             file_status = line.split()[0].upper() if not line.startswith('?') else 'A'
-            if file_status == requested_status:
+            if file_status.startswith(requested_status):
                 if requested_status == 'R':
                     extracted_paths.add((Path(line.split()[-2]), Path(line.split()[-1])))
                 else:
@@ -301,7 +311,7 @@ class GitUtil:
         try:
             if requested_status != 'R':
                 return {Path(os.path.join(item.a_path)) for item in
-                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
+                        self.repo.commit('HEAD~1').diff().iter_change_type(requested_status) if item.score == 100}
             else:
                 return {(Path(item.a_path), Path(item.b_path)) for item in
                         self.repo.commit('HEAD~1').diff().iter_change_type(requested_status)}
@@ -335,3 +345,10 @@ class GitUtil:
     def git_path(self) -> str:
         git_path = self.repo.git.rev_parse('--show-toplevel')
         return git_path.replace('\n', '')
+
+    def debug_print(self, debug: bool, status: str, staged: Set, committed: Set) -> None:
+        if debug:
+            click.echo(f'######## - {status} staged:')
+            click.echo(staged)
+            click.echo(f'######## - {status} committed:')
+            click.echo(committed)

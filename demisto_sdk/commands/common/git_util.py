@@ -76,15 +76,6 @@ class GitUtil:
         if staged_only:
             return staged - renamed - deleted
 
-        print('######## - staged:')
-        print(staged)
-        print('######## - commited:')
-        print(committed)
-        print('######## - renamed:')
-        print(renamed)
-        print('######## - deleted:')
-        print(deleted)
-
         return staged.union(committed) - renamed - deleted
 
     def added_files(self, prev_ver: str = 'master', committed_only: bool = False,
@@ -238,6 +229,11 @@ class GitUtil:
 
         if staged_only:
             return staged
+
+        print('######## - staged:')
+        print(staged)
+        print('######## - commited:')
+        print(committed)
 
         return staged.union(committed)
 

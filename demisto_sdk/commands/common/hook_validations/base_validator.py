@@ -192,7 +192,6 @@ class BaseValidator:
             json_contents = {}
 
         file_type = find_type(file_path)
-
         if file_path in json_contents:
             if output in json_contents[file_path].get('outputs'):
                 return

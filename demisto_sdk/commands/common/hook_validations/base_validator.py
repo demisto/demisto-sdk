@@ -191,7 +191,12 @@ class BaseValidator:
         else:
             json_contents = {}
 
-        file_type = find_type(file_path)
+        try:
+            file_type = find_type(file_path)
+
+        except FileNotFoundError:
+            file_type = None
+
         if file_path in json_contents:
             if output in json_contents[file_path].get('outputs'):
                 return

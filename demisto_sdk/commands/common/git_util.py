@@ -70,6 +70,10 @@ class GitUtil:
         committed_added = {Path(os.path.join(item.a_path)) for item in
                            self.repo.remote(name=remote).refs[branch].commit.
                            diff(self.repo.active_branch).iter_change_type('A')}
+        print('######## - committed added:')
+        print(committed_added)
+        print('######## - staged modified:')
+        print(staged)
 
         staged = staged - committed_added
 

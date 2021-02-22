@@ -595,6 +595,39 @@ def test_valid_is_pack_display_name_already_exist():
     assert is_valid
     assert not error
 
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMware2": {
+            "name": "VMware2",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert is_valid
+    assert not error
+
 
 def test_invalid_is_pack_display_name_already_exist():
     """

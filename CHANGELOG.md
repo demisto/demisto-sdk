@@ -1,9 +1,10 @@
 # Changelog
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
+* Updated the **upload** command to support indicator fields.
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.
-* Fixed an issue where downloading indicator layoutsconatiner objects failed.
+* Fixed an issue where downloading indicator layoutscontainer objects failed.
 * Added a validation that makes sure outputs in integrations are matching the README file.
 * Fixed an issue where the *create-id-set* flag in the **validate** command did not work.
 * Added a warning in case no id_set file is found when running the **validate** command.

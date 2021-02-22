@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

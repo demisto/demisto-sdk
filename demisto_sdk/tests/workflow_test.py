@@ -117,7 +117,7 @@ class ContentGitRepo:
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
                 assert res.exit_code == 0
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")

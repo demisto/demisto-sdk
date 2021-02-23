@@ -1,6 +1,6 @@
 category: Data Enrichment & Threat Intelligence
 commonfields:
-  id: HelloWorldFeed
+  id: FeedHelloWorld
   version: -1
 configuration:
 - defaultvalue: 'true'
@@ -83,8 +83,8 @@ configuration:
   name: proxy
   required: false
   type: 8
-display: HelloWorldFeed
-name: HelloWorldFeed
+display: FeedHelloWorld
+name: FeedHelloWorld
 script:
   commands:
   - arguments:
@@ -98,7 +98,7 @@ script:
     deprecated: false
     description: Gets indicators from the feed.
     execution: false
-    name: HelloWorldFeed-get-indicators
+    name: helloworld-get-indicators
   dockerimage: demisto/python3:3.8.5.10845
   feed: true
   isfetch: false

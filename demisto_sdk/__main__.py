@@ -673,7 +673,7 @@ def generate_test_playbook(**kwargs):
 @click.option(
     '--integration', is_flag=True, help="Create an integration based on HelloWorld example")
 @click.option(
-    '--feed', is_flag=True, help="Create a feed integration based on HelloWorldFeed example")
+    '--feed', is_flag=True, help="Create a feed integration based on FeedHelloWorld example")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
 @click.option(

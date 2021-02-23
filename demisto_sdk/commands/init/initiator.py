@@ -74,8 +74,8 @@ class Initiator:
                                      os.path.join('test_data', 'search_alerts.json'),
                                      os.path.join('test_data', 'update_alert_status.json'),
                                      os.path.join('test_data', 'domain_reputation.json')}
-    HELLO_WORLD_FEED_FILES = {'HelloWorldFeed.py', 'HelloWorldFeed.yml', 'HelloWorldFeed_description.md',
-                                     'HelloWorldFeed_image.png', 'HelloWorldFeed_test.py', 'Pipfile', 'Pipfile.lock',
+    HELLO_WORLD_FEED_FILES = {'FeedHelloWorld.py', 'FeedHelloWorld.yml', 'FeedHelloWorld_description.md',
+                                     'FeedHelloWorld_image.png', 'FeedHelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
                                 } ########## need to add test data
     TEST_DATA_DIR = 'test_data'
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
@@ -417,7 +417,7 @@ class Initiator:
         """Formats the given yml to fit the newly created integration/script
 
         Args:
-            current_suffix (str): The yml file name (HelloWorld, HelloWorldScript or HelloWorldFeed)
+            current_suffix (str): The yml file name (HelloWorld, HelloWorldScript or FeedHelloWorld)
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
@@ -520,7 +520,7 @@ class Initiator:
             path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
         elif self.is_feed:
-            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorldFeed')
+            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'FeedHelloWorld')
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
         else:
             path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')

@@ -1191,7 +1191,7 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
 
-        if not id_set:
+        if not id_set and not self.no_configuration_prints:
             error_message, error_code = Errors.no_id_set_file()
             self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
 

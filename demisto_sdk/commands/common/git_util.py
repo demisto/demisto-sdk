@@ -288,8 +288,9 @@ class GitUtil:
             line = line.strip()
             file_status = line.split()[0].upper() if not line.startswith('?') else 'A'
             if file_status.startswith(requested_status):
-                if requested_status == 'R' and file_status == 'R100':
-                    extracted_paths.add((Path(line.split()[-2]), Path(line.split()[-1])))
+                if requested_status == 'R':
+                    if file_status == 'R100':
+                        extracted_paths.add((Path(line.split()[-2]), Path(line.split()[-1])))
                 else:
                     extracted_paths.add(Path(line.split()[-1]))  # type: ignore
 

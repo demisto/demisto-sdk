@@ -915,7 +915,7 @@ def update_pack_releasenotes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True)
         validate_manager.setup_git_params()
         modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
         _packs = get_packs(modified).union(get_packs(old)).union(

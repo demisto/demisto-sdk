@@ -9,9 +9,9 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'RM102', 'MP106',
-                         'PA113', 'PA116', 'PB105', 'PB106', 'PB110', 'PB111',
-                         'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136']
+ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
+                         'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
+                         'MP106', 'RM102', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -21,7 +21,6 @@ PRESET_ERROR_TO_IGNORE = {
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
-
 
 ERROR_CODE = {
     "wrong_version": {'code': "BA100", 'ui_applicable': False, 'related_field': 'version'},
@@ -33,7 +32,8 @@ ERROR_CODE = {
     "no_minimal_fromversion_in_file": {'code': "BA106", 'ui_applicable': False, 'related_field': 'fromversion'},
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
-    "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True, 'related_field': '<parameter-name>.default'},
+    "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
+                                          'related_field': '<parameter-name>.default'},
     "wrong_required_value": {'code': "IN102", 'ui_applicable': True, 'related_field': '<parameter-name>.required'},
     "wrong_required_type": {'code': "IN103", 'ui_applicable': True, 'related_field': '<parameter-name>.type'},
     "wrong_category": {'code': "IN104", 'ui_applicable': True, 'related_field': 'category'},
@@ -50,16 +50,20 @@ ERROR_CODE = {
     "invalid_context_output": {'code': "IN115", 'ui_applicable': True, 'related_field': 'outputs'},
     "added_required_fields": {'code': "IN116", 'ui_applicable': False, 'related_field': '<parameter-name>.required'},
     "not_used_display_name": {'code': "IN117", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
-    "empty_display_configuration": {'code': "IN118", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
+    "empty_display_configuration": {'code': "IN118", 'ui_applicable': True,
+                                    'related_field': '<parameter-name>.display'},
     "feed_wrong_from_version": {'code': "IN119", 'ui_applicable': False, 'related_field': 'fromversion'},
     "pwsh_wrong_version": {'code': "IN120", 'ui_applicable': False, 'related_field': 'fromversion'},
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_v2_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
     "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
-    "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False, 'related_field': '<parameter-name>.default'},
-    "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False, 'related_field': 'configuration'},
-    "invalid_deprecated_integration_display_name": {'code': "IN127", 'ui_applicable': False, 'related_field': 'display'},
+    "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
+                                      'related_field': '<parameter-name>.default'},
+    "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
+                                                             'related_field': 'configuration'},
+    "invalid_deprecated_integration_display_name": {'code': "IN127", 'ui_applicable': False,
+                                                    'related_field': 'display'},
     "invalid_deprecated_integration_description": {'code': "IN128", 'ui_applicable': False, 'related_field': ''},
     "removed_integration_parameters": {'code': "IN129", 'ui_applicable': False, 'related_field': 'configuration'},
     "integration_not_runnable": {'code': "IN130", 'ui_applicable': False, 'related_field': 'configuration'},
@@ -148,14 +152,17 @@ ERROR_CODE = {
     "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
     "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
     "incident_field_or_type_from_version_5": {'code': "IF107", 'ui_applicable': True, 'related_field': 'fromVersion'},
-    "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
+                                                    'related_field': 'fromVersion'},
     "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
     "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
-    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': True, 'related_field': 'playbookId'},
-    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': True, 'related_field': 'extractSettings'},
+    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': True,
+                                                  'related_field': 'extractSettings'},
     "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
     "pack_file_does_not_exist": {'code': "PA100", 'ui_applicable': False, 'related_field': ''},
@@ -183,6 +190,7 @@ ERROR_CODE = {
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
+    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -201,13 +209,17 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
-    "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "invalid_from_version_in_old_classifiers": {'code': "CL103", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "missing_from_version_in_new_classifiers": {'code': "CL104", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "invalid_from_version_in_old_classifiers": {'code': "CL103", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "missing_from_version_in_new_classifiers": {'code': "CL104", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
     "missing_to_version_in_old_classifiers": {'code': "CL105", 'ui_applicable': False, 'related_field': 'toVersion'},
     "from_version_higher_to_version": {'code': "CL106", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "invalid_type_in_new_classifiers": {'code': "CL107", 'ui_applicable': False, 'related_field': 'type'},
-    "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False, 'related_field': 'incident_types'},
+    "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False,
+                                               'related_field': 'incident_types'},
     "invalid_from_version_in_mapper": {'code': "MP100", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "invalid_to_version_in_mapper": {'code': "MP101", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_mapper_file_name": {'code': "MP102", 'ui_applicable': False, 'related_field': ''},
@@ -484,6 +496,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def error_starting_mdx_server(line):
+        return f'Failed starting mdx server. stdout: {line}.\n' \
+               f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
     def missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
@@ -649,11 +667,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
-
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
 
     @staticmethod
     @error_code_decorator

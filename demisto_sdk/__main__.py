@@ -708,7 +708,7 @@ def generate_test_playbook(**kwargs):
     "--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
-                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld\n"
                              "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,

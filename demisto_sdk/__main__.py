@@ -671,9 +671,7 @@ def generate_test_playbook(**kwargs):
     "-o", "--output", help="The output dir to write the object into. The default one is the current working "
                            "directory.")
 @click.option(
-    '--integration', is_flag=True, help="Create an integration based on HelloWorld example")
-@click.option(
-    '--feed', is_flag=True, help="Create a feed integration based on FeedHelloWorld example")
+    '--integration', is_flag=True, help="Create an integration based on HelloWorld examples")
 @click.option(
     '--script', is_flag=True, help="Create a script based on HelloWorldScript example")
 @click.option(

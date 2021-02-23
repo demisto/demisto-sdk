@@ -101,7 +101,8 @@ class BaseUpdate:
             extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
-        self.recursive_remove_unnecessary_keys(extended_schema.get('mapping'), self.data)
+        if isinstance(extended_schema, dict):
+            self.recursive_remove_unnecessary_keys(extended_schema.get('mapping', {}), self.data)
 
     @staticmethod
     def recursive_extend_schema(current_schema: Union[str, bool, list, dict],
@@ -268,11 +269,13 @@ class BaseUpdate:
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
         if self.verbose:
-            click.echo('Removing _dev and _copy suffixes from name and display tags')
+            click.echo('Removing _dev and _copy suffixes from name, id and display tags')
         if self.data['name']:
             self.data['name'] = self.data.get('name', '').replace('_copy', '').replace('_dev', '')
         if self.data.get('display'):
             self.data['display'] = self.data.get('display', '').replace('_copy', '').replace('_dev', '')
+        if self.data.get('id'):
+            self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
     def initiate_file_validator(self, validator_type):
         """ Run schema validate and file validate of file

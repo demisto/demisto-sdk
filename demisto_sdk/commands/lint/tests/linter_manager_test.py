@@ -3,8 +3,24 @@ from pathlib import PosixPath
 from unittest.mock import MagicMock, patch
 
 import pytest
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
+                                                   FileType)
+from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.lint.lint_manager import LintManager
+from TestSuite.test_tools import ChangeCWD
+
+
+def mock_lint_manager(mocker):
+    mocker.patch.object(LintManager, '_get_packages', return_value=[])
+    mocker.patch.object(LintManager, '_gather_facts', return_value={'content_repo': ''})
+    return LintManager(input='',
+                       git=False,
+                       all_packs=False,
+                       quiet=False,
+                       verbose=False,
+                       log_path='',
+                       prev_ver='master',
+                       json_file_path='path')
 
 
 @patch('builtins.print')
@@ -103,7 +119,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     assert not os.path.isfile(file_path)
 
 
-def test_report_warning_lint_checks_not_packages_tests(capsys):
+def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
     """
     Given:
         - Lint manager dictionary with one pack which has warnings.
@@ -114,7 +130,6 @@ def test_report_warning_lint_checks_not_packages_tests(capsys):
     Then:
         - Ensure that the correct warnings printed to stdout.
     """
-    from demisto_sdk.commands.lint import lint_manager
     lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
                    'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
                    'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
@@ -188,8 +203,8 @@ def test_report_warning_lint_checks_not_packages_tests(capsys):
                        'bandit_warnings': None, 'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
                        'warning_code': 512}}
 
-    lint_manager.LintManager.report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
-                                                        pkgs_status=pkgs_status, all_packs=False)
+    mock_lint_manager(mocker).report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
+                                                         pkgs_status=pkgs_status, all_packs=False)
     captured = capsys.readouterr()
     assert "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them (" \
            "try-except-main-doesnt-exists)" in captured.out
@@ -198,7 +213,7 @@ def test_report_warning_lint_checks_not_packages_tests(capsys):
     assert "Xsoar_linter warnings" in captured.out
 
 
-def test_report_warning_lint_checks_all_packages_tests(capsys):
+def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
     """
     Given:
         - Lint manager dictionary with one pack which has warnings.
@@ -210,7 +225,6 @@ def test_report_warning_lint_checks_all_packages_tests(capsys):
     Then:
         - Ensure that there are no warnings printed to stdout.
     """
-    from demisto_sdk.commands.lint import lint_manager
     lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
                    'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
                    'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
@@ -284,8 +298,8 @@ def test_report_warning_lint_checks_all_packages_tests(capsys):
                        'bandit_warnings': None, 'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
                        'warning_code': 512}}
 
-    lint_manager.LintManager.report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
-                                                        pkgs_status=pkgs_status, all_packs=True)
+    mock_lint_manager(mocker).report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
+                                                         pkgs_status=pkgs_status, all_packs=True)
     captured = capsys.readouterr()
     assert captured.out == ""
 
@@ -344,3 +358,259 @@ def test_report_summary_no_warnings(capsys):
     assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
     assert "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out
     assert "Packages FAIL: [31m0[0m" in captured.out
+
+
+def test_create_json_output_flake8(repo, mocker):
+    """
+    Given:
+        - flake8 error entries.
+
+    When:
+        - Running flake8_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+    from demisto_sdk.commands.lint import lint_manager
+    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
+    check = {
+        'linter': 'flake8',
+        'pack': 'myPack',
+        'type': 'error',
+        'messages': 'Packs/myPack/Integrations/INT1/INT1.py:160:9: E225 missing whitespace around operator\n'
+                    'Packs/myPack/Integrations/INT2/INT2.py:160:9: E225 missing whitespace around operator'
+
+    }
+    json_contents = {}
+    mocked_lint_manager.flake8_error_formatter(check, json_contents)
+    expected_format = {
+        "Packs/myPack/Integrations/INT1/INT1.py": {
+            'file-type': 'py',
+            'entity-type': 'integration',
+            'display-name': 'Display',
+            'outputs': [{
+                'linter': 'flake8',
+                'severity': 'error',
+                'code': 'E225',
+                'message': 'missing whitespace around operator',
+                'line-number': "160",
+                'column-number': "9"
+            }]
+        },
+        "Packs/myPack/Integrations/INT2/INT2.py": {
+            'file-type': 'py',
+            'entity-type': 'integration',
+            'display-name': 'Display',
+            'outputs': [{
+                'linter': 'flake8',
+                'severity': 'error',
+                'code': 'E225',
+                'message': 'missing whitespace around operator',
+                'line-number': "160",
+                'column-number': "9"
+            }]
+        }
+    }
+    assert json_contents == expected_format
+
+
+def test_create_json_output_mypy(repo, mocker):
+    """
+    Given:
+        - mypy error entries.
+
+    When:
+        - Running mypy_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+    from demisto_sdk.commands.lint import lint_manager
+    pack = repo.create_pack('Pack')
+    integration = pack.create_integration(name="INT")
+    integration.create_default_integration()
+    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
+    check = {
+        'linter': 'mypy',
+        'pack': 'myPack',
+        'type': 'error',
+        'messages': f'{integration.code.path}:280:12: error:'
+                    'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                    f'            if incident_created_time.timestamp() > latest_created_time.tim...\n'
+                    f'               ^\n'
+                    f'{integration.code.path}:11:2: note: '
+                    f'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports\n'
+                    f'{integration.code.path}:284:37: error:\n'
+                    f'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                    f'            if last_fetch.timestamp() < incident_created_time.timestamp():\n'
+                    f'                                        ^\n'
+                    f'Found 6 errors in 1 file (checked 1 source file)'
+
+    }
+    json_contents = {}
+    with ChangeCWD(repo.path):
+        mocked_lint_manager.mypy_error_formatter(check, json_contents)
+
+    expected_format = {
+        f"{integration.code.path}": {
+            'file-type': 'py',
+            'entity-type': 'integration',
+            'display-name': 'Display',
+            'outputs': [
+                {
+                    'linter': 'mypy',
+                    'severity': 'error',
+                    'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                               '            if incident_created_time.timestamp() > latest_created_time.tim...\n'
+                               '               ^',
+                    'line-number': "280",
+                    'column-number': "12"
+                },
+                {
+                    'linter': 'mypy',
+                    'severity': 'error',
+                    'message': 'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports',
+                    'line-number': "11",
+                    'column-number': "2"
+                },
+                {
+                    'linter': 'mypy',
+                    'severity': 'error',
+                    'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                               '            if last_fetch.timestamp() < incident_created_time.timestamp():\n'
+                               '                                        ^',
+                    'line-number': "284",
+                    'column-number': "37"
+                },
+            ]
+        }
+    }
+    assert json_contents == expected_format
+
+
+def test_create_json_output_bandit(repo, mocker):
+    """
+    Given:
+        - bandit error entries.
+
+    When:
+        - Running bandit_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+    from demisto_sdk.commands.lint import lint_manager
+    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
+    check = {
+        'linter': 'flake8',
+        'pack': 'myPack',
+        'type': 'error',
+        'messages': 'Packs/myPack/Integrations/INT1/INT1.py:117: '
+                    'B110 [Severity: LOW Confidence: HIGH] Try, Except, Pass detected.'
+
+    }
+    json_contents = {}
+    mocked_lint_manager.bandit_error_formatter(check, json_contents)
+    expected_format = {
+        "Packs/myPack/Integrations/INT1/INT1.py": {
+            'file-type': 'py',
+            'display-name': 'Display',
+            'entity-type': 'integration',
+            'outputs': [{
+                'linter': 'bandit',
+                'severity': 'error',
+                'code': 'B110',
+                'message': 'Severity: LOW Confidence: HIGH - Try, Except, Pass detected.',
+                'line-number': "117",
+            }]
+        }
+    }
+    assert json_contents == expected_format
+
+
+def test_create_json_output_vulture(repo, mocker):
+    """
+    Given:
+        - vulture error entries.
+
+    When:
+        - Running vulture_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+    from demisto_sdk.commands.lint import lint_manager
+    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'find_file', return_value='Packs/myPack/Integrations/INT1/INT1.py')
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
+    check = {
+        'linter': 'vulture',
+        'pack': 'myPack',
+        'type': 'error',
+        'messages': "INT1.py:289: unreachable code after 'return' (100% confidence)"
+    }
+    json_contents = {}
+    mocked_lint_manager.vulture_error_formatter(check, json_contents)
+    expected_format = {
+        "Packs/myPack/Integrations/INT1/INT1.py": {
+            'file-type': 'py',
+            'display-name': 'Display',
+            'entity-type': 'integration',
+            'outputs': [{
+                'linter': 'vulture',
+                'severity': 'error',
+                'message': "unreachable code after 'return' (100% confidence)",
+                'line-number': "289",
+            }]
+        }
+    }
+    assert json_contents == expected_format
+
+
+def test_create_json_output_xsoar_linter(repo, mocker):
+    """
+    Given:
+        - XSOAR linter error entries.
+
+    When:
+        - Running xsoar_linter_error_formatter.
+
+    Then:
+        - Ensure that the JSON error entries are entered as expected.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+    from demisto_sdk.commands.lint import lint_manager
+    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
+    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
+    check = {
+        'linter': 'xsoar_linter',
+        'pack': 'myPack',
+        'type': 'error',
+        'messages': 'Packs/myPack/Integrations/INT1/INT1.py:105:8: '
+                    'E9001 FileShareLink.prepare_request_object: Sys.exit use is found, Please use return instead.'
+    }
+    json_contents = {}
+    mocked_lint_manager.xsoar_linter_error_formatter(check, json_contents)
+    expected_format = {
+        "Packs/myPack/Integrations/INT1/INT1.py": {
+            'file-type': 'py',
+            'entity-type': 'integration',
+            'display-name': 'Display',
+            'outputs': [{
+                'linter': 'xsoar_linter',
+                'severity': 'error',
+                'code': 'E9001',
+                'message': 'FileShareLink.prepare_request_object: Sys.exit use is found, Please use return instead.',
+                'line-number': "105",
+                "column-number": '8'
+            }]
+        }
+    }
+    assert json_contents == expected_format

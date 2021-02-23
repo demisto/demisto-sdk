@@ -401,13 +401,14 @@ def pylint_plugin(dest: Path):
     try:
         for file in plugin_dirs.iterdir():
             if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
-                os.link(file, dest / file.name)
+                os.symlink(file, dest / file.name)
 
         yield
     finally:
         for file in plugin_dirs.iterdir():
             if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
-                (dest / f'{file.name}').unlink()
+                if os.path.lexists(dest / f'{file.name}'):
+                    (dest / f'{file.name}').unlink()
 
 
 def split_warnings_errors(output: str):

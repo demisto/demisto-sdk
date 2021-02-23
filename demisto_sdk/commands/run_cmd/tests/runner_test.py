@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 from demisto_client.demisto_api import DefaultApi
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 INPUT_OUTPUTS = [

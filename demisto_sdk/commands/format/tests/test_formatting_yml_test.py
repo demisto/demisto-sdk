@@ -7,10 +7,10 @@ import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS)
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS
+from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -724,3 +724,48 @@ class TestFormatting:
         formatter.run_format()
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
+
+    TEST_UUID_FORMAT_OBJECT = [
+        PlaybookYMLFormat,
+        TestPlaybookYMLFormat
+    ]
+
+    @pytest.mark.parametrize('format_object', TEST_UUID_FORMAT_OBJECT)
+    def test_update_task_uuid_(self, format_object):
+        """
+        Given
+            - A test playbook file
+        When
+            - Run update_task_uuid command
+        Then
+            - Ensure that all the relevant fields under a task- id and taskid- are from uuid format and for each task
+            those fields have the same value
+        """
+
+        schema_path = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
+        playbook_yml = format_object(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True)
+        playbook_yml.data = {
+            "tasks": {
+                "1": {
+                    "taskid": '1',
+                    "task": {
+                        'id': '1'
+                    }
+                },
+                "2": {
+                    "taskid": '2',
+                    "task": {
+                        'id': 'some_name'
+                    }
+                }
+            }
+        }
+
+        playbook_yml.update_task_uuid()
+        assert is_string_uuid(playbook_yml.data['tasks']['1']['task']['id']) and \
+            is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
+        assert playbook_yml.data['tasks']['1']['task']['id'] == playbook_yml.data['tasks']['1']['taskid']
+        assert is_string_uuid(playbook_yml.data['tasks']['2']['task']['id']) and \
+            is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
+        assert playbook_yml.data['tasks']['2']['task']['id'] == playbook_yml.data['tasks']['2']['taskid']

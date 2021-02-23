@@ -1,8 +1,10 @@
 import os
 import random
 
+from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
-                                               print_error, print_warning)
+                                               open_id_set_file, print_error,
+                                               print_warning)
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
@@ -10,7 +12,7 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_section, generate_table_section, save_output, string_escape_md)
 
 
-def generate_script_doc(input, examples, output: str = None, permissions: str = None,
+def generate_script_doc(input_path, examples, output: str = None, permissions: str = None,
                         limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc: list = []
@@ -18,7 +20,7 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
         example_section: list = []
 
         if not output:  # default output dir will be the dir of the input file
-            output = os.path.dirname(os.path.realpath(input))
+            output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
             if not examples.startswith('!'):
@@ -33,18 +35,22 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
             errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
                           'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
-        script = get_yaml(input)
+        script = get_yaml(input_path)
 
         # get script data
-        secript_info = get_script_info(input)
+        script_info = get_script_info(input_path)
         script_id = script.get('commonfields')['id']
 
         # get script dependencies
         dependencies, _ = get_depends_on(script)
 
         # get the script usages by the id set
-        id_set_creator = IDSetCreator(output='', print_logs=False)
-        id_set = id_set_creator.create_id_set()
+        if not os.path.isfile(DEFAULT_ID_SET_PATH):
+            id_set_creator = IDSetCreator(output='', print_logs=False)
+            id_set = id_set_creator.create_id_set()
+        else:
+            id_set = open_id_set_file(DEFAULT_ID_SET_PATH)
+
         used_in = get_used_in(id_set, script_id)
 
         description = script.get('comment', '')
@@ -60,7 +66,7 @@ def generate_script_doc(input, examples, output: str = None, permissions: str = 
 
         doc.append(description + '\n')
 
-        doc.extend(generate_table_section(secript_info, 'Script Data'))
+        doc.extend(generate_table_section(script_info, 'Script Data'))
 
         if dependencies:
             doc.extend(generate_list_section('Dependencies', dependencies, True,
@@ -196,6 +202,7 @@ def get_used_in(id_set, script_id):
 
     id_set_sections = list(id_set.keys())
     id_set_sections.remove('TestPlaybooks')
+    id_set_sections.remove('Packs') if 'Packs' in id_set_sections else None
 
     for key in id_set_sections:
         items = id_set[key]
@@ -210,7 +217,7 @@ def get_used_in(id_set, script_id):
 
 
 def generate_script_example(script_name, example=None):
-    errors = []
+    errors: list = []
     if example:
         script_example = example[script_name][0]
         md_example = example[script_name][1]

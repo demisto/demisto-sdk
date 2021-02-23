@@ -98,6 +98,8 @@ mapping:
         type: bool
       isFetchSamples:
         type: bool
+      resetContext:
+        type: bool
   system:
     type: bool
   hidden:

@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.git_tools import get_changed_files
+from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
@@ -107,6 +107,8 @@ def format_manager(input: str = None,
             if dirname.endswith('CommonServerPython'):
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
+                continue
+            if dirname.endswith('test_data') or dirname.endswith('doc_imgs'):
                 continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:

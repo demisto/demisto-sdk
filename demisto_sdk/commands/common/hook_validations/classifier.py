@@ -1,8 +1,14 @@
 from distutils.version import LooseVersion
 
+import click
+from demisto_sdk.commands.common.constants import \
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import \
+    get_all_incident_and_indicator_fields_from_id_set
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
 TO_VERSION_FOR_OLD_CLASSIFIER = '5.9.9'
@@ -11,20 +17,32 @@ CLASSIFICATION_TYPE = 'classification'
 
 class ClassifierValidator(ContentEntityValidator):
 
-    def __init__(self, structure_validator, new_classifier_version=True, ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False):
+    def __init__(self, structure_validator, new_classifier_version=True, ignored_errors=None, is_circle=False,
+                 print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.new_classifier_version = new_classifier_version
         self.from_version = ''
         self.to_version = ''
+        self.is_circle = is_circle
 
-    def is_valid_classifier(self, validate_rn=True):
+    def is_valid_classifier(self, validate_rn=True, id_set_file=None, is_circle=False):
         """Checks whether the classifier is valid or not.
 
         Returns:
             bool. True if classifier is valid, else False.
         """
+        if not self.new_classifier_version:
+            return all([
+                super().is_valid_file(validate_rn),
+                self.is_valid_version(),
+                self.is_valid_from_version(),
+                self.is_valid_to_version(),
+                self.is_to_version_higher_from_version(),
+                self.is_valid_type(),
+                self.is_incident_field_exist(id_set_file, is_circle)
+            ])
+
         return all([
             super().is_valid_file(validate_rn),
             self.is_valid_version(),
@@ -115,6 +133,37 @@ class ClassifierValidator(ContentEntityValidator):
         """
         if self.new_classifier_version and self.current_file.get('type') != CLASSIFICATION_TYPE:
             error_message, error_code = Errors.invalid_type_in_new_classifiers()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        """Checks if classifier incident fields is exist in content repo, this validation is only for old classifiers.
+
+        Returns:
+            bool. True if incident fields is valid - exist in content repo, else False.
+        """
+        if not is_circle:
+            return True
+
+        if not id_set_file:
+            click.secho("Skipping classifier incident field validation. Could not read id_set.json.", fg="yellow")
+            return True
+
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'old classifier')
+
+        invalid_inc_fields_list = []
+        mapper = self.current_file.get('mapping', {})
+        for incident_type, mapping in mapper.items():
+            incident_fields = mapping.get('internalMapping', {})
+
+            for inc_name, _ in incident_fields.items():
+                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
+                    invalid_inc_fields_list.append(inc_name)
+
+        if invalid_inc_fields_list:
+            error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

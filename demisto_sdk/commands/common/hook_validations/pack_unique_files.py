@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import Repo
+from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -41,13 +41,14 @@ class PackUniqueFilesValidator(BaseValidator):
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
-                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False):
+                 should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
         """
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.pack = pack
         self.pack_path = pack_name_to_path(self.pack) if not pack_path else pack_path
         self.secrets_file = PACKS_WHITELIST_FILE_NAME
@@ -59,6 +60,8 @@ class PackUniqueFilesValidator(BaseValidator):
         self.should_version_raise = should_version_raise
         self.id_set_path = id_set_path
         self.private_repo = private_repo
+        self.skip_id_set_creation = skip_id_set_creation
+        self.prev_ver = prev_ver
 
     # error handling
     def _add_error(self, error, file_path):
@@ -76,11 +79,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def get_errors(self, raw=False):
+    def get_errors(self, raw=False) -> str:
         """Get the dict version or string version for print"""
         errors = ''
         if raw:
-            errors = self._errors
+            errors = '\n  '.join(self._errors)
         elif self._errors:
             errors = ' - Issues with unique files in pack: {}\n  {}'.format(self.pack, '\n  '.join(self._errors))
 
@@ -190,7 +193,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_version_bump(self):
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
-        old_meta_file_content = get_remote_file(metadata_file_path)
+        old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
         current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get('currentVersion', '0.0.0')
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
@@ -240,13 +243,14 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check created field in iso format
             created_field = metadata.get(PACK_METADATA_CREATED, '')
-            if not self.check_timestamp_format(created_field):
-                suggested_value = parser.parse(created_field).isoformat() + "Z"
-                if self._add_error(
-                        Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_CREATED,
-                                                                      created_field, suggested_value),
-                        self.pack_meta_file):
-                    return False
+            if created_field:
+                if not self.check_timestamp_format(created_field):
+                    suggested_value = parser.parse(created_field).isoformat() + "Z"
+                    if self._add_error(
+                            Errors.pack_timestamp_field_not_in_iso_format(PACK_METADATA_CREATED,
+                                                                          created_field, suggested_value),
+                            self.pack_meta_file):
+                        return False
 
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
@@ -348,10 +352,26 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
-        old_meta_file_content = current_repo.git.show(f'master:{metadata_file_path}')
+
+        # if running on master branch in private repo - do not run the test
+        if current_repo.active_branch == 'master':
+            if not self.suppress_print:
+                click.secho("Running on master branch - skipping price change validation", fg="yellow")
+            return None
+        try:
+            old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
+
+        except GitCommandError as e:
+            if not self.suppress_print:
+                click.secho(f"Got an error while trying to connect to git - {str(e)}\n"
+                            f"Skipping price change validation")
+            return None
 
         # if there was no past version
         if not old_meta_file_content:
+            if not self.suppress_print:
+                click.secho("Unable to find previous pack_metadata.json file - skipping price change validation",
+                            fg="yellow")
             return None
 
         return json.loads(old_meta_file_content)
@@ -364,7 +384,7 @@ class PackUniqueFilesValidator(BaseValidator):
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
         old_meta_file_content = self.get_master_private_repo_meta_file(metadata_file_path)
 
-        # if there was no past version
+        # if there was no past version or running on master branch
         if not old_meta_file_content:
             return True
 
@@ -379,7 +399,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_unique_files(self):
+    def are_valid_files(self) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -388,19 +408,25 @@ class PackUniqueFilesValidator(BaseValidator):
             self.validate_pack_meta_file()
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
-            self.validate_pack_dependencies(id_set_path=self.id_set_path)
+            self.validate_pack_dependencies()
         return self.get_errors()
 
     # pack dependencies validation
-    def validate_pack_dependencies(self, id_set_path=None):
+    def validate_pack_dependencies(self):
         try:
             click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                         fg="bright_cyan")
             core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
             first_level_dependencies = PackDependencies.find_dependencies(
-                self.pack, id_set_path=id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False)
+                self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+            )
+
+            if not first_level_dependencies:
+                if not self.suppress_print:
+                    click.secho("No first level dependencies found", fg="yellow")
+                return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)

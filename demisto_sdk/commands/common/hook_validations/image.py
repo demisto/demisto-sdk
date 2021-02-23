@@ -19,9 +19,10 @@ class ImageValidator(BaseValidator):
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
+                 json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
         self.file_path = ''
         if file_path.endswith('.png'):
@@ -137,7 +138,7 @@ class ImageValidator(BaseValidator):
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             with open(self.file_path, "rb") as image:
                 image_data = image.read()
-                image = base64.b64encode(image_data)
+                image = base64.b64encode(image_data)  # type: ignore
                 if isinstance(image, bytes):
                     image = image.decode("utf-8")
 

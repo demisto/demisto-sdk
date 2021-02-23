@@ -11,7 +11,7 @@ import yaml
 import yamlordereddictloader
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.unify.unifier import Unifier
 from mock import patch
@@ -153,7 +153,7 @@ def test_insert_description_to_yml():
         unifier.is_script_package = False
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
             desc_data = desc_file.read().decode("utf-8")
-        integration_doc_link = '\n---\n[View Integration Documentation]' \
+        integration_doc_link = '\n\n---\n[View Integration Documentation]' \
                                '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
         yml_unified, found_data_path = unifier.insert_description_to_yml(
             {'commonfields': {'id': 'VulnDB'}}, {}
@@ -628,7 +628,6 @@ PACK_METADATA_PARTNER = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": PARTNER_EMAIL,
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -644,7 +643,6 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": "support1@test.com,support2@test.com",
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -660,7 +658,6 @@ PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": "['support1@test.com', 'support2@test.com']",
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -676,7 +673,6 @@ PACK_METADATA_PARTNER_NO_EMAIL = json.dumps({
     "author": "bar",
     "url": PARTNER_URL,
     "email": '',
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -692,7 +688,6 @@ PACK_METADATA_PARTNER_NO_URL = json.dumps({
     "author": "bar",
     "url": '',
     "email": PARTNER_EMAIL,
-    "created": "2020-03-12T08:00:00Z",
     "categories": [
         "Data Enrichment & Threat Intelligence"
     ],
@@ -708,7 +703,6 @@ PACK_METADATA_XSOAR = json.dumps({
     "author": "Cortex XSOAR",
     "url": "https://www.paloaltonetworks.com/cortex",
     "email": "",
-    "created": "2020-04-14T00:00:00Z",
     "categories": [
         "Endpoint"
     ],
@@ -725,7 +719,6 @@ PACK_METADATA_COMMUNITY = json.dumps({
     "author": "Community Contributor",
     "url": "",
     "email": "",
-    "created": "2020-04-14T00:00:00Z",
     "categories": [
         "Endpoint"
     ],

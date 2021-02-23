@@ -1,28 +1,34 @@
 import io
 import json
 import os
+from typing import Optional
 
 import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
-                                                FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE)
-from demisto_sdk.commands.common.tools import (find_type, get_pack_name,
+                                                PRESET_ERROR_TO_IGNORE,
+                                                get_all_error_codes,
+                                                get_error_object)
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_file_displayed_name,
+                                               get_json, get_pack_name,
                                                get_yaml)
 
 
 class BaseValidator:
 
-    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
+                 json_file_path: Optional[str] = None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
+        self.json_file_path = json_file_path
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -75,6 +81,7 @@ class BaseValidator:
         if self.should_ignore_error(error_code, self.ignored_errors.get(file_name)) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error, fg="yellow")
+                self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
@@ -89,6 +96,7 @@ class BaseValidator:
             else:
                 click.secho(formatted_error, fg="bright_red")
 
+        self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         return formatted_error
 
@@ -126,7 +134,7 @@ class BaseValidator:
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):
         ignored_error_list = []
-        all_errors = ERROR_CODE.values()
+        all_errors = get_all_error_codes()
         for error_code in all_errors:
             error_type = error_code[:2]
             if error_code not in errors_to_check and error_type not in errors_to_check:
@@ -154,3 +162,48 @@ class BaseValidator:
         formatted_file_and_error = f'{file_path} - [{error_code}]'
         if formatted_file_and_error not in error_list:
             error_list.append(formatted_file_and_error)
+
+    def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
+        """Adds an error's info to the output JSON file
+
+        Args:
+            file_path (str): The file path where the error ocurred.
+            error_code (str): The error code
+            error_message (str): The error message
+            warning (bool): Whether the error is defined as a warning
+        """
+        if not self.json_file_path:
+            return
+
+        error_data = get_error_object(error_code)
+
+        output = {
+            "severity": "warning" if warning else "error",
+            "code": error_code,
+            "message": error_message,
+            "ui": error_data.get('ui_applicable'),
+            'related-field': error_data.get('related_field')
+        }
+
+        if os.path.exists(self.json_file_path):
+            json_contents = get_json(self.json_file_path)
+
+        else:
+            json_contents = {}
+
+        file_type = find_type(file_path)
+        if file_path in json_contents:
+            if output in json_contents[file_path].get('outputs'):
+                return
+            json_contents[file_path]['outputs'].append(output)
+        else:
+            json_contents[file_path] = {
+                "file-type": os.path.splitext(file_path)[1].replace('.', ''),
+                "entity-type": file_type.value if file_type else 'pack',
+                "display-name": get_file_displayed_name(file_path),
+                "outputs": [
+                    output
+                ]
+            }
+        with open(self.json_file_path, 'w') as f:
+            json.dump(json_contents, f, indent=4)

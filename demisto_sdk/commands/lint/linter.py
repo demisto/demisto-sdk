@@ -1,4 +1,5 @@
 # STD python packages
+import copy
 import hashlib
 import io
 import json
@@ -74,7 +75,9 @@ class Linter:
             "is_long_running": False,
             "lint_unittest_files": [],
             "additional_requirements": [],
-            "docker_engine": docker_engine
+            "docker_engine": docker_engine,
+            "is_script": False,
+            "commands": None
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -188,8 +191,9 @@ class Linter:
             yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-
+            self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
+            self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -295,19 +299,25 @@ class Linter:
         warning = []
         error = []
         other = []
-        if self._facts["lint_files"]:
-            exit_code: int = 0
-            for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
-                exit_code = SUCCESS
-                output = ""
+        exit_code: int = 0
+        for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+            exit_code = SUCCESS
+            output = ""
+            if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
                 if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
-                                                         lint_files=self._facts["lint_files"])
-                elif lint_check == "XSOAR_linter" and not no_xsoar_linter:
+                    flake8_lint_files = copy.deepcopy(self._facts["lint_files"])
+                    # if there are unittest.py then we would run flake8 on them too.
+                    if self._facts['lint_unittest_files']:
+                        flake8_lint_files.extend(self._facts['lint_unittest_files'])
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"], lint_files=flake8_lint_files)
+
+            if self._facts["lint_files"]:
+                if lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
+
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
@@ -315,40 +325,20 @@ class Linter:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
 
-                # check for any exit code other than 0
-                if exit_code:
-                    error, warning, other = split_warnings_errors(output)
-                if exit_code and warning:
-                    self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
-                if exit_code & FAIL:
-                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    # if the error were extracted correctly as they start with E
-                    if error:
-                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
-                    # if there were errors but they do not start with E
-                    else:
-                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
-
-        if self._facts['lint_unittest_files']:
-            for lint_check in ["flake8"]:
-                exit_code = SUCCESS
-                output = ""
-                if lint_check == "flake8" and not no_flake8:
-                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
-                                                         lint_files=self._facts["lint_unittest_files"])
-                if exit_code:
-                    error, warning, other = split_warnings_errors(output)
-                if exit_code & FAIL:
-                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                    if error:
-                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
-                    # for errors whihc start with 'E'
-                    else:
-                        self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
-                if exit_code and WARNING:
-                    self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
-                    self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+            # check for any exit code other than 0
+            if exit_code:
+                error, warning, other = split_warnings_errors(output)
+            if exit_code and warning:
+                self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+                self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+            if exit_code & FAIL:
+                self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                # if the error were extracted correctly as they start with E
+                if error:
+                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                # if there were errors but they do not start with E
+                else:
+                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
@@ -403,6 +393,11 @@ class Linter:
                 myenv['LONGRUNNING'] = 'True'
             if py_num < 3:
                 myenv['PY2'] = 'True'
+            myenv['is_script'] = str(self._facts['is_script'])
+            # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
+            # as a result we can use the env vars as a getway.
+            myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
+                if self._facts['commands'] else ''
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -748,13 +743,17 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
-                                                                                                   image=test_image,
-                                                                                                   command=[
-                                                                                                       build_pylint_command(self._facts["lint_files"])],
-                                                                                                   user=f"{os.getuid()}:4000",
-                                                                                                   detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(
+                name=container_name,
+                image=test_image,
+                command=[
+                    build_pylint_command(
+                        self._facts["lint_files"], docker_version=self._facts.get('python_version'))
+                ],
+                user=f"{os.getuid()}:4000",
+                detach=True,
+                environment=self._facts["env_vars"]
+            )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -1007,3 +1006,19 @@ class Linter:
             exit_code = RERUN
 
         return exit_code, output
+
+    def _get_commands_list(self, script_obj: dict):
+        """ Get all commands from yml file of the pack
+           Args:
+               script_obj(dict): the script section of the yml file.
+           Returns:
+               list: list of all commands
+        """
+        commands_list = []
+        try:
+            commands_obj = script_obj.get('commands', {})
+            for command in commands_obj:
+                commands_list.append(command.get('name', ''))
+        except Exception:
+            logger.debug("Failed getting the commands from the yml file")
+        return commands_list

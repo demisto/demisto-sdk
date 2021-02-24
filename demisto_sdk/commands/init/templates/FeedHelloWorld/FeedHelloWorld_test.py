@@ -57,8 +57,7 @@ from FeedHelloWorld import Client, get_indicators_command, fetch_indicators_comm
 from CommonServerPython import tableToMarkdown
 import json
 import io
-import pytest
-import demistomock as demisto
+
 
 URL = "https://openphish.com/feed.txt"
 

@@ -166,6 +166,9 @@ jobs:
             when: always
             command: |
               . .tox/py37/bin/activate
+              cd content
+              demisto-sdk -v
+
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
@@ -174,6 +177,9 @@ jobs:
             when: always
             command: |
               . .tox/py37/bin/activate
+              cd content
+              demisto-sdk -v
+
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
 

@@ -1,6 +1,6 @@
 category: Data Enrichment & Threat Intelligence
 commonfields:
-  id: FeedHelloWorld
+  id: HelloWorld Feed
   version: -1
 configuration:
 - defaultvalue: 'true'
@@ -107,8 +107,8 @@ configuration:
   name: feedTags
   required: false
   type: 0
-display: FeedHelloWorld
-name: FeedHelloWorld
+display: HelloWorld Feed
+name: HelloWorld Feed
 script:
   commands:
   - arguments:

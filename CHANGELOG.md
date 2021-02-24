@@ -1,5 +1,6 @@
 # Changelog
 * Updated the **upload** command to support indicator fields.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

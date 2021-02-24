@@ -161,6 +161,8 @@ jobs:
               demisto-sdk -v
 
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
+              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+
         - run:
             name: Merge Id Set
             when: always
@@ -169,7 +171,6 @@ jobs:
               cd content
               demisto-sdk -v
 
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
         - run:

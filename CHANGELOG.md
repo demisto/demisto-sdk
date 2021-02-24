@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
 
 # 1.3.0

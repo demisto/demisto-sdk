@@ -169,10 +169,6 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py37/bin/activate
-              cd content
-              demisto-sdk -v
-
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
 

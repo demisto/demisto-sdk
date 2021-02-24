@@ -138,7 +138,7 @@ jobs:
             root: ~/project
             paths:
               - content
-  validate-files:
+  validate-filesssssss:
       docker:
         - image: circleci/python:3.8.3-buster-node
       steps:
@@ -229,7 +229,7 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
-      - validate-files:
+      - validate-filesssssss:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - create-id-set:
@@ -244,6 +244,6 @@ workflows:
             - tox3-7-unit-tests
             - tox3-8-unit-tests
             - precommit-checks
-            - validate-files
+            - validate-filesssssss
             - create-id-set
             - create-content-artifacts

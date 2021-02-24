@@ -138,7 +138,7 @@ jobs:
             root: ~/project
             paths:
               - content
-  validate-filesssssss:
+  validate-files:
       docker:
         - image: circleci/python:3.8.3-buster-node
       steps:
@@ -150,7 +150,7 @@ jobs:
             command: |
               pip install gsutil
         - run:
-            name: Test validate files and yaml
+            name: Set Up & Create Id Set
             when: always
             command: |
               . .tox/py37/bin/activate
@@ -161,13 +161,25 @@ jobs:
               demisto-sdk -v
 
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
-
+        - run:
+            name: Merge Id Set
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+              cd content
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
-
+        - run:
+            name: Test validate files and yaml
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+              cd content
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
+
+
   create-id-set:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -229,7 +241,7 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
           <<: *reqs_tox
-      - validate-filesssssss:
+      - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - create-id-set:
@@ -244,6 +256,6 @@ workflows:
             - tox3-7-unit-tests
             - tox3-8-unit-tests
             - precommit-checks
-            - validate-filesssssss
+            - validate-files
             - create-id-set
             - create-content-artifacts

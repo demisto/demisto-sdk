@@ -162,15 +162,13 @@ jobs:
 
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
-
         - run:
             name: Merge Id Set
             when: always
             command: |
               . .tox/py37/bin/activate
               cd content
-              npm update
-              npm ci
+
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
@@ -183,16 +181,13 @@ jobs:
             command: |
               . .tox/py37/bin/activate
               cd content
-              npm update
-              npm ci
+
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
-
 
   create-id-set:
       docker:

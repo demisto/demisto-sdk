@@ -165,12 +165,6 @@ jobs:
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
               CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
-
-
-        - run:
-            name: Merge Id Set
-            when: always
-            command: |
         - run:
             name: Test validate files and yaml
             when: always

@@ -188,23 +188,6 @@ jobs:
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
-
-  create-id-set:
-      docker:
-        - image: circleci/python:3.8.3-buster-node
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ~/project
-        - run:
-            name: Test create ID set
-            when: always
-            command: |
-              . .tox/py37/bin/activate
-
-              cd content
-              demisto-sdk -v
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -253,9 +236,6 @@ workflows:
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - create-id-set:
-          <<: *tag_filter
-          <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
@@ -266,5 +246,4 @@ workflows:
             - tox3-8-unit-tests
             - precommit-checks
             - validate-files
-            - create-id-set
             - create-content-artifacts

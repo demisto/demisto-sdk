@@ -267,7 +267,7 @@ class GitUtil:
                   in self.repo.head.commit.diff().iter_change_type('R') if item.score == 100}.union(untracked)
 
         if staged_only:
-            self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
+            self.debug_print(debug=debug, status='Renamed', staged=staged, committed=set())
             return staged
 
         self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
@@ -366,11 +366,16 @@ class GitUtil:
 
     def debug_print(self, debug: bool, status: str, staged: Set, committed: Set) -> None:
         if debug:
-            click.echo(f'######## - {status} staged:')
-            click.echo(staged)
-            click.echo(f'######## - {status} committed:')
-            click.echo(committed)
-            click.echo('\n')
+            if staged:
+                click.echo(f'######## - {status} staged:')
+                click.echo(staged)
+                click.echo('\n')
+            if committed:
+                click.echo(f'######## - {status} committed:')
+                click.echo(committed)
+                click.echo('\n')
+            if not staged and not committed:
+                click.echo(f"######## - Found no {status} files")
 
     def handle_wrong_renamed_status(self, status: str, remote: str, branch: str, staged_only: bool) -> Set[Path]:
         """Get all the files that are recognized as non-100% rename in a given file status.

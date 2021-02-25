@@ -402,4 +402,7 @@ class GitUtil:
         """
         diff_line = self.repo.git.diff('--name-status',
                                        f'{remote}/{branch}...{self.repo.active_branch}', '--', file_path)
-        return diff_line.split()[0].upper()
+        if not diff_line:
+            return ''
+
+        return diff_line.split()[0].upper() if not diff_line.startswith('?') else 'A'

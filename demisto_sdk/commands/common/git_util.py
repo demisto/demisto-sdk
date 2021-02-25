@@ -372,9 +372,9 @@ class GitUtil:
                 click.echo('\n')
                 click.echo(f'######## - {status} committed:')
                 click.echo(committed)
-                click.echo('\n')
             else:
                 click.echo(f"######## - Found no {status} files")
+            click.echo('\n')
 
     def handle_wrong_renamed_status(self, status: str, remote: str, branch: str, staged_only: bool) -> Set[Path]:
         """Get all the files that are recognized as non-100% rename in a given file status.

@@ -57,6 +57,33 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
 
+    IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
+        ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
+        ({"script": {"isfetch": True}}, {"script": {"isfetch": True, "feed": False}}, False),
+        ({"script": {"isfetch": False, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
+        ({"script": {"feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
+
+    ]
+
+    @pytest.mark.parametrize("current_file, old_file, answer", IS_CHANGED_REMOVED_YML_FIELDS_INPUTS)
+    def test_is_changed_removed_yml_fields(self, current_file, old_file, answer):
+        """
+        Given
+        - integration script with different fields
+
+        When
+        - running the validation is_changed_removed_yml_fields()
+
+        Then
+        - upon removal or change of some fields from true to false: it should set is_valid to False and return True
+        - upon non removal or change of some fields from true to false: it should set is_valid to True and return False
+        """
+
+        structure = mock_structure("", current_file, old_file)
+        validator = IntegrationValidator(structure)
+        assert validator.is_changed_removed_yml_fields() is answer
+        assert validator.is_valid is not answer
+
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
         ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, False),

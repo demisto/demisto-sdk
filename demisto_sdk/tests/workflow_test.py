@@ -114,12 +114,12 @@ class ContentGitRepo:
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
             try:
-                # commit flow - secrets, lint and validate only on staged files
+                # commit flow - secrets, lint and validate only on staged files without rn
                 res = runner.invoke(main, "secrets")
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --staged --skip-pack-dependencies "
+                res = runner.invoke(main, "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
                                           "--no-docker-checks --debug-git")
                 assert res.exit_code == 0
 

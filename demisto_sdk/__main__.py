@@ -313,7 +313,7 @@ def validate(config, **kwargs):
             create_id_set=kwargs.get('create_id_set'),
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
-            debug_git=kwargs.get('debug_git')
+            debug_git=kwargs.get('debug_git'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

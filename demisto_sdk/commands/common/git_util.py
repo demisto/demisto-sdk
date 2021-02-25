@@ -24,6 +24,7 @@ class GitUtil:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
+            debug (bool): Whether to print the debug logs.
         Returns:
             Set: A set of Paths to the modified files.
         """
@@ -62,8 +63,10 @@ class GitUtil:
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
             committed = committed.intersection(all_branch_changed_files)
 
+        # remove the renamed and deleted files from the committed
+        committed = committed - renamed - deleted
+
         if committed_only:
-            committed = committed - renamed - deleted
             self.debug_print(debug=debug, status='Modified', staged=set(), committed=committed)
             return committed
 
@@ -78,19 +81,16 @@ class GitUtil:
         # and is then modified locally after being committed - it is identified as modified
         # but we want to identify the file as Added (its actual status against prev_ver) -
         # so will remove it from the staged modified files.
+        # also remove the deleted and renamed files as well.
         committed_added = {Path(os.path.join(item.a_path)) for item in
                            self.repo.remote(name=remote).refs[branch].commit.
                            diff(self.repo.active_branch).iter_change_type('A')}
 
-        staged = staged - committed_added
+        staged = staged - committed_added - renamed - deleted
 
         if staged_only:
-            staged = staged - renamed - deleted
             self.debug_print(debug=debug, status='Modified', staged=staged, committed=set())
             return staged
-
-        staged = staged - renamed - deleted
-        committed = committed - renamed - deleted
 
         self.debug_print(debug=debug, status='Modified', staged=staged, committed=committed)
 
@@ -103,6 +103,7 @@ class GitUtil:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
+            debug (bool): Whether to print the debug logs.
         Returns:
             Set: A set of Paths to the added files.
         """
@@ -133,8 +134,10 @@ class GitUtil:
         all_branch_changed_files = self._get_all_changed_files(prev_ver)
         committed = committed.intersection(all_branch_changed_files)
 
+        # remove deleted files
+        committed = committed - deleted
+
         if committed_only:
-            committed = committed - deleted
             self.debug_print(debug=debug, status='Added', staged=set(), committed=committed)
             return committed
 
@@ -159,13 +162,13 @@ class GitUtil:
 
         staged = staged.union(committed_added_locally_modified).union(untracked)
 
+        # remove deleted files.
+        staged = staged - deleted
+
         if staged_only:
-            staged = staged - deleted
             self.debug_print(debug=debug, status='Added', staged=staged, committed=set())
             return staged
 
-        staged = staged - deleted
-        committed = committed - deleted
         self.debug_print(debug=debug, status='Added', staged=staged, committed=committed)
 
         return staged.union(committed)
@@ -223,6 +226,7 @@ class GitUtil:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
+            debug (bool): Whether to print the debug logs.
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.

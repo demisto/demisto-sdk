@@ -107,18 +107,26 @@ class ContentGitRepo:
         Run all of the following validations:
         * secrets
         * lint -g --no-test
+        * validate -g --staged
         * validate -g
         """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
-            res = runner.invoke(main, "secrets")
             try:
+                # commit flow - secrets, lint and validate only on staged files without rn
+                res = runner.invoke(main, "secrets")
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
+                res = runner.invoke(main, "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
+                                          "--no-docker-checks --debug-git")
                 assert res.exit_code == 0
+
+                # build flow - validate on all changed files
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
+                assert res.exit_code == 0
+
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
 

@@ -1116,14 +1116,16 @@ class Integration:
                 break
             except ApiException:
                 self.build_context.logging_module.exception(
-                    f'Failed to test integration {self} instance, error trying to communicate with demisto server')
+                    f'Failed to test integration {self} instance, error trying to communicate with demisto server: '
+                    f'{client.api_client.configuration.host}')
                 return False
             except urllib3.exceptions.ReadTimeoutError:
                 self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
 
         if int(response_code) != 200:
             self.build_context.logging_module.error(
-                f'Integration-instance test-module failed. Bad status code: {response_code}')
+                f'Integration-instance test-module failed. Bad status code: {response_code}.\n'
+                f'Sever URL: {client.api_client.configuration.host}')
             return False
 
         result_object = ast.literal_eval(response_data)

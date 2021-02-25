@@ -39,7 +39,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.README: Readme,
     FileType.RELEASE_NOTES: ReleaseNote,
     FileType.DOC_IMAGE: DocFile,
-    FileType.JAVSCRIPT_FILE: '',
+    FileType.JAVASCRIPT_FILE: '',
     FileType.POWERSHELL_FILE: '',
     FileType.PYTHON_FILE: '',
 }

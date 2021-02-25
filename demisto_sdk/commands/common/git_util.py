@@ -366,14 +366,11 @@ class GitUtil:
 
     def debug_print(self, debug: bool, status: str, staged: Set, committed: Set) -> None:
         if debug:
-            if staged or committed:
-                click.echo(f'######## - {status} staged:')
-                click.echo(staged)
-                click.echo('\n')
-                click.echo(f'######## - {status} committed:')
-                click.echo(committed)
-            else:
-                click.echo(f"######## - Found no {status} files")
+            click.echo(f'######## - {status} staged:')
+            click.echo(staged)
+            click.echo('\n')
+            click.echo(f'######## - {status} committed:')
+            click.echo(committed)
             click.echo('\n')
 
     def handle_wrong_renamed_status(self, status: str, remote: str, branch: str, staged_only: bool) -> Set[Path]:

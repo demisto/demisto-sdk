@@ -76,6 +76,7 @@ ERROR_CODE = {
     "is_valid_integration_file_path_in_folder": {'code': "IN137", 'ui_applicable': False, 'related_field': ''},
     "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
                                                               'related_field': ''},
+    "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -434,6 +435,13 @@ class Errors:
     @error_code_decorator
     def removed_integration_parameters(field):
         return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+
+    @staticmethod
+    @error_code_decorator
+    def changed_integration_yml_fields(removed, changed):
+        return f"You've made some changes to some fields in the yml file, \n" \
+               f" the changed fields are: {changed} \n" \
+               f"the removed fields are: {removed} "
 
     @staticmethod
     @error_code_decorator

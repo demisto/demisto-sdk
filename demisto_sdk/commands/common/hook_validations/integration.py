@@ -662,7 +662,7 @@ class IntegrationValidator(ContentEntityValidator):
             old = oldscript.get(field)
             current = currentscript.get(field)
 
-            if old is not None and old is True:  # the field exits in old file and is true
+            if old is not None and old is True:  # the field exists in old file and is true
                 if current is None:  # the field was removed from current
                     removed[field] = old
                 elif not current:  # changed from true to false

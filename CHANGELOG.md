@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
+* Added a validation that some specific fields in the yml file is not changed from true to false, or totally removed
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

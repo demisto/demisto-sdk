@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from typing import Set, Tuple
 
@@ -54,9 +55,14 @@ class GitUtil:
         if not staged_only:
             # get all committed files identified as modified which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
-            committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
+            if remote:
+                committed = {Path(os.path.join(item.a_path)) for item
+                             in self.repo.remote(name=remote).refs[branch].commit.diff(
+                    self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
+
+            else:
+                committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=prev_ver).diff(
+                    self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
@@ -82,9 +88,13 @@ class GitUtil:
         # but we want to identify the file as Added (its actual status against prev_ver) -
         # so will remove it from the staged modified files.
         # also remove the deleted and renamed files as well.
-        committed_added = {Path(os.path.join(item.a_path)) for item in
-                           self.repo.remote(name=remote).refs[branch].commit.
-                           diff(self.repo.active_branch).iter_change_type('A')}
+        if remote:
+            committed_added = {Path(os.path.join(item.a_path)) for item in
+                               self.repo.remote(name=remote).refs[branch].commit.
+                               diff(self.repo.active_branch).iter_change_type('A')}
+        else:
+            committed_added = {Path(os.path.join(item.a_path)) for item in
+                               self.repo.commit(rev=prev_ver).diff(self.repo.active_branch).iter_change_type('A')}
 
         staged = staged - committed_added - renamed - deleted
 
@@ -125,9 +135,15 @@ class GitUtil:
 
         # get all committed files identified as added which are changed from prev_ver.
         # this can result in extra files identified which were not touched on this branch.
-        committed = {Path(os.path.join(item.a_path)) for item
-                     in self.repo.remote(name=remote).refs[branch].commit.diff(
-            self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
+        if remote:
+            committed = {Path(os.path.join(item.a_path)) for item
+                         in self.repo.remote(name=remote).refs[branch].commit.diff(
+                self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
+
+        else:
+            committed = {Path(os.path.join(item.a_path)) for item
+                         in self.repo.commit(rev=prev_ver).diff(
+                self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
 
         # identify all files that were touched on this branch regardless of status
         # intersect these with all the committed files to identify the committed added files.
@@ -195,9 +211,15 @@ class GitUtil:
         if not staged_only:
             # get all committed files identified as added which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
-            committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('D')}
+            if remote:
+                committed = {Path(os.path.join(item.a_path)) for item
+                             in self.repo.remote(name=remote).refs[branch].commit.diff(
+                    self.repo.active_branch).iter_change_type('D')}
+
+            else:
+                committed = {Path(os.path.join(item.a_path)) for item
+                             in self.repo.commit(rev=prev_ver).diff(
+                    self.repo.active_branch).iter_change_type('D')}
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
@@ -245,9 +267,15 @@ class GitUtil:
         if not staged_only:
             # get all committed files identified as renamed which are changed from prev_ver and are with 100% score.
             # this can result in extra files identified which were not touched on this branch.
-            committed = {(Path(item.a_path), Path(item.b_path)) for item
-                         in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('R') if item.score == 100}
+            if remote:
+                committed = {(Path(item.a_path), Path(item.b_path)) for item
+                             in self.repo.remote(name=remote).refs[branch].commit.diff(
+                    self.repo.active_branch).iter_change_type('R') if item.score == 100}
+
+            else:
+                committed = {(Path(item.a_path), Path(item.b_path)) for item
+                             in self.repo.commit(rev=prev_ver).diff(
+                    self.repo.active_branch).iter_change_type('R') if item.score == 100}
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
@@ -309,9 +337,14 @@ class GitUtil:
         """
         remote, branch = self._handle_prev_ver(prev_ver)
 
-        return {Path(os.path.join(item)) for item
-                in self.repo.git.diff('--name-only',
-                                      f'{remote}/{branch}...{self.repo.active_branch}').split('\n')}
+        if remote:
+            return {Path(os.path.join(item)) for item
+                    in self.repo.git.diff('--name-only',
+                                          f'{remote}/{branch}...{self.repo.active_branch}').split('\n')}
+        else:
+            return {Path(os.path.join(item)) for item
+                    in self.repo.git.diff('--name-only',
+                                          f'{prev_ver}...{self.repo.active_branch}').split('\n')}
 
     def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
@@ -346,6 +379,11 @@ class GitUtil:
         return remote in self.repo.remotes
 
     def _handle_prev_ver(self, prev_ver):
+        # check for sha1 in regex
+        sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
+        if sha1_pattern.match(prev_ver):
+            return None, prev_ver
+
         if '/' in prev_ver:
             remote = prev_ver.split('/')[0]
             remote = remote if self.check_if_remote_exists(remote) else str(self.repo.remote())
@@ -388,9 +426,14 @@ class GitUtil:
                     in self.repo.head.commit.diff().iter_change_type('R') if item.score < 100 and
                     self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
-        return {Path(item.b_path) for item in self.repo.remote(name=remote).refs[branch].commit.diff(
-            self.repo.active_branch).iter_change_type('R') if item.score < 100 and
-            self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+        if remote:
+            return {Path(item.b_path) for item in self.repo.remote(name=remote).refs[branch].commit.diff(
+                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+                self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+
+        return {Path(item.b_path) for item in self.repo.commit(rev=branch).diff(
+                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+                self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
     def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
         """Get the git status of a given file path
@@ -401,8 +444,13 @@ class GitUtil:
         Returns:
             str: the git status of the file (M, A, R, D).
         """
-        diff_line = self.repo.git.diff('--name-status',
-                                       f'{remote}/{branch}...{self.repo.active_branch}', '--', file_path)
+        if remote:
+            diff_line = self.repo.git.diff('--name-status',
+                                           f'{remote}/{branch}...{self.repo.active_branch}', '--', file_path)
+        else:
+            diff_line = self.repo.git.diff('--name-status',
+                                           f'{branch}...{self.repo.active_branch}', '--', file_path)
+
         if not diff_line:
             return ''
 

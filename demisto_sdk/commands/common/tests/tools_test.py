@@ -122,6 +122,21 @@ class TestGenericFunctions:
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
+    def test_find_type_no_file(self):
+        """
+        Given
+        - A non existing file path.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure None is returned
+        """
+        madeup_path = 'some/path'
+        output = find_type(madeup_path)
+        assert not output
+
     test_path_md = [
         VALID_MD
     ]

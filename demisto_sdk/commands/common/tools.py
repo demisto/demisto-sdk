@@ -909,10 +909,15 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.PYTHON_FILE
 
     if path.endswith('.js'):
-        return FileType.JAVSCRIPT_FILE
+        return FileType.JAVASCRIPT_FILE
 
-    if not _dict and not file_type:
-        _dict, file_type = get_dict_from_file(path)
+    try:
+        if not _dict and not file_type:
+            _dict, file_type = get_dict_from_file(path)
+
+    except FileNotFoundError:
+        # unable to find the file - hence can't identify it
+        return None
 
     if file_type == 'yml':
         if 'category' in _dict:

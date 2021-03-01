@@ -76,7 +76,7 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            create_id_set=False, json_file_path=None, skip_schema_check=False
+            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,7 +87,6 @@ class ValidateManager:
         self.validate_all = validate_all
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
-        self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
@@ -95,6 +94,7 @@ class ValidateManager:
         self.compare_type = '...'
         self.staged = staged
         self.skip_schema_check = skip_schema_check
+        self.debug_git = debug_git
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -131,7 +131,7 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.branch_name = ''
+        self.prev_ver = self.setup_prev_ver(prev_ver)
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -877,6 +877,19 @@ class ValidateManager:
 
     """ ######################################## Git Tools and filtering ####################################### """
 
+    def setup_prev_ver(self, prev_ver: Optional[str]):
+        """Setting up the prev_ver parameter"""
+        # if prev_ver parameter is set, use it
+        if prev_ver:
+            return prev_ver
+
+        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
+        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
+            return 'demisto/master'
+
+        # default to 'origin/master' if none of the above apply
+        return 'origin/master'
+
     def setup_git_params(self):
         """Setting up the git relevant params"""
         self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
@@ -948,11 +961,12 @@ class ValidateManager:
         """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
-                                                      committed_only=self.is_circle, staged_only=self.staged)
+                                                      committed_only=self.is_circle, staged_only=self.staged,
+                                                      debug=self.debug_git)
         added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                staged_only=self.staged)
+                                                staged_only=self.staged, debug=self.debug_git)
         renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                    staged_only=self.staged)
+                                                    staged_only=self.staged, debug=self.debug_git)
 
         # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
@@ -1023,7 +1037,7 @@ class ValidateManager:
             return None
 
         # redirect non-test code files to the associated yml file
-        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVSCRIPT_FILE]:
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
@@ -1189,7 +1203,7 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
 
-        if not id_set:
+        if not id_set and not self.no_configuration_prints:
             error_message, error_code = Errors.no_id_set_file()
             self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
 

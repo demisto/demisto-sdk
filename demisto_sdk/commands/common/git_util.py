@@ -60,6 +60,7 @@ class GitUtil:
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
                     self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
 
+            # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=prev_ver).diff(
                     self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
@@ -140,6 +141,7 @@ class GitUtil:
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
                 self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
 
+        # if remote does not exist we are checking against the commit sha1
         else:
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.commit(rev=prev_ver).diff(
@@ -216,6 +218,7 @@ class GitUtil:
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
                     self.repo.active_branch).iter_change_type('D')}
 
+            # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {Path(os.path.join(item.a_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
@@ -272,6 +275,7 @@ class GitUtil:
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
                     self.repo.active_branch).iter_change_type('R') if item.score == 100}
 
+            # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {(Path(item.a_path), Path(item.b_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
@@ -341,6 +345,8 @@ class GitUtil:
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
                                           f'{remote}/{branch}...{self.repo.active_branch}').split('\n')}
+
+        # if remote does not exist we are checking against the commit sha1
         else:
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
@@ -431,6 +437,7 @@ class GitUtil:
                 self.repo.active_branch).iter_change_type('R') if item.score < 100 and
                 self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
+        # if remote does not exist we are checking against the commit sha1
         return {Path(item.b_path) for item in self.repo.commit(rev=branch).diff(
                 self.repo.active_branch).iter_change_type('R') if item.score < 100 and
                 self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
@@ -446,10 +453,14 @@ class GitUtil:
         """
         if remote:
             diff_line = self.repo.git.diff('--name-status',
-                                           f'{remote}/{branch}...{self.repo.active_branch}', '--', file_path)
+                                           f'{remote}/{branch}...{self.repo.active_branch}',
+                                           '--', file_path)
+
+        # if remote does not exist we are checking against the commit sha1
         else:
             diff_line = self.repo.git.diff('--name-status',
-                                           f'{branch}...{self.repo.active_branch}', '--', file_path)
+                                           f'{branch}...{self.repo.active_branch}',
+                                           '--', file_path)
 
         if not diff_line:
             return ''

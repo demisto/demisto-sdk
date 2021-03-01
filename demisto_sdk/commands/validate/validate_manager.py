@@ -1,4 +1,5 @@
 import os
+import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
 
@@ -880,6 +881,11 @@ class ValidateManager:
         """Setting up the prev_ver parameter"""
         # if prev_ver parameter is set, use it
         if prev_ver:
+            # check for sha1 in regex and if so - check only committed files
+            sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
+            if sha1_pattern.match(prev_ver):
+                self.is_circle = True
+
             return prev_ver
 
         # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'

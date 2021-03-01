@@ -410,7 +410,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.validate_dependencies:
             self.validate_pack_dependencies()
 
-        # Check if unique files valid in ID set
+        # Check if unique files are valid against the rest of the files, using the ID set.
         if id_set_validations:
             is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, self.ignored_errors)
             if not is_valid:

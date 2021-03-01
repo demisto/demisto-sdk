@@ -416,7 +416,7 @@ class IDSetValidations(BaseValidator):
         return True, None
 
     def is_unique_file_valid_in_set(self, pack_path, ignored_errors=None):
-        """Check if the unique file is valid in the id_set
+        """Check if unique files are valid against the rest of the files, using the ID set.
         Args:
             pack_path (string): Path to the file.
             ignored_errors (list): a list of ignored errors for the specific file

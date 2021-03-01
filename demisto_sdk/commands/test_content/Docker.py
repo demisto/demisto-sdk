@@ -294,7 +294,9 @@ class Docker:
                              docker_thresholds.get(image_name, {}).get('pid_threshold') or def_pid_threshold)
             logging_module.debug(
                 f"Checking container: {container_name} "
-                f"(image: {image_full}) for memory: {memory_threshold} pid: {pid_threshold} thresholds ...")
+                f"(image: {image_full}) for memory: {memory_threshold} pid: {pid_threshold} thresholds"
+                f"with actual values: memory {memory_usage} pids: {pids_usage}"
+            )
             if memory_usage > memory_threshold:
                 error_message += ('Failed docker resource test. Docker container {} exceeded the memory threshold, '
                                   'configured: {} MiB and actual memory usage is {} MiB.\n'

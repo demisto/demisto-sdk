@@ -87,7 +87,6 @@ class ValidateManager:
         self.validate_all = validate_all
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
-        self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
@@ -132,7 +131,7 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.branch_name = ''
+        self.prev_ver = self.setup_prev_ver(prev_ver)
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -877,6 +876,19 @@ class ValidateManager:
             return True
 
     """ ######################################## Git Tools and filtering ####################################### """
+
+    def setup_prev_ver(self, prev_ver: Optional[str]):
+        """Setting up the prev_ver parameter"""
+        # if prev_ver parameter is set, use it
+        if prev_ver:
+            return prev_ver
+
+        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
+        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
+            return 'demisto/master'
+
+        # default to 'origin/master' if none of the above apply
+        return 'origin/master'
 
     def setup_git_params(self):
         """Setting up the git relevant params"""

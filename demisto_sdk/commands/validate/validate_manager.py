@@ -1,5 +1,4 @@
 import os
-import re
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
 
@@ -881,11 +880,6 @@ class ValidateManager:
         """Setting up the prev_ver parameter"""
         # if prev_ver parameter is set, use it
         if prev_ver:
-            # check for sha1 in regex and if so - check only committed files
-            sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
-            if sha1_pattern.match(prev_ver):
-                self.is_circle = True
-
             return prev_ver
 
         # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
@@ -911,6 +905,7 @@ class ValidateManager:
         if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
             self.prev_ver = os.environ.get('GIT_SHA1')
+            self.is_circle = True
 
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True

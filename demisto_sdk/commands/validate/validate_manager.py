@@ -59,7 +59,6 @@ from demisto_sdk.commands.common.hook_validations.test_playbook import \
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
-                                               get_content_release_identifier,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
@@ -905,7 +904,8 @@ class ValidateManager:
         # if running on release branch check against last release.
         if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
-            self.prev_ver = get_content_release_identifier(self.branch_name)
+            self.prev_ver = os.environ.get('GIT_SHA1')
+            self.is_circle = True
 
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
@@ -1115,9 +1115,6 @@ class ValidateManager:
                     pass
 
         return ignored_errors_list
-
-    def get_content_release_identifier(self) -> Optional[str]:
-        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def is_old_file_format(file_path, file_type):

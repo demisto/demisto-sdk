@@ -927,16 +927,6 @@ class TestValidators:
         assert validate_manager.validate_no_old_format(old_format_file)
         assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
-    def test_setup_git_params_release_branch(self, mocker):
-        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
-
-        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='21.0.7')
-        validate_manager = ValidateManager()
-        validate_manager.setup_git_params()
-
-        assert validate_manager.always_valid
-        assert validate_manager.skip_pack_rn_validation
-
     def test_setup_git_params_master_branch(self, mocker):
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
         validate_manager = ValidateManager()

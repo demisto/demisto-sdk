@@ -86,7 +86,7 @@ class Initiator:
     DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
     HELLO_WORLD_PACK_NAME = 'HelloWorld'
     DEFAULT_TEMPLATES = [DEFAULT_INTEGRATION_TEMPLATE, DEFAULT_SCRIPT_TEMPLATE]
-    HELLO_WORLD_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
+    HELLO_WORLD_BASE_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
@@ -573,7 +573,7 @@ class Initiator:
         if self.template in self.DEFAULT_TEMPLATES:
             pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
 
-        elif self.template in self.HELLO_WORLD_TEMPLATES + [self.HELLO_WORLD_FEED_INTEGRATION]:
+        elif self.template in self.HELLO_WORLD_BASE_TEMPLATES + [self.HELLO_WORLD_FEED_INTEGRATION]:
             pack_name = self.HELLO_WORLD_PACK_NAME
 
         else:
@@ -584,8 +584,10 @@ class Initiator:
         for file in files_list:
             try:
                 filename = file
-                if 'README.md' in file and self.template not in self.HELLO_WORLD_TEMPLATES:
-                    # Actual readme file name is `README_example.md`
+                if 'README.md' in file and self.template not in self.HELLO_WORLD_BASE_TEMPLATES:
+                    # This is for the cases when the actual readme file name in content repo
+                    # is `README_example.md` - which happens when we do not want the readme
+                    # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace('README.md', 'README_example.md')
                 file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:

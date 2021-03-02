@@ -909,7 +909,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.PYTHON_FILE
 
     if path.endswith('.js'):
-        return FileType.JAVSCRIPT_FILE
+        return FileType.JAVASCRIPT_FILE
 
     try:
         if not _dict and not file_type:
@@ -1386,24 +1386,6 @@ def get_code_lang(file_data: dict, file_entity: str) -> str:
     elif file_entity == SCRIPTS_DIR:
         return file_data.get('type', {})
     return ''
-
-
-def get_content_release_identifier(branch_name: str) -> Optional[str]:
-    """
-
-    Args:
-        branch_name: the branch name to get config.yml from
-
-    Returns:
-        GIT_SHA1 of latest content release if successfully returned from content repo.
-        else None.
-    """
-    try:
-        file_content = get_remote_file('.circleci/config.yml', tag=branch_name)
-    except Exception:
-        return None
-    else:
-        return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
 
 
 def camel_to_snake(camel: str) -> str:

@@ -79,13 +79,14 @@ class FileType(Enum):
     IMAGE = 'image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
-    JAVSCRIPT_FILE = 'javascriptfile'
+    JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
 
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
     FileType.INTEGRATION: 'Integrations',
+    FileType.BETA_INTEGRATION: 'Integrations',
     FileType.SCRIPT: 'Scripts',
     FileType.INCIDENT_FIELD: 'Incident Fields',
     FileType.INDICATOR_FIELD: 'Indicator Fields',

@@ -276,6 +276,9 @@ def unify(**kwargs):
 @click.option(
     '--skip-schema-check', is_flag=True,
     help='Whether to skip the file schema check.')
+@click.option(
+    '--debug-git', is_flag=True,
+    help='Whether to print debug logs for git statuses.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -309,7 +312,8 @@ def validate(config, **kwargs):
             staged=kwargs['staged'],
             create_id_set=kwargs.get('create_id_set'),
             json_file_path=kwargs.get('json_file'),
-            skip_schema_check=kwargs.get('skip_schema_check')
+            skip_schema_check=kwargs.get('skip_schema_check'),
+            debug_git=kwargs.get('debug_git'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -901,7 +905,7 @@ def update_pack_releasenotes(**kwargs):
     text: str = kwargs.get('text', '')
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
-    prev_ver = kwargs.get('prev_ver') if kwargs.get('prev_ver') else 'origin/master'
+    prev_ver = kwargs.get('prev_ver')
     prev_rn_text = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
@@ -911,7 +915,7 @@ def update_pack_releasenotes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True)
         validate_manager.setup_git_params()
         modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
         _packs = get_packs(modified).union(get_packs(old)).union(

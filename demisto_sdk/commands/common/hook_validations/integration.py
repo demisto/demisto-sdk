@@ -55,8 +55,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_duplicate_params(),
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
+            self.is_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
-            not self.is_outputs_for_reputations_commands_valid()
+            not self.is_outputs_for_reputations_commands_valid(),
         ]
         return not any(answers)
 
@@ -648,6 +649,31 @@ class IntegrationValidator(ContentEntityValidator):
         for field in configuration:
             field_to_required[field.get('name')] = field.get('required', False)
         return field_to_required
+
+    def is_changed_removed_yml_fields(self):
+        """checks if some specific Fields in the yml file were changed from true to false or removed"""
+        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin', 'isremotesyncout']
+        currentscript = self.current_file.get('script', {})
+        oldscript = self.old_file.get('script', {})
+
+        removed, changed = {}, {}
+
+        for field in fields:
+            old = oldscript.get(field)
+            current = currentscript.get(field)
+
+            if old is not None and old is True:  # the field exists in old file and is true
+                if current is None:  # the field was removed from current
+                    removed[field] = old
+                elif not current:  # changed from true to false
+                    changed[field] = old
+
+        if removed or changed:
+            error_message, error_code = Errors.changed_integration_yml_fields(repr(removed), repr(changed))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return True
+        return False
 
     def is_added_required_fields(self):
         # type: () -> bool

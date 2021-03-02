@@ -93,6 +93,8 @@ class GitUtil:
             committed_added = {Path(os.path.join(item.a_path)) for item in
                                self.repo.remote(name=remote).refs[branch].commit.
                                diff(self.repo.active_branch).iter_change_type('A')}
+
+        # if remote does not exist we are checking against the commit sha1
         else:
             committed_added = {Path(os.path.join(item.a_path)) for item in
                                self.repo.commit(rev=prev_ver).diff(self.repo.active_branch).iter_change_type('A')}

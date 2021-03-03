@@ -5,6 +5,7 @@
 * Fixed an issue where **validate** would incorrectly identify files as renamed.
 * Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
+* Added the *--no-pipenv* flag to the **split-yml** command.
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

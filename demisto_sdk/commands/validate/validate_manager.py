@@ -423,7 +423,7 @@ class ValidateManager:
             return self.validate_incident_type(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.MAPPER:
-            return self.validate_mapper(structure_validator, pack_error_ignore_list)
+            return self.validate_mapper(structure_validator, pack_error_ignore_list,is_modified)
 
         elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
             return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
@@ -636,10 +636,15 @@ class ValidateManager:
         else:
             return incident_type_validator.is_valid_incident_type(validate_rn=False)
 
-    def validate_mapper(self, structure_validator, pack_error_ignore_list):
+    def validate_mapper(self, structure_validator, pack_error_ignore_list, is_modified):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check :
+           return all([mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                        is_circle=self.is_circle),
+                       mapper_validator.is_backward_compatible()])
+
         return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
 

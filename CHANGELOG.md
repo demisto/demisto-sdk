@@ -1,4 +1,5 @@
 # Changelog
+* Increased minimum supported version for entities to **5.5.0**.
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
 * The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.

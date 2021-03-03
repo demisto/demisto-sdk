@@ -122,6 +122,12 @@ def main(config, version):
     is_flag=True,
     show_default=True
 )
+@click.option(
+    '--no-pipenv',
+    help="Don't auto create pipenv for requirements installation.",
+    is_flag=True,
+    show_default=True
+)
 @pass_config
 def extract(config, **kwargs):
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)

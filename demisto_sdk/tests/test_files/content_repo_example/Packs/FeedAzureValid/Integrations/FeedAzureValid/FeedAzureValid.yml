@@ -12,6 +12,7 @@ configuration:
   name: credentials
   required: true
   type: 9
+  hiddenusername: true
 - display: Indicator Reputation
   name: feedReputation
   defaultvalue: Good

@@ -46,6 +46,7 @@ from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+from demisto_sdk.commands.spell_check.spell_check import SpellCheck
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
@@ -1193,6 +1194,25 @@ def openapi_codegen_command(**kwargs):
     default="NonAMI")
 def test_content(**kwargs):
     execute_test_content(**kwargs)
+
+
+# ====================== spell-check ====================== #
+@main.command(name="spell-check",
+              short_help='''Check the spelling in .md and .yml files''')
+@click.option(
+    '-i', type=str, help='The path to the file to check', required=True)
+@click.option(
+    '--no-camel-case', type=bool, help='Whether to check CamelCase words', default=False)
+@click.option(
+    '--known-words', type=str, help="The path to a file containing known words"
+)
+def spell_check(**kwargs):
+    spell_checker = SpellCheck(
+        file_path=kwargs.get('input'),
+        known_words_file_path=kwargs.get('known_words'),
+        no_camel_case=kwargs.get('no_camel_case')
+    )
+    spell_checker.run_spell_check()
 
 
 @main.resultcallback()

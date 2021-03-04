@@ -1223,7 +1223,11 @@ def spell_check(**kwargs):
         no_failure=kwargs.get('always_true'),
         expand_dictionary=kwargs.get('expand_dictionary')
     )
-    spell_checker.run_spell_check()
+    result = spell_checker.run_spell_check()
+    if result:
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @main.resultcallback()

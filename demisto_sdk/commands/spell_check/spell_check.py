@@ -1,5 +1,6 @@
 import os
 import ssl
+import string
 from typing import Set
 
 import click
@@ -138,17 +139,24 @@ class SpellCheck:
             # adding nltk's word set to spellchecker.
             self.spellchecker.word_frequency.load_words(brown.words())
 
+    @staticmethod
+    def remove_punctuation(word):
+        return word.strip(string.punctuation)
+
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
         if not self.no_camel_case and self.is_camel_case(word):
             sub_words = self.camel_case_split(word)
             for sub_word in sub_words:
+                sub_word = self.remove_punctuation(sub_word)
                 if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
                     self.unknown_words.add(word)
 
-        elif word.isalpha() and self.spellchecker.unknown([word]):
-            self.unknown_words.add(word)
+        else:
+            word = self.remove_punctuation(word)
+            if word.isalpha() and self.spellchecker.unknown([word]):
+                self.unknown_words.add(word)
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.
@@ -175,7 +183,7 @@ class SpellCheck:
             self.check_spelling_in_script(yml_info)
 
         elif file_type in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
-            pass
+            self.check_spelling_in_playbook(yml_info)
 
     def check_spelling_in_integration(self, yml_file):
         """Check spelling on an integration file"""

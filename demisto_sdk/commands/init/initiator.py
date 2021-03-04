@@ -579,7 +579,6 @@ class Initiator:
             pack_name = self.template
 
         path = os.path.join('Packs', pack_name, dir, self.template)
-        print('path:' + path)
 
         for file in files_list:
             try:

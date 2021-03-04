@@ -553,7 +553,6 @@ class Initiator:
 
             if self.template == self.DEFAULT_SCRIPT_TEMPLATE:
                 template_files = template_files.union(self.DEFAULT_SCRIPT_TEST_DATA_FILES)
-
         return template_files
 
     def get_remote_templates(self, files_list, dir):

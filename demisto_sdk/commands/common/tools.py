@@ -180,8 +180,6 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
         res = requests.get(github_path, verify=False, timeout=10)
-        print('git path:' + github_path +'\n')
-        print('res:' + res)
         res.raise_for_status()
     except Exception as exc:
         if not suppress_print:

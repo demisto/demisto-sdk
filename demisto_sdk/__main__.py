@@ -1198,19 +1198,30 @@ def test_content(**kwargs):
 
 # ====================== spell-check ====================== #
 @main.command(name="spell-check",
-              short_help='''Check the spelling in .md and .yml files''')
+              help='''Check the spelling in .md and .yml files''')
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
-    '-i', type=str, help='The path to the file to check', required=True)
+    '-i', '--input', type=str, help='The path to the file to check', required=True)
 @click.option(
-    '--no-camel-case', type=bool, help='Whether to check CamelCase words', default=False)
+    '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
     '--known-words', type=str, help="The path to a file containing known words"
+)
+@click.option(
+    '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
+)
+@click.option(
+    '--expand-dictionary', is_flag=True, help="Whether to expand the base dictionary t to include more words"
 )
 def spell_check(**kwargs):
     spell_checker = SpellCheck(
         file_path=kwargs.get('input'),
         known_words_file_path=kwargs.get('known_words'),
-        no_camel_case=kwargs.get('no_camel_case')
+        no_camel_case=kwargs.get('no_camel_case'),
+        no_failure=kwargs.get('always_true'),
+        expand_dictionary=kwargs.get('expand_dictionary')
     )
     spell_checker.run_spell_check()
 

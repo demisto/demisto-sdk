@@ -9,6 +9,7 @@ class Docker:
 
     """
     PYTHON_INTEGRATION_TYPE = 'python'
+    POWERSHELL_INTEGRATION_TYPE = 'powershell'
     JAVASCRIPT_INTEGRATION_TYPE = 'javascript'
     DEFAULT_PYTHON2_IMAGE = 'demisto/python'
     DEFAULT_PYTHON3_IMAGE = 'demisto/python3'
@@ -185,7 +186,7 @@ class Docker:
 
         if integration_type == cls.JAVASCRIPT_INTEGRATION_TYPE:
             return None
-        elif integration_type == cls.PYTHON_INTEGRATION_TYPE and docker_image:
+        elif integration_type in {cls.PYTHON_INTEGRATION_TYPE, cls.POWERSHELL_INTEGRATION_TYPE} and docker_image:
             return [docker_image]
         else:
             return [cls.DEFAULT_PYTHON2_IMAGE, cls.DEFAULT_PYTHON3_IMAGE]

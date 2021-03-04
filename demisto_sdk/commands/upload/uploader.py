@@ -319,7 +319,8 @@ def sort_directories_based_on_dependencies(dir_list: List) -> List:
         List. The sorted list of directories.
     """
     srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
-    for dir_path in dir_list:
+    dir_list_copy = dir_list.copy()
+    for dir_path in dir_list_copy:
         if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
             dir_list.remove(dir_path)
     dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))

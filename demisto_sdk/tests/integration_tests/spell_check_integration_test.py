@@ -6,6 +6,17 @@ SPELL_CHECK = 'spell-check'
 
 
 def test_spell_integration_dir_valid(repo):
+    """
+    Given
+    - a integration directory.
+
+    When
+    - Running spell-check on it.
+
+    Then
+    - Ensure spell check runs on yml and md files only.
+    - Ensure no misspelled words are found.
+    """
     pack = repo.create_pack('my_pack')
     integration = pack.create_integration('myint')
     integration.create_default_integration()
@@ -14,11 +25,24 @@ def test_spell_integration_dir_valid(repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SPELL_CHECK, '-i', integration.path], catch_exceptions=False)
         assert 'No misspelled words found ' in result.stdout
-        print(result.stdout)
         assert 'Words that might be misspelled were found in' not in result.stdout
+        assert integration.yml.path in result.stdout
+        assert integration.readme.path in result.stdout
+        assert integration.description.path in result.stdout
+        assert integration.code.path not in result.stdout
 
 
 def test_spell_integration_invalid(repo):
+    """
+    Given
+    - a integration file path with misspelled words.
+
+    When
+    - Running spell-check on it.
+
+    Then
+    - Ensure misspelled words are found.
+    """
     pack = repo.create_pack('my_pack')
     integration = pack.create_integration('myint')
     integration.create_default_integration()
@@ -37,6 +61,16 @@ def test_spell_integration_invalid(repo):
 
 
 def test_spell_script_invalid(repo):
+    """
+    Given
+    - a script file path with misspelled words.
+
+    When
+    - Running spell-check on it.
+
+    Then
+    - Ensure misspelled words are found.
+    """
     pack = repo.create_pack('my_pack')
     script = pack.create_script('myscr')
     script.create_default_script()
@@ -56,6 +90,16 @@ def test_spell_script_invalid(repo):
 
 
 def test_spell_playbook_invalid(repo):
+    """
+    Given
+    - a playbook file path with misspelled words.
+
+    When
+    - Running spell-check on it.
+
+    Then
+    - Ensure misspelled words are found.
+    """
     pack = repo.create_pack('my_pack')
     playbook = pack.create_playbook('myplaybook')
     playbook.create_default_playbook()
@@ -75,6 +119,17 @@ def test_spell_playbook_invalid(repo):
 
 
 def test_spell_readme_invalid(repo):
+    """
+    Given
+    - a readme file path with misspelled words and valid and invalid camelCase words.
+
+    When
+    - Running spell-check on it.
+
+    Then
+    - Ensure misspelled words are found.
+    - Ensure legal camelCase words are not marked.
+    """
     pack = repo.create_pack('my_pack')
     integration = pack.create_integration('myint')
     integration.create_default_integration()

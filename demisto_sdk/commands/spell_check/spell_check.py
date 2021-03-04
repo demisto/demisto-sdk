@@ -141,6 +141,7 @@ class SpellCheck:
 
     @staticmethod
     def remove_punctuation(word):
+        """remove leading and trailing punctuation"""
         return word.strip(string.punctuation)
 
     def check_word(self, word):

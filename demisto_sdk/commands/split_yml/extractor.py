@@ -192,6 +192,13 @@ class Extractor:
                     next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
                 next_steps += "    git add {}\n".format(arg_path)
                 self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+
+            else:
+                self.print_logs("Skipping pipenv and requirements installation - Note: no Pipfile will be created",
+                                log_color=LOG_COLORS.YELLOW)
+
+        self.print_logs(f"Finished splitting the yml file - you can find the split results here: {output_path}",
+                        log_color=LOG_COLORS.GREEN)
         return 0
 
     def extract_code(self, code_file_path) -> int:

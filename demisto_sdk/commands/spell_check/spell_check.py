@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.tools import find_type
 # These are keys in a Demisto yml file which indicate that their values are visible to the user and
 # thus their spelling should be checked.
 from demisto_sdk.commands.spell_check.known_words import KNOWN_WORDS
-from nltk.corpus import brown
+from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
 
@@ -34,6 +34,8 @@ class SpellCheck:
         self.found_misspelled = False
         self.no_failure = no_failure
         self.expand_dictionary = expand_dictionary
+        self.files_with_misspells = set()  # type:Set
+        self.files_without_misspells = set()  # type:Set
 
     @staticmethod
     def is_camel_case(word):
@@ -75,6 +77,17 @@ class SpellCheck:
         for word, corrections in self.unknown_words.items():
             click.secho(f'{word} - did you mean: {corrections}', fg='bright_red')
 
+    def print_file_report(self):
+        if self.files_without_misspells:
+            click.secho('\n================= Files without misspells =================', fg='green')
+            no_misspells_string = '\n'.join(self.files_without_misspells)
+            click.secho(no_misspells_string, fg='green')
+
+        if self.files_with_misspells:
+            click.secho('\n================= Files with misspells =================', fg='bright_red')
+            misspells_string = '\n'.join(self.files_with_misspells)
+            click.secho(misspells_string, fg='bright_red')
+
     def run_spell_check(self):
         """Runs spell-check on the given file.
 
@@ -106,10 +119,13 @@ class SpellCheck:
                             f"{file}:\n", fg='bright_red')
                 self.print_unknown_words()
                 self.found_misspelled = True
+                self.files_with_misspells.add(file)
 
             else:
-                click.secho(f"No misspelled words found in {file}\n", fg='green')
+                click.secho(f"No misspelled words found in {file}", fg='green')
+                self.files_without_misspells.add(file)
 
+        self.print_file_report()
         if self.found_misspelled and not self.no_failure:
             return False
 
@@ -127,7 +143,8 @@ class SpellCheck:
 
         if self.expand_dictionary:
             # nltk - natural language tool kit - is a large package containing several dictionaries.
-            # to use it we need to download one of it's dictionaries - we will use the reasonably sized "words" dict.
+            # to use it we need to download one of it's dictionaries - we will use the
+            # reasonably sized "brown" and "webtext" dicts.
             # to avoid SSL download error  we disable SSL connection.
             try:
                 _create_unverified_https_context = ssl._create_unverified_context
@@ -136,12 +153,14 @@ class SpellCheck:
             else:
                 ssl._create_default_https_context = _create_unverified_https_context
 
-            # downloading "words" set from nltk.
+            # downloading "brown" and "webtext" sets from nltk.
             click.secho("Downloading expanded dictionary, this may take a minute...", fg='yellow')
             nltk.download('brown')
+            nltk.download('webtext')
 
             # adding nltk's word set to spellchecker.
             self.spellchecker.word_frequency.load_words(brown.words())
+            self.spellchecker.word_frequency.load_words(webtext.words())
 
     @staticmethod
     def remove_punctuation(word):

@@ -1,7 +1,7 @@
 import os
 import ssl
 import string
-from typing import Set
+from typing import Dict, Set
 
 import click
 import nltk
@@ -28,7 +28,7 @@ class SpellCheck:
         self.file_path = file_path
         self.files = set()  # type:Set
         self.spellchecker = SpellChecker()
-        self.unknown_words = set()  # type:Set
+        self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case
         self.known_words_file_path = known_words_file_path
         self.found_misspelled = False
@@ -71,6 +71,10 @@ class SpellCheck:
         elif find_type(self.file_path) in self.SUPPORTED_FILE_TYPES:
             self.files.add(self.file_path)
 
+    def print_unknown_words(self):
+        for word, corrections in self.unknown_words.items():
+            click.secho(f'{word} - did you mean: {corrections}', fg='bright_red')
+
     def run_spell_check(self):
         """Runs spell-check on the given file.
 
@@ -86,8 +90,8 @@ class SpellCheck:
 
         self.add_known_words()
         for file in self.files:
-            click.echo(f'Checking spelling on {file}')
-            self.unknown_words = set()
+            click.echo(f'\nChecking spelling on {file}')
+            self.unknown_words = {}
             if file.endswith('.md'):
                 self.check_md_file(file)
 
@@ -98,9 +102,9 @@ class SpellCheck:
                 self.check_yaml(yml_info, file)
 
             if len(self.unknown_words) > 0:
-                unknown_words_string = '\n'.join(self.unknown_words)
                 click.secho(f"\nWords that might be misspelled were found in "
-                            f"{file}:\n{unknown_words_string}\n", fg='bright_red')
+                            f"{file}:\n", fg='bright_red')
+                self.print_unknown_words()
                 self.found_misspelled = True
 
             else:
@@ -152,12 +156,12 @@ class SpellCheck:
             for sub_word in sub_words:
                 sub_word = self.remove_punctuation(sub_word)
                 if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                    self.unknown_words.add(word)
+                    self.unknown_words[sub_word] = list(self.spellchecker.candidates(sub_word))[:5]
 
         else:
             word = self.remove_punctuation(word)
             if word.isalpha() and self.spellchecker.unknown([word]):
-                self.unknown_words.add(word)
+                self.unknown_words[word] = list(self.spellchecker.candidates(word))[:5]
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.

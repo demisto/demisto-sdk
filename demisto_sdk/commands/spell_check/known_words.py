@@ -25,5 +25,6 @@ KNOWN_WORDS = [
     "incidentid",
     "incidenttype",
     'Cortex',
-    'XSOAR'
+    'XSOAR',
+    'integrations'
 ]

@@ -1207,13 +1207,14 @@ def test_content(**kwargs):
 @click.option(
     '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
-    '--known-words', type=str, help="The path to a file containing known words"
+    '--known-words', type=str, help="The path to a file containing additional known words"
 )
 @click.option(
     '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
 )
 @click.option(
-    '--expand-dictionary', is_flag=True, help="Whether to expand the base dictionary t to include more words"
+    '--expand-dictionary', is_flag=True, help="Whether to expand the base dictionary to include more words - "
+                                              "will download 'brown' corpus from nltk package"
 )
 def spell_check(**kwargs):
     spell_checker = SpellCheck(

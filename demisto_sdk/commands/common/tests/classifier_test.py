@@ -78,4 +78,5 @@ class TestClassifierValidator:
         structure = mock_structure("", current_file, old_file)
         validator = MapperValidator(structure)
 
-        assert validator.is_changed_incidents_fields() == answer
+        assert validator.is_field_mapping_removed() == answer
+        assert not validator.is_valid == answer

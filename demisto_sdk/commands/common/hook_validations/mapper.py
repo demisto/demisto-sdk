@@ -52,11 +52,11 @@ class MapperValidator(ContentEntityValidator):
         """Check whether the Mapper is backward compatible or not, update the _is_valid field to determine that"""
 
         answers = [
-            self.is_changed_incidents_fields(),
+            self.is_field_mapping_removed(),
         ]
         return not any(answers)
 
-    def is_changed_incidents_fields(self):
+    def is_field_mapping_removed(self):
         """checks if some incidents fields or incidents types were removed"""
         old_mapper = self.old_file.get('mapping', {})
         current_mapper = self.current_file.get('mapping', {})
@@ -68,7 +68,7 @@ class MapperValidator(ContentEntityValidator):
             removed_dict = {}
             for removed in removed_incident_types:
                 removed_dict[removed] = old_mapper[removed]
-            error_message, error_code = Errors.removed_incident_types(repr(removed_dict))
+            error_message, error_code = Errors.removed_incident_types(removed_dict)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return True
@@ -85,7 +85,7 @@ class MapperValidator(ContentEntityValidator):
                     removed_incident_fields[inc] = removed_fields
 
             if removed_incident_fields:
-                error_message, error_code = Errors.changed_incident_field_in_mapper(repr(removed_incident_fields))
+                error_message, error_code = Errors.changed_incident_field_in_mapper(removed_incident_fields)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return True

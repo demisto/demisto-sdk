@@ -486,10 +486,10 @@ class ValidateManager:
         pack_name = get_pack_name(file_path)
 
         # modified existing RN
-        if is_modified:
-            error_message, error_code = Errors.modified_existing_release_notes(pack_name)
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
-                return False
+        # if is_modified:
+        #     error_message, error_code = Errors.modified_existing_release_notes(pack_name)
+        #     if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
+        #         return False
 
         # added new RN to a new pack
         if pack_name in self.new_packs:

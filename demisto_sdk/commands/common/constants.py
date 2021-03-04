@@ -760,7 +760,7 @@ FILE_TYPES_FOR_TESTING = [
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
 # github repository url
-CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
+CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content' # use my branch link to content
 CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
 SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
 CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'

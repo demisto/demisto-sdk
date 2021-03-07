@@ -79,4 +79,4 @@ class TestClassifierValidator:
         validator = MapperValidator(structure)
 
         assert validator.is_field_mapping_removed() == answer
-        assert not validator.is_valid == answer
+        assert validator.is_valid != answer

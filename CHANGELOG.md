@@ -9,7 +9,6 @@
 * Added a validation that incident fields and incident types are not removed from mappers.
 * Added the *hiddenusername* field to the integration schema.
 
->>>>>>> master
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

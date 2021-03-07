@@ -142,8 +142,8 @@ schema;configuration_schema:
       type: str
     displaypassword:
       type: str
-    hiddenusername:
-      type: bool
+#    hiddenusername:
+#      type: bool
 
 # integration->script->command
 schema;command_schema:

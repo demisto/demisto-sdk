@@ -175,7 +175,7 @@ class SpellCheck:
             for sub_word in sub_words:
                 sub_word = self.remove_punctuation(sub_word)
                 if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                    self.unknown_words[sub_word] = list(self.spellchecker.candidates(sub_word))[:5]
+                    self.unknown_words[word] = list(self.spellchecker.candidates(sub_word))[:5]
 
         else:
             word = self.remove_punctuation(word)

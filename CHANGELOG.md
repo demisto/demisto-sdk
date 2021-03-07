@@ -8,6 +8,7 @@
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
 * Added the *hiddenusername* field to the integration schema.
+* Added a validation that images that are not integration images, do not ask for a new version or RN
 
 
 # 1.3.0

@@ -135,8 +135,7 @@ class SpellCheck:
         """Add known words to the spellchecker from external and internal files"""
         # adding known words file if given - these words will not count as misspelled
         if self.known_words_file_path:
-            with open(self.known_words_file_path, 'r') as known_words_file:
-                self.spellchecker.word_frequency.load_text_file(known_words_file)
+            self.spellchecker.word_frequency.load_text_file(self.known_words_file_path)
 
         # adding the KNOWN_WORDS to the spellchecker recognized words.
         self.spellchecker.word_frequency.load_words(KNOWN_WORDS)

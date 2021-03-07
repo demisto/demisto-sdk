@@ -6,6 +6,8 @@
 * Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
+* Added a validation that incident fields and incident types are not removed from mappers.
+* Added the *hiddenusername* field to the integration schema.
 * Added the **spell-check** command to check spelling in .md and .yml files.
 
 # 1.3.0

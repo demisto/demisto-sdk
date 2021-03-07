@@ -161,6 +161,11 @@ configuration:
   name: polling_timeout
   required: false
   type: 0
+- display: Username
+  name: credentials
+  required: true
+  type: 9
+  hiddenusername: false
 - additionalinfo: Supports CSV values.
   display: Tags
   name: feedTags

@@ -135,7 +135,7 @@ def test_spell_readme_invalid(repo):
     integration.create_default_integration()
     integration.readme.write("some weird readme which is not really a word. "
                              "and should be noted bellow - also hghghghgh\n"
-                             "GoodCase stillGoodCase notGidCase")
+                             "GoodCase stillGoodCase notGootCase")
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
@@ -145,6 +145,6 @@ def test_spell_readme_invalid(repo):
         assert 'Words that might be misspelled were found in' in result.stdout
         assert 'readme' in result.stdout
         assert 'hghghghgh' in result.stdout
-        assert 'notGidCase' in result.stdout
+        assert 'notGootCase' in result.stdout
         assert 'GoodCase' not in result.stdout
         assert 'stillGoodCase' not in result.stdout

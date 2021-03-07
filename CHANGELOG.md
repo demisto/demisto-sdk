@@ -7,7 +7,7 @@
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
-
+* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

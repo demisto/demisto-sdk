@@ -1308,7 +1308,8 @@ class TestContext:
             Empty string or
         """
         try:
-            server_url = self.client.api_client.configuration.host
+            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+
             if not self.playbook.configure_integrations(self.client):
                 return PB_Status.FAILED
 
@@ -1327,10 +1328,10 @@ class TestContext:
                 self.build_context.logging_module.error(f'Failed to get investigation id of incident: {incident}')
                 return ''
 
+            server_url = self.client.api_client.configuration.host
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
-            self.build_context.logging_module.info(
-                f'ssh tunnel command: {self.tunnel_command}')
             playbook_state = self._poll_for_playbook_state()
+
             self.playbook.disable_integrations(self.client)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state

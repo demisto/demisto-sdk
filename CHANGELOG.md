@@ -6,7 +6,8 @@
 * Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
-* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git
+* Added a validation that incident fields and incident types are not removed from mappers.
+
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

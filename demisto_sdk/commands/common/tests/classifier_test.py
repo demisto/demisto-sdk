@@ -53,11 +53,11 @@ class TestClassifierValidator:
 
     OLD_MAPPER = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
                               "2": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}}}
-    NEW_VALID_MAPPER = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
-                                    "2": {"internalMapping": {"field1": {"new_data1"}, "field2": {"data2"}}}}}
     NEW_MAPPER_WITH_DELETED_TYPES = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}}}
     NEW_MAPPER_WITH_DELETED_FIELDS = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
                                                   "2": {"internalMapping": {"field1": {"data1"}}}}}
+    NEW_VALID_MAPPER = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
+                                    "2": {"internalMapping": {"field1": {"new_data1"}, "field2": {"data2"}}}}}
 
     IS_CHANGED_INCIDENTS_FIELDS_INPUT = [
         (OLD_MAPPER, NEW_MAPPER_WITH_DELETED_FIELDS, True),
@@ -78,4 +78,5 @@ class TestClassifierValidator:
         structure = mock_structure("", current_file, old_file)
         validator = MapperValidator(structure)
 
-        assert validator.is_changed_incidents_fields() == answer
+        assert validator.is_field_mapping_removed() == answer
+        assert validator.is_valid != answer

@@ -105,7 +105,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
         (IGNORED_PNG, None),
-        ('', None)
+        ('', None),
+        ('Author_image.png', None)
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)

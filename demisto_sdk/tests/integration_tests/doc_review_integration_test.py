@@ -2,7 +2,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
 
-SPELL_CHECK = 'spell-check'
+DOC_REVIEW = 'doc-review'
 
 
 def test_spell_integration_dir_valid(repo):
@@ -11,7 +11,7 @@ def test_spell_integration_dir_valid(repo):
     - a integration directory.
 
     When
-    - Running spell-check on it.
+    - Running doc-review on it.
 
     Then
     - Ensure spell check runs on yml and md files only.
@@ -23,7 +23,7 @@ def test_spell_integration_dir_valid(repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SPELL_CHECK, '-i', integration.path], catch_exceptions=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', integration.path], catch_exceptions=False)
         assert 'No misspelled words found ' in result.stdout
         assert 'Words that might be misspelled were found in' not in result.stdout
         assert integration.yml.path in result.stdout
@@ -38,7 +38,7 @@ def test_spell_integration_invalid(repo):
     - a integration file path with misspelled words.
 
     When
-    - Running spell-check on it.
+    - Running doc-review on it.
 
     Then
     - Ensure misspelled words are found.
@@ -53,7 +53,7 @@ def test_spell_integration_invalid(repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SPELL_CHECK, '-i', integration.yml.path], catch_exceptions=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', integration.yml.path], catch_exceptions=False)
         assert 'No misspelled words found ' not in result.stdout
         assert 'Words that might be misspelled were found in' in result.stdout
         assert 'kfawh' in result.stdout
@@ -66,7 +66,7 @@ def test_spell_script_invalid(repo):
     - a script file path with misspelled words.
 
     When
-    - Running spell-check on it.
+    - Running doc-review on it.
 
     Then
     - Ensure misspelled words are found.
@@ -82,7 +82,7 @@ def test_spell_script_invalid(repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SPELL_CHECK, '-i', script.yml.path], catch_exceptions=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', script.yml.path], catch_exceptions=False)
         assert 'No misspelled words found ' not in result.stdout
         assert 'Words that might be misspelled were found in' in result.stdout
         assert 'kfawh' in result.stdout
@@ -95,7 +95,7 @@ def test_spell_playbook_invalid(repo):
     - a playbook file path with misspelled words.
 
     When
-    - Running spell-check on it.
+    - Running doc-review on it.
 
     Then
     - Ensure misspelled words are found.
@@ -111,7 +111,7 @@ def test_spell_playbook_invalid(repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SPELL_CHECK, '-i', playbook.yml.path], catch_exceptions=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', playbook.yml.path], catch_exceptions=False)
         assert 'No misspelled words found ' not in result.stdout
         assert 'Words that might be misspelled were found in' in result.stdout
         assert 'kfawh' in result.stdout
@@ -124,7 +124,7 @@ def test_spell_readme_invalid(repo):
     - a readme file path with misspelled words and valid and invalid camelCase words.
 
     When
-    - Running spell-check on it.
+    - Running doc-review on it.
 
     Then
     - Ensure misspelled words are found.
@@ -139,7 +139,7 @@ def test_spell_readme_invalid(repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [SPELL_CHECK, '-i', integration.readme.path], catch_exceptions=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', integration.readme.path], catch_exceptions=False)
         assert 'No misspelled words found ' not in result.stdout
         assert 'Words that might be misspelled were found in' in result.stdout
         assert 'readme' in result.stdout
@@ -147,3 +147,68 @@ def test_spell_readme_invalid(repo):
         assert 'notGidCase' in result.stdout
         assert 'GoodCase' not in result.stdout
         assert 'stillGoodCase' not in result.stdout
+
+
+def test_review_release_notes_valid(repo):
+    """
+    Given
+    - an valid rn file:
+        - Line start with capital letter.
+        - Line has a period in the end.
+        - Line does not use the word 'bug'.
+        - Line has no misspelled word.
+        - Line fits a template.
+
+    When
+    - Running doc-review on it.
+
+    Then
+    - Ensure no errors are found.
+    """
+    pack = repo.create_pack('my_pack')
+    valid_rn = '\n' \
+               '#### Integrations\n' \
+               '##### Demisto\n' \
+               ' - Fixed an issue where the ***ip*** command failed when unknown categories were returned.\n'
+    rn = pack.create_release_notes(version='1.1.0', content=valid_rn)
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', rn.path], catch_exceptions=False)
+        assert 'No misspelled words found' in result.stdout
+        assert f'Release notes {rn.path} look good!' in result.stdout
+
+
+def test_review_release_notes_invalid(repo):
+    """
+    Given
+    - an invalid rn file:
+        - Line does not start with capital letter.
+        - Line does not have period in the end.
+        - Line uses the word 'bug'.
+        - Line has a misspelled word.
+        - Line does not fit any template.
+
+    When
+    - Running doc-review on it.
+
+    Then
+    - Ensure misspelled words are found and correct fix is suggested.
+    - Ensure all errors are found.
+    """
+    pack = repo.create_pack('my_pack')
+    valid_rn = '\n' \
+               '#### Integrations\n' \
+               '##### Demisto\n' \
+               ' - fixed a bug where the ***ip*** commanda failed when unknown categories were returned\n'
+    rn = pack.create_release_notes(version='1.1.0', content=valid_rn)
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [DOC_REVIEW, '-i', rn.path], catch_exceptions=False)
+        assert 'Notes for the line: "fixed a bug where the ***ip*** commanda ' \
+               'failed when unknown categories were returned"' in result.stdout
+        assert 'Line is not using one of our templates,' in result.stdout
+        assert 'Refrain from using the word "bug", use "issue" instead.' in result.stdout
+        assert 'Line should end with a period (.)' in result.stdout
+        assert 'Line should start with capital letter.' in result.stdout
+        assert "commanda - did you mean:" in result.stdout
+        assert 'command' in result.stdout

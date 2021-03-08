@@ -1,21 +1,24 @@
 import os
 import ssl
 import string
+import sys
 from typing import Dict, Set
 
 import click
 import nltk
 import yaml
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import find_type
 # These are keys in a Demisto yml file which indicate that their values are visible to the user and
 # thus their spelling should be checked.
-from demisto_sdk.commands.spell_check.known_words import KNOWN_WORDS
+from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
+from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
 
-class SpellCheck:
+class DocReviewer:
     """Perform a spell check on the given .yml or .md file.
     """
 
@@ -24,8 +27,26 @@ class SpellCheck:
                             FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT]
 
     def __init__(self, file_path: str, known_words_file_path: str = None, no_camel_case: bool = False,
-                 no_failure: bool = False, expand_dictionary: bool = False):
+                 no_failure: bool = False, expand_dictionary: bool = False, templates: bool = False,
+                 use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False):
+        if templates:
+            ReleaseNotesChecker('', template_examples=True)
+            sys.exit(0)
+
+        # if nothing entered will default to use git
+        elif not file_path and not use_git:
+            use_git = True
+
         self.file_path = file_path
+        self.git_util = None
+        self.prev_ver = prev_ver if prev_ver else 'demisto/master'
+
+        if use_git:
+            self.git_util = GitUtil()
+
+        if release_notes_only:
+            self.SUPPORTED_FILE_TYPES = [FileType.RELEASE_NOTES]
+
         self.files = set()  # type:Set
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
@@ -36,6 +57,7 @@ class SpellCheck:
         self.expand_dictionary = expand_dictionary
         self.files_with_misspells = set()  # type:Set
         self.files_without_misspells = set()  # type:Set
+        self.malformed_rn_files = set()  # type:Set
 
     @staticmethod
     def is_camel_case(word):
@@ -65,9 +87,28 @@ class SpellCheck:
             elif find_type(full_path) in self.SUPPORTED_FILE_TYPES:
                 self.files.add(str(full_path))
 
+    def gather_all_changed_files(self):
+        modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
+        added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
+        filtered_renamed = set()  # type:Set
+        for file_tuple in renamed:
+            filtered_renamed.add(file_tuple[1])
+        return modified.union(added).union(filtered_renamed)
+
+    def get_files_from_git(self):
+        click.secho('Gathering all changed files from git', fg='bright_cyan')
+        for file in self.gather_all_changed_files():
+            file = str(file)
+            if os.path.isfile(file) and find_type(file) in self.SUPPORTED_FILE_TYPES:
+                self.files.add(file)
+
     def get_files_to_run_on(self):
         """Get all the relevant files that the spell-check could work on"""
-        if os.path.isdir(self.file_path):
+        if self.git_util:
+            self.get_files_from_git()
+
+        elif os.path.isdir(self.file_path):
             self.get_all_md_and_yml_files_in_dir(self.file_path)
 
         elif find_type(self.file_path) in self.SUPPORTED_FILE_TYPES:
@@ -75,25 +116,34 @@ class SpellCheck:
 
     def print_unknown_words(self):
         for word, corrections in self.unknown_words.items():
-            click.secho(f'{word} - did you mean: {corrections}', fg='bright_red')
+            click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
 
     def print_file_report(self):
         if self.files_without_misspells:
-            click.secho('\n================= Files without misspells =================', fg='green')
+            click.secho('\n================= Files Without Misspells =================', fg='green')
             no_misspells_string = '\n'.join(self.files_without_misspells)
             click.secho(no_misspells_string, fg='green')
 
         if self.files_with_misspells:
-            click.secho('\n================= Files with misspells =================', fg='bright_red')
+            click.secho('\n================= Files With Misspells =================', fg='bright_red')
             misspells_string = '\n'.join(self.files_with_misspells)
             click.secho(misspells_string, fg='bright_red')
 
-    def run_spell_check(self):
-        """Runs spell-check on the given file.
+        if self.malformed_rn_files:
+            click.secho('\n================= Malformed Release Notes =================', fg='bright_red')
+            bad_rn = '\n'.join(self.malformed_rn_files)
+            click.secho(bad_rn, fg='bright_red')
+
+    def run_doc_review(self):
+        """Runs spell-check on the given file and release notes check if relevant.
 
         Returns:
             bool. True if no problematic words found, False otherwise.
         """
+        click.secho('\n================= Starting Doc Review =================', fg='bright_cyan')
+        if len(self.SUPPORTED_FILE_TYPES) == 1:
+            click.secho('Running only on release notes', fg='bright_cyan')
+
         self.get_files_to_run_on()
 
         # no eligible files found
@@ -115,14 +165,14 @@ class SpellCheck:
                 self.check_yaml(yml_info, file)
 
             if len(self.unknown_words) > 0:
-                click.secho(f"\nWords that might be misspelled were found in "
-                            f"{file}:\n", fg='bright_red')
+                click.secho(f"\n - Words that might be misspelled were found in "
+                            f"{file}:", fg='bright_red')
                 self.print_unknown_words()
                 self.found_misspelled = True
                 self.files_with_misspells.add(file)
 
             else:
-                click.secho(f"No misspelled words found in {file}", fg='green')
+                click.secho(f" - No misspelled words found in {file}", fg='green')
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
@@ -183,7 +233,13 @@ class SpellCheck:
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.
+        Also if RN file will review it and add it to malformed RN file set if needed.
         """
+        if find_type(file_path) == FileType.RELEASE_NOTES:
+            good_rn = ReleaseNotesChecker(file_path).check_rn()
+            if not good_rn:
+                self.malformed_rn_files.add(file_path)
+
         with open(file_path, 'r') as md_file:
             md_file_lines = md_file.readlines()
 

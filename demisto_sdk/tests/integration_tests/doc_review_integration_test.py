@@ -212,3 +212,21 @@ def test_review_release_notes_invalid(repo):
         assert 'Line should start with capital letter.' in result.stdout
         assert "commanda - did you mean:" in result.stdout
         assert 'command' in result.stdout
+
+
+def test_templates_print(repo):
+    """
+    Given
+    - templates flag
+    When
+    - Running doc-review with it.
+
+    Then
+    - Ensure templates are printed.
+    - Ensure no additional checks run.
+    """
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [DOC_REVIEW, '--templates'], catch_exceptions=False)
+        assert 'General Pointers About Release Notes:' in result.stdout
+        assert 'Checking spelling on' not in result.stdout

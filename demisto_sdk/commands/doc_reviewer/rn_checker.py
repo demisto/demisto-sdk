@@ -11,7 +11,7 @@ def print_template_examples():
     click.echo(' - Packs/Integrations/scripts/playbooks and other content '
                'entities (incident fields, dashboards...) - should be wrapped with two stars - **entity_name**')
     click.echo(' - Parameters/arguments/functions/outputs names - '
-               'should be wrapped with one stars - *entity_name*')
+               'should be wrapped with one star - *entity_name*')
     click.secho('\nEnhancements examples:', fg='bright_cyan')
     click.echo('\n - You can now filter an event by attribute data fields.')
     click.echo('\n - Added support for the *extend-context* argument in the ***ua-parse*** command.')

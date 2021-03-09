@@ -895,7 +895,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.CHANGELOG
 
     # integration image
-    if path.endswith('_image.png'):
+    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
     # doc files images

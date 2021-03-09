@@ -59,7 +59,6 @@ from demisto_sdk.commands.common.hook_validations.test_playbook import \
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
-                                               get_content_release_identifier,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
@@ -90,7 +89,7 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or skip_dependencies
         self.compare_type = '...'
         self.staged = staged
         self.skip_schema_check = skip_schema_check
@@ -424,7 +423,7 @@ class ValidateManager:
             return self.validate_incident_type(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.MAPPER:
-            return self.validate_mapper(structure_validator, pack_error_ignore_list)
+            return self.validate_mapper(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
             return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
@@ -637,10 +636,15 @@ class ValidateManager:
         else:
             return incident_type_validator.is_valid_incident_type(validate_rn=False)
 
-    def validate_mapper(self, structure_validator, pack_error_ignore_list):
+    def validate_mapper(self, structure_validator, pack_error_ignore_list, is_modified):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                         is_circle=self.is_circle),
+                        mapper_validator.is_backward_compatible()])
+
         return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
 
@@ -905,7 +909,8 @@ class ValidateManager:
         # if running on release branch check against last release.
         if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
-            self.prev_ver = get_content_release_identifier(self.branch_name)
+            self.prev_ver = os.environ.get('GIT_SHA1')
+            self.is_circle = True
 
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
@@ -1115,9 +1120,6 @@ class ValidateManager:
                     pass
 
         return ignored_errors_list
-
-    def get_content_release_identifier(self) -> Optional[str]:
-        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def is_old_file_format(file_path, file_type):

@@ -1,8 +1,18 @@
 # Changelog
+* Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+
+# 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
 * The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.
 * Fixed an issue where **validate** would incorrectly identify files as renamed.
+* Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
+* Fixed an issue where **validate** failed when comparing branch against commit hash.
+* Added the *--no-pipenv* flag to the **split-yml** command.
+* Added a validation that incident fields and incident types are not removed from mappers.
+* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
+* Added the *hiddenusername* field to the integration schema.
+* Added a validation that images that are not integration images, do not ask for a new version or RN
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

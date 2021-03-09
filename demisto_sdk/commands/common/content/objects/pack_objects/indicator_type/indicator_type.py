@@ -1,7 +1,8 @@
 from typing import Union
 
 from demisto_sdk.commands.common.constants import (INDICATOR_TYPE,
-                                                   OLD_INDICATOR_TYPE)
+                                                   OLD_INDICATOR_TYPE,
+                                                   FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from wcmatch.pathlib import Path
@@ -10,6 +11,9 @@ from wcmatch.pathlib import Path
 class IndicatorType(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, INDICATOR_TYPE)
+
+    def type(self):
+        return FileType.REPUTATION
 
 
 class OldIndicatorType(JSONContentObject):
@@ -27,3 +31,6 @@ class OldIndicatorType(JSONContentObject):
             str: Normalize file name.
         """
         return "reputations.json"
+
+    def type(self):
+        return FileType.REPUTATION

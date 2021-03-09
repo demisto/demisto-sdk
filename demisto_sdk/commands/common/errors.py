@@ -229,6 +229,8 @@ ERROR_CODE = {
     "invalid_type_in_mapper": {'code': "MP104", 'ui_applicable': False, 'related_field': 'type'},
     "mapper_non_existent_incident_types": {'code': "MP105", 'ui_applicable': False, 'related_field': 'incident_types'},
     "invalid_incident_field_in_mapper": {'code': "MP106", 'ui_applicable': False, 'related_field': 'mapping'},
+    "changed_incident_field_in_mapper": {'code': "MP107", 'ui_applicable': True, 'related_field': 'mapping'},
+    "removed_incident_types": {'code': "MP108", 'ui_applicable': True, 'related_field': 'mapping'},
     "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
@@ -1405,6 +1407,16 @@ class Errors:
                "1 - The right incident field is set and the spelling is correct.\n" \
                "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def changed_incident_field_in_mapper(changed_inc_fields):
+        return f"Some incident fields were removed from the mapper, The removed fields: {changed_inc_fields}."
+
+    @staticmethod
+    @error_code_decorator
+    def removed_incident_types(removed_inc_types):
+        return f"Some Incidents types were removed from the mapper, the removed types are: {removed_inc_types}."
 
     @staticmethod
     @error_code_decorator

@@ -1,4 +1,5 @@
 import os
+import re
 import ssl
 import string
 import sys
@@ -71,15 +72,12 @@ class DocReviewer:
     @staticmethod
     def camel_case_split(camel):
         """split camel case word into sub-words"""
-        words = [[camel[0]]]
+        tokens = re.compile('([A-Z]?[a-z]+)').findall(camel)
+        for token in tokens:
+            # double space to handle capital words like IP/URL/DNS that not included in the regex
+            camel = camel.replace(token, ' {} '.format(token.title()))
 
-        for char in camel[1:]:
-            if words[-1][-1].islower() and char.isupper():
-                words.append(list(char))
-            else:
-                words[-1].append(char)
-
-        return [''.join(word) for word in words]
+        return camel.split()
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""

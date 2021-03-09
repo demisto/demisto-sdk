@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -1193,6 +1194,59 @@ def openapi_codegen_command(**kwargs):
     default="NonAMI")
 def test_content(**kwargs):
     execute_test_content(**kwargs)
+
+
+# ====================== doc-review ====================== #
+@main.command(name="doc-review",
+              help='''Check the spelling in .md and .yml files as well as review release notes''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=str, help='The path to the file to check')
+@click.option(
+    '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
+@click.option(
+    '--known-words', type=str, help="The path to a file containing additional known words"
+)
+@click.option(
+    '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
+)
+@click.option(
+    '--expand-dictionary', is_flag=True, help="Whether to expand the base dictionary to include more words - "
+                                              "will download 'brown' corpus from nltk package"
+)
+@click.option(
+    '--templates', is_flag=True, help="Whether to print release notes templates"
+)
+@click.option(
+    '-g', '--use-git', is_flag=True, help="Use git to identify the relevant changed files, "
+                                          "will be used by default if '-i' and '--templates' are not set"
+)
+@click.option(
+    '--prev-ver', type=str, help="The branch against which changes will be detected "
+                                 "if '-g' flag is set. Default is 'demisto/master'"
+)
+@click.option(
+    '-rn', '--release-notes', is_flag=True, help="Will run only on release notes files"
+)
+def doc_review(**kwargs):
+    doc_reviewer = DocReviewer(
+        file_path=kwargs.get('input'),
+        known_words_file_path=kwargs.get('known_words'),
+        no_camel_case=kwargs.get('no_camel_case'),
+        no_failure=kwargs.get('always_true'),
+        expand_dictionary=kwargs.get('expand_dictionary'),
+        templates=kwargs.get('templates'),
+        use_git=kwargs.get('use_git'),
+        prev_ver=kwargs.get('prev_ver'),
+        release_notes_only=kwargs.get('release_notes'),
+    )
+    result = doc_reviewer.run_doc_review()
+    if result:
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @main.resultcallback()

@@ -48,3 +48,9 @@ class Integration(YAMLContentUnifiedObject):
                         # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                         return client.integration_upload(file=file)  # type: ignore
+
+    def type(self):
+        if self.get('beta', False):
+            return FileType.BETA_INTEGRATION
+
+        return FileType.INTEGRATION

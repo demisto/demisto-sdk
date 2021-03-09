@@ -96,7 +96,8 @@ class ReleaseNotesChecker:
             if not self.check_templates(line):
                 self.add_note(line, 'Line is not using one of our templates, consider '
                                     'changing it to fit our standard.\n     '
-                                    'See here for more details: https://xsoar.pan.dev/docs/documentation/release-notes')
+                                    'For more information run: `demisto-sdk doc-review --templates` or view our '
+                                    'documentation at: https://xsoar.pan.dev/docs/documentation/release-notes')
 
             if line[0].isalpha() and not line[0].isupper():
                 self.add_note(line, 'Line should start with capital letter.')

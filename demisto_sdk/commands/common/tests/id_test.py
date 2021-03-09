@@ -551,7 +551,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
         "The mapper incidenttypes was found"
 
 
-def test_valid_is_pack_display_name_already_exist():
+def test_new_valid_is_pack_display_name_already_exist():
     """
     Given
         - pack_metadata file with a pack name that does not exist in our repo.
@@ -594,6 +594,19 @@ def test_valid_is_pack_display_name_already_exist():
     is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert is_valid
     assert not error
+
+
+def test_valid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that does not exist in our repo.
+    When
+        - _is_pack_display_name_already_exist is called
+    Then
+        - Ensure it is valid and no error is returned.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
         "VMware": {

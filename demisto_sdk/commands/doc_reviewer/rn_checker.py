@@ -52,7 +52,7 @@ class ReleaseNotesChecker:
                 self.notes = {}  # type:Dict
 
     def add_note(self, line, note):
-        """Add note about an release notes line"""
+        """Add note about a release notes line"""
         if line in self.notes:
             self.notes[line].append(note)
         else:

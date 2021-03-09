@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import click
 
@@ -43,21 +43,20 @@ class ReleaseNotesChecker:
         'Improved implementation',
         'Updated the Docker image to',
         'You can now',
-        
+
         # full line
         'Documentation and metadata improvements.',
         'Maintenance and stability enhancements.',
     }
 
-    def __init__(self, rn_file: str, template_examples: bool = False):
+    def __init__(self, rn_file_path: str, rn_file_content: List, template_examples: bool = False):
         if template_examples:
             print_template_examples()
 
         else:
-            with open(rn_file, 'r') as f:
-                self.file_path = rn_file
-                self.file_content = f.readlines()
-                self.notes = {}  # type:Dict
+            self.file_path = rn_file_path
+            self.file_content = rn_file_content
+            self.notes = {}  # type:Dict
 
     def add_note(self, line, note):
         """Add note about a release notes line"""

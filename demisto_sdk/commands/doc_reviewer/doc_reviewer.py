@@ -6,8 +6,12 @@ from typing import Dict, Set
 
 import click
 import nltk
-import yaml
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.content import path_to_pack_object
+from demisto_sdk.commands.common.content.objects.abstract_objects import \
+    TextObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
+    YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
@@ -77,10 +81,12 @@ class DocReviewer:
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
-        for rest_of_path in os.listdir(dir_name):
-            full_path = os.path.join(dir_name, rest_of_path)
+        for rest_of_path in os.walk(dir_name):
+            full_path = os.path.join(dir_name, str(rest_of_path))
+
+            # skip directories
             if os.path.isdir(full_path):
-                self.get_all_md_and_yml_files_in_dir(full_path)
+                continue
 
             elif find_type(full_path) in self.SUPPORTED_FILE_TYPES:
                 self.files.add(str(full_path))
@@ -146,7 +152,7 @@ class DocReviewer:
 
         # no eligible files found
         if not self.files:
-            click.secho(f"The path {self.file_path} does not contain any .md or .yml files", fg='bright_red')
+            click.secho("Could not find any .md or .yml files - Aborting", fg='bright_red')
             return True
 
         self.add_known_words()
@@ -157,10 +163,7 @@ class DocReviewer:
                 self.check_md_file(file)
 
             elif file.endswith('.yml'):
-                with open(file, 'r') as yaml_file:
-                    yml_info = yaml.safe_load(yaml_file)
-
-                self.check_yaml(yml_info, file)
+                self.check_yaml(file)
 
             if self.unknown_words:
                 click.secho(f"\n - Words that might be misspelled were found in "
@@ -233,25 +236,27 @@ class DocReviewer:
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.
         Also if RN file will review it and add it to malformed RN file set if needed.
         """
+        pack_object: TextObject = path_to_pack_object(file_path)
+        md_file_lines = pack_object.to_str().split('\n')
+
         if find_type(file_path) == FileType.RELEASE_NOTES:
-            good_rn = ReleaseNotesChecker(file_path).check_rn()
+            good_rn = ReleaseNotesChecker(file_path, md_file_lines).check_rn()
             if not good_rn:
                 self.malformed_rn_files.add(file_path)
-
-        with open(file_path, 'r') as md_file:
-            md_file_lines = md_file.readlines()
 
         for line in md_file_lines:
             for word in line.split():
                 self.check_word(word)
 
-    def check_yaml(self, yml_info, file_path):
+    def check_yaml(self, file_path):
         """Runs spell check on .yml file. Adds unknown words to given unknown_words set.
 
         Args:
-            yml_info (dict): The info of a yml file.
             file_path (str): The file path to the yml file.
         """
+        pack_object: YAMLContentObject = path_to_pack_object(file_path)
+        yml_info = pack_object.to_dict()
+
         file_type = find_type(file_path)
         if file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]:
             self.check_spelling_in_integration(yml_info)

@@ -39,4 +39,4 @@ This will spell check the given readme file as well as expand the known words wi
 This will print the documentation templates examples.
 
 5. `demisto-sdk doc-review --prev-ver myRemote/master -rn`
-This will run perform a doc review on all the release notes that were changed (added or modified) when compared to 'myRemote/master' using git.
+This will perform a doc review on all the release notes that were changed (added or modified) when compared to 'myRemote/master' using git.

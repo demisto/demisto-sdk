@@ -7,7 +7,9 @@ from typing import Dict, Set
 import click
 import nltk
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content import path_to_pack_object
+from demisto_sdk.commands.common.content import (Integration, Playbook,
+                                                 ReleaseNote, Script,
+                                                 path_to_pack_object)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
@@ -237,7 +239,7 @@ class DocReviewer:
         pack_object: TextObject = path_to_pack_object(file_path)
         md_file_lines = pack_object.to_str().split('\n')
 
-        if find_type(file_path) == FileType.RELEASE_NOTES:
+        if isinstance(pack_object, ReleaseNote):
             good_rn = ReleaseNotesChecker(file_path, md_file_lines).check_rn()
             if not good_rn:
                 self.malformed_rn_files.add(file_path)
@@ -255,14 +257,13 @@ class DocReviewer:
         pack_object: YAMLContentObject = path_to_pack_object(file_path)
         yml_info = pack_object.to_dict()
 
-        file_type = find_type(file_path)
-        if file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]:
+        if isinstance(pack_object, Integration):
             self.check_spelling_in_integration(yml_info)
 
-        elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT]:
+        elif isinstance(pack_object, Script):
             self.check_spelling_in_script(yml_info)
 
-        elif file_type in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
+        elif isinstance(pack_object, Playbook):
             self.check_spelling_in_playbook(yml_info)
 
     def check_spelling_in_integration(self, yml_file):

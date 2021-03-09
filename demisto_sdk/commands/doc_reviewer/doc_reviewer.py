@@ -192,7 +192,7 @@ class DocReviewer:
             # nltk - natural language tool kit - is a large package containing several dictionaries.
             # to use it we need to download one of it's dictionaries - we will use the
             # reasonably sized "brown" and "webtext" dicts.
-            # to avoid SSL download error  we disable SSL connection.
+            # to avoid SSL download error we disable SSL connection.
             try:
                 _create_unverified_https_context = ssl._create_unverified_context
             except AttributeError:

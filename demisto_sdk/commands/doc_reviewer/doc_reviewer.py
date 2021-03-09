@@ -34,7 +34,7 @@ class DocReviewer:
                  no_failure: bool = False, expand_dictionary: bool = False, templates: bool = False,
                  use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False):
         if templates:
-            ReleaseNotesChecker('', template_examples=True)
+            ReleaseNotesChecker(template_examples=True)
             sys.exit(0)
 
         # if nothing entered will default to use git

@@ -49,7 +49,7 @@ class ReleaseNotesChecker:
         'Maintenance and stability enhancements.',
     }
 
-    def __init__(self, rn_file_path: str, rn_file_content: List, template_examples: bool = False):
+    def __init__(self, rn_file_path: str = None, rn_file_content: List = [], template_examples: bool = False):
         if template_examples:
             print_template_examples()
 

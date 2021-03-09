@@ -36,9 +36,17 @@ def print_template_examples():
 
 class ReleaseNotesChecker:
     RN_TEMPLATES = {
-        'You can now', 'Added support for', 'Improved implementation', 'Fixed an issue',
-        'Updated the Docker image to', 'Added the', 'Maintenance and stability enhancements.',
-        'Documentation and metadata improvements.'
+        # prefixes
+        'Added support for',
+        'Added the',
+        'Fixed an issue',
+        'Improved implementation',
+        'Updated the Docker image to',
+        'You can now',
+        
+        # full line
+        'Documentation and metadata improvements.',
+        'Maintenance and stability enhancements.',
     }
 
     def __init__(self, rn_file: str, template_examples: bool = False):

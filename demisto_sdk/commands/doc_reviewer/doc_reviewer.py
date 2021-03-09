@@ -162,7 +162,7 @@ class DocReviewer:
 
                 self.check_yaml(yml_info, file)
 
-            if len(self.unknown_words) > 0:
+            if self.unknown_words:
                 click.secho(f"\n - Words that might be misspelled were found in "
                             f"{file}:", fg='bright_red')
                 self.print_unknown_words()

@@ -67,7 +67,7 @@ class DocReviewer:
     @staticmethod
     def is_camel_case(word):
         """check if a given word is in camel case"""
-        return word != word.lower() and word != word.upper() and "_" not in word
+        return word != word.lower() and word != word.upper() and "_" not in word and word != word.title()
 
     @staticmethod
     def camel_case_split(camel):
@@ -75,7 +75,7 @@ class DocReviewer:
         tokens = re.compile('([A-Z]?[a-z]+)').findall(camel)
         for token in tokens:
             # double space to handle capital words like IP/URL/DNS that not included in the regex
-            camel = camel.replace(token, ' {} '.format(token.title()))
+            camel = camel.replace(token, f' {token} ')
 
         return camel.split()
 

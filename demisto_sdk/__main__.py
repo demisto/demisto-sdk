@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 
 from pkg_resources import get_distribution
@@ -68,6 +69,22 @@ class DemistoSDK:
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
+def check_configuration_file(command, args):
+    config_file_path = '.demisto-sdk-conf'
+    if os.path.isfile(config_file_path):
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(config_file_path)
+
+            if command in config.sections():
+                for key in config[command]:
+                    if key in args:
+                        args[key] = config[command][key]
+
+        except MissingSectionHeaderError:
+            pass
+
+
 @click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )
 @click.help_option(
     '-h', '--help'
@@ -130,6 +147,7 @@ def main(config, version):
 )
 @pass_config
 def extract(config, **kwargs):
+    check_configuration_file('split-yml', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
@@ -171,6 +189,7 @@ def extract(config, **kwargs):
 )
 @pass_config
 def extract_code(config, **kwargs):
+    check_configuration_file('extract-code', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
@@ -200,6 +219,7 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
+    check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     unifier = Unifier(**kwargs)
@@ -287,6 +307,7 @@ def unify(**kwargs):
     help='Whether to print debug logs for git statuses.')
 @pass_config
 def validate(config, **kwargs):
+    check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
     file_path = kwargs['input']
@@ -362,6 +383,7 @@ def validate(config, **kwargs):
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
 def create_artifacts(**kwargs) -> int:
+    check_configuration_file('create-content-artifacts', kwargs)
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 
@@ -394,6 +416,7 @@ def create_artifacts(**kwargs) -> int:
     '--prev-ver', help='The branch against which to run secrets validation')
 @pass_config
 def secrets(config, **kwargs):
+    check_configuration_file('secrets', kwargs)
     sys.path.append(config.configuration.env_dir)
     secrets_validator = SecretsValidator(
         configuration=config.configuration,
@@ -441,37 +464,15 @@ def secrets(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(exists=True, resolve_path=True))
-def lint(input: str, git: bool, all_packs: bool, verbose: int, quiet: bool, parallel: int, no_flake8: bool,
-         no_bandit: bool, no_mypy: bool, no_vulture: bool, no_xsoar_linter: bool, no_pylint: bool, no_test: bool,
-         no_pwsh_analyze: bool,
-         no_pwsh_test: bool, keep_container: bool, prev_ver: str, test_xml: str, failure_report: str, log_path: str,
-         json_file: str):
+def lint(**kwargs):
     """Lint command will perform:\n
         1. Package in host checks - flake8, bandit, mypy, vulture.\n
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
-    lint_manager = LintManager(input=input,
-                               git=git,
-                               all_packs=all_packs,
-                               verbose=verbose,
-                               quiet=quiet,
-                               log_path=log_path,
-                               prev_ver=prev_ver,
-                               json_file_path=json_file)
-    return lint_manager.run_dev_packages(parallel=parallel,
-                                         no_flake8=no_flake8,
-                                         no_bandit=no_bandit,
-                                         no_mypy=no_mypy,
-                                         no_vulture=no_vulture,
-                                         no_xsoar_linter=no_xsoar_linter,
-                                         no_pylint=no_pylint,
-                                         no_test=no_test,
-                                         no_pwsh_analyze=no_pwsh_analyze,
-                                         no_pwsh_test=no_pwsh_test,
-                                         keep_container=keep_container,
-                                         test_xml=test_xml,
-                                         failure_report=failure_report)
+    check_configuration_file('lint', kwargs)
+    lint_manager = LintManager(**kwargs)
+    return lint_manager.run_dev_packages(**kwargs)
 
 
 # ====================== format ====================== #
@@ -524,6 +525,7 @@ def format_yml(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
 def upload(**kwargs):
+    check_configuration_file('upload', kwargs)
     uploader = Uploader(**kwargs)
     return uploader.upload()
 
@@ -557,6 +559,7 @@ def upload(**kwargs):
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
 def download(**kwargs):
+    check_configuration_file('download', kwargs)
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()
 
@@ -592,6 +595,7 @@ def download(**kwargs):
     "-r", "--raw-response", help="Used with `json-to-outputs` flag. Use the raw response of the query for"
                                  " `json-to-outputs`", is_flag=True)
 def run(**kwargs):
+    check_configuration_file('run', kwargs)
     runner = Runner(**kwargs)
     return runner.run()
 
@@ -627,6 +631,7 @@ def run(**kwargs):
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 def run_playbook(**kwargs):
+    check_configuration_file('run-playbook', kwargs)
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
 
@@ -657,6 +662,7 @@ file/UI/PyCharm. This script auto generates the YAML for a command from the JSON
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 def json_to_outputs_command(**kwargs):
+    check_configuration_file('json-to-outputs', kwargs)
     json_to_outputs(**kwargs)
 
 
@@ -685,6 +691,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 def generate_test_playbook(**kwargs):
+    check_configuration_file('generate-test-playbook', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
@@ -727,6 +734,7 @@ def generate_test_playbook(**kwargs):
     '--common_server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
+    check_configuration_file('init', kwargs)
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
@@ -772,6 +780,7 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_doc(**kwargs):
+    check_configuration_file('generate-docs', kwargs)
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
@@ -815,7 +824,8 @@ def generate_doc(**kwargs):
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command)
     elif file_type == FileType.SCRIPT:
-        return generate_script_doc(input_path=input_path, output=output_path, examples=examples, permissions=permissions,
+        return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
+                                   permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
@@ -837,10 +847,12 @@ def generate_doc(**kwargs):
 @click.option(
     "-o", "--output", help="Output file path, the default is the Tests directory.", default='', required=False)
 def id_set_command(**kwargs):
+    check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
     id_set_creator.create_id_set()
 
 
+# ====================== merge-id-sets ====================== #
 @main.command(name='merge-id-sets',
               hidden=True,
               short_help='Merge two id_sets')
@@ -857,6 +869,7 @@ def id_set_command(**kwargs):
     '-o', '--output', help='File path of the united id_set', required=True
 )
 def merge_id_sets_command(**kwargs):
+    check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
@@ -904,6 +917,7 @@ def merge_id_sets_command(**kwargs):
     "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
     type=click.Path(resolve_path=True))
 def update_pack_releasenotes(**kwargs):
+    check_configuration_file('update-release-notes', kwargs)
     _pack = kwargs.get('input')
     update_type = kwargs.get('update_type')
     pre_release: bool = kwargs.get('pre_release', False)
@@ -1009,8 +1023,9 @@ def update_pack_releasenotes(**kwargs):
     is_flag=True)
 @click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
               is_flag=True)
-def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
-    update_pack_metadata = not no_update
+def find_dependencies_command(**kwargs):
+    check_configuration_file('find-dependencies', kwargs)
+    update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     try:
         assert "Packs/" in str(input_path)
@@ -1021,10 +1036,8 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
-                                           id_set_path=id_set_path,
-                                           verbose=verbose,
                                            update_pack_metadata=update_pack_metadata,
-                                           )
+                                           **kwargs)
     except ValueError as exp:
         print_error(str(exp))
 
@@ -1066,6 +1079,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
     '-a', '--use_default', is_flag=True, help='Use the automatically generated integration configuration'
                                               ' (Skip the second run).')
 def openapi_codegen_command(**kwargs):
+    check_configuration_file('openapi-codegen', kwargs)
     if not kwargs.get('output_dir'):
         output_dir = os.getcwd()
     else:
@@ -1192,6 +1206,7 @@ def openapi_codegen_command(**kwargs):
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
 def test_content(**kwargs):
+    check_configuration_file('test-content', kwargs)
     execute_test_content(**kwargs)
 
 

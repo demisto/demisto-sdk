@@ -1,5 +1,5 @@
 # Changelog
-
+* Added support for local custom command configuration file `.demisto-sdk-conf`.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

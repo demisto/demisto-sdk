@@ -81,23 +81,21 @@ class DocReviewer:
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
-        for rest_of_path in os.walk(dir_name):
-            full_path = os.path.join(dir_name, str(rest_of_path))
-
-            # skip directories
-            if os.path.isdir(full_path):
-                continue
-
-            elif find_type(full_path) in self.SUPPORTED_FILE_TYPES:
-                self.files.add(str(full_path))
+        for root, _, files in os.walk(dir_name):
+            for file_name in files:
+                full_path = (os.path.join(root, file_name))
+                if find_type(full_path) in self.SUPPORTED_FILE_TYPES:
+                    self.files.add(str(full_path))
 
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         renamed = self.git_util.renamed_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         filtered_renamed = set()  # type:Set
+
         for file_tuple in renamed:
             filtered_renamed.add(file_tuple[1])
+
         return modified.union(added).union(filtered_renamed)
 
     def get_files_from_git(self):

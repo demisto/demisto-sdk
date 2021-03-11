@@ -1,4 +1,5 @@
 # Changelog
+* Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
 * Added support for local custom command configuration file `.demisto-sdk-conf`.
 
 # 1.3.1

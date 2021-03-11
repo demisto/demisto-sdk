@@ -153,7 +153,7 @@ class TestOpenAPICodeGen:
            - Ensure the arguments are generated correctly
         """
         from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
-            base_data
+            BASE_DATA
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'create-user'][0]
 
@@ -161,7 +161,7 @@ class TestOpenAPICodeGen:
                         ' email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus'
 
         arguments = integration.process_command_arguments(command)
-        body_args = integration.format_params(arguments[3], base_data, base_data)
+        body_args = integration.format_params(arguments[3], BASE_DATA, BASE_DATA)
         assert expected_args == body_args
 
     def test_command_headers(self):

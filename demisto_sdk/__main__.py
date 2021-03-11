@@ -471,8 +471,31 @@ def lint(**kwargs):
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
     check_configuration_file('lint', kwargs)
-    lint_manager = LintManager(**kwargs)
-    return lint_manager.run_dev_packages(**kwargs)
+    lint_manager = LintManager(
+        input=kwargs.get('input'),  # type: ignore[arg-type]
+        git=kwargs.get('git'),  # type: ignore[arg-type]
+        all_packs=kwargs.get('all_packs'),  # type: ignore[arg-type]
+        verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+        quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+        log_path=kwargs.get('log_path'),  # type: ignore[arg-type]
+        prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
+        json_file_path=kwargs.get('json_file')  # type: ignore[arg-type]
+    )
+    return lint_manager.run_dev_packages(
+        parallel=kwargs.get('parallel'),  # type: ignore[arg-type]
+        no_flake8=kwargs.get('no_flake8'),  # type: ignore[arg-type]
+        no_bandit=kwargs.get('no_bandit'),  # type: ignore[arg-type]
+        no_mypy=kwargs.get('no_mypy'),  # type: ignore[arg-type]
+        no_vulture=kwargs.get('no_vulture'),  # type: ignore[arg-type]
+        no_xsoar_linter=kwargs.get('no_xsoar_linter'),  # type: ignore[arg-type]
+        no_pylint=kwargs.get('no_pylint'),  # type: ignore[arg-type]
+        no_test=kwargs.get('no_test'),  # type: ignore[arg-type]
+        no_pwsh_analyze=kwargs.get('no_pwsh_analyze'),  # type: ignore[arg-type]
+        no_pwsh_test=kwargs.get('no_pwsh_test'),  # type: ignore[arg-type]
+        keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
+        test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
+        failure_report=kwargs.get('failure_report')  # type: ignore[arg-type]
+    )
 
 
 # ====================== format ====================== #
@@ -1027,6 +1050,8 @@ def find_dependencies_command(**kwargs):
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
+    verbose = kwargs.get('verbose', False)
+    id_set_path = kwargs.get('id_set_path', '')
     try:
         assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
@@ -1036,8 +1061,9 @@ def find_dependencies_command(**kwargs):
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
-                                           update_pack_metadata=update_pack_metadata,
-                                           **kwargs)
+                                           id_set_path=id_set_path,  # type: ignore[arg-type]
+                                           verbose=verbose,
+                                           update_pack_metadata=update_pack_metadata)
     except ValueError as exp:
         print_error(str(exp))
 

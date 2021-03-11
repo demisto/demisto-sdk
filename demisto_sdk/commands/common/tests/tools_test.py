@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                filter_files_by_type,
                                                filter_files_on_pack,
@@ -21,12 +21,14 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_dict_from_file,
                                                get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
-                                               get_file, get_files_in_dir,
+                                               get_file,
+                                               get_file_displayed_name,
+                                               get_files_in_dir,
                                                get_ignore_pack_skipped_tests,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
                                                get_release_notes_file_path,
-                                               get_ryaml,
+                                               get_ryaml, get_to_version,
                                                has_remote_configured,
                                                is_origin_content_repo,
                                                is_v2_file,
@@ -46,9 +48,12 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestGenericFunctions:
@@ -100,7 +105,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
         (IGNORED_PNG, None),
-        ('', None)
+        ('', None),
+        ('Author_image.png', None),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -117,6 +123,21 @@ class TestGenericFunctions:
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
+    def test_find_type_no_file(self):
+        """
+        Given
+        - A non existing file path.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure None is returned
+        """
+        madeup_path = 'some/path'
+        output = find_type(madeup_path)
+        assert not output
+
     test_path_md = [
         VALID_MD
     ]
@@ -129,7 +150,8 @@ class TestGenericFunctions:
         assert removed == [VALID_MD]
 
     test_content_path_on_pack = [
-        ('AbuseDB', {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
+        ('AbuseDB',
+         {'Packs/AbuseDB/Integrations/AbuseDB/AbuseDB.py', 'Packs/Another_pack/Integrations/example/example.py'})
     ]
 
     @pytest.mark.parametrize('pack, file_paths_list', test_content_path_on_pack)
@@ -147,7 +169,8 @@ class TestGenericFunctions:
 
     for_test_filter_files_by_type = [
         ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
-        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [], {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
+        ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [],
+         {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
         (set(), [FileType.PLAYBOOK], set())
     ]
 
@@ -326,7 +349,9 @@ class TestEntityAttributes:
     def test_get_entity_id_by_entity_type(self, data, entity):
         assert get_entity_id_by_entity_type(data, entity) == 1
 
-    @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR), ({'name': 'wow'}, PLAYBOOKS_DIR)])
+    @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR),
+                                              ({'name': 'wow'}, LAYOUTS_DIR),
+                                              ({'name': 'wow'}, PLAYBOOKS_DIR)])
     def test_get_entity_name_by_entity_type(self, data, entity):
         assert get_entity_name_by_entity_type(data, entity) == 'wow'
 
@@ -617,20 +642,20 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
                                     ])
 def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
     """
-        Given
-        - String or list of strings.
-        Case a: comma-separated string.
-        Case b: a string representing a list.
-        Case c: python list.
-        Case d: empty string.
-        Case e: empty list.
+    Given
+    - String or list of strings.
+    Case a: comma-separated string.
+    Case b: a string representing a list.
+    Case c: python list.
+    Case d: empty string.
+    Case e: empty list.
 
-        When
-        - Convert given string to list of strings, for example at unify.add_contributors_support.
+    When
+    - Convert given string to list of strings, for example at unify.add_contributors_support.
 
-        Then:
-        - Ensure a Python list is returned with the relevant values.
-        """
+    Then:
+    - Ensure a Python list is returned with the relevant values.
+    """
     func_result = arg_to_list(arg=arg, separator=",")
     assert func_result == expected_result
 
@@ -666,3 +691,190 @@ V2_DISPLAY_INPUTS = [
 @pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
 def test_is_v2_file_via_display(current, answer):
     assert is_v2_file(current, check_in_display=True) is answer
+
+
+def test_get_to_version_with_to_version(repo):
+    pack = repo.create_pack('Pack')
+    integration = pack.create_integration('INT', yml={'toversion': '4.5.0'})
+    with ChangeCWD(repo.path):
+        to_ver = get_to_version(integration.yml.path)
+
+        assert to_ver == '4.5.0'
+
+
+def test_get_to_version_no_to_version(repo):
+    pack = repo.create_pack('Pack')
+    integration = pack.create_integration('INT', yml={})
+    with ChangeCWD(repo.path):
+        to_ver = get_to_version(integration.yml.path)
+
+        assert to_ver == '99.99.99'
+
+
+def test_get_file_displayed_name__integration(repo):
+    """
+    Given
+    - The path to an integration.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the display field.
+    """
+    pack = repo.create_pack('MyPack')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    yml_content = integration.yml.read_dict()
+    yml_content['display'] = 'MyDisplayName'
+    integration.yml.write_dict(yml_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(integration.yml.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__script(repo):
+    """
+    Given
+    - The path to a script.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the name field.
+    """
+    pack = repo.create_pack('MyPack')
+    script = pack.create_script('MyScr')
+    script.create_default_script()
+    yml_content = script.yml.read_dict()
+    yml_content['name'] = 'MyDisplayName'
+    script.yml.write_dict(yml_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(script.yml.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__playbook(repo):
+    """
+    Given
+    - The path to a playbook.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the name field.
+    """
+    pack = repo.create_pack('MyPack')
+    playbook = pack.create_playbook('MyPlay')
+    playbook.create_default_playbook()
+    yml_content = playbook.yml.read_dict()
+    yml_content['name'] = 'MyDisplayName'
+    playbook.yml.write_dict(yml_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(playbook.yml.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__mapper(repo):
+    """
+    Given
+    - The path to a mapper.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the name field.
+    """
+    pack = repo.create_pack('MyPack')
+    mapper = pack.create_mapper('MyMap', content=MAPPER)
+    json_content = mapper.read_json_as_dict()
+    json_content['name'] = 'MyDisplayName'
+    mapper.write_json(json_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(mapper.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__old_classifier(repo):
+    """
+    Given
+    - The path to an old classifier.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the brandName field.
+    """
+    pack = repo.create_pack('MyPack')
+    old_classifier = pack.create_classifier('MyClas', content=OLD_CLASSIFIER)
+    json_content = old_classifier.read_json_as_dict()
+    json_content['brandName'] = 'MyDisplayName'
+    old_classifier.write_json(json_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(old_classifier.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__layout(repo):
+    """
+    Given
+    - The path to a layout.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the TypeName field.
+    """
+    pack = repo.create_pack('MyPack')
+    layout = pack.create_layout('MyLay', content=LAYOUT)
+    json_content = layout.read_json_as_dict()
+    json_content['TypeName'] = 'MyDisplayName'
+    layout.write_json(json_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(layout.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__reputation(repo):
+    """
+    Given
+    - The path to a reputation.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the id field.
+    """
+    pack = repo.create_pack('MyPack')
+    reputation = pack._create_json_based('MyRep', content=REPUTATION, prefix='reputation')
+    json_content = reputation.read_json_as_dict()
+    json_content['id'] = 'MyDisplayName'
+    reputation.write_json(json_content)
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(reputation.path)
+        assert display_name == 'MyDisplayName'
+
+
+def test_get_file_displayed_name__image(repo):
+    """
+    Given
+    - The path to an image.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the file name.
+    """
+    pack = repo.create_pack('MyPack')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    with ChangeCWD(repo.path):
+        display_name = get_file_displayed_name(integration.image.path)
+        assert display_name == os.path.basename(integration.image.rel_path)

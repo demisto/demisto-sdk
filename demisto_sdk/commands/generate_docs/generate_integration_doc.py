@@ -2,7 +2,8 @@ import os.path
 import re
 from typing import Any, List, Optional, Tuple
 
-from demisto_sdk.commands.common.constants import DOCS_COMMAND_SECTION_REGEX
+from demisto_sdk.commands.common.constants import (
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -42,7 +43,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
 
 
 def generate_integration_doc(
-        input: str,
+        input_path: str,
         examples: Optional[str] = None,
         output: Optional[str] = None,
         use_cases: Optional[str] = None,
@@ -55,7 +56,7 @@ def generate_integration_doc(
     """ Generate integration documentation.
 
     Args:
-        input: path to the yaml integration
+        input_path: path to the yaml integration
         examples: path to the command examples
         output: path to the output documentation
         use_cases: use cases string
@@ -68,10 +69,10 @@ def generate_integration_doc(
 
     """
     try:
-        yml_data = get_yaml(input)
+        yml_data = get_yaml(input_path)
 
         if not output:  # default output dir will be the dir of the input file
-            output = os.path.dirname(os.path.realpath(input))
+            output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
         example_dict = {}
         if examples and os.path.isfile(examples):
@@ -158,9 +159,15 @@ def generate_setup_section(yaml_data: dict):
 
     for conf in yaml_data['configuration']:
         access_data.append(
-            {'Parameter': conf.get('name', ''),
-             'Description': string_escape_md(conf.get('display', '')),
+            {'Parameter': conf.get('display'),
+             'Description': string_escape_md(conf.get('additionalinfo', '')),
              'Required': conf.get('required', '')})
+
+    # Check if at least one parameter has additional info field.
+    # If not, remove the description column from the access data table section.
+    access_data_with_description = list(filter(lambda x: x.get('Description', '') != '', access_data))
+    if len(access_data_with_description) == 0:
+        list(map(lambda x: x.pop('Description'), access_data))
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False, numbered_section=True))
     section.append('4. Click **Test** to validate the URLs, token, and connection.')
@@ -213,15 +220,19 @@ def generate_commands_section(
 
 
 def generate_single_command_section(cmd: dict, example_dict: dict, command_permissions_dict):
+    errors = []
     cmd_example = example_dict.get(cmd['name'])
     if command_permissions_dict:
-        cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        if command_permissions_dict.get(cmd['name']):
+            cmd_permission_example = ['#### Required Permissions', command_permissions_dict.get(cmd['name'])]
+        else:
+            errors.append(f"Error! Command Permissions were not found for command {cmd['name']}")
+            cmd_permission_example = ['#### Required Permissions', '']
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
         cmd_permission_example = ['#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**']
     else:  # no permissions for this command
         cmd_permission_example = ['', '']
 
-    errors = []
     section = [
         '### {}'.format(cmd['name']),
         '***',
@@ -272,7 +283,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         section.append('There is no context output for this command.')
     else:
         section.extend([
-            '| **Path** | **Type** | **Description** |',
+            CONTEXT_OUTPUT_README_TABLE_HEADER,
             '| --- | --- | --- |'
         ])
         for output in outputs:
@@ -309,7 +320,7 @@ def generate_command_example(cmd, cmd_example=None):
         '```{}```'.format(cmd_example),
         '',
     ]
-    if context_example:
+    if context_example and context_example != '{}':
         example.extend([
             '#### Context Example',
             '```json',

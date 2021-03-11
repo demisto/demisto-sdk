@@ -10,9 +10,10 @@ from time import ctime
 from typing import List, Union
 
 from dateparser import parse
-from mitmproxy import ctx, flow
+from mitmproxy import ctx
+from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
-from mitmproxy.http import HTTPRequest
+from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.script import concurrent
 
 logging.basicConfig(level=logging.DEBUG,
@@ -58,7 +59,7 @@ class TimestampReplacer:
         self.bad_keys_filepath = ''
         self.detect_timestamps = False
 
-    def load(self, loader):
+    def load(self, loader: Loader):
         loader.add_option(
             name='detect_timestamps',
             typespec=bool,
@@ -105,7 +106,7 @@ class TimestampReplacer:
             self.detect_timestamps = True
         self.load_problematic_keys()
 
-    def _debug_request(self, flow: flow.Flow) -> None:
+    def _debug_request(self, flow: HTTPFlow) -> None:
         """Print details of the request"""
         req = flow.request
         logging.info(f'{req.method} {req.pretty_url}')
@@ -123,7 +124,7 @@ class TimestampReplacer:
     #         ctx.options.server_replay or (ctx.options.rfile and ctx.options.save_stream_file)
     #     )
     # )
-    def request(self, flow: flow.Flow) -> None:
+    def request(self, flow: HTTPFlow) -> None:
         self.count += 1
         if ctx.options.debug:
             self._debug_request(flow)
@@ -134,6 +135,8 @@ class TimestampReplacer:
                 logging.info('updating problem_keys file at "{}"'.format(self.bad_keys_filepath))
                 self.update_problem_keys_file()
         elif ctx.options.script_mode in {'clean', 'playback'}:
+            logging.info(f'flow.live is: {flow.live}')
+            flow.live = False
             logging.info(f'mode={ctx.options.script_mode} cleaning problematic key values from the request')
             self.clean_bad_keys(req)
 

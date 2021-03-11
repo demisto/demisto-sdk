@@ -21,6 +21,8 @@ import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
+from demisto_sdk.commands.test_content.constants import (LOAD_BALANCER_DNS,
+                                                         SSH_USER)
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import \
     acquire_test_lock
@@ -28,7 +30,8 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
                                                            run_with_mock)
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
-from demisto_sdk.commands.test_content.tools import update_server_configuration
+from demisto_sdk.commands.test_content.tools import (
+    is_redhat_instance, update_server_configuration)
 from slack import WebClient as SlackClient
 
 ENV_RESULTS_PATH = './env_results.json'
@@ -47,7 +50,7 @@ __all__ = ['BuildContext',
            'TestContext',
            'TestPlaybook',
            'TestResults',
-           'TestsExecution']
+           'ServerContext']
 
 
 class IntegrationConfiguration:
@@ -96,6 +99,8 @@ class TestConfiguration:
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
+        self.is_mockable = test_configuration.get('is_mockable')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -165,14 +170,17 @@ class TestPlaybook:
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
         # If There are a list of filtered tests and the playbook is not in them
-        if self.build_context.filtered_tests and self.configuration.playbook_id not in self.build_context.filtered_tests:
+        if not self.build_context.filtered_tests or self.configuration.playbook_id not in self.build_context.filtered_tests:
             self.build_context.logging_module.debug(f'Skipping {self} because it\'s not in filtered tests')
             skipped_tests_collected[self.configuration.playbook_id] = 'not in filtered tests'
             return False
         # nightly test in a non nightly build
         if self.configuration.nightly_test and not self.build_context.is_nightly:
-            self.build_context.logging_module.debug(
-                f'Skipping {self} because it\'s a nightly test in a non nightly build')
+            log_message = f'Skipping {self} because it\'s a nightly test in a non nightly build'
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
+                self.build_context.logging_module.warning(log_message)
+            else:
+                self.build_context.logging_module.debug(log_message)
             skipped_tests_collected[self.configuration.playbook_id] = \
                 'nightly test in a non nightly build'
             return False
@@ -180,7 +188,7 @@ class TestPlaybook:
         # skipped test
         if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
             # If the playbook supposed to run according to the filters but it's skipped - warning log
-            if self.build_context.filtered_tests and self.configuration.playbook_id in self.build_context.filtered_tests:
+            if self.configuration.playbook_id in self.build_context.filtered_tests:
                 self.build_context.logging_module.warning(f'Skipping test {self} because it\'s in skipped test list')
             else:
                 self.build_context.logging_module.debug(f'Skipping test {self} because it\'s in skipped test list')
@@ -397,23 +405,23 @@ class BuildContext:
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
         self.slack_user_id = self._retrieve_slack_user_id()
-        self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips[0])
+        self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
-    def _get_all_integration_config(self, server_ip: str) -> Optional[list]:
+    def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server
         Since in all packs are installed the data returned from this request is very heavy and we want to avoid
         running it in multiple threads.
         Args:
-            server_ip: The url of the server to create integration in
+            instances_ips: The mapping of the urls to the ports used to tunnel it's traffic
 
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
         if not self.is_nightly:
             return []
-
-        server_url = f'https://{server_ip}'
+        url, port = list(instances_ips.items())[0]
+        server_url = f'https://localhost:{port}' if port else f'https://{url}'
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -513,7 +521,11 @@ class BuildContext:
                                             integration_name in unmockable_integrations]
             if test_name and (not test_record.test_integrations or unmockable_integrations_used) or not self.isAMI:
                 unmockable_tests.append(test_record)
-
+                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
+                # it will be added twice if we don't continue.
+                continue
+            if test_record.is_mockable is False:
+                unmockable_tests.append(test_record)
         return unmockable_tests
 
     @staticmethod
@@ -541,17 +553,39 @@ class BuildContext:
         tests_records = self.conf.tests
         return [test for test in tests_records if test.playbook_id]
 
-    def _get_instances_ips(self) -> List[str]:
+    def _get_instances_ips(self) -> Dict[str, Any]:
         """
         Parses the env_results.json and extracts the instance ip from each server configured in it.
         Returns:
-            A list containing tuple with the following:
-                - The server IP
+            A dict contains a mapping from server internal ip to the port used to tunnel it.
         """
         if self.server:
-            return [self.server]
-        instances_ips = [env.get('InstanceDNS') for env in self.env_json if env.get('Role') == self.server_version]
+            return {self.server: None}
+        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
         return instances_ips
+
+    def get_public_ip_from_server_url(self, server_url: str) -> str:
+        """
+        Gets a tunnel server url in the form of https://localhost:<port>, from that url checks in self.instance_ips
+        if there is a url that is mapped into that port and return that url if found.
+        Args:
+            server_url: The server url to parse the port from.
+
+        Returns:
+            A URL with the private IP of the server.
+        """
+        port_pattern = re.compile(r'https://localhost:([0-9]+)')
+        port_match = port_pattern.findall(server_url)
+        if port_match:
+            port = int(port_match[0])
+        else:
+            # If the server URL has no port in the end - it means it's a local build and we can return the
+            # server URL as is.
+            return server_url
+        for server_private_ip, tunnel_port in self.instances_ips.items():
+            if tunnel_port == port:
+                return f'https://{server_private_ip}'
+        raise Exception(f'Could not find private ip for the server mapped to port {port}')
 
     @staticmethod
     def _parse_tests_list_arg(tests_list: str):
@@ -766,6 +800,7 @@ class Integration:
              'params': {}})
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
+        self.integration_type: str = ""
         self.module_instance: dict = {}
 
     @staticmethod
@@ -841,7 +876,7 @@ class Integration:
             }
         if is_mockable:
             self.build_context.logging_module.debug(f'configuring {self} with proxy params')
-            for param in ('proxy', 'useProxy', 'insecure', 'unsecure'):
+            for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
         return True
 
@@ -942,7 +977,8 @@ class Integration:
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
-        self._set_integration_params(client.api_client.configuration.host, playbook_id, is_mockable)
+        server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
+        self._set_integration_params(server_url, playbook_id, is_mockable)
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')
@@ -1020,6 +1056,7 @@ class Integration:
         integration_config = ast.literal_eval(res[0])
         self.integration_configuration_from_server = integration_config
         self.module_instance = module_instance
+        self.integration_type = integration_config.get('configuration', {}).get('integrationScript', {}).get('type', '')
         return True
 
     def delete_integration_instance(self, client, instance_id: Optional[str] = None) -> bool:
@@ -1081,14 +1118,16 @@ class Integration:
                 break
             except ApiException:
                 self.build_context.logging_module.exception(
-                    f'Failed to test integration {self} instance, error trying to communicate with demisto server')
+                    f'Failed to test integration {self} instance, error trying to communicate with demisto server: '
+                    f'{client.api_client.configuration.host}')
                 return False
             except urllib3.exceptions.ReadTimeoutError:
                 self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
 
         if int(response_code) != 200:
             self.build_context.logging_module.error(
-                f'Integration-instance test-module failed. Bad status code: {response_code}')
+                f'Integration-instance test-module failed. Bad status code: {response_code}.\n'
+                f'Sever URL: {client.api_client.configuration.host}')
             return False
 
         result_object = ast.literal_eval(response_data)
@@ -1145,12 +1184,28 @@ class Integration:
 
 
 class TestContext:
-    def __init__(self, build_context: BuildContext, playbook: TestPlaybook, client: DefaultApi):
+    def __init__(self,
+                 build_context: BuildContext,
+                 playbook: TestPlaybook,
+                 client: DefaultApi,
+                 server_context: 'ServerContext'):
+        """
+        Initializes the TestContext class
+        Args:
+            build_context: The context of the current build
+            playbook: The TestPlaybook instance to run in the current test execution
+            client: A demisto client instance to use for communication with the server
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
+        """
         self.build_context = build_context
+        self.server_context = server_context
         self.playbook = playbook
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
+        self.tunnel_command = \
+            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{SSH_USER}@{LOAD_BALANCER_DNS}" ' \
+            f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1255,7 +1310,8 @@ class TestContext:
             Empty string or
         """
         try:
-            server_url = self.client.api_client.configuration.host
+            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+
             if not self.playbook.configure_integrations(self.client):
                 return PB_Status.FAILED
 
@@ -1274,9 +1330,12 @@ class TestContext:
                 self.build_context.logging_module.error(f'Failed to get investigation id of incident: {incident}')
                 return ''
 
+            server_url = self.client.api_client.configuration.host
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
+
             self.playbook.disable_integrations(self.client)
+            self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
             self.build_context.logging_module.exception(f'Failed to run incident test for {self.playbook}')
@@ -1296,11 +1355,12 @@ class TestContext:
     def _run_docker_threshold_test(self):
         self._collect_docker_images()
         if self.test_docker_images:
+            memory_threshold, pid_threshold = self.get_threshold_values()
             error_message = Docker.check_resource_usage(
-                server_url=self.client.api_client.configuration.host,
+                server_url=self.server_context.server_ip,
                 docker_images=self.test_docker_images,
-                def_memory_threshold=self.playbook.configuration.memory_threshold,
-                def_pid_threshold=self.playbook.configuration.pid_threshold,
+                def_memory_threshold=memory_threshold,
+                def_pid_threshold=pid_threshold,
                 docker_thresholds=self.build_context.conf.docker_thresholds,
                 logging_module=self.build_context.logging_module)
             if error_message:
@@ -1308,45 +1368,50 @@ class TestContext:
                 return False
         return True
 
+    def get_threshold_values(self) -> Tuple[int, int]:
+        """
+        Gets the memory and pid threshold values to enforce on the current test.
+        If one of the playbook's integrations is a powershell integration - the threshold have to be equals or
+        higher than the default powershell threshold value.
+        Returns:
+            - The memory threshold value
+            - The pid threshold value
+        """
+        memory_threshold = self.playbook.configuration.memory_threshold
+        pid_threshold = self.playbook.configuration.pid_threshold
+        has_pwsh_integration = any(integration for integration in self.playbook.integrations if
+                                   integration.integration_type == Docker.POWERSHELL_INTEGRATION_TYPE)
+        if has_pwsh_integration:
+            memory_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE, memory_threshold)
+            pid_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE, pid_threshold)
+        return memory_threshold, pid_threshold
+
     def _send_slack_message(self, channel, text, user_name, as_user):
         self.build_context.slack_client.api_call(
             "chat.postMessage",
-            channel=channel,
-            username=user_name,
-            as_user=as_user,
-            text=text,
-            mrkdwn='true'
+            json={
+                'channel': channel,
+                'username': user_name,
+                'as_user': as_user,
+                'text': text,
+                'mrkdwn': 'true'
+            }
         )
 
-    @staticmethod
-    def _retrieve_slack_user_id(circle_user_name, slack_client):
-        user_id = ''
-        res = slack_client.api_call('users.list')
-
-        user_list = res.get('members', [])
-        for user in user_list:
-            profile = user.get('profile', {})
-            name = profile.get('real_name_normalized', '')
-            if name == circle_user_name:
-                user_id = user.get('id', '')
-
-        return user_id
-
     def _notify_failed_test(self):
-        if self.incident_id:
-            text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
-                   f' {self.client.api_client.configuration.host}'
-        else:
-            text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
-                   f' {self.client.api_client.configuration.host}/#/WorkPlan/{self.incident_id}'
-
+        text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
+               f'for more details run: `{self.tunnel_command}` and browse into the following link\n' \
+               f'{self.client.api_client.configuration.host}'
+        text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
-                channel=self.build_context.slack_user_id,
-                username="Content CircleCI",
-                as_user="False",
-                text=text
+                json={
+                    'channel': self.build_context.slack_user_id,
+                    'username': 'Content CircleCI',
+                    'as_user': 'False',
+                    'text': text
+                }
             )
 
     def _add_to_succeeded_playbooks(self) -> None:
@@ -1355,13 +1420,22 @@ class TestContext:
         """
         self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
 
-    def _add_to_failed_playbooks(self) -> None:
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
         Adds the playbook to the succeeded playbooks list
+
+        Args:
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
+        if is_second_playback_run:
+            self.build_context.logging_module.error(
+                'Playback on newly created record has failed, see the following confluence page for help:\n'
+                'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
+            playbook_name_to_add += ' (Second Playback)'
+        self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
     @staticmethod
@@ -1404,7 +1478,9 @@ class TestContext:
             The result of the test.
         """
         playbook_state = self._run_incident_test()
-        if playbook_state:
+        # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
+        # the threshold configurations.
+        if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
@@ -1428,25 +1504,35 @@ class TestContext:
                 return False
         return True
 
-    def _handle_status(self, status: str, is_playback_run: bool = False) -> None:
+    def _handle_status(self, status: str,
+                       is_first_playback_run: bool = False,
+                       is_second_playback_run: bool = False,
+                       is_record_run: bool = False) -> None:
         """
         Handles the playbook execution run
         - Logs according to the results
         - Adds the test to the test results
         Args:
-            is_playback_run:
-            status:
+            status: The string representation of the playbook execution
+            is_first_playback_run: Is the playbook runs in playback mode
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.success(f'PASS: {self} succeed')
+            # It's not enough that the record run will pass to declare the test as successful,
+            # we need the second playback to pass as well.
+            if is_record_run:
+                return
             self._add_to_succeeded_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
-            self.build_context.logging_module.error(f'Failed: {self} failed')
             self._add_to_failed_playbooks()
 
         else:
-            if is_playback_run:
+            if is_first_playback_run:
+                return
+            if is_second_playback_run:
+                self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
             self._add_to_failed_playbooks()
             if not self.build_context.is_local_run:
@@ -1466,47 +1552,78 @@ class TestContext:
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._incident_and_docker_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_playback_run=True)
+            self._handle_status(status, is_first_playback_run=True)
             if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                 return True
+            self.build_context.logging_module.warning(
+                "Test failed with mock, recording new mock file. (Mock: Recording)")
 
         # Running on record mode since playback has failed or mock file was not found
-        self.build_context.logging_module.warning("Test failed with mock, recording new mock file. (Mock: Recording)")
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
-                    self._handle_status(status)
-                    succeed = status == PB_Status.COMPLETED
-                    result_holder[RESULT] = succeed
+                    self._handle_status(status, is_record_run=True)
+                    completed = status == PB_Status.COMPLETED
+                    result_holder[RESULT] = completed
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if status == PB_Status.COMPLETED:
+        if completed:
             self.build_context.logging_module.info(
-                'Running another playback attempt on the new record to verify that the record is valid')
+                f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-                self._clean_incident_if_successful(status)
-            if status != PB_Status.COMPLETED:
-                self.build_context.logging_module.warning(
-                    'Playback on newly created record has failed, see the following confluence page for help:\n'
-                    'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
+            self._handle_status(status, is_second_playback_run=True)
         return True
 
-    def execute_test(self, proxy: Optional[MITMProxy] = None):
-        self._send_circle_memory_and_pid_stats_on_slack()
-        if self.playbook.is_mockable:
-            test_executed = self._execute_mockable_test(proxy)  # type: ignore
-        else:
-            test_executed = self._execute_unmockable_test()
-        self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
-        self.build_context.logging_module.execute_logs()
-        return test_executed
+    def _is_runnable_on_current_server_instance(self) -> bool:
+        """
+        Nightly builds can have RHEL instances that uses podman instead of docker as well as the regular LINUX instance.
+        In such case - if the test in runnable on docker instances **only** and the current instance uses podman -
+        we will not execute the test under this instance and instead will will return it to the queue in order to run
+        it under some other instance
+        Returns:
+            True if this instance can be run on the current instance else False
+        """
+        if self.playbook.configuration.runnable_on_docker_only and not self.server_context.is_instance_using_docker:
+            self.build_context.logging_module.debug(
+                f'Skipping test {self.playbook} since it\'s not runnable on podman instances')
+            return False
+        return True
+
+    def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
+        """
+        Executes the test and return a boolean that indicates whether the test was executed or not.
+        In case the test was not executed - it will be returned to the queue and will be collected later in the future
+        by some other ServerContext instance.
+        Args:
+            proxy: The MITMProxy instance to use in the current test
+
+        Returns:
+            True if the test was executed by the instance else False
+        """
+        try:
+            if not self._is_runnable_on_current_server_instance():
+                return False
+            self._send_circle_memory_and_pid_stats_on_slack()
+            if self.playbook.is_mockable:
+                test_executed = self._execute_mockable_test(proxy)  # type: ignore
+            else:
+                test_executed = self._execute_unmockable_test()
+            return test_executed
+        except Exception:
+            self.build_context.logging_module.exception(
+                f'Unexpected error while running test on playbook {self.playbook}')
+            self._add_to_failed_playbooks()
+            return True
+        finally:
+            self.build_context.logging_module.info(f'------ Test {self} end ------ \n')
+            self.build_context.logging_module.execute_logs()
 
     def __str__(self):
         test_message = f'playbook: {self.playbook}'
@@ -1514,24 +1631,28 @@ class TestContext:
             test_message += f' with integration(s): {self.playbook.integrations}'
         else:
             test_message += ' with no integrations'
+        if not self.server_context.is_instance_using_docker:
+            test_message += ', RedHat instance'
         return test_message
 
     def __repr__(self):
         return str(self)
 
 
-class TestsExecution:
+class ServerContext:
 
-    def __init__(self, build_context: BuildContext, server_ip: str):
+    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None):
         self.build_context = build_context
-        self.server_ip = server_ip
-        self.server_url = f'https://{self.server_ip}'
+        self.server_ip = server_private_ip
+        self.tunnel_port = tunnel_port
+        self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
-        self.proxy = MITMProxy(server_ip,
+        self.proxy = MITMProxy(server_private_ip,
                                self.build_context.logging_module,
                                build_number=self.build_context.build_number,
                                branch_name=self.build_context.build_name)
+        self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
 
@@ -1543,10 +1664,16 @@ class TestsExecution:
 
     def _execute_tests(self, queue: Queue) -> None:
         """
-        Iterates the tests queue and executes them as long as there are tests to execute
+        Iterates the tests queue and executes them as long as there are tests to execute.
+        Before the tests execution starts we will reset the containers to make sure the proxy configuration is correct
+        - We need it before the mockable tests because the server starts the python2 default container when it starts
+            and it has no proxy configurations.
+        - We need it before the unmockable tests because at that point all containers will have the proxy configured
+            and we want to clean those configurations when testing unmockable playbooks
         Args:
             queue: The queue to fetch tests to execute from
         """
+        self._reset_containers()
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
@@ -1554,7 +1681,10 @@ class TestsExecution:
             except Empty:
                 continue
             self._configure_new_client()
-            test_executed = TestContext(self.build_context, test_playbook, self.client).execute_test(self.proxy)
+            test_executed = TestContext(self.build_context,
+                                        test_playbook,
+                                        self.client,
+                                        self).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -1565,7 +1695,7 @@ class TestsExecution:
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.docker_ip + ':' + self.proxy.PROXY_PORT,
+        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
                                               server=self.server_url)
@@ -1625,7 +1755,6 @@ class TestsExecution:
         try:
             self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
             self._execute_mockable_tests()
-            self._reset_containers()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',

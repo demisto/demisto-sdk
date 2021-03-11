@@ -11,12 +11,13 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import click
 import networkx
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    DASHBOARDS_DIR,
+                                                   DEFAULT_ID_SET_PATH,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -33,7 +34,7 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -72,7 +73,13 @@ BUILT_IN_FIELDS = [
     "droppedCount",
     "linkedCount",
     "feedBased",
-    "id"
+    "id",
+    "xsoarReadOnlyRoles",
+    "dbotMirrorId",
+    "dbotMirrorInstance",
+    "dbotMirrorDirection",
+    "dbotMirrorTags",
+    "dbotMirrorLastSync"
 ]
 
 
@@ -687,11 +694,36 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
+def get_pack_metadata_data(file_path, print_logs: bool):
+    try:
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+
+        json_data = get_json(file_path)
+        pack_data = {
+            "name": json_data.get('name'),
+            "current_version": json_data.get('currentVersion'),
+            "author": json_data.get('author', ''),
+            'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
+            "tags": json_data.get('tags', []),
+            "use_cases": json_data.get('useCases', []),
+            "categories": json_data.get('categories', [])
+        }
+
+        pack_id = get_pack_name(file_path)
+        return {pack_id: pack_data}
+
+    except Exception as exp:  # noqa
+        print_error(f'Failed to process {file_path}, Error: {str(exp)}')
+        raise
+
+
 def get_mapper_data(path):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    type_ = json_data.get('type', '')  # can be 'mapping-outgoing' or 'mapping-incoming'
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -704,7 +736,24 @@ def get_mapper_data(path):
     mapping = json_data.get('mapping', {})
     for key, value in mapping.items():
         incidents_types.add(key)
-        incidents_fields = incidents_fields.union(set(value.get('internalMapping').keys()))
+        internal_mapping = value.get('internalMapping')  # get the mapping
+        if type_ == 'mapping-outgoing':
+            incident_fields_set = set()
+            # incident fields are in the simple key or in complex.root key of each key
+            for internal_mapping_key in internal_mapping.keys():
+                fields_mapper = internal_mapping.get(internal_mapping_key, {})
+                if isinstance(fields_mapper, dict):
+                    incident_field_simple = fields_mapper.get('simple')
+                    if incident_field_simple:
+                        incident_fields_set.add(incident_field_simple)
+                    else:
+                        incident_field_complex = fields_mapper.get('complex', {})
+                        if incident_field_complex and 'root' in incident_field_complex:
+                            incident_fields_set.add(incident_field_complex.get('root'))
+            incidents_fields = incidents_fields.union(incident_fields_set)
+        elif type_ == 'mapping-incoming':
+            # all the incident fields are the keys of the mapping
+            incidents_fields = incidents_fields.union(set(internal_mapping.keys()))
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
@@ -1000,6 +1049,16 @@ def get_playbooks_paths(pack_to_create):
     return playbook_files
 
 
+def get_pack_metadata_paths(pack_to_create):
+    if pack_to_create:
+        path_list = [pack_to_create, 'pack_metadata.json']
+
+    else:
+        path_list = ['Packs', '*', 'pack_metadata.json']
+
+    return glob.glob(os.path.join(*path_list))
+
+
 def get_general_paths(path, pack_to_create):
     if pack_to_create:
         path_list = [
@@ -1034,6 +1093,7 @@ class IDSetType(Enum):
     INDICATOR_FIELD = 'IndicatorFields'
     INDICATOR_TYPE = 'IndicatorTypes'
     LAYOUTS = 'Layouts'
+    PACKS = 'Packs'
 
     @classmethod
     def has_value(cls, value):
@@ -1055,6 +1115,9 @@ class IDSet:
             raise ValueError(f'Invalid IDSetType {object_type}')
 
         self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
+
+    def add_pack_to_id_set_packs(self, object_type: IDSetType, obj_name, obj_value):
+        self._id_set_dict.setdefault(object_type, {}).update({obj_name: obj_value})
 
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
@@ -1089,14 +1152,19 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     for object_type, object_list in second_id_set.get_dict().items():
         subset = first_id_set.get_list(object_type)
 
-        for obj in object_list:
-            obj_id = list(obj.keys())[0]
-            is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
-                                         external_object=obj)
-            if is_duplicate:
-                duplicates.append(obj_id)
-            else:
-                united_id_set.add_to_list(object_type, obj)
+        if object_type != "Packs":
+            for obj in object_list:
+                obj_id = list(obj.keys())[0]
+                is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
+                                             external_object=obj)
+                if is_duplicate:
+                    duplicates.append(obj_id)
+                else:
+                    united_id_set.add_to_list(object_type, obj)
+
+        else:
+            for obj_name, obj_value in object_list.items():
+                united_id_set.add_pack_to_id_set_packs(object_type, obj_name, obj_value)
 
     if duplicates:
         return None, duplicates
@@ -1104,11 +1172,8 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     return united_id_set, []
 
 
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
-
-
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None, objects_to_create: list = None,  # noqa: C901
-                     print_logs: bool = True):
+def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
+                     objects_to_create: list = None, print_logs: bool = True):
     """Re create the id set
 
     Args:
@@ -1175,12 +1240,24 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    packs_dict: Dict[str, Dict] = {}
 
-    pool = Pool(processes=int(cpu_count() * 1.5))
+    pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+
+        if 'Packs' in objects_to_create:
+            print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
+            for pack_data in pool.map(partial(get_pack_metadata_data,
+                                              print_logs=print_logs
+                                              ),
+                                      get_pack_metadata_paths(pack_to_create)):
+                packs_dict.update(pack_data)
+
+        progress_bar.update(1)
+
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
@@ -1370,13 +1447,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Reports'] = sort(reports_list)
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
+    new_ids_dict['Packs'] = packs_dict
 
-    if id_set_path:
-        with open(id_set_path, 'w+') as id_set_file:
-            json.dump(new_ids_dict, id_set_file, indent=4)
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
-
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
         print_error(
@@ -1400,7 +1474,6 @@ def find_duplicates(id_set, print_logs):
             if has_duplicate(objects, id_to_check, object_type, print_logs):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
-
     if print_logs:
         print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 

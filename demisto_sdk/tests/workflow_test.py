@@ -107,19 +107,26 @@ class ContentGitRepo:
         Run all of the following validations:
         * secrets
         * lint -g --no-test
-        * validate -g --skip-id-set-creation
+        * validate -g --staged
+        * validate -g
         """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
-            res = runner.invoke(main, "secrets")
             try:
+                # commit flow - secrets, lint and validate only on staged files without rn
+                res = runner.invoke(main, "secrets")
                 assert res.exit_code == 0
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies --skip-id-set-creation"
-                                          " --no-docker-checks")
+                res = runner.invoke(main, "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
+                                          "--no-docker-checks --debug-git")
                 assert res.exit_code == 0
+
+                # build flow - validate on all changed files
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
+                assert res.exit_code == 0
+
             except AssertionError:
                 raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
 
@@ -269,7 +276,7 @@ def all_files_renamed(content_repo: ContentGitRepo):
 
     # rename all files in dir
     for file in list_files(hello_world_path):
-        new_file = file.replace('HelloWorld', 'Test')
+        new_file = file.replace('HelloWorld', 'Hello_World')
         if not file == new_file:
             content_repo.run_command(
                 f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
@@ -333,7 +340,7 @@ def test_workflow_by_sequence(function: Callable):
             Will run all validation with expected the test to pass.
             * secrets
             * lint -g --no-test
-            * validate -g --skip-id-set-creation
+            * validate -g
     """
     global content_git_repo
     function(content_git_repo)

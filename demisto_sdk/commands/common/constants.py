@@ -79,8 +79,28 @@ class FileType(Enum):
     IMAGE = 'image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
-    JAVSCRIPT_FILE = 'javascriptfile'
+    JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+
+
+RN_HEADER_BY_FILE_TYPE = {
+    FileType.PLAYBOOK: 'Playbooks',
+    FileType.INTEGRATION: 'Integrations',
+    FileType.BETA_INTEGRATION: 'Integrations',
+    FileType.SCRIPT: 'Scripts',
+    FileType.INCIDENT_FIELD: 'Incident Fields',
+    FileType.INDICATOR_FIELD: 'Indicator Fields',
+    FileType.REPUTATION: 'Indicator Types',
+    FileType.INCIDENT_TYPE: 'Incident Types',
+    FileType.CLASSIFIER: 'Classifiers',
+    FileType.LAYOUT: 'Layouts',
+    FileType.REPORT: 'Reports',
+    FileType.WIDGET: 'Widgets',
+    FileType.DASHBOARD: 'Dashboards',
+    FileType.CONNECTION: 'Connections',
+    FileType.MAPPER: 'Mappers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
+}
 
 
 ENTITY_TYPE_TO_DIR = {
@@ -102,7 +122,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.MAPPER.value: CLASSIFIERS_DIR
 }
-
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
@@ -320,7 +339,6 @@ PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = fr'{INTEGRATIONS_DIR_REGEX}/integration
 PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_INTEGRATION_NON_SPLIT_README_REGEX = fr'{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$'
 
-
 SCRIPTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{SCRIPTS_DIR}'
 SCRIPT_DIR_REGEX = fr'{SCRIPTS_DIR_REGEX}\/([^\\/]+)'
 SCRIPT_TYPE_REGEX = '.*script-.*.yml'
@@ -335,7 +353,6 @@ PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = fr'{SCRIPTS_DIR_REGEX}/script-([^\\/]+)'
 PACKS_SCRIPT_TEST_PLAYBOOK = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$'
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$'
 PACKS_SCRIPT_NON_SPLIT_README_REGEX = fr'{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$'
-
 
 PACKS_LAYOUTS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{LAYOUTS_DIR}'
 PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json'
@@ -375,7 +392,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*'
 PACKS_MAPPER_JSON_REGEX = fr'{_PACKS_MAPPER_BASE_REGEX}\.json'
 
-
 PACKS_CONNECTIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}'
 PACKS_CONNECTION_JSON_REGEX = fr'{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$'
 
@@ -388,7 +404,6 @@ PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
 TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
 TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
-
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
                                                                                      PACKS_DIR,
@@ -425,7 +440,7 @@ PACK_METADATA_DEPENDENCIES = 'dependencies'
 
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT,
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
-                        PACK_METADATA_TAGS, PACK_METADATA_CREATED, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
+                        PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
 API_MODULES_PACK = 'ApiModules'
 API_MODULE_PY_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.py'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR)
@@ -726,11 +741,12 @@ TYPE_TO_EXTENSION = {
     TYPE_PWSH: '.ps1'
 }
 
-TESTS_DIRECTORIES = [
+TESTS_AND_DOC_DIRECTORIES = [
     'testdata',
     'test_data',
     'data_test',
-    'tests_data'
+    'tests_data',
+    'doc_files'
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -812,7 +828,6 @@ SCHEMA_TO_REGEX = {
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
-
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
@@ -839,7 +854,9 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip'}
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+
+GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
 DBOT_SCORES_DICT = {
     'DBotScore.Indicator': 'The indicator that was tested.',
@@ -862,6 +879,7 @@ PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
+MARKETPLACE_MIN_VERSION = '6.0.0'
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1006,3 +1024,65 @@ FEATURE_BRANCHES = ['v4.5.0']
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
+
+LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
+                                     'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
+                                     'short_description', 'description', 'Tags', 'blocked']
+
+UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
+
+DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+
+CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
+
+
+class ContentItems(Enum):
+    # the format is defined in issue #19786, may change in the future
+    SCRIPTS = 'automation'
+    PLAYBOOKS = 'playbook'
+    INTEGRATIONS = 'integration'
+    INCIDENT_FIELDS = 'incidentfield'
+    INCIDENT_TYPES = 'incidenttype'
+    DASHBOARDS = 'dashboard'
+    INDICATOR_FIELDS = 'indicatorfield'
+    REPORTS = 'report'
+    INDICATOR_TYPES = 'reputation'
+    LAYOUTS = 'layoutscontainer'
+    CLASSIFIERS = 'classifier'
+    WIDGETS = 'widget'
+
+
+YML_SUPPORTED_FOLDERS = {
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    PLAYBOOKS_DIR,
+    TEST_PLAYBOOKS_DIR
+}
+
+JSON_SUPPORTED_FOLDERS = {
+    CLASSIFIERS_DIR,
+    CONNECTIONS_DIR,
+    DASHBOARDS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR,
+    LAYOUTS_DIR,
+    INDICATOR_TYPES_DIR,
+    REPORTS_DIR,
+    WIDGETS_DIR
+}
+
+CONTENT_ITEMS_DISPLAY_FOLDERS = {
+    SCRIPTS_DIR,
+    DASHBOARDS_DIR,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INTEGRATIONS_DIR,
+    PLAYBOOKS_DIR,
+    INDICATOR_FIELDS_DIR,
+    REPORTS_DIR,
+    INDICATOR_TYPES_DIR,
+    LAYOUTS_DIR,
+    CLASSIFIERS_DIR,
+    WIDGETS_DIR
+}

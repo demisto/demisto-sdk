@@ -48,6 +48,13 @@ demisto-sdk <command> <args>
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
+### Version Check
+`demisto-sdk` will check against the GitHub repository releases for a new version every time it runs and will issue a warning if you are not using the latest and greatest. If you wish to skip this check you can set the environment variable: `DEMISTO_SDK_SKIP_VERSION_CHECK`. For example:
+```shell
+export DEMISTO_SDK_SKIP_VERSION_CHECK=yes
+```
+
+
 ----
 
 ## Commands

@@ -1,7 +1,74 @@
 # Changelog
+* Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+
+# 1.3.1
+* Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
+* Updated the **upload** command to support indicator fields.
+* The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.
+* Fixed an issue where **validate** would incorrectly identify files as renamed.
+* Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
+* Fixed an issue where **validate** failed when comparing branch against commit hash.
+* Added the *--no-pipenv* flag to the **split-yml** command.
+* Added a validation that incident fields and incident types are not removed from mappers.
+* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
+* Added the *hiddenusername* field to the integration schema.
+* Added a validation that images that are not integration images, do not ask for a new version or RN
+
+# 1.3.0
+* Do not collect optional dependencies on indicator types reputation commands.
+* Fixed an issue where downloading indicator layoutscontainer objects failed.
+* Added a validation that makes sure outputs in integrations are matching the README file.
+* Fixed an issue where the *create-id-set* flag in the **validate** command did not work.
+* Added a warning in case no id_set file is found when running the **validate** command.
+* Fixed an issue where changed files were not recognised correctly on forked branches in the **validate** and the **update-release-notes** commands.
+* Fixed an issue when files were classified incorrectly when running *update-release-notes*.
+* Added a validation that integration and script file paths are compatible with our convention.
+* Fixed an issue where id_set.json file was re created whenever running the generate-docs command.
+* added the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
+
+# 1.2.19
+* Fixed an issue where merge id_set was not updated to work with the new entity of Packs.
+* Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
+
+# 1.2.18
+* Changed the *skip-id-set-creation* flag to *create-id-set* in the **validate** command. Its default value will be False.
+* Added support for the 'cve' reputation command in default arg validation.
+* Filter out generic and reputation command from scripts and playbooks dependencies calculation.
+* Added support for the incident fields in outgoing mappers in the ID set.
+* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
+* Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
+* Exclude changes from doc_files directory on validation.
+* Added a validation that an integration command has at most one default argument.
+* Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
+* Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
+* Fixed an issue where beta integrations where not running deprecation validations.
+* Allowed adding additional information to the deprecated description.
+* Fixing an issue when escaping less and greater signs in integration params did not work as expected.
+
+# 1.2.17
+* Added a validation that the classifier of an integration exists.
+* Added a validation that the mapper of an integration exists.
+* Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
+* Added new validation for incident and indicator fields in classifiers mappers and layouts exist in the content.
+* Added cache for get_remote_file to reducing failures from accessing the remote repo.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the `id` of the given playbooks.
+* Playbook dependencies from incident and indicator fields are now marked as optional.
+* Mappers dependencies from incident types and incident fields are now marked as optional.
+* Classifier dependencies from incident types are now marked as optional.
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
+* Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
+* Using the *verbose* argument in the **find-dependencies** command will now log to the console.
+* Improved the deprecated message validation required from integrations.
+* Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
 
 # 1.2.16
 * Added allowed ignore errors to the *IDSetValidator*.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
 
 # 1.2.15
 * Added the *ID101* to the allowed ignored errors.

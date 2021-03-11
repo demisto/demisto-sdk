@@ -19,13 +19,25 @@ This command is used in order to run integration or script commands of a remote 
 
     The query to run
 
-* **-k, --insecure**
+* **--insecure**
 
     Skip certificate validation
 
 * **-v, --verbose**
 
     Verbose output
+
+* **--json-to-outputs**
+
+    Whether to run json_to_outputs command on the context output of the query. If the context output does not exists or the `-r` flag is used, will use the raw response of the query
+
+* **-p, --prefix**
+
+    Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates
+
+* **-r, --raw-response**
+
+    Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`
 
 * **-D, --debug**
 

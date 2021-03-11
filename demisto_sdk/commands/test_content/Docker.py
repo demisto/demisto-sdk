@@ -9,6 +9,7 @@ class Docker:
 
     """
     PYTHON_INTEGRATION_TYPE = 'python'
+    POWERSHELL_INTEGRATION_TYPE = 'powershell'
     JAVASCRIPT_INTEGRATION_TYPE = 'javascript'
     DEFAULT_PYTHON2_IMAGE = 'demisto/python'
     DEFAULT_PYTHON3_IMAGE = 'demisto/python3'
@@ -19,6 +20,8 @@ class Docker:
     CONTAINER_ID = 'ID'
     DEFAULT_CONTAINER_MEMORY_USAGE = 75
     DEFAULT_CONTAINER_PIDS_USAGE = 3
+    DEFAULT_PWSH_CONTAINER_MEMORY_USAGE = 140
+    DEFAULT_PWSH_CONTAINER_PIDS_USAGE = 24
     REMOTE_MACHINE_USER = 'ec2-user'
     SSH_OPTIONS = 'ssh -o StrictHostKeyChecking=no'
 
@@ -185,7 +188,7 @@ class Docker:
 
         if integration_type == cls.JAVASCRIPT_INTEGRATION_TYPE:
             return None
-        elif integration_type == cls.PYTHON_INTEGRATION_TYPE and docker_image:
+        elif integration_type in {cls.PYTHON_INTEGRATION_TYPE, cls.POWERSHELL_INTEGRATION_TYPE} and docker_image:
             return [docker_image]
         else:
             return [cls.DEFAULT_PYTHON2_IMAGE, cls.DEFAULT_PYTHON3_IMAGE]
@@ -294,7 +297,9 @@ class Docker:
                              docker_thresholds.get(image_name, {}).get('pid_threshold') or def_pid_threshold)
             logging_module.debug(
                 f"Checking container: {container_name} "
-                f"(image: {image_full}) for memory: {memory_threshold} pid: {pid_threshold} thresholds ...")
+                f"(image: {image_full}) for memory: {memory_threshold} pid: {pid_threshold} thresholds "
+                f"with actual values: memory {memory_usage} pids: {pids_usage} ..."
+            )
             if memory_usage > memory_threshold:
                 error_message += ('Failed docker resource test. Docker container {} exceeded the memory threshold, '
                                   'configured: {} MiB and actual memory usage is {} MiB.\n'

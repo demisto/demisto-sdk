@@ -32,10 +32,30 @@ from packaging.version import Version
 from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
-UPLOAD_SUPPORTED_ENTITIES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.WIDGET,
-                             FileType.TEST_PLAYBOOK, FileType.INCIDENT_TYPE, FileType.CLASSIFIER,
-                             FileType.LAYOUT, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.INCIDENT_FIELD,
-                             FileType.OLD_CLASSIFIER, FileType.TEST_SCRIPT, FileType.MAPPER, FileType.BETA_INTEGRATION]
+UPLOAD_SUPPORTED_ENTITIES = [
+    FileType.INTEGRATION,
+    FileType.BETA_INTEGRATION,
+    FileType.SCRIPT,
+    FileType.TEST_SCRIPT,
+
+    FileType.PLAYBOOK,
+    FileType.TEST_PLAYBOOK,
+
+    FileType.OLD_CLASSIFIER,
+    FileType.CLASSIFIER,
+    FileType.MAPPER,
+
+    FileType.INCIDENT_TYPE,
+    FileType.INCIDENT_FIELD,
+    FileType.REPUTATION,
+    FileType.INDICATOR_FIELD,
+
+    FileType.WIDGET,
+    # FileType.REPORT,  currently not supported by demisto-py
+    FileType.DASHBOARD,
+    FileType.LAYOUT,
+    FileType.LAYOUTS_CONTAINER,
+]
 
 
 UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
@@ -299,7 +319,8 @@ def sort_directories_based_on_dependencies(dir_list: List) -> List:
         List. The sorted list of directories.
     """
     srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
-    for dir_path in dir_list:
+    dir_list_copy = dir_list.copy()
+    for dir_path in dir_list_copy:
         if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
             dir_list.remove(dir_path)
     dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))

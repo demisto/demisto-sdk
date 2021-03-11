@@ -1,11 +1,13 @@
 import os
 import re
+import uuid
 from typing import Tuple
 
 import click
 from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
@@ -87,10 +89,24 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 else:
                     click.secho('Version format is not valid', fg='red')
 
+    def update_task_uuid(self):
+        """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""
+        for task_key, task in self.data.get('tasks', {}).items():
+            taskid = str(task.get('taskid', ''))
+            task_id_under_task = str(task.get('task', {}).get('id', ''))
+            if not is_string_uuid(taskid) or not is_string_uuid(task_id_under_task):
+                if self.verbose:
+                    click.secho(f"Taskid field and the id under task field must be from uuid format. Generating uuid "
+                                f"for those fields under task key: {task_key}", fg='white')
+                generated_uuid = str(uuid.uuid4())
+                task['taskid'] = generated_uuid
+                task['task']['id'] = generated_uuid
+
     def run_format(self):
         self.update_fromversion_by_user()
         super().update_yml()
         self.add_description()
+        self.update_task_uuid()
         self.save_yml_to_destination_file()
 
     def format_file(self) -> Tuple[int, int]:

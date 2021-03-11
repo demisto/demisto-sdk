@@ -1,5 +1,4 @@
 import argparse
-import ast
 import glob
 import io
 import json
@@ -9,10 +8,10 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -28,10 +27,11 @@ from demisto_sdk.commands.common.constants import (
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -161,6 +161,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
+@lru_cache(maxsize=64)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
     Args:
@@ -451,9 +452,10 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :return: The file name
     """
     if content_entity == LAYOUTS_DIR:
-        return data.get('typeId', '')
-    else:
-        return data.get('name', '')
+        if 'typeId' in data:
+            return data.get('typeId', '')
+        return data.get('name', '')  # for layoutscontainer
+    return data.get('name', '')
 
 
 def collect_ids(file_path):
@@ -650,6 +652,8 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
+    if isinstance(file_path, Path):
+        file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
     match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
@@ -670,7 +674,6 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
             pack = get_pack_name(path)
             if pack and is_file_path_in_pack(path):
                 packs.add(pack)
-
     return packs
 
 
@@ -892,7 +895,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.CHANGELOG
 
     # integration image
-    if path.endswith('_image.png'):
+    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
     # doc files images
@@ -905,8 +908,16 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.py'):
         return FileType.PYTHON_FILE
 
-    if not _dict and not file_type:
-        _dict, file_type = get_dict_from_file(path)
+    if path.endswith('.js'):
+        return FileType.JAVASCRIPT_FILE
+
+    try:
+        if not _dict and not file_type:
+            _dict, file_type = get_dict_from_file(path)
+
+    except FileNotFoundError:
+        # unable to find the file - hence can't identify it
+        return None
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1377,24 +1388,6 @@ def get_code_lang(file_data: dict, file_entity: str) -> str:
     return ''
 
 
-def get_content_release_identifier(branch_name: str) -> Optional[str]:
-    """
-
-    Args:
-        branch_name: the branch name to get config.yml from
-
-    Returns:
-        GIT_SHA1 of latest content release if successfully returned from content repo.
-        else None.
-    """
-    try:
-        file_content = get_remote_file('.circleci/config.yml', tag=branch_name)
-    except Exception:
-        return None
-    else:
-        return file_content.get('references', {}).get('environment', {}).get('environment', {}).get('GIT_SHA1')
-
-
 def camel_to_snake(camel: str) -> str:
     """
     Converts camel case (CamelCase) strings to snake case (snake_case) strings.
@@ -1471,3 +1464,89 @@ def is_v2_file(current_file, check_in_display=False):
     if suffix != "v2":
         return False
     return True
+
+
+def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
+    fields_list = []
+    for item in ['IncidentFields', 'IndicatorFields']:
+        all_item_fields = id_set_file.get(item)
+        for item_field in all_item_fields:
+            for field, field_info in item_field.items():
+                if entity_type == 'mapper' or entity_type == 'old classifier':
+                    fields_list.append(field_info.get('name', ''))
+                    fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
+                elif entity_type == 'layout':
+                    fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
+    return fields_list
+
+
+def is_string_uuid(string_to_check: str):
+    """
+    Check if a given string is from uuid type
+    Args:
+        string_to_check: string
+
+    Returns:
+        bool. True if the string match uuid type, else False
+
+    """
+    return bool(re.fullmatch(UUID_REGEX, string_to_check))
+
+
+def extract_multiple_keys_from_dict(key: str, var: dict):
+    """
+    Args:
+        key: string representing a re-occurring field in dictionary
+        var: nested dictionary (can contain both nested lists and nested dictionary)
+
+    Returns: A generator that generates value in an occurrence of the nested key in var.
+    """
+    if hasattr(var, 'items'):
+        for k, v in var.items():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in extract_multiple_keys_from_dict(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    for result in extract_multiple_keys_from_dict(key, d):
+                        yield result
+
+
+def find_file(root_path, file_name):
+    """Find a file with a given file name under a given root path.
+    Returns:
+        str: The full file path from root path if exists, else return empty string.
+    """
+    for file in os.listdir(root_path):
+        file_path = os.path.join(root_path, file)
+        if file_path.endswith(file_name):
+            return file_path
+        elif os.path.isdir(file_path):
+            found_file = find_file(file_path, file_name)
+            if found_file:
+                return found_file
+    return ''
+
+
+def get_file_displayed_name(file_path):
+    """Gets the file name that is displayed in the UI by the file's path.
+    If there is no displayed name - returns the file name"""
+    file_type = find_type(file_path)
+    if FileType.INTEGRATION == file_type:
+        return get_yaml(file_path).get('display')
+    elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
+        return get_yaml(file_path).get('name')
+    elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.REPORT]:
+        return get_json(file_path).get('name')
+    elif file_type == FileType.OLD_CLASSIFIER:
+        return get_json(file_path).get('brandName')
+    elif file_type == FileType.LAYOUT:
+        return get_json(file_path).get('TypeName')
+    elif file_type == FileType.REPUTATION:
+        return get_json(file_path).get('id')
+    else:
+        return os.path.basename(file_path)

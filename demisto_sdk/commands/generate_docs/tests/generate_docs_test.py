@@ -2,12 +2,13 @@ import json
 import os
 
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
-    generate_integration_doc)
+    generate_integration_doc, generate_setup_section,
+    generate_single_command_section)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -62,16 +63,25 @@ def test_format_md():
 
 def test_string_escape_md():
     from demisto_sdk.commands.generate_docs.common import string_escape_md
-    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)')
-    assert '<' not in res
-    assert '>' not in res
+
+    res = string_escape_md('First fetch timestamp (<number> <time unit>, e.g., 12 hours, 7 days)',
+                           minimal_escaping=True, escape_multiline=True, escape_less_greater_signs=True)
+    assert res == 'First fetch timestamp (`<number>` `<time unit>`, e.g., 12 hours, 7 days)'
+
+    res = string_escape_md("format: <number> <time unit>, e.g., 12 hours, 7 days.",
+                           minimal_escaping=True, escape_multiline=True, escape_less_greater_signs=True)
+    assert res == "format: `<number>` `<time unit>`, e.g., 12 hours, 7 days."
+
     res = string_escape_md("new line test \n", escape_multiline=True)
     assert '\n' not in res
     assert '<br/>' in res
+
     res = string_escape_md('Here are "Double Quotation" marks')
     assert '"' in res
+
     res = string_escape_md("Here are 'Single Quotation' marks")
     assert "'" in res
+
     res = string_escape_md('- This _sentence_ has _wrapped_with_underscore_ and _another_ words.')
     assert '\\_wrapped_with_underscore\\_' in res
     assert '\\_sentence\\_' in res
@@ -311,6 +321,7 @@ def test_get_input_data_complex():
 
     assert _value == 'File.Name'
 
+
 # script tests
 
 
@@ -389,6 +400,27 @@ def test_generate_commands_section():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_command_section_with_empty_cotext_example():
+    """
+    When an string represents an empty dict '{}' is the context output
+    the 'Context Example' sections should be empty
+    """
+    example_dict = {
+        'test1': (None, None, '{}')
+    }
+    command = {'deprecated': False, 'name': 'test1'}
+
+    section, errors = generate_single_command_section(command, example_dict=example_dict, command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.', '', '#### Command Example', '```None```', '',
+                        '#### Human Readable Output', '\n>None', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
 def test_generate_commands_section_human_readable():
     yml_data = {
         'script': {
@@ -443,6 +475,41 @@ def test_generate_commands_with_permissions_section():
         'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
         '#### Human Readable Output', '\n', '']
 
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+def test_generate_commands_with_permissions_section_command_doesnt_exist():
+    """
+        Given
+            - Integration commands from yml file with command permission flag on.
+            - The commands from yml file do not exist in the given command permissions dict.
+        When
+            - Running the generate_table_section command.
+        Then
+            - Validate that in the #### Required Permissions section empty string is returned
+            - Validate that an error is returned in error list which indicated that for this command no permission were found.
+    """
+    yml_data = {
+        'script': {
+            'commands': [
+                {'deprecated': True,
+                 'name': 'deprecated-cmd'},
+                {'deprecated': False,
+                 'name': 'non-deprecated-cmd'}]}}
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
+        '!non-deprecated-cmd': 'SUPERUSER'})
+
+    expected_section = [
+        '## Commands',
+        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+        '', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+        'There are no input arguments for this command.', '', '#### Context Output', '',
+        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
+        '#### Human Readable Output', '\n', '']
+
+    assert 'Error! Command Permissions were not found for command non-deprecated-cmd' in errors
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
@@ -535,3 +602,54 @@ def test_generate_table_section_numbered_section():
     section = generate_table_section(data=[{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
                                      title='', horizontal_rule=False, numbered_section=True)
     assert section == expected_section
+
+
+yml_data_cases = [(
+    {"name": "test", "configuration": [
+        {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
+        {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
+    ]},  # case no param with additional info field
+    ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+     '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+     '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |', '    | test2 | True |',
+     '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
+        ]},  # case some params with additional info field
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | test1 | More info | True |', '    | test2 |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
+        ]},  # case all params with additional info field
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+)
+
+]
+
+
+@pytest.mark.parametrize("yml_input, expected_results", yml_data_cases)
+def test_generate_setup_section_with_additional_info(yml_input, expected_results):
+    """
+        Given
+            - A yml file with parameters in configuration section
+        When
+            - Running the generate_setup_section command.
+        Then
+            - Validate that the generated table has the 'Description' column if
+            at least one parameter has the additionalinfo field.
+    """
+    section = generate_setup_section(yml_input)
+    assert section == expected_results

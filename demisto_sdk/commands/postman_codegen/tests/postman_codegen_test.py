@@ -1,6 +1,5 @@
 import json
 import os
-from enum import Enum
 from pathlib import Path
 
 import yaml
@@ -153,9 +152,6 @@ class TestPostmanCodeGen:
         with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), 'r') as config_file:
             expected_config = json.load(config_file)
 
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), 'w') as g:
-            g.write(json.dumps(autogen_config, default=lambda o: o.name if isinstance(o, Enum) else o.__dict__, indent=4))
-
         assert expected_config == autogen_config.to_dict()
 
     def test_py_code_generated_from_config(self, mocker, tmpdir):
@@ -165,14 +161,12 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config: IntegrationGeneratorConfig = IntegrationGeneratorConfig(**config_dict)
 
         code = autogen_config.generate_integration_python_code()
-        with open(os.path.join(self.test_files_path, 'VT-actual-code.py'), 'w') as g:
-            g.write(code)
 
         with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.py'), mode='r') as f:
             expected_code = f.read()
@@ -200,7 +194,7 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config: IntegrationGeneratorConfig = IntegrationGeneratorConfig(**config_dict)
@@ -210,8 +204,6 @@ class TestPostmanCodeGen:
             expected_yml = f.read()
 
         actual_yml = yaml.dump(yaml_obj)
-        with open(os.path.join(self.test_integration_dir, 'actual.yml'), mode='w') as f:
-            f.write(actual_yml)
         assert expected_yml == actual_yml
 
     def test_generate_integration_package(self, tmpdir, mocker):
@@ -233,7 +225,7 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config: IntegrationGeneratorConfig = IntegrationGeneratorConfig(**config_dict)
@@ -264,7 +256,7 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config: IntegrationGeneratorConfig = IntegrationGeneratorConfig(**config_dict)
@@ -339,7 +331,7 @@ class TestPostmanCodeGen:
         - ensure in the code we return response.get('scans')
         - ensure in yml, we generate outputs for scans object, and not to the whole response
         """
-        with open(os.path.join(self.test_files_path, 'VT-config-result.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
             config_dict = json.load(f)
 
         config = IntegrationGeneratorConfig(**config_dict)
@@ -417,12 +409,6 @@ class TestPostmanCodeGen:
         integration_obj = config.generate_integration_yml()
         integration_yml = yaml.dump(integration_obj.to_yaml())
 
-        with open(Path(self.test_integration_dir, 'actual.py'), mode='w') as f:
-            f.write(integration_code)
-
-        with open(Path(self.test_integration_dir, 'actual.yml'), mode='w') as f:
-            f.write(integration_yml)
-
         assert "foo = args.get('foo')" in integration_code
         assert "def test_report_request(self, foo, resource):" in integration_code
         assert "'GET', f'vtapi/v2/test/{foo}', params=params, headers=headers)" in integration_code
@@ -490,9 +476,6 @@ class TestPostmanCodeGen:
             category=None
         )
 
-        with open(Path(self.test_integration_dir, 'actual-config.json'), mode='w') as f:
-            json.dump(config.to_dict(), f, indent=4)
-
         assert _testutil_get_param(config, 'apikey') is not None
         command = _testutil_get_command(config, 'test-report')
         assert command.headers == [
@@ -525,9 +508,6 @@ class TestPostmanCodeGen:
         }
 
         integration_code = config.generate_integration_python_code()
-
-        with open(Path(self.test_integration_dir, 'actual.py'), mode='w') as f:
-            f.write(integration_code)
 
         assert "headers['Authorization'] = f'SSWS {params[\"api_key\"]}'" in integration_code
 
@@ -609,9 +589,6 @@ class TestPostmanCodeGen:
             category=None
         )
 
-        with open(Path(self.test_integration_dir, 'actual-config.json'), mode='w') as f:
-            json.dump(config.to_dict(), f, indent=4)
-
         command = _testutil_get_command(config, 'test-create-group')
         assert len(command.arguments) == 3
         assert command.arguments[0].name == 'test_name'
@@ -629,9 +606,6 @@ class TestPostmanCodeGen:
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
         integration_yml = yaml.dump(integration_obj.to_yaml())
-
-        with open(Path(self.test_integration_dir, 'actual.py'), mode='w') as f:
-            f.write(integration_code)
 
         assert 'def test_create_group_request(self, test_name, test_id, test_key):' in integration_code
         assert 'data={"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code

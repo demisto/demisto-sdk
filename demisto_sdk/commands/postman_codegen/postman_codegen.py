@@ -296,7 +296,7 @@ def convert_request_to_command(item):
     logger.debug(f'creating url arguments of request: {item.get("name")}')
     request_url_object = item.get('request').get('url')
 
-    if not url_path:
+    if not request_url_object:
         logger.error(f'failed to get item.request.url.path object of request {item.get("name")}. '
                      f'Go to Postman, Save the request and try again with the updated collection.')
         return None

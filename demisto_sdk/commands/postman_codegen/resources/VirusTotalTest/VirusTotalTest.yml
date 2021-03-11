@@ -3,7 +3,7 @@ commonfields:
   id: VirusTotalTest
   version: -1
 configuration:
-- defaultvalue: ''
+- defaultvalue: https://www.virustotal.com
   display: Server URL
   name: url
   required: true

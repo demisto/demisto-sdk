@@ -51,7 +51,7 @@ class Client(BaseClient):
 
 
 def url_report_command(client, args):
-    resource = str(args.get('resource', ''))
+    resource = args.get('resource')
 
     response = client.url_report_request(resource)
     command_results = CommandResults(
@@ -65,7 +65,7 @@ def url_report_command(client, args):
 
 
 def domain_report_command(client, args):
-    domain = str(args.get('domain', ''))
+    domain = args.get('domain')
 
     response = client.domain_report_request(domain)
     command_results = CommandResults(
@@ -92,7 +92,7 @@ def file_scan_command(client, args):
 
 
 def file_download_command(client, args):
-    hash = str(args.get('hash', ''))
+    hash = args.get('hash')
 
     response = client.file_download_request(hash)
     command_results = CommandResults(

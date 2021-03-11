@@ -1196,29 +1196,29 @@
         {
             "name": "url",
             "display": "Server URL",
-            "defaultvalue": "",
-            "type_": 0,
+            "defaultvalue": "https://www.virustotal.com",
+            "type_": "STRING",
             "required": true
         },
         {
             "name": "proxy",
             "display": "Use system proxy",
             "defaultvalue": "",
-            "type_": 8,
+            "type_": "BOOLEAN",
             "required": false
         },
         {
             "name": "insecure",
             "display": "Trust any certificate",
             "defaultvalue": "",
-            "type_": 8,
+            "type_": "BOOLEAN",
             "required": false
         },
         {
             "name": "apikey",
             "display": "API Key",
             "defaultvalue": "",
-            "type_": 4,
+            "type_": "ENCRYPTED",
             "required": true
         }
     ]

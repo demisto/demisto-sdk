@@ -40,8 +40,8 @@ def json_body_to_code(request_json_body):
 
 
 class ParameterType(Enum):
+    STRING = 0
     NUMBER = 1
-    STRING = 2
     ENCRYPTED = 4
     BOOLEAN = 8
     AUTH = 9
@@ -156,15 +156,15 @@ class IntegrationGeneratorConfig:
         if commands and isinstance(commands, list) and len(commands) > 0 and isinstance(commands[0], dict):
             self.commands = [IntegrationGeneratorCommand(**command) for command in commands]
         else:
-            self.commands = commands or []
+            self.commands = commands
 
         if isinstance(params, list) and len(params) > 0 and isinstance(params[0], dict):
             self.params = [IntegrationGeneratorParam(**param) for param in params]
         else:
-            self.params = params or []
+            self.params = params
 
     def to_dict(self):
-        return json.loads(json.dumps(self, default=lambda o: o.__dict__))
+        return json.loads(json.dumps(self, default=lambda o: o.name if isinstance(o, Enum) else o.__dict__))
 
     @staticmethod
     def get_arg_default(arg: IntegrationGeneratorArg) -> Optional[str]:
@@ -235,9 +235,10 @@ class IntegrationGeneratorConfig:
             if code_arg_name in ILLEGAL_CODE_NAMES:
                 code_arg_name = f'{code_arg_name}{NAME_FIX}'
 
+            new_arg_type: Optional[str] = None
             if arg.type_ == 'array':
                 argument_default: Optional[str] = ', []'
-                new_arg_type: Optional[str] = 'argToList'
+                new_arg_type = 'argToList'
             elif arg.type_:
                 new_arg_type = ARGUMENT_TYPES[arg.type_]
                 if new_arg_type == 'bool':
@@ -518,7 +519,7 @@ class IntegrationGeneratorConfig:
             params.append(XSOARIntegration.Configuration(display=param.display,
                                                          name=param.name,
                                                          defaultvalue=param.defaultvalue,
-                                                         type_=param.type_,
+                                                         type_=param.type_.value,
                                                          required=param.required))
 
         return params

@@ -1,5 +1,6 @@
 import json
 import os
+from enum import Enum
 from pathlib import Path
 
 import yaml
@@ -153,7 +154,7 @@ class TestPostmanCodeGen:
             expected_config = json.load(config_file)
 
         with open(os.path.join(self.test_files_path, 'VT-config-result.json'), 'w') as g:
-            g.write(json.dumps(autogen_config, default=lambda o: o.__dict__, indent=4))
+            g.write(json.dumps(autogen_config, default=lambda o: o.name if isinstance(o, Enum) else o.__dict__, indent=4))
 
         assert expected_config == autogen_config.to_dict()
 
@@ -422,7 +423,7 @@ class TestPostmanCodeGen:
         with open(Path(self.test_integration_dir, 'actual.yml'), mode='w') as f:
             f.write(integration_yml)
 
-        assert "foo = str(args.get('foo', ''))" in integration_code
+        assert "foo = args.get('foo')" in integration_code
         assert "def test_report_request(self, foo, resource):" in integration_code
         assert "'GET', f'vtapi/v2/test/{foo}', params=params, headers=headers)" in integration_code
 

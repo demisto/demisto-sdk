@@ -220,13 +220,13 @@ class OpenAPIIntegration:
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
         client = BASE_CLIENT.replace('$REQUESTFUNCS$', ''.join(req_functions))
-        code = code.replace('$CLIENT$', client)
+        code = code.replace('$CLIENT$', client).replace('$CLIENT_API_KEY$', '')
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
             code = code.replace('$BEARERAUTHPARAMS$', BASE_TOKEN)
         else:
             code = '\n'.join(
-                [x for x in code.split('\n') if any(ext not in x for ext in ['$BEARERAUTHPARAMS$', '$CLIENT_API_KEY$'])])
+                [x for x in code.split('\n') if any(ext not in x for ext in ['$BEARERAUTHPARAMS$'])])
 
         if BASIC_AUTH_TYPE in self.configuration['auth']:
             code = code.replace('$BASEAUTHPARAMS$', BASE_CREDENTIALS)

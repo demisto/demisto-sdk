@@ -115,7 +115,8 @@ class TestOpenAPICodeGen:
             expected_py = py_file.read()
 
         py = integration.generate_python_code()
-
+        with open('../resources/actual.py', mode='w') as f:
+            f.write(py)
         assert py == expected_py
 
     def test_get_command_function(self):

@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput, json_body_to_code)

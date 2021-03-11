@@ -286,6 +286,9 @@ def unify(**kwargs):
 @click.option(
     '--debug-git', is_flag=True,
     help='Whether to print debug logs for git statuses.')
+@click.option(
+    '--print-pykwalify', is_flag=True,
+    help='Whether to print the pykwalify log errors.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)

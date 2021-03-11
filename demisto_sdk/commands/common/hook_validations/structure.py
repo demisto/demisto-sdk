@@ -47,13 +47,15 @@ class StructureValidator(BaseValidator):
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
-                 suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False):
+                 suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False,
+                 pykwalify_logs=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
+        self.pykwalify_logs = pykwalify_logs
 
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         if isinstance(self.scheme_name, str):
@@ -130,11 +132,12 @@ class StructureValidator(BaseValidator):
         click.secho(f'Validating scheme for {self.file_path}')
 
         try:
-            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
+            # disabling massages of level ERROR and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
             log.setLevel(logging.CRITICAL)
-            if self.suppress_print:
-                logging.disable(logging.CRITICAL)
+            if self.pykwalify_logs:
+                # reactivating pykwalify ERROR level logs
+                logging.disable(logging.ERROR)
             scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value  # type: ignore
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))

@@ -1,5 +1,7 @@
 # Changelog
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Improved the pykwalify errors in the **validate** command.
+* Added the *--print-pykwalify* flag in the **validate** command.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

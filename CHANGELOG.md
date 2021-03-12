@@ -1,5 +1,6 @@
 # Changelog
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added a validation that contrib/partner details are not in the detailed description file
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

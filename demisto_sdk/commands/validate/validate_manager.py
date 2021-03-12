@@ -30,6 +30,8 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
@@ -136,7 +138,6 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
         self.is_external_repo = is_external_repo
@@ -352,7 +353,7 @@ class ValidateManager:
                                                  skip_schema_check=self.skip_schema_check)
 
         # schema validation
-        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
             if not structure_validator.is_valid_file():
                 return False
 
@@ -380,6 +381,8 @@ class ValidateManager:
                                                    is_modified)
             else:
                 click.secho('Skipping release notes validation', fg='yellow')
+        elif file_type == FileType.DESCRIPTION:
+            return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -468,6 +471,12 @@ class ValidateManager:
         return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """
+
+    def validate_description(self, file_path, pack_error_ignore_list):
+        description_validator = DescriptionValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     json_file_path=self.json_file_path)
+        return description_validator.is_valid_desc()
 
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,

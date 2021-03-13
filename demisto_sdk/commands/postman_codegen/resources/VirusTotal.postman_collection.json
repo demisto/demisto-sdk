@@ -191,7 +191,7 @@
 					"formdata": [
 						{
 							"key": "apikey",
-							"value": "b7cb886740962d8a06b37e103a456616a5e99a42c1c9108326e614a963286afe",
+							"value": "TEST_VALUE",
 							"type": "text"
 						},
 						{
@@ -226,7 +226,7 @@
 							"formdata": [
 								{
 									"key": "apikey",
-									"value": "b7cb886740962d8a06b37e103a456616a5e99a42c1c9108326e614a963286afe",
+									"value": "TEST_VALUE",
 									"type": "text"
 								},
 								{
@@ -421,11 +421,6 @@
 	"auth": {
 		"type": "apikey",
 		"apikey": [
-			{
-				"key": "value",
-				"value": "f9fab4e5f473f64bb17bdee9fc0e347e734c8bdc9b46875f243894c745636d8f",
-				"type": "string"
-			},
 			{
 				"key": "in",
 				"value": "query",

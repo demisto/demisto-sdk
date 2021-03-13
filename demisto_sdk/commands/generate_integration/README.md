@@ -222,7 +222,7 @@ Supported paramter types:
 |commands.outputs|list|List of command outputs.| |Optional|
 |commands.outputs.name|string|JSON path to this field/output|`scan_id`, `alerts.severity`|Required|
 |commands.outputs.description|string|Something that will describe what this field is|Severity of the alert, possible values are `low` `medium` and `high`|Optional|
-|commands.outputs.type_|string|Field/output type.|`String`, `Number`, `Date`, `Unknown`|Optional|
+|commands.outputs.type_|string|Field/output type.|`String`, `Number`, `Date`postman_codegen_test.py:107, `Unknown`|Optional|
 
 **Example**
 ```

@@ -11,11 +11,6 @@
         "type": "apikey",
         "apikey": [
             {
-                "key": "value",
-                "value": "f9fab4e5f473f64bb17bdee9fc0e347e734c8bdc9b46875f243894c745636d8f",
-                "type": "string"
-            },
-            {
                 "key": "in",
                 "value": "query",
                 "type": "string"

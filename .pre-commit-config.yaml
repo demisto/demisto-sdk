@@ -1,4 +1,4 @@
-exclude: demisto_sdk/tests/test_files/*|.circleci/config.yml|demisto_sdk/commands/postman_codegen/resources/*
+exclude: demisto_sdk/tests/test_files/*|.circleci/config.yml|demisto_sdk/commands/postman_codegen/resources/*|demisto_sdk/commands/generate_integration/resources/*
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0

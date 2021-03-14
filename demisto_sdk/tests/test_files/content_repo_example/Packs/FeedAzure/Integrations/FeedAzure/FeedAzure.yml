@@ -166,6 +166,11 @@ configuration:
   name: feedTags
   required: false
   type: 0
+- additionalinfo: Supports CSV values.
+  display: Tags
+  name: feedTags
+  required: false
+  type: 0
 - additionalinfo: The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed
   display: Traffic Light Protocol Color
   name: tlp_color

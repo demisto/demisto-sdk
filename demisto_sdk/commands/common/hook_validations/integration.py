@@ -51,6 +51,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_removed_integration_parameters(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
+            self.is_there_duplicate_args(),
+            self.is_there_duplicate_params(),
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
             self.is_changed_removed_yml_fields(),
@@ -95,9 +97,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
             self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path(),
-            self.is_there_duplicate_args(),
-            self.is_there_duplicate_params(),
+            self.is_valid_integration_file_path()
         ]
 
         if not skip_test_conf:
@@ -504,7 +504,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         has_duplicate_params = False
         configurations = self.current_file.get('configuration', [])
-        param_list = set()  # type: set
+        param_list = []  # type: list
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
@@ -514,7 +514,7 @@ class IntegrationValidator(ContentEntityValidator):
                     has_duplicate_params = True
 
             else:
-                param_list.add(param_name)
+                param_list.append(param_name)
 
         return has_duplicate_params
 

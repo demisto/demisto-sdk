@@ -522,6 +522,7 @@ class TestPackValidation:
         assert 'Playbook conditional task with id:15 has an unhandled condition: MAYBE' in result.output
         assert "The files were found as invalid, the exact error message can be located above" in result.stdout
         assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
+        assert '''The argument 'limit' is duplicated in 'azure-get-indicators'.''' in result.stdout
         assert result.stderr == ""
 
     def test_integration_validate_invalid_pack_path(self):

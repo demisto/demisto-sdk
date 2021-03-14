@@ -475,6 +475,39 @@ class TestIntegrationValidation:
         assert "can't be hidden. Please remove this field" not in result.stdout
         assert result.stderr == ""
 
+    def test_duplicate_param_and_argument_invalid(self, mocker, repo):
+        """
+        Given
+        - An invalid Integration - duplicate argument in a command, and duplicate param.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IN113 - Duplicate argument in a command in the integration.
+        - Ensure validate fails on IN114 - Duplicate parameter in integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        first_command_args = invalid_integration_yml['script']['commands'][0]['arguments']
+        first_command_args.append(first_command_args[0])
+        invalid_integration_yml['configuration'].append(
+            {'additionalinfo': 'Supports CSV values', 'display': 'Tags', 'name': 'feedTags', 'required': False,
+             'type': 0})
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'IN113' in result.stdout
+        assert 'IN114' in result.stdout
+        assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
+        assert f'''The argument '{first_command_args[0]['name']}' is duplicated''' in result.stdout
+
 
 class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
@@ -521,8 +554,6 @@ class TestPackValidation:
         assert f'{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml' in result.output
         assert 'Playbook conditional task with id:15 has an unhandled condition: MAYBE' in result.output
         assert "The files were found as invalid, the exact error message can be located above" in result.stdout
-        assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
-        assert '''The argument 'limit' is duplicated in 'azure-get-indicators'.''' in result.stdout
         assert result.stderr == ""
 
     def test_integration_validate_invalid_pack_path(self):

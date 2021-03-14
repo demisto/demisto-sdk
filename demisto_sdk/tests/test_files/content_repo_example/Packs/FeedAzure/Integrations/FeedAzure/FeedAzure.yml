@@ -166,11 +166,6 @@ configuration:
   name: feedTags
   required: false
   type: 0
-- additionalinfo: Supports CSV values.
-  display: Tags
-  name: feedTags
-  required: false
-  type: 0
 - additionalinfo: The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed
   display: Traffic Light Protocol Color
   name: tlp_color
@@ -187,13 +182,6 @@ name: AzureFeed
 script:
   commands:
   - arguments:
-    - default: false
-      defaultValue: '10'
-      description: The maximum number of indicators to return. The default value is 10.
-      isArray: false
-      name: limit
-      required: false
-      secret: false
     - default: false
       defaultValue: '10'
       description: The maximum number of indicators to return. The default value is 10.

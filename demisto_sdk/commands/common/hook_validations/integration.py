@@ -482,7 +482,7 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         is_there_duplicates = False
         for command in commands:
-            arg_list = set()
+            arg_list = []  # type: list
             for arg in command.get('arguments', []):
                 if arg in arg_list:
                     error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
@@ -491,7 +491,7 @@ class IntegrationValidator(ContentEntityValidator):
                         is_there_duplicates = True
 
                 else:
-                    arg_list.add(arg)
+                    arg_list.append(arg)
 
         return is_there_duplicates
 

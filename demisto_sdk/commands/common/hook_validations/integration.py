@@ -97,8 +97,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
             self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path()
-            # self.is_there_duplicate_params(),
+            self.is_valid_integration_file_path(),
+            self.is_there_duplicate_params()
             # self.is_there_duplicate_args()
         ]
 

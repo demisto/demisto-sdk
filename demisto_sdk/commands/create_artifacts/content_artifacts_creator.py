@@ -314,6 +314,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
     Raises:
         Exception: Raise caught exception for further cleanups.
     """
+    global logger
     for future in as_completed(futures):
         try:
             result = future.result()
@@ -541,6 +542,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
+    global logger
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
@@ -923,6 +925,8 @@ def zip_packs(artifact_manager: ArtifactsManager):
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
     """Report artifacts results destination"""
+    global logger
+
     logger.info("\nArtifacts created:")
     if artifact_manager.zip_artifacts:
         template = "\n\t - {}.zip"
@@ -942,6 +946,8 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
 def sign_packs(artifact_manager: ArtifactsManager):
     """Sign packs directories"""
+    global logger
+
     if artifact_manager.signDirectory and artifact_manager.signature_key:
         with ProcessPoolHandler(artifact_manager) as pool:
             with open('keyfile', 'wb') as keyfile:

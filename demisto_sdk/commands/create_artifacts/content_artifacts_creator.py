@@ -281,6 +281,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
+    global logger
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool

@@ -51,6 +51,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_removed_integration_parameters(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
+            self.is_there_duplicate_args(),
+            self.is_there_duplicate_params(),
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
             self.is_changed_removed_yml_fields(),

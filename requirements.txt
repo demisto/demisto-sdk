@@ -11,7 +11,7 @@ dateparser>=0.7.2
 demisto-py>=2.0.19
 dictor>=0.1.5
 docker==4.3.0  # Issue #27819
-flake8>=3.8.3
+flake8==3.8.3
 flatten_dict>=0.3.0
 gitdb>=4.0.5
 gitpython>=3.1.0

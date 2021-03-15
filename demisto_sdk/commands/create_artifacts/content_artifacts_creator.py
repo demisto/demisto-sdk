@@ -20,9 +20,6 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-####################
-# Global variables #
-####################
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
@@ -30,6 +27,10 @@ from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
+
+####################
+# Global variables #
+####################
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
@@ -539,7 +540,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
-    global logger
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 

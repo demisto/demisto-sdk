@@ -540,6 +540,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         ArtifactsReport: ArtifactsReport object.
     """
     global logger
+    logger = logging_setup(3)
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 

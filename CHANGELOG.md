@@ -1,5 +1,6 @@
 # Changelog
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

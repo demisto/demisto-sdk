@@ -506,19 +506,19 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     if 'all' in artifact_manager.pack_names:
         for pack_name, pack in artifact_manager.content.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack, logger)))
+                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
 
     else:
         for pack_name in artifact_manager.pack_names:
             if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.content.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.content.packs[pack_name], logger)
+                                             args=(artifact_manager, artifact_manager.content.packs[pack_name])
                                              ))
 
     return futures
 
 
-def dump_pack(artifact_manager: ArtifactsManager, pack: Pack, logger: logging.Logger) -> ArtifactsReport:
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
     """ Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
@@ -540,7 +540,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack, logger: logging.Lo
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
-    # global logger
+    global logger
 
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 

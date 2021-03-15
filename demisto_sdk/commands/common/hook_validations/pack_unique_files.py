@@ -34,6 +34,7 @@ SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
+INCORRECT_PREFIX_PACK_NAME = ["Playbook", "Integration", "Script"]
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -225,10 +226,23 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
 
             # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '').lower()
-            if not name_field or 'fill mandatory field' in name_field:
+            name_field = metadata.get(PACK_METADATA_NAME, '')
+            if not name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
+            else:
+                if len(name_field) < 3:
+                    if self._add_error(Errors.pack_metadata_name_not_valid("short"), self.pack_meta_file):
+                        return False
+                if name_field[0].islower():
+                    if self._add_error(Errors.pack_metadata_name_not_valid("capital"), self.pack_meta_file):
+                        return False
+                if name_field.split()[0] in INCORRECT_PREFIX_PACK_NAME:
+                    if self._add_error(Errors.pack_metadata_name_not_valid("prefix"), self.pack_meta_file):
+                        return False
+                if "pack" in name_field.lower():
+                    if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
+                        return False
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:

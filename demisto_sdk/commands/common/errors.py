@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111']
+                         'MP106', 'RM102', 'PB110', 'PB111', 'PA108']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
@@ -1124,7 +1124,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_name_not_valid():
+    def pack_metadata_name_not_valid(reason=None):
+        if reason == "short":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
+                   f'characters long. '
+        if reason == "capital":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
+                   f'letter. '
+        if reason == "prefix":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not start with one of ' \
+                   f'these words: ["Playbook", "Integration", "Script"]. '
+        if reason == "pack":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the word: ' \
+                   f'"Pack". '
         return f'Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
 
     @staticmethod

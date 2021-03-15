@@ -88,7 +88,7 @@ class LintManager:
         Returns:
             dict: facts
         """
-        # global logger
+        global logger
         facts = {
             "content_repo": None,
             "requirements_3": None,

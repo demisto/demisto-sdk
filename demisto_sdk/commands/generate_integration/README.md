@@ -30,7 +30,6 @@ Generates `integration-VirusTotal.yml` under `/output/path` directory.
 
 
 
-
 ## Authentication
 This section will define the way the integration will authenticate with 3rd party product/service.
 Supported authentication types:
@@ -197,16 +196,23 @@ Supported paramter types:
 |----------|----------|-----------|--------|-----------|
 |commands.arguments|list|List of command arguments. These arguments will be passed as part of the request.| |Optional|
 |commands.arguments.in_|string|Possible values are `query` `url` `body`. If set to `query`, the argument will be passed in the request url query like `?resource={resource}`. If set to `body`, the argument will be passed in the request body. If set to `url`, the argument will be passed as part of the url like `/vtapi/v2/url/{resource}`|query, url, body|Required|
+|commands.arguments.description|string|Argument description.|Machine ID to be used to stop the isolation. e.g. 0a3250e0693a109f1affc9217be9459028aa8426|Optional|
+|commands.arguments.required|boolean|Set to true if the argument is mandatory|false|Optional|
+|commands.arguments.is_array|boolean|Set to true if the argument is of type array|`xdr-get-incidents` receives argument of type array `incident_id_list`. When list of ids passed, the command returns all the incidents with the corresponding ids.|Optional|
+|commands.arguments.default_value|string|Argument initial value.|`size`/`limit` arguments usually will have default values like `50`|Optional|
+|commands.arguments.predefined_values|list|List of strings. If the argument has predefined list of possible values, then set this field.|['low','medium','high']|Optional|
+|commands.arguments.type_|string|Argument casting and conversion.|`int` -> `size = int(size)`, `array` -> `scan_ids = argToList(scan_ids)`|Optional|
+|commands.arguments.in_object|list|Not supported yet.| |Optional|
 
 **Example**
 ```
 "arguments": [
     {
-        "name": "resource",
-        "description": "",
+        "name": "size",
+        "description": "Number of incidents to return.",
         "required": false,
         "is_array": false,
-        "default_value": "",
+        "default_value": "10",
         "predefined_values": [],
         "ref": null,
         "type_": null,
@@ -271,3 +277,6 @@ def create_profile(self, name, id):
 
     return response
 ```
+
+
+## Troubleshooting

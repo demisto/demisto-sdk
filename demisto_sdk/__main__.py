@@ -1056,7 +1056,7 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
 @click.option(
     '-cp', '--command-prefix', help='The prefix for each command in the integration. By default is the product name in lower case', required=False)
 @click.option(
-    '--config', help='Used for advanced integration customisation. Generates a config json file instead of integration.', required=False, is_flag=True)
+    '--config-out', help='Used for advanced integration customisation. Generates a config json file instead of integration.', required=False, is_flag=True)
 @click.option(
     '--verbose', help='Print debug level logs', required=False, is_flag=True)
 def postman_codegen_command(**kwargs):

@@ -26,6 +26,7 @@ ARGUMENT_TYPES = {
     'file': 'str',
     'int': 'int',
     'str': 'str',
+    'bool': 'bool',
     None: None
 }
 

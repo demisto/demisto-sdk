@@ -50,7 +50,7 @@ def test_json_body_to_code():
 
 
 class TestCodeGenerator:
-    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'generate_integration', 'resources')
+    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'generate_integration', 'tests', 'test_files')
     test_integration_dir = os.path.join(test_files_path, 'VirusTotalTest')
     postman_collection_path = os.path.join(test_files_path, 'VirusTotal.postman_collection.json')
     autogen_config_path = os.path.join(test_files_path, 'VirusTotal-autogen-config.json')
@@ -64,7 +64,7 @@ class TestCodeGenerator:
         identical with the actual result.
 
         If this test fails, validate that the reason for the failure is valid and then
-        update the test python file under resources folder.
+        update the test python file under test_files folder.
 
         Given
         - code genereator config file, which was generated for VirusTotal api (4 commands)
@@ -74,7 +74,7 @@ class TestCodeGenerator:
 
         Then
         - ensure code is generated
-        - esnrue the code is identical to what is stored under resources folder
+        - esnrue the code is identical to what is stored under test_files folder
         """
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
@@ -103,7 +103,7 @@ class TestCodeGenerator:
         identical with the actual result.
 
         If this test fails, validate that the reason for the failure is valid and then
-        update the test python file under resources folder.
+        update the test python file under test_files folder.
 
         Given
         - generated xsoar integration config file for VirusTotal Test
@@ -112,7 +112,7 @@ class TestCodeGenerator:
         - generating integration yml file
 
         Then
-        - ensure it generates the yml successfully and the yml is the exact as expected yml from resources folder
+        - ensure it generates the yml successfully and the yml is the exact as expected yml from test_files folder
        """
         import yaml
 

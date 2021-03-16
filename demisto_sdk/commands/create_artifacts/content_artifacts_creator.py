@@ -20,9 +20,6 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-####################
-# Global variables #
-####################
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
@@ -30,6 +27,10 @@ from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
+
+####################
+# Global variables #
+####################
 
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
@@ -280,6 +281,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
+    global logger
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool
@@ -312,6 +314,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
     Raises:
         Exception: Raise caught exception for further cleanups.
     """
+    global logger
     for future in as_completed(futures):
         try:
             result = future.result()
@@ -923,6 +926,8 @@ def zip_packs(artifact_manager: ArtifactsManager):
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
     """Report artifacts results destination"""
+    global logger
+
     logger.info("\nArtifacts created:")
     if artifact_manager.zip_artifacts:
         template = "\n\t - {}.zip"
@@ -942,6 +947,8 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
 def sign_packs(artifact_manager: ArtifactsManager):
     """Sign packs directories"""
+    global logger
+
     if artifact_manager.signDirectory and artifact_manager.signature_key:
         with ProcessPoolHandler(artifact_manager) as pool:
             with open('keyfile', 'wb') as keyfile:

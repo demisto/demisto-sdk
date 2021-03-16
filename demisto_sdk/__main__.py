@@ -979,10 +979,7 @@ def update_pack_releasenotes(**kwargs):
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text,
                                           prev_rn_text=prev_rn_text)
-                updated = update_pack_rn.execute_update()
-                # if new release notes were created and if previous release notes existed, remove previous
-                if updated and prev_rn_text:
-                    os.unlink(packs_existing_rn[pack])
+                update_pack_rn.execute_update()
 
             else:
                 print_warning(f'Either no changes were found in {pack} pack '

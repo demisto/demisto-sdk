@@ -75,14 +75,14 @@ class UpdateRN:
                           f" is not versioned.")
         else:
             try:
-                if self.is_bump_required():
+                new_metadata = self.get_pack_metadata()
+                if self.is_bump_required(new_metadata):
                     if self.update_type is None:
                         self.update_type = "revision"
                     new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
                     print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
                                 LOG_COLORS.NATIVE)
                 else:
-                    new_metadata = self.get_pack_metadata()
                     new_version = new_metadata.get('currentVersion', '99.99.99')
             except ValueError as e:
                 click.secho(str(e), fg='red')
@@ -106,7 +106,7 @@ class UpdateRN:
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
-                if self.is_bump_required():
+                if self.is_bump_required(new_metadata):
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
                 if is_docker_image_changed:
@@ -151,7 +151,7 @@ class UpdateRN:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
 
-    def is_bump_required(self):
+    def is_bump_required(self, new_metadata):
         """
         This function checks to see if the currentVersion in the pack metadata has been changed or
         not. Additionally, it will verify that there is no conflict with the currentVersion in the
@@ -160,9 +160,13 @@ class UpdateRN:
         try:
             if self.only_docs_changed():
                 return False
-            new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
+                # TODO check prev_rn_text empty when first time creating release note
+                if self.prev_rn_text:
+                    print_error(f'Master and local branch have both added to the pack {self.pack} update release notes.'
+                                f'Please merge from master and re-run the command.')
+                    sys.exit(1)
                 return True
             return False
         except RuntimeError:

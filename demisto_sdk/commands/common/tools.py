@@ -363,7 +363,7 @@ def get_file(method, file_path, type_of_file):
                 print_error(
                     "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return {}
-    if type(data_dictionary) in (dict, list):
+    if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
 

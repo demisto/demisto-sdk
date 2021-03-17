@@ -1,4 +1,5 @@
 # Changelog
+* fixed an issue where **validate** a pack name is in correct syntax
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
 
 # 1.3.1

@@ -35,6 +35,8 @@ ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
 INCORRECT_PREFIX_PACK_NAME = ["Playbook", "Integration", "Script"]
+PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[^A-Z]|[^A-Z]PACK$|' \
+          '[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$'
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -240,7 +242,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 if name_field.split()[0] in INCORRECT_PREFIX_PACK_NAME:
                     if self._add_error(Errors.pack_metadata_name_not_valid("prefix"), self.pack_meta_file):
                         return False
-                if "pack" in name_field.lower():
+                if re.findall(PATTERN, name_field):
                     if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
                         return False
 

@@ -76,14 +76,14 @@ class UpdateRN:
                           f" is not versioned.")
         else:
             try:
-                new_metadata = self.get_pack_metadata()
-                if self.is_bump_required(new_metadata):
+                if self.is_bump_required():
                     if self.update_type is None:
                         self.update_type = "revision"
                     new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
                     print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
                                 LOG_COLORS.NATIVE)
                 else:
+                    new_metadata = self.get_pack_metadata()
                     new_version = new_metadata.get('currentVersion', '99.99.99')
             except ValueError as e:
                 click.secho(str(e), fg='red')
@@ -96,7 +96,7 @@ class UpdateRN:
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
                 if 'yml' in packfile and file_type == FileType.INTEGRATION:
-                    docker_image_name = check_docker_image_changed(packfile)
+                    docker_image_name: Optional[str] = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
@@ -107,7 +107,7 @@ class UpdateRN:
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
-                if self.is_bump_required(new_metadata):
+                if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
                 if self.existing_rn_changed:
@@ -150,7 +150,7 @@ class UpdateRN:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
 
-    def is_bump_required(self, new_metadata):
+    def is_bump_required(self):
         """
         This function checks to see if the currentVersion in the pack metadata has been changed or
         not. Additionally, it will verify that there is no conflict with the currentVersion in the
@@ -159,6 +159,7 @@ class UpdateRN:
         try:
             if self.only_docs_changed():
                 return False
+            new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 if self.prev_rn_text:

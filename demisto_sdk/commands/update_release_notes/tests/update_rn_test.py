@@ -612,7 +612,7 @@ class TestRNUpdate(unittest.TestCase):
         mock_master.return_value = True
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-        assert client.is_bump_required(dict()) is False
+        assert client.is_bump_required() is False
 
 
 class TestRNUpdateUnit:
@@ -696,14 +696,13 @@ class TestRNUpdateUnit:
 
         """
         self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
-        shutil.copy(
-            '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
-            self.meta_backup)
+        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+                    self.meta_backup)
 
     def teardown(self):
         if self.meta_backup:
             shutil.copy(self.meta_backup,
-                        '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+                        'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
@@ -886,12 +885,13 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value=git_current_version)
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
         # mocking the only_docs_changed to test only the is_bump_required
         mocker.patch.object(UpdateRN, 'only_docs_changed', return_value=False)
         mocker.patch.object(Popen, 'communicate',
                             return_value=(json.dumps({"currentVersion": git_current_version}), ''))
         mocker.patch('sys.exit', return_value=None)
-        bump_result = update_rn.is_bump_required({"currentVersion": pack_current_version})
+        bump_result = update_rn.is_bump_required()
         assert bump_result is expected_result
 
     def test_renamed_files(self, mocker):
@@ -1068,9 +1068,7 @@ class TestRNUpdateUnit:
             - A new record with the updated docker image is added.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open(
-                '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
-                'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
@@ -1090,6 +1088,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
+
         os.unlink('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md')
 
     def test_add_and_modify_files_without_update_docker_image(self, mocker):

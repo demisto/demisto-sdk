@@ -92,11 +92,11 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            docker_image_name = None
+            docker_image_name: Optional[str] = None
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
                 if 'yml' in packfile and file_type == FileType.INTEGRATION:
-                    docker_image_name: Optional[str] = check_docker_image_changed(packfile)
+                    docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
@@ -428,6 +428,7 @@ class UpdateRN:
         updated_rn = re.sub(update_docker_image_regex, docker_image_str, rn_string)
         self.existing_rn_changed = True
         return updated_rn
+
 
 def get_file_description(path, file_type):
     if not os.path.isfile(path):

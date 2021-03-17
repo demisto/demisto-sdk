@@ -161,7 +161,6 @@ class UpdateRN:
                 return False
             new_version = new_metadata.get('currentVersion', '99.99.99')
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
-                # TODO check prev_rn_text empty when first time creating release note
                 if self.prev_rn_text:
                     print_error(f'Master and local branch have both added to the pack {self.pack} update release notes.'
                                 f'Please merge from master and re-run the command.')

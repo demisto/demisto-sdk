@@ -612,7 +612,7 @@ class TestRNUpdate(unittest.TestCase):
         mock_master.return_value = True
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-        assert client.is_bump_required() is False
+        assert client.is_bump_required(dict()) is False
 
 
 class TestRNUpdateUnit:
@@ -884,13 +884,12 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value=git_current_version)
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
-        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
         # mocking the only_docs_changed to test only the is_bump_required
         mocker.patch.object(UpdateRN, 'only_docs_changed', return_value=False)
         mocker.patch.object(Popen, 'communicate',
                             return_value=(json.dumps({"currentVersion": git_current_version}), ''))
         mocker.patch('sys.exit', return_value=None)
-        bump_result = update_rn.is_bump_required()
+        bump_result = update_rn.is_bump_required({"currentVersion": pack_current_version})
         assert bump_result is expected_result
 
     def test_renamed_files(self, mocker):

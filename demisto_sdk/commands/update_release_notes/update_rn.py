@@ -487,4 +487,3 @@ def get_from_version_at_update_rn(path: str):
         print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
         return
     return get_from_version(path)
-

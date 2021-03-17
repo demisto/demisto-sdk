@@ -455,9 +455,12 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
 
 def check_docker_image_changed(added_or_modified_yml):
     try:
+        # if cat-file command fails, it means file did not exist in origin/master, therefore release notes for
+        # docker image should not be added.
+        run_command(f'git cat-file -e origin/master:{added_or_modified_yml}', exit_on_error=False)
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
-        if any(['is outside repository' in exp for exp in e.args]):
+        if any(['is outside repository' in exp or 'Not a valid object name' in exp for exp in e.args]):
             return False, ''
         else:
             print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
@@ -484,3 +487,4 @@ def get_from_version_at_update_rn(path: str):
         print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
         return
     return get_from_version(path)
+

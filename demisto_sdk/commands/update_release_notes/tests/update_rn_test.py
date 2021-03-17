@@ -511,8 +511,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
-                                       desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -530,8 +529,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
-                                       desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -551,8 +549,7 @@ class TestRNUpdate(unittest.TestCase):
                                         'fromversion': '5.0.0'},
             'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True,
-                                   'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -699,13 +696,14 @@ class TestRNUpdateUnit:
 
         """
         self.meta_backup = str(tmp_path / 'pack_metadata-backup.json')
-        shutil.copy('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
-                    self.meta_backup)
+        shutil.copy(
+            '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+            self.meta_backup)
 
     def teardown(self):
         if self.meta_backup:
             shutil.copy(self.meta_backup,
-                        'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
+                        '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json')
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
@@ -762,7 +760,8 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
+                                  docker_image_name=None)
 
     def test_update_existing_rn(self, mocker):
         """
@@ -977,15 +976,15 @@ class TestRNUpdateUnit:
         modified = {'/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml'}
         added = {}
         id_set_content = {'integrations':
-            [
-                {'FeedTAXII_integration':
-                     {'name': 'FeedTAXII_integration',
-                      'file_path': '/FeedTAXII_integration.yml',
-                      'pack': 'FeedTAXII',
-                      'api_modules': 'ApiModules_script'
-                      }
-                 }
-            ]}
+                          [
+                              {'FeedTAXII_integration':
+                               {'name': 'FeedTAXII_integration',
+                                'file_path': '/FeedTAXII_integration.yml',
+                                'pack': 'FeedTAXII',
+                                'api_modules': 'ApiModules_script'
+                                }
+                               }
+                          ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
 
@@ -1069,7 +1068,9 @@ class TestRNUpdateUnit:
             - A new record with the updated docker image is added.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open(
+                '/Users/tneeman/dev/demisto/demisto-sdk/demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json',
+                'r') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
@@ -1089,9 +1090,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
-
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
-            file.write('')
+        os.unlink('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md')
 
     def test_add_and_modify_files_without_update_docker_image(self, mocker):
         """
@@ -1138,7 +1137,7 @@ class TestRNUpdateUnit:
         (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149616',
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
-         'to: *demisto/python3:3.9.1.149616*\n', True),
+         'to: *demisto/python3:3.9.1.149616*\n', True)
     ]
 
     @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)
@@ -1156,9 +1155,9 @@ class TestRNUpdateUnit:
 
         Then
         - Case a: Release notes were not changed, existing_rn_changed is false.
-        - Case a: Release notes were changed with the updated docker image, existing_rn_changed is true.
-        - Case a: Release notes were not changed, existing_rn_changed is false.
-        - Case a: Release notes were changed to most updated docker image, existing_rn_changed is true.
+        - Case b: Release notes were changed with the updated docker image, existing_rn_changed is true.
+        - Case c: Release notes were not changed, existing_rn_changed is false.
+        - Case d: Release notes were changed to most updated docker image, existing_rn_changed is true.
         """
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))

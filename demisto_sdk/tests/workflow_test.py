@@ -315,11 +315,11 @@ def rename_incident_field(content_repo: ContentGitRepo):
 
 
 @pytest.mark.parametrize("function", [
-    init_pack,
+    # init_pack,
     init_integration,
-    modify_entity,
-    all_files_renamed,
-    rename_incident_field
+    # modify_entity,
+    # all_files_renamed,
+    # rename_incident_field
 ])
 def test_workflow_by_sequence(function: Callable):
     """

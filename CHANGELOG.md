@@ -1,10 +1,10 @@
 # Changelog
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
-* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
 * The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.
 * Fixed an issue where **validate** would incorrectly identify files as renamed.
 * Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.

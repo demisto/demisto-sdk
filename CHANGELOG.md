@@ -1,5 +1,7 @@
 # Changelog
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
+* Fixed issue where **update-release-notes** added docker image updated more than once if command was called again.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

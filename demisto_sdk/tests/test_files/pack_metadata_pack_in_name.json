@@ -1,5 +1,5 @@
 {
-    "name": "AWSPackFeed",
+    "name": "AWSThePackFeed",
     "description": "Indicators feed from AWS",
     "support": "xsoar",
     "serverMinVersion": "5.5.0",

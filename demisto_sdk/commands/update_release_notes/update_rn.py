@@ -5,12 +5,12 @@ import copy
 import errno
 import json
 import os
+import re
 import sys
 from distutils.version import LooseVersion
-from typing import Union, Optional
+from typing import Optional, Union
 
 import click
-import re
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,

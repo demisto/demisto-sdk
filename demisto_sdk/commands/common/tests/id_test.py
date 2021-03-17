@@ -551,6 +551,36 @@ def test_is_mapper_incident_types_found__missing_classifier():
         "The mapper incidenttypes was found"
 
 
+def test_is_unique_file_valid_in_set(pack):
+    """
+    Given
+        - pack with pack_metadata file.
+    When
+        - is_unique_file_valid_in_set is called
+    Then
+        - Ensure it is valid and no error is returned.
+    """
+    pack_metadata_data = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    pack.pack_metadata.write_json(pack_metadata_data)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    is_valid, error = validator.is_unique_file_valid_in_set(pack_path=pack.path)
+    assert is_valid
+    assert not error
+
+
 def test_new_valid_is_pack_display_name_already_exist():
     """
     Given

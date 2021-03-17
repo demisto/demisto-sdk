@@ -1089,7 +1089,8 @@ class TestRNUpdateUnit:
             RN = file.read()
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
 
-        os.unlink('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md')
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
+            file.write('')
 
     def test_add_and_modify_files_without_update_docker_image(self, mocker):
         """

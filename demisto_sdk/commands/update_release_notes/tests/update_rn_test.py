@@ -1070,6 +1070,8 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
+            file.write('### Integrations\n')
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
@@ -1082,7 +1084,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+        client = UpdateRN(pack_path="Packs/Test", update_type=None,
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:

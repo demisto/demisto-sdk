@@ -714,8 +714,8 @@ def test_invalid_is_pack_display_name_already_exist():
     }
     is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert not is_valid
-    assert error == ('The name of your pack is: VMware but there is an existing pack with that '
-                     "name, please change the pack's name in the metadata file.", 'PA122')
+    assert error == ("A pack named: VMware already exists in content repository, change the pack's "
+                     "name in the metadata file.", 'PA122')
 
 
 def test_new_invalid_is_pack_display_name_already_exist():
@@ -760,8 +760,8 @@ def test_new_invalid_is_pack_display_name_already_exist():
     }
     is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert not is_valid
-    assert error == ('The name of your pack is: Cisco Email Security but there is an existing pack with that '
-                     "name, please change the pack's name in the metadata file.", 'PA122')
+    assert error == ("A pack named: Cisco Email Security already exists in content repository, change the pack's "
+                     "name in the metadata file.", 'PA122')
 
 
 class TestPlaybookEntitiesVersionsValid:

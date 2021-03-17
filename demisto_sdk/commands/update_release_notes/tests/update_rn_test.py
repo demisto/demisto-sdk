@@ -884,12 +884,13 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value=git_current_version)
         update_rn = UpdateRN(pack_path="Packs/Base", update_type='minor', modified_files_in_pack=set(),
                              added_files=set())
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={"currentVersion": pack_current_version})
         # mocking the only_docs_changed to test only the is_bump_required
         mocker.patch.object(UpdateRN, 'only_docs_changed', return_value=False)
         mocker.patch.object(Popen, 'communicate',
                             return_value=(json.dumps({"currentVersion": git_current_version}), ''))
         mocker.patch('sys.exit', return_value=None)
-        bump_result = update_rn.is_bump_required({"currentVersion": pack_current_version})
+        bump_result = update_rn.is_bump_required()
         assert bump_result is expected_result
 
     def test_renamed_files(self, mocker):
@@ -1126,6 +1127,43 @@ class TestRNUpdateUnit:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
+
+    docker_image_test_rn = '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image ' \
+                           'to: *demisto/python3:3.9.1.149615*\n'
+    docker_image_test_data = [
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', None,
+         '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', False),
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615',
+         docker_image_test_rn, True),
+        (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
+        (docker_image_test_rn, 'demisto/python3:3.9.1.149616',
+         '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
+         'to: *demisto/python3:3.9.1.149616*\n', True),
+    ]
+
+    @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)
+    def test_rn_with_docker_image(self, rn, docker_image, expected_rn, expected_existing_rn_changed):
+        """
+        Given
+        - Case a: Release notes existed, did not contain updated docker image notes, docker image was not updated
+        - Case b: Release notes existed, did not contain updated docker image notes, docker image was updated
+        - Case c: Release notes existed, contains updated docker image notes, docker image was not updated since
+                  last release notes.
+        - Case d: Release notes existed, contains updated docker image notes, docker image was updated again since
+                  last release notes.
+        When
+        - Checking if docker image update occurred.
+
+        Then
+        - Case a: Release notes were not changed, existing_rn_changed is false.
+        - Case a: Release notes were changed with the updated docker image, existing_rn_changed is true.
+        - Case a: Release notes were not changed, existing_rn_changed is false.
+        - Case a: Release notes were changed to most updated docker image, existing_rn_changed is true.
+        """
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert client.rn_with_docker_image(rn, docker_image) == expected_rn
+        assert client.existing_rn_changed == expected_existing_rn_changed
 
 
 def test_get_from_version_at_update_rn(integration):

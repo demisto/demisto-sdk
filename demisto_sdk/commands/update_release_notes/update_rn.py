@@ -7,9 +7,10 @@ import json
 import os
 import sys
 from distutils.version import LooseVersion
-from typing import Union
+from typing import Union, Optional
 
 import click
+import re
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,
@@ -91,11 +92,11 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            is_docker_image_changed = False
+            docker_image_name = None
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
                 if 'yml' in packfile and file_type == FileType.INTEGRATION:
-                    is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
+                    docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
@@ -108,9 +109,7 @@ class UpdateRN:
             if len(rn_string) > 0:
                 if self.is_bump_required(new_metadata):
                     self.commit_to_bump(new_metadata)
-                self.create_markdown(rn_path, rn_string, changed_files)
-                if is_docker_image_changed:
-                    self.update_markdown(rn_path, f'- Updated the Docker image to: *{docker_image_name}*.')
+                self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
@@ -392,28 +391,42 @@ class UpdateRN:
                     new_rn += new_rn_part
         return new_rn
 
-    def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):
+    def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict,
+                        docker_image_name: Optional[str]):
         if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
         elif self.update_type is None and self.specific_version is None:
             current_rn = get_latest_release_notes_text(release_notes_path)
             updated_rn = self.update_existing_rn(current_rn, changed_files)
+            updated_rn = self.rn_with_docker_image(updated_rn, docker_image_name)
             with open(release_notes_path, 'w') as fp:
                 fp.write(updated_rn)
         else:
             self.existing_rn_changed = True
+            updated_rn = self.rn_with_docker_image(rn_string, docker_image_name)
             with open(release_notes_path, 'w') as fp:
-                fp.write(rn_string)
+                fp.write(updated_rn)
 
-    def update_markdown(self, release_notes_path: str, rn_string: str):
-        if os.path.exists(release_notes_path):
-            self.existing_rn_changed = True
-            with open(release_notes_path, 'a') as fp:
-                fp.write(rn_string)
-        else:
-            print_warning(f"Changes were detected, but could not find release notes file to update."
-                          f"\ngiven path: {release_notes_path}")
-
+    def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
+        """
+        Receives existing release notes, if docker image was updated, adds docker_image to release notes.
+        Taking care of cases s.t:
+        1) Release notes did not contain updated docker image note.
+        2) Release notes contained updated docker image notes, with the newest updated docker image.
+        3) Release notes contained updated docker image notes, but docker image was updated again since last time
+           release notes have been updated.
+        """
+        if not docker_image:
+            return rn_string
+        docker_image_str = f'- Updated the Docker image to: *{docker_image}*'
+        if '- Updated the Docker image to' not in rn_string:
+            return rn_string + f'{docker_image_str}\n'
+        if docker_image_str in rn_string:
+            return rn_string
+        update_docker_image_regex = r'- Updated the Docker image to: \*.*\*'
+        updated_rn = re.sub(update_docker_image_regex, docker_image_str, rn_string)
+        self.existing_rn_changed = True
+        return updated_rn
 
 def get_file_description(path, file_type):
     if not os.path.isfile(path):
@@ -462,17 +475,17 @@ def check_docker_image_changed(added_or_modified_yml):
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):
-            return False, ''
+            return None
         else:
             print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
-            return False, ''
+            return None
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
             if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
-                return True, diff_line.split()[-1]
-        return False, ''
+                return diff_line.split()[-1]
+        return None
 
 
 def get_from_version_at_update_rn(path: str):

@@ -1,5 +1,9 @@
 # Changelog
+* Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
 * Added support for local custom command configuration file `.demisto-sdk-conf`.
 
 # 1.3.1

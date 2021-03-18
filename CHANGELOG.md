@@ -3,6 +3,7 @@
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
 * Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
 * Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
+* Added the *--ignore-untracked* flag to the **validate** command to ignore file which are untracked by git in the validation process.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

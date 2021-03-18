@@ -147,9 +147,7 @@ class StructureValidator(BaseValidator):
         except Exception as err:
             try:
                 return self.parse_error_msg(err)
-            except Exception as e:
-                print('error')
-                print(e)
+            except Exception:
                 error_message, error_code = Errors.pykwalify_general_error(err)
                 if self.handle_error(error_message, error_code, self.file_path):
                     self.is_valid = False

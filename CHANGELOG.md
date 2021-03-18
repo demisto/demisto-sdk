@@ -12,6 +12,7 @@
 * Added a validation that a pack's display name does not already exist in content repository.
 * Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
 * Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
+* Added the *--ignore-untracked* flag to the **validate** command to ignore file which are untracked by git in the validation process.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

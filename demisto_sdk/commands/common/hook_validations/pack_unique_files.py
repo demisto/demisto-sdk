@@ -208,6 +208,20 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def valid_pack_name(self, pack_name):
+        if len(pack_name) < 3:
+            if self._add_error(Errors.pack_metadata_name_not_valid("short"), self.pack_meta_file):
+                return False
+        if pack_name[0].islower():
+            if self._add_error(Errors.pack_metadata_name_not_valid("capital"), self.pack_meta_file):
+                return False
+        if pack_name.split()[0] in INCORRECT_PREFIX_PACK_NAME:
+            if self._add_error(Errors.pack_metadata_name_not_valid("prefix"), self.pack_meta_file):
+                return False
+        if re.findall(PATTERN, pack_name):
+            if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
+                return False
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -233,18 +247,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
             else:
-                if len(name_field) < 3:
-                    if self._add_error(Errors.pack_metadata_name_not_valid("short"), self.pack_meta_file):
-                        return False
-                if name_field[0].islower():
-                    if self._add_error(Errors.pack_metadata_name_not_valid("capital"), self.pack_meta_file):
-                        return False
-                if name_field.split()[0] in INCORRECT_PREFIX_PACK_NAME:
-                    if self._add_error(Errors.pack_metadata_name_not_valid("prefix"), self.pack_meta_file):
-                        return False
-                if re.findall(PATTERN, name_field):
-                    if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
-                        return False
+                return self.valid_pack_name(name_field)
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:

@@ -8,7 +8,7 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext, ServerContext)
 
-SKIPPED_INTEGRATION_COMMENT = 'The following integrations are skipped and critical for the test'
+SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. The collected tests are related to this pull requests and might be critical.'
 
 
 def _handle_github_response(response, logging_module) -> dict:
@@ -38,7 +38,7 @@ def _add_pr_comment(comment, logging_module):
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
-                    if SKIPPED_INTEGRATION_COMMENT in existing_comment.get('body'):
+                    if SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
@@ -70,7 +70,7 @@ def execute_test_content(**kwargs):
             and build_context.build_name != 'master' \
             and not build_context.is_nightly:
         skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
-        comment = f'{SKIPPED_INTEGRATION_COMMENT}:\n- {skipped_integrations}'
+        comment = f'{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}'
         _add_pr_comment(comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)
     build_context.tests_data_keeper.create_result_files()

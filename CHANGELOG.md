@@ -1,7 +1,11 @@
 # Changelog
+* Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
-* Improved the pykwalify errors in the **validate** command.
-* Added the *--print-pykwalify* flag in the **validate** command.
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
+* Improved the `pykwalify` error outputs in the **validate** command.
+* Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

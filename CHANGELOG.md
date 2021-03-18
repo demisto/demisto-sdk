@@ -1,6 +1,9 @@
 # Changelog
-* fixed an issue where **validate** a pack name is in correct syntax
+* fixed an issue where **validate** a pack name is in right syntax
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

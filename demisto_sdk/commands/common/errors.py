@@ -188,6 +188,7 @@ ERROR_CODE = {
     "pack_metadata_non_approved_usecases": {'code': "PA119", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_non_approved_tags": {'code': "PA120", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
+    "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1193,6 +1194,12 @@ class Errors:
     @error_code_decorator
     def pack_metadata_price_change(old_price, new_price) -> str:
         return f"The pack price was changed from {old_price} to {new_price} - revert the change"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_name_already_exists(new_pack_name) -> str:
+        return f"A pack named: {new_pack_name} already exists in content repository, " \
+               f"change the pack's name in the metadata file."
 
     @staticmethod
     @error_code_decorator

@@ -19,13 +19,14 @@ class GitUtil:
             self.repo = repo
 
     def modified_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                       staged_only: bool = False, debug: bool = False) -> Set[Path]:
+                       staged_only: bool = False, debug: bool = False, ignore_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as modified against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
+            ignore_untracked (bool): Whether to ignore untracked files.
         Returns:
             Set: A set of Paths to the modified files.
         """
@@ -77,8 +78,10 @@ class GitUtil:
             self.debug_print(debug=debug, status='Modified', staged=set(), committed=committed)
             return committed
 
-        # get all untracked modified files
-        untracked = self._get_untracked_files('M')
+        untracked = set()  # type: Set
+        if not ignore_untracked:
+            # get all untracked modified files
+            untracked = self._get_untracked_files('M')
 
         # get all the files that are staged on the branch and identified as modified.
         staged = {Path(os.path.join(item.a_path)) for item
@@ -110,13 +113,14 @@ class GitUtil:
         return staged.union(committed)
 
     def added_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                    staged_only: bool = False, debug: bool = False) -> Set[Path]:
+                    staged_only: bool = False, debug: bool = False, ignore_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as added against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
+            ignore_untracked (bool): Whether to ignore untracked files.
         Returns:
             Set: A set of Paths to the added files.
         """
@@ -161,11 +165,14 @@ class GitUtil:
             self.debug_print(debug=debug, status='Added', staged=set(), committed=committed)
             return committed
 
-        # get all untracked added files
-        untracked_added = self._get_untracked_files('A')
+        untracked_added = set()  # type: Set
+        untracked_modified = set()  # type: Set
+        if not ignore_untracked:
+            # get all untracked added files
+            untracked_added = self._get_untracked_files('A')
 
-        # get all untracked modified files
-        untracked_modified = self._get_untracked_files('M')
+            # get all untracked modified files
+            untracked_modified = self._get_untracked_files('M')
 
         # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in
@@ -194,12 +201,13 @@ class GitUtil:
         return staged.union(committed)
 
     def deleted_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                      staged_only: bool = False) -> Set[Path]:
+                      staged_only: bool = False, ignore_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as deleted against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
+            ignore_untracked (bool): Whether to ignore untracked files.
         Returns:
             Set: A set of Paths to the deleted files.
         """
@@ -234,8 +242,10 @@ class GitUtil:
         if committed_only:
             return committed
 
-        # get all untracked deleted files
-        untracked = self._get_untracked_files('D')
+        untracked = set()  # type: Set
+        if not ignore_untracked:
+            # get all untracked deleted files
+            untracked = self._get_untracked_files('D')
 
         # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in
@@ -247,13 +257,15 @@ class GitUtil:
         return staged.union(committed)
 
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                      staged_only: bool = False, debug: bool = False) -> Set[Tuple[Path, Path]]:
+                      staged_only: bool = False, debug: bool = False,
+                      ignore_untracked: bool = False) -> Set[Tuple[Path, Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
+            ignore_untracked (bool): Whether to ignore untracked files.
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
@@ -293,8 +305,10 @@ class GitUtil:
             self.debug_print(debug=debug, status='Renamed', staged=set(), committed=committed)
             return committed
 
-        # get all untracked renamed files
-        untracked = self._get_untracked_files('R')
+        untracked = set()  # type:Set
+        if not ignore_untracked:
+            # get all untracked renamed files
+            untracked = self._get_untracked_files('R')
 
         # get all the files that are staged on the branch and identified as renamed and are with 100% score.
         staged = {(Path(item.a_path), Path(item.b_path)) for item

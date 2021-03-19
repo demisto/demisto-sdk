@@ -8,7 +8,8 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
 from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext, ServerContext)
 
-SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. The collected tests are related to this pull requests and might be critical.'
+SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
+                          'The collected tests are related to this pull request and might be critical.'
 
 
 def _handle_github_response(response, logging_module) -> dict:

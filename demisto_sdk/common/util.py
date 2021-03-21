@@ -1,4 +1,10 @@
+from enum import Enum
+
+
 def to_dict(obj):
+    if isinstance(obj, Enum):
+        return obj.name
+
     if not hasattr(obj, '__dict__'):
         return obj
 

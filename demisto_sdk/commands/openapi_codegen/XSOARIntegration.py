@@ -109,7 +109,7 @@ class XSOARIntegration:
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,
                      commands: list = None):
-            if isinstance(script, str):
+            if script and isinstance(script, str):
                 self.script = FoldedScalarString(script)
             else:
                 self.script = script

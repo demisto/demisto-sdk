@@ -576,8 +576,8 @@ class IntegrationGeneratorConfig:
 
             with open(Path(output_dir, f'integration-{self.name}.yml'), mode='w') as f:
                 yaml = ruamel.yaml.YAML()
-                # yaml.indent(mapping=2, sequence=4, offset=2)
                 yaml.preserve_quotes = True
+                yaml.width = 50000
                 yaml.dump(xsoar_integration.to_dict(), f)
 
             return
@@ -590,11 +590,14 @@ class IntegrationGeneratorConfig:
         with open(Path(package_dir, f'{self.name}.py'), mode='w') as f:
             f.write(code)
 
-        yml = self.generate_integration_yml()
+        integration_obj = self.generate_integration_yml()
         try:
             logger.info('Creating yml file...')
             with open(Path(package_dir, f'{self.name}.yml'), 'w') as fp:
-                fp.write(yaml.dump(yml.to_dict()))
+                yaml = ruamel.yaml.YAML()
+                yaml.preserve_quotes = True
+                yaml.width = 50000
+                yaml.dump(integration_obj.to_dict(), fp)
 
         except Exception as err:
             logger.exception(f'Failed to write integration yml file. Error: {err}')

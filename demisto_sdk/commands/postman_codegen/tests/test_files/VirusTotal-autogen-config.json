@@ -26,7 +26,7 @@
     "code_type": "python",
     "code_subtype": "python3",
     "is_fetch": false,
-    "fix_code": false,
+    "fix_code": true,
     "commands": [
         {
             "name": "url-report",
@@ -1210,7 +1210,7 @@
             "required": false
         },
         {
-            "name": "apikey",
+            "name": "api_key",
             "display": "API Key",
             "defaultvalue": "",
             "type_": "ENCRYPTED",

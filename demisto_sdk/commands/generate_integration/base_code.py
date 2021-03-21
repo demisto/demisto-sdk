@@ -14,7 +14,7 @@ BASE_TOKEN = """headers['Authorization'] = params['api_key']"""
 BASE_HEADER_API_KEY = """headers['$HEADER_API_KEY$'] = params['api_key']"""
 BASE_HEADER_FORMATTED = """headers['$HEADER_NAME$'] = $HEADER_FORMAT$"""
 BASE_CLIENT_API_KEY = """client.api_key = params['api_key']"""
-BASE_BEARER_TOKEN = """headers['Authorization'] = f'Bearer {params["api_key"]}'"""
+BASE_BEARER_TOKEN = """headers['Authorization'] = f'Bearer {params["token"]}'"""
 BASE_FUNCTION = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
 

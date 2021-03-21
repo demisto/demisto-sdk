@@ -126,7 +126,7 @@ class TestCodeGenerator:
             config_dict['fix_code'] = True
             autogen_config = IntegrationGeneratorConfig(**config_dict)
 
-        yaml_obj = autogen_config.generate_integration_yml().to_yaml()
+        yaml_obj = autogen_config.generate_integration_yml().to_dict()
         with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml'), mode='r') as f:
             expected_yml = f.read()
 
@@ -233,7 +233,7 @@ class TestCodeGenerator:
 
         integration_code = config.generate_integration_python_code()
         integration_yml = config.generate_integration_yml()
-        integration_yml_str = yaml.dump(integration_yml.to_yaml())
+        integration_yml_str = yaml.dump(integration_yml.to_dict())
 
         assert "outputs=response.get('scans')" in integration_code
         assert 'contextPath: VirusTotalTest.TestScan.scans.field1' in integration_yml_str

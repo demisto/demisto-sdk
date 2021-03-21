@@ -1,8 +1,15 @@
+import json
 import logging
+import re
+from pathlib import Path
+from typing import Union
 
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.generate_integration.code_generator import *
+from demisto_sdk.commands.generate_integration.code_generator import (
+    IntegrationGeneratorArg, IntegrationGeneratorCommand,
+    IntegrationGeneratorConfig, IntegrationGeneratorOutput,
+    IntegrationGeneratorParam, ParameterType)
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
 
@@ -178,7 +185,7 @@ def postman_to_autogen_configuration(collection_path: Union[Path, str], name, co
     if postman_auth:
         if postman_auth['type'] == 'apikey':
             params.append(IntegrationGeneratorParam(
-                name='apikey',
+                name='api_key',
                 display='API Key',
                 type_=ParameterType.ENCRYPTED,
                 required=True
@@ -200,12 +207,16 @@ def postman_to_autogen_configuration(collection_path: Union[Path, str], name, co
     else:
         # look for apikey in headers
         logger.debug('trying to find apikey in request headers')
+        auth_header_found = False
         for item in items:
+            if auth_header_found:
+                break
+
             request = item.get('request', {})
             for header in request.get('header', []):
                 if header.get('key') == 'Authorization':
                     params.append(IntegrationGeneratorParam(
-                        name='apikey',
+                        name='api_key',
                         display='API Key',
                         type_=ParameterType.ENCRYPTED,
                         required=True
@@ -239,6 +250,9 @@ def postman_to_autogen_configuration(collection_path: Union[Path, str], name, co
                             }
                         ]
                     }
+
+                    auth_header_found = True
+                    break
 
     if name:
         display_name = name
@@ -345,7 +359,7 @@ def convert_request_to_command(item):
                 logger.exception(f'Failed to parse {item.get("name")} request body as JSON.')
 
     if not item.get('response') or item.get('response') == 0:
-        logger.error(f'{item.get("name")} request missing a response. Make sure you save at least one successful '
+        logger.error(f'[{item.get("name")}] request missing a response. Make sure you save at least one successful '
                      f'response in Postman')
     else:
         response = item.get('response')[0]

@@ -93,7 +93,7 @@ class TestOpenAPICodeGen:
         with open(os.path.join(self.test_files_path, 'swagger_yaml.yml'), 'rb') as yaml_file:
             expected_yaml = yaml.safe_load(yaml_file)
 
-        yaml_obj = integration.generate_yaml().to_yaml()
+        yaml_obj = integration.generate_yaml().to_dict()
 
         assert yaml.dump(yaml_obj) == yaml.dump(expected_yaml)
 

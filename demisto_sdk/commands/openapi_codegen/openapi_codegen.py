@@ -819,7 +819,7 @@ class OpenAPIIntegration:
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(yaml_file, 'w') as fp:
-                fp.write(yaml.dump(self.generate_yaml().to_yaml()))
+                fp.write(yaml.dump(self.generate_yaml().to_dict()))
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')

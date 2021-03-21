@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from distutils.util import strtobool
@@ -7,8 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import autopep8
-import yaml
-from demisto_sdk.commands.common.tools import print_error
+import ruamel.yaml
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
@@ -16,6 +16,9 @@ from demisto_sdk.commands.generate_integration.base_code import (
     BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_REQUEST_FUNCTION)
 from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
     XSOARIntegration
+from demisto_sdk.common.util import to_dict
+
+logger = logging.getLogger('demisto-sdk')
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
@@ -138,7 +141,7 @@ class IntegrationGeneratorConfig:
     def __init__(self, name: str, display_name: str, description: str, params,
                  category: str, command_prefix: str,
                  commands, docker_image, url, base_url_path,
-                 auth, context_path, code_type='python', code_subtype='python3', is_fetch=False, fix_code=False):
+                 auth, context_path, code_type='python', code_subtype='python3', is_fetch=False, fix_code=True):
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -165,7 +168,7 @@ class IntegrationGeneratorConfig:
             self.params = params
 
     def to_dict(self):
-        return json.loads(json.dumps(self, default=lambda o: o.name if isinstance(o, Enum) else o.__dict__))
+        return to_dict(self)
 
     @staticmethod
     def get_arg_default(arg: IntegrationGeneratorArg) -> Optional[str]:
@@ -267,11 +270,11 @@ class IntegrationGeneratorConfig:
             if arg.in_:
                 if 'query' in arg.in_:
                     params_data.append({
-                        arg.name: ref_arg_name
+                        arg.name: code_arg_name
                     })
                 elif arg.in_ in ['formData', 'body']:
                     body_data.append({
-                        arg.name: ref_arg_name
+                        arg.name: code_arg_name
                     })
 
         return argument_names, arguments, arguments_found, body_data, params_data
@@ -280,7 +283,7 @@ class IntegrationGeneratorConfig:
         function_name = command.name.replace('-', '_')
         headers = command.headers
 
-        print(f'Adding the function {function_name} to the code...')
+        logger.info(f'Adding the function {function_name} to the code...')
         function = BASE_FUNCTION.replace('$FUNCTIONNAME$', function_name)
         req_function = BASE_REQUEST_FUNCTION.replace('$FUNCTIONNAME$', function_name)
 
@@ -449,10 +452,10 @@ class IntegrationGeneratorConfig:
             list_functions.append(function)
 
         code = code.replace('$COMMANDSLIST$', '\n\t'.join(list_functions))
-        print('Finished generating the Python code.')
+        logger.info('Finished generating the Python code.')
 
         if self.fix_code:
-            print('Fixing the code with autopep8...')
+            logger.info('Fixing the code with autopep8...')
             code = autopep8.fix_code(code)
 
         return code
@@ -565,10 +568,17 @@ class IntegrationGeneratorConfig:
     def generate_integration_package(self, output_dir: Union[Path, str], is_unified: bool = False):
         if is_unified:
             code = self.generate_integration_python_code()
+            code = code.replace('import demistomock as demisto', '')\
+                .replace('from CommonServerPython import *', '')\
+                .replace('from CommonServerUserPython import *', '')
+
             xsoar_integration = self.generate_integration_yml(code)
 
             with open(Path(output_dir, f'integration-{self.name}.yml'), mode='w') as f:
-                f.write(yaml.dump(xsoar_integration.to_yaml()))
+                yaml = ruamel.yaml.YAML()
+                # yaml.indent(mapping=2, sequence=4, offset=2)
+                yaml.preserve_quotes = True
+                yaml.dump(xsoar_integration.to_dict(), f)
 
             return
 
@@ -582,10 +592,10 @@ class IntegrationGeneratorConfig:
 
         yml = self.generate_integration_yml()
         try:
-            print('Creating yml file...')
+            logger.info('Creating yml file...')
             with open(Path(package_dir, f'{self.name}.yml'), 'w') as fp:
-                fp.write(yaml.dump(yml.to_yaml()))
+                fp.write(yaml.dump(yml.to_dict()))
 
         except Exception as err:
-            print_error(f'Failed to write integration yml file. Error: {err}')
+            logger.exception(f'Failed to write integration yml file. Error: {err}')
             raise

@@ -1040,8 +1040,8 @@ def find_dependencies_command(id_set_path, verbose, no_update, **kwargs):
 
 # ====================== postman-codegen ====================== #
 @main.command(name="postman-codegen",
-              short_help='''Generates a Cortex XSOAR integration given an Postman collection 2.1 JSON file.''',
-              help='''Generates a Cortex XSOAR integration given an Postman collection 2.1 JSON file.''')
+              short_help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''',
+              help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''')
 @click.help_option(
     '-h', '--help'
 )
@@ -1076,8 +1076,12 @@ def postman_codegen_command(**kwargs):
         context_path_prefix=context_path_prefix
     )
 
-    with open(Path(output_dir, f'config-{config.name}.json'), mode='w') as f:
-        json.dump(config.to_dict(), f, indent=4)
+    if kwargs['config_out']:
+        with open(Path(output_dir, f'config-{config.name}.json'), mode='w') as f:
+            json.dump(config.to_dict(), f, indent=4)
+    else:
+        # generate integration yml
+        config.generate_integration_package(output_dir, is_unified=True)
 
 
 # ====================== generate-integration ====================== #

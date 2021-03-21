@@ -1056,7 +1056,8 @@ class Integration:
         integration_config = ast.literal_eval(res[0])
         self.integration_configuration_from_server = integration_config
         self.module_instance = module_instance
-        self.integration_type = integration_config.get('configuration', {}).get('integrationScript', {}).get('type', '')
+        integration_script = integration_config.get('configuration', {}).get('integrationScript', {}) or {}
+        self.integration_type = integration_script.get('type', '')
         return True
 
     def delete_integration_instance(self, client, instance_id: Optional[str] = None) -> bool:

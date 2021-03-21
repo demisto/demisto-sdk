@@ -172,7 +172,7 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
-        (WITHOUT_DUP, False)
+        (WITHOUT_DUP, True)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_PARAMS_INPUTS)
@@ -180,7 +180,7 @@ class TestIntegrationValidator:
         current = {'configuration': current}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
-        assert validator.is_there_duplicate_params() is answer
+        assert validator.has_no_duplicate_params() is answer
 
     @patch('demisto_sdk.commands.common.hook_validations.integration.print_error')
     def test_with_duplicate_params(self, print_error):
@@ -189,7 +189,7 @@ class TestIntegrationValidator:
         - integration configuration contains duplicate parameter (called test)
 
         When
-        - running the validation is_there_duplicate_params()
+        - running the validation has_no_duplicate_params()
 
         Then
         - it should set is_valid to False
@@ -208,22 +208,22 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
 
-        assert validator.is_there_duplicate_params() is True
+        assert validator.has_no_duplicate_params() is False
         assert validator.is_valid is False
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
     DUPLICATE_ARGS_INPUTS = [
-        (WITHOUT_DUP_ARGS, False),
-        (WITH_DUP_ARGS, True)
+        (WITHOUT_DUP_ARGS, True),
+        (WITH_DUP_ARGS, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)
-    def test_is_there_duplicate_args(self, current, answer):
+    def test_has_no_duplicate_args(self, current, answer):
         current = {'script': {'commands': current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
-        assert validator.is_there_duplicate_args() is answer
+        assert validator.has_no_duplicate_args() is answer
 
     PYTHON3_SUBTYPE = {
         "type": "python",

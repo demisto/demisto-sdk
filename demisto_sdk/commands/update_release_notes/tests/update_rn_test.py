@@ -1128,6 +1128,26 @@ class TestRNUpdateUnit:
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
 
+    def test_new_integration_docker_not_updated(self, mocker):
+        """
+        Given
+            - New integration created.
+        When
+            - Running update-release-notes command
+
+        Then
+            - Docker is not indicated as updated.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import check_docker_image_changed
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', side_effect=RuntimeError(
+            'fatal: Not a valid object name origin/master:Packs/NewIntegration/Integrations/NewIntegration/'
+            'NewIntegration.yml'))
+
+        is_docker_image_changed, docker_image_name = check_docker_image_changed(
+            'Packs/NewIntegration/Integrations/NewIntegration/NewIntegration.yml')
+        assert is_docker_image_changed is False
+        assert docker_image_name == ''
+
 
 def test_get_from_version_at_update_rn(integration):
     """

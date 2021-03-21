@@ -1,4 +1,6 @@
-# Changelog
+#Changelog
+
+# 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
 * Added a validation that a pack's display name does not already exist in content repository.

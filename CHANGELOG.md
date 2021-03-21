@@ -1,5 +1,5 @@
 #Changelog
-* Fixed an issue where **update-release-notes** on newly created integration created release notes with '- Updated the Docker image' note.
+* Fixed an issue where **update-release-notes** on newly created integration added release notes with '- Updated the Docker image' note.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

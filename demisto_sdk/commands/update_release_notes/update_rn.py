@@ -94,7 +94,7 @@ class UpdateRN:
             is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == FileType.INTEGRATION:
+                if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
                     is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
@@ -455,12 +455,9 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
 
 def check_docker_image_changed(added_or_modified_yml):
     try:
-        # if cat-file command fails, it means file did not exist in origin/master, therefore release notes for
-        # docker image should not be added.
-        run_command(f'git cat-file -e origin/master:{added_or_modified_yml}', exit_on_error=False)
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
-        if any(['is outside repository' in exp or 'Not a valid object name' in exp for exp in e.args]):
+        if any(['is outside repository' in exp for exp in e.args]):
             return False, ''
         else:
             print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')

@@ -759,8 +759,10 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
-                                  docker_image_name=None)
+
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
+        # update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
+        #                           docker_image_name=None)
 
     def test_update_existing_rn(self, mocker):
         """
@@ -1019,7 +1021,10 @@ class TestRNUpdateUnit:
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
-        assert check_docker_image_changed('test.yml') is None
+        is_docker_image_changed, docker_image_name = check_docker_image_changed('test.yml')
+        assert is_docker_image_changed is False
+        assert docker_image_name == ''
+        # assert check_docker_image_changed('test.yml') is None
 
     def test_update_docker_image_in_yml(self, mocker):
         """
@@ -1087,9 +1092,10 @@ class TestRNUpdateUnit:
         client = UpdateRN(pack_path="Packs/Test", update_type=None,
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
         client.execute_update()
+        client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
-        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
+        assert RN.count('Updated the Docker image to: *dockerimage:python/test:1243*') == 1
 
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
             file.write('')

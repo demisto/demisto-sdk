@@ -913,7 +913,8 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver')
-    existing_rn_version = ''
+    # existing_rn_version = ''
+    prev_rn_text = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -958,7 +959,12 @@ def update_pack_releasenotes(**kwargs):
     if _packs:
         for pack in _packs:
             if pack in packs_existing_rn and update_type is None:
-                existing_rn_version = packs_existing_rn[pack]
+                try:
+                    with open(packs_existing_rn[pack], 'r') as f:
+                        prev_rn_text = f.read()
+                except Exception as e:
+                    print_error(f'Failed to load the previous release notes file content: {e}')
+                # existing_rn_version = packs_existing_rn[pack]
             elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
@@ -974,7 +980,8 @@ def update_pack_releasenotes(**kwargs):
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text,
-                                          existing_rn_version_path=existing_rn_version)
+                                          prev_rn_text=prev_rn_text)
+                                          # existing_rn_version_path=existing_rn_version)
                 updated = update_pack_rn.execute_update()
                 # if new release notes were created and if previous release notes existed, remove previous
                 if updated and update_pack_rn.should_delete_existing_rn:

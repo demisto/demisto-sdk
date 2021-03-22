@@ -268,46 +268,47 @@ def test_json_output(repo):
     base = BaseValidator(json_file_path=json_path)
     ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
     non_ui_applicable_error_message, non_ui_applicable_error_code = Errors.wrong_subtype()
-    expected_json_1 = {
-        integration.yml.path: {
-            "file-type": "yml",
-            "entity-type": "integration",
-            "display-name": "Sample",
-            "outputs": [
-                {
-                    "severity": "error",
-                    "code": ui_applicable_error_code,
-                    "message": ui_applicable_error_message,
-                    "ui": True,
-                    'related-field': '<parameter-name>.display'
-                }
-            ]
+    expected_json_1 = [
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'integration',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'error',
+            'errorCode': ui_applicable_error_code,
+            'message': ui_applicable_error_message,
+            'ui': True,
+            'relatedField': '<parameter-name>.display'
         }
-    }
+    ]
 
-    expected_json_2 = {
-        integration.yml.path: {
-            "file-type": "yml",
-            "entity-type": "integration",
-            "display-name": "Sample",
-            "outputs": [
-                {
-                    "severity": "error",
-                    "code": ui_applicable_error_code,
-                    "message": ui_applicable_error_message,
-                    "ui": True,
-                    'related-field': '<parameter-name>.display'
-                },
-                {
-                    "severity": "warning",
-                    "code": non_ui_applicable_error_code,
-                    "message": non_ui_applicable_error_message,
-                    "ui": False,
-                    'related-field': 'subtype'
-                }
-            ]
+    expected_json_2 = [
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'integration',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'error',
+            'errorCode': ui_applicable_error_code,
+            'message': ui_applicable_error_message,
+            'ui': True,
+            'relatedField': '<parameter-name>.display'
+        },
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'integration',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'warning',
+            'errorCode': non_ui_applicable_error_code,
+            'message': non_ui_applicable_error_message,
+            'ui': False,
+            'relatedField': 'subtype'
         }
-    }
+    ]
 
     with ChangeCWD(repo.path):
         # create new file

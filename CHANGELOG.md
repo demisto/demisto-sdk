@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 * Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 
 
 # 1.3.2

@@ -1,7 +1,7 @@
 # Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 * Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
-* Fixed issue where **update-release-notes** added docker image updated more than once if command was called again.
+* Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

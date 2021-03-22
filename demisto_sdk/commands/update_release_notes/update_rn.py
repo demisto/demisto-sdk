@@ -411,10 +411,17 @@ class UpdateRN:
         """
         Receives existing release notes, if docker image was updated, adds docker_image to release notes.
         Taking care of cases s.t:
-        1) Release notes did not contain updated docker image note.
-        2) Release notes contained updated docker image notes, with the newest updated docker image.
-        3) Release notes contained updated docker image notes, but docker image was updated again since last time
+        1) no docker image update have occurred ('docker_image' is None).
+        2) Release notes did not contain updated docker image note.
+        3) Release notes contained updated docker image notes, with the newest updated docker image.
+        4) Release notes contained updated docker image notes, but docker image was updated again since last time
            release notes have been updated.
+
+        Args:
+            rn_string (str): The current text contained in the release note.
+            docker_image (Optional[str]): The docker image str, if given.
+        Returns:
+            (str): The release notes, with the most updated docker image release note, if given.
         """
         if not docker_image:
             return rn_string

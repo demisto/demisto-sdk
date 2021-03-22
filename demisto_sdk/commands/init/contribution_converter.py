@@ -231,7 +231,8 @@ class ContributionConverter:
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
                         src_file_path = os.path.join(src_path, name)
-                        shutil.move(src_file_path, dst_path)
+                        dst_file_path = os.path.join(dst_path, name)
+                        shutil.move(src_file_path, dst_file_path)
             else:
                 # replace dst folder with src folder
                 shutil.move(src_path, dst_path)

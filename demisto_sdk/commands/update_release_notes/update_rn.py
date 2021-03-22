@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', prev_rn_text: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -51,7 +51,8 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.text = text
-        self.prev_rn_text = prev_rn_text
+        self.existing_rn_version_path = existing_rn_version_path
+        self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
 
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -103,7 +104,16 @@ class UpdateRN:
                     'is_new_file': True if packfile in self.added_files else False,
                     'fromversion': get_from_version_at_update_rn(packfile)
                 }
-            rn_string = self.prev_rn_text
+
+            rn_string = ''
+            if self.existing_rn_version_path:
+                self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
+                try:
+                    with open(self.existing_rn_version_path, 'r') as f:
+                        rn_string = f.read()
+                except Exception as e:
+                    print_error(f'Failed to load the previous release notes file content: {e}')
+
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
@@ -162,10 +172,6 @@ class UpdateRN:
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
-                if self.prev_rn_text:
-                    print_error(f'Master and local branch have both added to the pack {self.pack} update release notes.'
-                                f'Please merge from master and re-run the command.')
-                    sys.exit(1)
                 return True
             return False
         except RuntimeError:

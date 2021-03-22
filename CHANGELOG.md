@@ -1,5 +1,7 @@
 # Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

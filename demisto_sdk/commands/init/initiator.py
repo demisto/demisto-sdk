@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from distutils.dir_util import copy_tree
+from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
@@ -84,6 +85,7 @@ class Initiator:
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
+    SUPPORTED_FROM_VERSION = "5.5.0"
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
@@ -439,6 +441,10 @@ class Initiator:
             yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
+
+        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+            yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
+
         if integration:
             yml_dict["display"] = self.id
 

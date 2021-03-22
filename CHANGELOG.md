@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 * Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
 
 

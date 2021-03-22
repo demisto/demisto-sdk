@@ -1,5 +1,4 @@
-#Changelog
-# 1.3.3
+# Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 
 # 1.3.2

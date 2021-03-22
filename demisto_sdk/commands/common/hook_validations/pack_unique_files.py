@@ -352,6 +352,11 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def is_right_usage_of_usecase_tag(self):
+        """Checks whether Use Case tag in pack_metadata is used properly
+
+        Return:
+             bool: True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
+        """
         try:
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
 

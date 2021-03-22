@@ -1,6 +1,14 @@
 # Changelog
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+
+
+# 1.3.2
+* Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
-* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

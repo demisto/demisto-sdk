@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 
-from demisto_sdk.common.util import to_dict
+import demisto_sdk.commands.common.tools as tools
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 
@@ -20,7 +20,7 @@ class XSOARIntegration:
                           sort_keys=True, indent=4)
 
     def to_dict(self) -> dict:
-        return to_dict(self)
+        return tools.to_dict(self)
 
     @classmethod
     def get_base_integration(cls):

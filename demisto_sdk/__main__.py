@@ -1,6 +1,5 @@
 # Site packages
 import json
-import logging
 import os
 import sys
 from pathlib import Path
@@ -61,8 +60,6 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-logger: logging.Logger
 
 
 class DemistoSDK:
@@ -1067,7 +1064,7 @@ def postman_codegen_command(**kwargs):
     command_prefix = kwargs['command_prefix']
 
     if kwargs['verbose']:
-        logger.setLevel(logging.DEBUG)
+        logging_setup(verbose=3)
 
     config = postman_to_autogen_configuration(
         collection_path=collection_path,
@@ -1102,7 +1099,7 @@ def generate_integration_command(**kwargs):
     output_dir = kwargs['output'] or '.'
 
     if kwargs['verbose']:
-        logger.setLevel(logging.DEBUG)
+        logging_setup(verbose=3)
 
     config = None
     with open(path, mode='r') as f:
@@ -1340,7 +1337,4 @@ def exit_from_program(result=0, **kwargs):
 
 
 if __name__ == '__main__':
-    logger = logging_setup(verbose=logging.DEBUG,
-                           quiet=True)
-
     sys.exit(main())

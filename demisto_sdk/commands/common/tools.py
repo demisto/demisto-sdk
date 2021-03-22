@@ -8,6 +8,7 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -505,6 +506,29 @@ def str2bool(v):
         return False
 
     raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def to_dict(obj):
+    if isinstance(obj, Enum):
+        return obj.name
+
+    if not hasattr(obj, '__dict__'):
+        return obj
+
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("_"):
+            continue
+
+        element = []
+        if isinstance(val, list):
+            for item in val:
+                element.append(to_dict(item))
+        else:
+            element = to_dict(val)
+        result[key] = element
+
+    return result
 
 
 def old_get_release_notes_file_path(file_path):

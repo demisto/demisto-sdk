@@ -16,7 +16,7 @@ from demisto_sdk.commands.generate_integration.base_code import (
     BASE_CREDENTIALS, BASE_DATA, BASE_FUNCTION, BASE_HEADER,
     BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_PROPS, BASE_REQUEST_FUNCTION,
     BASE_TOKEN)
-from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
+from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']

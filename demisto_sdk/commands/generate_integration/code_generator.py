@@ -8,15 +8,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import autopep8
+import demisto_sdk.commands.common.tools as tools
 import ruamel.yaml
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
     BASE_HEADER, BASE_HEADER_API_KEY, BASE_HEADER_FORMATTED,
     BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_REQUEST_FUNCTION)
-from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
+from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
-from demisto_sdk.common.util import to_dict
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -168,7 +168,7 @@ class IntegrationGeneratorConfig:
             self.params = params
 
     def to_dict(self):
-        return to_dict(self)
+        return tools.to_dict(self)
 
     @staticmethod
     def get_arg_default(arg: IntegrationGeneratorArg) -> Optional[str]:

@@ -18,27 +18,47 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     """
     if quiet:
         verbose = 0
-    logger: logging.Logger = logging.getLogger('demisto-sdk')
-    logger.setLevel(logging.DEBUG)
+    l: logging.Logger = logging.getLogger('demisto-sdk')
+    l.setLevel(logging.DEBUG)
+
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
-    fmt = logging.Formatter('%(message)s')
+
+    fmt = logging.Formatter('[%(levelname)s] %(message)s')
+    console_handler = None
+    file_handler = None
+
+    if l.hasHandlers():
+        for h in l.handlers:
+            if h.name == 'console-handler':
+                console_handler = h
+            elif h.name == 'file-handler':
+                file_handler = h
 
     if verbose:
-        console_handler = logging.StreamHandler()
+        if not console_handler:
+            console_handler = logging.StreamHandler()
+            console_handler.name = 'console-handler'
+            console_handler.setFormatter(fmt)
+            l.addHandler(console_handler)
+
         console_handler.setLevel(log_level)
-        console_handler.setFormatter(fmt)
-        logger.addHandler(console_handler)
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
-        file_handler.setFormatter(fmt)
-        file_handler.setLevel(level=logging.DEBUG)
-        logger.addHandler(file_handler)
+        if not file_handler:
+            file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+            file_handler.setFormatter(fmt)
+            file_handler.name = 'file-handler'
+            file_handler.setLevel(level=logging.DEBUG)
+            l.addHandler(file_handler)
 
-    logger.propagate = False
+    l.propagate = False
 
-    return logger
+    return l
+
+
+logger: logging.Logger = logging_setup(verbose=2,
+                                       quiet=False)
 
 
 # Python program to print

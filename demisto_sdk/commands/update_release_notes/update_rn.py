@@ -94,7 +94,7 @@ class UpdateRN:
             is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
+                if 'yml' in packfile and file_type == FileType.INTEGRATION:
                     is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,

@@ -456,7 +456,11 @@ class IntegrationGeneratorConfig:
 
         if self.fix_code:
             logger.info('Fixing the code with autopep8...')
-            code = autopep8.fix_code(code)
+
+            code = autopep8.fix_code(code, options={
+                'max_line_length': 120,
+                'ignore': ['W293', 'W504', 'F405', 'F403']
+            })
 
         return code
 
@@ -574,11 +578,14 @@ class IntegrationGeneratorConfig:
 
             xsoar_integration = self.generate_integration_yml(code)
 
-            with open(Path(output_dir, f'integration-{self.name}.yml'), mode='w') as f:
+            path = Path(output_dir, f'integration-{self.name}.yml')
+            with open(path, mode='w') as f:
                 yaml = ruamel.yaml.YAML()
                 yaml.preserve_quotes = True
                 yaml.width = 50000
                 yaml.dump(xsoar_integration.to_dict(), f)
+
+                logger.info(f'Generated integration yml at: [{os.path.abspath(path)}]')
 
             return
 
@@ -592,7 +599,7 @@ class IntegrationGeneratorConfig:
 
         integration_obj = self.generate_integration_yml()
         try:
-            logger.info('Creating yml file...')
+            logger.debug('Creating yml file...')
             with open(Path(package_dir, f'{self.name}.yml'), 'w') as fp:
                 yaml = ruamel.yaml.YAML()
                 yaml.preserve_quotes = True
@@ -602,3 +609,5 @@ class IntegrationGeneratorConfig:
         except Exception as err:
             logger.exception(f'Failed to write integration yml file. Error: {err}')
             raise
+
+        logger.info(f'Generated integration package at: [{os.path.abspath(package_dir)}]')

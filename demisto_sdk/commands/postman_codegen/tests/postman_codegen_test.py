@@ -270,7 +270,7 @@ class TestPostmanCodeGen:
             category=None
         )
 
-        assert _testutil_get_param(config, 'apikey') is not None
+        assert _testutil_get_param(config, 'api_key') is not None
         command = _testutil_get_command(config, 'test-report')
         assert command.headers == [
             {
@@ -402,7 +402,7 @@ class TestPostmanCodeGen:
         integration_yml = yaml.dump(integration_obj.to_dict())
 
         assert 'def test_create_group_request(self, test_name, test_id, test_key):' in integration_code
-        assert 'data={"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code
+        assert 'data = {"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code
         assert 'response = self._http_request(\'POST\', \'api/v1/groups\', params=params, json_data=data, headers=headers)' in integration_code
 
         assert "name: test_id" in integration_yml

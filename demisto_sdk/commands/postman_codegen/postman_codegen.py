@@ -359,7 +359,7 @@ def convert_request_to_command(item):
                 logger.exception(f'Failed to parse {item.get("name")} request body as JSON.')
 
     if not item.get('response') or item.get('response') == 0:
-        logger.error(f'[{item.get("name")}] request missing a response. Make sure you save at least one successful '
+        logger.error(f'[{item.get("name")}] request is missing response. Make sure to save at least one successful '
                      f'response in Postman')
     else:
         response = item.get('response')[0]

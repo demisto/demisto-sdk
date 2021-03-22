@@ -368,6 +368,7 @@ def validate(config, **kwargs):
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
 def create_artifacts(**kwargs) -> int:
+    logging_setup(3)
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 

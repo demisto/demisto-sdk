@@ -24,33 +24,38 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
 
     fmt = logging.Formatter('[%(levelname)s] %(message)s')
-    console_handler = None
-    file_handler = None
+    console_handler_index = -1
+    file_handler_index = -1
 
     if l.hasHandlers():
-        for h in l.handlers:
+        for i, h in enumerate(l.handlers):
             if h.name == 'console-handler':
-                console_handler = h
+                console_handler_index = i
             elif h.name == 'file-handler':
-                file_handler = h
+                file_handler_index = i
 
     if verbose:
-        if not console_handler:
-            console_handler = logging.StreamHandler()
-            console_handler.name = 'console-handler'
-            console_handler.setFormatter(fmt)
-            l.addHandler(console_handler)
-
+        console_handler = logging.StreamHandler()
+        console_handler.name = 'console-handler'
+        console_handler.setFormatter(fmt)
         console_handler.setLevel(log_level)
+
+        if console_handler_index == -1:
+            l.addHandler(console_handler)
+        else:
+            l.handlers[console_handler_index] = console_handler
 
     # Setting debug log file if in circleci
     if log_path:
-        if not file_handler:
-            file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
-            file_handler.setFormatter(fmt)
-            file_handler.name = 'file-handler'
-            file_handler.setLevel(level=logging.DEBUG)
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+        file_handler.setFormatter(fmt)
+        file_handler.name = 'file-handler'
+        file_handler.setLevel(level=logging.DEBUG)
+
+        if file_handler_index == -1:
             l.addHandler(file_handler)
+        else:
+            l.handlers[file_handler_index] = file_handler
 
     l.propagate = False
 

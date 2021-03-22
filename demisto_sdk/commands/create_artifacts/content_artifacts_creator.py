@@ -23,7 +23,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 ####################
 # Global variables #
 ####################
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -36,7 +35,7 @@ IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
-logger: logging.Logger
+logger = logging.getLogger('demisto-sdk')
 EX_SUCCESS = 0
 EX_FAIL = 1
 
@@ -91,9 +90,6 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
     def create_content_artifacts(self) -> int:
-        global logger
-        logger = logging_setup(3)
-
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
             futures: List[ProcessFuture] = []
             # content/Packs

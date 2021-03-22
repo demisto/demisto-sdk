@@ -259,6 +259,36 @@ class TestPackUniqueFilesValidator:
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
 
+    @pytest.mark.parametrize('pack_content, tags, is_valid', [
+        ("none", [], True),
+        ("none", ["Use Case"], False),
+        ("playbook", ["Use Case"], True),
+        ("incident", ["Use Case"], True),
+        ("layout", ["Use Case"], True),
+        ("playbook", [], True),
+    ])
+    def test_is_right_usage_of_usecase_tag(self, repo, pack_content, tags, is_valid):
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags
+        })
+
+        if pack_content == "playbook":
+            playbook = pack.create_playbook(name="PlaybookName")
+            pack.playbooks.append(playbook)
+        elif pack_content == "incident":
+            incident_type = pack.create_incident_type(name="IncidentTypeName")
+            pack.incident_types.append(incident_type)
+        elif pack_content == "layout":
+            layout = pack.create_layout(name="Layout")
+            pack.layouts.append(layout)
+
+        self.validator.pack_path = pack.path + "/"
+        assert self.validator.is_right_usage_of_usecase_tag() == is_valid
+
     @pytest.mark.parametrize('type, is_valid', [
         ('community', True),
         ('partner', True),

@@ -233,6 +233,7 @@ class ContributionConverter:
                         src_file_path = os.path.join(src_path, name)
                         dst_file_path = os.path.join(dst_path, name)
                         shutil.move(src_file_path, dst_file_path)
+                shutil.rmtree(src_path, ignore_errors=True)
             else:
                 # replace dst folder with src folder
                 shutil.move(src_path, dst_path)

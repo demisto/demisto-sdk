@@ -514,6 +514,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     cc.pack_dir_path = tmp_path
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
 
 
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)

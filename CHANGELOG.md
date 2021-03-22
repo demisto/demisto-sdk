@@ -1,4 +1,5 @@
-#Changelog
+# Changelog
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 * Fixed an issue where **update-release-notes** on newly created integration added release notes for docker update.
 
 # 1.3.2

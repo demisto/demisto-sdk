@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
 * Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
 
 # 1.3.2

@@ -1130,6 +1130,42 @@ class TestRNUpdateUnit:
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
 
+    def test_new_integration_docker_not_updated(self, mocker):
+        """
+        Given
+            - New integration created.
+        When
+            - Running update-release-notes command
+
+        Then
+            - Docker is not indicated as updated.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        import os
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            pack_data = json.load(file)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
+                     return_value='+  dockerimage:python/test:1243')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
+                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
+        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+                          added_files={'Packs/Test/Integrations/Test.yml'})
+        client.execute_update()
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+            RN = file.read()
+        os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
+
     docker_image_test_rn = '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image ' \
                            'to: *demisto/python3:3.9.1.149615*\n'
     docker_image_test_data = [

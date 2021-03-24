@@ -166,7 +166,6 @@ class Unifier:
             # append suffix to output file name
             output_filename = file_name_suffix.join(os.path.splitext(output_filename))
 
-
         if self.dest_path:
             self.dest_path = os.path.join(self.dest_path, output_filename)
         else:

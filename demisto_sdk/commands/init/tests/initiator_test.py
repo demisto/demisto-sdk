@@ -314,7 +314,8 @@ def test_yml_reformatting(tmp_path, initiator):
                 'id': 'HelloWorld'
             }),
             'display': 'HelloWorld',
-            'name': 'HelloWorld'
+            'name': 'HelloWorld',
+            'fromversion': initiator.SUPPORTED_FROM_VERSION
         })
 
 

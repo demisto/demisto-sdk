@@ -2,12 +2,19 @@ import os
 import re
 
 import yaml
-from demisto_sdk.commands.common.constants import (
-    BANG_COMMAND_NAMES, CONTEXT_OUTPUT_README_TABLE_HEADER, DBOT_SCORES_DICT,
-    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
-    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH)
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   DBOT_SCORES_DICT,
+                                                   FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH,
+                                                   FIRST_FETCH_PARAM,
+                                                   INTEGRATION_CATEGORIES,
+                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
+                                                   MAX_FETCH_PARAM,
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                Errors)
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -15,10 +22,10 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import (extract_multiple_keys_from_dict,
-                                               is_v2_file, print_error,
-                                               server_version_compare, compare_context_path_in_yml_and_readme)
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_IGNORED_ERRORS, FOUND_FILES_AND_ERRORS
+from demisto_sdk.commands.common.tools import (
+    compare_context_path_in_yml_and_readme, is_v2_file, print_error,
+    server_version_compare)
+
 
 class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
@@ -652,7 +659,8 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_changed_removed_yml_fields(self):
         """checks if some specific Fields in the yml file were changed from true to false or removed"""
-        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin', 'isremotesyncout']
+        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin',
+                  'isremotesyncout']
         currentscript = self.current_file.get('script', {})
         oldscript = self.old_file.get('script', {})
 

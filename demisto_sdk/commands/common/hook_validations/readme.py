@@ -10,13 +10,14 @@ from threading import Lock
 from typing import Callable, Optional
 
 import requests
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_path, print_warning, get_yaml,
-                                               run_command_os, compare_context_path_in_yml_and_readme)
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_IGNORED_ERRORS, FOUND_FILES_AND_ERRORS
-
+from demisto_sdk.commands.common.tools import (
+    compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
+    print_warning, run_command_os)
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 

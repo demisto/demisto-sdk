@@ -12,7 +12,7 @@ from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
-from demisto_sdk.commands.common.constants import CONTEXT_OUTPUT_README_TABLE_HEADER
+
 import click
 import colorama
 import demisto_client
@@ -23,9 +23,10 @@ import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
+    DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
@@ -1590,6 +1591,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
         # handles cases of old integrations with context in 'important' section
         if 'important' in command:
             command.pop('important')
+
         # Gets all context path in the relevant command section from YML file
         existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
 

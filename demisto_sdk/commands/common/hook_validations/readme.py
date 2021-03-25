@@ -265,7 +265,7 @@ class ReadMeValidator(BaseValidator):
             readme_content = f.read()
             readme_size = len(readme_content)
             if 1 <= readme_size <= self.MINIMUM_README_LENGTH:
-                error = f'You Pack README is too small ({readme_size} chars). Please move its content to the pack ' \
+                error = f'Your Pack README is too small ({readme_size} chars). Please move its content to the pack ' \
                         'description or add more useful information to the Pack README. ' \
                         'Pack README files are expected to include a few sentences about the pack and/or images.'
                 error_message, error_code = Errors.readme_error(error)

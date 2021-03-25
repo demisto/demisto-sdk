@@ -209,7 +209,6 @@ def test_invalid_short_file(capsys):
     """
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()
-
     stdout, _ = capsys.readouterr()
     short_readme_error = 'Your Pack README is too small (29 chars). Please move its content to the pack ' \
                          'description or add more useful information to the Pack README. ' \

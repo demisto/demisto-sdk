@@ -18,7 +18,6 @@ def mock_lint_manager(mocker):
                        all_packs=False,
                        quiet=False,
                        verbose=False,
-                       log_path='',
                        prev_ver='master',
                        json_file_path='path')
 

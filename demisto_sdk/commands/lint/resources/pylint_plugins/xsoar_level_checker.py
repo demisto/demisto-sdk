@@ -65,7 +65,6 @@ class XsoarChecker(BaseChecker):
                     for child in self._inner_search_return_error(node):
                         if isinstance(child, astroid.Raise) and child.exc.func.name == "NotImplementedError":
                             not_implemented_error_exist = True
-                            break
                         if isinstance(child, astroid.If):
                             if_clause = child.body
                             else_clause = child.orelse
@@ -74,6 +73,8 @@ class XsoarChecker(BaseChecker):
                                 if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
                                     not_implemented_error_exist = True
                                     break
+                        if not_implemented_error_exist:
+                            break
                     if not not_implemented_error_exist:
                         self.add_message("not-implemented-error-doesnt-exist", node=node)
         except Exception:

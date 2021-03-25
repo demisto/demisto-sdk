@@ -526,7 +526,7 @@ class TestIntegrationValidator:
         current = {
             "script": {"feed": feed},
             "fromversion": fromversion,
-            'configuration': FEED_REQUIRED_PARAMS_STRUCTURE
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE)
         }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
@@ -805,7 +805,7 @@ class TestIsFeedParamsExist:
 
     def setup(self):
         config = {
-            'configuration': FEED_REQUIRED_PARAMS_STRUCTURE,
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             'script': {'feed': True}
         }
         self.validator = IntegrationValidator(mock_structure("", config))

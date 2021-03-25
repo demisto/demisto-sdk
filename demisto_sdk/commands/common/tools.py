@@ -1562,7 +1562,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
         readme_content: the content string of the readme file.
     Returns:
     """
-    different_contexts = {}
+    different_contexts: dict = {}
 
     # Gets the data from the README
     # the pattern to get the context part out of command section:

@@ -4,16 +4,14 @@ from CommonServerPython import *
 
 class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
-        super().__init__(base_url=server_url, verify=verify,
-                         proxy=proxy, headers=headers, auth=auth)
+        super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
 
     def url_report_request(self, resource):
         params = assign_params(resource=resource, apikey=self.api_key)
 
         headers = self._headers
 
-        response = self._http_request(
-            'GET', 'vtapi/v2/url/report', params=params, headers=headers)
+        response = self._http_request('GET', 'vtapi/v2/url/report', params=params, headers=headers)
 
         return response
 
@@ -24,8 +22,7 @@ class Client(BaseClient):
         headers['Content-Type'] = 'application/json'
         headers['Accept'] = 'application/json'
 
-        response = self._http_request(
-            'GET', 'vtapi/v2/domain/report', params=params, headers=headers)
+        response = self._http_request('GET', 'vtapi/v2/domain/report', params=params, headers=headers)
 
         return response
 
@@ -34,8 +31,7 @@ class Client(BaseClient):
 
         headers = self._headers
 
-        response = self._http_request(
-            'POST', 'vtapi/v2/file/scan', params=params, headers=headers)
+        response = self._http_request('POST', 'vtapi/v2/file/scan', params=params, headers=headers)
 
         return response
 
@@ -44,8 +40,7 @@ class Client(BaseClient):
 
         headers = self._headers
 
-        response = self._http_request(
-            'GET', 'vtapi/v2/file/download', params=params, headers=headers)
+        response = self._http_request('GET', 'vtapi/v2/file/download', params=params, headers=headers)
 
         return response
 
@@ -125,8 +120,7 @@ def main():
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, ''), verify_certificate,
-                        proxy, headers=headers, auth=None)
+        client = Client(urljoin(url, ''), verify_certificate, proxy, headers=headers, auth=None)
         client.api_key = params['api_key']
         commands = {
             'vt-test-url-report': url_report_command,

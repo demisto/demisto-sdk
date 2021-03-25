@@ -273,7 +273,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json({
             PACK_METADATA_USE_CASES: [],
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
-            PACK_METADATA_TAGS: tags
+            PACK_METADATA_TAGS: tags,
         })
 
         if pack_content == "playbook":

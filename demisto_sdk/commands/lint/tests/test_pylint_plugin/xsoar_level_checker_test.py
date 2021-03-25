@@ -164,6 +164,31 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_not_implemented_error_exists_in_if_clause(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Main function that in the else claus raises a NotImplementedError
+        Then:
+            - Ensure that the there was not message added to the checker.
+        """
+        node = astroid.extract_node("""
+            def main() -> bool:
+                try:
+                    if True:
+                        return True
+                    if command not in commands:
+                        raise NotImplementedError("this command was not implemented")
+                    else:
+                        return True
+                except Exception:
+                    pass
+        """)
+        assert node is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
     def test_not_implemented_error_doesnt_exists_on_Script(self):
         """
         Given:

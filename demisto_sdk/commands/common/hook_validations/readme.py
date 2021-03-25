@@ -51,6 +51,7 @@ class ReadMeValidator(BaseValidator):
     # Static var to hold the mdx server process
     _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
     _MDX_SERVER_LOCK = Lock()
+    MINIMUM_README_LENGTH = 30
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
                  json_file_path=None):
@@ -70,7 +71,8 @@ class ReadMeValidator(BaseValidator):
             self.is_image_path_valid(),
             self.is_mdx_file(),
             self.verify_no_empty_sections(),
-            self.verify_no_default_sections_left()
+            self.verify_no_default_sections_left(),
+            self.verify_readme_is_not_too_short()
         ])
 
     def mdx_verify(self) -> bool:
@@ -255,6 +257,20 @@ class ReadMeValidator(BaseValidator):
             error_message, error_code = Errors.readme_error(errors)
             self.handle_error(error_message, error_code, file_path=self.file_path)
 
+        return is_valid
+
+    def verify_readme_is_not_too_short(self):
+        is_valid = True
+        with open(self.file_path) as f:
+            readme_content = f.read()
+            readme_size = len(readme_content)
+            if 1 <= readme_size <= self.MINIMUM_README_LENGTH:
+                error = f'You Pack README is too small ({readme_size} chars). Please move its content to the pack ' \
+                        'description or add more useful information to the Pack README. ' \
+                        'Pack README files are expected to include a few sentences about the pack and/or images.'
+                error_message, error_code = Errors.readme_error(error)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                is_valid = False
         return is_valid
 
     @staticmethod

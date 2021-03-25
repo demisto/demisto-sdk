@@ -887,6 +887,110 @@ NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
 IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONTENT_PACK}
 
+# FEED_REQUIRED_PARAMS = [
+#     {
+#         'name': 'feed',
+#         'must_equal': {
+#             'defaultvalue': 'true',
+#             'display': 'Fetch indicators',
+#             'type': 8,
+#             'required': False
+#         },
+#         'must_contain': {}
+#     },
+#     {
+#         'name': 'feedReputation',
+#         'must_equal': {
+#             'display': 'Indicator Reputation',
+#             'type': 18,
+#             'required': False,
+#             'options': ['None', 'Good', 'Suspicious', 'Bad']
+#         },
+#         'must_contain': {
+#             'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+#         }
+#     },
+#     {
+#         'name': 'feedReliability',
+#         'must_equal': {
+#             'display': 'Source Reliability',
+#             'type': 15,
+#             'required': True,
+#             'options': [
+#                 'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
+#                 'E - Unreliable', 'F - Reliability cannot be judged']
+#         },
+#         'must_contain': {
+#             'additionalinfo': 'Reliability of the source providing the intelligence data'
+#         }
+#     },
+#     {
+#         'name': 'feedExpirationPolicy',
+#         'must_equal': {
+#             'display': "",
+#             'type': 17,
+#             'required': False,
+#             'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+#         },
+#         'must_contain': {}
+#     },
+#     {
+#         'name': 'feedExpirationInterval',
+#         'must_equal': {
+#             'display': "",
+#             'type': 1,
+#             'required': False
+#         },
+#         'must_contain': {}
+#     },
+#     {
+#         'name': 'feedFetchInterval',
+#         'must_equal': {
+#             'display': 'Feed Fetch Interval',
+#             'type': 19,
+#             'required': False
+#         },
+#         'must_contain': {}
+#     },
+#     {
+#         'name': 'feedBypassExclusionList',
+#         'must_equal': {
+#             'display': 'Bypass exclusion list',
+#             'type': 8,
+#             'required': False
+#         },
+#         'must_contain': {
+#             'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
+#                               ' This means that if an indicator from this feed is on the exclusion list,'
+#                               ' the indicator might still be added to the system.'
+#         }
+#     },
+#     {
+#         'name': 'feedTags',
+#         'must_equal': {
+#             'display': 'Tags',
+#             'required': False,
+#             'type': 0
+#         },
+#         'must_contain': {
+#             'additionalinfo': 'Supports CSV values.'
+#         }
+#     },
+#     {
+#         'name': 'tlp_color',
+#         'must_equal': {
+#             'display': 'Traffic Light Protocol Color',
+#             'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+#             'required': False,
+#             'type': 15
+#         },
+#         'must_contain': {
+#             'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the '
+#                               'feed'
+#         }
+#     }
+# ]
+
 FEED_REQUIRED_PARAMS = [
     {
         'defaultvalue': 'true',

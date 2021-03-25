@@ -844,6 +844,24 @@ class TestIsFeedParamsExist:
         assert self.validator.all_feed_params_exist() is True, \
             'all_feed_params_exist() returns False instead True for feedReputation param'
 
+    def test_additional_info_contained(self):
+        """
+        Given:
+        - Parameters of feed integration.
+
+        When:
+        - Integration has all feed required params, and additionalinfo containing the expected additionalinfo parameter.
+
+        Then:
+        - Ensure that all_feed_params_exists() returns true.
+        """
+        configuration = self.validator.current_file['configuration']
+        for item in configuration:
+            if item.get('additionalinfo'):
+                item['additionalinfo'] = f'''{item['additionalinfo']}.'''
+        assert self.validator.all_feed_params_exist() is True, \
+            'all_feed_params_exist() returns False instead True'
+
     NO_HIDDEN = {"configuration": [{"id": "new", "name": "new", "display": "test"}, {"d": "123", "n": "s", "r": True}]}
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
     HIDDEN_TRUE = {"configuration": [{"id": "n", "n": "n"}, {"display": "123", "required": "false", "hidden": True}]}

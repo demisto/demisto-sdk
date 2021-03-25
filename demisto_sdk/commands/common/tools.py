@@ -1576,7 +1576,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     # handles scripts
     if not commands:
         return different_contexts
-
+    commands = commands.get('commands', [])
     for command in commands:
         command_name = command.get('name')
 

@@ -17,6 +17,7 @@ from mock import mock_open, patch
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
+
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):

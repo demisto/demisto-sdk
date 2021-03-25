@@ -802,7 +802,8 @@ class TestIsFeedParamsExist:
 
     def setup(self):
         config = {
-            'configuration': deepcopy(FEED_REQUIRED_PARAMS),
+            'configuration': [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
+                                   name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS],
             'script': {'feed': True}
         }
         self.validator = IntegrationValidator(mock_structure("", config))

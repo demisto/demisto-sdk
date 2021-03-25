@@ -4,6 +4,7 @@
 * Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
 * Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* Updated the **demisto-sdk validate** command to check that 'additionalinfo' field contains the expected 'additionalinfo' value for feed required parameters.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

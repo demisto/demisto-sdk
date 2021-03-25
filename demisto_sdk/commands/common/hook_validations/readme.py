@@ -289,7 +289,7 @@ class ReadMeValidator(BaseValidator):
                 or f'{yml_path} - [IN136]' in FOUND_FILES_AND_ERRORS:
             return False
 
-        # get README file's content
+        # get README file's content:
         with open(self.file_path, 'r') as readme:
             readme_content = readme.read()
 

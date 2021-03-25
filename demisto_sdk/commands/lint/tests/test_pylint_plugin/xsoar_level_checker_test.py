@@ -176,8 +176,6 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         node = astroid.extract_node("""
             def main() -> bool:
                 try:
-                    if True:
-                        return True
                     if command not in commands:
                         raise NotImplementedError("this command was not implemented")
                     else:
@@ -202,6 +200,31 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             def main() -> bool:
                 try:
                     raise NotImplementedError("this command was not implemented")
+                except Exception:
+                    pass
+        """)
+        assert node is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_not_implemented_error_exists_inside_elif_clause(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Main function that in the elif clause raises a NotImplementedError.
+        Then:
+            - Ensure that the there was not message added to the checker.
+        """
+        node = astroid.extract_node("""
+            def main() -> bool:
+                try:
+                    if True:
+                        return True
+                    elif command not in commands:
+                        raise NotImplementedError("this command was not implemented")
+                    else:
+                        return True
                 except Exception:
                     pass
         """)

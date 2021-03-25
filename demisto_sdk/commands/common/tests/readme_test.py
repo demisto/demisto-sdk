@@ -9,11 +9,13 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
+INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-SHORT-invalid.md'
 
 README_INPUTS = [
     (VALID_MD, True),
     (INVALID_MD, False),
     (INVALID2_MD, False),
+    (INVALID3_MD, False)
 ]
 
 MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test you must run "npm install" ' \

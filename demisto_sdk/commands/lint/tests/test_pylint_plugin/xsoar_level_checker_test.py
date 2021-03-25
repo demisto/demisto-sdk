@@ -169,7 +169,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - Main function that in the else claus raises a NotImplementedError
+            - Main function that in the if clause raises a NotImplementedError.
         Then:
             - Ensure that the there was not message added to the checker.
         """
@@ -182,6 +182,26 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                         raise NotImplementedError("this command was not implemented")
                     else:
                         return True
+                except Exception:
+                    pass
+        """)
+        assert node is not None
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_not_implemented_error_exists_not_inside_else_if_clauses(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - Main function that raises a NotImplementedError outside of if or else clauses.
+        Then:
+            - Ensure that the there was not message added to the checker.
+        """
+        node = astroid.extract_node("""
+            def main() -> bool:
+                try:
+                    raise NotImplementedError("this command was not implemented")
                 except Exception:
                     pass
         """)

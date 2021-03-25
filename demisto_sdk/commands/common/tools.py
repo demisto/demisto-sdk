@@ -1555,12 +1555,15 @@ def get_file_displayed_name(file_path):
 
 def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     """
-    Gets both README and YML file and compares the context path between them.
+    Gets both README and YML file of Integration and compares the context path between them.
+    Scripts are not being checked.
     Args:
         yml_dict: a dictionary representing YML content.
         readme_content: the content string of the readme file.
     Returns:
     """
+    different_contexts = {}
+
     # Gets the data from the README
     # the pattern to get the context part out of command section:
     context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*',
@@ -1568,9 +1571,12 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     # the pattern to get the value in the first column under the outputs table:
     context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
     readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
-    commands = yml_dict.get("script", {}).get('commands', [])
+    commands = yml_dict.get("script", {})
 
-    different_contexts = {}
+    # handles scripts
+    if not commands:
+        return different_contexts
+
     for command in commands:
         command_name = command.get('name')
 

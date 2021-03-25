@@ -273,6 +273,8 @@ class ReadMeValidator(BaseValidator):
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
+        if 'Scripts' in dir_path:
+            return True
 
         # Get YML file, assuming only one yml in integration
         files_in_integration = os.listdir(dir_path)
@@ -292,7 +294,6 @@ class ReadMeValidator(BaseValidator):
             readme_content = readme.read()
 
         yml_as_dict = get_yaml(yml_path)
-        # commands = self.current_file.get("script", {}).get('commands', [])
 
         difference = compare_context_path_in_yml_and_readme(yml_as_dict, readme_content)
         for command_name in difference:

@@ -4,6 +4,8 @@
 * Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
 * Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
@@ -11,7 +13,6 @@
 * Added a validation that a pack's display name does not already exist in content repository.
 * Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
 * Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
-* Added the *--ignore-untracked* flag to the **validate** command to ignore file which are untracked by git in the validation process.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

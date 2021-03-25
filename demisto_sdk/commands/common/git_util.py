@@ -19,14 +19,14 @@ class GitUtil:
             self.repo = repo
 
     def modified_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                       staged_only: bool = False, debug: bool = False, ignore_untracked: bool = False) -> Set[Path]:
+                       staged_only: bool = False, debug: bool = False, include_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as modified against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
-            ignore_untracked (bool): Whether to ignore untracked files.
+            include_untracked (bool): Whether to include untracked files.
         Returns:
             Set: A set of Paths to the modified files.
         """
@@ -79,7 +79,7 @@ class GitUtil:
             return committed
 
         untracked = set()  # type: Set
-        if not ignore_untracked:
+        if include_untracked:
             # get all untracked modified files
             untracked = self._get_untracked_files('M')
 
@@ -113,14 +113,14 @@ class GitUtil:
         return staged.union(committed)
 
     def added_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                    staged_only: bool = False, debug: bool = False, ignore_untracked: bool = False) -> Set[Path]:
+                    staged_only: bool = False, debug: bool = False, include_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as added against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
-            ignore_untracked (bool): Whether to ignore untracked files.
+            include_untracked (bool): Whether to include untracked files.
         Returns:
             Set: A set of Paths to the added files.
         """
@@ -167,7 +167,7 @@ class GitUtil:
 
         untracked_added = set()  # type: Set
         untracked_modified = set()  # type: Set
-        if not ignore_untracked:
+        if include_untracked:
             # get all untracked added files
             untracked_added = self._get_untracked_files('A')
 
@@ -201,13 +201,13 @@ class GitUtil:
         return staged.union(committed)
 
     def deleted_files(self, prev_ver: str = 'master', committed_only: bool = False,
-                      staged_only: bool = False, ignore_untracked: bool = False) -> Set[Path]:
+                      staged_only: bool = False, include_untracked: bool = False) -> Set[Path]:
         """Gets all the files that are recognized by git as deleted against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
-            ignore_untracked (bool): Whether to ignore untracked files.
+            include_untracked (bool): Whether to include untracked files.
         Returns:
             Set: A set of Paths to the deleted files.
         """
@@ -243,7 +243,7 @@ class GitUtil:
             return committed
 
         untracked = set()  # type: Set
-        if not ignore_untracked:
+        if include_untracked:
             # get all untracked deleted files
             untracked = self._get_untracked_files('D')
 
@@ -258,14 +258,14 @@ class GitUtil:
 
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False, debug: bool = False,
-                      ignore_untracked: bool = False) -> Set[Tuple[Path, Path]]:
+                      include_untracked: bool = False) -> Set[Tuple[Path, Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
             committed_only (bool): Whether to return only committed files.
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
-            ignore_untracked (bool): Whether to ignore untracked files.
+            include_untracked (bool): Whether to include untracked files.
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
@@ -306,7 +306,7 @@ class GitUtil:
             return committed
 
         untracked = set()  # type:Set
-        if not ignore_untracked:
+        if include_untracked:
             # get all untracked renamed files
             untracked = self._get_untracked_files('R')
 

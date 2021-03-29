@@ -35,7 +35,8 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
-                    self.is_incident_field_exist(id_set_file, is_circle)
+                    self.is_incident_field_exist(id_set_file, is_circle),
+                    self.is_id_equals_name(),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -73,6 +74,10 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
 
     @abstractmethod
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+        pass
+
+    @abstractmethod
+    def is_id_equals_name(self) -> bool:
         pass
 
 
@@ -154,6 +159,14 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_id_equals_name(self):
+        """Check whether the playbook ID is equal to its name.
+
+        Returns:
+            bool. Whether the file id equals to its name
+        """
+        return super(LayoutsContainerValidator, self)._is_id_equals_name('layoutscontainer')
 
 
 class LayoutValidator(LayoutBaseValidator):
@@ -237,3 +250,6 @@ class LayoutValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_id_equals_name(self) -> bool:
+        pass

@@ -78,3 +78,24 @@ class TestLayoutValidator:
         structure = mock_structure("", layout_json)
         validator = LayoutsContainerValidator(structure)
         assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
+
+    IS_MATCHING_NAME_ID_INPUT = [
+        ({"id": "name", "name": "name"}, True),
+        ({"id": "id_field", "name": "name_field"}, False)
+    ]
+
+    @pytest.mark.parametrize("layout_container, result", IS_MATCHING_NAME_ID_INPUT)
+    def test_is_name_id_equal(self, repo, layout_container, result):
+        """
+        Given
+        - A layout container with name and id
+        When
+        - validating layout container
+        Then
+        - validating that layout_container name and id are equal.
+        """
+
+        structure = mock_structure("", layout_container)
+        validator = LayoutsContainerValidator(structure)
+
+        assert validator.is_id_equals_name() == result

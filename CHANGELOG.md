@@ -6,6 +6,8 @@
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
 * Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
 * Added validation for README files verifying their length (over 30 chars).
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

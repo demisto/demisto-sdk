@@ -252,4 +252,4 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     def is_id_equals_name(self) -> bool:
-        pass
+        return True

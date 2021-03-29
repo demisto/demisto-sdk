@@ -362,7 +362,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             if "Use Case" in pack_meta_file_content['tags']:
                 playbooks_path = os.path.join(self.pack_path, "Playbooks")
-                incidents_path = os.path.join(self.pack_path, "IncidentsTypes")
+                incidents_path = os.path.join(self.pack_path, "IncidentTypes")
                 layouts_path = os.path.join(self.pack_path, "Layouts")
 
                 answers = [

@@ -6,6 +6,7 @@
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
 * Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
 * Added validation for README files verifying their length (over 30 chars).
+* Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

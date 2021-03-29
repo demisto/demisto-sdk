@@ -9,11 +9,15 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
+INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
+EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
 
 README_INPUTS = [
     (VALID_MD, True),
     (INVALID_MD, False),
     (INVALID2_MD, False),
+    (INVALID3_MD, False),
+    (EMPTY_MD, True)
 ]
 
 MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test you must run "npm install" ' \
@@ -177,7 +181,7 @@ def test_valid_sections(integration, file_input):
 def test_verify_no_default_sections_left(integration, capsys, file_input, section):
     """
     Given
-        - Read me that contains sections that are created as default and need to be changed
+        - Readme that contains sections that are created as default and need to be changed
     When
         - Run validate on README file
     Then
@@ -192,3 +196,22 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     section_error = f'Replace "{section}" with a suitable info.'
     assert not result
     assert section_error in stdout
+
+
+def test_invalid_short_file(capsys):
+    """
+    Given
+        - Non empty Readme with less than 30 chars.
+    When
+        - Running validate on README file
+    Then
+        - Ensure verify on Readme fails
+    """
+    readme_validator = ReadMeValidator(INVALID3_MD)
+    result = readme_validator.verify_readme_is_not_too_short()
+    stdout, _ = capsys.readouterr()
+    short_readme_error = 'Your Pack README is too small (29 chars). Please move its content to the pack ' \
+                         'description or add more useful information to the Pack README. ' \
+                         'Pack README files are expected to include a few sentences about the pack and/or images.'
+    assert not result
+    assert short_readme_error in stdout

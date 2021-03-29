@@ -93,13 +93,14 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.REPUTATION: 'Indicator Types',
     FileType.INCIDENT_TYPE: 'Incident Types',
     FileType.CLASSIFIER: 'Classifiers',
+    FileType.OLD_CLASSIFIER: 'Classifiers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts',
     FileType.LAYOUT: 'Layouts',
     FileType.REPORT: 'Reports',
     FileType.WIDGET: 'Widgets',
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
-    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
 }
 
 

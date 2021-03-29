@@ -5,6 +5,7 @@
 * Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
 * Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
+* Added validation for README files verifying their length (over 30 chars).
 * Updated the **demisto-sdk validate** command to check that 'additionalinfo' field contains the expected 'additionalinfo' value for feed required parameters.
 
 # 1.3.2

@@ -61,7 +61,6 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
-        readme_content = ''
         with open(self.file_path) as f:
             readme_content = f.read()
         self.readme_content = readme_content
@@ -71,7 +70,6 @@ class ReadMeValidator(BaseValidator):
         Returns:
             bool: True if env configured else Fale.
         """
-
         return all([
             self.is_image_path_valid(),
             self.is_mdx_file(),

@@ -1,8 +1,10 @@
 # Changelog
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
 * Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
-* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
-
+* Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
+* Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
+* Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

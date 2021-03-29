@@ -181,7 +181,7 @@ def test_valid_sections(integration, file_input):
 def test_verify_no_default_sections_left(integration, capsys, file_input, section):
     """
     Given
-        - Read me that contains sections that are created as default and need to be changed
+        - Readme that contains sections that are created as default and need to be changed
     When
         - Run validate on README file
     Then
@@ -201,11 +201,11 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
 def test_invalid_short_file(capsys):
     """
     Given
-        - Read me that contains sections that are created as default and need to be changed
+        - Non empty Readme with less than 30 chars.
     When
-        - Run validate on README file
+        - Running validate on README file
     Then
-        - Ensure no default sections in the readme file
+        - Ensure verify on Readme fails
     """
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()

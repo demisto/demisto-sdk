@@ -251,6 +251,11 @@ def unify(**kwargs):
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the validation.'
+)
+@click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not.'
 )
@@ -324,6 +329,7 @@ def validate(config, **kwargs):
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
+            include_untracked=kwargs.get('include_untracked')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -722,7 +728,7 @@ def generate_test_playbook(**kwargs):
     "--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
-                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,
@@ -916,7 +922,7 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver')
-    prev_rn_text = ''
+    existing_rn_version = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -961,11 +967,7 @@ def update_pack_releasenotes(**kwargs):
     if _packs:
         for pack in _packs:
             if pack in packs_existing_rn and update_type is None:
-                try:
-                    with open(packs_existing_rn[pack], 'r') as f:
-                        prev_rn_text = f.read()
-                except Exception as e:
-                    print_error(f'Failed to load the previous release notes file content: {e}')
+                existing_rn_version = packs_existing_rn[pack]
             elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
@@ -981,10 +983,10 @@ def update_pack_releasenotes(**kwargs):
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text,
-                                          prev_rn_text=prev_rn_text)
+                                          existing_rn_version_path=existing_rn_version)
                 updated = update_pack_rn.execute_update()
                 # if new release notes were created and if previous release notes existed, remove previous
-                if updated and prev_rn_text:
+                if updated and update_pack_rn.should_delete_existing_rn:
                     os.unlink(packs_existing_rn[pack])
 
             else:

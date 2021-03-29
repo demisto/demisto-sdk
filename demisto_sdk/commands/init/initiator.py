@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from distutils.dir_util import copy_tree
+from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
@@ -41,8 +42,10 @@ class Initiator:
     DEFAULT_INTEGRATION_TEMPLATE = 'BaseIntegration'
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
+    HELLO_WORLD_FEED_INTEGRATION = 'FeedHelloWorld'
 
-    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION, DEFAULT_INTEGRATION_TEMPLATE]
+    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION, HELLO_WORLD_FEED_INTEGRATION,
+                                    DEFAULT_INTEGRATION_TEMPLATE]
 
     TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
     TEMPLATE_INTEGRATION_FILES = {f'{TEMPLATE_INTEGRATION_NAME}.py',
@@ -62,6 +65,10 @@ class Initiator:
                                    os.path.join(TEST_DATA_DIR, 'update_alert_status.json'),
                                    os.path.join(TEST_DATA_DIR, 'domain_reputation.json')}
 
+    HELLO_WORLD_FEED_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'build_iterators_results.json'),
+                                        os.path.join(TEST_DATA_DIR, 'get_indicators_command_results.json'),
+                                        os.path.join(TEST_DATA_DIR, 'FeedHelloWorld_mock.txt')}
+
     ''' SCRIPT TEMPLATES CONSTANTS '''
     DEFAULT_SCRIPT_TEMPLATE = 'BaseScript'
     HELLO_WORLD_SCRIPT = 'HelloWorldScript'
@@ -80,10 +87,11 @@ class Initiator:
     DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
     HELLO_WORLD_PACK_NAME = 'HelloWorld'
     DEFAULT_TEMPLATES = [DEFAULT_INTEGRATION_TEMPLATE, DEFAULT_SCRIPT_TEMPLATE]
-    HELLO_WORLD_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
+    HELLO_WORLD_BASE_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
+    SUPPORTED_FROM_VERSION = "5.5.0"
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
@@ -439,6 +447,10 @@ class Initiator:
             yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
+
+        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+            yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
+
         if integration:
             yml_dict["display"] = self.id
 
@@ -536,6 +548,9 @@ class Initiator:
             if self.template == self.HELLO_WORLD_INTEGRATION:
                 template_files = template_files.union(self.HELLO_WORLD_TEST_DATA_FILES)
 
+            elif self.template == self.HELLO_WORLD_FEED_INTEGRATION:
+                template_files = template_files.union(self.HELLO_WORLD_FEED_TEST_DATA_FILES)
+
             elif self.template == self.DEFAULT_INTEGRATION_TEMPLATE:
                 template_files = template_files.union(self.DEFAULT_INTEGRATION_TEST_DATA_FILES)
         else:
@@ -544,7 +559,6 @@ class Initiator:
 
             if self.template == self.DEFAULT_SCRIPT_TEMPLATE:
                 template_files = template_files.union(self.DEFAULT_SCRIPT_TEST_DATA_FILES)
-
         return template_files
 
     def get_remote_templates(self, files_list, dir):
@@ -556,13 +570,15 @@ class Initiator:
         Returns:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
-        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES:
+        # create test_data dir
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES\
+                + [self.HELLO_WORLD_FEED_INTEGRATION]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
         if self.template in self.DEFAULT_TEMPLATES:
             pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
 
-        elif self.template in self.HELLO_WORLD_TEMPLATES:
+        elif self.template in self.HELLO_WORLD_BASE_TEMPLATES + [self.HELLO_WORLD_FEED_INTEGRATION]:
             pack_name = self.HELLO_WORLD_PACK_NAME
 
         else:
@@ -573,8 +589,10 @@ class Initiator:
         for file in files_list:
             try:
                 filename = file
-                if 'README.md' in file and self.template not in self.HELLO_WORLD_TEMPLATES:
-                    # Actual readme file name is `README_example.md`
+                if 'README.md' in file and self.template not in self.HELLO_WORLD_BASE_TEMPLATES:
+                    # This is for the cases when the actual readme file name in content repo
+                    # is `README_example.md` - which happens when we do not want the readme
+                    # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace('README.md', 'README_example.md')
                 file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:

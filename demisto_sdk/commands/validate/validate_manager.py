@@ -75,7 +75,8 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, pykwalify_logs=False
+            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
+            pykwalify_logs=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -94,6 +95,7 @@ class ValidateManager:
         self.staged = staged
         self.skip_schema_check = skip_schema_check
         self.debug_git = debug_git
+        self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
 
         if json_file_path:
@@ -969,11 +971,13 @@ class ValidateManager:
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
                                                       committed_only=self.is_circle, staged_only=self.staged,
-                                                      debug=self.debug_git)
+                                                      debug=self.debug_git, include_untracked=self.include_untracked)
         added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                staged_only=self.staged, debug=self.debug_git)
+                                                staged_only=self.staged, debug=self.debug_git,
+                                                include_untracked=self.include_untracked)
         renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                    staged_only=self.staged, debug=self.debug_git)
+                                                    staged_only=self.staged, debug=self.debug_git,
+                                                    include_untracked=self.include_untracked)
 
         # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)

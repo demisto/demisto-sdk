@@ -1,4 +1,15 @@
 # Changelog
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+* Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
+* Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
+* Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
+* Added validation for README files verifying their length (over 30 chars).
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
+
+# 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
 * Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
 * Added a validation that a pack's display name does not already exist in content repository.

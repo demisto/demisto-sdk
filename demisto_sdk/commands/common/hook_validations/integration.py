@@ -843,6 +843,7 @@ class IntegrationValidator(ContentEntityValidator):
             bool. True if the integration is defined as well False otherwise.
         """
         params_exist = True
+        # Build params in efficient way of param_name: {param_field_name: param_field_value} to query quickly for param.
         params = {
             param.get('name'): {k: v for k, v in param.items()} for param in self.current_file.get('configuration', [])}
 

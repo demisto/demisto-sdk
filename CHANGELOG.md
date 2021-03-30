@@ -1,4 +1,25 @@
 # Changelog
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+* Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
+* Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
+* Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
+* Added validation for README files verifying their length (over 30 chars).
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
+* Improved the `pykwalify` error outputs in the **validate** command.
+* Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
+
+# 1.3.2
+* Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
+* Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
+
+# 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
 * Updated the **upload** command to support indicator fields.
 * The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.
@@ -7,8 +28,9 @@
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
+* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
 * Added the *hiddenusername* field to the integration schema.
-* Fixed an issue where **validate** was failing on editing existing release notes.
+* Added a validation that images that are not integration images, do not ask for a new version or RN
 
 # 1.3.0
 * Do not collect optional dependencies on indicator types reputation commands.

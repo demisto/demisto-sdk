@@ -314,7 +314,8 @@ def test_yml_reformatting(tmp_path, initiator):
                 'id': 'HelloWorld'
             }),
             'display': 'HelloWorld',
-            'name': 'HelloWorld'
+            'name': 'HelloWorld',
+            'fromversion': initiator.SUPPORTED_FROM_VERSION
         })
 
 
@@ -406,7 +407,8 @@ def test_integration_init(initiator, tmpdir):
     assert expected_files == integration_dir_files
 
 
-def test_template_integration_init(initiator, tmpdir):
+@pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
+def test_template_integration_init(initiator, tmpdir, template):
     """
     Tests `integration_init` function with a given integration template name.
 
@@ -428,7 +430,7 @@ def test_template_integration_init(initiator, tmpdir):
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
-    initiator.template = 'HelloWorld'
+    initiator.template = template
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()

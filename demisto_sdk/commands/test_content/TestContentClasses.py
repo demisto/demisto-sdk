@@ -21,8 +21,8 @@ import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
-from demisto_sdk.commands.test_content.constants import (LOAD_BALANCER_DNS,
-                                                         SSH_USER)
+from demisto_sdk.commands.test_content.constants import (
+    CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import \
     acquire_test_lock
@@ -800,6 +800,7 @@ class Integration:
              'params': {}})
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
+        self.integration_type: str = ""
         self.module_instance: dict = {}
 
     @staticmethod
@@ -1055,6 +1056,8 @@ class Integration:
         integration_config = ast.literal_eval(res[0])
         self.integration_configuration_from_server = integration_config
         self.module_instance = module_instance
+        integration_script = integration_config.get('configuration', {}).get('integrationScript', {}) or {}
+        self.integration_type = integration_script.get('type', '')
         return True
 
     def delete_integration_instance(self, client, instance_id: Optional[str] = None) -> bool:
@@ -1202,7 +1205,7 @@ class TestContext:
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
         self.tunnel_command = \
-            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{SSH_USER}@{LOAD_BALANCER_DNS}" ' \
+            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" ' \
             f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
 
     def _get_investigation_playbook_state(self) -> str:
@@ -1353,17 +1356,36 @@ class TestContext:
     def _run_docker_threshold_test(self):
         self._collect_docker_images()
         if self.test_docker_images:
+            memory_threshold, pid_threshold = self.get_threshold_values()
             error_message = Docker.check_resource_usage(
                 server_url=self.server_context.server_ip,
                 docker_images=self.test_docker_images,
-                def_memory_threshold=self.playbook.configuration.memory_threshold,
-                def_pid_threshold=self.playbook.configuration.pid_threshold,
+                def_memory_threshold=memory_threshold,
+                def_pid_threshold=pid_threshold,
                 docker_thresholds=self.build_context.conf.docker_thresholds,
                 logging_module=self.build_context.logging_module)
             if error_message:
                 self.build_context.logging_module.error(error_message)
                 return False
         return True
+
+    def get_threshold_values(self) -> Tuple[int, int]:
+        """
+        Gets the memory and pid threshold values to enforce on the current test.
+        If one of the playbook's integrations is a powershell integration - the threshold have to be equals or
+        higher than the default powershell threshold value.
+        Returns:
+            - The memory threshold value
+            - The pid threshold value
+        """
+        memory_threshold = self.playbook.configuration.memory_threshold
+        pid_threshold = self.playbook.configuration.pid_threshold
+        has_pwsh_integration = any(integration for integration in self.playbook.integrations if
+                                   integration.integration_type == Docker.POWERSHELL_INTEGRATION_TYPE)
+        if has_pwsh_integration:
+            memory_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE, memory_threshold)
+            pid_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE, pid_threshold)
+        return memory_threshold, pid_threshold
 
     def _send_slack_message(self, channel, text, user_name, as_user):
         self.build_context.slack_client.api_call(

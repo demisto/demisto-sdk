@@ -684,7 +684,7 @@ class Linter:
         dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
         dockerfile = template.render(image=test_image_name,
                                      copy_pack=True)
-        with open(file=dockerfile_path, mode="+x") as file:
+        with open(dockerfile_path, mode="w+") as file:
             file.write(str(dockerfile))
         # we only do retries in CI env where docker build is sometimes flacky
         build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1

@@ -188,6 +188,7 @@ ERROR_CODE = {
     "pack_metadata_non_approved_usecases": {'code': "PA119", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_non_approved_tags": {'code': "PA120", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
+    "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -208,6 +209,8 @@ ERROR_CODE = {
     "pykwalify_field_undefined": {'code': "ST108", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_missing_in_root": {'code': "ST109", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
     "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
@@ -1184,6 +1187,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_name_already_exists(new_pack_name) -> str:
+        return f"A pack named: {new_pack_name} already exists in content repository, " \
+               f"change the pack's name in the metadata file."
+
+    @staticmethod
+    @error_code_decorator
     def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
         return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
                f"Suggested change: {changed_value}"
@@ -1269,23 +1278,33 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pykwalify_missing_parameter(key_from_error, current_string, path):
-        return f'Missing {key_from_error} in \n{current_string}\nPath: {path}'
+    def pykwalify_missing_parameter(key_from_error, path):
+        return f'Missing the field "{key_from_error}" in Path: {path}'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_field_undefined(key_from_error):
-        return f'The field {key_from_error} was not defined in the scheme'
+        return f'The field "{key_from_error}" was not defined in the scheme'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_field_undefined_with_path(key_from_error, path):
+        return f'The field "{key_from_error}" in path {path} was not defined in the scheme'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_missing_in_root(key_from_error):
-        return f'Missing {key_from_error} in root'
+        return f'Missing the field "{key_from_error}" in root'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_incorrect_enum(path_to_wrong_enum, wrong_enum, enum_values):
+        return f'The value "{wrong_enum}" in {path_to_wrong_enum} is invalid - legal values include: {enum_values}'
 
     @staticmethod
     @error_code_decorator

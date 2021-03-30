@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -250,6 +251,11 @@ def unify(**kwargs):
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the validation.'
+)
+@click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not.'
 )
@@ -285,6 +291,9 @@ def unify(**kwargs):
 @click.option(
     '--debug-git', is_flag=True,
     help='Whether to print debug logs for git statuses.')
+@click.option(
+    '--print-pykwalify', is_flag=True,
+    help='Whether to print the pykwalify log errors.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -320,6 +329,7 @@ def validate(config, **kwargs):
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
+            include_untracked=kwargs.get('include_untracked')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -718,7 +728,7 @@ def generate_test_playbook(**kwargs):
     "--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
-                             "Integration template options: HelloWorld, HelloIAMWorld\n"
+                             "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
     '--demisto_mock', is_flag=True,
@@ -912,7 +922,7 @@ def update_pack_releasenotes(**kwargs):
     specific_version = kwargs.get('version')
     id_set_path = kwargs.get('id_set_path')
     prev_ver = kwargs.get('prev_ver')
-    prev_rn_text = ''
+    existing_rn_version = ''
     # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
     if _pack and is_all:
         print_error("Please remove the --all flag when specifying only one pack.")
@@ -957,11 +967,7 @@ def update_pack_releasenotes(**kwargs):
     if _packs:
         for pack in _packs:
             if pack in packs_existing_rn and update_type is None:
-                try:
-                    with open(packs_existing_rn[pack], 'r') as f:
-                        prev_rn_text = f.read()
-                except Exception as e:
-                    print_error(f'Failed to load the previous release notes file content: {e}')
+                existing_rn_version = packs_existing_rn[pack]
             elif pack in packs_existing_rn and update_type is not None:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
@@ -977,10 +983,10 @@ def update_pack_releasenotes(**kwargs):
                 update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
                                           modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
                                           added_files=pack_added, specific_version=specific_version, text=text,
-                                          prev_rn_text=prev_rn_text)
+                                          existing_rn_version_path=existing_rn_version)
                 updated = update_pack_rn.execute_update()
                 # if new release notes were created and if previous release notes existed, remove previous
-                if updated and prev_rn_text:
+                if updated and update_pack_rn.should_delete_existing_rn:
                     os.unlink(packs_existing_rn[pack])
 
             else:
@@ -1193,6 +1199,59 @@ def openapi_codegen_command(**kwargs):
     default="NonAMI")
 def test_content(**kwargs):
     execute_test_content(**kwargs)
+
+
+# ====================== doc-review ====================== #
+@main.command(name="doc-review",
+              help='''Check the spelling in .md and .yml files as well as review release notes''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=str, help='The path to the file to check')
+@click.option(
+    '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
+@click.option(
+    '--known-words', type=str, help="The path to a file containing additional known words"
+)
+@click.option(
+    '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
+)
+@click.option(
+    '--expand-dictionary', is_flag=True, help="Whether to expand the base dictionary to include more words - "
+                                              "will download 'brown' corpus from nltk package"
+)
+@click.option(
+    '--templates', is_flag=True, help="Whether to print release notes templates"
+)
+@click.option(
+    '-g', '--use-git', is_flag=True, help="Use git to identify the relevant changed files, "
+                                          "will be used by default if '-i' and '--templates' are not set"
+)
+@click.option(
+    '--prev-ver', type=str, help="The branch against which changes will be detected "
+                                 "if '-g' flag is set. Default is 'demisto/master'"
+)
+@click.option(
+    '-rn', '--release-notes', is_flag=True, help="Will run only on release notes files"
+)
+def doc_review(**kwargs):
+    doc_reviewer = DocReviewer(
+        file_path=kwargs.get('input'),
+        known_words_file_path=kwargs.get('known_words'),
+        no_camel_case=kwargs.get('no_camel_case'),
+        no_failure=kwargs.get('always_true'),
+        expand_dictionary=kwargs.get('expand_dictionary'),
+        templates=kwargs.get('templates'),
+        use_git=kwargs.get('use_git'),
+        prev_ver=kwargs.get('prev_ver'),
+        release_notes_only=kwargs.get('release_notes'),
+    )
+    result = doc_reviewer.run_doc_review()
+    if result:
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @main.resultcallback()

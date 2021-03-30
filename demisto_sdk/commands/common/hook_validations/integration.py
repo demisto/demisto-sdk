@@ -51,8 +51,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_removed_integration_parameters(),
             self.is_added_required_fields(),
             self.is_changed_command_name_or_arg(),
-            self.is_there_duplicate_args(),
-            self.is_there_duplicate_params(),
             self.is_changed_subtype(),
             self.is_not_valid_display_configuration(),
             self.is_changed_removed_yml_fields(),
@@ -97,7 +95,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
             self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path()
+            self.is_valid_integration_file_path(),
+            self.has_no_duplicate_params(),
+            self.has_no_duplicate_args()
         ]
 
         if not skip_test_conf:
@@ -472,15 +472,15 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_there_duplicate_args(self):
+    def has_no_duplicate_args(self):
         # type: () -> bool
         """Check if a command has the same arg more than once
 
         Returns:
-            bool. True if there are duplicates, False otherwise.
+            bool. True if there are no duplicates, False if duplicates exist.
         """
         commands = self.current_file.get('script', {}).get('commands', [])
-        is_there_duplicates = False
+        does_not_have_duplicate_args = True
         for command in commands:
             arg_list = []  # type: list
             for arg in command.get('arguments', []):
@@ -488,35 +488,35 @@ class IntegrationValidator(ContentEntityValidator):
                     error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
-                        is_there_duplicates = True
+                        does_not_have_duplicate_args = False
 
                 else:
                     arg_list.append(arg)
 
-        return is_there_duplicates
+        return does_not_have_duplicate_args
 
-    def is_there_duplicate_params(self):
+    def has_no_duplicate_params(self):
         # type: () -> bool
         """Check if the integration has the same param more than once
 
         Returns:
-            bool. True if there are duplicates, False otherwise.
+            bool. True if there are no duplicates, False if duplicates exist.
         """
-        has_duplicate_params = False
+        does_not_have_duplicate_param = True
         configurations = self.current_file.get('configuration', [])
-        param_list = []  # type: list
+        param_list = set()
         for configuration_param in configurations:
             param_name = configuration_param['name']
             if param_name in param_list:
                 error_message, error_code = Errors.duplicate_param(param_name)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
-                    has_duplicate_params = True
+                    does_not_have_duplicate_param = False
 
             else:
-                param_list.append(param_name)
+                param_list.add(param_name)
 
-        return has_duplicate_params
+        return does_not_have_duplicate_param
 
     @staticmethod
     def _get_command_to_args(integration_json):

@@ -11,6 +11,7 @@ INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
 EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
+FAKE_INTEGRATION_README = f'{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md'
 
 README_INPUTS = [
     (VALID_MD, True),
@@ -196,6 +197,23 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     section_error = f'Replace "{section}" with a suitable info.'
     assert not result
     assert section_error in stdout
+
+
+ERROR_FOUND_CASES = [
+    ([f'{FAKE_INTEGRATION_README} - [RM102]'], [], False),
+    ([], [f'{FAKE_INTEGRATION_README} - [RM102]'], False),
+    ([], [], True),
+]
+
+
+@pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
+def test_context_only_runs_once_when_error_exist(mocker, integration, errors_found, errors_ignore, expected):
+    readme_validator = ReadMeValidator(FAKE_INTEGRATION_README)
+    mocker.patch.object(ReadMeValidator, '_get_error_lists',
+                        return_value=(errors_found, errors_ignore))
+
+    result = readme_validator.is_context_different_in_yml()
+    assert result == expected
 
 
 def test_invalid_short_file(capsys):

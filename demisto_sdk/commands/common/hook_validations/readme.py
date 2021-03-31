@@ -268,6 +268,10 @@ class ReadMeValidator(BaseValidator):
             is_valid = False
         return is_valid
 
+    @staticmethod
+    def _get_error_lists():
+        return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
+
     def is_context_different_in_yml(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
@@ -291,24 +295,23 @@ class ReadMeValidator(BaseValidator):
         yml_file = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
         yml_path = os.path.join(dir_path, yml_file)
 
-        # Only run validation if the validation has not run with is_context_change_in_readme on integration
-        # so no duplicates errors will be created:
+        # Getting the relevant error_code:
         error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
         error, missing_from_yml_error_code = Errors.missing_output_context('', '')
-        if f'{self.file_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
-                or f'{self.file_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_ERRORS \
-                or f'{yml_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
-                or f'{yml_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_ERRORS:
-            return False
 
-        # get README file's content:
-        with open(self.file_path, 'r') as readme:
-            readme_content = readme.read()
+        # Only run validation if the validation has not run with is_context_change_in_readme on integration
+        # so no duplicates errors will be created:
+        errors, ignored_errors = self._get_error_lists()
+        if f'{self.file_path} - [{missing_from_readme_error_code}]' in ignored_errors \
+                or f'{self.file_path} - [{missing_from_readme_error_code}]' in errors \
+                or f'{yml_path} - [{missing_from_yml_error_code}]' in ignored_errors \
+                or f'{yml_path} - [{missing_from_yml_error_code}]' in errors:
+            return False
 
         # get YML file's content:
         yml_as_dict = get_yaml(yml_path)
 
-        difference_context_paths = compare_context_path_in_yml_and_readme(yml_as_dict, readme_content)
+        difference_context_paths = compare_context_path_in_yml_and_readme(yml_as_dict, self.readme_content)
 
         # Add errors to error's list
         for command_name in difference_context_paths:

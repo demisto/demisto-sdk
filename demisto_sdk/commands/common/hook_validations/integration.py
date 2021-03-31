@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (extract_multiple_keys_from_dict,
-                                               is_v2_file, print_error,
+                                               get_remote_file, is_v2_file,
+                                               print_error,
                                                server_version_compare)
 
 
@@ -70,7 +71,6 @@ class IntegrationValidator(ContentEntityValidator):
             Returns:
                 bool: True if integration is valid, False otherwise.
         """
-
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
@@ -102,6 +102,14 @@ class IntegrationValidator(ContentEntityValidator):
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
+
+        core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+
+        pack = self.file_path.split("/")
+        is_core = True if pack[0] == "Packs" and pack[1] in core_packs_list else False
+        if is_core:
+            answers.append(self.no_incident_in_core_packs())
+
         return all(answers)
 
     def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
@@ -471,6 +479,29 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
 
         return True
+
+    def no_incident_in_core_packs(self):
+        """check if commands' name or argument contains the word incident"""
+
+        commands = self.current_file.get('script', {}).get('commands', [])
+        strings_with_incident_list = []
+        no_incidents = True
+        for command in commands:
+            name = command.get('name', '')
+            if 'incident' in name:
+                strings_with_incident_list.append(name)
+            args = command.get('arguments', [])
+            for arg in args:
+                if 'incident' in arg['name']:
+                    strings_with_incident_list.append(arg['name'])
+
+        if strings_with_incident_list:
+            error_message, error_code = Errors.incident_in_command_name_or_args(strings_with_incident_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                no_incidents = False
+
+        return no_incidents
 
     def has_no_duplicate_args(self):
         # type: () -> bool

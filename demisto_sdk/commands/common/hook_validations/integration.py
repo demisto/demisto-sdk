@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Dict
 
 import yaml
 from demisto_sdk.commands.common.constants import (
@@ -873,15 +874,32 @@ class IntegrationValidator(ContentEntityValidator):
             bool. True if the integration is defined as well False otherwise.
         """
         params_exist = True
-        params = [_key for _key in self.current_file.get('configuration', [])]
-        for counter, param in enumerate(params):
-            if 'defaultvalue' in param and param['name'] != 'feed':
-                params[counter].pop('defaultvalue')
-            if 'hidden' in param:
-                params[counter].pop('hidden')
-        for param in FEED_REQUIRED_PARAMS:
-            if param not in params:
-                error_message, error_code = Errors.parameter_missing_for_feed(param.get('name'), yaml.dump(param))
+        # Build params in efficient way of param_name: {param_field_name: param_field_value} to query quickly for param.
+        params = {
+            param.get('name'): {k: v for k, v in param.items()} for param in self.current_file.get('configuration', [])}
+
+        for param_name, param_details in params.items():
+            if 'defaultvalue' in param_details and param_name != 'feed':
+                param_details.pop('defaultvalue')
+            if 'hidden' in param_details:
+                param_details.pop('hidden')
+
+        for required_param in FEED_REQUIRED_PARAMS:
+            is_valid = False
+            param_details = params.get(required_param.get('name'))  # type: ignore
+            equal_key_values: Dict = required_param.get('must_equal', dict())   # type: ignore
+            contained_key_values: Dict = required_param.get('must_contain', dict())  # type: ignore
+            if param_details:
+                # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
+                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and \
+                    all(k in param_details and param_details[k] == v
+                        for k, v in equal_key_values.items()) and \
+                    all(k in param_details and v in param_details[k]
+                        for k, v in contained_key_values.items())
+            if not is_valid:
+                param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
+                error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
+                                                                              yaml.dump(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     params_exist = False
 

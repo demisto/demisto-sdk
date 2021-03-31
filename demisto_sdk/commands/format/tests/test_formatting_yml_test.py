@@ -178,6 +178,42 @@ class TestFormatting:
         assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'
         assert base_yml.data['tasks']['25']['task']['description'] == 'Check if there is a SHA256 hash in context.'
 
+    @pytest.mark.parametrize('source_path', [EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE])
+    def test_remove_empty_keys_set_incident_from_playbook(self, source_path):
+        """
+            Given:
+                - Playbook file to format, with empty keys in tasks that uses the setIncident script
+            When:
+                - Running the remove_empty_fields_set_incident function
+            Then:
+                - Validate that the empty keys were removed successfully
+        """
+        schema_path = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", "{}.yml".format("playbook")))
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        set_incidnt_script_task_args = base_yml.data.get('tasks', {}).get('24').get('scriptarguments')
+        non_set_incidnt_script_task_args = base_yml.data.get('tasks', {}).get('25').get('scriptarguments')
+
+        # Assert the empty keys are indeed in a setIncident script arguments
+        assert 'emailurlclicked' in set_incidnt_script_task_args
+        assert 'severity' in set_incidnt_script_task_args
+        assert not set_incidnt_script_task_args['emailurlclicked'] and set_incidnt_script_task_args['severity']
+
+        # Assert the empty keys are indeed in a non setIncident script arguments
+        assert 'assetid' in non_set_incidnt_script_task_args
+        assert not non_set_incidnt_script_task_args['assetid']
+
+        base_yml.remove_empty_fields_set_incident()
+
+        # Assert the empty keys were removed from setIncident script arguments and the non empty keys remained
+        assert 'emailurlclicked' not in set_incidnt_script_task_args
+        assert 'severity' in set_incidnt_script_task_args
+
+        # Assert the empty keys were remained a non setIncident script arguments
+        assert 'assetid' in non_set_incidnt_script_task_args
+        assert not non_set_incidnt_script_task_args['assetid']
+
+
     @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_sourceplaybookid(self, source_path):
         schema_path = os.path.normpath(

@@ -277,16 +277,13 @@ class TestPackUniqueFilesValidator:
         })
 
         if pack_content == "playbook":
-            playbook = pack.create_playbook(name="PlaybookName")
-            pack.playbooks.append(playbook)
+            pack.create_playbook(name="PlaybookName")
         elif pack_content == "incident":
-            incident_type = pack.create_incident_type(name="IncidentTypeName")
-            pack.incident_types.append(incident_type)
+            pack.create_incident_type(name="IncidentTypeName")
         elif pack_content == "layout":
-            layout = pack.create_layout(name="Layout")
-            pack.layouts.append(layout)
+            pack.create_layout(name="Layout")
 
-        self.validator.pack_path = pack.path + "/"
+        self.validator.pack_path = pack.path
         assert self.validator.is_right_usage_of_usecase_tag() == is_valid
 
     @pytest.mark.parametrize('type, is_valid', [

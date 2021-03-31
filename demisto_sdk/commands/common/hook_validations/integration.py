@@ -1017,6 +1017,8 @@ class IntegrationValidator(ContentEntityValidator):
         """
         Checks if there has been a corresponding change to the integration's README
         when changing the context paths of an integration.
+        This validation might run together with is_context_different_in_yml in Readme's validation.
+
         Returns:
             True if there has been a corresponding change to README file when context is changed in integration
         """
@@ -1026,11 +1028,16 @@ class IntegrationValidator(ContentEntityValidator):
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
 
+        # Only run validation if the validation has not run with is_context_different_in_yml on readme
+        # so no duplicates errors will be created:
+        error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
+        error, missing_from_yml_error_code = Errors.missing_output_context('', '')
         readme_path = os.path.join(dir_path, 'README.md')
-        if f'{readme_path} - [RM102]' in FOUND_FILES_AND_IGNORED_ERRORS \
-                or f'{readme_path} - [RM102]' in FOUND_FILES_AND_ERRORS \
-                or f'{self.file_path} - [IN136]' in FOUND_FILES_AND_IGNORED_ERRORS \
-                or f'{self.file_path} - [IN136]' in FOUND_FILES_AND_ERRORS:
+
+        if f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_ERRORS:
             return False
 
         # get README file's content

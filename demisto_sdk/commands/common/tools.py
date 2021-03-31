@@ -1560,7 +1560,8 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     Args:
         yml_dict: a dictionary representing YML content.
         readme_content: the content string of the readme file.
-    Returns:
+    Returns: A dictionary as following: {<command_name>:{'only in yml': <set of context paths found only in yml>,
+                                                        'only in readme': <set of context paths found only in readme>}}
     """
     different_contexts: dict = {}
 

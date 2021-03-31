@@ -213,7 +213,6 @@ class TestFormatting:
         assert 'assetid' in non_set_incidnt_script_task_args
         assert not non_set_incidnt_script_task_args['assetid']
 
-
     @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_sourceplaybookid(self, source_path):
         schema_path = os.path.normpath(

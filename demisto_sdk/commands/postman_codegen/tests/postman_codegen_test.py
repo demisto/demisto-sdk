@@ -67,7 +67,6 @@ def test_create_body_format_list_of_dicts():
 
 class TestPostmanCodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
-    test_integration_dir = os.path.join(test_files_path, 'VirusTotalTest')
     postman_collection_path = os.path.join(test_files_path, 'VirusTotal.postman_collection.json')
     autogen_config_path = os.path.join(test_files_path, 'VirusTotal-autogen-config.json')
 

@@ -52,7 +52,6 @@ def test_json_body_to_code():
 class TestCodeGenerator:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'generate_integration', 'tests', 'test_files')
     test_integration_dir = os.path.join(test_files_path, 'VirusTotalTest')
-    postman_collection_path = os.path.join(test_files_path, 'VirusTotal.postman_collection.json')
     autogen_config_path = os.path.join(test_files_path, 'VirusTotal-autogen-config.json')
 
     def test_py_code_generated_from_config(self, mocker, tmpdir):

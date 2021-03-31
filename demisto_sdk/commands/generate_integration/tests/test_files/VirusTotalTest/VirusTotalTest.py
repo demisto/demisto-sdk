@@ -50,7 +50,7 @@ def url_report_command(client, args):
 
     response = client.url_report_request(resource)
     command_results = CommandResults(
-        outputs_prefix='VirusTotalTest',
+        outputs_prefix='VirusTotalTest.UrlReport',
         outputs_key_field='',
         outputs=response,
         raw_response=response
@@ -64,7 +64,7 @@ def domain_report_command(client, args):
 
     response = client.domain_report_request(domain)
     command_results = CommandResults(
-        outputs_prefix='VirusTotalTest',
+        outputs_prefix='VirusTotalTest.DomainReport',
         outputs_key_field='',
         outputs=response,
         raw_response=response
@@ -77,7 +77,7 @@ def file_scan_command(client, args):
 
     response = client.file_scan_request()
     command_results = CommandResults(
-        outputs_prefix='VirusTotalTest',
+        outputs_prefix='VirusTotalTest.FileScan',
         outputs_key_field='',
         outputs=response,
         raw_response=response
@@ -91,7 +91,7 @@ def file_download_command(client, args):
 
     response = client.file_download_request(hash)
     command_results = CommandResults(
-        outputs_prefix='VirusTotalTest',
+        outputs_prefix='VirusTotalTest.FileDownload',
         outputs_key_field='',
         outputs=response,
         raw_response=response

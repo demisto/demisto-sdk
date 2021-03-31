@@ -1,4 +1,5 @@
 # Changelog
+* Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
@@ -12,7 +13,6 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
-* Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

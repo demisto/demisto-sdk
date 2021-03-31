@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
-    print_warning, run_command_os, get_yml_paths_in_dir)
+    get_yml_paths_in_dir, print_warning, run_command_os)
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 

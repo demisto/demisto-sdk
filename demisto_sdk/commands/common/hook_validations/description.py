@@ -37,12 +37,12 @@ class DescriptionValidator(BaseValidator):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
             description_content = f.read()
-            contrib_details = re.findall(rf'### .* {CONTRIBUTOR_DETAILED_DESC}', description_content)
-            if contrib_details:
-                error_message, error_code = Errors.description_contains_contrib_details()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self._is_valid = False
-                    return False
+        contrib_details = re.findall(rf'### .* {CONTRIBUTOR_DETAILED_DESC}', description_content)
+        if contrib_details:
+            error_message, error_code = Errors.description_contains_contrib_details()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
         return True
 
     def is_valid_beta_description(self):

@@ -1,5 +1,6 @@
 # Site packages
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -1065,7 +1066,9 @@ def postman_codegen_command(**kwargs):
     command_prefix = kwargs['command_prefix']
 
     if kwargs['verbose']:
-        logging_setup(verbose=3)
+        logger = logging_setup(verbose=3)
+    else:
+        logger = logging.getLogger('demisto-sdk')
 
     config = postman_to_autogen_configuration(
         collection_path=collection_path,
@@ -1075,8 +1078,10 @@ def postman_codegen_command(**kwargs):
     )
 
     if kwargs['config_out']:
-        with open(Path(output_dir, f'config-{config.name}.json'), mode='w') as f:
+        path = Path(output_dir, f'config-{config.name}.json')
+        with open(path, mode='w') as f:
             json.dump(config.to_dict(), f, indent=4)
+            logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
     else:
         # generate integration yml
         config.generate_integration_package(output_dir, is_unified=True)

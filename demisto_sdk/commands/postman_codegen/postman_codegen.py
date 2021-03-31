@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Union
 
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.generate_integration.code_generator import (
@@ -14,27 +15,6 @@ from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')
-
-
-def request_name_to_command_name(request_name):
-    """
-    Scan File => scan-file
-    Scan File- => scan-file
-    *scan,file => scan-file
-    Scan     File => scan-file
-
-    """
-    if request_name:
-        command_name = request_name.lower()
-        command_name = re.sub(' +', '-', command_name)
-        command_name = re.sub('[^A-Za-z0-9-]+', '', command_name)
-        m = re.search('[a-z0-9]+(-[a-z]+)*', command_name)
-        if m:
-            return m.group(0)
-        else:
-            return command_name
-
-    return request_name
 
 
 def postman_headers_to_conf_headers(postman_headers, skip_authorization_header: bool = False):
@@ -270,7 +250,7 @@ def postman_to_autogen_configuration(collection_path: Union[Path, str], name, co
         description=description or info.get('description', 'Generated description - REPLACE THIS'),
         params=params,
         category=category or 'Utilities',
-        command_prefix=command_prefix or request_name_to_command_name(id_),
+        command_prefix=command_prefix or tools.to_kebab_case(id_),
         commands=commands,
         docker_image=docker_image,
         context_path=context_path_prefix or id_,
@@ -296,7 +276,9 @@ def get_docker_image():
 
 def convert_request_to_command(item):
     logger.debug(f'converting request to command: {item.get("name")}')
-    command_name = request_name_to_command_name(item.get('name'))
+    command_name = tools.to_kebab_case(item.get('name'))
+    context_prefix = tools.to_pascal_case(item.get('name'))
+
     request = item.get('request', {})
 
     logger.debug(f'converting postman headers of request: {item.get("name")}')
@@ -387,7 +369,7 @@ def convert_request_to_command(item):
         description=request.get('description'),
         arguments=args,
         outputs=outputs,
-        context_path='',
+        context_path=context_prefix,
         root_object='',
         unique_key='',
         returns_file=returns_file,

@@ -1574,3 +1574,48 @@ def get_file_displayed_name(file_path):
         return get_json(file_path).get('id')
     else:
         return os.path.basename(file_path)
+
+
+def to_kebab_case(s: str):
+    """
+    Scan File => scan-file
+    Scan File- => scan-file
+    *scan,file => scan-file
+    Scan     File => scan-file
+
+    """
+    if s:
+        new_s = s.lower()
+        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
+        m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
+        if m:
+            return m.group(0)
+        else:
+            return new_s
+
+    return s
+
+
+def to_pascal_case(s: str):
+    """
+    Scan File => ScanFile
+    Scan File- => ScanFile
+    *scan,file => ScanFile
+    Scan     File => ScanFile
+    scan-file => ScanFile
+    scan.file => ScanFile
+
+    """
+    if s:
+        if re.search(r'^[A-Z][a-z]+(?:[A-Z][a-z]+)*$', s):
+            return s
+
+        new_s = s.lower()
+        new_s = re.sub(r'[ -\.]+', '-', new_s)
+        new_s = ''.join([t.title() for t in new_s.split('-')])
+        new_s = re.sub(r'[^A-Za-z0-9]+', '', new_s)
+
+        return new_s
+
+    return s

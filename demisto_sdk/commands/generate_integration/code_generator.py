@@ -401,7 +401,8 @@ class IntegrationGeneratorConfig:
                 if api_key_in == 'query':
                     auth_api_key_in_query = True
                     code = code.replace('$CLIENT_API_KEY$', BASE_CLIENT_API_KEY)
-                elif api_key_in == 'header':
+                else:
+                    # api key passed in header
                     if api_key_format:
                         code = code.replace('$BEARERAUTHPARAMS$',
                                             BASE_HEADER_FORMATTED.replace('$HEADER_NAME$', api_key_name).replace('$HEADER_FORMAT$', api_key_format))
@@ -585,7 +586,7 @@ class IntegrationGeneratorConfig:
                 yaml.width = 50000
                 yaml.dump(xsoar_integration.to_dict(), f)
 
-                logger.info(f'Generated integration yml at: [{os.path.abspath(path)}]')
+                logger.info(f'Generated integration yml at:\n{os.path.abspath(path)}')
 
             return
 
@@ -610,4 +611,4 @@ class IntegrationGeneratorConfig:
             logger.exception(f'Failed to write integration yml file. Error: {err}')
             raise
 
-        logger.info(f'Generated integration package at: [{os.path.abspath(package_dir)}]')
+        logger.info(f'Generated integration package at:\n{os.path.abspath(package_dir)}')

@@ -7,7 +7,7 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 import requests
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -281,7 +281,7 @@ class ReadMeValidator(BaseValidator):
         yml_file_paths = get_yml_paths_in_dir(dir_path)
         if not yml_file_paths:
             return True
-        yml_file = yml_file_paths[0]
+        yml_file = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
         yml_path = os.path.join(dir_path, yml_file)
 
         # Only run validation if the validation has not run with is_context_change_in_readme on integration

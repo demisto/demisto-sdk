@@ -166,7 +166,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(LayoutsContainerValidator, self)._is_id_equals_name('layoutscontainer')
+        return super()._is_id_equals_name('layoutscontainer')
 
 
 class LayoutValidator(LayoutBaseValidator):
@@ -252,4 +252,4 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     def is_id_equals_name(self) -> bool:
-        return True
+        pass

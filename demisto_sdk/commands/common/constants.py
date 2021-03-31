@@ -460,7 +460,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'playbook',
     'dashboard',
     'incident_type',
-    'layoutscontainer'
+    'layoutscontainer',
 ]
 
 INTEGRATION_PREFIX = 'integration'

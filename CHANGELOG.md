@@ -1,5 +1,6 @@
 # Changelog
 * Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
+* Added a validation that layoutscontainer's id and name are matching
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

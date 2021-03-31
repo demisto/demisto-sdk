@@ -210,6 +210,8 @@ ERROR_CODE = {
     "pykwalify_field_undefined": {'code': "ST108", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_missing_in_root": {'code': "ST109", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
     "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
     "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
@@ -1282,23 +1284,33 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pykwalify_missing_parameter(key_from_error, current_string, path):
-        return f'Missing {key_from_error} in \n{current_string}\nPath: {path}'
+    def pykwalify_missing_parameter(key_from_error, path):
+        return f'Missing the field "{key_from_error}" in Path: {path}'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_field_undefined(key_from_error):
-        return f'The field {key_from_error} was not defined in the scheme'
+        return f'The field "{key_from_error}" was not defined in the scheme'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_field_undefined_with_path(key_from_error, path):
+        return f'The field "{key_from_error}" in path {path} was not defined in the scheme'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_missing_in_root(key_from_error):
-        return f'Missing {key_from_error} in root'
+        return f'Missing the field "{key_from_error}" in root'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_incorrect_enum(path_to_wrong_enum, wrong_enum, enum_values):
+        return f'The value "{wrong_enum}" in {path_to_wrong_enum} is invalid - legal values include: {enum_values}'
 
     @staticmethod
     @error_code_decorator

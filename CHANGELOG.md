@@ -6,7 +6,11 @@
 * Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
 * Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
 * Added validation for README files verifying their length (over 30 chars).
-* Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
+* Improved the `pykwalify` error outputs in the **validate** command.
+* Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
+* Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

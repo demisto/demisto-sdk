@@ -290,7 +290,7 @@ class ReadMeValidator(BaseValidator):
         # Get YML file, assuming only one yml in integration
 
         yml_file_paths = get_yml_paths_in_dir(dir_path)
-        if not yml_file_paths:
+        if not yml_file_paths[0]:
             return True
         yml_file_path = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
 

@@ -284,7 +284,7 @@ class ReadMeValidator(BaseValidator):
 
         # disregards scripts as the structure of the files is different:
         dir_path = os.path.dirname(self.file_path)
-        if 'Integrations' not in dir_path:
+        if 'Scripts' in dir_path:
             return True
 
         # Get YML file, assuming only one yml in integration

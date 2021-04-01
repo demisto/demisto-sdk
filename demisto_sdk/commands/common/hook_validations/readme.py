@@ -296,7 +296,7 @@ class ReadMeValidator(BaseValidator):
 
         # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
         if dir_path not in yml_file_path:
-            yml_file = os.path.join(dir_path, yml_file_path)
+            yml_file_path = os.path.join(dir_path, yml_file_path)
 
         # Getting the relevant error_code:
         error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')

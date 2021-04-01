@@ -1167,16 +1167,16 @@ class TestRNUpdateUnit:
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
 
     docker_image_test_rn = '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image ' \
-                           'to: *demisto/python3:3.9.1.149615*\n'
+                           'to: *demisto/python3:3.9.1.149615*.\n'
     docker_image_test_data = [
         ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', None,
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', False),
-        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615',
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615.',
          docker_image_test_rn, True),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149616',
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
-         'to: *demisto/python3:3.9.1.149616*\n', True)
+         'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
 
     @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)

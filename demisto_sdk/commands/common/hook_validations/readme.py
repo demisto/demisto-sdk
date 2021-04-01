@@ -293,7 +293,10 @@ class ReadMeValidator(BaseValidator):
         if not yml_file_paths:
             return True
         yml_file = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
-        yml_path = os.path.join(dir_path, yml_file)
+
+        # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
+        if dir_path not in yml_file:
+            yml_path = os.path.join(dir_path, yml_file)
 
         # Getting the relevant error_code:
         error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')

@@ -292,11 +292,11 @@ class ReadMeValidator(BaseValidator):
         yml_file_paths = get_yml_paths_in_dir(dir_path)
         if not yml_file_paths:
             return True
-        yml_file = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
+        yml_file_path = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
 
         # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
-        if dir_path not in yml_file:
-            yml_path = os.path.join(dir_path, yml_file)
+        if dir_path not in yml_file_path:
+            yml_file = os.path.join(dir_path, yml_file_path)
 
         # Getting the relevant error_code:
         error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
@@ -307,12 +307,12 @@ class ReadMeValidator(BaseValidator):
         errors, ignored_errors = self._get_error_lists()
         if f'{self.file_path} - [{missing_from_readme_error_code}]' in ignored_errors \
                 or f'{self.file_path} - [{missing_from_readme_error_code}]' in errors \
-                or f'{yml_path} - [{missing_from_yml_error_code}]' in ignored_errors \
-                or f'{yml_path} - [{missing_from_yml_error_code}]' in errors:
+                or f'{yml_file_path} - [{missing_from_yml_error_code}]' in ignored_errors \
+                or f'{yml_file_path} - [{missing_from_yml_error_code}]' in errors:
             return False
 
         # get YML file's content:
-        yml_as_dict = get_yaml(yml_path)
+        yml_as_dict = get_yaml(yml_file_path)
 
         difference_context_paths = compare_context_path_in_yml_and_readme(yml_as_dict, self.readme_content)
 

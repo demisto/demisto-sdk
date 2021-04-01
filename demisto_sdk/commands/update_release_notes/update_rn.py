@@ -437,7 +437,7 @@ class UpdateRN:
         self.existing_rn_changed = True
         if '- Updated the Docker image to' not in rn_string:
             return rn_string + f'{docker_image_str}\n'
-        update_docker_image_regex = r'- Updated the Docker image to: \*.*\*'
+        update_docker_image_regex = r'- Updated the Docker image to: \*.*\*\.'
         updated_rn = re.sub(update_docker_image_regex, docker_image_str, rn_string)
         self.existing_rn_changed = True
         return updated_rn

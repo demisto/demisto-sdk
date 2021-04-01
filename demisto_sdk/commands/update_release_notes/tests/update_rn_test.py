@@ -1171,7 +1171,7 @@ class TestRNUpdateUnit:
     docker_image_test_data = [
         ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', None,
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', False),
-        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615.',
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615',
          docker_image_test_rn, True),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149616',

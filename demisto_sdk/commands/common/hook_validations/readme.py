@@ -328,7 +328,7 @@ class ReadMeValidator(BaseValidator):
             if difference_context_paths[command_name].get('only in readme'):
                 error, code = Errors.missing_output_context(
                     command_name, ", ".join(difference_context_paths[command_name].get('only in readme')))
-                if self.handle_error(error, code, file_path=yml_path):
+                if self.handle_error(error, code, file_path=yml_file_path):
                     valid = False
 
         return valid

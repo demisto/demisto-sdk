@@ -431,7 +431,7 @@ class UpdateRN:
         """
         if not docker_image:
             return rn_string
-        docker_image_str = f'- Updated the Docker image to: *{docker_image}*'
+        docker_image_str = f'- Updated the Docker image to: *{docker_image}*.'
         if docker_image_str in rn_string:
             return rn_string
         self.existing_rn_changed = True

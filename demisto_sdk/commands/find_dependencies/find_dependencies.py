@@ -10,7 +10,7 @@ import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import get_json, print_error
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
@@ -191,7 +191,8 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
-                                            exclude_ignored_dependencies: bool = True) -> set:
+                                            exclude_ignored_dependencies: bool = True,
+                                            incident_or_indicator=None) -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -207,9 +208,17 @@ class PackDependencies:
         packs = set()
         if not isinstance(items_names, list):
             items_names = [items_names]
-
         for item_name in items_names:
-            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}', f'{item_name}-mapper']
+            if incident_or_indicator:
+                if incident_or_indicator == 'incident':
+                    item_possible_names = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
+                elif incident_or_indicator == 'indicator':
+                    item_possible_names = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
+
+            else:
+                item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
+                                       f'{item_name}-mapper']
+
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
@@ -529,22 +538,40 @@ class PackDependencies:
 
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
+            layout_path = layout_data.get("file_path")
+            layout_info = get_json(layout_path)
+            layout_type = 'indicator' if layout_info.get('group') == 'indicator' or \
+                layout_info.get('kind') == 'indicatorsDetails' else 'incident'
+
             layout_dependencies = set()
 
-            related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
-            packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_incident_and_indicator_types, id_set['IncidentTypes'] + id_set['IndicatorTypes'],
-                exclude_ignored_dependencies)
+            if layout_type == 'indicator':
+                related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
+                packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
+                    related_incident_and_indicator_types, id_set['IndicatorTypes'],
+                    exclude_ignored_dependencies)
+            else:
+                related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
+                packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
+                    related_incident_and_indicator_types, id_set['IncidentTypes'],
+                    exclude_ignored_dependencies)
 
             if packs_found_from_incident_indicator_types:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_types)
                 layout_dependencies.update(pack_dependencies_data)
 
-            related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
-            packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'],
-                exclude_ignored_dependencies)
+            if layout_type == 'indicator':
+                related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
+                packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
+                    related_incident_and_indicator_fields, id_set['IndicatorFields'],
+                    exclude_ignored_dependencies, layout_type)
+
+            else:
+                related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
+                packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
+                    related_incident_and_indicator_fields, id_set['IncidentFields'],
+                    exclude_ignored_dependencies, layout_type)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \

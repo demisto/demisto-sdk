@@ -4,7 +4,7 @@ import os
 import sys
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Union
+from typing import Optional, Union
 
 import click
 import networkx as nx
@@ -192,7 +192,7 @@ class PackDependencies:
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
                                             exclude_ignored_dependencies: bool = True,
-                                            incident_or_indicator=None) -> set:
+                                            incident_or_indicator: Optional[str] = None) -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -200,7 +200,8 @@ class PackDependencies:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-
+            incident_or_indicator (str): 'indicator' if should focus on indicator fields,
+                 'incident' if should focus on incident fields and None to focus on both.
         Returns:
             set: found pack ids.
 

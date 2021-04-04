@@ -1550,3 +1550,11 @@ def get_file_displayed_name(file_path):
         return get_json(file_path).get('id')
     else:
         return os.path.basename(file_path)
+
+
+def write_yml(yml_path, yml_data):
+    ryaml = YAML()
+    ryaml.allow_duplicate_keys = True
+    ryaml.preserve_quotes = True  # type: ignore
+    with open(yml_path, 'w') as f:
+        ryaml.dump(yml_data, f)  # ruamel preservers multilines

@@ -4,15 +4,19 @@ import uuid
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
+from demisto_sdk.commands.common.constants import (OLDEST_SUPPORTED_VERSION,
+                                                   FileType)
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
-from demisto_sdk.commands.common.tools import is_string_uuid
+from demisto_sdk.commands.common.tools import (find_type, get_yaml,
+                                               is_string_uuid, write_yml)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
+from git import InvalidGitRepositoryError
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
@@ -152,9 +156,53 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if task_name:
                     task['task']['name'] = task_name
 
+    def update_playbook_usages(self) -> None:
+        current_playbook_id = self.data['id']
+        new_playbook_id = self.data['name']
+
+        # if the id and name are the same - there is no need for this format.
+        if current_playbook_id == new_playbook_id:
+            return
+
+        # gather all the changed files - if the formatted playbook was
+        # modified then any additional playbook changes were changed alongside it -
+        # we would use git to gather all other changed playbooks
+        try:
+            git_util = GitUtil()
+            all_changed_files = git_util.modified_files(include_untracked=True).union(
+                git_util.added_files(include_untracked=True))
+            all_changed_files = all_changed_files.union({item[1] for item in
+                                                         git_util.renamed_files(include_untracked=True)})
+        except (InvalidGitRepositoryError, TypeError):
+            click.secho('Unable to connect to git - skipping sub-playbook checks', fg='yellow')
+
+        for file_path in all_changed_files:
+            str_file_path = str(file_path)
+            updated_tasks = []
+            # if the changed file is a playbook get it's data
+            if find_type(str_file_path) in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
+                playbook_data = get_yaml(str_file_path)
+                # go through all the tasks
+                for task_id, task_data in playbook_data.get('tasks').items():
+                    # if a task is of playbook type
+                    if task_data.get('type') == 'playbook':
+                        id_key = 'playbookId' if 'playbookId' in task_data.get('task') else 'playbookName'
+                        # make sure the playbookId or playbookName use the new id and not the old
+                        if task_data.get('task').get(id_key) == current_playbook_id:
+                            playbook_data['tasks'][task_id]['task'][id_key] = new_playbook_id
+                            updated_tasks.append(task_id)
+
+                # if any tasks were changed re-write the playbook
+                if updated_tasks:
+                    if self.verbose:
+                        click.echo(f'Found usage of playbook in {str_file_path} tasks: '
+                                   f'{" ".join(updated_tasks)} - Updating playbookId')
+                    write_yml(str_file_path, playbook_data)
+
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            self.update_playbook_usages()
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
             self.update_conf_json('playbook')

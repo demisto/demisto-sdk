@@ -36,7 +36,6 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
                     self.is_incident_field_exist(id_set_file, is_circle),
-                    self.is_id_equals_name(),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -76,12 +75,13 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         pass
 
-    @abstractmethod
-    def is_id_equals_name(self) -> bool:
-        pass
-
 
 class LayoutsContainerValidator(LayoutBaseValidator):
+    def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
+        return all([super().is_valid_layout(),
+                    self.is_id_equals_name()
+                    ])
+
     def is_valid_from_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -250,6 +250,3 @@ class LayoutValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
-
-    def is_id_equals_name(self) -> bool:
-        pass

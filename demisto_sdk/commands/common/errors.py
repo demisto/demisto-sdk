@@ -455,7 +455,7 @@ class Errors:
     def incident_in_command_name_or_args(strings_contain_incident):
         return f"This is a core pack with an integration that contains the word incident in the following commands'" \
                f" name and argument:\n {strings_contain_incident}. \n, To fix the problem, remove the word incident, " \
-               f"or add them to the  to the whitelist named argsExceptionsList in:\n" \
+               f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
 

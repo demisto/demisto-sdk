@@ -1,7 +1,7 @@
 # Changelog
 * Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
-* Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
 * Added a validation that community/partner details are not in the detailed description file.
+* Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

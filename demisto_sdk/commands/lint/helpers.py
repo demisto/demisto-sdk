@@ -281,7 +281,7 @@ def get_python_version_from_image(image: str) -> float:
         float: Python version X.Y (3.7, 3.6, ..)
     """
     docker_client = docker.from_env()
-    py_num = 2.7
+    py_num = 3.8
     # Run three times
     for attempt in range(3):
         try:

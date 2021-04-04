@@ -493,7 +493,7 @@ class IntegrationValidator(ContentEntityValidator):
                 strings_with_incident_list.append(name)
             args = command.get('arguments', [])
             for arg in args:
-                if 'incident' in arg['name']:
+                if 'incident' in arg.get('name'):
                     strings_with_incident_list.append(arg['name'])
 
         if strings_with_incident_list:

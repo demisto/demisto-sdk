@@ -268,10 +268,6 @@ class ReadMeValidator(BaseValidator):
             is_valid = False
         return is_valid
 
-    @staticmethod
-    def _get_error_lists():
-        return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
-
     def is_context_different_in_yml(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
@@ -290,8 +286,11 @@ class ReadMeValidator(BaseValidator):
         # Get YML file, assuming only one yml in integration
 
         yml_file_paths = get_yml_paths_in_dir(dir_path)
+
+        # Handles case of Pack's Readme, so no YML file is found in pack.
         if not yml_file_paths[0]:
             return True
+
         yml_file_path = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
 
         # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
@@ -357,6 +356,10 @@ class ReadMeValidator(BaseValidator):
         if ReadMeValidator._MDX_SERVER_PROCESS:
             ReadMeValidator._MDX_SERVER_PROCESS.terminate()
             ReadMeValidator._MDX_SERVER_PROCESS = None
+
+    @staticmethod
+    def _get_error_lists():
+        return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
 atexit.register(ReadMeValidator.stop_mdx_server)

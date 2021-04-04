@@ -82,7 +82,7 @@ def test_is_image_path_valid():
         "https://github.com/demisto/content/raw/123/Packs/FeedOffice365/doc_files/test.png"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
-    sys.stdout = sys.__stdout__   # reset stdout.
+    sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
     assert images_paths[0] and alternative_images_paths[0] in captured_output.getvalue()
     assert images_paths[1] and alternative_images_paths[1] in captured_output.getvalue()
@@ -208,12 +208,49 @@ ERROR_FOUND_CASES = [
 
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
 def test_context_only_runs_once_when_error_exist(mocker, integration, errors_found, errors_ignore, expected):
+    """
+        Given
+            - README that contains changes and YML file
+        When
+            - Run validate on README file and YML
+        Then
+            - Ensure validation only run once, either for YML or for README
+        """
     readme_validator = ReadMeValidator(FAKE_INTEGRATION_README)
     mocker.patch.object(ReadMeValidator, '_get_error_lists',
                         return_value=(errors_found, errors_ignore))
 
     result = readme_validator.is_context_different_in_yml()
     assert result == expected
+
+
+DIFFERENCE_CONTEXT_RESULTS_CASE = [
+    ({'zoom-create-user': {'only in yml': {'Zoom.User.id'}, 'only in readme': set()}}, False),  # case path exists only in yml
+    ({'zoom-list-users': {'only in yml': set(), 'only in readme': {'Zoom.User.last_name', 'Zoom.User.first_name'}}}, False),  # case path exists only in readme
+    ({}, True),  # case no changes were found
+]
+
+
+@pytest.mark.parametrize("difference_found, expected", DIFFERENCE_CONTEXT_RESULTS_CASE)
+def test_context_difference_created_is_valid(mocker, difference_found, expected):
+    """
+    Given
+        - README that contains changes and YML file
+    When
+        - Run validate on README file and YML
+    Then
+        - Ensure the difference context is correct
+    """
+    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.compare_context_path_in_yml_and_readme',
+                 return_value=difference_found)
+    readme_validator = ReadMeValidator(FAKE_INTEGRATION_README)
+    handle_error_mock = mocker.patch.object(ReadMeValidator, 'handle_error')
+    valid = readme_validator.is_context_different_in_yml()
+    assert valid == expected
+    if not valid:
+        handle_error_mock.assert_called()
+    else:
+        handle_error_mock.assert_not_called()
 
 
 def test_invalid_short_file(capsys):

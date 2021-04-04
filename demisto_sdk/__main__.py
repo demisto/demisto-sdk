@@ -257,6 +257,11 @@ def unify(**kwargs):
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the validation.'
+)
+@click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
     help='Whether to run all validation on all files or not.'
 )
@@ -292,6 +297,9 @@ def unify(**kwargs):
 @click.option(
     '--debug-git', is_flag=True,
     help='Whether to print debug logs for git statuses.')
+@click.option(
+    '--print-pykwalify', is_flag=True,
+    help='Whether to print the pykwalify log errors.')
 @pass_config
 def validate(config, **kwargs):
     sys.path.append(config.configuration.env_dir)
@@ -327,6 +335,7 @@ def validate(config, **kwargs):
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
+            include_untracked=kwargs.get('include_untracked')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

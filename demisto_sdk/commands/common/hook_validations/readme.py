@@ -51,6 +51,7 @@ class ReadMeValidator(BaseValidator):
     # Static var to hold the mdx server process
     _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
     _MDX_SERVER_LOCK = Lock()
+    MINIMUM_README_LENGTH = 30
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
                  json_file_path=None):
@@ -60,6 +61,9 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
+        with open(self.file_path) as f:
+            readme_content = f.read()
+        self.readme_content = readme_content
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -70,14 +74,13 @@ class ReadMeValidator(BaseValidator):
             self.is_image_path_valid(),
             self.is_mdx_file(),
             self.verify_no_empty_sections(),
-            self.verify_no_default_sections_left()
+            self.verify_no_default_sections_left(),
+            self.verify_readme_is_not_too_short()
         ])
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
-        with open(self.file_path, 'r') as f:
-            readme_content = f.read()
-        readme_content = self.fix_mdx(readme_content)
+        readme_content = self.fix_mdx()
         with tempfile.NamedTemporaryFile('w+t') as fp:
             fp.write(readme_content)
             fp.flush()
@@ -96,10 +99,7 @@ class ReadMeValidator(BaseValidator):
                                                               file_path=str(self.file_path))
             if not server_started:
                 return False
-
-        with open(self.file_path, 'r') as f:
-            readme_content = f.read()
-        readme_content = self.fix_mdx(readme_content)
+        readme_content = self.fix_mdx()
         retry = Retry(total=2)
         adapter = HTTPAdapter(max_retries=retry)
         session = requests.Session()
@@ -129,8 +129,8 @@ class ReadMeValidator(BaseValidator):
                 return self.mdx_verify_server()
         return True
 
-    @staticmethod
-    def fix_mdx(txt: str) -> str:
+    def fix_mdx(self) -> str:
+        txt = self.readme_content
         # copied from: https://github.com/demisto/content-docs/blob/2402bd1ab1a71f5bf1a23e1028df6ce3b2729cbb/content-repo/mdx_utils.py#L11
         # to use the same logic as we have in the content-docs build
         replace_tuples = [
@@ -179,21 +179,18 @@ class ReadMeValidator(BaseValidator):
         return valid
 
     def is_html_doc(self) -> bool:
-        txt = ''
-        with open(self.file_path, 'r') as f:
-            txt = f.read(4096).strip()
-        if txt.startswith(NO_HTML):
+        if self.readme_content.startswith(NO_HTML):
             return False
-        if txt.startswith(YES_HTML):
+        if self.readme_content.startswith(YES_HTML):
             return True
         # use some heuristics to try to figure out if this is html
-        return txt.startswith('<p>') or txt.startswith('<!DOCTYPE html>') or ('<thead>' in txt and '<tbody>' in txt)
+        return self.readme_content.startswith('<p>') or \
+            self.readme_content.startswith('<!DOCTYPE html>') or \
+            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
-        with open(self.file_path) as f:
-            readme_content = f.read()
         invalid_paths = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', readme_content,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")', self.readme_content,
             re.IGNORECASE)
         if invalid_paths:
             for path in invalid_paths:
@@ -215,10 +212,8 @@ class ReadMeValidator(BaseValidator):
         """
         is_valid = True
         errors = ""
-        with open(self.file_path) as f:
-            readme_content = f.read()
         for section in SECTIONS:
-            found_section = re.findall(rf'(## {section}\n*)(-*\s*\n\n?)?(\s*.*)', readme_content, re.IGNORECASE)
+            found_section = re.findall(rf'(## {section}\n*)(-*\s*\n\n?)?(\s*.*)', self.readme_content, re.IGNORECASE)
             if found_section:
                 line_after_headline = str(found_section[0][2])
                 # checks if the line after the section's headline is another headline or empty
@@ -243,10 +238,8 @@ class ReadMeValidator(BaseValidator):
         """
         is_valid = True
         errors = ""
-        with open(self.file_path) as f:
-            readme_content = f.read()
         for section in USER_FILL_SECTIONS:
-            required_section = re.findall(rf'{section}', readme_content, re.IGNORECASE)
+            required_section = re.findall(rf'{section}', self.readme_content, re.IGNORECASE)
             if required_section:
                 errors += f'Replace "{section}" with a suitable info.\n'
                 is_valid = False
@@ -255,6 +248,19 @@ class ReadMeValidator(BaseValidator):
             error_message, error_code = Errors.readme_error(errors)
             self.handle_error(error_message, error_code, file_path=self.file_path)
 
+        return is_valid
+
+    def verify_readme_is_not_too_short(self):
+        is_valid = True
+        readme_size = len(self.readme_content)
+        if 1 <= readme_size <= self.MINIMUM_README_LENGTH:
+            error = f'Your Pack README is too small ({readme_size} chars). Please move its content to the pack ' \
+                    'description or add more useful information to the Pack README. ' \
+                    'Pack README files are expected to include a few sentences about the pack and/or images.' \
+                    f'\nFile "{self.content_path}/{self.file_path}", line 0'
+            error_message, error_code = Errors.readme_error(error)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            is_valid = False
         return is_valid
 
     @staticmethod

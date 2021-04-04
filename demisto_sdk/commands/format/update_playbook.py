@@ -156,7 +156,33 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if task_name:
                     task['task']['name'] = task_name
 
+    def check_for_subplaybook_usages(self, file_path: str, current_playbook_id: str, new_playbook_id: str) -> None:
+        """Check if the current_playbook_id appears in the file's playbook type tasks and change it if needed"""
+        updated_tasks = []
+        # if the changed file is a playbook get it's data
+        if find_type(file_path) in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
+            playbook_data = get_yaml(file_path)
+            # go through all the tasks
+            for task_id, task_data in playbook_data.get('tasks').items():
+                # if a task is of playbook type
+                if task_data.get('type') == 'playbook':
+                    id_key = 'playbookId' if 'playbookId' in task_data.get('task') else 'playbookName'
+                    # make sure the playbookId or playbookName use the new id and not the old
+                    if task_data.get('task').get(id_key) == current_playbook_id:
+                        playbook_data['tasks'][task_id]['task'][id_key] = new_playbook_id
+                        updated_tasks.append(task_id)
+
+            # if any tasks were changed re-write the playbook
+            if updated_tasks:
+                if self.verbose:
+                    click.echo(f'Found usage of playbook in {file_path} tasks: '
+                               f'{" ".join(updated_tasks)} - Updating playbookId')
+                write_yml(file_path, playbook_data)
+
     def update_playbook_usages(self) -> None:
+        """Check if the current playbook is used as a sub-playbook in other changed playbooks.
+        Change the playbook's id in the tasks id needed.
+        """
         current_playbook_id = self.data['id']
         new_playbook_id = self.data['name']
 
@@ -175,29 +201,10 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                                                          git_util.renamed_files(include_untracked=True)})
         except (InvalidGitRepositoryError, TypeError):
             click.secho('Unable to connect to git - skipping sub-playbook checks', fg='yellow')
+            return
 
         for file_path in all_changed_files:
-            str_file_path = str(file_path)
-            updated_tasks = []
-            # if the changed file is a playbook get it's data
-            if find_type(str_file_path) in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
-                playbook_data = get_yaml(str_file_path)
-                # go through all the tasks
-                for task_id, task_data in playbook_data.get('tasks').items():
-                    # if a task is of playbook type
-                    if task_data.get('type') == 'playbook':
-                        id_key = 'playbookId' if 'playbookId' in task_data.get('task') else 'playbookName'
-                        # make sure the playbookId or playbookName use the new id and not the old
-                        if task_data.get('task').get(id_key) == current_playbook_id:
-                            playbook_data['tasks'][task_id]['task'][id_key] = new_playbook_id
-                            updated_tasks.append(task_id)
-
-                # if any tasks were changed re-write the playbook
-                if updated_tasks:
-                    if self.verbose:
-                        click.echo(f'Found usage of playbook in {str_file_path} tasks: '
-                                   f'{" ".join(updated_tasks)} - Updating playbookId')
-                    write_yml(str_file_path, playbook_data)
+            self.check_for_subplaybook_usages(str(file_path), current_playbook_id, new_playbook_id)
 
     def run_format(self) -> int:
         try:

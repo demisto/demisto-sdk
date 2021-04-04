@@ -962,10 +962,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incident_in_script_arg(incidents_list):
-        return f"This is a core pack with a script that contains the word incident in the following arguments'" \
-               f" name:\n {incidents_list}. \n, To fix the problem, remove the word incident, " \
-               f"or add them to the  to the whitelist named argsExceptionsList in:\n" \
+    def incident_in_script_arg(arguments):
+        return f"The script is part of a core pack. Therefore, the use of the word `incident` in argument names is forbidden. problematic argument" \
+               f" names:\n {arguments}. \n, To fix the problem, remove the word incident, " \
+               f"or add the argument name to the allowlist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
 

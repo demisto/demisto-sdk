@@ -298,17 +298,18 @@ def get_python_version_from_image(image: str) -> float:
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
                 py_num = float(py_num)
+                for _ in range(2):
+                    # Try to remove the container two times.
+                    try:
+                        container_obj.remove(force=True)
+                        break
+                    except docker.errors.APIError:
+                        logger.exception(f'Could not remove the image {image}')
+                return py_num
             else:
                 raise docker.errors.ContainerError
-            for _ in range(2):
-                # Try to remove the container two times.
-                try:
-                    container_obj.remove(force=True)
-                    break
-                except docker.errors.APIError:
-                    pass
-        except (docker.errors.APIError, docker.errors.ContainerError) as e:
-            logger.info(f'Failed detecting Python version (in attempt {attempt}) - {str(e)}.')
+        except (docker.errors.APIError, docker.errors.ContainerError):
+            logger.exception(f'Failed detecting Python version (in attempt {attempt})')
             continue
 
     return py_num

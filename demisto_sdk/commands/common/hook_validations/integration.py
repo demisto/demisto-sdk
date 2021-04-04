@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (extract_multiple_keys_from_dict,
-                                               get_remote_file, is_v2_file,
-                                               print_error,
+                                               get_pack_name, get_remote_file,
+                                               is_v2_file, print_error,
                                                server_version_compare)
 
 
@@ -106,8 +106,8 @@ class IntegrationValidator(ContentEntityValidator):
 
         core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
-        pack = self.file_path.split("/")
-        is_core = True if pack[0] == "Packs" and pack[1] in core_packs_list else False
+        pack = get_pack_name(self.file_path)
+        is_core = True if pack in core_packs_list else False
         if is_core:
             answers.append(self.no_incident_in_core_packs())
 
@@ -485,19 +485,22 @@ class IntegrationValidator(ContentEntityValidator):
         """check if commands' name or argument contains the word incident"""
 
         commands = self.current_file.get('script', {}).get('commands', [])
-        strings_with_incident_list = []
+        commands_with_incident = []
+        args_with_incident = {}
         no_incidents = True
         for command in commands:
-            name = command.get('name', '')
-            if 'incident' in name:
-                strings_with_incident_list.append(name)
+            command_name = command.get('name', '')
+            if 'incident' in command_name:
+                commands_with_incident.append(command_name)
             args = command.get('arguments', [])
             for arg in args:
-                if 'incident' in arg.get('name'):
-                    strings_with_incident_list.append(arg['name'])
+                arg_name = arg.get("name")
+                if 'incident' in arg_name:
+                    args_with_incident[command_name] = arg_name
 
-        if strings_with_incident_list:
-            error_message, error_code = Errors.incident_in_command_name_or_args(strings_with_incident_list)
+        if commands_with_incident or args_with_incident:
+            error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,
+                                                                                args_with_incident)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 no_incidents = False

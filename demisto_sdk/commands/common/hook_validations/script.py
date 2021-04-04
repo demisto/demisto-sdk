@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_remote_file, is_v2_file,
+from demisto_sdk.commands.common.tools import (get_pack_name, get_remote_file,
+                                               is_v2_file,
                                                server_version_compare)
 
 
@@ -75,8 +76,8 @@ class ScriptValidator(ContentEntityValidator):
             ])
         core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
-        pack = self.file_path.split("/")
-        is_core = True if pack[0] == "Packs" and pack[1] in core_packs_list else False
+        pack = get_pack_name(self.file_path)
+        is_core = True if pack in core_packs_list else False
         if is_core:
             is_script_valid = all([
                 is_script_valid,

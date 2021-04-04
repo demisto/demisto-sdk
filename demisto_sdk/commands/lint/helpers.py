@@ -282,8 +282,8 @@ def get_python_version_from_image(image: str) -> float:
     """
     docker_client = docker.from_env()
     py_num = 2.7
-    # Run two times
-    for _ in range(2):
+    # Run three times
+    for attempt in range(3):
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
@@ -307,7 +307,8 @@ def get_python_version_from_image(image: str) -> float:
                     break
                 except docker.errors.APIError:
                     pass
-        except (docker.errors.APIError, docker.errors.ContainerError):
+        except (docker.errors.APIError, docker.errors.ContainerError) as e:
+            logger.info(f'Failed detecting Python version (in attempt {attempt}) - {str(e)}.')
             continue
 
     return py_num

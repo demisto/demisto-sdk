@@ -1055,7 +1055,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*.' in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
         """
@@ -1090,7 +1090,7 @@ class TestRNUpdateUnit:
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
-        assert RN.count('Updated the Docker image to: *dockerimage:python/test:1243*') == 1
+        assert RN.count('Updated the Docker image to: *dockerimage:python/test:1243*.') == 1
 
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
             file.write('')
@@ -1167,7 +1167,7 @@ class TestRNUpdateUnit:
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
 
     docker_image_test_rn = '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image ' \
-                           'to: *demisto/python3:3.9.1.149615*\n'
+                           'to: *demisto/python3:3.9.1.149615*.\n'
     docker_image_test_data = [
         ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', None,
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', False),
@@ -1176,7 +1176,7 @@ class TestRNUpdateUnit:
         (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
         (docker_image_test_rn, 'demisto/python3:3.9.1.149616',
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
-         'to: *demisto/python3:3.9.1.149616*\n', True)
+         'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
 
     @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)

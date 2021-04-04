@@ -109,6 +109,7 @@ class ContentGitRepo:
         * lint -g --no-test
         * validate -g --staged
         * validate -g
+        * validate -g --include-untracked
         """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
@@ -125,6 +126,10 @@ class ContentGitRepo:
 
                 # build flow - validate on all changed files
                 res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
+                assert res.exit_code == 0
+
+                # local run - validation with untracked files
+                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu")
                 assert res.exit_code == 0
 
             except AssertionError:

@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', '
                          'MP106', 'RM102', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -147,6 +147,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -191,6 +192,7 @@ ERROR_CODE = {
     "pack_metadata_non_approved_tags": {'code': "PA120", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
     "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
+    "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -978,6 +980,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def description_contains_contrib_details():
+        return "Description file contains contribution/partner details that will be generated automatically "\
+               "when the upload command is performed.\nDelete any details related to contribution/partner "
+
+    @staticmethod
+    @error_code_decorator
     def no_beta_disclaimer_in_description():
         return f"The detailed description in beta integration package " \
                f"does not contain the beta disclaimer note. Add the following to the description:\n" \
@@ -1210,6 +1218,11 @@ class Errors:
     def pack_name_already_exists(new_pack_name) -> str:
         return f"A pack named: {new_pack_name} already exists in content repository, " \
                f"change the pack's name in the metadata file."
+
+    @staticmethod
+    @error_code_decorator
+    def is_wrong_usage_of_usecase_tag():
+        return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
 
     @staticmethod
     @error_code_decorator

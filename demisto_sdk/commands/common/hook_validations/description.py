@@ -9,6 +9,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml, os, re
 
+CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
+
 
 class DescriptionValidator(BaseValidator):
     """DescriptionValidator was designed to make sure we provide a detailed description properly.
@@ -18,7 +20,7 @@ class DescriptionValidator(BaseValidator):
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
+    def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
@@ -30,6 +32,18 @@ class DescriptionValidator(BaseValidator):
         self.is_duplicate_description()
 
         return self._is_valid
+
+    def is_valid_desc(self):
+        """check if DESCRIPTION file contains contribution details"""
+        with open(self.file_path) as f:
+            description_content = f.read()
+        contrib_details = re.findall(rf'### .* {CONTRIBUTOR_DETAILED_DESC}', description_content)
+        if contrib_details:
+            error_message, error_code = Errors.description_contains_contrib_details()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+        return True
 
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""

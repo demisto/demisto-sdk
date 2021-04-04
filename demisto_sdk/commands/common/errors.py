@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', '
                          'MP106', 'RM102', 'PB110', 'PB111']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -145,6 +145,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -956,6 +957,12 @@ class Errors:
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
                f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_contrib_details():
+        return "Description file contains contribution/partner details that will be generated automatically "\
+               "when the upload command is performed.\nDelete any details related to contribution/partner "
 
     @staticmethod
     @error_code_decorator

@@ -181,7 +181,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_tags(),
             self._is_price_changed(),
             self._is_approved_tags(),
-            self._is_valid_support_type()
+            self._is_valid_support_type(),
+            self.is_right_usage_of_usecase_tag(),
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -347,6 +348,33 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                return False
+        return True
+
+    def is_right_usage_of_usecase_tag(self):
+        """Checks whether Use Case tag in pack_metadata is used properly
+
+        Return:
+             bool: True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
+        """
+        try:
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+
+            if "Use Case" in pack_meta_file_content['tags']:
+                playbooks_path = os.path.join(self.pack_path, "Playbooks")
+                incidents_path = os.path.join(self.pack_path, "IncidentTypes")
+                layouts_path = os.path.join(self.pack_path, "Layouts")
+
+                answers = [
+                    os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
+                    os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
+                    os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+                ]
+                if not any(answers):
+                    if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
+                        return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
                 return False
         return True
 

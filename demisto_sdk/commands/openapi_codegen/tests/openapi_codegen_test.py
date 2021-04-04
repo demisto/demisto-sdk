@@ -111,7 +111,7 @@ class TestOpenAPICodeGen:
        """
         integration = self.init_integration()
 
-        with open(os.path.join(self.test_files_path, 'swagger_python.txt'), 'r') as py_file:
+        with open(os.path.join(self.test_files_path, 'swagger_python.py'), 'r') as py_file:
             expected_py = py_file.read()
 
         py = integration.generate_python_code()

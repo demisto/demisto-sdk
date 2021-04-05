@@ -157,7 +157,13 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                     task['task']['name'] = task_name
 
     def check_for_subplaybook_usages(self, file_path: str, current_playbook_id: str, new_playbook_id: str) -> None:
-        """Check if the current_playbook_id appears in the file's playbook type tasks and change it if needed"""
+        """Check if the current_playbook_id appears in the file's playbook type tasks and change it if needed.
+
+            Arguments:
+                file_path (str): The file path to check.
+                current_playbook_id (str): The current playbook ID.
+                new_playbook_id (str): The new playbook ID.
+        """
         updated_tasks = []
         # if the changed file is a playbook get it's data
         if find_type(file_path) in [FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
@@ -168,7 +174,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if task_data.get('type') == 'playbook':
                     id_key = 'playbookId' if 'playbookId' in task_data.get('task') else 'playbookName'
                     # make sure the playbookId or playbookName use the new id and not the old
-                    if task_data.get('task').get(id_key) == current_playbook_id:
+                    if task_data.get('task', {}).get(id_key) == current_playbook_id:
                         playbook_data['tasks'][task_id]['task'][id_key] = new_playbook_id
                         updated_tasks.append(task_id)
 
@@ -195,12 +201,16 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         # we would use git to gather all other changed playbooks
         try:
             git_util = GitUtil()
-            all_changed_files = git_util.modified_files(include_untracked=True).union(
-                git_util.added_files(include_untracked=True))
-            all_changed_files = all_changed_files.union({item[1] for item in
-                                                         git_util.renamed_files(include_untracked=True)})
-        except (InvalidGitRepositoryError, TypeError):
+            modified_files = git_util.modified_files(include_untracked=True)
+            added_files = git_util.added_files(include_untracked=True)
+            renamed_files = {item[1] for item in git_util.renamed_files(include_untracked=True)}
+
+            all_changed_files = modified_files.union(added_files).union(renamed_files)
+
+        except (InvalidGitRepositoryError, TypeError) as e:
             click.secho('Unable to connect to git - skipping sub-playbook checks', fg='yellow')
+            if self.verbose:
+                click.secho(f'The error: {e}')
             return
 
         for file_path in all_changed_files:

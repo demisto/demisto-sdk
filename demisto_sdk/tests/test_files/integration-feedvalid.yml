@@ -117,7 +117,6 @@ script:
       name: limit
       required: false
       secret: false
-      hidden: false
     deprecated: false
     description: Gets the feed indicators.
     execution: false

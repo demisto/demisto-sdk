@@ -189,6 +189,15 @@ script:
       name: limit
       required: false
       secret: false
+      hidden: false
+    - default: false
+      defaultValue: '10'
+      description: hidden_command
+      isArray: false
+      name: hidden_command
+      required: false
+      secret: false
+      hidden: true
     deprecated: false
     description: Gets indicators from the feed.
     execution: false

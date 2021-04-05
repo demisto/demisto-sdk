@@ -2,6 +2,7 @@
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
 * Added a validation that community/partner details are not in the detailed description file.
 * Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
+* Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
 
 # 1.3.3

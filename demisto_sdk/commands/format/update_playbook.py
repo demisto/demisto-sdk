@@ -183,8 +183,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         """Check if the current playbook is used as a sub-playbook in other changed playbooks.
         Change the playbook's id in the tasks id needed.
         """
-        current_playbook_id = self.data['id']
-        new_playbook_id = self.data['name']
+        current_playbook_id = str(self.data.get('id'))
+        new_playbook_id = str(self.data.get('name'))
 
         # if the id and name are the same - there is no need for this format.
         if current_playbook_id == new_playbook_id:

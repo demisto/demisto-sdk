@@ -175,6 +175,8 @@ schema;command_schema:
       - include: important_schema
     timeout:
       type: int
+#    hidden:
+#      type: bool
 
 # int
 schema;argument_schema:

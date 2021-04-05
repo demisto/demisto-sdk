@@ -189,19 +189,25 @@ script:
       name: limit
       required: false
       secret: false
-      hidden: false
-    - default: false
-      defaultValue: '10'
-      description: hidden_command
-      isArray: false
-      name: hidden_command
-      required: false
-      secret: false
-      hidden: true
     deprecated: false
     description: Gets indicators from the feed.
     execution: false
     name: azure-get-indicators
+    outputs:
+    hidden: false
+  - arguments:
+    - default: false
+      defaultValue: '10'
+      description: The maximum number of indicators to return. The default value is 10.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    deprecated: false
+    description: hidden command.
+    hidden: true
+    execution: false
+    name: azure-hidden-command
     outputs:
   dockerimage: demisto/python3:3.8.1.9324
   feed: true

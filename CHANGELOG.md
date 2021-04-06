@@ -5,6 +5,7 @@
 * Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
 * Added the *hidden* field to the integration schema.
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
+* Added support for local custom command configuration file `.demisto-sdk-conf`.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
@@ -25,7 +26,6 @@
 * Added a validation that a pack's display name does not already exist in content repository.
 * Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
 * Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
-* Added support for local custom command configuration file `.demisto-sdk-conf`.
 
 # 1.3.1
 * Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.

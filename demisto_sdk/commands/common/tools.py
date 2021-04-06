@@ -1610,3 +1610,11 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
                                                 "only in readme": only_in_readme_paths}
 
     return different_contexts
+
+
+def write_yml(yml_path: str, yml_data: Dict):
+    ryaml = YAML()
+    ryaml.allow_duplicate_keys = True
+    ryaml.preserve_quotes = True
+    with open(yml_path, 'w') as f:
+        ryaml.dump(yml_data, f)  # ruamel preservers multilines

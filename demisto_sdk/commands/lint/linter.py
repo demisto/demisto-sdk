@@ -788,11 +788,10 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
-            logger.critical(f"{log_prompt} - Unable to run pylint - {e}")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run pylint")
             exit_code = RERUN
             output = str(e)
-
         return exit_code, output
 
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str, dict]:

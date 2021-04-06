@@ -35,7 +35,7 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
                          [("### Community Contributed Integration\n### OtherSection", False),
                           ("### partner Contributed Integration", False),
                           ("### Other section", True)])
-def test_is_valid_desc(integration, file_input, result):
+def test_is_valid_file(integration, file_input, result):
     """
     Given
         - Description file with Contribution details or not
@@ -48,7 +48,7 @@ def test_is_valid_desc(integration, file_input, result):
     integration.description.write(file_input)
     description_path = integration.description.path
     description_validator = DescriptionValidator(description_path)
-    answer = description_validator.is_valid_desc()
+    answer = description_validator.is_valid_file()
 
     assert answer == result
     assert description_validator._is_valid == answer

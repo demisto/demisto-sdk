@@ -45,10 +45,6 @@ BASIC_YML_TEST_PACKS = [
 ]
 
 
-def format_object(SOURCE_FORMAT_PLAYBOOK_COPY, path, verbose):
-    pass
-
-
 class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_yml_preserve_comment(self, source_path, destination_path, formatter, yml_title, file_type, capsys):

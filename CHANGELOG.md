@@ -5,6 +5,7 @@
 * Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
 * Added the *hidden* field to the integration schema.
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
+* Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

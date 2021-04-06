@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111']
+                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -77,7 +77,8 @@ ERROR_CODE = {
     "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
                                                               'related_field': ''},
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
-    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False, 'related_field': 'script.commands.name'},
+    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False, 'related_field':
+                                         'script.commands.name'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},

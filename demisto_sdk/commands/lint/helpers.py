@@ -280,10 +280,15 @@ def get_python_version_from_image(image: str) -> float:
     Returns:
         float: Python version X.Y (3.7, 3.6, ..)
     """
+    docker_user = os.getenv('DOCKERHUB_USER')
+    docker_pass = os.getenv('DOCKERHUB_PASSWORD')
     docker_client = docker.from_env()
-    py_num = 2.7
-    # Run two times
-    for _ in range(2):
+    docker_client.login(username=docker_user,
+                        password=docker_pass,
+                        registry="https://index.docker.io/v1")
+    py_num = 3.8
+    # Run three times
+    for attempt in range(3):
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
@@ -298,16 +303,18 @@ def get_python_version_from_image(image: str) -> float:
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
                 py_num = float(py_num)
+                for _ in range(2):
+                    # Try to remove the container two times.
+                    try:
+                        container_obj.remove(force=True)
+                        break
+                    except docker.errors.APIError:
+                        logger.warning(f'Could not remove the image {image}')
+                return py_num
             else:
                 raise docker.errors.ContainerError
-            for _ in range(2):
-                # Try to remove the container two times.
-                try:
-                    container_obj.remove(force=True)
-                    break
-                except docker.errors.APIError:
-                    pass
-        except (docker.errors.APIError, docker.errors.ContainerError):
+        except Exception:
+            logger.exception(f'Failed detecting Python version (in attempt {attempt})')
             continue
 
     return py_num

@@ -32,7 +32,8 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     # Setting debug log file if in circleci
     if log_path:
         file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
-        file_handler.setFormatter(fmt)
+        file_handler.setFormatter(
+            logging.Formatter('[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'))
         file_handler.setLevel(level=logging.DEBUG)
         logger.addHandler(file_handler)
 

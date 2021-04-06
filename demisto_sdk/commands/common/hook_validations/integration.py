@@ -3,12 +3,19 @@ import re
 from typing import Dict
 
 import yaml
-from demisto_sdk.commands.common.constants import (
-    BANG_COMMAND_NAMES, CONTEXT_OUTPUT_README_TABLE_HEADER, DBOT_SCORES_DICT,
-    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
-    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH)
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   DBOT_SCORES_DICT,
+                                                   FEED_REQUIRED_PARAMS,
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   FIRST_FETCH,
+                                                   FIRST_FETCH_PARAM,
+                                                   INTEGRATION_CATEGORIES,
+                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
+                                                   MAX_FETCH_PARAM,
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                Errors)
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -16,10 +23,9 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import (extract_multiple_keys_from_dict,
-                                               get_pack_name, get_remote_file,
-                                               is_v2_file, print_error,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    compare_context_path_in_yml_and_readme, is_v2_file, print_error,
+    server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -72,6 +78,7 @@ class IntegrationValidator(ContentEntityValidator):
             Returns:
                 bool: True if integration is valid, False otherwise.
         """
+
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
@@ -103,14 +110,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
-
-        core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
-
-        pack = get_pack_name(self.file_path)
-        is_core = True if pack in core_packs_list else False
-        if is_core:
-            answers.append(self.no_incident_in_core_packs())
-
         return all(answers)
 
     def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
@@ -481,32 +480,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def no_incident_in_core_packs(self):
-        """check if commands' name or argument contains the word incident"""
-
-        commands = self.current_file.get('script', {}).get('commands', [])
-        commands_with_incident = []
-        args_with_incident = {}
-        no_incidents = True
-        for command in commands:
-            command_name = command.get('name', '')
-            if 'incident' in command_name:
-                commands_with_incident.append(command_name)
-            args = command.get('arguments', [])
-            for arg in args:
-                arg_name = arg.get("name")
-                if 'incident' in arg_name:
-                    args_with_incident[command_name] = arg_name
-
-        if commands_with_incident or args_with_incident:
-            error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,
-                                                                                args_with_incident)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-                no_incidents = False
-
-        return no_incidents
-
     def has_no_duplicate_args(self):
         # type: () -> bool
         """Check if a command has the same arg more than once
@@ -687,7 +660,8 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_changed_removed_yml_fields(self):
         """checks if some specific Fields in the yml file were changed from true to false or removed"""
-        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin', 'isremotesyncout']
+        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin',
+                  'isremotesyncout']
         currentscript = self.current_file.get('script', {})
         oldscript = self.old_file.get('script', {})
 
@@ -1061,55 +1035,47 @@ class IntegrationValidator(ContentEntityValidator):
         """
         Checks if there has been a corresponding change to the integration's README
         when changing the context paths of an integration.
+        This validation might run together with is_context_different_in_yml in Readme's validation.
+
         Returns:
             True if there has been a corresponding change to README file when context is changed in integration
         """
         valid = True
-        # the pattern to get the context part out of command section:
-        context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*', r'\*') + ".(.*?)#{3,5}"
-        # the pattern to get the value in the first column under the outputs table:
-        context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
 
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(os.path.join(dir_path, 'README.md')):
             return True
 
-        # get README file's content
+        # Only run validation if the validation has not run with is_context_different_in_yml on readme
+        # so no duplicates errors will be created:
+        error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
+        error, missing_from_yml_error_code = Errors.missing_output_context('', '')
         readme_path = os.path.join(dir_path, 'README.md')
+
+        if f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_ERRORS:
+            return False
+
+        # get README file's content
         with open(readme_path, 'r') as readme:
             readme_content = readme.read()
-            readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
 
-        commands = self.current_file.get("script", {}).get('commands', [])
-
-        for command in commands:
-            command_name = command.get('name')
-
-            # Gets all context path in the relevant command section from README file
-            command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
-            command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
-            if not command_section:
-                continue
-            if not command_section[0].endswith('###'):
-                command_section[0] += '###'  # mark end of file so last pattern of regex will be recognized.
-            context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
-            if not context_section:
-                context_path_in_command = set()
-            else:
-                context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
-                context_path_in_command.remove('---')
-
-            existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
-
-            # finds diff between YML and README
-            only_in_yml_paths = existing_context_in_yml - context_path_in_command
-            only_in_readme_paths = context_path_in_command - existing_context_in_yml
-            if only_in_yml_paths:
-                error, code = Errors.readme_missing_output_context(command_name, ", ".join(only_in_yml_paths))
+        # commands = self.current_file.get("script", {}).get('commands', [])
+        difference = compare_context_path_in_yml_and_readme(self.current_file, readme_content)
+        for command_name in difference:
+            if difference[command_name].get('only in yml'):
+                error, code = Errors.readme_missing_output_context(
+                    command_name,
+                    ", ".join(difference[command_name].get('only in yml')))
                 if self.handle_error(error, code, file_path=readme_path):
                     valid = False
-            if only_in_readme_paths:
-                error, code = Errors.missing_output_context(command_name, ", ".join(only_in_readme_paths))
+
+            if difference[command_name].get('only in readme'):
+                error, code = Errors.missing_output_context(command_name,
+                                                            ", ".join(difference[command_name].get('only in readme')))
                 if self.handle_error(error, code, file_path=self.file_path):
                     valid = False
+
         return valid

@@ -84,7 +84,7 @@ def check_configuration_file(command, args):
                         # if the key exists in the args we will run it over if it is either:
                         # a - a flag currently not set and is defined in the conf file
                         # b - not a flag but an arg that is currently None and there is a value for it in the conf file
-                        if isinstance(args[key], bool) and args[key] is False and config[command][key] in true_synonyms:
+                        if args[key] is False and config[command][key] in true_synonyms:
                             args[key] = True
 
                         elif args[key] is None and config[command][key] is not None:
@@ -94,10 +94,9 @@ def check_configuration_file(command, args):
                     else:
                         if config[command][key] in true_synonyms:
                             args[key] = True
+
                         else:
                             args[key] = config[command][key]
-
-            print_error(args)
 
         except MissingSectionHeaderError:
             pass

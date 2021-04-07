@@ -35,13 +35,11 @@ class DescriptionFormat(BaseUpdate):
 
         with open(self.source_file, 'r') as f:
             description_content = f.read()
-        f.close()
-        matches = re.findall('###.*Contributed Integration[\\S\n ]+[*]{3}', description_content)
-        for match in matches:
-            description_content = description_content.replace(match, "")
-        f = open(self.source_file, 'w')
-        description_content = description_content.rstrip("\n")
-        f.write(description_content)
+        formatted_description = re.sub('###.*Contributed Integration[\\S\n ]+?[*]{3}[\n]*', "", description_content)
+        formatted_description = formatted_description.rstrip("\n")
+
+        with open(self.source_file, 'w') as f:
+            f.write(formatted_description)
         f.close()
 
     def run_format(self) -> int:

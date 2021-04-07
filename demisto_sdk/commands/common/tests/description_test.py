@@ -29,3 +29,26 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
     description_validator = DescriptionValidator(str(unified_integration_yml))
     assert description_validator.is_duplicate_description()
     assert not DescriptionValidator.handle_error.called
+
+
+@pytest.mark.parametrize("file_input, result",
+                         [("### Community Contributed Integration\n### OtherSection", False),
+                          ("### partner Contributed Integration", False),
+                          ("### Other section", True)])
+def test_is_valid_file(integration, file_input, result):
+    """
+    Given
+        - Description file with Contribution details or not
+    When
+        - Run validate on Description file
+    Then
+        - Ensure no Contribution details in the file
+    """
+
+    integration.description.write(file_input)
+    description_path = integration.description.path
+    description_validator = DescriptionValidator(description_path)
+    answer = description_validator.is_valid_file()
+
+    assert answer == result
+    assert description_validator._is_valid == answer

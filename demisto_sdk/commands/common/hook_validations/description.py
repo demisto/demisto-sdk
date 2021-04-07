@@ -33,7 +33,7 @@ class DescriptionValidator(BaseValidator):
 
         return self._is_valid
 
-    def is_valid_desc(self):
+    def is_valid_file(self):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
             description_content = f.read()

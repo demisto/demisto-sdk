@@ -480,7 +480,7 @@ class ValidateManager:
         description_validator = DescriptionValidator(file_path, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      json_file_path=self.json_file_path)
-        return description_validator.is_valid_desc()
+        return description_validator.is_valid_file()
 
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,

@@ -5,7 +5,7 @@
 * Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
 * Added the *hidden* field to the integration schema.
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
-* Added support for local custom command configuration file `.demisto-sdk-conf`.
+* Added support for local custom command configuration file `.demisto-sdk-conf`.**format** commnad to inlcude an update to the description file of an integration, to remove community/partner details.
 * Fixed issue where **generate-docs** does not add the used scripts to the README file.
 
 # 1.3.3

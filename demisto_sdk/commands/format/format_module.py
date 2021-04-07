@@ -10,6 +10,7 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_description import DescriptionFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -48,11 +49,11 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
-    'canvas-context-connections': ConnectionJSONFormat
+    'canvas-context-connections': ConnectionJSONFormat,
+    'description': DescriptionFormat
 }
 UNFORMATTED_FILES = ['readme',
                      'releasenotes',
-                     'description',
                      'changelog',
                      'image',
                      'javascriptfile',
@@ -86,7 +87,7 @@ def format_manager(input: str = None,
         int 0 in case of success 1 otherwise
     """
     if input:
-        files = get_files_in_dir(input, ['json', 'yml', 'py'])
+        files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
     else:
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]

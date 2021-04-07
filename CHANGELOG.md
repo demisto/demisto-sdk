@@ -6,6 +6,7 @@
 * Added the *hidden* field to the integration schema.
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
 * Added support for local custom command configuration file `.demisto-sdk-conf`.
+* Updated the **format** commnad to inlcude an update to the description file of an integration, to remove community/partner details.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

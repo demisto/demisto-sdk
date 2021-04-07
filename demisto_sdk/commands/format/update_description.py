@@ -32,22 +32,16 @@ class DescriptionFormat(BaseUpdate):
 
     def remove_community_partner_details(self):
         """update description file to not contain community/partner details"""
+
         with open(self.source_file, 'r') as f:
-            description_content = f.readlines()
+            description_content = f.read()
         f.close()
+        matches = re.findall('###.*Contributed Integration[\\S\n ]+[*]{3}', description_content)
+        for match in matches:
+            description_content = description_content.replace(match, "")
         f = open(self.source_file, 'w')
-        line = 0
-        desc_deleted = False
-        while line < len(description_content):
-            contrib_details = re.findall(rf'### .* {CONTRIBUTOR_DETAILED_DESC}', description_content[line].strip("\n"))
-            if contrib_details and not desc_deleted:
-                while description_content[line].strip("\n") != "***":
-                    line += 1
-                line += 1
-                desc_deleted = True
-            else:
-                f.write(description_content[line])
-                line += 1
+        description_content = description_content.rstrip("\n")
+        f.write(description_content)
         f.close()
 
     def run_format(self) -> int:

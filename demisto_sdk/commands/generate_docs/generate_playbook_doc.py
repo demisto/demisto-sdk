@@ -127,6 +127,8 @@ def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list,
                                 integrations.add(integration_dependency)
         else:
             script_name = task.get('scriptName')
+            if not script_name:
+                script_name = task.get('script')
             if script_name:
                 scripts.add(script_name)
             elif task.get('type') == 'playbook':

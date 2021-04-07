@@ -4,6 +4,7 @@
 * Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
 * Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
 * Added the *hidden* field to the integration schema.
+* Fixed issue where **generate-docs** does not add the used scripts to the README file.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

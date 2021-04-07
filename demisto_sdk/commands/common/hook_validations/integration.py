@@ -516,7 +516,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         commands = self.current_file.get('script', {}).get('commands', [])
         commands_with_incident = []
-        args_with_incident = {}
+        args_with_incident: Dict[str, list] = {}
         no_incidents = True
         for command in commands:
             command_name = command.get('name', '')
@@ -526,7 +526,7 @@ class IntegrationValidator(ContentEntityValidator):
             for arg in args:
                 arg_name = arg.get("name")
                 if 'incident' in arg_name:
-                    args_with_incident[command_name] = arg_name
+                    args_with_incident.setdefault(command_name, []).append(arg_name)
 
         if commands_with_incident or args_with_incident:
             error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,

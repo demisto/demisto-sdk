@@ -54,7 +54,7 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 """
 
 from FeedHelloWorld import Client, get_indicators_command, fetch_indicators_command
-from CommonServerPython import tableToMarkdown
+from CommonServerPython import tableToMarkdown, string_to_table_header
 import json
 import io
 
@@ -125,5 +125,5 @@ def test_get_indicators_command(mocker):
     mocker.patch.object(Client, 'build_iterator', return_value=indicators_list)
     results = get_indicators_command(client, params={'tlp_color': 'RED'}, args={'limit': '10'})
     human_readable = tableToMarkdown('Indicators from HelloWorld Feed:', indicators_list,
-                                     headers=['value', 'type'], removeNull=True)
+                                     headers=['value', 'type'], headerTransform=string_to_table_header, removeNull=True)
     assert results.readable_output == human_readable

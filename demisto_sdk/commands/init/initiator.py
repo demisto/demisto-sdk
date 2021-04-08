@@ -64,7 +64,7 @@ class Initiator:
                                    os.path.join(TEST_DATA_DIR, 'update_alert_status.json'),
                                    os.path.join(TEST_DATA_DIR, 'domain_reputation.json')}
 
-    HELLO_WORLD_FEED_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'build_iterators_results.json'),
+    HELLO_WORLD_FEED_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'build_iterator_results.json'),
                                         os.path.join(TEST_DATA_DIR, 'get_indicators_command_results.json'),
                                         os.path.join(TEST_DATA_DIR, 'FeedHelloWorld_mock.txt')}
 

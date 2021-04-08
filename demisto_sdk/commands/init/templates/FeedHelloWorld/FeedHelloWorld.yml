@@ -10,6 +10,8 @@ configuration:
   type: 8
 - defaultvalue: https://openphish.com/feed.txt
   display: Server's URL
+  additionalinfo: Should be feed of type .txt. For using other types of feed, modify
+    the parsing in the python file.
   name: url
   required: true
   type: 0
@@ -49,19 +51,6 @@ configuration:
   - WHITE
   required: false
   type: 15
-- defaultvalue: suddenDeath
-  name: feedExpirationPolicy
-  options:
-  - never
-  - interval
-  - indicatorType
-  - suddenDeath
-  required: false
-  type: 17
-- defaultvalue: '20160'
-  name: feedExpirationInterval
-  required: false
-  type: 1
 - defaultvalue: '30'
   display: Feed Fetch Interval
   name: feedFetchInterval
@@ -83,12 +72,6 @@ configuration:
   name: proxy
   required: false
   type: 8
-- additionalinfo: Supports CSV values.
-  display: Tags
-  hidden: false
-  name: feedTags
-  required: false
-  type: 0
 - display: ''
   name: feedExpirationPolicy
   type: 17
@@ -123,7 +106,7 @@ script:
     description: Gets indicators from the feed.
     execution: false
     name: helloworld-get-indicators
-  dockerimage: demisto/python3:3.9.1.15759
+  dockerimage: demisto/python3:3.9.2.17957
   feed: true
   isfetch: false
   longRunning: false
@@ -133,6 +116,7 @@ script:
   subtype: python3
   type: python
 fromversion: 5.5.0
-description: ''
+description: 'This is the Feed Hello World integration for getting started with your
+  feed integration.'
 tests:
 - No tests (auto formatted)

@@ -228,6 +228,27 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
 
+    NO_INCIDENT_INPUT = [
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),
+        ({"script": {"commands": [{"name": "command_incident", "arguments": [{"name": "arg1"}]}]}}, False),
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "incident_arg"}]}]}}, False)
+    ]
+
+    @pytest.mark.parametrize("content, answer", NO_INCIDENT_INPUT)
+    def test_no_incident_in_core_pack(self, content, answer):
+        """
+        Given
+            - An integration with commands' names and arguments.
+        When
+            - running no_incident_in_core_packs.
+        Then
+            - validate that commands' names and arguments do not contain the word incident.
+        """
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        assert validator.no_incident_in_core_packs() is answer
+        assert validator.is_valid is answer
+
     PYTHON3_SUBTYPE = {
         "type": "python",
         "subtype": "python3"

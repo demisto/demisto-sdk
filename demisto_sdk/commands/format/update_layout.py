@@ -104,6 +104,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_fromVersion(from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
+        self.update_id()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)

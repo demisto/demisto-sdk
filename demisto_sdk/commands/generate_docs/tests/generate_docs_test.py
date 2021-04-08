@@ -653,3 +653,92 @@ def test_generate_setup_section_with_additional_info(yml_input, expected_results
     """
     section = generate_setup_section(yml_input)
     assert section == expected_results
+
+
+def test_scripts_in_playbook(repo):
+    """
+        Given
+            - A test playbook file
+        When
+            - Run get_playbook_dependencies command
+        Then
+            - Ensure that the scripts we get are from both the script and scriptName fields.
+    """
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+        get_playbook_dependencies
+    pack = repo.create_pack('pack')
+    playbook = pack.create_playbook('LargePlaybook')
+    test_task_1 = {
+        "id": "1",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["2"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "scriptName": "test_1",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    test_task_2 = {
+        "id": "2",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["3"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "script": "test_2",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    playbook.create_default_playbook()
+    playbook_data = playbook.yml.read_dict()
+    playbook_data['tasks']['1'] = test_task_1
+    playbook_data['tasks']['2'] = test_task_2
+    playbook.yml.write_dict(playbook_data)
+
+    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook_data,
+                                                                           playbook_path=playbook.yml.rel_path)
+
+    assert scripts == ["test_1", "test_2"]

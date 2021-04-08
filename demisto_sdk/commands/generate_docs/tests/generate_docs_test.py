@@ -741,4 +741,5 @@ def test_scripts_in_playbook(repo):
     playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook_data,
                                                                            playbook_path=playbook.yml.rel_path)
 
-    assert scripts == ["test_1", "test_2"]
+    assert "test_1" in scripts
+    assert "test_2" in scripts

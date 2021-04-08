@@ -1,5 +1,4 @@
 # Changelog
-* Updated the **format** commnad to inlcude an update to the description file of an integration, to remove community/partner details.
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 

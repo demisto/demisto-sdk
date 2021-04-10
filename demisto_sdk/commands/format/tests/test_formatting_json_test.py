@@ -285,6 +285,20 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.set_group_field()
         assert layoutscontainer_formatter.data.get('group') == 'incident'
 
+    def test_update_id(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layoutscontainer file with non matching name and id.
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and id are  matching
+        """
+        layoutscontainer_formatter.data['name'] = "name"
+        layoutscontainer_formatter.data['id'] = "id"
+        layoutscontainer_formatter.update_id()
+        assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
+
     def test_remove_null_fields(self, layoutscontainer_formatter):
         """
         Given

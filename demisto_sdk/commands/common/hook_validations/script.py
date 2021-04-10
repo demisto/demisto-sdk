@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (is_v2_file,
+from demisto_sdk.commands.common.tools import (get_pack_name, get_remote_file,
+                                               is_v2_file,
                                                server_version_compare)
 
 
@@ -73,6 +74,15 @@ class ScriptValidator(ContentEntityValidator):
                 is_script_valid,
                 self.is_valid_name()
             ])
+        core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+
+        pack = get_pack_name(self.file_path)
+        is_core = True if pack in core_packs_list else False
+        if is_core:
+            is_script_valid = all([
+                is_script_valid,
+                self.no_incident_in_core_pack()
+            ])
         return is_script_valid
 
     @classmethod
@@ -130,6 +140,23 @@ class ScriptValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return True
         return False
+
+    def no_incident_in_core_pack(self):
+        """check if args name contains the word incident"""
+        args = self.current_file.get('args', [])
+        strings_with_incident_list = []
+        no_incidents = True
+        for arg in args:
+            if 'incident' in arg['name']:
+                strings_with_incident_list.append(arg['name'])
+
+        if strings_with_incident_list:
+            error_message, error_code = Errors.incident_in_script_arg(strings_with_incident_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                no_incidents = False
+
+        return no_incidents
 
     def is_there_duplicates_args(self):
         # type: () -> bool

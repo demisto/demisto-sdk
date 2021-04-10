@@ -1,7 +1,16 @@
 # Changelog
-* Updated the **demisto-sdk validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
+* Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
+* Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
+
+# 1.3.4
+* Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
 * Added a validation that community/partner details are not in the detailed description file.
 * Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
+* Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
+* Added the *hidden* field to the integration schema.
+* Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
+* Added support for local custom command configuration file `.demisto-sdk-conf`.
+* Updated the **format** command to include an update to the description file of an integration, to remove community/partner details.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

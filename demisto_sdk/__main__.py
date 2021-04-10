@@ -1,5 +1,6 @@
 # Site packages
 import json
+import logging
 import os
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -16,6 +17,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import get_packs
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
@@ -36,6 +38,8 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
     generate_playbook_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
+from demisto_sdk.commands.generate_integration.code_generator import \
+    IntegrationGeneratorConfig
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 from demisto_sdk.commands.init.initiator import Initiator
@@ -44,6 +48,8 @@ from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
+from demisto_sdk.commands.postman_codegen.postman_codegen import \
+    postman_to_autogen_configuration
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -409,6 +415,7 @@ def validate(config, **kwargs):
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
 def create_artifacts(**kwargs) -> int:
+    logging_setup(3)
     check_configuration_file('create-content-artifacts', kwargs)
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
@@ -496,6 +503,10 @@ def lint(**kwargs):
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.\n
     Meant to be used with integrations/scripts that use the folder (package) structure. Will lookup up what
     docker image to use and will setup the dev dependencies and file in the target folder."""
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
     check_configuration_file('lint', kwargs)
     lint_manager = LintManager(
         input=kwargs.get('input'),  # type: ignore[arg-type]
@@ -503,7 +514,6 @@ def lint(**kwargs):
         all_packs=kwargs.get('all_packs'),  # type: ignore[arg-type]
         verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
-        log_path=kwargs.get('log_path'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
         json_file_path=kwargs.get('json_file')  # type: ignore[arg-type]
     )
@@ -1088,6 +1098,84 @@ def find_dependencies_command(**kwargs):
                                            update_pack_metadata=update_pack_metadata)
     except ValueError as exp:
         print_error(str(exp))
+
+
+# ====================== postman-codegen ====================== #
+@main.command(name="postman-codegen",
+              short_help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''',
+              help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', help='The Postman collection 2.1 JSON file', required=True)
+@click.option(
+    '-o', '--output', help='The output directory to save the config file or the integration', required=False)
+@click.option(
+    '-n', '--name', help='The output integration name', required=False)
+@click.option(
+    '-op', '--output-prefix', help='The global integration output prefix. By default it is the product name.', required=False)
+@click.option(
+    '-cp', '--command-prefix', help='The prefix for each command in the integration. By default is the product name in lower case', required=False)
+@click.option(
+    '--config-out', help='Used for advanced integration customisation. Generates a config json file instead of integration.', required=False, is_flag=True)
+@click.option(
+    '--verbose', help='Print debug level logs', required=False, is_flag=True)
+def postman_codegen_command(**kwargs):
+    collection_path = kwargs['input']
+    output_dir = kwargs['output'] or '.'
+    name = kwargs['name']
+    context_path_prefix = kwargs['output_prefix']
+    command_prefix = kwargs['command_prefix']
+
+    if kwargs['verbose']:
+        logger = logging_setup(verbose=3)
+    else:
+        logger = logging.getLogger('demisto-sdk')
+
+    config = postman_to_autogen_configuration(
+        collection_path=collection_path,
+        name=name,
+        command_prefix=command_prefix,
+        context_path_prefix=context_path_prefix
+    )
+
+    if kwargs['config_out']:
+        path = Path(output_dir, f'config-{config.name}.json')
+        with open(path, mode='w') as f:
+            json.dump(config.to_dict(), f, indent=4)
+            logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
+    else:
+        # generate integration yml
+        config.generate_integration_package(output_dir, is_unified=True)
+
+
+# ====================== generate-integration ====================== #
+@main.command(name="generate-integration",
+              short_help='''Generates a Cortex XSOAR integration from a config json file, which is generated by commands like postman-codegen''',
+              help='''Generates a Cortex XSOAR integration from a config json file, which is generated by commands like postman-codegen''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', help='config json file produced by commands like postman-codegen and openapi-codegen', required=True)
+@click.option(
+    '-o', '--output', help='The output directory to save the integration package', required=False)
+@click.option(
+    '--verbose', help='Print debug level logs', required=False, is_flag=True)
+def generate_integration_command(**kwargs):
+    path = kwargs['input']
+    output_dir = kwargs['output'] or '.'
+
+    if kwargs['verbose']:
+        logging_setup(verbose=3)
+
+    config = None
+    with open(path, mode='r') as f:
+        config_dict = json.load(f)
+        config = IntegrationGeneratorConfig(**config_dict)
+
+    config.generate_integration_package(output_dir, True)
 
 
 # ====================== openapi-codegen ====================== #

@@ -10,11 +10,14 @@ from threading import Lock
 from typing import Callable, Optional
 
 import requests
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_path, print_warning,
-                                               run_command_os)
+from demisto_sdk.commands.common.tools import (
+    compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
+    get_yml_paths_in_dir, print_warning, run_command_os)
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -75,7 +78,9 @@ class ReadMeValidator(BaseValidator):
             self.is_mdx_file(),
             self.verify_no_empty_sections(),
             self.verify_no_default_sections_left(),
-            self.verify_readme_is_not_too_short()
+            self.verify_readme_is_not_too_short(),
+            self.is_context_different_in_yml(),
+
         ])
 
     def mdx_verify(self) -> bool:
@@ -263,6 +268,70 @@ class ReadMeValidator(BaseValidator):
             is_valid = False
         return is_valid
 
+    def is_context_different_in_yml(self) -> bool:
+        """
+        Checks if there has been a corresponding change to the integration's README
+        when changing the context paths of an integration.
+        This validation might run together with is_context_change_in_readme in Integration's validation.
+        Returns:
+            True if there has been a corresponding change to README file when context is changed in integration
+        """
+        valid = True
+
+        # disregards scripts as the structure of the files is different:
+        dir_path = os.path.dirname(self.file_path)
+        if 'Scripts' in dir_path:
+            return True
+
+        # Get YML file, assuming only one yml in integration
+
+        yml_file_paths = get_yml_paths_in_dir(dir_path)
+
+        # Handles case of Pack's Readme, so no YML file is found in pack.
+        if not yml_file_paths[0]:
+            return True
+
+        yml_file_path = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
+
+        # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
+        if dir_path not in yml_file_path:
+            yml_file_path = os.path.join(dir_path, yml_file_path)
+
+        # Getting the relevant error_code:
+        error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
+        error, missing_from_yml_error_code = Errors.missing_output_context('', '')
+
+        # Only run validation if the validation has not run with is_context_change_in_readme on integration
+        # so no duplicates errors will be created:
+        errors, ignored_errors = self._get_error_lists()
+        if f'{self.file_path} - [{missing_from_readme_error_code}]' in ignored_errors \
+                or f'{self.file_path} - [{missing_from_readme_error_code}]' in errors \
+                or f'{yml_file_path} - [{missing_from_yml_error_code}]' in ignored_errors \
+                or f'{yml_file_path} - [{missing_from_yml_error_code}]' in errors:
+            return False
+
+        # get YML file's content:
+        yml_as_dict = get_yaml(yml_file_path)
+
+        difference_context_paths = compare_context_path_in_yml_and_readme(yml_as_dict, self.readme_content)
+
+        # Add errors to error's list
+        for command_name in difference_context_paths:
+            if difference_context_paths[command_name].get('only in yml'):
+                error, code = Errors.readme_missing_output_context(
+                    command_name,
+                    ", ".join(difference_context_paths[command_name].get('only in yml')))
+                if self.handle_error(error, code, file_path=self.file_path):
+                    valid = False
+
+            if difference_context_paths[command_name].get('only in readme'):
+                error, code = Errors.missing_output_context(
+                    command_name, ", ".join(difference_context_paths[command_name].get('only in readme')))
+                if self.handle_error(error, code, file_path=yml_file_path):
+                    valid = False
+
+        return valid
+
     @staticmethod
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:
         with ReadMeValidator._MDX_SERVER_LOCK:
@@ -287,6 +356,10 @@ class ReadMeValidator(BaseValidator):
         if ReadMeValidator._MDX_SERVER_PROCESS:
             ReadMeValidator._MDX_SERVER_PROCESS.terminate()
             ReadMeValidator._MDX_SERVER_PROCESS = None
+
+    @staticmethod
+    def _get_error_lists():
+        return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
 atexit.register(ReadMeValidator.stop_mdx_server)

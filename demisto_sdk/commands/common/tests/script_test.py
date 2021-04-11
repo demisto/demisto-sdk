@@ -412,3 +412,23 @@ class TestScriptValidator:
         mocker.patch.object(validator, "handle_error", return_value=True)
 
         assert not validator.is_valid_script_file_path()
+
+    NO_INCIDENT_INPUT = [
+        ({"args": [{"name": "arg1"}]}, True),
+        ({"args": [{"name": "incident_arg"}]}, False)
+    ]
+
+    @pytest.mark.parametrize("content, answer", NO_INCIDENT_INPUT)
+    def test_no_incident_in_core_pack(self, content, answer):
+        """
+        Given
+            - A script with args names.
+        When
+            - running no_incident_in_core_pack.
+        Then
+            - validate that args' names do not contain the word incident.
+        """
+
+        validator = get_validator(content)
+        assert validator.no_incident_in_core_pack() is answer
+        assert validator.is_valid is answer

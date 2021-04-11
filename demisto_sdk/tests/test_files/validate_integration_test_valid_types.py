@@ -268,7 +268,7 @@ LAYOUT = {
 }
 
 LAYOUTS_CONTAINER = {
-    "id": "my-layoutscontainer",
+    "id": "my_layoutscontainer",
     "name": "my_layoutscontainer",
     "group": "incident",
     "description": "description",

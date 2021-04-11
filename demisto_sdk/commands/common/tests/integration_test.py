@@ -14,6 +14,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
 
+FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
+                                       name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
+
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
@@ -224,6 +227,27 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
+
+    NO_INCIDENT_INPUT = [
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),
+        ({"script": {"commands": [{"name": "command_incident", "arguments": [{"name": "arg1"}]}]}}, False),
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "incident_arg"}]}]}}, False)
+    ]
+
+    @pytest.mark.parametrize("content, answer", NO_INCIDENT_INPUT)
+    def test_no_incident_in_core_pack(self, content, answer):
+        """
+        Given
+            - An integration with commands' names and arguments.
+        When
+            - running no_incident_in_core_packs.
+        Then
+            - validate that commands' names and arguments do not contain the word incident.
+        """
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        assert validator.no_incident_in_core_packs() is answer
+        assert validator.is_valid is answer
 
     PYTHON3_SUBTYPE = {
         "type": "python",
@@ -496,7 +520,7 @@ class TestIntegrationValidator:
         (INVALID_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
         (INVALID_DISPLAY_TYPE_EXPIRATION, False),
-        (FEED_REQUIRED_PARAMS, True),
+        (FEED_REQUIRED_PARAMS_STRUCTURE, True),
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -523,7 +547,7 @@ class TestIntegrationValidator:
         current = {
             "script": {"feed": feed},
             "fromversion": fromversion,
-            'configuration': deepcopy(FEED_REQUIRED_PARAMS)
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE)
         }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
@@ -802,7 +826,7 @@ class TestIsFeedParamsExist:
 
     def setup(self):
         config = {
-            'configuration': deepcopy(FEED_REQUIRED_PARAMS),
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             'script': {'feed': True}
         }
         self.validator = IntegrationValidator(mock_structure("", config))
@@ -843,6 +867,24 @@ class TestIsFeedParamsExist:
                 item['hidden'] = True
         assert self.validator.all_feed_params_exist() is True, \
             'all_feed_params_exist() returns False instead True for feedReputation param'
+
+    def test_additional_info_contained(self):
+        """
+        Given:
+        - Parameters of feed integration.
+
+        When:
+        - Integration has all feed required params, and additionalinfo containing the expected additionalinfo parameter.
+
+        Then:
+        - Ensure that all_feed_params_exists() returns true.
+        """
+        configuration = self.validator.current_file['configuration']
+        for item in configuration:
+            if item.get('additionalinfo'):
+                item['additionalinfo'] = f'''{item['additionalinfo']}.'''
+        assert self.validator.all_feed_params_exist() is True, \
+            'all_feed_params_exist() returns False instead True'
 
     NO_HIDDEN = {"configuration": [{"id": "new", "name": "new", "display": "test"}, {"d": "123", "n": "s", "r": True}]}
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}

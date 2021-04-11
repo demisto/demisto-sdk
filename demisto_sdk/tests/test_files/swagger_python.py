@@ -564,7 +564,7 @@ def update_user_command(client, args):
 
 def test_module(client):
     # Test functions here
-    demisto.results('ok')
+    return_results('ok')
 
 
 def main():
@@ -575,14 +575,15 @@ def main():
     verify_certificate = not params.get('insecure', False)
     proxy = params.get('proxy', False)
     headers = {}
-    headers['Authorization'] = f'{params["api_key"]}'
+    headers['Authorization'] = params['api_key']
 
     command = demisto.command()
-    LOG(f'Command being called is {command}')
+    demisto.debug(f'Command being called is {command}')
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, "/v2"), verify_certificate, proxy, headers=headers, auth=None)
+        client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
+        
         commands = {
     		'testswagger-add-pet': add_pet_command,
 			'testswagger-create-user': create_user_command,
@@ -609,8 +610,10 @@ def main():
 
         if command == 'test-module':
             test_module(client)
-        else:
+        elif command in commands:
             return_results(commands[command](client, args))
+        else:
+            raise NotImplementedError(f'{command} command is not implemented.')
 
     except Exception as e:
         return_error(str(e))

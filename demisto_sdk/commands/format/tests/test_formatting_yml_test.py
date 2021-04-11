@@ -573,7 +573,7 @@ class TestFormatting:
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
 
         assert base_yml.data['tasks']['29']['task'][
-                   'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+            'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
@@ -810,10 +810,10 @@ class TestFormatting:
 
         playbook_yml.update_task_uuid()
         assert is_string_uuid(playbook_yml.data['tasks']['1']['task']['id']) and \
-               is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
+            is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
         assert playbook_yml.data['tasks']['1']['task']['id'] == playbook_yml.data['tasks']['1']['taskid']
         assert is_string_uuid(playbook_yml.data['tasks']['2']['task']['id']) and \
-               is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
+            is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
         assert playbook_yml.data['tasks']['2']['task']['id'] == playbook_yml.data['tasks']['2']['taskid']
 
     def test_check_for_subplaybook_usages(self, repo):

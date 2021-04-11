@@ -1,6 +1,7 @@
 # Changelog
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
+* The **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
@@ -24,7 +25,6 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
-* The **format** command will now remove empty fields from setIncident script arguments.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

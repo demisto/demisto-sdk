@@ -152,11 +152,14 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if task_name:
                     task['task']['name'] = task_name
 
-    def remove_empty_fields_set_incident(self):
-        """Removes unnecessary empty fields from setIncident script"""
+    def remove_empty_fields_from_scripts(self):
+        """Removes unnecessary empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator
+        scripts """
+
+        scripts = ["setIncident", "setIndicator", "createNewIncident", "createNewIndicator"]
         for task_id, task in self.data.get('tasks', {}).items():
-            script = task.get('task', {}).get('script', '')
-            if 'setIncident' in script:
+            current_task_script = task.get('task', {}).get('script', '')
+            if any(script in current_task_script for script in scripts):
                 script_args = task.get('scriptarguments', {})
                 for key in list(script_args):
                     if not script_args[key]:  # if value is empty
@@ -170,7 +173,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.update_conf_json('playbook')
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()
-            self.remove_empty_fields_set_incident()
+            self.remove_empty_fields_from_scripts()
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:

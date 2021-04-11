@@ -22,7 +22,7 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
+    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS,
     EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID, FEED_INTEGRATION_VALID, GIT_ROOT,
     INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
@@ -178,40 +178,50 @@ class TestFormatting:
         assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'
         assert base_yml.data['tasks']['25']['task']['description'] == 'Check if there is a SHA256 hash in context.'
 
-    @pytest.mark.parametrize('source_path', [EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE])
-    def test_remove_empty_keys_set_incident_from_playbook(self, source_path):
+    @pytest.mark.parametrize('source_path', [PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS])
+    def test_remove_empty_scripts_keys_from_playbook(self, source_path):
         """
             Given:
-                - Playbook file to format, with empty keys in tasks that uses the setIncident script
+                - Playbook file to format, with empty keys in tasks that uses the
+                 [setIncident, SetIndicator, CreateNewIncident, CreateNewIndicator] script
             When:
-                - Running the remove_empty_fields_set_incident function
+                - Running the remove_empty_fields_from_scripts function
             Then:
                 - Validate that the empty keys were removed successfully
         """
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", "{}.yml".format("playbook")))
         base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
-        set_incidnt_script_task_args = base_yml.data.get('tasks', {}).get('24').get('scriptarguments')
-        non_set_incidnt_script_task_args = base_yml.data.get('tasks', {}).get('25').get('scriptarguments')
+        create_new_incident_script_task_args = base_yml.data.get('tasks', {}).get('0').get('scriptarguments')
+        different_script_task_args = base_yml.data.get('tasks', {}).get('1').get('scriptarguments')
+        create_new_indicator_script_task_args = base_yml.data.get('tasks', {}).get('2').get('scriptarguments')
+        set_incident_script_task_args = base_yml.data.get('tasks', {}).get('3').get('scriptarguments')
+        set_indicator_script_task_args = base_yml.data.get('tasks', {}).get('4').get('scriptarguments')
 
-        # Assert the empty keys are indeed in a setIncident script arguments
-        assert 'emailurlclicked' in set_incidnt_script_task_args
-        assert 'severity' in set_incidnt_script_task_args
-        assert not set_incidnt_script_task_args['emailurlclicked'] and set_incidnt_script_task_args['severity']
+        # Assert that empty keys exists in the scripts arguments
+        assert 'commandline' in create_new_incident_script_task_args
+        assert not create_new_incident_script_task_args['commandline']
+        assert 'malicious_description' in different_script_task_args
+        assert not different_script_task_args['malicious_description']
+        assert 'assigneduser' in create_new_indicator_script_task_args
+        assert not create_new_indicator_script_task_args['assigneduser']
+        assert 'occurred' in set_incident_script_task_args
+        assert not set_incident_script_task_args['occurred']
+        assert 'sla' in set_indicator_script_task_args
+        assert not set_indicator_script_task_args['sla']
 
-        # Assert the empty keys are indeed in a non setIncident script arguments
-        assert 'assetid' in non_set_incidnt_script_task_args
-        assert not non_set_incidnt_script_task_args['assetid']
+        base_yml.remove_empty_fields_from_scripts()
 
-        base_yml.remove_empty_fields_set_incident()
+        # Assert the empty keys were removed from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator
+        # scripts
+        assert 'commandline' not in create_new_incident_script_task_args
+        assert 'assigneduser' not in create_new_indicator_script_task_args
+        assert 'occurred' not in set_incident_script_task_args
+        assert 'sla' not in set_indicator_script_task_args
 
-        # Assert the empty keys were removed from setIncident script arguments and the non empty keys remained
-        assert 'emailurlclicked' not in set_incidnt_script_task_args
-        assert 'severity' in set_incidnt_script_task_args
-
-        # Assert the empty keys were remained a non setIncident script arguments
-        assert 'assetid' in non_set_incidnt_script_task_args
-        assert not non_set_incidnt_script_task_args['assetid']
+        # Assert the empty keys are still in the other script arguments
+        assert 'malicious_description' in different_script_task_args
+        assert not different_script_task_args['malicious_description']
 
     @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_sourceplaybookid(self, source_path):
@@ -562,7 +572,7 @@ class TestFormatting:
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
 
         assert base_yml.data['tasks']['29']['task'][
-            'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+                   'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
@@ -799,8 +809,8 @@ class TestFormatting:
 
         playbook_yml.update_task_uuid()
         assert is_string_uuid(playbook_yml.data['tasks']['1']['task']['id']) and \
-            is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
+               is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
         assert playbook_yml.data['tasks']['1']['task']['id'] == playbook_yml.data['tasks']['1']['taskid']
         assert is_string_uuid(playbook_yml.data['tasks']['2']['task']['id']) and \
-            is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
+               is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
         assert playbook_yml.data['tasks']['2']['task']['id'] == playbook_yml.data['tasks']['2']['taskid']

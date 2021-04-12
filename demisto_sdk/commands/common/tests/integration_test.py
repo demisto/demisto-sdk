@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
 
-FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
-                                       name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
+FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'))
+                                  for required_param in FEED_REQUIRED_PARAMS]
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

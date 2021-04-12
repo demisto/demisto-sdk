@@ -478,7 +478,8 @@ class TestFormatting:
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     params[counter].pop('defaultvalue')
-            for param in FEED_REQUIRED_PARAMS:
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
                 assert param in params
         os.remove(target)
         os.rmdir(path)

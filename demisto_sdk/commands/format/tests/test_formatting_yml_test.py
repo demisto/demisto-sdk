@@ -26,7 +26,7 @@ from demisto_sdk.tests.constants_test import (
     EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID, FEED_INTEGRATION_VALID, GIT_ROOT,
     INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY, FEED_INTEGRATION_EMPTY_VALID,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from mock import Mock, patch
 from ruamel.yaml import YAML
@@ -500,6 +500,24 @@ class TestFormatting:
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get('configuration', [])
         assert 'defaultvalue' in configuration_params[0]
+
+    def test_format_on_feed_integration_adds_feed_parameters(self):
+        """
+        Given
+        - Feed integration yml without feed parameters configured.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensures the feed parameters are added.
+        """
+        base_yml = IntegrationYMLFormat(FEED_INTEGRATION_EMPTY_VALID, path="schema_path", verbose=True)
+        base_yml.set_feed_params_in_config()
+        configuration_params = base_yml.data.get('configuration', [])
+        for param_details in FEED_REQUIRED_PARAMS:
+            param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
+            assert param in configuration_params
 
     def test_set_fetch_params_in_config_with_default_value(self):
         """

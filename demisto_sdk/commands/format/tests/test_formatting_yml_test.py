@@ -482,7 +482,9 @@ class TestFormatting:
                 if 'hidden' in param:
                     param.pop('hidden')
             for param_details in FEED_REQUIRED_PARAMS:
-                param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
+                param = {'name': param_details.get('name')}
+                param.update(param_details.get('must_equal', dict()))
+                param.update(param_details.get('must_contain', dict()))
                 assert param in params
         os.remove(target)
         os.rmdir(path)
@@ -519,7 +521,9 @@ class TestFormatting:
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get('configuration', [])
         for param_details in FEED_REQUIRED_PARAMS:
-            param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
+            param = {'name': param_details.get('name')}
+            param.update(param_details.get('must_equal', dict()))
+            param.update(param_details.get('must_contain', dict()))
             assert param in configuration_params
 
     def test_set_fetch_params_in_config_with_default_value(self):

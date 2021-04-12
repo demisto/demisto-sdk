@@ -121,7 +121,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 if 'defaultvalue' in param and param.get('name') != 'feed':
                     params[counter].pop('defaultvalue')
             for param_details in FEED_REQUIRED_PARAMS:
-                param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
+                param = {'name': param_details.get('name')}
+                param.update(param_details.get('must_equal', dict()))
+                param.update(param_details.get('must_contain', dict()))
                 if param.get('name') not in param_names:
                     self.data['configuration'].append(param)
 

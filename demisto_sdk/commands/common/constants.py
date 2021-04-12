@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Dict, List
+from typing import List
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -888,10 +888,10 @@ NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
 IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONTENT_PACK}
 
-FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
+FEED_REQUIRED_PARAMS = [
     {
+        'name': 'feed',
         'must_equal': {
-            'name': 'feed',
             'defaultvalue': 'true',
             'display': 'Fetch indicators',
             'type': 8,
@@ -900,8 +900,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         'must_contain': {}
     },
     {
+        'name': 'feedReputation',
         'must_equal': {
-            'name': 'feedReputation',
             'display': 'Indicator Reputation',
             'type': 18,
             'required': False,
@@ -912,8 +912,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         }
     },
     {
+        'name': 'feedReliability',
         'must_equal': {
-            'name': 'feedReliability',
             'display': 'Source Reliability',
             'type': 15,
             'required': True,
@@ -926,8 +926,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         }
     },
     {
+        'name': 'feedExpirationPolicy',
         'must_equal': {
-            'name': 'feedExpirationPolicy',
             'display': "",
             'type': 17,
             'required': False,
@@ -936,8 +936,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         'must_contain': {}
     },
     {
+        'name': 'feedExpirationInterval',
         'must_equal': {
-            'name': 'feedExpirationInterval',
             'display': "",
             'type': 1,
             'required': False
@@ -945,8 +945,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         'must_contain': {}
     },
     {
+        'name': 'feedFetchInterval',
         'must_equal': {
-            'name': 'feedFetchInterval',
             'display': 'Feed Fetch Interval',
             'type': 19,
             'required': False
@@ -954,8 +954,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         'must_contain': {}
     },
     {
+        'name': 'feedBypassExclusionList',
         'must_equal': {
-            'name': 'feedBypassExclusionList',
             'display': 'Bypass exclusion list',
             'type': 8,
             'required': False
@@ -967,8 +967,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         }
     },
     {
+        'name': 'feedTags',
         'must_equal': {
-            'name': 'feedTags',
             'display': 'Tags',
             'required': False,
             'type': 0
@@ -978,8 +978,8 @@ FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
         }
     },
     {
+        'name': 'tlp_color',
         'must_equal': {
-            'name': 'tlp_color',
             'display': 'Traffic Light Protocol Color',
             'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
             'required': False,

@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import List
+from typing import Dict, List
 
 # dirs
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
@@ -888,7 +888,7 @@ NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
 IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONTENT_PACK}
 
-FEED_REQUIRED_PARAMS = [
+FEED_REQUIRED_PARAMS: List[Dict[str, Dict]] = [
     {
         'must_equal': {
             'name': 'feed',

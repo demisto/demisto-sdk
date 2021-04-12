@@ -774,7 +774,7 @@ CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
-FILTER_CONF = './Tests/filter_file.txt'
+FILTER_CONF = './artifacts/filter_file.txt'
 
 
 class PB_Status:

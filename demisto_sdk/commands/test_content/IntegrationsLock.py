@@ -10,8 +10,8 @@ from google.cloud import storage
 
 LOCKS_PATH = 'content-locks'
 BUCKET_NAME = os.environ.get('GCS_ARTIFACTS_BUCKET')
-CIRCLE_BUILD_NUM = os.environ.get('CIRCLE_BUILD_NUM')
-WORKFLOW_ID = os.environ.get('CIRCLE_WORKFLOW_ID')
+BUILD_NUM = os.environ.get('CI_BUILD_ID')
+WORKFLOW_ID = os.environ.get('CI_PIPELINE_ID')
 CIRCLE_STATUS_TOKEN = os.environ.get('CIRCLECI_STATUS_TOKEN')
 
 
@@ -170,7 +170,7 @@ def create_lock_files(integrations_generation_number: dict,
     for integration, generation_number in integrations_generation_number.items():
         blob = bucket.blob(f'{LOCKS_PATH}/{integration}')
         try:
-            blob.upload_from_string(f'{WORKFLOW_ID}:{CIRCLE_BUILD_NUM}:{test_playbook.configuration.timeout + 30}',
+            blob.upload_from_string(f'{WORKFLOW_ID}:{BUILD_NUM}:{test_playbook.configuration.timeout + 30}',
                                     if_generation_match=generation_number)
             test_playbook.build_context.logging_module.debug(f'integration {integration} locked')
             locked_integrations.append(integration)
@@ -202,7 +202,7 @@ def unlock_integrations(integrations_to_unlock: list,
         try:
             # Verifying build number is the same as current build number to avoid deleting other tests lock files
             _, build_number, _ = lock_file.download_as_string().decode().split(':')
-            if build_number == CIRCLE_BUILD_NUM:
+            if build_number == BUILD_NUM:
                 lock_file.delete(if_generation_match=lock_file.generation)
                 test_playbook.build_context.logging_module.debug(
                     f'Integration {integration} unlocked')

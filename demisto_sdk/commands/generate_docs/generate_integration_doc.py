@@ -362,11 +362,7 @@ def get_command_examples(commands_file_path, specific_commands):
     commands = []
     if specific_commands:
         for command_ex in command_examples:
-            is_command_specific = False
-            for specific_command in specific_commands:
-                if command_ex.startswith(f'!{specific_command}'):
-                    is_command_specific = True
-            if is_command_specific:
+            if command_ex.split(' ')[0].strip('!') in specific_commands:
                 commands.append(command_ex)
     else:
         commands = command_examples

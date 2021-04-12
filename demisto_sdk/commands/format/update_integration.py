@@ -116,12 +116,13 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
+            param_names = {param.get('name') for param in params if 'name' in param}
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param.get('name') != 'feed':
                     params[counter].pop('defaultvalue')
             for param_details in FEED_REQUIRED_PARAMS:
                 param = dict(param_details.get('must_equal', dict()), **param_details.get('must_contain', dict()))
-                if param not in params:
+                if param.get('name') not in param_names:
                     self.data['configuration'].append(param)
 
     def update_docker_image(self):

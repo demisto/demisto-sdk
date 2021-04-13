@@ -1687,3 +1687,25 @@ def to_pascal_case(s: str):
         return new_s
 
     return s
+
+
+def get_pack_metadata(file_path: str) -> dict:
+    """ Get pack_metadata dict, related to file those path was provided
+
+    Args:
+        file_path(str): file path
+
+    Returns: pack_metadata of the pack, that source_file related to,
+        on failure returns {}
+
+    """
+    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
+    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
+    directory = match.group() if match else ''
+
+    try:
+        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
+        pack_metadata, _ = get_dict_from_file(metadata_path)
+        return pack_metadata
+    except:
+        return {}

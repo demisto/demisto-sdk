@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                is_v2_file,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare)
+                                               server_version_compare, get_pack_metadata)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -878,3 +878,26 @@ def test_get_file_displayed_name__image(repo):
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
         assert display_name == os.path.basename(integration.image.rel_path)
+
+
+def test_get_pack_metadata(repo):
+    """
+    Given
+    - The path to fiile.
+
+    When
+    - Running get_pack_metadata.
+
+    Then:
+    - Ensure the returned pack metadata
+    """
+    pack = repo.create_pack('MyPack')
+    pack_metadata = pack.pack_metadata
+    pack_metadata.update({"name": "MyPack",
+                          "support": "xsoar",
+                          "currentVersion": "1.1.0"
+                          })
+
+    result = get_pack_metadata(pack.path)
+
+    assert pack_metadata.read_json_as_dict() == result

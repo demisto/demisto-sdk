@@ -12,10 +12,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_dict_from_file,
                                                get_remote_file,
                                                is_file_from_content_repo,
-                                               print_color)
+                                               print_color, get_pack_metadata)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -198,17 +198,22 @@ class BaseUpdate:
         Args:
             from_version: The specific from_version value.
         """
+        metadata = get_pack_metadata(self.source_file)
+        # if it is new contributed pack = setting version to 6.0.0
+        set_to_6 = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+
         # If there is no existing file in content repo
         if not self.old_file:
             if self.verbose:
                 click.echo('Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
-
                 # If user entered specific from version key to be set
                 if from_version:
                     self.data[self.from_version_key] = from_version
-
+                # if it is new contributed pack = setting version to 6.0.0
+                elif set_to_6:
+                    self.data[self.from_version_key] = VERSION_6_0_0
                 # Otherwise add fromversion key to current file and set to default 5.0.0
                 else:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
@@ -216,6 +221,9 @@ class BaseUpdate:
             # If user wants to modify fromversion key and the key already existed
             elif from_version:
                 self.data[self.from_version_key] = from_version
+            # if it is new contributed pack = setting version to 6.0.0
+            elif set_to_6:
+                self.data[self.from_version_key] = VERSION_6_0_0
 
         # If there is an existing file in content repo
         else:

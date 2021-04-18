@@ -11,10 +11,10 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'PA108']
+                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -77,11 +77,14 @@ ERROR_CODE = {
     "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
                                                               'related_field': ''},
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
+    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False, 'related_field':
+                                         'script.commands.name'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
+    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -145,6 +148,7 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -189,6 +193,7 @@ ERROR_CODE = {
     "pack_metadata_non_approved_tags": {'code': "PA120", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
     "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
+    "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -447,6 +452,16 @@ class Errors:
         return f"You've made some changes to some fields in the yml file, \n" \
                f" the changed fields are: {changed} \n" \
                f"the removed fields are: {removed} "
+
+    @staticmethod
+    @error_code_decorator
+    def incident_in_command_name_or_args(commands, args):
+        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
+               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}\n" \
+               f"To fix the problem, remove the word incident, " \
+               f"or add them to the whitelist named argsExceptionsList in:\n" \
+               f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
+               f"servicemodule_test.go#L8273"
 
     @staticmethod
     @error_code_decorator
@@ -951,10 +966,26 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incident_in_script_arg(arguments):
+        return f"The script is part of a core pack. Therefore, the use of the word `incident` in argument names is" \
+               f" forbidden. problematic argument" \
+               f" names:\n {arguments}. \n, To fix the problem, remove the word incident, " \
+               f"or add the argument name to the allowlist named argsExceptionsList in:\n" \
+               f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
+               f"servicemodule_test.go#L8273"
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
         return f"No detailed description file was found in the package. Please add one, " \
                f"and make sure it includes the beta disclaimer note." \
                f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_contrib_details():
+        return "Description file contains contribution/partner details that will be generated automatically "\
+               "when the upload command is performed.\nDelete any details related to contribution/partner "
 
     @staticmethod
     @error_code_decorator
@@ -1127,19 +1158,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_name_not_valid(reason=None):
-        if reason == "short":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
-                   f'characters long. '
-        if reason == "capital":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
-                   f'letter. '
-        if reason == "prefix":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not start with one of ' \
-                   f'these words: ["Playbook", "Integration", "Script"]. '
-        if reason == "pack":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the word: ' \
-                   f'"Pack". '
+    def pack_metadata_name_not_valid():
         return f'Pack metadata {PACK_METADATA_NAME} field is not valid. Please fill valid pack name.'
 
     @staticmethod
@@ -1202,6 +1221,11 @@ class Errors:
     def pack_name_already_exists(new_pack_name) -> str:
         return f"A pack named: {new_pack_name} already exists in content repository, " \
                f"change the pack's name in the metadata file."
+
+    @staticmethod
+    @error_code_decorator
+    def is_wrong_usage_of_usecase_tag():
+        return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
 
     @staticmethod
     @error_code_decorator

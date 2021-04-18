@@ -209,7 +209,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def valid_pack_name(self, pack_name):
+    def validate_pack_name(self, pack_name):
         if len(pack_name) < 3:
             if self._add_error(Errors.pack_metadata_name_not_valid("short"), self.pack_meta_file):
                 return False
@@ -249,7 +249,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
             else:
-                return self.valid_pack_name(name_field)
+                self.validate_pack_name(name_field)
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:

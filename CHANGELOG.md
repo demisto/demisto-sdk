@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation that a pack name follows XSOAR standards.
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.

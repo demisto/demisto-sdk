@@ -1,0 +1,34 @@
+category: Data Enrichment & Threat Intelligence
+commonfields:
+  id: JSON Feed
+  version: -1
+configuration: []
+description: Fetches indicators from a JSON feed.
+display: JSON Feed
+name: JSON Feed
+script:
+  commands:
+  - arguments:
+    - default: false
+      defaultValue: '50'
+      description: The maximum number of results to return. The default value is 50.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    deprecated: false
+    description: Gets the feed indicators.
+    execution: false
+    name: json-get-indicators
+  dockerimage: demisto/jmespath:1.0.0.8854
+  feed: true
+  isfetch: false
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python
+tests:
+- no test
+fromversion: 5.5.0

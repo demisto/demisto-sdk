@@ -17,7 +17,7 @@ import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
-from demisto_sdk.commands.common.logger import Colors, logging_setup
+from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_content_path,
                                                get_file_displayed_name,
@@ -33,7 +33,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
 from demisto_sdk.commands.lint.linter import Linter
 from wcmatch.pathlib import Path
 
-logger: logging.Logger
+logger = logging.getLogger('demisto-sdk')
 
 
 class LintManager:
@@ -48,13 +48,9 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str,
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
                  json_file_path: str = ''):
-        # Set logging level and file handler if required
-        global logger
-        logger = logging_setup(verbose=verbose,
-                               quiet=quiet,
-                               log_path=log_path)
+
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager

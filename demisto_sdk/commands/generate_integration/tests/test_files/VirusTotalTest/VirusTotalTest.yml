@@ -1,0 +1,688 @@
+category: Utilities
+commonfields:
+  id: VirusTotalTest
+  version: -1
+configuration:
+- defaultvalue: https://www.virustotal.com
+  display: Server URL
+  name: url
+  required: true
+  type: 0
+- defaultvalue: ''
+  display: Use system proxy
+  name: proxy
+  required: false
+  type: 8
+- defaultvalue: ''
+  display: Trust any certificate
+  name: insecure
+  required: false
+  type: 8
+- defaultvalue: ''
+  display: API Key
+  name: api_key
+  required: true
+  type: 4
+description: Virus Total collection description
+display: VirusTotal Test
+name: VirusTotalTest
+script:
+  commands:
+  - arguments:
+    - description: ''
+      isArray: false
+      name: resource
+      required: false
+    description: URL Report description
+    name: vt-test-url-report
+    outputs:
+    - contextPath: VirusTotalTest.UrlReport.scan_id
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.resource
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.url
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.response_code
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.UrlReport.scan_date
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.UrlReport.permalink
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.verbose_msg
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.filescan_id
+      description: ''
+      type: Unknown
+    - contextPath: VirusTotalTest.UrlReport.positives
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.UrlReport.total
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.UrlReport.scans.CMC Threat Intelligence.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CMC Threat Intelligence.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.CLEAN MX.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CLEAN MX.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.DNS8.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.DNS8.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.MalSilo.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.MalSilo.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.NotMining.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.NotMining.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.AICC (MONITORAPP).detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.AICC (MONITORAPP).result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.VX Vault.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.VX Vault.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.securolytics.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.securolytics.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Tencent.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Tencent.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.MalwarePatrol.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.MalwarePatrol.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Armis.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Armis.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.MalBeacon.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.MalBeacon.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Comodo Valkyrie Verdict.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Comodo Valkyrie Verdict.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.PhishLabs.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.PhishLabs.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.EmergingThreats.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.EmergingThreats.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Sangfor.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Sangfor.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.K7AntiVirus.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.K7AntiVirus.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Virusdie External Site Scan.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Virusdie External Site Scan.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Artists Against 419.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Artists Against 419.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.CINS Army.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CINS Army.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Cyren.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Cyren.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Quttera.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Quttera.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.AegisLab WebGuard.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.AegisLab WebGuard.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.MalwareDomainList.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.MalwareDomainList.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.MalwareDomainList.detail
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Lumu.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Lumu.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.zvelo.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.zvelo.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Google Safebrowsing.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Google Safebrowsing.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Kaspersky.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Kaspersky.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.BitDefender.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.BitDefender.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.GreenSnow.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.GreenSnow.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.IPsum.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.IPsum.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.G-Data.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.G-Data.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.CyberCrime.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CyberCrime.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Malware Domain Blocklist.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Malware Domain Blocklist.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.AutoShun.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.AutoShun.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Feodo Tracker.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Feodo Tracker.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Web Security Guard.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Web Security Guard.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Cyan.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Cyan.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.CyRadar.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CyRadar.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.desenmascara.me.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.desenmascara.me.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.ADMINUSLabs.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.ADMINUSLabs.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.SCUMWARE.org.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.SCUMWARE.org.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Dr.Web.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Dr.Web.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.AlienVault.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.AlienVault.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Emsisoft.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Emsisoft.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Spamhaus.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Spamhaus.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.malwares.com URL checker.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.malwares.com URL checker.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Phishtank.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Phishtank.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.EonScope.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.EonScope.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Malwared.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Malwared.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Avira.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Avira.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Cisco Talos IP Blacklist.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Cisco Talos IP Blacklist.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.OpenPhish.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.OpenPhish.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Antiy-AVL.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Antiy-AVL.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Forcepoint ThreatSeeker.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Forcepoint ThreatSeeker.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Spam404.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Spam404.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Trustwave.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Trustwave.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Certego.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Certego.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.URLhaus.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.URLhaus.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Yandex Safebrowsing.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Yandex Safebrowsing.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Yandex Safebrowsing.detail
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.ESET.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.ESET.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Threatsourcing.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Threatsourcing.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.BlockList.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.BlockList.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.SecureBrain.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.SecureBrain.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Nucleon.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Nucleon.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.PREBYTES.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.PREBYTES.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Sophos.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Sophos.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Blueliv.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Blueliv.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Hoplite Industries.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Hoplite Industries.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Netcraft.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Netcraft.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.CRDF.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.CRDF.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.ThreatHive.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.ThreatHive.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.BADWARE.INFO.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.BADWARE.INFO.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.FraudScore.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.FraudScore.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Quick Heal.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Quick Heal.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Rising.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Rising.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.StopBadware.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.StopBadware.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Sucuri SiteCheck.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Sucuri SiteCheck.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Fortinet.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Fortinet.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.StopForumSpam.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.StopForumSpam.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.ZeroCERT.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.ZeroCERT.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Baidu-International.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Baidu-International.result
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.UrlReport.scans.Phishing Database.detected
+      description: ''
+      type: Boolean
+    - contextPath: VirusTotalTest.UrlReport.scans.Phishing Database.result
+      description: ''
+      type: String
+  - arguments:
+    - description: ''
+      isArray: false
+      name: domain
+      required: false
+    description: Domain Report description
+    name: vt-test-domain-report
+    outputs:
+    - contextPath: VirusTotalTest.DomainReport.undetected_downloaded_samples.date
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.DomainReport.undetected_downloaded_samples.positives
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.undetected_downloaded_samples.total
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.undetected_downloaded_samples.sha256
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.whois_timestamp
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.detected_downloaded_samples.date
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.DomainReport.detected_downloaded_samples.positives
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.detected_downloaded_samples.total
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.detected_downloaded_samples.sha256
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.Forcepoint ThreatSeeker category
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.undetected_urls
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.DomainReport.Comodo Valkyrie Verdict category
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.undetected_referrer_samples.date
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.DomainReport.undetected_referrer_samples.positives
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.undetected_referrer_samples.total
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.undetected_referrer_samples.sha256
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.resolutions.last_resolved
+      description: ''
+      type: Date
+    - contextPath: VirusTotalTest.DomainReport.resolutions.ip_address
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.subdomains
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.sophos category
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.whois
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.DomainReport.response_code
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.DomainReport.verbose_msg
+      description: ''
+      type: String
+  - description: File scan description
+    name: vt-test-file-scan
+    outputs:
+    - contextPath: VirusTotalTest.FileScan.scan_id
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.sha1
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.resource
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.response_code
+      description: ''
+      type: Number
+    - contextPath: VirusTotalTest.FileScan.sha256
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.permalink
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.md5
+      description: ''
+      type: String
+    - contextPath: VirusTotalTest.FileScan.verbose_msg
+      description: ''
+      type: String
+  - arguments:
+    - description: ''
+      isArray: false
+      name: hash
+      required: false
+    description: file download description
+    name: vt-test-file-download
+  dockerimage: demisto/python3:3.8.6.12176
+  isfetch: false
+  script: ''
+  subtype: python3
+  type: python

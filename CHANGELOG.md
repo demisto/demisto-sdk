@@ -3,6 +3,7 @@
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.

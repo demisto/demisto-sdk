@@ -222,6 +222,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if re.findall(PATTERN, pack_name):
             if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
                 return False
+        return True
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""

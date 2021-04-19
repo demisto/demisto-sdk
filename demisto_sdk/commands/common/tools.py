@@ -31,7 +31,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType, Links)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType,
+    GithubContentConfig)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -161,6 +162,13 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
+def get_core_pack_list():
+    if GithubContentConfig.Links._is_premium:
+        return []
+    else:
+        return get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+
+
 @lru_cache(maxsize=64)
 def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
     """
@@ -177,9 +185,21 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
     tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(Links.Github.CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = os.path.join(GithubContentConfig.Links.CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
-        res = requests.get(github_path, verify=False, timeout=10)
+        if GithubContentConfig.Links.is_premium:
+            if not GithubContentConfig.Credentials.TOKEN:
+                print_color(
+                    f'You are working in content-premium repo, define your github token environment.\n'
+                    f'`export {GithubContentConfig.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
+                )
+            headers = {
+                'Authorization': f"Bearer {GithubContentConfig.Credentials.TOKEN}",
+                'Accept': f'application/vnd.github.VERSION.raw',
+            }
+        else:
+            headers = {}
+        res = requests.get(github_path, verify=False, timeout=10, headers=headers)
         res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
@@ -304,7 +324,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(Links.Github.CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GithubContentConfig.Links.CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -317,7 +337,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(Links.Github.CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GithubContentConfig.Links.CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -331,7 +351,7 @@ def get_last_remote_release_version():
     """
     if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(Links.Github.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
+            releases_request = requests.get(GithubContentConfig.Links.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()
             releases = releases_request.json()
             if isinstance(releases, list) and isinstance(releases[0], dict):

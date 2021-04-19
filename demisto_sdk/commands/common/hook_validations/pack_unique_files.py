@@ -23,7 +23,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
+                                               get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -451,7 +452,7 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                         fg="bright_cyan")
-            core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+            core_pack_list = get_core_pack_list()
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,

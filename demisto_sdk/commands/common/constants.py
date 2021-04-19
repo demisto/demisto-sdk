@@ -1,10 +1,11 @@
 import os
 import re
 from enum import Enum
-from subprocess import PIPE, Popen
-from typing import List
+from typing import List, Optional
 
 # dirs
+from demisto_sdk.commands.common.git_util import GitUtil
+
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
@@ -104,7 +105,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
 }
-
 
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
@@ -764,16 +764,18 @@ FILE_TYPES_FOR_TESTING = [
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
-class GithubLinks:
+class ContentGithubLinks:
     BASE_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/'
     SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
     CONTENT_GITHUB_UPSTREAM: str
     CONTENT_GITHUB_ORIGIN: str
+    _is_premium: bool
 
     def __init__(self):
-        if self.is_on_private_repo():
+        self._is_premium = self._is_on_premium_repo()
+        if self._is_premium:
             self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, r'content-premium')
             self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
             self.CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content-premium'
@@ -785,16 +787,30 @@ class GithubLinks:
             self.CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
 
     @staticmethod
-    def is_on_private_repo() -> bool:
-        stdout, _ = Popen(
-            'git config --get remote.origin.url'.split(),
-            stdout=PIPE
-        ).communicate()
-        return 'content-premium' in str(stdout)
+    def _is_on_premium_repo() -> bool:
+        urls = GitUtil().repo.remote().urls
+        return any('demisto/content-premium' in url for url in urls)
+
+    @property
+    def is_premium(self):
+        return self._is_premium
+
+    @is_premium.setter
+    def is_premium(self, value):
+        raise ValueError('Can not change is_premium attribute')
 
 
-class Links:
-    Github = GithubLinks()
+class GithubCredentials:
+    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    TOKEN: Optional[str]
+
+    def __init__(self):
+        self.TOKEN = os.getenv(self.ENV_TOKEN_NAME)
+
+
+class GithubContentConfig:
+    Links = ContentGithubLinks()
+    Credentials = GithubCredentials()
 
 
 # Run all test signal

@@ -1,17 +1,21 @@
-base_argument = "$SARGNAME$ = $ARGTYPE$args.get('$DARGNAME$'"
-base_params = """params = assign_params($PARAMS$)"""
-base_data = """data = assign_params($DATAOBJ$)"""
-base_props = """assign_params($PROPS$)"""
-base_headers = """headers=headers"""
-base_header = """headers[$HEADERKEY$] = $HEADERVALUE$"""
-base_list_functions = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
-base_credentials = """
+BASE_ARGUMENT = "$SARGNAME$ = $ARGTYPE$args.get('$DARGNAME$'"
+BASE_PARAMS = """params = assign_params($PARAMS$)"""
+BASE_DATA = """data = assign_params($DATAOBJ$)"""
+BASE_PROPS = """assign_params($PROPS$)"""
+BASE_HEADERS = """headers=headers"""
+BASE_HEADER = """headers[$HEADERKEY$] = $HEADERVALUE$"""
+BASE_LIST_FUNCTIONS = "		'$FUNCTIONNAME$': $FUNCTIONCOMMAND$,"
+BASE_CREDENTIALS = """
     username = params['credentials']['identifier']
     password = params['credentials']['password']
 """
-base_basic_auth = """(username, password)"""
-base_token = """headers['Authorization'] = f'{params["api_key"]}'"""
-base_function = """def $FUNCTIONNAME$_command(client, args):
+BASE_BASIC_AUTH = """(username, password)"""
+BASE_TOKEN = """headers['Authorization'] = params['api_key']"""
+BASE_HEADER_API_KEY = """headers['$HEADER_API_KEY$'] = params['api_key']"""
+BASE_HEADER_FORMATTED = """headers['$HEADER_NAME$'] = $HEADER_FORMAT$"""
+BASE_CLIENT_API_KEY = """client.api_key = params['api_key']"""
+BASE_BEARER_TOKEN = """headers['Authorization'] = f'Bearer {params["token"]}'"""
+BASE_FUNCTION = """def $FUNCTIONNAME$_command(client, args):
     $ARGUMENTS$
 
     response = client.$FUNCTIONNAME$_request($REQARGS$)
@@ -25,7 +29,7 @@ base_function = """def $FUNCTIONNAME$_command(client, args):
     return command_results
 
 """
-base_request_function = """
+BASE_REQUEST_FUNCTION = """
     def $FUNCTIONNAME$_request(self$REQARGS$):
         $PARAMETERS$
         $DATA$
@@ -38,13 +42,16 @@ base_request_function = """
         return response
 
 """
-base_client = """class Client(BaseClient):
+BASE_CLIENT = """class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
         super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
 
 $REQUESTFUNCS$
 """
-base_code = """import demistomock as demisto
+
+CLIENT_API_KEY = """client.api_key = params['api_key']"""
+
+BASE_CODE_TEMPLATE = """import demistomock as demisto
 from CommonServerPython import *
 
 
@@ -53,7 +60,7 @@ $CLIENT$
 $FUNCTIONS$
 def test_module(client):
     # Test functions here
-    demisto.results('ok')
+    return_results('ok')
 
 
 def main():
@@ -68,19 +75,22 @@ def main():
     $BEARERAUTHPARAMS$
 
     command = demisto.command()
-    LOG(f'Command being called is {command}')
+    demisto.debug(f'Command being called is {command}')
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, "$BASEURL$"), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
+        client = Client(urljoin(url, '$BASEURL$'), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
+        $CLIENT_API_KEY$
         commands = {
     $COMMANDSLIST$
         }
 
         if command == 'test-module':
             test_module(client)
-        else:
+        elif command in commands:
             return_results(commands[command](client, args))
+        else:
+            raise NotImplementedError(f'{command} command is not implemented.')
 
     except Exception as e:
         return_error(str(e))

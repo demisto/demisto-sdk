@@ -8,6 +8,7 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -506,6 +507,29 @@ def str2bool(v):
         return False
 
     raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def to_dict(obj):
+    if isinstance(obj, Enum):
+        return obj.name
+
+    if not hasattr(obj, '__dict__'):
+        return obj
+
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("_"):
+            continue
+
+        element = []
+        if isinstance(val, list):
+            for item in val:
+                element.append(to_dict(item))
+        else:
+            element = to_dict(val)
+        result[key] = element
+
+    return result
 
 
 def old_get_release_notes_file_path(file_path):
@@ -1618,3 +1642,48 @@ def write_yml(yml_path: str, yml_data: Dict):
     ryaml.preserve_quotes = True
     with open(yml_path, 'w') as f:
         ryaml.dump(yml_data, f)  # ruamel preservers multilines
+
+
+def to_kebab_case(s: str):
+    """
+    Scan File => scan-file
+    Scan File- => scan-file
+    *scan,file => scan-file
+    Scan     File => scan-file
+
+    """
+    if s:
+        new_s = s.lower()
+        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
+        m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
+        if m:
+            return m.group(0)
+        else:
+            return new_s
+
+    return s
+
+
+def to_pascal_case(s: str):
+    """
+    Scan File => ScanFile
+    Scan File- => ScanFile
+    *scan,file => ScanFile
+    Scan     File => ScanFile
+    scan-file => ScanFile
+    scan.file => ScanFile
+
+    """
+    if s:
+        if re.search(r'^[A-Z][a-z]+(?:[A-Z][a-z]+)*$', s):
+            return s
+
+        new_s = s.lower()
+        new_s = re.sub(r'[ -\.]+', '-', new_s)
+        new_s = ''.join([t.title() for t in new_s.split('-')])
+        new_s = re.sub(r'[^A-Za-z0-9]+', '', new_s)
+
+        return new_s
+
+    return s

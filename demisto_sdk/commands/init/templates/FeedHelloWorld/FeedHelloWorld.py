@@ -9,13 +9,6 @@ Code Conventions: https://xsoar.pan.dev/docs/integrations/code-conventions
 Feed Required Parameters: https://xsoar.pan.dev/docs/integrations/feeds#required-parameters
 Linting: https://xsoar.pan.dev/docs/integrations/linting
 
-When building a Cortex XSOAR feed integration that is reusable, a lot of effort
-must be placed in the design. We recommend to fill a Design Document template,
-that allows you to capture Use Cases, Requirements and Inputs/Outputs.
-
-Example Design document for the this Integration (HelloWorld):
-https://docs.google.com/document/d/1wETtBEKg37PHNU8tYeB56M1LE314ux086z3HFeF_cX0
-
 
 The API
 --------------
@@ -127,64 +120,15 @@ then this is the command that will be executed at the specified Feed Fetch Inter
 ``test-module`` - this is the command that is run when the Test button in the configuration
  panel of a feed integration is clicked.
 
-
-
-Command functions, when invoked through an XSOAR command usually return data
-using the ``CommandResults`` class, that is then passed to ``return_results()``
-in the ``main()`` function.
-``return_results()`` is defined in ``CommonServerPython.py`` to return
-the data to XSOAR. ``return_results()`` actually wraps ``demisto.results()``.
-You should never use ``demisto.results()`` directly.
-
-Sometimes you will need to return values in a format that is not compatible
-with ``CommandResults`` (for example files): in that case you must return a
-data structure that is then pass passed to ``return.results()``.
-
-In any case you should never call ``return_results()`` directly from the
-command functions.
-
-When you use create the CommandResults object in command functions, you
-usually pass some types of data:
-
-- Human Readable: usually in Markdown format. This is what is presented to the
-analyst in the War Room. You can use ``tableToMarkdown()``, defined in
-``CommonServerPython.py``, to convert lists and dicts in Markdown and pass it
-to ``return_results()`` using the ``readable_output`` argument, or the
-``return_results()`` function will call ``tableToMarkdown()`` automatically for
-you.
-
-- Context Output: this is the machine readable data, JSON based, that XSOAR can
-parse and manage in the Playbooks or Incident's War Room. The Context Output
-fields should be defined in your feed integration YML file and is important during
-the design phase. Make sure you define the format and follow best practices.
-You can use ``demisto-sdk json-to-outputs`` to autogenerate the YML file
-outputs section. Context output is passed as the ``outputs`` argument in ``demisto_results()``,
-and the prefix is passed via the ``outputs_prefix``
-argument.
-
 More information on Context Outputs, Standards, DBotScore and demisto-sdk:
 https://xsoar.pan.dev/docs/integrations/code-conventions#outputs
 https://xsoar.pan.dev/docs/integrations/context-and-outputs
 https://xsoar.pan.dev/docs/integrations/context-standards
 https://xsoar.pan.dev/docs/integrations/dbot
 https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md
-
-Also, when you write data in the Context, you want to make sure that if you
-return updated information for an entity, to update it and not append to
-the list of entities. To update data in the Context,
-you can define which is the key attribute to use, such as ``outputs_key_field='id'``.
-This means that you are using the ``id`` key to determine whether adding a new entry
-in the context or updating an existing one that has the same ID.
-You can look at the examples to understand how it works.
-
-More information here:
 https://xsoar.pan.dev/docs/integrations/context-and-outputs
 https://xsoar.pan.dev/docs/integrations/code-conventions#outputs
 https://xsoar.pan.dev/docs/integrations/dt
-
-- Raw Output: this is usually the raw result from your API and is used for
-troubleshooting purposes or for invoking your command from Automation Scripts.
-If not specified, ``return_results()`` will use the same data as ``outputs``.
 
 
 Main Function
@@ -234,13 +178,13 @@ class Client(BaseClient):
             A list of objects, containing the indicators.
         """
 
+        result = []
+
         res = self._http_request('GET',
                                  url_suffix='',
                                  full_url=self._base_url,
                                  resp_type='text',
                                  )
-
-        result = []
 
         # In this case the feed output is in text format, so extracting the indicators from the response requires
         # iterating over it's lines solely. Other feeds could be in other kinds of formats (CSV, MISP, etc.), or might
@@ -249,6 +193,8 @@ class Client(BaseClient):
             indicators = res.split('\n')
 
             for indicator in indicators:
+                # Infer the type of the indicator using 'auto_detect_indicator_type(indicator)' function
+                # (defined in CommonServerPython).
                 if auto_detect_indicator_type(indicator):
                     result.append({
                         'value': indicator,
@@ -258,7 +204,7 @@ class Client(BaseClient):
 
         except ValueError as err:
             demisto.debug(str(err))
-            raise ValueError(f'Could not parse returned data to Json. \n\nError massage: {err}')
+            raise ValueError(f'Could not parse returned data as indicator. \n\nError massage: {err}')
         return result
 
 
@@ -301,21 +247,30 @@ def fetch_indicators(client: Client, tlp_color: Optional[str] = None, feed_tags:
 
     # extract values from iterator
     for item in iterator:
-        value = item.get('value')
+        value_ = item.get('value')
         type_ = item.get('type')
         raw_data = {
-            'value': value,
+            'value': value_,
             'type': type_,
         }
 
-        # create indicator object for each value
-        for key, val in item.items():
-            raw_data.update({key: val})
+        # Create indicator object for each value.
+        # The object consists of a dictionary with required and optional keys and values, as described blow.
+        for key, value in item.items():
+            raw_data.update({key: value})
         indicator_obj = {
-            'value': value,
+            # The indicator value.
+            'value': value_,
+            # The indicator type as defined in Cortex XSOAR.
+            # One can use the FeedIndicatorType class under CommonServerPython to populate this field.
             'type': type_,
+            # The name of the service supplying this feed.
             'service': 'HelloWorld',
+            # A dictionary that maps values to existing indicator fields defined in Cortex XSOAR.
+            # One can use this section in order to map custom indicator fields previously defined
+            # in Cortex XSOAR to their values.
             'fields': {},
+            # A dictionary of the raw data returned from the feed source about the indicator.
             'rawJSON': raw_data
         }
 
@@ -347,7 +302,7 @@ def get_indicators_command(client: Client,
     feed_tags = argToList(params.get('feedTags', ''))
     indicators = fetch_indicators(client, tlp_color, feed_tags, limit)
     human_readable = tableToMarkdown('Indicators from HelloWorld Feed:', indicators,
-                                     headers=['value', 'type'], removeNull=True)
+                                     headers=['value', 'type'], headerTransform=string_to_table_header, removeNull=True)
     return CommandResults(
         readable_output=human_readable,
         outputs_prefix='',
@@ -378,15 +333,15 @@ def main():
 
     params = demisto.params()
 
-    # get the service API url
+    # Get the service API url
     base_url = params.get('url')
 
-    # if your Client class inherits from BaseClient, SSL verification is
+    # If your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
     insecure = not params.get('insecure', False)
 
-    # if your Client class inherits from BaseClient, system proxy is handled
+    # If your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
     proxy = params.get('proxy', False)
 
@@ -419,7 +374,7 @@ def main():
         elif command == 'fetch-indicators':
             # This is the command that initiates a request to the feed endpoint and create new indicators objects from
             # the data fetched. If the integration instance is configured to fetch indicators, then this is the command
-            # that will be executed at the specified Feed Fetch Interval
+            # that will be executed at the specified feed fetch interval.
             indicators = fetch_indicators_command(client, params)
             for iter_ in batch(indicators, batch_size=2000):
                 demisto.createIndicators(iter_)
@@ -429,7 +384,7 @@ def main():
 
     # Log exceptions and return errors
     except Exception as e:
-        demisto.error(traceback.format_exc())  # print the traceback
+        demisto.error(traceback.format_exc())  # Print the traceback
         return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 

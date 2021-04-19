@@ -8,7 +8,7 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc, generate_setup_section,
-    generate_single_command_section)
+    generate_single_command_section, get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -582,6 +582,56 @@ class TestGenerateIntegrationDoc:
         assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
                in open(fake_readme).read()
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+
+
+def test_get_command_examples_with_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file with exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+
+
+def test_get_command_examples_without_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file without exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
 
 def test_generate_table_section_numbered_section():

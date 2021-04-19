@@ -10,12 +10,14 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_dict_from_file,
+                                               get_pack_metadata,
                                                get_remote_file,
                                                is_file_from_content_repo,
-                                               print_color, get_pack_metadata)
+                                               print_color)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
+    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
+    VERSION_6_0_0)
 from ruamel.yaml import YAML
 
 ryaml = YAML()

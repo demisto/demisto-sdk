@@ -1038,7 +1038,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'Packs/TestPack/pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {'/Packs/TestPack/pack_metadata.json'}, set()))
 
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()

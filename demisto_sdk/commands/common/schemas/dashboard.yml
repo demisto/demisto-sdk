@@ -63,3 +63,5 @@ schema;layout_schema:
       type: map
       required: true
       allowempty: True
+    reflectDimensions:
+      type: bool

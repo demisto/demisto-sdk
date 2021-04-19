@@ -359,6 +359,7 @@ def get_command_examples(commands_file_path, specific_commands):
         print('failed to open command file')
         command_examples = commands_file_path.split('\n')
 
+    # Filter from the examples only the commands specified by the user
     commands = []
     if specific_commands:
         for command_ex in command_examples:

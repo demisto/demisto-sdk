@@ -11,7 +11,7 @@
 * Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
 * Added support for local custom command configuration file `.demisto-sdk-conf`.
 * Updated the **format** command to include an update to the description file of an integration, to remove community/partner details.
-* Fixed issue where **generate-docs** does not add the used scripts to the README file.
+* Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
 
 # 1.3.3
 * Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.

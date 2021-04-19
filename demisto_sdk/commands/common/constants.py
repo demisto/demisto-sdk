@@ -1,5 +1,7 @@
+import os
 import re
 from enum import Enum
+from subprocess import PIPE, Popen
 from typing import List
 
 # dirs
@@ -761,12 +763,39 @@ FILE_TYPES_FOR_TESTING = [
 # python subtypes
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
-# github repository url
-CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
-CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
-SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
-CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
-CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+
+class GithubLinks:
+    BASE_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/'
+    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+    CONTENT_GITHUB_LINK: str
+    CONTENT_GITHUB_MASTER_LINK: str
+    CONTENT_GITHUB_UPSTREAM: str
+    CONTENT_GITHUB_ORIGIN: str
+
+    def __init__(self):
+        if self.is_on_private_repo():
+            self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, r'content-premium')
+            self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
+            self.CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content-premium'
+            self.CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content-premium'
+        else:
+            self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, r'content')
+            self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
+            self.CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
+            self.CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+
+    @staticmethod
+    def is_on_private_repo() -> bool:
+        stdout, _ = Popen(
+            'git config --get remote.origin.url'.split(),
+            stdout=PIPE
+        ).communicate()
+        return 'content-premium' in str(stdout)
+
+
+class Links:
+    Github = GithubLinks()
+
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

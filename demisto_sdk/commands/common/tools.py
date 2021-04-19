@@ -23,7 +23,6 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
@@ -31,9 +30,8 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    FileType)
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType, Links)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -179,7 +177,7 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
     tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = os.path.join(Links.Github.CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
         res = requests.get(github_path, verify=False, timeout=10)
         res.raise_for_status()
@@ -306,7 +304,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(Links.Github.CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -319,7 +317,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(Links.Github.CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -333,7 +331,7 @@ def get_last_remote_release_version():
     """
     if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
+            releases_request = requests.get(Links.Github.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()
             releases = releases_request.json()
             if isinstance(releases, list) and isinstance(releases[0], dict):

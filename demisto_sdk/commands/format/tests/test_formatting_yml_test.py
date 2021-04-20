@@ -23,12 +23,12 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
     EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
-    EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID, FEED_INTEGRATION_VALID, GIT_ROOT,
-    INTEGRATION_PATH, PLAYBOOK_PATH, PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
-    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
-    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
-    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    EQUAL_VAL_PATH, FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
+    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from mock import Mock, patch
 from ruamel.yaml import YAML
 from TestSuite.test_tools import ChangeCWD
@@ -524,7 +524,12 @@ class TestFormatting:
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     params[counter].pop('defaultvalue')
-            for param in FEED_REQUIRED_PARAMS:
+                if 'hidden' in param:
+                    param.pop('hidden')
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = {'name': param_details.get('name')}
+                param.update(param_details.get('must_equal', dict()))
+                param.update(param_details.get('must_contain', dict()))
                 assert param in params
         os.remove(target)
         os.rmdir(path)
@@ -545,6 +550,26 @@ class TestFormatting:
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get('configuration', [])
         assert 'defaultvalue' in configuration_params[0]
+
+    def test_format_on_feed_integration_adds_feed_parameters(self):
+        """
+        Given
+        - Feed integration yml without feed parameters configured.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensures the feed parameters are added.
+        """
+        base_yml = IntegrationYMLFormat(FEED_INTEGRATION_EMPTY_VALID, path="schema_path", verbose=True)
+        base_yml.set_feed_params_in_config()
+        configuration_params = base_yml.data.get('configuration', [])
+        for param_details in FEED_REQUIRED_PARAMS:
+            param = {'name': param_details.get('name')}
+            param.update(param_details.get('must_equal', dict()))
+            param.update(param_details.get('must_contain', dict()))
+            assert param in configuration_params
 
     def test_set_fetch_params_in_config_with_default_value(self):
         """

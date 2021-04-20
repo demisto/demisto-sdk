@@ -218,13 +218,13 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_name(self, pack_name):
         if len(pack_name) < 3:
-            if self._add_error(Errors.pack_metadata_name_not_valid("short"), self.pack_meta_file):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
                 return False
         if pack_name[0].islower():
-            if self._add_error(Errors.pack_metadata_name_not_valid("capital"), self.pack_meta_file):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("capital"), self.pack_meta_file):
                 return False
         if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
-            if self._add_error(Errors.pack_metadata_name_not_valid("pack"), self.pack_meta_file):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
                 return False
         return True
 

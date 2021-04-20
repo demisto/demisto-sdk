@@ -795,10 +795,6 @@ class ContentGithubLinks:
     def is_premium(self):
         return self._is_premium
 
-    @is_premium.setter
-    def is_premium(self, value):
-        raise ValueError('Can not change is_premium attribute')
-
 
 class GithubCredentials:
     ENV_TOKEN_NAME = 'GITHUB_TOKEN'

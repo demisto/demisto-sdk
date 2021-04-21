@@ -144,6 +144,3 @@ def test_json_outputs_where_no_image_in_integration(repo):
         assert json_outputs[0]['filePath'] == image_path
         assert json_outputs[0]['fileType'] == 'png'
         assert json_outputs[0]['entityType'] == 'image'
-
-
-

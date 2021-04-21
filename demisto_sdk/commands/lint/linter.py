@@ -16,6 +16,10 @@ import docker.errors
 import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
+
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
@@ -35,9 +39,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -308,7 +309,8 @@ class Linter:
                     # if there are unittest.py then we would run flake8 on them too.
                     if self._facts['lint_unittest_files']:
                         flake8_lint_files.extend(self._facts['lint_unittest_files'])
-                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"], lint_files=flake8_lint_files)
+                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
+                                                         lint_files=flake8_lint_files)
 
             if self._facts["lint_files"]:
                 if lint_check == "XSOAR_linter" and not no_xsoar_linter:
@@ -819,10 +821,14 @@ class Linter:
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
                                                                                                    image=test_image,
                                                                                                    command=[
-                                                                                                       build_pytest_command(test_xml=test_xml, json=True)],
+                                                                                                       build_pytest_command(
+                                                                                                           test_xml=test_xml,
+                                                                                                           json=True)],
                                                                                                    user=f"{os.getuid()}:4000",
                                                                                                    detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+                                                                                                   environment=
+                                                                                                   self._facts[
+                                                                                                       "env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -974,7 +980,9 @@ class Linter:
                                                                                                    command=build_pwsh_test_command(),
                                                                                                    user=f"{os.getuid()}:4000",
                                                                                                    detach=True,
-                                                                                                   environment=self._facts["env_vars"])
+                                                                                                   environment=
+                                                                                                   self._facts[
+                                                                                                       "env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")

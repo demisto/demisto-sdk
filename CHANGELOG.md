@@ -5,6 +5,7 @@
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
+* Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.

@@ -177,6 +177,8 @@ schema;command_schema:
       type: int
     hidden:
       type: bool
+    polling:
+      type: bool
 
 # int
 schema;argument_schema:

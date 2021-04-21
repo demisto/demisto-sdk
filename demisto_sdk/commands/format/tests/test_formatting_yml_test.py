@@ -23,8 +23,9 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
     EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
-    EQUAL_VAL_PATH, FEED_INTEGRATION_INVALID, FEED_INTEGRATION_VALID, GIT_ROOT,
-    INTEGRATION_PATH, PLAYBOOK_PATH, SOURCE_FORMAT_INTEGRATION_COPY,
+    EQUAL_VAL_PATH, FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
+    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
@@ -178,6 +179,51 @@ class TestFormatting:
         assert 'description' in base_yml.data['tasks']['7']['task']
         assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API'
         assert base_yml.data['tasks']['25']['task']['description'] == 'Check if there is a SHA256 hash in context.'
+
+    @pytest.mark.parametrize('source_path', [PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS])
+    def test_remove_empty_scripts_keys_from_playbook(self, source_path):
+        """
+            Given:
+                - Playbook file to format, with empty keys in tasks that uses the
+                 [setIncident, SetIndicator, CreateNewIncident, CreateNewIndicator] script
+            When:
+                - Running the remove_empty_fields_from_scripts function
+            Then:
+                - Validate that the empty keys were removed successfully
+        """
+        schema_path = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", "{}.yml".format("playbook")))
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        create_new_incident_script_task_args = base_yml.data.get('tasks', {}).get('0').get('scriptarguments')
+        different_script_task_args = base_yml.data.get('tasks', {}).get('1').get('scriptarguments')
+        create_new_indicator_script_task_args = base_yml.data.get('tasks', {}).get('2').get('scriptarguments')
+        set_incident_script_task_args = base_yml.data.get('tasks', {}).get('3').get('scriptarguments')
+        set_indicator_script_task_args = base_yml.data.get('tasks', {}).get('4').get('scriptarguments')
+
+        # Assert that empty keys exists in the scripts arguments
+        assert 'commandline' in create_new_incident_script_task_args
+        assert not create_new_incident_script_task_args['commandline']
+        assert 'malicious_description' in different_script_task_args
+        assert not different_script_task_args['malicious_description']
+        assert 'assigneduser' in create_new_indicator_script_task_args
+        assert not create_new_indicator_script_task_args['assigneduser']
+        assert 'occurred' in set_incident_script_task_args
+        assert not set_incident_script_task_args['occurred']
+        assert 'sla' in set_indicator_script_task_args
+        assert not set_indicator_script_task_args['sla']
+
+        base_yml.remove_empty_fields_from_scripts()
+
+        # Assert the empty keys were removed from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator
+        # scripts
+        assert 'commandline' not in create_new_incident_script_task_args
+        assert 'assigneduser' not in create_new_indicator_script_task_args
+        assert 'occurred' not in set_incident_script_task_args
+        assert 'sla' not in set_indicator_script_task_args
+
+        # Assert the empty keys are still in the other script arguments
+        assert 'malicious_description' in different_script_task_args
+        assert not different_script_task_args['malicious_description']
 
     @pytest.mark.parametrize('source_path', [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_sourceplaybookid(self, source_path):
@@ -478,7 +524,12 @@ class TestFormatting:
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     params[counter].pop('defaultvalue')
-            for param in FEED_REQUIRED_PARAMS:
+                if 'hidden' in param:
+                    param.pop('hidden')
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = {'name': param_details.get('name')}
+                param.update(param_details.get('must_equal', dict()))
+                param.update(param_details.get('must_contain', dict()))
                 assert param in params
         os.remove(target)
         os.rmdir(path)
@@ -499,6 +550,26 @@ class TestFormatting:
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get('configuration', [])
         assert 'defaultvalue' in configuration_params[0]
+
+    def test_format_on_feed_integration_adds_feed_parameters(self):
+        """
+        Given
+        - Feed integration yml without feed parameters configured.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensures the feed parameters are added.
+        """
+        base_yml = IntegrationYMLFormat(FEED_INTEGRATION_EMPTY_VALID, path="schema_path", verbose=True)
+        base_yml.set_feed_params_in_config()
+        configuration_params = base_yml.data.get('configuration', [])
+        for param_details in FEED_REQUIRED_PARAMS:
+            param = {'name': param_details.get('name')}
+            param.update(param_details.get('must_equal', dict()))
+            param.update(param_details.get('must_contain', dict()))
+            assert param in configuration_params
 
     def test_set_fetch_params_in_config_with_default_value(self):
         """

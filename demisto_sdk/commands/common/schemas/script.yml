@@ -85,6 +85,8 @@ mapping:
         mapping:
           fromServerVersion:
             type: str
+  polling:
+    type: bool
 
 # script->args
 schema;argument_schema:

@@ -99,6 +99,8 @@ SOURCE_FORMAT_PLAYBOOK_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_n
 DESTINATION_FORMAT_PLAYBOOK_COPY = "playbook-new_format_new_playbook_copy.yml"
 INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_Integration_with_test_playbooks.yml'
 PLAYBOOK_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook_with_test_playbooks.yml'
+PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-with-incidnet-" \
+                                           f"indicator-fields.yml"
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"
@@ -199,6 +201,7 @@ SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/inte
 SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"
 
 FEED_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feedvalid.yml"
+FEED_INTEGRATION_EMPTY_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-empty-valid.yml"
 FEED_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-invalid.yml"
 
 XSOAR_LINTER_PY3_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_py3_XSOARLinter.py"

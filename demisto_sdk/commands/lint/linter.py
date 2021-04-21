@@ -1,4 +1,5 @@
 # STD python packages
+import copy
 import hashlib
 import io
 import json
@@ -7,7 +8,6 @@ import os
 import platform
 import time
 import traceback
-from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
 # 3-rd party packages
@@ -279,7 +279,7 @@ class Linter:
         """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
         This is because not all lints should be done on unittest files.
         """
-        lint_files_list = deepcopy(self._facts["lint_files"])
+        lint_files_list = copy.deepcopy(self._facts["lint_files"])
         for lint_file in lint_files_list:
             if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
                 self._facts['lint_unittest_files'].append(lint_file)

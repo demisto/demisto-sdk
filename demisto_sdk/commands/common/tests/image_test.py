@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 from demisto_sdk.commands.common.hook_validations import image
 from demisto_sdk.commands.common.hook_validations.integration import \

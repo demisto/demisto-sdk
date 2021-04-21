@@ -176,6 +176,7 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
     info_list = []
     error_list = []
     skipped_list = []
+    info_list.append('Here my changes!!!!!!!!!!!!!')
     if format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
             error_list.append(f'Format Status   on file: {input} - Failed')

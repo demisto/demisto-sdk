@@ -324,3 +324,48 @@ def test_json_output(repo):
             json_output = json.load(f)
 
         assert json_output == expected_json_2
+
+
+def test_json_output_with_json_file(repo):
+    """
+    Given
+    - A ui applicable error.
+    - An existing and an empty json_outputs file.
+
+    When
+    - Running json_output method.
+
+    Then
+    - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+    - Ensure it's not failing because the file is empty.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    json_path = os.path.join(repo.path, 'valid_json.json')
+    open(json_path, "x")
+    base = BaseValidator(json_file_path=json_path)
+    ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
+    expected_json_1 = [
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'integration',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'error',
+            'errorCode': ui_applicable_error_code,
+            'message': ui_applicable_error_message,
+            'ui': True,
+            'relatedField': '<parameter-name>.display'
+        }
+    ]
+
+    with ChangeCWD(repo.path):
+        # create new file
+        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+        with open(base.json_file_path, 'r') as f:
+            json_output = json.load(f)
+
+        assert json_output == expected_json_1
+

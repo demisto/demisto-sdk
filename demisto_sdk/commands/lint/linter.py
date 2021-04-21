@@ -1,5 +1,4 @@
 # STD python packages
-import copy
 import hashlib
 import io
 import json

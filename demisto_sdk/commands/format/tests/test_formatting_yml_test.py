@@ -925,4 +925,3 @@ class TestFormatting:
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion()
         assert bs.data['fromversion'] == '6.0.0'
-

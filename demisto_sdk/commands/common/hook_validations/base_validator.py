@@ -185,11 +185,11 @@ class BaseValidator:
             'relatedField': error_data.get('related_field')
         }
 
+        json_contents = []
         if os.path.exists(self.json_file_path):
-            json_contents = get_json(self.json_file_path)
-
-        else:
-            json_contents = []
+            existing_json = get_json(self.json_file_path)
+            if existing_json:
+                json_contents = existing_json
 
         file_type = find_type(file_path)
         formatted_error_output = {

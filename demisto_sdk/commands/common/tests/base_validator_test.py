@@ -368,4 +368,3 @@ def test_json_output_with_json_file(repo):
             json_output = json.load(f)
 
         assert json_output == expected_json_1
-

@@ -29,7 +29,7 @@ def test_integration_init_integration_positive(tmp_path):
     pack_author = "SuperMario"
     pack_url = "https://www.github.com/supermario"
     pack_email = "mario@super.com"
-    pack_dev_email = "mario@super.com"
+    pack_dev_email = "mario1@super.com,mario2@super.com"
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"
     create_integration = 'Y'
@@ -65,7 +65,7 @@ def test_integration_init_integration_positive(tmp_path):
             "author": pack_author,
             "url": pack_url,
             "email": pack_email,
-            "devEmail": pack_dev_email,
+            "devEmail": ["mario1@super.com", "mario2@super.com"],
             "categories": [
                        "Endpoint"
             ],

@@ -318,11 +318,12 @@ class Initiator:
                 support_url = input("\nIncorrect input. Please enter full valid url: ")
             pack_metadata['url'] = support_url
             pack_metadata['email'] = input("\nThe email in which users can reach out for support (optional): ")
-            dev_email = input("\nThe email will be used to inform you for any changes on your pack (optional): ")
-            if dev_email:
-                pack_metadata['devEmail'] = dev_email
         else:  # community pack url should refer to the marketplace live discussions
             pack_metadata['url'] = MARKETPLACE_LIVE_DISCUSSIONS
+
+        dev_email = input("\nThe email will be used to inform you for any changes on your pack (optional): ")
+        if dev_email:
+            pack_metadata['devEmail'] = [e.strip() for e in dev_email.split(',') if e]
 
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]

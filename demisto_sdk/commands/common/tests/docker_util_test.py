@@ -1,6 +1,6 @@
-import pytest
 import uuid
 
+import pytest
 from demisto_sdk.commands.common.docker_util import *
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
@@ -40,10 +40,11 @@ class TestContainerRunner:
             ('echo test', None),
             (
                 'cd bla/bla',
-                {'Message':
-                     'OCI runtime create failed: container_linux.go:367: starting container process caused:'
-                     ' exec: "cd": executable file not found in $PATH: unknown'
-                 }
+                {
+                    'Message':
+                        'OCI runtime create failed: container_linux.go:367: starting container process caused:'
+                        ' exec: "cd": executable file not found in $PATH: unknown'
+                }
             )
         ]
 
@@ -99,7 +100,7 @@ class TestContainerRunner:
             self.container_runner.container
             assert caller.called.numerator == 1
 
-        def test_with_create_container(self, mocker):
+        def test_with_create_container(self):
             self.container_runner.container
             assert self.container_runner._container_obj is not None
             self.container_runner._create_container()
@@ -133,7 +134,7 @@ class TestDockerTools:
         def remove(name):
             try:
                 DockerTools.remove_container(name)
-            except:
+            except:     # noqa: E722
                 pass
 
         @pytest.mark.parametrize('container_name', ['test_remove_running_container'])
@@ -173,7 +174,7 @@ class TestDockerTools:
             for image_id in self.to_delete:
                 try:
                     client.images.remove(image_id)
-                except:
+                except:     # noqa: E722
                     pass
 
         images = ['demisto/python3']

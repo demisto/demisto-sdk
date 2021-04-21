@@ -1,7 +1,8 @@
 import io
 import os
 import tarfile
-from typing import Union, List, Optional
+from typing import Dict, List, Optional, Union
+
 import docker
 from demisto_sdk.commands.common.logger import logger
 
@@ -10,14 +11,14 @@ client = docker.from_env()
 
 class ContainerRunner:
 
-    def __init__(self, image: str, container_name: Optional[str]):
+    def __init__(self, image: str, container_name: Optional[str] = None):
         self._base_image_name = image
         self._image_name = image
         self.container_name = container_name
-        self._container_obj = None
+        self._container_obj: Optional[docker.models.containers.Container] = None
 
     @property
-    def container(self):
+    def container(self) -> docker.models.containers.Container:
         if self._container_obj is None:
             self._create_container()
         return self._container_obj
@@ -27,19 +28,19 @@ class ContainerRunner:
             self.remove_container()
         self._container_obj = client.containers.create(image=self._image_name, name=self.container_name, **kwargs)
 
-    def exec(self, command: Union[str, List[str]], **kwargs):
+    def exec(self, command: Union[str, List[str]], **kwargs) -> Dict[str, Union[bytes, Dict, int]]:
         if self._container_obj is not None:
-            self._image_name = self._container_obj.commit().id
+            self._image_name = self.container.commit().id
             self.remove_container()
         kwargs['detach'] = True
         self._create_container(command=command, **kwargs)
         try:
-            self._container_obj.start()
+            self.container.start()
         except Exception as error:
             logger.debug(error)
-        return {**self._container_obj.wait(), 'Outputs': self._container_obj.logs()}
+        return {**self.container.wait(), 'Outputs': self.container.logs()}
 
-    def import_file(self, file_bytes: bytes, file_dest: Optional[str]):
+    def import_file(self, file_bytes: bytes, file_dest: str) -> bool:
         tar_byte_file = io.BytesIO()
         dir_dest, file_name = os.path.split(file_dest)
         if not dir_dest:
@@ -49,21 +50,24 @@ class ContainerRunner:
         tar_byte_file.seek(0)
         return self.container.put_archive(dir_dest, tar_byte_file.read())
 
-    def export_file(self, file_src: str):
+    def export_file(self, file_src: str) -> bytes:
         archive, stat = self.container.get_archive(f'{file_src}')
         byte_file = io.BytesIO(initial_bytes=b''.join(archive))
         byte_file.seek(0)
         with tarfile.open(fileobj=byte_file) as tar_file:
-            return tar_file.extractfile(file_src.split('/')[-1]).read()
+            io_obj = tar_file.extractfile(file_src.split(os.path.sep)[-1])
+            return io_obj.read() if io_obj else b''
 
     def remove_container(self):
-        self._container_obj.remove()
-        self._container_obj = None
+        if self._container_obj:
+            self._container_obj.remove()
+            self._container_obj = None
 
     def remove_images(self):
         self.remove_container()
-        DockerTools.remove_image(self._image_name)
-        self._image_name = self._base_image_name
+        if not (self._image_name == self._base_image_name):
+            DockerTools.remove_image(self._image_name)
+            self._image_name = self._base_image_name
 
     def __del__(self):
         self.remove_images()
@@ -72,7 +76,7 @@ class ContainerRunner:
 class DockerTools:
 
     @staticmethod
-    def remove_container(name_or_id, ignore_container_not_found=True, force=False):
+    def remove_container(name_or_id: str, ignore_container_not_found: bool = True, force: bool = False):
         try:
             client.containers.get(name_or_id).remove(force=force)
         except docker.errors.NotFound as not_found:
@@ -80,7 +84,7 @@ class DockerTools:
                 raise not_found
 
     @staticmethod
-    def remove_image(name_or_id, ignore_image_not_found=True, force=False):
+    def remove_image(name_or_id: str, ignore_image_not_found: bool = True, force: bool = False):
         try:
             client.images.remove(name_or_id, force=force)
         except docker.errors.ImageNotFound as not_found:
@@ -88,7 +92,7 @@ class DockerTools:
                 raise not_found
 
 
-def create_tar_info(name, file_bytes):
+def create_tar_info(name: str, file_bytes: bytes):
     file_data = io.BytesIO(initial_bytes=file_bytes)
     file_data.name = name
     file_data.seek(0)

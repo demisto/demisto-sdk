@@ -172,7 +172,7 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': PACK_EMAIL,
-            'devEmail': PACK_DEV_EMAIL,
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
@@ -212,7 +212,7 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': PACK_EMAIL,
-            'devEmail': PACK_DEV_EMAIL,
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
@@ -241,7 +241,7 @@ class TestCreateMetadata:
             generate_multiple_inputs(
                 deque([
                     PACK_NAME, PACK_DESC, '4', '1', PACK_AUTHOR,
-                    PACK_TAGS, PACK_GITHUB_USERS
+                    PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
         )
@@ -252,6 +252,7 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': '',
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[3],

@@ -967,14 +967,9 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj: docker.models.containers.Container = self._docker_client.containers.run(name=container_name,
-                                                                                                   image=test_image,
-                                                                                                   command=build_pwsh_test_command(),
-                                                                                                   user=f"{os.getuid()}:4000",
-                                                                                                   detach=True,
-                                                                                                   environment=
-                                                                                                   self._facts[
-                                                                                                       "env_vars"])
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(
+                name=container_name, image=test_image, command=build_pwsh_test_command(),
+                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")

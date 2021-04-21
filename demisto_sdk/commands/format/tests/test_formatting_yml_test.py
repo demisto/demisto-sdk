@@ -891,3 +891,6 @@ class TestFormatting:
 
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
+
+    def test_set_fromVersion_six_new_contributor_pack(self):
+        pass

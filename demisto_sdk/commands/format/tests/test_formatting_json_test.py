@@ -755,3 +755,6 @@ class TestFormattingReport:
         formatter.run_format()
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
+
+    def test_set_fromVersion_six_new_contributor_pack(self):
+        pass

@@ -892,5 +892,37 @@ class TestFormatting:
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
 
-    def test_set_fromVersion_six_new_contributor_pack(self):
-        pass
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
+        """
+        Given
+            - An integration from new countributed pack, with no fromversion key ant yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata = {'support': 'partner',
+                              'currentVersion': '1.0.0'}
+        integration = pack.create_integration()
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion()
+        assert bs.data['fromversion'] == '6.0.0'
+
+    def test_set_fromversion_six_new_contributor_pack(self, mocker, pack):
+        """
+        Given
+            - An integration from new countributed pack with fromversion key at yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata = {'support': 'partner',
+                              'currentVersion': '1.0.0'}
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion()
+        assert bs.data['fromversion'] == '6.0.0'
+

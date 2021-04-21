@@ -1707,5 +1707,5 @@ def get_pack_metadata(file_path: str) -> dict:
         metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
         pack_metadata, _ = get_dict_from_file(metadata_path)
         return pack_metadata
-    except:
+    except Exception:
         return {}

@@ -756,5 +756,19 @@ class TestFormattingReport:
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
 
-    def test_set_fromVersion_six_new_contributor_pack(self):
-        pass
+    def test_set_fromversion_six_new_contributor_pack(self, pack, mocker):
+        """
+        Given
+            - An integration from new countributed pack
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata = {'support': 'partner',
+                              'currentVersion': '1.0.0'}
+        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
+        bs = BaseUpdateJSON(input=incident_type.path)
+        bs.set_fromVersion()
+        assert bs.data['fromVersion'] == '6.0.0'

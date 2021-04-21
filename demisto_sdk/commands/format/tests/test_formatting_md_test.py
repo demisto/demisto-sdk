@@ -36,6 +36,3 @@ class TestDescriptionFormat:
         """
         description_formatter.remove_community_partner_details()
         assert filecmp.cmp(description_formatter.source_file, SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS) is True
-
-    def test_set_fromVersion_six_new_contributor_pack(self):
-        pass

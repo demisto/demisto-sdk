@@ -176,7 +176,6 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
     info_list = []
     error_list = []
     skipped_list = []
-    info_list.append('Here my changes!!!!!!!!!!!!!')
     if format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
             error_list.append(f'Format Status   on file: {input} - Failed')
@@ -191,15 +190,15 @@ def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], L
         info_list.append(f'Validate Status on file: {input} - Success')
     elif not format_res and validate_res:
         if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            info_list.append(f'Format Status herehere  on file: {input} - Success')
+            info_list.append(f'Format Status   on file: {input} - Success')
             skipped_list.append(f'Validate Status on file: {input} - Skipped')
         elif validate_res == VALIDATE_RES_FAILED_CODE:
-            info_list.append(f'Format Status herehere  on file: {input} - Success')
+            info_list.append(f'Format Status   on file: {input} - Success')
         else:
-            info_list.append(f'Format Status herehere  on file: {input} - Success')
+            info_list.append(f'Format Status   on file: {input} - Success')
             error_list.append(f'Validate Status on file: {input} - Failed')
             error_list.append(f'For more information run: `demisto-sdk validate -i {input}`')
     elif not format_res and not validate_res:
-        info_list.append(f'Format Status herehere  on file: {input} - Success')
+        info_list.append(f'Format Status   on file: {input} - Success')
         info_list.append(f'Validate Status on file: {input} - Success')
     return info_list, error_list, skipped_list

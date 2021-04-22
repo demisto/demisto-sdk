@@ -8,6 +8,11 @@ configuration:
   defaultvalue: 'true'
   type: 8
   required: false
+- display: Username
+  name: credentials
+  required: true
+  type: 9
+  hiddenusername: false
 - display: Indicator Reputation
   name: feedReputation
   defaultvalue: Good

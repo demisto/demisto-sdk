@@ -181,7 +181,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_tags(),
             self._is_price_changed(),
             self._is_approved_tags(),
-            self._is_valid_support_type()
+            self._is_valid_support_type(),
+            self.is_right_usage_of_usecase_tag(),
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -350,6 +351,33 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def is_right_usage_of_usecase_tag(self):
+        """Checks whether Use Case tag in pack_metadata is used properly
+
+        Return:
+             bool: True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
+        """
+        try:
+            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+
+            if "Use Case" in pack_meta_file_content['tags']:
+                playbooks_path = os.path.join(self.pack_path, "Playbooks")
+                incidents_path = os.path.join(self.pack_path, "IncidentTypes")
+                layouts_path = os.path.join(self.pack_path, "Layouts")
+
+                answers = [
+                    os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
+                    os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
+                    os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+                ]
+                if not any(answers):
+                    if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
+                        return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
+                return False
+        return True
+
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
 
@@ -399,7 +427,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def are_valid_files(self) -> str:
+    def are_valid_files(self, id_set_validations) -> str:
         """Main Execution Method"""
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
@@ -409,6 +437,13 @@ class PackUniqueFilesValidator(BaseValidator):
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
             self.validate_pack_dependencies()
+
+        # Check if unique files are valid against the rest of the files, using the ID set.
+        if id_set_validations:
+            is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, self.ignored_errors)
+            if not is_valid:
+                self._add_error(error, self.pack_path)
+
         return self.get_errors()
 
     # pack dependencies validation

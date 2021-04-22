@@ -8,6 +8,7 @@ import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
+from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
@@ -23,15 +24,15 @@ import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
+    DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -362,9 +363,9 @@ def get_file(method, file_path, type_of_file):
                 data_dictionary = method(stream)
             except Exception as e:
                 print_error(
-                    "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
+                    "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return {}
-    if type(data_dictionary) is dict:
+    if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
 
@@ -506,6 +507,29 @@ def str2bool(v):
         return False
 
     raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def to_dict(obj):
+    if isinstance(obj, Enum):
+        return obj.name
+
+    if not hasattr(obj, '__dict__'):
+        return obj
+
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("_"):
+            continue
+
+        element = []
+        if isinstance(val, list):
+            for item in val:
+                element.append(to_dict(item))
+        else:
+            element = to_dict(val)
+        result[key] = element
+
+    return result
 
 
 def old_get_release_notes_file_path(file_path):
@@ -896,7 +920,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         return FileType.CHANGELOG
 
     # integration image
-    if path.endswith('_image.png'):
+    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
     # doc files images
@@ -1551,3 +1575,115 @@ def get_file_displayed_name(file_path):
         return get_json(file_path).get('id')
     else:
         return os.path.basename(file_path)
+
+
+def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
+    """
+    Gets both README and YML file of Integration and compares the context path between them.
+    Scripts are not being checked.
+    Args:
+        yml_dict: a dictionary representing YML content.
+        readme_content: the content string of the readme file.
+    Returns: A dictionary as following: {<command_name>:{'only in yml': <set of context paths found only in yml>,
+                                                        'only in readme': <set of context paths found only in readme>}}
+    """
+    different_contexts: dict = {}
+
+    # Gets the data from the README
+    # the pattern to get the context part out of command section:
+    context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*',
+                                                                                             r'\*') + ".(.*?)#{3,5}"
+    # the pattern to get the value in the first column under the outputs table:
+    context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+    readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+    commands = yml_dict.get("script", {})
+
+    # handles scripts
+    if not commands:
+        return different_contexts
+    commands = commands.get('commands', [])
+    for command in commands:
+        command_name = command.get('name')
+
+        # Gets all context path in the relevant command section from README file
+        command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
+        command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
+        if not command_section:
+            continue
+        if not command_section[0].endswith('###'):
+            command_section[0] += '###'  # mark end of file so last pattern of regex will be recognized.
+        context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
+        if not context_section:
+            context_path_in_command = set()
+        else:
+            context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
+            context_path_in_command.remove('---')
+
+        # handles cases of old integrations with context in 'important' section
+        if 'important' in command:
+            command.pop('important')
+
+        # Gets all context path in the relevant command section from YML file
+        existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
+
+        # finds diff between YML and README
+        only_in_yml_paths = existing_context_in_yml - context_path_in_command
+        only_in_readme_paths = context_path_in_command - existing_context_in_yml
+        if only_in_yml_paths or only_in_readme_paths:
+            different_contexts[command_name] = {"only in yml": only_in_yml_paths,
+                                                "only in readme": only_in_readme_paths}
+
+    return different_contexts
+
+
+def write_yml(yml_path: str, yml_data: Dict):
+    ryaml = YAML()
+    ryaml.allow_duplicate_keys = True
+    ryaml.preserve_quotes = True
+    with open(yml_path, 'w') as f:
+        ryaml.dump(yml_data, f)  # ruamel preservers multilines
+
+
+def to_kebab_case(s: str):
+    """
+    Scan File => scan-file
+    Scan File- => scan-file
+    *scan,file => scan-file
+    Scan     File => scan-file
+
+    """
+    if s:
+        new_s = s.lower()
+        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
+        m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
+        if m:
+            return m.group(0)
+        else:
+            return new_s
+
+    return s
+
+
+def to_pascal_case(s: str):
+    """
+    Scan File => ScanFile
+    Scan File- => ScanFile
+    *scan,file => ScanFile
+    Scan     File => ScanFile
+    scan-file => ScanFile
+    scan.file => ScanFile
+
+    """
+    if s:
+        if re.search(r'^[A-Z][a-z]+(?:[A-Z][a-z]+)*$', s):
+            return s
+
+        new_s = s.lower()
+        new_s = re.sub(r'[ -\.]+', '-', new_s)
+        new_s = ''.join([t.title() for t in new_s.split('-')])
+        new_s = re.sub(r'[^A-Za-z0-9]+', '', new_s)
+
+        return new_s
+
+    return s

@@ -302,7 +302,8 @@ class BaseUpdate:
 
                 # TODO: remove the connection condition if we implement a specific validator for connections.
                 if structure_validator.is_valid_file() and \
-                        (file_type == FileType.CONNECTION or validator.is_valid_file(validate_rn=False)):
+                        (file_type in [FileType.CONNECTION, file_type == FileType.DESCRIPTION] or
+                         validator.is_valid_file()):
                     if self.verbose:
                         click.secho('The files are valid', fg='green')
                     return SUCCESS_RETURN_CODE

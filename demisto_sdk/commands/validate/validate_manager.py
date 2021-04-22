@@ -30,6 +30,8 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
@@ -62,8 +64,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, open_id_set_file,
-                                               run_command)
+                                               get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -75,7 +76,8 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False
+            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
+            pykwalify_logs=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -89,11 +91,13 @@ class ValidateManager:
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or skip_dependencies
         self.compare_type = '...'
         self.staged = staged
         self.skip_schema_check = skip_schema_check
         self.debug_git = debug_git
+        self.include_untracked = include_untracked
+        self.pykwalify_logs = pykwalify_logs
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -136,7 +140,6 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
         self.is_external_repo = is_external_repo
@@ -349,10 +352,11 @@ class ValidateManager:
                                                  old_file_path=old_file_path, branch_name=self.branch_name,
                                                  is_new_file=not is_modified,
                                                  json_file_path=self.json_file_path,
-                                                 skip_schema_check=self.skip_schema_check)
+                                                 skip_schema_check=self.skip_schema_check,
+                                                 pykwalify_logs=self.pykwalify_logs)
 
         # schema validation
-        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
             if not structure_validator.is_valid_file():
                 return False
 
@@ -380,6 +384,8 @@ class ValidateManager:
                                                    is_modified)
             else:
                 click.secho('Skipping release notes validation', fg='yellow')
+        elif file_type == FileType.DESCRIPTION:
+            return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -423,7 +429,7 @@ class ValidateManager:
             return self.validate_incident_type(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.MAPPER:
-            return self.validate_mapper(structure_validator, pack_error_ignore_list)
+            return self.validate_mapper(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
             return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
@@ -468,6 +474,12 @@ class ValidateManager:
         return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """
+
+    def validate_description(self, file_path, pack_error_ignore_list):
+        description_validator = DescriptionValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     json_file_path=self.json_file_path)
+        return description_validator.is_valid_file()
 
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
@@ -636,10 +648,15 @@ class ValidateManager:
         else:
             return incident_type_validator.is_valid_incident_type(validate_rn=False)
 
-    def validate_mapper(self, structure_validator, pack_error_ignore_list):
+    def validate_mapper(self, structure_validator, pack_error_ignore_list, is_modified):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                         is_circle=self.is_circle),
+                        mapper_validator.is_backward_compatible()])
+
         return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
 
@@ -691,7 +708,7 @@ class ValidateManager:
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver,
                                                                json_file_path=self.json_file_path)
-        pack_errors = pack_unique_files_validator.are_valid_files()
+        pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
             return False
@@ -962,11 +979,13 @@ class ValidateManager:
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
                                                       committed_only=self.is_circle, staged_only=self.staged,
-                                                      debug=self.debug_git)
+                                                      debug=self.debug_git, include_untracked=self.include_untracked)
         added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                staged_only=self.staged, debug=self.debug_git)
+                                                staged_only=self.staged, debug=self.debug_git,
+                                                include_untracked=self.include_untracked)
         renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                    staged_only=self.staged, debug=self.debug_git)
+                                                    staged_only=self.staged, debug=self.debug_git,
+                                                    include_untracked=self.include_untracked)
 
         # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)

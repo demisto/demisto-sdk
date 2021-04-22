@@ -81,6 +81,10 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    CONF_JSON = 'confjson'
+    METADATA = 'metadata'
+    WHITE_LIST = 'whitelist'
+    LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -93,13 +97,14 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.REPUTATION: 'Indicator Types',
     FileType.INCIDENT_TYPE: 'Incident Types',
     FileType.CLASSIFIER: 'Classifiers',
+    FileType.OLD_CLASSIFIER: 'Classifiers',
+    FileType.LAYOUTS_CONTAINER: 'Layouts',
     FileType.LAYOUT: 'Layouts',
     FileType.REPORT: 'Reports',
     FileType.WIDGET: 'Widgets',
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
-    FileType.LAYOUTS_CONTAINER: 'Layouts Containers',
 }
 
 
@@ -458,7 +463,8 @@ ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'playbook',
     'dashboard',
-    'incident_type'
+    'incident_type',
+    'layoutscontainer',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -888,72 +894,105 @@ IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONT
 
 FEED_REQUIRED_PARAMS = [
     {
-        'defaultvalue': 'true',
-        'display': 'Fetch indicators',
         'name': 'feed',
-        'type': 8,
-        'required': False
+        'must_equal': {
+            'defaultvalue': 'true',
+            'display': 'Fetch indicators',
+            'type': 8,
+            'required': False
+        },
+        'must_contain': {}
     },
     {
-        'display': 'Indicator Reputation',
         'name': 'feedReputation',
-        'type': 18,
-        'required': False,
-        'options': ['None', 'Good', 'Suspicious', 'Bad'],
-        'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+        'must_equal': {
+            'display': 'Indicator Reputation',
+            'type': 18,
+            'required': False,
+            'options': ['None', 'Good', 'Suspicious', 'Bad']
+        },
+        'must_contain': {
+            'additionalinfo': 'Indicators from this integration instance will be marked with this reputation'
+        }
     },
     {
-        'display': 'Source Reliability',
         'name': 'feedReliability',
-        'type': 15,
-        'required': True,
-        'options': [
-            'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
-            'E - Unreliable', 'F - Reliability cannot be judged'],
-        'additionalinfo': 'Reliability of the source providing the intelligence data'
+        'must_equal': {
+            'display': 'Source Reliability',
+            'type': 15,
+            'required': True,
+            'options': [
+                'A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable',
+                'E - Unreliable', 'F - Reliability cannot be judged']
+        },
+        'must_contain': {
+            'additionalinfo': 'Reliability of the source providing the intelligence data'
+        }
     },
     {
-        'display': "",
         'name': 'feedExpirationPolicy',
-        'type': 17,
-        'required': False,
-        'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+        'must_equal': {
+            'display': "",
+            'type': 17,
+            'required': False,
+            'options': ['never', 'interval', 'indicatorType', 'suddenDeath']
+        },
+        'must_contain': {}
     },
     {
-        'display': "",
         'name': 'feedExpirationInterval',
-        'type': 1,
-        'required': False
+        'must_equal': {
+            'display': "",
+            'type': 1,
+            'required': False
+        },
+        'must_contain': {}
     },
     {
-        'display': 'Feed Fetch Interval',
         'name': 'feedFetchInterval',
-        'type': 19,
-        'required': False
+        'must_equal': {
+            'display': 'Feed Fetch Interval',
+            'type': 19,
+            'required': False
+        },
+        'must_contain': {}
     },
     {
-        'display': 'Bypass exclusion list',
         'name': 'feedBypassExclusionList',
-        'type': 8,
-        'required': False,
-        'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
-                          ' This means that if an indicator from this feed is on the exclusion list,'
-                          ' the indicator might still be added to the system.'
+        'must_equal': {
+            'display': 'Bypass exclusion list',
+            'type': 8,
+            'required': False
+        },
+        'must_contain': {
+            'additionalinfo': 'When selected, the exclusion list is ignored for indicators from this feed.'
+                              ' This means that if an indicator from this feed is on the exclusion list,'
+                              ' the indicator might still be added to the system.'
+        }
     },
     {
-        'additionalinfo': 'Supports CSV values.',
-        'display': 'Tags',
         'name': 'feedTags',
-        'required': False,
-        'type': 0
+        'must_equal': {
+            'display': 'Tags',
+            'required': False,
+            'type': 0
+        },
+        'must_contain': {
+            'additionalinfo': 'Supports CSV values.'
+        }
     },
     {
-        'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed',
-        'display': 'Traffic Light Protocol Color',
         'name': 'tlp_color',
-        'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
-        'required': False,
-        'type': 15
+        'must_equal': {
+            'display': 'Traffic Light Protocol Color',
+            'options': ['RED', 'AMBER', 'GREEN', 'WHITE'],
+            'required': False,
+            'type': 15
+        },
+        'must_contain': {
+            'additionalinfo': 'The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the '
+                              'feed'
+        }
     }
 ]
 

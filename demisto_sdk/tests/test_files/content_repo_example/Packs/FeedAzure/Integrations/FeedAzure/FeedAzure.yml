@@ -194,6 +194,21 @@ script:
     execution: false
     name: azure-get-indicators
     outputs:
+    hidden: false
+  - arguments:
+    - default: false
+      defaultValue: '10'
+      description: The maximum number of indicators to return. The default value is 10.
+      isArray: false
+      name: limit
+      required: false
+      secret: false
+    deprecated: false
+    description: hidden command.
+    hidden: true
+    execution: false
+    name: azure-hidden-command
+    outputs:
   dockerimage: demisto/python3:3.8.1.9324
   feed: true
   isfetch: false

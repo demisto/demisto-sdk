@@ -77,6 +77,16 @@ mapping:
   subtype:
     type: str
     enum: ['python2', 'python3']
+  contentitemexportablefields:
+    type: map
+    mapping:
+      contentitemfields:
+        type: map
+        mapping:
+          fromServerVersion:
+            type: str
+  polling:
+    type: bool
 
 # script->args
 schema;argument_schema:

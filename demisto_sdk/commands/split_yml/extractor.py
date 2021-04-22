@@ -36,14 +36,16 @@ class Extractor:
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
         no_pipenv (boo): whether to create pipenv
+        basic_fmt (bool): whether to perform basic formatting on the code, i.e. autopep8 and isort
         file_type (str): yml file type (integration/script)
         configuration (Configuration): Configuration object
+        lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
     """
 
     def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
-                 no_logging: bool = False):
+                 no_logging: bool = False, no_basic_fmt: bool = False):
         self.input = input
         self.output = output
         self.demisto_mock = not no_demisto_mock
@@ -53,6 +55,8 @@ class Extractor:
         self.readme = not no_readme
         self.pipenv = not no_pipenv
         self.logging = not no_logging
+        self.basic_fmt = not no_basic_fmt
+        self.lines_inserted_at_code_start = 0
         if configuration is None:
             self.config = Configuration()
         else:
@@ -131,21 +135,23 @@ class Extractor:
 
         # Python code formatting and dev env setup
         if code_type == TYPE_PYTHON:
-            self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
-            try:
-                subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
-            except FileNotFoundError:
-                self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
-                                "Make sure to install it with: pip install autopep8.\n"
-                                "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
-            if self.pipenv:
-                self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+            if self.basic_fmt:
+                self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
                 try:
-                    subprocess.call(["isort", code_file])
+                    subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
                 except FileNotFoundError:
-                    self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
-                                    "Make sure to install it with: pip install isort.\n"
-                                    "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
+                    self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
+                                    "Make sure to install it with: pip install autopep8.\n"
+                                    "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
+            if self.pipenv:
+                if self.basic_fmt:
+                    self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+                    try:
+                        subprocess.call(["isort", code_file])
+                    except FileNotFoundError:
+                        self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
+                                        "Make sure to install it with: pip install isort.\n"
+                                        "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
 
                 self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
                 docker = get_all_docker_images(script_obj)[0]
@@ -192,6 +198,13 @@ class Extractor:
                     next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
                 next_steps += "    git add {}\n".format(arg_path)
                 self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+
+            else:
+                self.print_logs("Skipping pipenv and requirements installation - Note: no Pipfile will be created",
+                                log_color=LOG_COLORS.YELLOW)
+
+        self.print_logs(f"Finished splitting the yml file - you can find the split results here: {output_path}",
+                        log_color=LOG_COLORS.GREEN)
         return 0
 
     def extract_code(self, code_file_path) -> int:
@@ -218,11 +231,14 @@ class Extractor:
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto  # noqa: F401\n")
+                self.lines_inserted_at_code_start += 1
             if common_server:
                 if lang_type == TYPE_PYTHON:
                     code_file.write("from CommonServerPython import *  # noqa: F401\n")
+                    self.lines_inserted_at_code_start += 1
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
+                    self.lines_inserted_at_code_start += 1
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)

@@ -11,11 +11,12 @@ import yaml
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
-from demisto_sdk.commands.openapi_codegen.base_code import (
-    base_argument, base_basic_auth, base_client, base_code, base_credentials,
-    base_data, base_function, base_header, base_list_functions, base_params,
-    base_props, base_request_function, base_token)
-from demisto_sdk.commands.openapi_codegen.XSOARIntegration import \
+from demisto_sdk.commands.generate_integration.base_code import (
+    BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_CLIENT, BASE_CODE_TEMPLATE,
+    BASE_CREDENTIALS, BASE_DATA, BASE_FUNCTION, BASE_HEADER,
+    BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_PROPS, BASE_REQUEST_FUNCTION,
+    BASE_TOKEN)
+from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
@@ -206,7 +207,7 @@ class OpenAPIIntegration:
         """
 
         # Use the code from base_code in py as the basis
-        code: str = base_code
+        code: str = BASE_CODE_TEMPLATE
 
         # Build the functions from configuration file
         functions: list = []
@@ -218,18 +219,18 @@ class OpenAPIIntegration:
 
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
-        client = base_client.replace('$REQUESTFUNCS$', ''.join(req_functions))
-        code = code.replace('$CLIENT$', client)
+        client = BASE_CLIENT.replace('$REQUESTFUNCS$', ''.join(req_functions))
+        code = code.replace('$CLIENT$', client).replace('$CLIENT_API_KEY$', '')
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
-            code = code.replace('$BEARERAUTHPARAMS$', base_token)
+            code = code.replace('$BEARERAUTHPARAMS$', BASE_TOKEN)
         else:
             code = '\n'.join(
-                [x for x in code.split('\n') if '$BEARERAUTHPARAMS$' not in x])
+                [x for x in code.split('\n') if any(ext not in x for ext in ['$BEARERAUTHPARAMS$'])])
 
         if BASIC_AUTH_TYPE in self.configuration['auth']:
-            code = code.replace('$BASEAUTHPARAMS$', base_credentials)
-            code = code.replace('$BASEAUTH$', base_basic_auth)
+            code = code.replace('$BASEAUTHPARAMS$', BASE_CREDENTIALS)
+            code = code.replace('$BASEAUTH$', BASE_BASIC_AUTH)
         else:
             code = '\n'.join(
                 [x for x in code.split('\n') if '$BASEAUTHPARAMS$' not in x])
@@ -244,7 +245,7 @@ class OpenAPIIntegration:
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
 
-            function = base_list_functions.replace(
+            function = BASE_LIST_FUNCTIONS.replace(
                 '$FUNCTIONNAME$', f"{prefix}{command['name']}".replace('_', '-'))
             fn = command['name'].replace('-', '_')
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
@@ -274,8 +275,8 @@ class OpenAPIIntegration:
         function_name = command['name'].replace('-', '_')
         headers = command['headers']
         self.print_with_verbose(f'Adding the function {function_name} to the code...')
-        function = base_function.replace('$FUNCTIONNAME$', function_name)
-        req_function = base_request_function.replace('$FUNCTIONNAME$', function_name)
+        function = BASE_FUNCTION.replace('$FUNCTIONNAME$', function_name)
+        req_function = BASE_REQUEST_FUNCTION.replace('$FUNCTIONNAME$', function_name)
         argument_names, arguments, arguments_found, body_data, params_data = self.process_command_arguments(command)
         if arguments_found:
             function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
@@ -295,13 +296,13 @@ class OpenAPIIntegration:
                 command['path'] = command['path'].replace(param, f'{param}{NAME_FIX}')
         req_function = req_function.replace('$PATH$', command['path'])
         if params_data:
-            params = self.format_params(params_data, base_params, '$PARAMS$')
+            params = self.format_params(params_data, BASE_PARAMS, '$PARAMS$')
             req_function = req_function.replace('$PARAMETERS$', params)
         else:
             req_function = '\n'.join(
                 [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
         if body_data:
-            body_data = self.format_params(body_data, base_data, '$DATAOBJ$')
+            body_data = self.format_params(body_data, BASE_DATA, '$DATAOBJ$')
             req_function = req_function.replace('$DATA$', body_data)
         else:
             req_function = '\n'.join(
@@ -319,7 +320,7 @@ class OpenAPIIntegration:
             new_headers = []
             for header in headers:
                 for k, v in header.items():
-                    new_headers.append(base_header.replace('$HEADERKEY$', f"'{k}'")
+                    new_headers.append(BASE_HEADER.replace('$HEADERKEY$', f"'{k}'")
                                        .replace('$HEADERVALUE$', f"'{v}'"))
 
             req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
@@ -384,7 +385,7 @@ class OpenAPIIntegration:
                         prop_arg_type = 'argToBoolean'
                     if prop_arg_name in ILLEGAL_CODE_NAMES:
                         prop_arg_name = f'{prop_arg_name}{NAME_FIX}'
-                    this_prop_argument = f"{base_argument.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
+                    this_prop_argument = f"{BASE_ARGUMENT.replace('$DARGNAME$', prop_arg_name)}{prop_default})"
                     this_prop_argument = this_prop_argument.replace('$SARGNAME$', prop_arg_name)
                     if 'None' not in prop_default:
                         this_prop_argument = this_prop_argument.replace('$ARGTYPE$', f'{prop_arg_type}(') + ')'
@@ -392,7 +393,7 @@ class OpenAPIIntegration:
                         this_prop_argument = this_prop_argument.replace('$ARGTYPE$', '')
                     arg_props.append({k: prop_arg_name})
                     arguments.append(this_prop_argument)
-                all_props = self.format_params(arg_props, base_props, '$PROPS$')
+                all_props = self.format_params(arg_props, BASE_PROPS, '$PROPS$')
                 this_argument = f'{code_arg_name} = {all_props}'
                 if arg_type == 'array':
                     this_argument = f'argToList({this_argument})'
@@ -406,7 +407,7 @@ class OpenAPIIntegration:
                     if new_arg_type == 'bool':
                         new_arg_type = 'argToBoolean'
 
-                this_argument = f"{base_argument.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
+                this_argument = f"{BASE_ARGUMENT.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
                 if 'None' not in argument_default:
                     this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
                 else:
@@ -818,7 +819,7 @@ class OpenAPIIntegration:
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(yaml_file, 'w') as fp:
-                fp.write(yaml.dump(self.generate_yaml().to_yaml()))
+                fp.write(yaml.dump(self.generate_yaml().to_dict()))
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')

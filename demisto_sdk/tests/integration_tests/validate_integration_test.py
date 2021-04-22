@@ -475,6 +475,39 @@ class TestIntegrationValidation:
         assert "can't be hidden. Please remove this field" not in result.stdout
         assert result.stderr == ""
 
+    def test_duplicate_param_and_argument_invalid(self, mocker, repo):
+        """
+        Given
+        - An invalid Integration - duplicate argument in a command, and duplicate param.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on IN113 - Duplicate argument in a command in the integration.
+        - Ensure validate fails on IN114 - Duplicate parameter in integration.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        first_command_args = invalid_integration_yml['script']['commands'][0]['arguments']
+        first_command_args.append(first_command_args[0])
+        invalid_integration_yml['configuration'].append(
+            {'additionalinfo': 'Supports CSV values', 'display': 'Tags', 'name': 'feedTags', 'required': False,
+             'type': 0})
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert 'IN113' in result.stdout
+        assert 'IN114' in result.stdout
+        assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
+        assert f'''The argument '{first_command_args[0]['name']}' is duplicated''' in result.stdout
+
 
 class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
@@ -654,7 +687,7 @@ class TestClassifierValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'Missing id in root' in result.stdout
+        assert 'Missing the field "id" in root' in result.stdout
         assert result.exit_code == 1
 
     def test_missing_fromversion_field_in_new_classifier(self, mocker, repo):
@@ -788,7 +821,7 @@ class TestClassifierValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert 'Missing id in root' in result.stdout
+        assert 'Missing the field "id" in root' in result.stdout
         assert result.exit_code == 1
 
     def test_missing_toversion_field_in_old_classifier(self, mocker, repo):
@@ -905,7 +938,7 @@ class TestMapperValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
         assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'Missing id in root' in result.stdout
+        assert 'Missing the field "id" in root' in result.stdout
         assert result.exit_code == 1
 
     def test_mapper_from_version_higher_to_version(self, mocker, repo):
@@ -1044,7 +1077,7 @@ class TestConnectionValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', connection.path], catch_exceptions=False)
         assert f'Validating {connection.path} as canvas-context-connections' in result.stdout
-        assert 'Missing contextKey1' in result.stdout
+        assert 'Missing the field "contextKey1"' in result.stdout
         assert result.exit_code == 1
 
 
@@ -1739,7 +1772,7 @@ class TestReportValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', report.path], catch_exceptions=False)
         assert f'Validating {report.path} as report' in result.stdout
-        assert 'Enum \'bla\' does not exist. Path: \'/orientation\'' in result.stdout
+        assert 'The value "bla" in \'orientation\' is invalid' in result.stdout
         assert result.exit_code == 1
 
 

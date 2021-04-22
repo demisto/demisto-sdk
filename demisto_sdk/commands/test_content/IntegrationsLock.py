@@ -49,7 +49,7 @@ def safe_unlock_integrations(test_playbook):
     try:
         # executing the test could take a while, re-instancing the storage client
         storage_client = storage.Client()
-        unlock_integrations(test_playbook, storage_client)
+        unlock_integrations(test_playbook.integrations, test_playbook, storage_client)
     except Exception:
         test_playbook.build_context.logging_module.exception('attempt to unlock integration failed for unknown reason.')
 
@@ -181,20 +181,22 @@ def create_lock_files(integrations_generation_number: dict,
             test_playbook.build_context.logging_module.warning(
                 f'Could not lock integration {integration}, Create file with precondition failed.'
                 f'delaying test execution.')
-            unlock_integrations(test_playbook, storage_client)
+            unlock_integrations(locked_integrations, test_playbook, storage_client)
             return False
     return True
 
 
-def unlock_integrations(test_playbook,
+def unlock_integrations(integrations_to_unlock: list,
+                        test_playbook,
                         storage_client: storage.Client) -> None:
     """
     Delete all integration lock files for integrations specified in 'locked_integrations'
     Args:
+        integrations_to_unlock (List[Integration]): The test playbook instance we want to test under the lock's context
         test_playbook (TestPlaybook): The test playbook instance we want to test under the lock's context
         storage_client: The GCP storage client
     """
-    locked_integrations = [integration.name for integration in test_playbook.integrations]
+    locked_integrations = [integration.name for integration in integrations_to_unlock]
     locked_integration_blobs = get_locked_integrations(locked_integrations, storage_client)
     for integration, lock_file in locked_integration_blobs.items():
         try:

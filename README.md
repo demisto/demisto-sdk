@@ -112,6 +112,8 @@ include_untracked=true
 update_type=minor
 ```
 
+---
+
 ### How to setup development environment?
 
 Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk-dev` virtual environment.

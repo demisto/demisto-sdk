@@ -31,8 +31,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType,
-    GithubContentConfig)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, ContentGithubLinks,
+    FileType, GithubContentConfig)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -163,14 +163,20 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
 
 
 def get_core_pack_list():
-    if GithubContentConfig.Links._is_premium:
+    if is_external_repository():
         return []
     else:
         return get_remote_file('Tests/Marketplace/core_packs_list.json') or []
 
 
 @lru_cache(maxsize=64)
-def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
+def get_remote_file(
+        full_file_path,
+        tag='master',
+        return_content=False,
+        suppress_print=False,
+        github_repo=GithubContentConfig.Links.CURRENT_REPOSITORY
+):
     """
     Args:
         full_file_path (string):The full path of the file.
@@ -185,20 +191,21 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
     tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(GithubContentConfig.Links.CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = os.path.join(ContentGithubLinks(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
     try:
-        if GithubContentConfig.Links.is_premium:
-            if not GithubContentConfig.Credentials.TOKEN:
+        headers = {}
+        if is_external_repository():
+            if GithubContentConfig.Credentials.TOKEN:
+                headers = {
+                    'Authorization': f"Bearer {GithubContentConfig.Credentials.TOKEN}",
+                    'Accept': f'application/vnd.github.VERSION.raw',
+                }
+            else:
                 print_color(
-                    f'You are working in content-premium repo, define your github token environment.\n'
+                    f'You are working in a private repository: "{GithubContentConfig.Links.CURRENT_REPOSITORY}".\n'
+                    f'Please define your github token in your environment.\n'
                     f'`export {GithubContentConfig.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
                 )
-            headers = {
-                'Authorization': f"Bearer {GithubContentConfig.Credentials.TOKEN}",
-                'Accept': f'application/vnd.github.VERSION.raw',
-            }
-        else:
-            headers = {}
         res = requests.get(github_path, verify=False, timeout=10, headers=headers)
         res.raise_for_status()
     except Exception as exc:
@@ -238,7 +245,7 @@ def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
-    Mark scripts/integrations that were removed and added as modifiied.
+    Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
@@ -1056,6 +1063,7 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
+@lru_cache()
 def is_external_repository():
     """
     Returns True if script executed from private repository

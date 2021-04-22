@@ -765,35 +765,35 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
 class ContentGithubLinks:
-    BASE_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/'
+    """
+    Attributes:
+
+    """
+    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
+    BASE_GITHUB_LINK = r'https://raw.githubusercontent.com/'
     SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+    CURRENT_REPOSITORY: str
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
     CONTENT_GITHUB_UPSTREAM: str
     CONTENT_GITHUB_ORIGIN: str
     _is_premium: bool
 
-    def __init__(self):
-        self._is_premium = self._is_on_premium_repo()
-        if self._is_premium:
-            self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, r'content-premium')
-            self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
-            self.CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content-premium'
-            self.CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content-premium'
+    def __init__(self, repo_name=None):
+        if repo_name:
+            self.CURRENT_REPOSITORY = repo_name
         else:
-            self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, r'content')
-            self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
-            self.CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
-            self.CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+            self.CURRENT_REPOSITORY = self._get_repository_name()
+
+        self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, self.CURRENT_REPOSITORY)
+        self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
+        self.CONTENT_GITHUB_UPSTREAM = rf'upstream.*{self.CURRENT_REPOSITORY}'
+        self.CONTENT_GITHUB_ORIGIN = rf'origin.*{self.CURRENT_REPOSITORY}'
 
     @staticmethod
-    def _is_on_premium_repo() -> bool:
-        urls = GitUtil().repo.remote().urls
-        return any('demisto/content-premium' in url for url in urls)
-
-    @property
-    def is_premium(self):
-        return self._is_premium
+    def _get_repository_name():
+        for url in GitUtil().repo.remote().urls:
+            return re.findall(r':(.*)\.', url)[0]
 
 
 class GithubCredentials:

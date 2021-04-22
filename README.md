@@ -82,6 +82,36 @@ Supported commands:
 
 ---
 
+### Customizable command configuration
+
+You can create your own configuration for the `demisto-sdk` commands by creating a file named `.demisto-sdk-conf` within the directory from which you run the commands.
+This file will enable you to set a default value to the existing command flags that will take effect whenever the command is run.
+This can be done by entering the following structure into the file:
+```buildoutcfg
+[command_name]
+flag_name=flag_default_value
+```
+Note: Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name.
+
+Here are a few examples:
+ -  As a user, I would like to not use the `mypy` linter in my environment when using the `lint` command. In the `.demisto-sdk-conf` file I'll enter:
+ ```buildoutcfg
+[lint]
+no_mypy=true
+```
+
+- As a user, I would like to include untracked git files in my validation when running the `validate` command. In the `.demisto-sdk-conf` file I'll enter:
+```buildoutcfg
+[validate]
+include_untracked=true
+```
+
+- As a user, I would like to automatically use minor version changes when running the `update-release-notes` command. In the `.demisto-sdk-conf` file I'll enter:
+```buildoutcfg
+[update-release-notes]
+update_type=minor
+```
+
 ### How to setup development environment?
 
 Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk-dev` virtual environment.

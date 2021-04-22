@@ -196,7 +196,7 @@ class BaseValidator:
 
         # handling unified yml image errors
         if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):
-            entity_type = 'image'
+            entity_type = FileType.IMAGE.value
 
         formatted_error_output = {
             'filePath': file_path,

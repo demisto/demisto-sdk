@@ -450,7 +450,11 @@ class Unifier:
                     contributor_description += f'\n- **Email**: [{email}](mailto:{email})'
             if contributor_url:
                 contributor_description += f'\n- **URL**: [{contributor_url}]({contributor_url})'
-        unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
+
+        contrib_details = re.findall(r'### .* Contributed Integration', existing_detailed_description)
+
+        if not contrib_details:
+            unified_yml['detaileddescription'] = contributor_description + '\n***\n' + existing_detailed_description
 
         return unified_yml
 

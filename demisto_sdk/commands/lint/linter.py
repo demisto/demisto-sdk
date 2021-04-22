@@ -16,10 +16,6 @@ import docker.errors
 import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-from wcmatch.pathlib import NEGATE, Path
-
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
@@ -39,6 +35,9 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 

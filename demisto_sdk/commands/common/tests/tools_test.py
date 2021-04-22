@@ -227,7 +227,8 @@ class TestGetRemoteFile:
         assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+                                                'demisto/master')
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 

@@ -1,5 +1,5 @@
 # Changelog
-* Added a validation that core packs will not be dependent on un-core packs
+* Added a validation that core packs are not dependent on non-core packs.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

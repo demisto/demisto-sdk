@@ -249,7 +249,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check validity of pack metadata mandatory fields
             name_field = metadata.get(PACK_METADATA_NAME, '')
-            if not name_field:
+            if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
             elif not self.validate_pack_name(name_field):

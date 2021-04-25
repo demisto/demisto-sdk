@@ -1233,13 +1233,13 @@ class Errors:
     def pack_name_is_not_in_xsoar_standards(reason):
         if reason == "short":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
-                   f'characters long. '
+                   f'characters long.'
         if reason == "capital":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
-                   f'letter. '
+                   f'letter.'
         if reason == "wrong_word":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the word: ' \
-                   f'"Pack". '
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words: ' \
+                   f'["Pack", "Playbook", "Integration", "Script"]'
 
     @staticmethod
     @error_code_decorator

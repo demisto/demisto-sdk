@@ -28,12 +28,12 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, ContentGithubLinks,
-    FileType, GithubContentConfig)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
+    WIDGETS_DIR, FileType, GithubContentConfig)
 from packaging.version import parse
+from requests import HTTPError
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -171,18 +171,19 @@ def get_core_pack_list():
 
 @lru_cache(maxsize=64)
 def get_remote_file(
-        full_file_path,
-        tag='master',
-        return_content=False,
-        suppress_print=False,
-        github_repo=GithubContentConfig.Links.CURRENT_REPOSITORY
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+        github_repo=GithubContentConfig().CURRENT_REPOSITORY
 ):
     """
     Args:
-        full_file_path (string):The full path of the file.
-        tag (string): The branch name. default is 'master'
-        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print (bool): whether to suppress the warning message in case the file was not found.
+        full_file_path:The full path of the file.
+        tag: The branch name. default is 'master'
+        return_content: Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print: whether to suppress the warning message in case the file was not found.
+        github_repo: The repository to grab the file from
     Returns:
         The file content in the required format.
 
@@ -191,33 +192,39 @@ def get_remote_file(
     tag = tag.replace('origin/', '')
 
     # The replace in the end is for Windows support
-    github_path = os.path.join(ContentGithubLinks(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = os.path.join(
+        GithubContentConfig(
+            github_repo).CONTENT_GITHUB_LINK, tag, full_file_path
+    ).replace('\\', '/')
     try:
         headers = {}
         if is_external_repository():
-            if GithubContentConfig.Credentials.TOKEN:
+            githhub_config = GithubContentConfig()
+            if githhub_config.Credentials.TOKEN:
                 headers = {
-                    'Authorization': f"Bearer {GithubContentConfig.Credentials.TOKEN}",
+                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
                     'Accept': f'application/vnd.github.VERSION.raw',
                 }
             else:
                 print_color(
-                    f'You are working in a private repository: "{GithubContentConfig.Links.CURRENT_REPOSITORY}".\n'
+                    f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
                     f'Please define your github token in your environment.\n'
-                    f'`export {GithubContentConfig.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
+                    f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
                 )
         res = requests.get(github_path, verify=False, timeout=10, headers=headers)
         res.raise_for_status()
-    except Exception as exc:
+    except HTTPError as exc:
         if not suppress_print:
-            print_warning('Could not find the old entity file under "{}".\n'
-                          'please make sure that you did not break backward compatibility. '
-                          'Reason: {}'.format(github_path, exc))
+            print_warning(
+                f'Could not find the old entity file under "{github_path}".\n'
+                'please make sure that you did not break backward compatibility.\n'
+                f'Reason: {exc}'
+            )
         return {}
     if return_content:
         return res.content
     if full_file_path.endswith('json'):
-        details = json.loads(res.content)
+        details = res.json()
     elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
     # if neither yml nor json then probably a CHANGELOG or README file.
@@ -331,7 +338,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(GithubContentConfig.Links.CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -344,7 +351,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(GithubContentConfig.Links.CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -358,7 +365,7 @@ def get_last_remote_release_version():
     """
     if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(GithubContentConfig.Links.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
+            releases_request = requests.get(GithubContentConfig.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()
             releases = releases_request.json()
             if isinstance(releases, list) and isinstance(releases[0], dict):

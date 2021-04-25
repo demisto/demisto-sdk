@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
     PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, GithubContentConfig)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -321,7 +321,9 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_usecases = set()
         try:
             approved_usecases = tools.get_remote_file(
-                'Tests/Marketplace/approved_usecases.json').get('approved_list') or []
+                'Tests/Marketplace/approved_usecases.json',
+                github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            ).get('approved_list') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
@@ -341,7 +343,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_tags = set()
         try:
-            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json').get('approved_list') or []
+            approved_tags = tools.get_remote_file(
+                'Tests/Marketplace/approved_tags.json',
+                github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            ).get('approved_list') or []
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:

@@ -210,7 +210,7 @@ def init_pack(content_repo: ContentGitRepo):
             input="\n".join(["y", "Sample", "description", "1", "1", "n"])
         )
         try:
-            assert res.exit_code == 0
+            assert res.exit_code == 0, res.stdout
         except AssertionError:
             raise AssertionError(f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}")
         content_repo.run_validations()
@@ -331,6 +331,7 @@ def test_workflow_by_sequence(function: Callable):
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:
         function: A test to run
+        monekeypatch: MonkeyPatch object
 
     Workflow:
         The tests will use ContentGitRepo as a base content repository.

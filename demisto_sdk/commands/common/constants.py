@@ -764,38 +764,6 @@ FILE_TYPES_FOR_TESTING = [
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
-class ContentGithubLinks:
-    """
-    Attributes:
-
-    """
-    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
-    BASE_GITHUB_LINK = r'https://raw.githubusercontent.com/'
-    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
-    CURRENT_REPOSITORY: str
-    CONTENT_GITHUB_LINK: str
-    CONTENT_GITHUB_MASTER_LINK: str
-    CONTENT_GITHUB_UPSTREAM: str
-    CONTENT_GITHUB_ORIGIN: str
-    _is_premium: bool
-
-    def __init__(self, repo_name=None):
-        if repo_name:
-            self.CURRENT_REPOSITORY = repo_name
-        else:
-            self.CURRENT_REPOSITORY = self._get_repository_name()
-
-        self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_GITHUB_LINK, self.CURRENT_REPOSITORY)
-        self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
-        self.CONTENT_GITHUB_UPSTREAM = rf'upstream.*{self.CURRENT_REPOSITORY}'
-        self.CONTENT_GITHUB_ORIGIN = rf'origin.*{self.CURRENT_REPOSITORY}'
-
-    @staticmethod
-    def _get_repository_name():
-        for url in GitUtil().repo.remote().urls:
-            return re.findall(r':(.*)\.', url)[0]
-
-
 class GithubCredentials:
     ENV_TOKEN_NAME = 'GITHUB_TOKEN'
     TOKEN: Optional[str]
@@ -805,8 +773,45 @@ class GithubCredentials:
 
 
 class GithubContentConfig:
-    Links = ContentGithubLinks()
-    Credentials = GithubCredentials()
+    """Holds links, credentials and other github config
+
+    Attributes:
+        CURRENT_REPOSITORY: The current repository in the cwd
+        CONTENT_GITHUB_LINK: Link to the raw git repository
+        CONTENT_GITHUB_MASTER_LINK: Link to the git master repository
+        CONTENT_GITHUB_UPSTREAM: upstream name
+        CONTENT_GITHUB_ORIGIN: origin name
+        Credentials: Credentials to the git.
+    """
+    BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'
+    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
+
+    CURRENT_REPOSITORY: str
+    CONTENT_GITHUB_LINK: str
+    CONTENT_GITHUB_MASTER_LINK: str
+    CONTENT_GITHUB_UPSTREAM: str
+    CONTENT_GITHUB_ORIGIN: str
+
+    def __init__(self, repo_name: Optional[str] = None):
+
+        if not repo_name:
+            repo_name = self.OFFICIAL_CONTENT_REPO_NAME
+        if repo_name:
+            self.CURRENT_REPOSITORY = repo_name
+        else:
+            self.CURRENT_REPOSITORY = self._get_repository_name()
+
+        self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
+        self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
+        self.CONTENT_GITHUB_UPSTREAM = rf'upstream.*{self.CURRENT_REPOSITORY}'
+        self.CONTENT_GITHUB_ORIGIN = rf'origin.*{self.CURRENT_REPOSITORY}'
+        self.Credentials = GithubCredentials()
+
+    @staticmethod
+    def _get_repository_name():
+        for url in GitUtil().repo.remote().urls:
+            return re.findall(r':(.*)\.', url)[0]
 
 
 # Run all test signal

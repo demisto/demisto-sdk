@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
     PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, GithubContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                print_error, print_v,
@@ -594,7 +594,11 @@ class Initiator:
                     # is `README_example.md` - which happens when we do not want the readme
                     # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace('README.md', 'README_example.md')
-                file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
+                file_content = tools.get_remote_file(
+                    os.path.join(path, filename),
+                    return_content=True,
+                    github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:

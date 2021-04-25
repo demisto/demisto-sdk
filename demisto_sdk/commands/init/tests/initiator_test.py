@@ -434,7 +434,7 @@ def test_template_integration_init(initiator, tmpdir, template):
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
-    integration_dir_files = {file for file in listdir(integration_path)}
+    integration_dir_files = set(listdir(integration_path))
     expected_files = {
         "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
@@ -443,7 +443,8 @@ def test_template_integration_init(initiator, tmpdir, template):
 
     assert res
     assert os.path.isdir(integration_path)
-    assert expected_files == integration_dir_files
+    diff = expected_files.difference(integration_dir_files)
+    assert not diff, f'There\'s a missing file in the copied files, {diff=}'
 
 
 def test_script_init(initiator, tmpdir):

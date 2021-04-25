@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
     WIDGETS_DIR, FileType, GithubContentConfig)
 from packaging.version import parse
-from requests import HTTPError
+from requests.exceptions import HTTPError, MissingSchema
 from ruamel.yaml import YAML
 
 # disable insecure warnings
@@ -213,7 +213,7 @@ def get_remote_file(
                 )
         res = requests.get(github_path, verify=False, timeout=10, headers=headers)
         res.raise_for_status()
-    except HTTPError as exc:
+    except (HTTPError, MissingSchema) as exc:
         if not suppress_print:
             print_warning(
                 f'Could not find the old entity file under "{github_path}".\n'

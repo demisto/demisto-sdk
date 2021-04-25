@@ -444,7 +444,7 @@ def test_template_integration_init(initiator, tmpdir, template):
     assert res
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
-    assert not diff, f'There\'s a missing file in the copied files, {diff=}'
+    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
 def test_script_init(initiator, tmpdir):

@@ -800,11 +800,10 @@ class GithubContentConfig:
     def __init__(self, repo_name: Optional[str] = None):
 
         if not repo_name:
-            repo_name = self.OFFICIAL_CONTENT_REPO_NAME
-        if repo_name:
+            repo_name = self._get_repository_name()
             self.CURRENT_REPOSITORY = repo_name
         else:
-            self.CURRENT_REPOSITORY = self._get_repository_name()
+            self.CURRENT_REPOSITORY = repo_name
 
         self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
         self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
@@ -813,9 +812,10 @@ class GithubContentConfig:
         self.Credentials = GithubCredentials()
 
     @staticmethod
-    def _get_repository_name():
+    def _get_repository_name() -> str:
         for url in GitUtil().repo.remote().urls:
             return re.findall(r':(.*)\.', url)[0]
+        return ''
 
 
 # Run all test signal

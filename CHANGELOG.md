@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 * Fixed issue where running the **generate-docs** command with -c flag ran all the commands and not just the commands specified by the flag.

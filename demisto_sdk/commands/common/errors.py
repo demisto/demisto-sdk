@@ -1316,7 +1316,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_core_package_dependencies(core_pack, dependency_pack):
-        return f'Core pack {core_pack} can not depends on un-core pack {dependency_pack}.'
+        return f'The core pack {core_pack} can not depend on a non-core pack: {dependency_pack} - revert this change.'
 
     @staticmethod
     @error_code_decorator

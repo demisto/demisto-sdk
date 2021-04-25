@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

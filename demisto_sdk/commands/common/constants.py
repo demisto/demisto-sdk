@@ -84,6 +84,10 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    CONF_JSON = 'confjson'
+    METADATA = 'metadata'
+    WHITE_LIST = 'whitelist'
+    LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
 
 
 RN_HEADER_BY_FILE_TYPE = {

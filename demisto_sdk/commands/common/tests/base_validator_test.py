@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD
 
-DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK['deprecated'])
+DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
+    PRESET_ERROR_TO_CHECK['deprecated'])
 
 
 def test_handle_error():
@@ -324,3 +325,91 @@ def test_json_output(repo):
             json_output = json.load(f)
 
         assert json_output == expected_json_2
+
+
+def test_json_output_with_json_file(repo):
+    """
+    Given
+    - A ui applicable error.
+    - An existing and an empty json_outputs file.
+
+    When
+    - Running json_output method.
+
+    Then
+    - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+    - Ensure it's not failing because the file is empty.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    json_path = os.path.join(repo.path, 'valid_json.json')
+    open(json_path, "x")
+    base = BaseValidator(json_file_path=json_path)
+    ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
+    expected_json_1 = [
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'integration',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'error',
+            'errorCode': ui_applicable_error_code,
+            'message': ui_applicable_error_message,
+            'ui': True,
+            'relatedField': '<parameter-name>.display'
+        }
+    ]
+
+    with ChangeCWD(repo.path):
+        # create new file
+        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+        with open(base.json_file_path, 'r') as f:
+            json_output = json.load(f)
+
+        assert json_output == expected_json_1
+
+
+def test_json_output_with_unified_yml_image_error(repo):
+    """
+    Given
+    - A ui applicable image error that occurred in a unified yml.
+    - An existing and an empty json_outputs file.
+
+    When
+    - Running json_output method.
+
+    Then
+    - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+    - Ensure the entityType is 'image'.
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('MyInt')
+    integration.create_default_integration()
+    json_path = os.path.join(repo.path, 'valid_json.json')
+    open(json_path, "x")
+    base = BaseValidator(json_file_path=json_path)
+    ui_applicable_error_message, ui_applicable_error_code = Errors.image_too_large()
+    expected_json_1 = [
+        {
+            'filePath': integration.yml.path,
+            'fileType': 'yml',
+            'entityType': 'image',
+            'errorType': 'Settings',
+            'name': 'Sample',
+            'severity': 'error',
+            'errorCode': ui_applicable_error_code,
+            'message': ui_applicable_error_message,
+            'ui': True,
+            'relatedField': 'image'
+        }
+    ]
+
+    with ChangeCWD(repo.path):
+        # create new file
+        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+        with open(base.json_file_path, 'r') as f:
+            json_output = json.load(f)
+
+        assert json_output == expected_json_1

@@ -16,6 +16,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
@@ -174,6 +176,32 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
         assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
+
+    def test_validate_core_pack_dependencies(self, mocker):
+        """
+        Given
+        - An core pack that dependent in un-core pack
+
+        When
+        - Running validate_pack_dependencies.
+
+        Then
+        - Ensure that the validation fails and that the invalid core package dependencies error is printed.
+        """
+
+        def get_core_packs_file(argument):
+            return ['fake_pack']
+
+        def get_dependencies(pack_name, id_set_path=None, silent_mode=None, exclude_ignored_dependencies=None,
+                             update_pack_metadata=None, skip_id_set_creation=None):
+            return {'dependency_pack': {'mandatory': True, 'display_name': 'dependency pack'}}
+
+        mocker.patch.object(tools, 'get_remote_file', side_effect=get_core_packs_file)
+        mocker.patch.object(PackDependencies, 'find_dependencies', side_effect=get_dependencies)
+
+        assert not self.validator.validate_pack_dependencies()
+        assert Errors.invalid_core_package_dependencies('fake_pack', 'dependency_pack')[0] \
+            in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """

@@ -91,7 +91,7 @@ This can be done by entering the following structure into the file:
 [command_name]
 flag_name=flag_default_value
 ```
-Note: Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name.
+Note: Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name (e.g. instead of `no-docker-checks` use `no_docker_checks`).
 
 Here are a few examples:
  -  As a user, I would like to not use the `mypy` linter in my environment when using the `lint` command. In the `.demisto-sdk-conf` file I'll enter:

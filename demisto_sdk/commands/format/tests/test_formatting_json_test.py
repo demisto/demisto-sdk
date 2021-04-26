@@ -759,7 +759,7 @@ class TestFormattingReport:
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
         """
         Given
-            - An integration from new countributed pack, with no fromversion key at yml
+            - A new contributed pack with no fromversion key at incident_type json
         When
             - Run format command
         Then
@@ -774,7 +774,8 @@ class TestFormattingReport:
     def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
         Given
-            - A new countributed pack with - incident types,
+            - A new contributed pack with - incident types, incident field, indicator field, indicator type,
+            classifier and layout
         When
             - Run format command
         Then

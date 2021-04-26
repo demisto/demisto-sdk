@@ -892,7 +892,7 @@ class TestFormatting:
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
 
-    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """
         Given
             - An integration from new contributed pack, with no fromversion key at yml

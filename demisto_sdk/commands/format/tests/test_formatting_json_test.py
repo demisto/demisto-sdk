@@ -756,7 +756,7 @@ class TestFormattingReport:
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
 
-    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """
         Given
             - A new contributed pack with no fromversion key at incident_type json

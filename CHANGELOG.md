@@ -11,6 +11,7 @@
 * Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 * Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 * When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
+* Added an option to fill in the developer email when running the **init** command.
 * When formatting new contributors packs, the **format** command will set *fromversion* to 6.0.0 unless stated another version.
 
 # 1.3.4

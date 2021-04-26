@@ -901,15 +901,13 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to 6.0.0
         """
-        pack.pack_metadata = {'support': 'partner',
-                              'currentVersion': '1.0.0'}
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration()
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion()
         assert bs.data['fromversion'] == '6.0.0'
 
-    def test_set_fromversion_six_new_contributor_pack(self, mocker, pack):
+    def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
         Given
             - An integration from new countributed pack with fromversion key at yml
@@ -918,10 +916,11 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to 6.0.0
         """
-        pack.pack_metadata = {'support': 'partner',
-                              'currentVersion': '1.0.0'}
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        script = pack.create_script(yml={'fromversion': '5.0.0'})
+        playbook = pack.create_playbook(yml={'fromversion': '5.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.0.0'})
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
-        bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion()
-        assert bs.data['fromversion'] == '6.0.0'
+        for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
+            bs = BaseUpdate(input=path)
+            bs.set_fromVersion()
+            assert bs.data['fromversion'] == '6.0.0', path

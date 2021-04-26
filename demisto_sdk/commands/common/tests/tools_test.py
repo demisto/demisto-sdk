@@ -885,21 +885,20 @@ def test_get_file_displayed_name__image(repo):
 def test_get_pack_metadata(repo):
     """
     Given
-    - The path to fiile.
+    - The path to some file in the repo.
 
     When
     - Running get_pack_metadata.
 
     Then:
-    - Ensure the returned pack metadata
+    - Ensure the returned pack metadata of the file's pack.
     """
+    metadata_json = {"name": "MyPack", "support": "xsoar", "currentVersion": "1.1.0"}
+
     pack = repo.create_pack('MyPack')
     pack_metadata = pack.pack_metadata
-    pack_metadata.update({"name": "MyPack",
-                          "support": "xsoar",
-                          "currentVersion": "1.1.0"
-                          })
+    pack_metadata.update(metadata_json)
 
     result = get_pack_metadata(pack.path)
 
-    assert pack_metadata.read_json_as_dict() == result
+    assert metadata_json == result

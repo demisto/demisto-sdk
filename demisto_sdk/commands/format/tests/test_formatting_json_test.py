@@ -756,19 +756,39 @@ class TestFormattingReport:
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
 
-    def test_set_fromversion_six_new_contributor_pack(self, pack, mocker):
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
         """
         Given
-            - An integration from new countributed pack
+            - An integration from new countributed pack, with no fromversion key at yml
         When
             - Run format command
         Then
             - Ensure that the integration fromversion is set to 6.0.0
         """
-        pack.pack_metadata = {'support': 'partner',
-                              'currentVersion': '1.0.0'}
-        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_pack_metadata', return_value=pack.pack_metadata)
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        incident_type = pack.create_incident_type(name='TestType', content={})
         bs = BaseUpdateJSON(input=incident_type.path)
         bs.set_fromVersion()
         assert bs.data['fromVersion'] == '6.0.0'
+
+    def test_set_fromversion_six_new_contributor_pack(self, pack):
+        """
+        Given
+            - A new countributed pack with - incident types,
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
+        incident_field = pack.create_incident_field(name='TestField', content={'fromVersion': '5.5.0'})
+        indicator_field = pack.create_indicator_field(name='TestFeild', content={'fromVersion': '5.5.0'})
+        indicator_type = pack.create_indicator_type(name='TestType', content={'fromVersion': '5.5.0'})
+        classifier = pack.create_classifier(name='TestClassifier', content={'fromVersion': '5.5.0'})
+        layout = pack.create_layout(name='TestLayout', content={'fromVersion': '5.5.0'})
+        for path in [incident_type.path, incident_field.path, indicator_field.path, indicator_type.path,
+                     classifier.path, layout.path]:
+            bs = BaseUpdateJSON(input=path)
+            bs.set_fromVersion()
+            assert bs.data['fromVersion'] == '6.0.0'

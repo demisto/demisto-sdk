@@ -1,10 +1,15 @@
 # Changelog
+* Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+
+# 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 * Fixed issue where running the **generate-docs** command with -c flag ran all the commands and not just the commands specified by the flag.
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
+* Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 * When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
 * When formatting new contributors packs, the **format** command will set *fromversion* to 6.0.0 unless stated another version.
 

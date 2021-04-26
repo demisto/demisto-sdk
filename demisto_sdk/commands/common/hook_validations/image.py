@@ -41,6 +41,7 @@ class ImageValidator(BaseValidator):
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given()
+                    self.file_path = file_path.replace('.yml', '_image.png')
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 

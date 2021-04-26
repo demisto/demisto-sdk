@@ -29,11 +29,10 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SDK_API_GITHUB_RELEASES,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
+    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -176,7 +175,7 @@ def get_remote_file(full_file_path, tag='master', return_content=False, suppress
 
     """
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.replace('origin/', '')
+    tag = tag.replace('origin/', '').replace('demisto/', '')
 
     # The replace in the end is for Windows support
     github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
@@ -363,7 +362,7 @@ def get_file(method, file_path, type_of_file):
                 data_dictionary = method(stream)
             except Exception as e:
                 print_error(
-                    "{} has a structure issue of file type{}. Error was: {}".format(file_path, type_of_file, str(e)))
+                    "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
                 return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary

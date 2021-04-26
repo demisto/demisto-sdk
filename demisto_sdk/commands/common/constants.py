@@ -790,12 +790,12 @@ class GithubContentConfig:
     BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'
     SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
     OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
+    CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
+    CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
 
     CURRENT_REPOSITORY: str
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
-    CONTENT_GITHUB_UPSTREAM: str
-    CONTENT_GITHUB_ORIGIN: str
 
     def __init__(self, repo_name: Optional[str] = None):
 
@@ -807,8 +807,6 @@ class GithubContentConfig:
 
         self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
         self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
-        self.CONTENT_GITHUB_UPSTREAM = rf'upstream.*{self.CURRENT_REPOSITORY}'
-        self.CONTENT_GITHUB_ORIGIN = rf'origin.*{self.CURRENT_REPOSITORY}'
         self.Credentials = GithubCredentials()
 
     @staticmethod

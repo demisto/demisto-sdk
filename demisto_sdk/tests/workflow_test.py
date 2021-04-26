@@ -118,10 +118,16 @@ class ContentGitRepo:
                 # commit flow - secrets, lint and validate only on staged files without rn
                 res = runner.invoke(main, "secrets")
                 assert res.exit_code == 0
+
                 res = runner.invoke(main, "lint -g --no-test")
                 assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
-                                          "--no-docker-checks --debug-git")
+
+                res = runner.invoke(
+                    main,
+                    "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
+                    "--no-docker-checks --debug-git"
+                )
+
                 assert res.exit_code == 0
 
                 # build flow - validate on all changed files
@@ -210,7 +216,7 @@ def init_pack(content_repo: ContentGitRepo):
             input="\n".join(["y", "Sample", "description", "1", "1", "n"])
         )
         try:
-            assert res.exit_code == 0, res.stdout
+            assert res.exit_code == 0
         except AssertionError:
             raise AssertionError(f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}")
         content_repo.run_validations()
@@ -331,7 +337,6 @@ def test_workflow_by_sequence(function: Callable):
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:
         function: A test to run
-        monekeypatch: MonkeyPatch object
 
     Workflow:
         The tests will use ContentGitRepo as a base content repository.
@@ -341,8 +346,7 @@ def test_workflow_by_sequence(function: Callable):
         Create/Modify files:
             The test will create new files or will modify them.
         Run Demisto-SDK commands:
-            Will run any tested demisto-sdk functionality. as the init command and update-release-notes.
-        Run validations:
+            Will run any tested demisto-sdk functionality. as the init com
             Will run all validation with expected the test to pass.
             * secrets
             * lint -g --no-test

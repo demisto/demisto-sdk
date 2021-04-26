@@ -867,7 +867,7 @@ class ValidateManager:
 
         packs_that_have_missing_rn = packs_that_should_have_new_rn.difference(packs_that_have_new_rn)
 
-        if len(packs_that_have_missing_rn) > 0:
+        if packs_that_have_missing_rn:
             is_valid = set()
             for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack

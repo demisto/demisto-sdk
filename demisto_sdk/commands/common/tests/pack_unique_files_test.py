@@ -168,7 +168,7 @@ class TestPackUniqueFilesValidator:
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
 
-        def error_raising_function(argument):
+        def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
         mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)

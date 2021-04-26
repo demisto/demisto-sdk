@@ -14,7 +14,7 @@ import click
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,
-    FileType)
+    FileType, GithubContentConfig)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -156,7 +156,7 @@ class UpdateRN:
         master_current_version = '0.0.0'
         master_metadata = None
         try:
-            master_metadata = get_remote_file(self.metadata_path)
+            master_metadata = get_remote_file(self.metadata_path, github_repo=GithubContentConfig().CURRENT_REPOSITORY)
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "

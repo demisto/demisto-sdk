@@ -176,7 +176,7 @@ class ContentGitRepo:
                 stream.write(content)
 
 
-content_git_repo = None
+content_git_repo: Optional[ContentGitRepo] = None
 
 
 @pytest.fixture(autouse=True)
@@ -192,7 +192,7 @@ def function_setup():
     content_git_repo.create_branch()
 
 
-def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
+def init_pack(content_repo: ContentGitRepo, _):
     """
     Given: Instruction to create a new pack using the sdk.
         Fill metadata: y
@@ -230,10 +230,10 @@ def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     res = runner.invoke(main, "init --integration -n Sample", input='y')
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     content_repo.run_command("git add .")
-
     monkeypatch.chdir(content_repo.content)
     res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    content_repo.update_rn()
     content_repo.run_validations()
 
 
@@ -261,7 +261,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     content_repo.run_validations()
 
 
-def all_files_renamed(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
+def all_files_renamed(content_repo: ContentGitRepo, _):
     """
     Given: HelloWorld Integration
 
@@ -278,10 +278,14 @@ def all_files_renamed(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
             content_repo.run_command(
                 f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
             )
+    runner = CliRunner(mix_stderr=False)
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    content_repo.update_rn()
     content_repo.run_validations()
 
 
-def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
+def rename_incident_field(content_repo: ContentGitRepo, _):
     """
     Given: Incident field in HelloWorld pack.
 
@@ -290,7 +294,6 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
     Then: Validate lint, secrets and validate exit code is 0
 
     """
-    monkeypatch.chdir(content_repo.content)
     hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
     curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
 

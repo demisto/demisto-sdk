@@ -12,7 +12,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 import click
 import colorama
@@ -161,13 +161,20 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
+core_pack_list: Optional[list] = None
+
+
 def get_core_pack_list():
-    if is_external_repository():
-        return []
-    else:
-        return get_remote_file(
+    global core_pack_list
+    if isinstance(core_pack_list, list):
+        return core_pack_list
+    if not is_external_repository():
+        core_pack_list = get_remote_file(
             'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ) or []
+    else:
+        core_pack_list = []
+    return core_pack_list
 
 
 @lru_cache(maxsize=64)
@@ -214,7 +221,7 @@ def get_remote_file(
                 )
         res = requests.get(github_path, verify=False, timeout=10, headers=headers)
         res.raise_for_status()
-    except (requests.exceptions.HTTPError, requests.exceptions.MissingSchema) as exc:
+    except Exception as exc:
         if not suppress_print:
             print_warning(
                 f'Could not find the old entity file under "{github_path}".\n'

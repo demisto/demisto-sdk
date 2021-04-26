@@ -20,6 +20,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
 XSOAR_EULA_URL = 'https://github.com/demisto/content/blob/master/LICENSE'
+
 CORE_PACKS_LIST = get_core_pack_list()
 
 

@@ -3,8 +3,9 @@ import re
 from enum import Enum
 from typing import List, Optional
 
-# dirs
 from demisto_sdk.commands.common.git_util import GitUtil
+# dirs
+from git import InvalidGitRepositoryError
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -811,8 +812,14 @@ class GithubContentConfig:
 
     @staticmethod
     def _get_repository_name() -> str:
-        for url in GitUtil().repo.remote().urls:
-            return re.findall(r':(.*)\.', url)[0]
+        """Returns the git repository of the cwd.
+        if not running in a git repository, will return an empty string
+        """
+        try:
+            for url in GitUtil().repo.remote().urls:
+                return re.findall(r':(.*)\.', url)[0]
+        except (AttributeError, InvalidGitRepositoryError, IndexError):
+            pass
         return ''
 
 

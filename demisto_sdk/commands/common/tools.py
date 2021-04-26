@@ -165,7 +165,9 @@ def get_core_pack_list():
     if is_external_repository():
         return []
     else:
-        return get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+        return get_remote_file(
+            'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ) or []
 
 
 @lru_cache(maxsize=64)

@@ -64,8 +64,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, open_id_set_file,
-                                               run_command)
+                                               get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version

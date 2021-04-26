@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
@@ -10,6 +11,7 @@
 * Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 * Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 * When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
+* Added an option to fill in the developer email when running the **init** command.
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.

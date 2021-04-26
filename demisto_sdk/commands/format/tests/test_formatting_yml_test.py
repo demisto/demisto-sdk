@@ -895,7 +895,7 @@ class TestFormatting:
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, mocker, pack):
         """
         Given
-            - An integration from new countributed pack, with no fromversion key ant yml
+            - An integration from new countributed pack, with no fromversion key at yml
         When
             - Run format command
         Then

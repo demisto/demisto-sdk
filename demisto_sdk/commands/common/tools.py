@@ -1689,7 +1689,7 @@ def to_pascal_case(s: str):
 
 
 def get_pack_metadata(file_path: str) -> dict:
-    """ Get pack_metadata dict, related to file those path was provided
+    """ Get the pack_metadata dict, of the pack containing the given file path.
 
     Args:
         file_path(str): file path

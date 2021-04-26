@@ -321,7 +321,7 @@ class Initiator:
         else:  # community pack url should refer to the marketplace live discussions
             pack_metadata['url'] = MARKETPLACE_LIVE_DISCUSSIONS
 
-        dev_email = input("\nThe email will be used to inform you for any changes on your pack (optional): ")
+        dev_email = input("\nThe email will be used to inform you for any changes made to your pack (optional): ")
         if dev_email:
             pack_metadata['devEmail'] = [e.strip() for e in dev_email.split(',') if e]
 

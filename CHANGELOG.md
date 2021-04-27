@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
+* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
 
 # 1.3.5

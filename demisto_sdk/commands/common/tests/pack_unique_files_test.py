@@ -170,8 +170,10 @@ class TestPackUniqueFilesValidator:
 
         def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
-
-        mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
+        mocker.patch(
+            'demisto_sdk.commands.common.hook_validations.pack_unique_files.get_core_pack_list',
+            side_effect=error_raising_function
+        )
         assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 

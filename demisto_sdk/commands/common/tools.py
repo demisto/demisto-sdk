@@ -12,7 +12,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -177,13 +177,44 @@ def get_core_pack_list():
     return core_pack_list
 
 
+def urljoin(url, suffix=""):
+    """
+        Will join url and its suffix
+
+        Example:
+        "https://google.com/", "/"   => "https://google.com/"
+        "https://google.com", "/"   => "https://google.com/"
+        "https://google.com", "api"   => "https://google.com/api"
+        "https://google.com", "/api"  => "https://google.com/api"
+        "https://google.com/", "api"  => "https://google.com/api"
+        "https://google.com/", "/api" => "https://google.com/api"
+
+        :type url: ``string``
+        :param url: URL string (required)
+
+        :type suffix: ``string``
+        :param suffix: the second part of the url
+
+        :rtype: ``string``
+        :return: Full joined url
+    """
+    if url[-1:] != "/":
+        url = url + "/"
+
+    if suffix.startswith("/"):
+        suffix = suffix[1:]
+        return url + suffix
+
+    return url + suffix
+
+
 @lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        github_repo=GithubContentConfig().CURRENT_REPOSITORY
+        github_repo: Optional[str] = None
 ):
     """
     Args:
@@ -196,14 +227,17 @@ def get_remote_file(
         The file content in the required format.
 
     """
+    if not github_repo:
+        github_repo = GithubContentConfig().CURRENT_REPOSITORY
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
-    # The replace in the end is for Windows support
-    github_path = os.path.join(
-        GithubContentConfig(
-            github_repo).CONTENT_GITHUB_LINK, tag, full_file_path
-    ).replace('\\', '/')
+    github_path = urljoin(
+        urljoin(
+            GithubContentConfig(
+                github_repo).CONTENT_GITHUB_LINK, tag
+        ), full_file_path
+    )
     try:
         headers = {}
         if is_external_repository():

@@ -14,7 +14,7 @@ import click
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,
-    FileType, GithubContentConfig)
+    FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -153,17 +153,13 @@ class UpdateRN:
         """
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
-        master_current_version = '0.0.0'
-        master_metadata = None
         try:
-            master_metadata = get_remote_file(self.metadata_path, github_repo=GithubContentConfig().CURRENT_REPOSITORY)
-            master_current_version = master_metadata.get('currentVersion', '0.0.0')
+            master_metadata = get_remote_file(self.metadata_path)
+            return master_metadata.get('currentVersion', '0.0.0')
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")
-        if master_metadata:
-            master_current_version = master_metadata.get('currentVersion', '0.0.0')
-        return master_current_version
+            return '0.0.0'
 
     def is_bump_required(self):
         """

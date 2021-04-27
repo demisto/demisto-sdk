@@ -805,9 +805,10 @@ class GithubContentConfig:
             self.CURRENT_REPOSITORY = repo_name
         else:
             self.CURRENT_REPOSITORY = repo_name
-
-        self.CONTENT_GITHUB_LINK = os.path.join(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
-        self.CONTENT_GITHUB_MASTER_LINK = os.path.join(self.CONTENT_GITHUB_LINK, r'master')
+        # DO NOT USE os.path.join on URLs, it may cause errors
+        self.CONTENT_GITHUB_LINK = self.BASE_RAW_GITHUB_LINK + self.CURRENT_REPOSITORY
+        self.CONTENT_GITHUB_MASTER_LINK = self.CONTENT_GITHUB_LINK + r'master' if self.CONTENT_GITHUB_LINK.endswith(
+            '/') else self.CONTENT_GITHUB_LINK + '/' + r'master'
         self.Credentials = GithubCredentials()
 
     @staticmethod
@@ -817,7 +818,7 @@ class GithubContentConfig:
         """
         try:
             for url in GitUtil().repo.remote().urls:
-                return re.findall(r':(.*)\.', url)[0]
+                return re.findall(r':(.*)\.', url)[0].replace('//github.com/', '')
         except (AttributeError, InvalidGitRepositoryError, IndexError):
             pass
         return ''

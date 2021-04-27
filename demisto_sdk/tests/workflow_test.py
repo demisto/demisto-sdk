@@ -15,6 +15,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 class TestError(BaseException):
+    __test__ = False
     pass
 
 
@@ -55,8 +56,8 @@ class ContentGitRepo:
         logging.debug('Content dir path: %s ' % content_git_repo)
         # In circleCI, the dir is already there
         if os.path.isdir(circle_content_dir):
-            self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
             logging.debug('Found circle content dir, copying')
+            self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
         # Local machine - search for content alias
         elif os.environ.get('CONTENT'):
             logging.debug('Found CONTENT env var, copying.')
@@ -66,10 +67,6 @@ class ContentGitRepo:
         else:
             logging.debug('Cloning content repo')
             self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
-        # Resetting the git branch
-        self.git_cleanup()
-        # pulling if not pulled
-        self.run_command("git pull")
 
     def __del__(self):
         """

@@ -177,37 +177,6 @@ def get_core_pack_list():
     return core_pack_list
 
 
-def urljoin(url, suffix=""):
-    """
-        Will join url and its suffix
-
-        Example:
-        "https://google.com/", "/"   => "https://google.com/"
-        "https://google.com", "/"   => "https://google.com/"
-        "https://google.com", "api"   => "https://google.com/api"
-        "https://google.com", "/api"  => "https://google.com/api"
-        "https://google.com/", "api"  => "https://google.com/api"
-        "https://google.com/", "/api" => "https://google.com/api"
-
-        :type url: ``string``
-        :param url: URL string (required)
-
-        :type suffix: ``string``
-        :param suffix: the second part of the url
-
-        :rtype: ``string``
-        :return: Full joined url
-    """
-    if url[-1:] != "/":
-        url = url + "/"
-
-    if suffix.startswith("/"):
-        suffix = suffix[1:]
-        return url + suffix
-
-    return url + suffix
-
-
 @lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
@@ -232,12 +201,10 @@ def get_remote_file(
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
-    github_path = urljoin(
-        urljoin(
-            GithubContentConfig(
-                github_repo).CONTENT_GITHUB_LINK, tag
-        ), full_file_path
-    )
+    github_path = os.path.join(GithubContentConfig(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path)
+    if github_path.startswith('//'):  # Sometimes the os.path.join is not working as intended for urls
+        github_path = 'https' + github_path
+
     try:
         headers = {}
         if is_external_repository():

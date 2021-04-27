@@ -186,7 +186,6 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid core pack dependencies error is printed.
         """
-
         dependencies_packs = {'dependency_pack_1': {'mandatory': True, 'display_name': 'dependency pack 1'},
                               'dependency_pack_2': {'mandatory': False, 'display_name': 'dependency pack 2'},
                               'dependency_pack_3': {'mandatory': True, 'display_name': 'dependency pack 3'}}

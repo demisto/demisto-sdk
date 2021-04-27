@@ -194,7 +194,7 @@ ERROR_CODE = {
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
     "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
     "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
-    "invalid_core_package_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
+    "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1315,8 +1315,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_core_package_dependencies(core_pack, dependency_pack):
-        return f'The core pack {core_pack} can not depend on a non-core pack: {dependency_pack} - revert this change.'
+    def invalid_core_pack_dependencies(core_pack, dependencies_packs):
+        return f'The core pack {core_pack} can not depend on non-core packs: {dependencies_packs} - ' \
+               f'please revert this change.'
 
     @staticmethod
     @error_code_decorator

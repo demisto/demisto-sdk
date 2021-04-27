@@ -13,6 +13,10 @@ from ruamel import yaml
 from TestSuite.test_tools import ChangeCWD
 
 
+class TestError(BaseException):
+    pass
+
+
 def list_files(path: Path) -> Generator[str, None, None]:
     """
     Yield files only in dir
@@ -233,7 +237,10 @@ def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     monkeypatch.chdir(content_repo.content)
     res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-    content_repo.update_rn()
+    try:
+        content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
     content_repo.run_validations()
 
 
@@ -257,7 +264,10 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     content_repo.run_command("git add .")
     # Get the newest rn file and modify it.
-    content_repo.update_rn()
+    try:
+        content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
     content_repo.run_validations()
 
 
@@ -281,7 +291,10 @@ def all_files_renamed(content_repo: ContentGitRepo, _):
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-    content_repo.update_rn()
+    try:
+        content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
     content_repo.run_validations()
 
 
@@ -301,8 +314,12 @@ def rename_incident_field(content_repo: ContentGitRepo, _):
         f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
     )
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-    content_repo.update_rn()
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    try:
+        content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
     content_repo.run_validations()
 
 

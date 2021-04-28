@@ -55,17 +55,17 @@ class ContentGitRepo:
         self.content = tmpdir / 'content'
         logging.debug('Content dir path: %s ' % content_git_repo)
         # In circleCI, the dir is already there
-        # if os.path.isdir(circle_content_dir):
-        #     logging.debug('Found circle content dir, copying')
-        #     self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
+        if os.path.isdir(circle_content_dir):
+            logging.debug('Found circle content dir, copying')
+            self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
         # # Local machine - search for content alias
-        # elif os.environ.get('CONTENT'):
-        #     logging.debug('Found CONTENT env var, copying.')
-        #     curr_content = os.environ.get('CONTENT')
-        #     self.run_command(f"cp -r {curr_content} {tmpdir}", cwd=Path(os.getcwd()))
+        elif os.environ.get('CONTENT'):
+            logging.debug('Found CONTENT env var, copying.')
+            curr_content = os.environ.get('CONTENT')
+            self.run_command(f"cp -r {curr_content} {tmpdir}", cwd=Path(os.getcwd()))
         # # Cloning content
-        # else:
-        logging.debug('Cloning content repo')
+        else:
+            logging.debug('Cloning content repo')
         self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
 
     def __del__(self):

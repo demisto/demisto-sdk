@@ -86,6 +86,7 @@ class UpdateRN:
                 else:
                     new_metadata = self.get_pack_metadata()
                     new_version = new_metadata.get('currentVersion', '99.99.99')
+                    print(f'new version from local pack meta {new_version}')
             except ValueError as e:
                 click.secho(str(e), fg='red')
                 sys.exit(1)
@@ -171,9 +172,11 @@ class UpdateRN:
             if self.only_docs_changed():
                 return False
             new_metadata = self.get_pack_metadata()
-            new_version = new_metadata.get('currentVersion', '99.99.99')
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            local_version = new_metadata.get('currentVersion', '99.99.99')
+            if LooseVersion(self.master_version) >= LooseVersion(local_version):
+                print(f'Version bump required, bumping from {local_version}. master is {self.master_version}')
                 return True
+            print(f'Version bump not required, local version is {local_version}. master is {self.master_version}')
             return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"

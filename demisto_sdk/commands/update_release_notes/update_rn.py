@@ -91,6 +91,7 @@ class UpdateRN:
                 click.secho(str(e), fg='red')
                 sys.exit(1)
             rn_path = self.return_release_notes_path(new_version)
+            print(f'The rn_path to create rns {rn_path}')
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
@@ -156,7 +157,10 @@ class UpdateRN:
         """
         try:
             master_metadata = get_remote_file(self.metadata_path)
-            return master_metadata.get('currentVersion', '0.0.0')
+            version = master_metadata.get('currentVersion')
+            if not version:
+                raise ValueError(
+                    f'Could not find version in {self.metadata_path}. metadata is \n{json.dumps(master_metadata, indent=4)}')
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")

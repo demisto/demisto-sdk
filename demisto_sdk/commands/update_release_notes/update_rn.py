@@ -156,7 +156,9 @@ class UpdateRN:
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
         try:
+            print(f'Entering get remote, metadata path = {self.metadata_path}')
             master_metadata = get_remote_file(self.metadata_path)
+            print('Getting out of get remote')
             version = master_metadata.get('currentVersion')
             if not version:
                 raise ValueError(

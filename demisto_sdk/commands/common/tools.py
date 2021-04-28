@@ -6,7 +6,6 @@ import os
 import re
 import shlex
 import sys
-import urllib
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
@@ -178,7 +177,7 @@ def get_core_pack_list():
     return core_pack_list
 
 
-# @lru_cache(maxsize=64)
+@lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',

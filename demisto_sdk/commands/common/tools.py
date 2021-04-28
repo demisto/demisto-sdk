@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+import urllib
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum

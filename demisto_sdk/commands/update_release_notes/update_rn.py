@@ -86,12 +86,10 @@ class UpdateRN:
                 else:
                     new_metadata = self.get_pack_metadata()
                     new_version = new_metadata.get('currentVersion', '99.99.99')
-                    print(f'new version from local pack meta {new_version}')
             except ValueError as e:
                 click.secho(str(e), fg='red')
                 sys.exit(1)
             rn_path = self.return_release_notes_path(new_version)
-            print(f'The rn_path to create rns {rn_path}')
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
@@ -123,22 +121,18 @@ class UpdateRN:
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
                 if self.existing_rn_changed:
-                    print_color(
-                        f"Finished updating release notes for {self.pack}."
-                        f"\nNext Steps:\n - Please review the "
-                        f"created release notes found at {rn_path} and document any changes you "
-                        f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
-                        f"the new release notes to your branch.\nFor information regarding proper"
-                        f" format of the release notes, please refer to "
-                        f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
-
+                    print_color(f"Finished updating release notes for {self.pack}."
+                                f"\nNext Steps:\n - Please review the "
+                                f"created release notes found at {rn_path} and document any changes you "
+                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                                f"the new release notes to your branch.\nFor information regarding proper"
+                                f" format of the release notes, please refer to "
+                                f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
                     return True
                 else:
-                    click.secho(
-                        "No changes to pack files were detected from the previous time "
-                        "this command was run. The release notes have not been "
-                        "changed.", fg='green'
-                    )
+                    click.secho("No changes to pack files were detected from the previous time "
+                                "this command was run. The release notes have not been "
+                                "changed.", fg='green')
             else:
                 click.secho("No changes which would belong in release notes were detected.", fg='yellow')
         return False
@@ -155,18 +149,16 @@ class UpdateRN:
         """
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
+        master_current_version = '0.0.0'
+        master_metadata = None
         try:
-            print(f'Entering get remote, metadata path = {self.metadata_path}')
             master_metadata = get_remote_file(self.metadata_path)
-            print('Getting out of get remote')
-            version = master_metadata.get('currentVersion')
-            if not version:
-                raise ValueError(
-                    f'Could not find version in {self.metadata_path}. metadata is \n{json.dumps(master_metadata, indent=4)}')
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")
-            return '0.0.0'
+        if master_metadata:
+            master_current_version = master_metadata.get('currentVersion', '0.0.0')
+        return master_current_version
 
     def is_bump_required(self):
         """
@@ -178,11 +170,9 @@ class UpdateRN:
             if self.only_docs_changed():
                 return False
             new_metadata = self.get_pack_metadata()
-            local_version = new_metadata.get('currentVersion', '99.99.99')
-            if LooseVersion(self.master_version) >= LooseVersion(local_version):
-                print(f'Version bump required, bumping from {local_version}. master is {self.master_version}')
+            new_version = new_metadata.get('currentVersion', '99.99.99')
+            if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 return True
-            print(f'Version bump not required, local version is {local_version}. master is {self.master_version}')
             return False
         except RuntimeError:
             print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"

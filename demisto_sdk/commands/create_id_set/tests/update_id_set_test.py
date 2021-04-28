@@ -1101,9 +1101,7 @@ class TestMappers:
         outgoing_mapper_snow = {
             "defaultIncidentType": "ServiceNow Ticket",
             "description": "Maps outgoing ServiceNow incident Fields.",
-            "script": {
-                "feed": False,
-            },
+            "feed": False,
             "fromVersion": "6.0.0",
             "id": "ServiceNow-outgoing-mapper",
             "mapping": {

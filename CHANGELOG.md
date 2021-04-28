@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+* Added a validation that make sure the integration image name is a valid name.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

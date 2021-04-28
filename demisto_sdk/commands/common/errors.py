@@ -114,6 +114,7 @@ ERROR_CODE = {
     "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
     "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
     "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
     "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
@@ -773,6 +774,12 @@ class Errors:
     @error_code_decorator
     def default_image_error():
         return "This is the default image, please change to the integration image."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_name():
+        return "The image name is invalid. " \
+               "please make sure the name looks like the following: <integration_name>_image.png"
 
     @staticmethod
     @error_code_decorator

@@ -57,6 +57,8 @@ class ImageValidator(BaseValidator):
         if is_existing_image or '.png' in self.file_path:
             self.is_not_default_image()
 
+        self.is_valid_image_name()
+
         return self._is_valid
 
     def oversize_image(self):
@@ -157,4 +159,16 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    def is_valid_image_name(self):
+        """Check if the image name is valid"""
+
+        if not self.file_path.endswith("_image.png"):
+            error_message, error_code = Errors.invalid_image_name()
+
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+
         return True

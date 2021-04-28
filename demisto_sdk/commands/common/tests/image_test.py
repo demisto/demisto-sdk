@@ -169,7 +169,7 @@ def test_is_valid_image_name(repo):
     integration_1.create_default_integration()
     integration_2.create_default_integration()
 
-    integration_2.image = File(integration_2._tmpdir_integration_path / f'{integration_2}_img.png',
+    integration_2.image = File(integration_2._tmpdir_integration_path / f'{integration_2.name}_img.png',
                                integration_2._repo.path)
 
     image_validator_1 = image.ImageValidator(integration_1.yml.path)

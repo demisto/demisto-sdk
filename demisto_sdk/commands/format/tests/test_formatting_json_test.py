@@ -775,7 +775,7 @@ class TestFormattingReport:
         """
         Given
             - A new contributed pack with - incident types, incident field, indicator field, indicator type,
-            classifier and layout
+            classifier and layout s
         When
             - Run format command
         Then

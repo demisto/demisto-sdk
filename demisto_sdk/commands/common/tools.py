@@ -178,7 +178,6 @@ def get_core_pack_list():
     return core_pack_list
 
 
-@lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',

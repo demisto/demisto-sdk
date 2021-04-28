@@ -108,7 +108,8 @@ class TestIDSetCreator:
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
         pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'name':
-                                                         'integration to create id set'}, name='integration1')
+                                                         'integration to create id set',
+                                                         'script': {'script': 'not empty'}}, name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')

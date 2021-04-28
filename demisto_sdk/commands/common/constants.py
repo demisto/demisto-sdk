@@ -2,7 +2,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
@@ -805,28 +805,23 @@ class GithubContentConfig:
 
     def __init__(self, repo_name: Optional[str] = None):
         if not repo_name:
-            repo_name = self._get_repository_name()
+            repo_name = self._get_repository_name(GitUtil().repo.remote().urls)
             self.CURRENT_REPOSITORY = repo_name
         else:
             self.CURRENT_REPOSITORY = repo_name
-        print(f'Repositoryu name is {repo_name}')
         # DO NOT USE os.path.join on URLs, it may cause errors
         self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
-        print(f'self.CONTENT_GITHUB_LINK = {self.CONTENT_GITHUB_LINK}')
         self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
         self.Credentials = GithubCredentials()
 
     @staticmethod
-    def _get_repository_name() -> str:
+    def _get_repository_name(urls: Iterable) -> str:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
-        print('in get repo name')
         try:
-            for url in GitUtil().repo.remote().urls:
-                print(f'url is {url}')
-                repo = re.findall(r':(.*)\.', url)[0].replace('//github.com/', '')
-                print(f'the repo is {repo}')
+            for url in urls:
+                repo = re.findall(r'.com/(.*)\.', url)[0].replace('//github.com/', '')
                 return repo
         except (AttributeError, InvalidGitRepositoryError, IndexError):
             pass

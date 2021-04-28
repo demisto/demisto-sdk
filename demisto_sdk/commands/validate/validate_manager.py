@@ -497,12 +497,6 @@ class ValidateManager:
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
 
-        # modified existing RN
-        if is_modified:
-            error_message, error_code = Errors.modified_existing_release_notes(pack_name)
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
-                return False
-
         # added new RN to a new pack
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)

@@ -202,9 +202,10 @@ def get_remote_file(
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
     github_path = os.path.join(GithubContentConfig(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+
     if github_path.startswith('//'):  # Sometimes the os.path.join is not working as intended for urls
         github_path = 'https' + github_path
-
+    print(f'calling path {github_path}')
     try:
         headers = {}
         if is_external_repository():

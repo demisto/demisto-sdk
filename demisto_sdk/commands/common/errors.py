@@ -1317,7 +1317,7 @@ class Errors:
     @error_code_decorator
     def invalid_core_pack_dependencies(core_pack, dependencies_packs):
         return f'The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - ' \
-               f'please revert this change.'
+               f'revert this change.'
 
     @staticmethod
     @error_code_decorator

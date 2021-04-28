@@ -163,18 +163,17 @@ def test_is_valid_image_name(repo):
 
     pack = repo.create_pack('PackName')
 
-    integration_with_valid_image_name = pack.create_integration('IntName_1')
-    integration_with_not_valid_image_name = pack.create_integration('IntName_2')
+    integration_1 = pack.create_integration('IntName_1')
+    integration_2 = pack.create_integration('IntName_2')
 
-    integration_with_valid_image_name.create_default_integration()
-    integration_with_not_valid_image_name.create_default_integration()
+    integration_1.create_default_integration()
+    integration_2.create_default_integration()
 
-    integration_with_not_valid_image_name.image = File(integration_with_not_valid_image_name._tmpdir_integration_path /
-                                                       f'{integration_with_not_valid_image_name.name}_img.png',
-                                                       integration_with_not_valid_image_name._repo.path)
+    integration_2.image = File(integration_2._tmpdir_integration_path / f'{integration_2}_img.png',
+                               integration_2._repo.path)
 
-    image_validator_1 = image.ImageValidator(integration_with_valid_image_name.yml.path)
-    image_validator_2 = image.ImageValidator(integration_with_not_valid_image_name.yml.path)
+    image_validator_1 = image.ImageValidator(integration_1.yml.path)
+    image_validator_2 = image.ImageValidator(integration_2.yml.path)
 
     assert image_validator_1.is_valid_image_name()
     assert not image_validator_2.is_valid_image_name()

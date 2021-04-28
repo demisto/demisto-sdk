@@ -771,7 +771,7 @@ PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
 def urljoin(*args):
-    return reduce(lambda a, b: a.rstrip('/') + '/' + b.lstrip('/'), args).rstrip("/")
+    return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
 
 
 class GithubCredentials:

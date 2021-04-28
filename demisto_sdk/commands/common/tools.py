@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+import urllib
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
@@ -196,16 +197,19 @@ def get_remote_file(
         The file content in the required format.
 
     """
+    print('Im in get remote file!')
     if not github_repo:
         github_repo = GithubContentConfig().CURRENT_REPOSITORY
+    print(f'Im calling repo {github_repo}')
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
+    print(f'tag is {tag}')
     github_path = os.path.join(GithubContentConfig(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
 
     if github_path.startswith('//'):  # Sometimes the os.path.join is not working as intended for urls
         github_path = 'https' + github_path
-    print(f'calling path {github_path}')
+    print(f'The url im calling is {github_path}')
     try:
         headers = {}
         if is_external_repository():

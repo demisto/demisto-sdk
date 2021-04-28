@@ -1,6 +1,7 @@
 import os
 import re
 from enum import Enum
+from functools import reduce
 from typing import List, Optional
 
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -769,6 +770,10 @@ FILE_TYPES_FOR_TESTING = [
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
+def urljoin(*args):
+    return reduce(lambda a, b: a.rstrip('/') + '/' + b.lstrip('/'), args).rstrip("/")
+
+
 class GithubCredentials:
     ENV_TOKEN_NAME = 'GITHUB_TOKEN'
     TOKEN: Optional[str]
@@ -799,16 +804,16 @@ class GithubContentConfig:
     CONTENT_GITHUB_MASTER_LINK: str
 
     def __init__(self, repo_name: Optional[str] = None):
-
         if not repo_name:
             repo_name = self._get_repository_name()
             self.CURRENT_REPOSITORY = repo_name
         else:
             self.CURRENT_REPOSITORY = repo_name
+        print(f'Repositoryu name is {repo_name}')
         # DO NOT USE os.path.join on URLs, it may cause errors
-        self.CONTENT_GITHUB_LINK = self.BASE_RAW_GITHUB_LINK + self.CURRENT_REPOSITORY
-        self.CONTENT_GITHUB_MASTER_LINK = self.CONTENT_GITHUB_LINK + r'master' if self.CONTENT_GITHUB_LINK.endswith(
-            '/') else self.CONTENT_GITHUB_LINK + '/' + r'master'
+        self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
+        print(f'self.CONTENT_GITHUB_LINK = {self.CONTENT_GITHUB_LINK}')
+        self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
         self.Credentials = GithubCredentials()
 
     @staticmethod
@@ -816,9 +821,13 @@ class GithubContentConfig:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
+        print('in get repo name')
         try:
             for url in GitUtil().repo.remote().urls:
-                return re.findall(r':(.*)\.', url)[0].replace('//github.com/', '')
+                print(f'url is {url}')
+                repo = re.findall(r':(.*)\.', url)[0].replace('//github.com/', '')
+                print(f'the repo is {repo}')
+                return repo
         except (AttributeError, InvalidGitRepositoryError, IndexError):
             pass
         return ''

@@ -32,7 +32,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
     PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, FileType, GithubContentConfig)
+    WIDGETS_DIR, FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -197,17 +197,14 @@ def get_remote_file(
 
     """
     print('Im in get remote file!')
-    if not github_repo:
-        github_repo = GithubContentConfig().CURRENT_REPOSITORY
+    github_config = GithubContentConfig(github_repo)
     print(f'Im calling repo {github_repo}')
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
     print(f'tag is {tag}')
-    github_path = os.path.join(GithubContentConfig(github_repo).CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
 
-    if github_path.startswith('//'):  # Sometimes the os.path.join is not working as intended for urls
-        github_path = 'https' + github_path
     print(f'The url im calling is {github_path}')
     try:
         headers = {}

@@ -147,33 +147,48 @@ def test_json_outputs_where_no_image_in_integration(repo):
         assert json_outputs[0]['entityType'] == 'image'
 
 
-def test_is_valid_image_name(repo):
+def test_is_valid_image_name_with_valid_name(repo):
     """
         Given
-            - An integration_1 image with a valid name
-            - An integration_2 image with a invalid name
+            - An integration image with a valid name
 
         When
             - Validating the integration image name
 
         Then
-            - Ensure that image validator for integration_1 passes.
-            - Ensure that image validator for integration_2 failed.
+            - Ensure that image validator for integration passes.
     """
 
     pack = repo.create_pack('PackName')
 
-    integration_1 = pack.create_integration('IntName_1')
-    integration_2 = pack.create_integration('IntName_2')
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
 
-    integration_1.create_default_integration()
-    integration_2.create_default_integration()
+    image_validator = image.ImageValidator(integration.yml.path)
 
-    integration_2.image = File(integration_2._tmpdir_integration_path / f'{integration_2.name}_img.png',
-                               integration_2._repo.path)
+    assert image_validator.is_valid_image_name()
 
-    image_validator_1 = image.ImageValidator(integration_1.yml.path)
-    image_validator_2 = image.ImageValidator(integration_2.yml.path)
 
-    assert image_validator_1.is_valid_image_name()
-    assert not image_validator_2.is_valid_image_name()
+def test_is_valid_image_name_with_invalid_name(repo):
+    """
+        Given
+            - An integration image with a invalid name
+
+        When
+            - Validating the integration image name
+
+        Then
+            - Ensure that image validator for integration failed.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
+                             integration._repo.path)
+
+    image_validator = image.ImageValidator(integration.yml.path)
+
+    assert not image_validator.is_valid_image_name()

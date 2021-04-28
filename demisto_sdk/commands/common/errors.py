@@ -778,7 +778,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_image_name():
-        return "The image name is invalid. " \
+        return "The image's file name is invalid. " \
                "please make sure the name looks like the following: <integration_name>_image.png"
 
     @staticmethod

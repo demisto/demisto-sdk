@@ -1313,6 +1313,13 @@ class TestContext:
         try:
             self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
 
+            for integration in self.playbook.integrations:
+                # if there are server configs to set, we reset containers before so the server configs related to docker
+                # will be applied
+                if integration.configuration and 'server_keys' in integration.configuration.params:
+                    self.server_context._reset_containers()
+                    break
+
             if not self.playbook.configure_integrations(self.client):
                 return PB_Status.FAILED
 
@@ -1341,6 +1348,11 @@ class TestContext:
         except Exception:
             self.build_context.logging_module.exception(f'Failed to run incident test for {self.playbook}')
             return PB_Status.FAILED
+        finally:
+            # handle server config set for the test
+            updated_keys = self._clear_server_keys()
+            if updated_keys:
+                self.server_context._reset_containers()
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:
         """
@@ -1352,6 +1364,28 @@ class TestContext:
         if self.incident_id and test_passed:
             self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
+
+    def _clear_server_keys(self) -> bool:
+        """Deletes server configurations, by setting the value to empty string, that were applied for a test, if applied
+
+        Returns:
+             bool: Whether server configurations were updated to indicate if reset containers is required
+        """
+        updated = False
+        for integration in self.playbook.integrations:
+            if integration.configuration and 'server_keys' not in integration.configuration.params:
+                continue
+            server_configuration = {
+                key: '' for key in integration.configuration.params.get('server_keys', {}).keys()  # type: ignore[union-attr]
+            }
+            update_server_configuration(
+                client=self.client,
+                server_configuration=server_configuration,
+                error_msg='Failed to set server keys',
+                logging_manager=integration.build_context.logging_module,
+            )
+            updated = True
+        return updated
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()

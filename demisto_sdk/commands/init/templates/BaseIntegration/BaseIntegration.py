@@ -124,23 +124,26 @@ def main() -> None:
     :return:
     :rtype:
     """
+    params = demisto.params()
+    args = demisto.args()
+    command = demisto.command()
 
     # TODO: make sure you properly handle authentication
-    # api_key = demisto.params().get('apikey')
+    # api_key = params.get('apikey')
 
     # get the service API url
-    base_url = urljoin(demisto.params()['url'], '/api/v1')
+    base_url = urljoin(params['url'], '/api/v1')
 
     # if your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    verify_certificate = not demisto.params().get('insecure', False)
+    verify_certificate = not params.get('insecure', False)
 
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = demisto.params().get('proxy', False)
+    proxy = params.get('proxy', False)
 
-    demisto.debug(f'Command being called is {demisto.command()}')
+    demisto.debug(f'Command being called is {command}')
     try:
 
         # TODO: Make sure you add the proper headers for authentication
@@ -153,20 +156,24 @@ def main() -> None:
             headers=headers,
             proxy=proxy)
 
-        if demisto.command() == 'test-module':
+        if command == 'test-module':
             # This is the call made when pressing the integration Test button.
             result = test_module(client)
             return_results(result)
 
         # TODO: REMOVE the following dummy command case:
-        elif demisto.command() == 'baseintegration-dummy':
-            return_results(baseintegration_dummy_command(client, demisto.args()))
+        elif command == 'baseintegration-dummy':
+            return_results(baseintegration_dummy_command(client, args))
         # TODO: ADD command cases for the commands you will implement
+
+        # If command called was not implemented, return NotImplementedError
+        else:
+            raise NotImplementedError(f'''Command '{command}' is not implemented.''')
 
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
+        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 
 ''' ENTRY POINT '''

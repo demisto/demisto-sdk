@@ -186,9 +186,13 @@ def test_is_valid_image_name_with_invalid_name(repo):
     integration = pack.create_integration('IntName')
     integration.create_default_integration()
 
+    if os.path.exists(integration.image.path):
+        os.remove(integration.image.path)
+        integration.image = None
+
     integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
                              integration._repo.path)
 
-    image_validator = image.ImageValidator(integration.yml.path)
+    image_validator = image.ImageValidator(integration.image.path)
 
     assert not image_validator.is_valid_image_name()

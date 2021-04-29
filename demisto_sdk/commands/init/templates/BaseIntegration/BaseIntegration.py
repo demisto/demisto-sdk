@@ -156,7 +156,6 @@ def main() -> None:
             headers=headers,
             proxy=proxy)
 
-
         if command == 'test-module':
             # This is the call made when pressing the integration Test button.
             result = test_module(client)

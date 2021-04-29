@@ -246,11 +246,12 @@ class TestPlaybook:
                 return False
         return True
 
-    def configure_integrations(self, client: DefaultApi) -> bool:
+    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
         """
         Configures all integrations that the playbook uses and return a boolean indicating the result
         Args:
             client: The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
             True if all integrations was configured else False
@@ -259,7 +260,9 @@ class TestPlaybook:
         for integration in self.integrations:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
-                                                                       self.is_mockable)
+                                                                       self.is_mockable,
+                                                                       server_context,
+                                                                       )
             if not instance_created:
                 self.build_context.logging_module.error(
                     f'Cannot run playbook {self}, integration {integration} failed to configure')
@@ -270,14 +273,44 @@ class TestPlaybook:
             configured_integrations.append(integration)
         return True
 
-    def disable_integrations(self, client: DefaultApi) -> None:
+    def disable_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> None:
         """
         Disables all integrations that the playbook uses
+        Clears server configurations set for the integration if there are such
+        Reset containers if server configurations were cleared
+
         Args:
             client: The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
+        updated_keys = self._clear_server_keys(client)
+        if updated_keys:
+            server_context._reset_containers()
+
+    def _clear_server_keys(self, client: DefaultApi) -> bool:
+        """Deletes server configurations, by setting the value to empty string, that were applied for a test, if applied
+        Args:
+            client (DefaultApi): The demisto_client to use
+        Returns:
+             bool: Whether server configurations were updated to indicate if reset containers is required
+        """
+        updated = False
+        for integration in self.integrations:
+            if integration.configuration and 'server_keys' not in integration.configuration.params:
+                continue
+            server_configuration = {
+                key: '' for key in integration.configuration.params.get('server_keys', {}).keys()  # type: ignore[union-attr]
+            }
+            update_server_configuration(
+                client=client,
+                server_configuration=server_configuration,
+                error_msg='Failed to set server keys',
+                logging_manager=integration.build_context.logging_module,
+            )
+            updated = True
+        return updated
 
     def delete_integration_instances(self, client: DefaultApi):
         """
@@ -939,15 +972,19 @@ class Integration:
                     f'Deleting integration instance {instance_name} since it is defined by name')
                 self.delete_integration_instance(client, instance.get('id'))
 
-    def _set_server_keys(self, client: DefaultApi) -> None:
+    def _set_server_keys(self, client: DefaultApi, server_context: 'ServerContext') -> None:
         """In case the the params of the test in the content-test-conf repo has 'server_keys' key:
+            Resets containers
             Adds server configuration keys using the demisto_client.
 
         Args:
             client (demisto_client): The configured client to use.
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         if 'server_keys' not in self.configuration.params:  # type: ignore
             return
+
+        server_context._reset_containers()
 
         self.build_context.logging_module.debug(f'Setting server keys for integration: {self}')
 
@@ -966,13 +1003,19 @@ class Integration:
             logging_manager=self.build_context.logging_module
         )
 
-    def create_integration_instance(self, client: DefaultApi, playbook_id: str, is_mockable: bool) -> bool:
+    def create_integration_instance(self,
+                                    client: DefaultApi,
+                                    playbook_id: str,
+                                    is_mockable: bool,
+                                    server_context: 'ServerContext',
+                                    ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
         Args:
             client: The demisto_client instance to use
             playbook_id: The playbook id for which the instance should be created
             is_mockable: Indicates whether the integration should be configured with proxy=True or not
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
             The integration configuration as it exists on the server after it was configured
@@ -1014,7 +1057,7 @@ class Integration:
         }
 
         # set server keys
-        self._set_server_keys(client)
+        self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
@@ -1313,19 +1356,12 @@ class TestContext:
         try:
             self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
 
-            for integration in self.playbook.integrations:
-                # if there are server configs to set, we reset containers before so the server configs related to docker
-                # will be applied
-                if integration.configuration and 'server_keys' in integration.configuration.params:
-                    self.server_context._reset_containers()
-                    break
-
-            if not self.playbook.configure_integrations(self.client):
+            if not self.playbook.configure_integrations(self.client, self.server_context):
                 return PB_Status.FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
-                self.playbook.disable_integrations(self.client)
+                self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
             incident = self.playbook.create_incident(self.client)
@@ -1342,17 +1378,12 @@ class TestContext:
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
 
-            self.playbook.disable_integrations(self.client)
+            self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
             self.build_context.logging_module.exception(f'Failed to run incident test for {self.playbook}')
             return PB_Status.FAILED
-        finally:
-            # handle server config set for the test
-            updated_keys = self._clear_server_keys()
-            if updated_keys:
-                self.server_context._reset_containers()
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:
         """
@@ -1364,28 +1395,6 @@ class TestContext:
         if self.incident_id and test_passed:
             self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
-
-    def _clear_server_keys(self) -> bool:
-        """Deletes server configurations, by setting the value to empty string, that were applied for a test, if applied
-
-        Returns:
-             bool: Whether server configurations were updated to indicate if reset containers is required
-        """
-        updated = False
-        for integration in self.playbook.integrations:
-            if integration.configuration and 'server_keys' not in integration.configuration.params:
-                continue
-            server_configuration = {
-                key: '' for key in integration.configuration.params.get('server_keys', {}).keys()  # type: ignore[union-attr]
-            }
-            update_server_configuration(
-                client=self.client,
-                server_configuration=server_configuration,
-                error_msg='Failed to set server keys',
-                logging_manager=integration.build_context.logging_module,
-            )
-            updated = True
-        return updated
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()

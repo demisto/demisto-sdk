@@ -165,7 +165,12 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
 core_pack_list: Optional[list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
-def get_core_pack_list():
+def get_core_pack_list() -> list:
+    """Getting the core pack list from Github content
+
+    Returns:
+        Core pack list
+    """
     global core_pack_list
     if isinstance(core_pack_list, list):
         return core_pack_list

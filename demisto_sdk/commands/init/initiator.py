@@ -98,7 +98,8 @@ class Initiator:
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
@@ -107,6 +108,7 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -232,6 +234,7 @@ class Initiator:
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
+            self.category = pack_metadata['categories'][0]
             json.dump(pack_metadata, fp, indent=4)
 
             click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
@@ -240,7 +243,7 @@ class Initiator:
         if create_integration in ['y', 'yes']:
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock, template=self.template)
+                                         demisto_mock=self.demisto_mock, template=self.template, category=self.category)
             return integration_init.init()
 
         return True
@@ -457,6 +460,7 @@ class Initiator:
 
         if integration:
             yml_dict["display"] = self.id
+            yml_dict["category"] = self.category
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(

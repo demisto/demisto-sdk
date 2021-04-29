@@ -7,7 +7,7 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 import requests
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -38,6 +38,9 @@ USER_FILL_SECTIONS = [
 
 REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
+PACKS_TO_IGNORE = ['HelloWorld']
+
+DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
@@ -190,8 +193,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               self.readme_content.startswith('<!DOCTYPE html>') or \
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         invalid_paths = re.findall(
@@ -234,20 +237,44 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    def _find_section_in_text(self, sections_list: List[str], ignore_packs: Optional[List[str]] = None) -> str:
+        """
+        Find if sections from the sections list appear in the readme content and returns an error message.
+        Arguments:
+            sections_list - list of strings, each string is a section to find in the text
+            ignore_packs - List of packs and integration names to be ignored
+        Returns:
+            An error message with the relevant sections.
+        """
+        errors = ""
+
+        current_pack_name = self.pack_path.name
+        if ignore_packs and current_pack_name in ignore_packs:
+            print("\n\n ignoring this pack \n\n")
+            return errors
+
+        for section in sections_list:
+            required_section = re.findall(rf'{section}', self.readme_content, re.IGNORECASE)
+            if required_section:
+                errors += f'Replace "{section}" with a suitable info.\n'
+        return errors
+
     def verify_no_default_sections_left(self) -> bool:
         """ Check that there are no default leftovers such as:
             1. 'FILL IN REQUIRED PERMISSIONS HERE'.
             2. unexplicit version number - such as "version xx of".
+            3. Default description belonging to one of the examples integrations
         Returns:
             bool: True If all req ok else False
         """
-        is_valid = True
+
         errors = ""
-        for section in USER_FILL_SECTIONS:
-            required_section = re.findall(rf'{section}', self.readme_content, re.IGNORECASE)
-            if required_section:
-                errors += f'Replace "{section}" with a suitable info.\n'
-                is_valid = False
+        errors += self._find_section_in_text(USER_FILL_SECTIONS)
+        errors += self._find_section_in_text(DEFAULT_SENTENCES,PACKS_TO_IGNORE)
+        is_valid = not bool(errors)
+        print("===================================================\n")
+        print(errors)
+        print("\n===================================================")
 
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)

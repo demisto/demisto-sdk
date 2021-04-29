@@ -238,9 +238,25 @@ class TestGithubContentConfig:
                                  'https://github.com/demisto/content.git'
                              ])
     def test_get_repo_name(self, url: str):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url
+        Then:
+            Validate the correct repo got back (demisto/content)
+        """
         github_config = constants.GithubContentConfig()
         assert github_config._get_repository_name([url]) == 'demisto/content'
 
     def test_get_repo_name_empty_case(self):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            Searching for repository name
+        Then:
+            Validate the correct repo got back
+        """
         github_config = constants.GithubContentConfig()
         assert github_config._get_repository_name([]) == ''

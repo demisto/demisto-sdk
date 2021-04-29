@@ -770,7 +770,19 @@ FILE_TYPES_FOR_TESTING = [
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
 
-def urljoin(*args):
+def urljoin(*args: str):
+    """Gets arguments to join as url
+
+    Args:
+        *args: args to join
+
+    Returns:
+        Joined url
+
+    Examples:
+        >>> urljoin('https://www.example.com', 'suffix/', '/suffix2', 'suffix', 'file.json')
+        'https://www.example.com/suffix/suffix2/suffix/file.json'
+    """
     return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
 
 
@@ -783,14 +795,12 @@ class GithubCredentials:
 
 
 class GithubContentConfig:
-    """Holds links, credentials and other github config
+    """Holds links, credentials and other content related github configuration
 
     Attributes:
         CURRENT_REPOSITORY: The current repository in the cwd
-        CONTENT_GITHUB_LINK: Link to the raw git repository
-        CONTENT_GITHUB_MASTER_LINK: Link to the git master repository
-        CONTENT_GITHUB_UPSTREAM: upstream name
-        CONTENT_GITHUB_ORIGIN: origin name
+        CONTENT_GITHUB_LINK: Link to the raw content git repository
+        CONTENT_GITHUB_MASTER_LINK: Link to the content git repository's master branch
         Credentials: Credentials to the git.
     """
     BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'

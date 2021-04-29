@@ -181,10 +181,10 @@ class BaseUpdate:
                 # In any other case there is nothing to do with the sequence
                 else:
                     sequence = schema.get(field, {}).get('sequence', [])
-                    if sequence and schema.get(field, {}).get('sequence')[0].get('mapping'):
+                    if sequence and sequence[0].get('mapping'):
                         for list_element in data[field]:
                             self.recursive_remove_unnecessary_keys(
-                                schema.get(field, {}).get('sequence')[0].get('mapping'),
+                                sequence[0].get('mapping'),
                                 list_element
                             )
 

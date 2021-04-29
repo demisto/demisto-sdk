@@ -575,7 +575,7 @@ class Initiator:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
         # create test_data dir
-        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES\
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES \
                 + [self.HELLO_WORLD_FEED_INTEGRATION]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
@@ -601,6 +601,7 @@ class Initiator:
                 file_content = tools.get_remote_file(
                     os.path.join(path, filename),
                     return_content=True,
+                    # Templates available only in the official repo
                     github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:

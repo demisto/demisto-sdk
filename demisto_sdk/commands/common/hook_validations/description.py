@@ -27,8 +27,8 @@ class DescriptionValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
-        # Fixing a historic mistake where the init function initated with file path instead of structure validator
-        self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path  # mypy: ignore
+        # Handling a case where the init function initiated with file path instead of structure validator
+        self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
 
     def is_valid(self):
         self.is_duplicate_description()

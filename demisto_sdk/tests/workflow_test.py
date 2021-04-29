@@ -66,7 +66,7 @@ class ContentGitRepo:
         # # Cloning content
         else:
             logging.debug('Cloning content repo')
-        self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
+            self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
 
     def __del__(self):
         """
@@ -125,8 +125,8 @@ class ContentGitRepo:
             res = runner.invoke(main, "secrets")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
-            # res = runner.invoke(main, "lint -g --no-test")
-            # assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+            res = runner.invoke(main, "lint -g --no-test")
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             res = runner.invoke(
                 main,
@@ -338,6 +338,7 @@ def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:
         function: A test to run
+        monkeypatch: A pytest's mocker object. Used to change working directory.
 
     Workflow:
         The tests will use ContentGitRepo as a base content repository.

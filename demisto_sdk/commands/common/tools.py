@@ -162,7 +162,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[list] = None
+core_pack_list: Optional[list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
 def get_core_pack_list():
@@ -174,6 +174,7 @@ def get_core_pack_list():
             'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ) or []
     else:
+        # no core packs in external repos.
         core_pack_list = []
     return core_pack_list
 
@@ -1727,3 +1728,27 @@ def to_pascal_case(s: str):
         return new_s
 
     return s
+
+
+def get_approved_usecases() -> list:
+    """Gets approved list of usecases from content master
+
+    Returns:
+        List of approved usecases
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_usecases.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])
+
+
+def get_approved_tags() -> list:
+    """Gets approved list of tags from content master
+
+    Returns:
+        List of approved tags
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_tags.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])

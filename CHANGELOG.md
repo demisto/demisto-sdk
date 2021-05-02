@@ -1,6 +1,6 @@
 # Changelog
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
-* Fixed an issue where running the **init** command does not set the correct category field in yml which is by default Utilities.
+* Fixed an issue where running the **init** command does not set the correct category field in yml file.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

@@ -989,24 +989,6 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
-    def test_validate_release_notes__invalid_modified_rn(self, mocker):
-        """
-        Given
-            - A modified release note file.
-        When
-            - Run the validate command.
-        Then
-            - validate_release_notes returns False
-        """
-
-        file_path = 'Packs/CortexXDR/ReleaseNotes/1_1_1.md'
-        modified_files = {'Packs/CortexXDR/ReleaseNotes/1_1_1.md'}
-        mocker.patch.object(ReleaseNotesValidator, '__init__', return_value=None)
-        mocker.patch.object(ReleaseNotesValidator, 'is_file_valid', return_value=True)
-        mocker.patch.object(BaseValidator, 'handle_error', return_value="Modified existing release notes")
-        validate_manager = ValidateManager(skip_conf_json=True)
-        assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
-
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),

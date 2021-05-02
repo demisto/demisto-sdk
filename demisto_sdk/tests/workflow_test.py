@@ -228,7 +228,7 @@ def init_integration(content_repo: ContentGitRepo):
     runner = CliRunner(mix_stderr=False)
     hello_world_path = content_repo.content / "Packs" / "HelloWorld" / "Integrations"
     with ChangeCWD(hello_world_path):
-        res = runner.invoke(main, "init --integration -n Sample", input='y')
+        res = runner.invoke(main, "init --integration -n Sample", input="\n".join(["y", "1"]))
         assert res.exit_code == 0
         content_repo.run_command("git add .")
 

@@ -108,7 +108,7 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
-        self.category = category if category else 'Utilities'
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -241,9 +241,14 @@ class Initiator:
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
+            is_same_category = str(input("\nDo you want to set the integration category as you defined in the pack "
+                                         "metadata? Y/N ")).lower()
+
+            integration_category = self.category if is_same_category in ['y', 'yes'] else ''
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock, template=self.template, category=self.category)
+                                         demisto_mock=self.demisto_mock, template=self.template,
+                                         category=integration_category)
             return integration_init.init()
 
         return True
@@ -460,7 +465,8 @@ class Initiator:
 
         if integration:
             yml_dict["display"] = self.id
-            yml_dict["category"] = self.category
+            yml_dict["category"] = self.category if self.category else Initiator.get_valid_user_input(
+                options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(

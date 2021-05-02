@@ -291,6 +291,7 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
 def test_yml_reformatting(tmp_path, initiator):
     integration_id = 'HelloWorld'
     initiator.id = integration_id
+    initiator.category = 'Utilities'
     d = tmp_path / integration_id
     d.mkdir()
     full_output_path = Path(d)

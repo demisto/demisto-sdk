@@ -320,7 +320,7 @@ def test_yml_reformatting(tmp_path, initiator):
             'display': 'HelloWorld',
             'name': 'HelloWorld',
             'fromversion': initiator.SUPPORTED_FROM_VERSION,
-            'category': ''
+            'category': 'Utilities'
         })
 
 

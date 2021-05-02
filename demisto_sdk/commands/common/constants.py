@@ -1194,3 +1194,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }
+
+
+class DemistoException(Exception):
+    pass

@@ -209,6 +209,14 @@ class Initiator:
         elif os.path.isfile('content-descriptor.json'):
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
+        # if in an external repo check for the existence of Packs directory
+        # if it does not exist create it
+        elif tools.is_external_repository():
+            if not os.path.isdir("Packs"):
+                print("Creating 'Packs' directory")
+                os.mkdir('Packs')
+            self.full_output_path = os.path.join("Packs", self.dir_name)
+
         # if non of the above conditions apply - create the pack in current directory
         else:
             self.full_output_path = self.dir_name

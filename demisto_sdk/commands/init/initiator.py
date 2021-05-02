@@ -108,7 +108,7 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
-        self.category = category
+        self.category = category if category else 'Utilities'
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.

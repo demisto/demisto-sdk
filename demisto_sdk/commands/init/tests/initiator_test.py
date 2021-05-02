@@ -398,6 +398,7 @@ def test_integration_init(initiator, tmpdir):
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.template = DEFAULT_INTEGRATION
+    initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
@@ -437,6 +438,7 @@ def test_template_integration_init(initiator, tmpdir, template):
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.template = template
+    initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()

@@ -455,8 +455,8 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         return {Path(item.b_path) for item in self.repo.commit(rev=branch).diff(
-                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
-                self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+            self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+            self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
     def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
         """Get the git status of a given file path
@@ -482,3 +482,15 @@ class GitUtil:
             return ''
 
         return diff_line.split()[0].upper() if not diff_line.startswith('?') else 'A'
+
+    def get_all_changed_files(self, prev_ver: str = 'master', committed_only: bool = False,
+                              staged_only: bool = False, debug: bool = False,
+                              include_untracked: bool = False) -> Set[Path]:
+        modified_files = self.modified_files(prev_ver=prev_ver, committed_only=committed_only, staged_only=staged_only,
+                                             debug=debug, include_untracked=include_untracked)
+        added_files = self.added_files(prev_ver=prev_ver, committed_only=committed_only, staged_only=staged_only,
+                                       debug=debug, include_untracked=include_untracked)
+        renamed_files = self.renamed_files(prev_ver=prev_ver, committed_only=committed_only, staged_only=staged_only,
+                                           debug=debug, include_untracked=include_untracked)
+        renamed_files = {file[1] for file in renamed_files}
+        return modified_files.union(added_files).union(renamed_files)

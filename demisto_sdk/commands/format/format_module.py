@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
@@ -72,7 +72,8 @@ def format_manager(input: str = None,
                    no_validate: bool = False,
                    verbose: bool = False,
                    update_docker: bool = False,
-                   assume_yes: bool = False):
+                   assume_yes: bool = False,
+                   use_git: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -83,14 +84,19 @@ def format_manager(input: str = None,
         verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
         assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        use_git (bool): Use git to automatically recognize which files changed and run format on them
     Returns:
         int 0 in case of success 1 otherwise
     """
+    supported_file_types = ['json', 'yml', 'py', 'md']
+    use_git = use_git or not input
+
     if input:
-        files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
-    else:
-        files = [file['name'] for file in
-                 get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
+        files = get_files_in_dir(input, supported_file_types)
+
+    elif use_git:
+        files = get_files_to_format(supported_file_types)
+
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")
@@ -147,6 +153,21 @@ def format_manager(input: str = None,
     if error_list:
         return 1
     return 0
+
+
+def get_files_to_format(supported_file_types) -> List[str]:
+    git_util = GitUtil()
+    all_changed_files = git_util.get_all_changed_files()
+
+    filtered_files = []
+    for file_path in all_changed_files:
+        str_file_path = str(file_path)
+        for file_type in supported_file_types:
+            if str_file_path.endswith(file_type):
+                filtered_files.append(str_file_path)
+                break
+
+    return filtered_files
 
 
 def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \

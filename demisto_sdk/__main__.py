@@ -559,6 +559,10 @@ def lint(**kwargs):
     "-y", "--assume-yes",
     help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
     is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them",
+    is_flag=True)
 def format_yml(**kwargs):
     return format_manager(**kwargs)
 

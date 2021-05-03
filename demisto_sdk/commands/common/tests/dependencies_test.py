@@ -949,6 +949,7 @@ def test_dependencies(mocker, repo, test_number):
         - Update packs dependencies in pack metadata
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mock_is_external_repo(mocker, False)
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 10
@@ -983,6 +984,7 @@ def test_specific_entity(mocker, repo, entity_class):
         Then
         - Update packs dependencies in pack metadata
     """
+    mock_is_external_repo(mocker, False)
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
@@ -1004,6 +1006,13 @@ def test_specific_entity(mocker, repo, entity_class):
         dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+
+def mock_is_external_repo(mocker, is_external_repo_return):
+    return mocker.patch(
+        'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
+        return_value=is_external_repo_return
+    )
 
 
 def test_dependencies_case_1(mocker, repo):
@@ -1032,6 +1041,7 @@ def test_dependencies_case_1(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')
@@ -1091,6 +1101,7 @@ def test_dependencies_case_2(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')
@@ -1122,3 +1133,63 @@ def test_dependencies_case_2(mocker, repo):
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
     assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))
+
+
+def test_dependencies_case_private_repo(mocker, repo):
+    """
+    Given
+        - External repo with the following items:
+            -"foo" pack containing:
+              - integration_foo which is a feed integration
+            - "bar" pack containing:
+              - mapper_in_bar
+
+            - integration_foo using:
+              - mapper_in_bar
+
+    When
+        - running find_dependencies in an external repo (content-private template)
+
+    Then
+        - foo pack's pack_metadata should include the following dependencies:
+          - bar
+          - CommonTypes
+        - Check is_external_repository called at least once.
+
+    Notes:
+        This test is calling to Official Content bucket to get the ID SET.
+        If it fails on it - There's a problem with the path.
+
+    """
+    # setup the packs
+    pack_foo = repo.create_pack('foo')
+    pack_bar = repo.create_pack('bar')
+    pack_common_types = repo.create_pack('CommonTypes')
+
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': ''})
+    mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
+                                                                          'name': 'mapper_in_bar',
+                                                                          'mapping': {},
+                                                                          'type': 'mapping'})
+    # Pack can not be empty
+    pack_common_types.create_integration('integration_common_types',
+                                         yml={'name': 'integration_common_types', 'category': ''})
+
+    # make integration_foo feed
+    IntegrationDependencies.make_integration_feed(
+        integration_foo
+    )
+
+    # make integration_foo depend on mapper_in_bar
+    IntegrationDependencies.make_integration_depend_on_mapper_in(
+        integration_foo,
+        mapper_in_bar
+    )
+    external_mock = mock_is_external_repo(mocker, True)
+    run_find_dependencies(mocker, repo.path, 'foo')
+
+    expected_dependencies = ['bar', 'CommonTypes']
+    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+
+    assert IsEqualFunctions.is_lists_equal(expected_dependencies, list(dependencies_from_pack_metadata))
+    assert external_mock.call_count >= 1

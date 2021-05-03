@@ -912,11 +912,9 @@ def id_set_command(**kwargs):
 
 
 # ====================== merge-id-sets ====================== #
-@main.command(name='merge-id-sets',
-              hidden=True,
-              short_help='Merge two id_sets')
-@click.help_option(
-    '-h', '--help'
+@main.command(
+    hidden=True,
+    short_help='Merge two id_sets'
 )
 @click.option(
     '-i1', '--id-set1', help='First id_set.json file path', required=True
@@ -927,7 +925,7 @@ def id_set_command(**kwargs):
 @click.option(
     '-o', '--output', help='File path of the united id_set', required=True
 )
-def merge_id_sets_command(**kwargs):
+def merge_id_sets(**kwargs):
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
@@ -1063,11 +1061,7 @@ def update_pack_releasenotes(**kwargs):
 
 
 # ====================== find-dependencies ====================== #
-@main.command(name="find-dependencies",
-              short_help='''Find pack dependencies and update pack metadata.''')
-@click.help_option(
-    '-h', '--help'
-)
+@main.command()
 @click.option(
     "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
     type=click.Path(exists=True, dir_okay=True))
@@ -1076,9 +1070,10 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
-@click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
+@click.option('-v', "--verbose", help="Whether to p rint the log to the console.", required=False,
               is_flag=True)
-def find_dependencies_command(**kwargs):
+def find_dependencies(**kwargs):
+    """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
@@ -1093,7 +1088,7 @@ def find_dependencies_command(**kwargs):
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(pack_name=pack_name,
-                                           id_set_path=id_set_path,  # type: ignore[arg-type]
+                                           id_set_path=str(id_set_path),
                                            verbose=verbose,
                                            update_pack_metadata=update_pack_metadata)
     except ValueError as exp:

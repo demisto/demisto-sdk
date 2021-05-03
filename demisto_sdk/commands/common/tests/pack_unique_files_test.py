@@ -175,6 +175,25 @@ class TestPackUniqueFilesValidator:
         assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
 
+    def test_validate_core_pack_dependencies(self):
+        """
+        Given
+        - A list of non-core packs
+
+        When
+        - Running validate_core_pack_dependencies.
+
+        Then
+        - Ensure that the validation fails and that the invalid core pack dependencies error is printed.
+        """
+        dependencies_packs = {'dependency_pack_1': {'mandatory': True, 'display_name': 'dependency pack 1'},
+                              'dependency_pack_2': {'mandatory': False, 'display_name': 'dependency pack 2'},
+                              'dependency_pack_3': {'mandatory': True, 'display_name': 'dependency pack 3'}}
+
+        assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
+        assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
+            in self.validator.get_errors()
+
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
         Given

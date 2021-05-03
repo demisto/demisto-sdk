@@ -471,6 +471,11 @@ class PackUniqueFilesValidator(BaseValidator):
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
             click.echo(click.style(dependency_result, bold=True))
+
+            if self.pack in core_pack_list:
+                if not self.validate_core_pack_dependencies(first_level_dependencies):
+                    return False
+
             non_supported_pack = first_level_dependencies.get('NonSupported', {})
             deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
 
@@ -487,3 +492,16 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
             else:
                 raise
+
+    def validate_core_pack_dependencies(self, dependencies_packs):
+
+        found_dependencies = []
+        for dependency_pack in dependencies_packs:
+            if dependencies_packs.get(dependency_pack, {}).get('mandatory'):
+                found_dependencies.append(dependency_pack)
+
+        if found_dependencies:
+            error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True

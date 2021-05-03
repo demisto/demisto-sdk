@@ -134,7 +134,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            super().update_yml(is_integration=True)
+            super().update_yml(file_type='integration')
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()

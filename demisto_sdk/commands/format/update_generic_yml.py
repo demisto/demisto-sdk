@@ -86,10 +86,10 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, is_integration=False):
+    def update_yml(self, file_type=''):
         """Manager function for the generic YML updates."""
 
-        self.set_fromVersion(from_version=self.from_version, is_integration=is_integration)
+        self.set_fromVersion(from_version=self.from_version, file_type=file_type)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.update_id_to_equal_name()

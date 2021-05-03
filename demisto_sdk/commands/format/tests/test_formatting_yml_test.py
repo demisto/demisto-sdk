@@ -768,7 +768,7 @@ class TestFormatting:
         click.echo.assert_called_once_with('Could not find sub-schema for input_schema', LOG_COLORS.YELLOW)
 
     @staticmethod
-    def exception_raise():
+    def exception_raise(file_type=''):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [

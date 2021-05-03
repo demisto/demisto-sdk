@@ -195,7 +195,7 @@ class BaseUpdate:
                 return reg
         return None
 
-    def set_fromVersion(self, from_version=None, is_integration=False):
+    def set_fromVersion(self, from_version=None, file_type=''):
         """Sets fromversion key in file:
         Args:
             from_version: The specific from_version value.
@@ -226,7 +226,7 @@ class BaseUpdate:
             # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
             # if it is new contributed pack = setting version to 6.0.0
             elif set_to_6:
-                if self.data.get(self.from_version_key) != '5.5.0' or not is_integration:
+                if self.data.get(self.from_version_key) != '5.5.0' or file_type != 'integration':
                     self.data[self.from_version_key] = VERSION_6_0_0
 
         # If there is an existing file in content repo

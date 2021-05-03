@@ -1038,7 +1038,8 @@ def test_dependencies_case_1(mocker, repo):
     pack_common_types = repo.create_pack('CommonTypes')
 
     playbook_foo = pack_foo.create_playbook('playbook_foo')
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo'})
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo', 'category': '',
+                                                                          'script': {'type': 'python'}})
     script_bar = pack_bar.create_script('script_bar', yml={'script': '', 'type': 'python', 'name': 'script_bar'})
     incident_field_email = pack_common_types.create_incident_field(name='incident_Email',
                                                                    content={'id': 'incident_Email',
@@ -1096,14 +1097,16 @@ def test_dependencies_case_2(mocker, repo):
     pack_bar = repo.create_pack('bar')
     pack_common_types = repo.create_pack('CommonTypes')
 
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': ''})
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': '',
+                                                                          'script': {'type': 'python'}})
     mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
                                                                           'name': 'mapper_in_bar',
                                                                           'mapping': {},
                                                                           'type': 'mapping'})
     # Pack can not be empty
     pack_common_types.create_integration('integration_common_types',
-                                         yml={'name': 'integration_common_types', 'category': ''})
+                                         yml={'name': 'integration_common_types', 'category': '',
+                                              'script': {'type': 'python'}})
 
     # make integration_foo feed
     IntegrationDependencies.make_integration_feed(

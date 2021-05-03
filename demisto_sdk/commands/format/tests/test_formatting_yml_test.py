@@ -910,7 +910,7 @@ class TestFormatting:
     def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
         Given
-            - An integration from new contributed pack with fromversion key at yml
+            - A script, playbook and integration from new contributed pack with fromversion key at the yml
         When
             - Run format command
         Then

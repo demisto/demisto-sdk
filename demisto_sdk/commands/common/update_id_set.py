@@ -194,7 +194,7 @@ def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
 
-    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in ['-', '']
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')

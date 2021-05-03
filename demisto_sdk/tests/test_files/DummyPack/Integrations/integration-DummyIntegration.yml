@@ -1418,9 +1418,9 @@ script:
         main()
   subtype: python3
   type: python
+  feed: true
 fromversion: 4.1.0
 defaultclassifier: dummy-classifier
 defaultIncidentType: dummy-incident-type
-feed: true
 defaultmapperin: dummy-mapper-in
 defaultmapperout: dummy-mapper-out

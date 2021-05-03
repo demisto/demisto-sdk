@@ -43,6 +43,8 @@ from demisto_sdk.commands.generate_integration.code_generator import \
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.integration_diff.integration_diff_detector import \
+    IntegrationDiffDetector
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
     json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
@@ -1393,6 +1395,27 @@ def doc_review(**kwargs):
         release_notes_only=kwargs.get('release_notes'),
     )
     result = doc_reviewer.run_doc_review()
+    if result:
+        sys.exit(0)
+
+    sys.exit(1)
+
+
+# ====================== integration-diff ====================== #
+@main.command(name="integration-diff",
+              help='''Check differences between two integrations, one old and one new.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-n', '--new', type=str, help='The new integration.', required=True)
+@click.option(
+    '-o', '--old', type=str, help='The old integration.', required=True)
+def integration_diff(**kwargs):
+
+    integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))
+    result = integration_diff_detector.check_diff()
+
     if result:
         sys.exit(0)
 

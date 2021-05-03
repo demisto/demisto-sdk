@@ -938,5 +938,5 @@ class TestFormatting:
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.5.0'})
         bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion(is_integration=True)
+        bs.set_fromVersion(file_type='integration')
         assert bs.data['fromversion'] == '5.5.0', integration.yml.path

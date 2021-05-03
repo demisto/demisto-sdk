@@ -6,7 +6,7 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 
 
-def test_c(mocker):
+def test_clear_server_keys(mocker):
     """
     Given:
         - Test playbook and integration to run

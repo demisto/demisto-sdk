@@ -285,14 +285,17 @@ class TestPlaybook:
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
-        updated_keys = self._clear_server_keys(client)
+        updated_keys = self._set_prev_server_keys(client, server_context)
         if updated_keys:
             server_context._reset_containers()
 
-    def _clear_server_keys(self, client: DefaultApi) -> bool:
-        """Deletes server configurations, by setting the value to empty string, that were applied for a test, if applied
+    def _set_prev_server_keys(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
+        """Sets previous stored system (server) config, if existed
+
         Args:
             client (DefaultApi): The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
+
         Returns:
              bool: Whether server configurations were updated to indicate if reset containers is required
         """
@@ -300,16 +303,20 @@ class TestPlaybook:
         for integration in self.integrations:
             if integration.configuration and 'server_keys' not in integration.configuration.params:
                 continue
-            server_configuration = {
-                key: '' for key in integration.configuration.params.get('server_keys', {}).keys()  # type: ignore[union-attr]
-            }
-            update_server_configuration(
-                client=client,
-                server_configuration=server_configuration,
-                error_msg='Failed to set server keys',
-                logging_manager=integration.build_context.logging_module,
-            )
-            updated = True
+            if server_context.prev_system_conf:
+                update_server_configuration(
+                    client=client,
+                    server_configuration=server_context.prev_system_conf,
+                    error_msg='Failed to set server keys',
+                    logging_manager=integration.build_context.logging_module,
+                )
+                server_context.prev_system_conf = {}
+                updated = True
+            else:
+                integration.build_context.logging_module.error(
+                    f'Failed clearing system conf. Found server_keys for integration {integration.name} but could not'
+                    'find previous system conf stored'
+                )
         return updated
 
     def delete_integration_instances(self, client: DefaultApi):
@@ -996,12 +1003,13 @@ class Integration:
         for key, value in self.configuration.params.get('server_keys').items():  # type: ignore
             data['data'][key] = value  # type: ignore
 
-        update_server_configuration(
+        _, _, prev_system_conf = update_server_configuration(
             client=client,
             server_configuration=self.configuration.params.get('server_keys'),  # type: ignore
             error_msg='Failed to set server keys',
             logging_manager=self.build_context.logging_module
         )
+        server_context.prev_system_conf = prev_system_conf
 
     def create_integration_instance(self,
                                     client: DefaultApi,
@@ -1699,6 +1707,7 @@ class ServerContext:
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
+        self.prev_system_conf: dict = {}
 
     def _execute_unmockable_tests(self):
         """

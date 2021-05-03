@@ -18,7 +18,8 @@ import docker.errors
 import git
 import requests
 # Local packages
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
+                                                   DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from docker.models.containers import Container
 
@@ -138,11 +139,17 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
     modules_content = {}
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
+        module_not_found = False
+
         for module in modules:
             try:
                 modules_content[module] = (content_repo.working_dir / module).read_bytes()
             except FileNotFoundError:
+                module_not_found = True
                 logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
+
+        if module_not_found and is_external_repo:
+            raise DemistoException('Unable to find module in external repository')
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:

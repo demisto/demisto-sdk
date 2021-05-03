@@ -16,6 +16,7 @@ from typing import Callable, Dict, Optional, Tuple
 import click
 import networkx
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+                                                   COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,
                                                    DEFAULT_ID_SET_PATH,
                                                    INCIDENT_FIELDS_DIR,
@@ -194,7 +195,7 @@ def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
 
-    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in ['-', '']
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
@@ -209,7 +210,7 @@ def get_integration_data(file_path):
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
-    is_feed = data_dictionary.get('feed')
+    is_feed = data_dictionary.get('script', {}).get('feed', False)
     mappers = set()
 
     deprecated_commands = []
@@ -246,8 +247,9 @@ def get_integration_data(file_path):
     if default_incident_type and default_incident_type != '':
         integration_data['incident_types'] = default_incident_type
     if is_feed:
-        integration_data['indicator_fields'] = "CommonTypes"
-        integration_data['indicator_types'] = "CommonTypes"
+        # if the integration is a feed it should be dependent on CommonTypes
+        integration_data['indicator_fields'] = COMMON_TYPES_PACK
+        integration_data['indicator_types'] = COMMON_TYPES_PACK
 
     return {id_: integration_data}
 

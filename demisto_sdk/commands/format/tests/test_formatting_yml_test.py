@@ -924,3 +924,19 @@ class TestFormatting:
             bs = BaseUpdate(input=path)
             bs.set_fromVersion()
             assert bs.data['fromversion'] == '6.0.0', path
+
+    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
+        """
+        Given
+            - An integration from new contributed pack with fromversion key at yml,
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is not set to 6.0.0
+            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        integration = pack.create_integration(yml={'fromversion': '5.5.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(is_integration=True)
+        assert bs.data['fromversion'] == '5.5.0', integration.yml.path

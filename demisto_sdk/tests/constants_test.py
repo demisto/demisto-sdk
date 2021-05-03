@@ -1,4 +1,5 @@
 import demisto_sdk.commands.common.constants as constants
+import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -125,7 +126,7 @@ INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
 SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
 SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-    f"description_formatted_contrib_details.md"
+                                               f"description_formatted_contrib_details.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
@@ -228,3 +229,34 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
+
+
+class TestGithubContentConfig:
+    @pytest.mark.parametrize('url',
+                             [
+                                 'ssh://git@github.com/demisto/content.git',
+                                 'https://github.com/demisto/content.git'
+                             ])
+    def test_get_repo_name(self, url: str):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url
+        Then:
+            Validate the correct repo got back (demisto/content)
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([url]) == 'demisto/content'
+
+    def test_get_repo_name_empty_case(self):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            Searching for repository name
+        Then:
+            Validate the correct repo got back
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([]) == ''

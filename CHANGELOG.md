@@ -3,6 +3,7 @@
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
 * Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
 * Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
+* Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
 * Fixed an issue where running the **init** command does not set the correct category field in yml file.
 
 # 1.3.5

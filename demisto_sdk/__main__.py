@@ -1070,7 +1070,7 @@ def update_pack_releasenotes(**kwargs):
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
-@click.option('-v', "--verbose", help="Whether to p rint the log to the console.", required=False,
+@click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
               is_flag=True)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""

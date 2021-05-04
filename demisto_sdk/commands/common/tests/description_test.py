@@ -1,7 +1,10 @@
+import os
+
 import pytest
 import yaml
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
+from TestSuite.file import File
 
 
 @pytest.mark.parametrize('integration_obj', [
@@ -52,3 +55,54 @@ def test_is_valid_file(integration, file_input, result):
 
     assert answer == result
     assert description_validator._is_valid == answer
+
+
+def test_is_valid_description_name(repo):
+    """
+        Given
+            - An integration description with a valid name
+
+        When
+            - Validating the integration description name
+
+        Then
+            - Ensure that description validator for integration passes.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    description_validator = DescriptionValidator(integration.yml.path)
+
+    assert description_validator.is_valid_description_name()
+
+
+def test_is_invalid_description_name(repo):
+    """
+        Given
+            - An integration description with a invalid name
+
+        When
+            - Validating the integration description name
+
+        Then
+            - Ensure that description validator for integration failed.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    if os.path.exists(integration.description.path):
+        os.remove(integration.description.path)
+        integration.description = None
+
+    integration.description = File(integration._tmpdir_integration_path / f'{integration.name}_desc.md',
+                                   integration._repo.path)
+
+    description_validator = DescriptionValidator(integration.yml.path)
+
+    assert not description_validator.is_valid_description_name()

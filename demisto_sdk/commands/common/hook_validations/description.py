@@ -33,6 +33,10 @@ class DescriptionValidator(BaseValidator):
     def is_valid(self):
         self.is_duplicate_description()
 
+        data_dictionary = get_yaml(self.file_path)
+        if not data_dictionary.get('detaileddescription'):
+            self.is_valid_description_name()
+
         return self._is_valid
 
     def is_valid_file(self):
@@ -110,6 +114,19 @@ class DescriptionValidator(BaseValidator):
         if is_description_in_package and is_description_in_yml:
             error_message, error_code = Errors.description_in_package_and_yml()
             if self.handle_error(error_message, error_code, file_path=package_path):
+                self._is_valid = False
+                return False
+
+        return True
+
+    def is_valid_description_name(self):
+        """Check if the description name is valid"""
+        description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
+
+        if not description_path:
+            error_message, error_code = Errors.invalid_description_name()
+
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 

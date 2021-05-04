@@ -172,18 +172,4 @@ class ImageValidator(BaseValidator):
                 self._is_valid = False
                 return False
 
-        image_folder = os.path.basename(os.path.dirname(image_path))
-        image_file = os.path.basename(image_path)
-        image_file = image_file[:image_file.index("_image.png")]
-
-        if image_file != image_folder:
-            valid_image_file = image_file.replace('-', '').replace('_', '')
-
-            if valid_image_file.lower() != image_folder.lower():
-                error_message, error_code = Errors.invalid_image_name()
-
-                if self.handle_error(error_message, error_code, file_path=image_path):
-                    self._is_valid = False
-                    return False
-
         return True

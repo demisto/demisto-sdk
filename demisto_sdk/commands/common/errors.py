@@ -150,6 +150,7 @@ ERROR_CODE = {
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -780,8 +781,7 @@ class Errors:
     @error_code_decorator
     def invalid_image_name():
         return "The image's file name is invalid. " \
-               "please make sure the name looks like the following: <integration_name>_image.png, " \
-               "when the integration_name should be the same as the name of the folder that contains it."
+               "please make sure the name looks like the following: <integration_name>_image.png"
 
     @staticmethod
     @error_code_decorator
@@ -995,6 +995,12 @@ class Errors:
     def description_contains_contrib_details():
         return "Description file contains contribution/partner details that will be generated automatically "\
                "when the upload command is performed.\nDelete any details related to contribution/partner "
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_description_name():
+        return "The description's file name is invalid. " \
+               "please make sure the name looks like the following: <integration_name>_description.md"
 
     @staticmethod
     @error_code_decorator

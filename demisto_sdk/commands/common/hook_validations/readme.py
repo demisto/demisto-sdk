@@ -193,9 +193,8 @@ class ReadMeValidator(BaseValidator):
         if self.readme_content.startswith(YES_HTML):
             return True
         # use some heuristics to try to figure out if this is html
-        return self.readme_content.startswith('<p>') or \
-               self.readme_content.startswith('<!DOCTYPE html>') or \
-               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+        return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or (
+                    '<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         invalid_paths = re.findall(

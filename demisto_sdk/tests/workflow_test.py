@@ -199,7 +199,7 @@ def function_setup():
     content_git_repo.create_branch()
 
 
-def init_pack(content_repo: ContentGitRepo):
+def init_pack(content_repo: ContentGitRepo, _):
     """
     Given: Instruction to create a new pack using the sdk.
         Fill metadata: y

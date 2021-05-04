@@ -87,7 +87,7 @@ def test_module(client: Client) -> str:
 
 
 # TODO: REMOVE the following dummy command function
-def baseintegration_dummy_command(client: Client, args: dict[str, Any]) -> CommandResults:
+def baseintegration_dummy_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     # dummy is a required argument
     dummy = args['dummy']
     # dummy2 is not a required argument

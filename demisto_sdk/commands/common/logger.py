@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from typing import Optional
 
 
@@ -35,7 +36,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
                 file_handler_index = i
 
     if verbose:
-        console_handler = logging.StreamHandler()
+        console_handler = logging.StreamHandler(sys.stdout)
         console_handler.name = 'console-handler'
         console_handler.setFormatter(fmt)
         console_handler.setLevel(log_level)

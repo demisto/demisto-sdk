@@ -1,6 +1,11 @@
 # Changelog
+* Added a validation that core packs are not dependent on non-core packs.
 * Added a validation that a pack name follows XSOAR standards.
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
+* Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
+* Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
+* Added support for running SDK commands in private repositories.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

@@ -4,6 +4,7 @@ from enum import Enum
 from functools import reduce
 from typing import Iterable, List, Optional
 
+import click
 from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
@@ -819,7 +820,7 @@ class GithubContentConfig:
                 urls = GitUtil().repo.remote().urls
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = ''
+                self.CURRENT_REPOSITORY = 'demisto/content'
         else:
             self.CURRENT_REPOSITORY = repo_name
         # DO NOT USE os.path.join on URLs, it may cause errors
@@ -834,11 +835,14 @@ class GithubContentConfig:
         """
         try:
             for url in urls:
-                repo = re.findall(r'.com/(.*)\.', url)[0].replace('//github.com/', '')
+                repo = re.findall(r'.com[/:](.*)\.', url)[0].replace('//github.com/', '')
                 return repo
         except (AttributeError, InvalidGitRepositoryError, IndexError):
             pass
-        return ''
+
+        # default to content repo if the repo is not found
+        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
+        return 'demisto/content'
 
 
 # Run all test signal

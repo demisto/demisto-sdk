@@ -235,7 +235,8 @@ class TestGithubContentConfig:
     @pytest.mark.parametrize('url',
                              [
                                  'ssh://git@github.com/demisto/content.git',
-                                 'https://github.com/demisto/content.git'
+                                 'git@github.com:demisto/content.git',  # clone using github ssh example
+                                 'https://github.com/demisto/content.git',  # clone using github https example
                              ])
     def test_get_repo_name(self, url: str):
         """

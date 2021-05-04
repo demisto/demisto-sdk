@@ -834,7 +834,7 @@ class GithubContentConfig:
         """
         try:
             for url in urls:
-                repo = re.findall(r'.com/(.*)\.', url)[0].replace('//github.com/', '')
+                repo = re.findall(r'.com[/:](.*)\.', url)[0].replace('//github.com/', '')
                 return repo
         except (AttributeError, InvalidGitRepositoryError, IndexError):
             pass

@@ -44,7 +44,11 @@ class IntegrationDependencies:
 
     @staticmethod
     def make_integration_feed(integration: Integration):
-        integration.yml.update({'feed': True})
+        yml_dict = integration.yml.read_dict()
+        if 'script' not in yml_dict:
+            yml_dict['script'] = {}
+        yml_dict['script']['feed'] = True
+        integration.yml.write_dict(yml_dict)
 
 
 class WidgetDependencies:

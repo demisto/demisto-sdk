@@ -5,7 +5,8 @@
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
-* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands.
+* Fixed the field of ui_applicable for DS105 error, turned to false.
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.

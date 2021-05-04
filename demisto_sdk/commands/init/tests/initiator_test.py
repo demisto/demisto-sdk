@@ -291,6 +291,7 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
 def test_yml_reformatting(tmp_path, initiator):
     integration_id = 'HelloWorld'
     initiator.id = integration_id
+    initiator.category = 'Utilities'
     d = tmp_path / integration_id
     d.mkdir()
     full_output_path = Path(d)
@@ -319,7 +320,8 @@ def test_yml_reformatting(tmp_path, initiator):
             }),
             'display': 'HelloWorld',
             'name': 'HelloWorld',
-            'fromversion': initiator.SUPPORTED_FROM_VERSION
+            'fromversion': initiator.SUPPORTED_FROM_VERSION,
+            'category': 'Utilities'
         })
 
 
@@ -396,6 +398,7 @@ def test_integration_init(initiator, tmpdir):
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.template = DEFAULT_INTEGRATION
+    initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
@@ -435,10 +438,11 @@ def test_template_integration_init(initiator, tmpdir, template):
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.template = template
+    initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
-    integration_dir_files = {file for file in listdir(integration_path)}
+    integration_dir_files = set(listdir(integration_path))
     expected_files = {
         "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
@@ -447,7 +451,8 @@ def test_template_integration_init(initiator, tmpdir, template):
 
     assert res
     assert os.path.isdir(integration_path)
-    assert expected_files == integration_dir_files
+    diff = expected_files.difference(integration_dir_files)
+    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
 def test_script_init(initiator, tmpdir):

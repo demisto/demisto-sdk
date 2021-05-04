@@ -159,23 +159,34 @@ class BaseUpdate:
                 # tasks key in playbook.yml schema where a field should match the regex (^[0-9]+$)
                 matching_key = self.regex_matching_key(field, schema.keys())
                 if matching_key:
-                    if schema.get(matching_key).get('mapping'):  # type: ignore
-                        self.recursive_remove_unnecessary_keys(schema.get(matching_key).get('mapping'), data.get(field))  # type: ignore
+                    mapping = schema.get(matching_key, {}).get('mapping')
+                    if mapping:
+                        self.recursive_remove_unnecessary_keys(
+                            schema.get(matching_key, {}).get('mapping'),
+                            data.get(field, {})
+                        )
                 else:
                     if self.verbose:
                         print(f'Removing {field} field')
                     data.pop(field, None)
             else:
-                if schema.get(field).get('mapping'):  # type: ignore
-                    self.recursive_remove_unnecessary_keys(schema.get(field).get('mapping'), data.get(field))  # type: ignore
+                mapping = schema.get(field, {}).get('mapping')
+                if mapping:  # type: ignore
+                    self.recursive_remove_unnecessary_keys(
+                        schema.get(field, {}).get('mapping'),
+                        data.get(field, {})
+                    )
                 # In case he have a sequence with mapping key in it's first element it's a continuation of the schema
                 # and we need to remove unnecessary keys from it too.
                 # In any other case there is nothing to do with the sequence
-                elif schema.get(field).get('sequence'):  # type: ignore
-                    if schema.get(field).get('sequence')[0].get('mapping'):  # type: ignore
+                else:
+                    sequence = schema.get(field, {}).get('sequence', [])
+                    if sequence and sequence[0].get('mapping'):
                         for list_element in data[field]:
-                            self.recursive_remove_unnecessary_keys(schema.get(field).get('sequence')[0].get('mapping'),  # type: ignore
-                                                                   list_element)
+                            self.recursive_remove_unnecessary_keys(
+                                sequence[0].get('mapping'),
+                                list_element
+                            )
 
     def regex_matching_key(self, field, schema_keys):
         """
@@ -296,14 +307,17 @@ class BaseUpdate:
                 file_type = find_type(self.output_file)
 
                 # validates on the output file generated from the format
-                structure_validator = StructureValidator(self.output_file,
-                                                         predefined_scheme=file_type, suppress_print=not self.verbose)
+                structure_validator = StructureValidator(
+                    self.output_file,
+                    predefined_scheme=file_type,
+                    suppress_print=not self.verbose
+                )
                 validator = validator_type(structure_validator, suppress_print=not self.verbose)
 
                 # TODO: remove the connection condition if we implement a specific validator for connections.
                 if structure_validator.is_valid_file() and \
                         (file_type in [FileType.CONNECTION, file_type == FileType.DESCRIPTION] or
-                         validator.is_valid_file(validate_rn=False)):
+                         validator.is_valid_file()):
                     if self.verbose:
                         click.secho('The files are valid', fg='green')
                     return SUCCESS_RETURN_CODE

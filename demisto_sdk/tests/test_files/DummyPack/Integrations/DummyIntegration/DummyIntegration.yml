@@ -1385,11 +1385,11 @@ script:
   longRunningPort: false
   runonce: false
   script: '-'
+  feed: true
   subtype: python3
   type: python
 fromversion: 4.1.0
 defaultclassifier: dummy-classifier
 defaultIncidentType: dummy-incident-type
-feed: true
 defaultmapperin: dummy-mapper-in
 defaultmapperout: dummy-mapper-out

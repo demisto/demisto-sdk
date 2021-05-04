@@ -1,4 +1,5 @@
 import demisto_sdk.commands.common.constants as constants
+import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -99,6 +100,8 @@ SOURCE_FORMAT_PLAYBOOK_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_n
 DESTINATION_FORMAT_PLAYBOOK_COPY = "playbook-new_format_new_playbook_copy.yml"
 INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_Integration_with_test_playbooks.yml'
 PLAYBOOK_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook_with_test_playbooks.yml'
+PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-with-incidnet-" \
+                                           f"indicator-fields.yml"
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"
@@ -123,7 +126,7 @@ INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
 SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
 SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-    f"description_formatted_contrib_details.md"
+                                               f"description_formatted_contrib_details.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
@@ -226,3 +229,34 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
+
+
+class TestGithubContentConfig:
+    @pytest.mark.parametrize('url',
+                             [
+                                 'ssh://git@github.com/demisto/content.git',
+                                 'https://github.com/demisto/content.git'
+                             ])
+    def test_get_repo_name(self, url: str):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url
+        Then:
+            Validate the correct repo got back (demisto/content)
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([url]) == 'demisto/content'
+
+    def test_get_repo_name_empty_case(self):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            Searching for repository name
+        Then:
+            Validate the correct repo got back
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([]) == ''

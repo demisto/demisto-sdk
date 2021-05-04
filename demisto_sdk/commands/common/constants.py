@@ -1,8 +1,13 @@
+import os
 import re
 from enum import Enum
-from typing import List
+from functools import reduce
+from typing import Iterable, List, Optional
 
+from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
+from git import InvalidGitRepositoryError
+
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
@@ -81,6 +86,10 @@ class FileType(Enum):
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
+    CONF_JSON = 'confjson'
+    METADATA = 'metadata'
+    WHITE_LIST = 'whitelist'
+    LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -102,7 +111,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
 }
-
 
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
@@ -761,16 +769,81 @@ FILE_TYPES_FOR_TESTING = [
 # python subtypes
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
-# github repository url
-CONTENT_GITHUB_LINK = r'https://raw.githubusercontent.com/demisto/content'
-CONTENT_GITHUB_MASTER_LINK = CONTENT_GITHUB_LINK + '/master'
-SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
-CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
-CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+
+def urljoin(*args: str):
+    """Gets arguments to join as url
+
+    Args:
+        *args: args to join
+
+    Returns:
+        Joined url
+
+    Examples:
+        >>> urljoin('https://www.example.com', 'suffix/', '/suffix2', 'suffix', 'file.json')
+        'https://www.example.com/suffix/suffix2/suffix/file.json'
+    """
+    return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
+
+
+class GithubCredentials:
+    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    TOKEN: Optional[str]
+
+    def __init__(self):
+        self.TOKEN = os.getenv(self.ENV_TOKEN_NAME)
+
+
+class GithubContentConfig:
+    """Holds links, credentials and other content related github configuration
+
+    Attributes:
+        CURRENT_REPOSITORY: The current repository in the cwd
+        CONTENT_GITHUB_LINK: Link to the raw content git repository
+        CONTENT_GITHUB_MASTER_LINK: Link to the content git repository's master branch
+        Credentials: Credentials to the git.
+    """
+    BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'
+    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
+    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
+    CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
+    CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+
+    CURRENT_REPOSITORY: str
+    CONTENT_GITHUB_LINK: str
+    CONTENT_GITHUB_MASTER_LINK: str
+
+    def __init__(self, repo_name: Optional[str] = None):
+        if not repo_name:
+            try:
+                urls = GitUtil().repo.remote().urls
+                self.CURRENT_REPOSITORY = self._get_repository_name(urls)
+            except (InvalidGitRepositoryError, AttributeError):  # No repository
+                self.CURRENT_REPOSITORY = ''
+        else:
+            self.CURRENT_REPOSITORY = repo_name
+        # DO NOT USE os.path.join on URLs, it may cause errors
+        self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
+        self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
+        self.Credentials = GithubCredentials()
+
+    @staticmethod
+    def _get_repository_name(urls: Iterable) -> str:
+        """Returns the git repository of the cwd.
+        if not running in a git repository, will return an empty string
+        """
+        try:
+            for url in urls:
+                repo = re.findall(r'.com/(.*)\.', url)[0].replace('//github.com/', '')
+                return repo
+        except (AttributeError, InvalidGitRepositoryError, IndexError):
+            pass
+        return ''
+
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
-FILTER_CONF = './Tests/filter_file.txt'
+FILTER_CONF = './artifacts/filter_file.txt'
 
 
 class PB_Status:
@@ -887,6 +960,7 @@ BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
 DEPRECATED_CONTENT_PACK = "DeprecatedContent"
 IGNORED_DEPENDENCY_CALCULATION = {BASE_PACK, NON_SUPPORTED_PACK, DEPRECATED_CONTENT_PACK}
+COMMON_TYPES_PACK = 'CommonTypes'
 
 FEED_REQUIRED_PARAMS = [
     {
@@ -1058,7 +1132,7 @@ OLDEST_SUPPORTED_VERSION = '5.0.0'
 FEATURE_BRANCHES = ['v4.5.0']
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.IMAGE, FileType.DOC_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1121,3 +1195,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }
+
+
+class DemistoException(Exception):
+    pass

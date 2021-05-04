@@ -15,7 +15,8 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+                                                   TYPE_PWSH, TYPE_PYTHON,
+                                                   DemistoException)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import (find_file, find_type,
@@ -131,9 +132,14 @@ class LintManager:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"],  # type: ignore
                                                      is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
-        except git.GitCommandError as e:
-            print_error(
-                "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
+        except (git.GitCommandError, DemistoException) as e:
+            if is_external_repo:
+                print_error('You are running on an external repo - '
+                            'run `.hooks/bootstrap` before running the demisto-sdk lint command\n'
+                            'See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup')
+            else:
+                print_error(
+                    "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master")
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
@@ -223,8 +229,9 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-              f"{content_repo.active_branch}{Colors.reset}")
+        print(
+            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         if content_repo.active_branch == 'master':
@@ -239,7 +246,8 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+                         no_pylint: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -465,7 +473,8 @@ class LintManager:
                     for image in pkgs_status[fail_pack]["images"]:
                         print(image[f"{check}_errors"])
 
-    def report_warning_lint_checks(self, lint_status: dict, pkgs_status: dict, return_warning_code: int, all_packs: bool):
+    def report_warning_lint_checks(self, lint_status: dict, pkgs_status: dict, return_warning_code: int,
+                                   all_packs: bool):
         """ Log warnings lint log if exists
 
         Args:

@@ -30,6 +30,8 @@ mapping:
     required: true
   hidden:
     type: bool
+  deprecated:
+    type: bool
   starttaskid:
     type: str
     required: true

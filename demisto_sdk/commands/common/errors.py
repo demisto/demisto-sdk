@@ -165,8 +165,8 @@ ERROR_CODE = {
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
-    "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': True, 'related_field': 'playbookId'},
-    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': True,
+    "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
+    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
                                                   'related_field': 'extractSettings'},
     "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
@@ -194,6 +194,7 @@ ERROR_CODE = {
     "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
     "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
     "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
+    "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1311,6 +1312,12 @@ class Errors:
     @error_code_decorator
     def invalid_package_dependencies(pack_name):
         return f'{pack_name} depends on NonSupported / DeprecatedContent packs.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_core_pack_dependencies(core_pack, dependencies_packs):
+        return f'The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - ' \
+               f'revert this change.'
 
     @staticmethod
     @error_code_decorator

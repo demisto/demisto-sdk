@@ -208,19 +208,30 @@ class TestGenericFunctions:
 
 
 class TestGetRemoteFile:
+    content_repo = 'demisto/content'
+
     def test_get_remote_file_sanity(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_content_sanity(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         assert hello_world_py
 
     def test_get_remote_file_content(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
@@ -228,38 +239,68 @@ class TestGetRemoteFile:
         assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file('Integrations/File/File.yml', '19.10.0')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/File/File.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_origin_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_md_file_origin(self):
-        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        hello_world_readme = tools.get_remote_file(
+            'Packs/HelloWorld/README.md',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_readme == {}
 
     def test_should_file_skip_validation_negative(self):
-        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        should_skip = tools.should_file_skip_validation(
+            'Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json'
+        )
         assert not should_skip
 
     SKIPPED_FILE_PATHS = [

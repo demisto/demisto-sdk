@@ -9,6 +9,8 @@ from git import InvalidGitRepositoryError, Repo
 
 
 class GitUtil:
+    repo: Repo
+
     def __init__(self, repo: Repo = None):
         if not repo:
             try:

@@ -42,6 +42,7 @@ PACKS_TO_IGNORE = ['HelloWorld']
 
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
+
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
         In order to run the validator correctly please make sure:
@@ -270,7 +271,7 @@ class ReadMeValidator(BaseValidator):
 
         errors = ""
         errors += self._find_section_in_text(USER_FILL_SECTIONS)
-        errors += self._find_section_in_text(DEFAULT_SENTENCES,PACKS_TO_IGNORE)
+        errors += self._find_section_in_text(DEFAULT_SENTENCES, PACKS_TO_IGNORE)
         is_valid = not bool(errors)
         print("===================================================\n")
         print(errors)

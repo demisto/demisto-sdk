@@ -15,7 +15,7 @@ https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/Hel
 """
 
 import traceback
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 import demistomock as demisto
 import urllib3
@@ -43,7 +43,7 @@ class Client(BaseClient):
     """
 
     # TODO: REMOVE the following dummy function:
-    def baseintegration_dummy(self, dummy: str, dummy2: Optional[str]) -> dict[str, str]:
+    def baseintegration_dummy(self, dummy: str, dummy2: Optional[int]) -> Dict[str, str]:
         """Returns a simple python dict with the information provided
         in the input (dummy).
 
@@ -131,7 +131,7 @@ def main():
 
         # TODO: Make sure you add the proper headers for authentication
         # (i.e. "Authorization": {api key})
-        headers: dict = {}
+        headers = {}
 
         client = Client(
             base_url=base_url,
@@ -152,7 +152,7 @@ def main():
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
+        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

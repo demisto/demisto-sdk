@@ -34,7 +34,7 @@ from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
 from slack import WebClient as SlackClient
 
-ENV_RESULTS_PATH = './env_results.json'
+ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
@@ -496,7 +496,7 @@ class BuildContext:
     @staticmethod
     def _extract_filtered_tests() -> list:
         """
-        Reads the content from ./Tests/filter_file.txt and parses it into a list of test playbook IDs that should be run
+        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
         in the current build
         Returns:
             A list of playbook IDs that should be run in the current build
@@ -673,7 +673,10 @@ class BuildContext:
         """
         Gets the user id of the circle user who triggered the current build
         """
-        circle_user_name = self._get_user_name_from_circle()
+        if os.environ.get('GITLAB_USER_LOGIN'):
+            user_name = os.environ['GITLAB_USER_LOGIN']
+        else:
+            user_name = self._get_user_name_from_circle()
         user_id = ''
         res = self.slack_client.api_call('users.list')
 
@@ -681,7 +684,7 @@ class BuildContext:
         for user in user_list:
             profile = user.get('profile', {})
             name = profile.get('real_name_normalized', '')
-            if name == circle_user_name:
+            if name == user_name:
                 user_id = user.get('id', '')
 
         return user_id

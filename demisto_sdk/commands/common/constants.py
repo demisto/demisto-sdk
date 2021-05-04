@@ -820,7 +820,7 @@ class GithubContentConfig:
                 urls = GitUtil().repo.remote().urls
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = 'demisto/content'
+                self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.CURRENT_REPOSITORY = repo_name
         # DO NOT USE os.path.join on URLs, it may cause errors
@@ -842,7 +842,7 @@ class GithubContentConfig:
 
         # default to content repo if the repo is not found
         click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-        return 'demisto/content'
+        return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
 
 # Run all test signal

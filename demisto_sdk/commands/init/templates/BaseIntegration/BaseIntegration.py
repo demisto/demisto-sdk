@@ -48,8 +48,8 @@ class Client(BaseClient):
         in the input (dummy).
 
         Args:
-            dummy: string to add in the dummy dict that is returned
-            dummy2: int to limit the number of results r
+            dummy: string to add in the dummy dict that is returned. This is a required argument.
+            dummy2: int to limit the number of results. This is an optional argument.
 
         Returns:
             The dict with the arguments
@@ -70,13 +70,14 @@ def test_module(client: Client) -> str:
 
     Returning 'ok' indicates that the integration works like it is supposed to.
     Connection to the service is successful.
-    Raises exceptions if something goes wrong.
+    Raises:
+     exceptions if something goes wrong.
 
-    :type client: ``Client``
-    :param Client: client to use
+    Args:
+        Client: client to use
 
-    :return: 'ok' if test passed, anything else will fail the test.
-    :rtype: ``str``
+    Returns:
+        'ok' if test passed, anything else will fail the test.
     """
 
     # TODO: ADD HERE some code to test connectivity and authentication to your service.

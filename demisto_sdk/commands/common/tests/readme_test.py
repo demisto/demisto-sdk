@@ -3,6 +3,7 @@ import os
 import sys
 
 import pytest
+
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 

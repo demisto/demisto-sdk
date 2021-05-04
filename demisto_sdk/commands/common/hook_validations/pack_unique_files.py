@@ -23,7 +23,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
+                                               get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -319,8 +320,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_usecases = set()
         try:
-            approved_usecases = tools.get_remote_file(
-                'Tests/Marketplace/approved_usecases.json').get('approved_list') or []
+            approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
@@ -340,7 +340,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_tags = set()
         try:
-            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json').get('approved_list') or []
+            approved_tags = tools.get_approved_tags()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:
@@ -451,7 +451,7 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                         fg="bright_cyan")
-            core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+            core_pack_list = get_core_pack_list()
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
@@ -471,6 +471,11 @@ class PackUniqueFilesValidator(BaseValidator):
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
             click.echo(click.style(dependency_result, bold=True))
+
+            if self.pack in core_pack_list:
+                if not self.validate_core_pack_dependencies(first_level_dependencies):
+                    return False
+
             non_supported_pack = first_level_dependencies.get('NonSupported', {})
             deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
 
@@ -487,3 +492,16 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
             else:
                 raise
+
+    def validate_core_pack_dependencies(self, dependencies_packs):
+
+        found_dependencies = []
+        for dependency_pack in dependencies_packs:
+            if dependencies_packs.get(dependency_pack, {}).get('mandatory'):
+                found_dependencies.append(dependency_pack)
+
+        if found_dependencies:
+            error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True

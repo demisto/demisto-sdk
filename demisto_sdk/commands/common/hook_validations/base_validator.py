@@ -185,17 +185,23 @@ class BaseValidator:
             'relatedField': error_data.get('related_field')
         }
 
+        json_contents = []
         if os.path.exists(self.json_file_path):
-            json_contents = get_json(self.json_file_path)
-
-        else:
-            json_contents = []
+            existing_json = get_json(self.json_file_path)
+            if existing_json:
+                json_contents = existing_json
 
         file_type = find_type(file_path)
+        entity_type = file_type.value if file_type else 'pack'
+
+        # handling unified yml image errors
+        if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):
+            entity_type = FileType.IMAGE.value
+
         formatted_error_output = {
             'filePath': file_path,
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),
-            'entityType': file_type.value if file_type else 'pack',
+            'entityType': entity_type,
             'errorType': 'Settings',
             'name': get_file_displayed_name(file_path),
             **output

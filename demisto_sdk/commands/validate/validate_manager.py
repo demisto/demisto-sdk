@@ -64,8 +64,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, open_id_set_file,
-                                               run_command)
+                                               get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -498,12 +497,6 @@ class ValidateManager:
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
 
-        # modified existing RN
-        if is_modified:
-            error_message, error_code = Errors.modified_existing_release_notes(pack_name)
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
-                return False
-
         # added new RN to a new pack
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)
@@ -746,7 +739,7 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
-    @ staticmethod
+    @staticmethod
     def should_raise_pack_version(pack: str) -> bool:
         """
         Args:
@@ -841,12 +834,14 @@ class ValidateManager:
         packs_that_should_have_new_rn_api_module_related: set = set()
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
         changed_files = modified_files.union(old_format_files).union(added_files)
-        packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
-                                                                  skip_file_types={FileType.RELEASE_NOTES,
-                                                                                   FileType.README,
-                                                                                   FileType.TEST_PLAYBOOK,
-                                                                                   FileType.TEST_SCRIPT,
-                                                                                   FileType.DOC_IMAGE})
+        packs_that_should_have_new_rn = get_pack_names_from_files(
+            changed_files,
+            skip_file_types={FileType.RELEASE_NOTES,
+                             FileType.README,
+                             FileType.TEST_PLAYBOOK,
+                             FileType.TEST_SCRIPT,
+                             FileType.DOC_IMAGE}
+        )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
             integrations = get_api_module_integrations_set(api_module_set,
@@ -866,7 +861,7 @@ class ValidateManager:
 
         packs_that_have_missing_rn = packs_that_should_have_new_rn.difference(packs_that_have_new_rn)
 
-        if len(packs_that_have_missing_rn) > 0:
+        if packs_that_have_missing_rn:
             is_valid = set()
             for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack
@@ -1082,7 +1077,7 @@ class ValidateManager:
 
     """ ######################################## Validate Tools ############################################### """
 
-    @ staticmethod
+    @staticmethod
     def create_ignored_errors_list(errors_to_check):
         ignored_error_list = []
         all_errors = get_all_error_codes()
@@ -1093,7 +1088,7 @@ class ValidateManager:
 
         return ignored_error_list
 
-    @ staticmethod
+    @staticmethod
     def get_allowed_ignored_errors_from_list(error_list):
         allowed_ignore_list = []
         for error in error_list:
@@ -1152,7 +1147,7 @@ class ValidateManager:
             return True
         return False
 
-    @ staticmethod
+    @staticmethod
     def get_packs_with_added_release_notes(added_files):
         added_rn = set()
         for file in added_files:
@@ -1189,7 +1184,7 @@ class ValidateManager:
 
         return modified_packs_that_should_have_version_raised
 
-    @ staticmethod
+    @staticmethod
     def get_packs(changed_files):
         packs = set()
         for changed_file in changed_files:
@@ -1251,8 +1246,8 @@ class ValidateManager:
             is_deprecated = "deprecated" in current_file and current_file["deprecated"]
 
         toversion_is_old = "toversion" in current_file and \
-            version.parse(current_file.get("toversion", "99.99.99")) < \
-            version.parse(OLDEST_SUPPORTED_VERSION)
+                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
             click.echo(f"Validating deprecated file: {file_path}")

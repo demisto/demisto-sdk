@@ -1,10 +1,22 @@
 # Changelog
+* Added a validation that core packs are not dependent on non-core packs.
+* Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
+* Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
+* Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
+* Added support for running SDK commands in private repositories.
+
+# 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
 * Fixed issue where running the **generate-docs** command with -c flag ran all the commands and not just the commands specified by the flag.
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
+* Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
+* When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
+* Added an option to fill in the developer email when running the **init** command.
 
 # 1.3.4
 * Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
@@ -28,6 +40,7 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.

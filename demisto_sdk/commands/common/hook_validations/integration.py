@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_pack_name, get_remote_file,
+    compare_context_path_in_yml_and_readme, get_core_pack_list, get_pack_name,
     is_v2_file, print_error, server_version_compare)
 
 
@@ -111,7 +111,7 @@ class IntegrationValidator(ContentEntityValidator):
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
 
-        core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+        core_packs_list = get_core_pack_list()
 
         pack = get_pack_name(self.file_path)
         is_core = True if pack in core_packs_list else False

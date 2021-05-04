@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_pack_name, get_remote_file,
-                                               is_v2_file,
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_pack_name, is_v2_file,
                                                server_version_compare)
 
 
@@ -17,8 +17,7 @@ class ScriptValidator(ContentEntityValidator):
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -74,7 +73,7 @@ class ScriptValidator(ContentEntityValidator):
                 is_script_valid,
                 self.is_valid_name()
             ])
-        core_packs_list = get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+        core_packs_list = get_core_pack_list()
 
         pack = get_pack_name(self.file_path)
         is_core = True if pack in core_packs_list else False

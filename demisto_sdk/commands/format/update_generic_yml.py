@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
@@ -86,7 +86,7 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, file_type=''):
+    def update_yml(self, file_type: Optional[str] = None):
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(from_version=self.from_version, file_type=file_type)

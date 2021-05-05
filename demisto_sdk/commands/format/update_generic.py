@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Set, Union
+from typing import Set, Union, Optional
 
 import click
 import yaml
@@ -206,15 +206,15 @@ class BaseUpdate:
                 return reg
         return None
 
-    def set_fromVersion(self, from_version=None, file_type=''):
+    def set_fromVersion(self, from_version=None, file_type: Optional[str] = None):
         """Sets fromversion key in file:
         Args:
             from_version: The specific from_version value.
-            is_integration: Is the updating file is integration
+            file_type: what is the file type: for now only integration type passed
         """
         metadata = get_pack_metadata(self.source_file)
         # if it is new contributed pack = setting version to 6.0.0
-        set_to_6 = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
 
         # If there is no existing file in content repo
         if not self.old_file:
@@ -226,7 +226,7 @@ class BaseUpdate:
                 if from_version:
                     self.data[self.from_version_key] = from_version
                 # if it is new contributed pack = setting version to 6.0.0
-                elif set_to_6:
+                elif should_set_from_version:
                     self.data[self.from_version_key] = VERSION_6_0_0
                 # Otherwise add fromversion key to current file and set to default 5.0.0
                 else:
@@ -236,7 +236,7 @@ class BaseUpdate:
                 self.data[self.from_version_key] = from_version
             # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
             # if it is new contributed pack = setting version to 6.0.0
-            elif set_to_6:
+            elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != 'integration':
                     self.data[self.from_version_key] = VERSION_6_0_0
 

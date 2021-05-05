@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union

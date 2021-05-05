@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
@@ -1083,15 +1083,17 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-@lru_cache()
 def is_external_repository():
     """
     Returns True if script executed from private repository
 
     """
-    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
-    return os.path.exists(private_settings_path)
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        return os.path.exists(private_settings_path)
+    except git.InvalidGitRepositoryError:
+        return True
 
 
 def get_content_path() -> str:

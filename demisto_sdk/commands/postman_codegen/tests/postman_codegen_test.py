@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import yaml
@@ -468,11 +469,17 @@ class TestPostmanCodeGen:
         pass
 
 
-def _testutil_create_postman_collection(dest_path, with_request: dict = None, no_auth: bool = False):
-    default_collection_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests',
-                                           'test_files',
-                                           'VirusTotal.postman_collection.json')
-    with open(default_collection_path, mode='r') as f:
+def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):
+    default_collection_path = os.path.join(
+        git_path(),
+        'demisto_sdk',
+        'commands',
+        'postman_codegen',
+        'tests',
+        'test_files',
+        'VirusTotal.postman_collection.json'
+    )
+    with open(default_collection_path) as f:
         collection = json.load(f)
 
     if with_request:
@@ -486,22 +493,17 @@ def _testutil_create_postman_collection(dest_path, with_request: dict = None, no
 
 
 def _testutil_get_param(config: IntegrationGeneratorConfig, param_name: str):
-    if config.params is None:
-        return None
-
-    for param in config.params:
-        if param.name == param_name:
-            return param
+    if config.params is not None:
+        for param in config.params:
+            if param.name == param_name:
+                return param
 
     return None
 
 
 def _testutil_get_command(config: IntegrationGeneratorConfig, command_name: str):
-    if config.commands is None:
-        return None
-
-    for command in config.commands:
-        if command.name == command_name:
-            return command
-
+    if config.commands is not None:
+        for command in config.commands:
+            if command.name == command_name:
+                return command
     return None

@@ -179,9 +179,9 @@ def test_valid_sections(integration, file_input):
                            'FILL IN REQUIRED PERMISSIONS HERE'),
                           ("This integration was integrated and tested with version xx of integration v2",
                            'version xx'), (
-                          "##Dummy Integration\n this integration is for getting started and learn how to build an "
-                          "integration. some extra text here",
-                          'getting started and learn how to build an integration')])
+                                  "##Dummy Integration\n this integration is for getting started and learn how to build an "
+                                  "integration. some extra text here",
+                                  'getting started and learn how to build an integration')])
 def test_verify_no_default_sections_left(integration, capsys, file_input, section):
     """
     Given
@@ -207,6 +207,24 @@ ERROR_FOUND_CASES = [
     ([], [f'{FAKE_INTEGRATION_README} - [RM102]'], False),
     ([], [], True),
 ]
+
+
+@pytest.mark.parametrize("readme_fake_path, readme_text",
+                         [('HelloWorld/README.md', 'getting started and learn how to build an integration')])
+def test_readme_ignore(integration, readme_fake_path,readme_text):
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - README path of ignore pack
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    readme_validator = ReadMeValidator(readme_fake_path, ignored_errors=True)
+    readme_validator.readme_content.write(readme_text)
+    result = readme_validator.verify_no_default_sections_left()
+    assert result
 
 
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)

@@ -6,6 +6,7 @@
 * Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
 * Added support for running SDK commands in private repositories.
 * Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
+* When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

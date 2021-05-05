@@ -7,6 +7,7 @@
 * Added support for running SDK commands in private repositories.
 * Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
 * When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
+* If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
 * Fixed a missing logic in find dependencies when validate core pack dependencies.
 
 # 1.3.5

@@ -119,14 +119,13 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    cur_version = get_distribution('demisto-sdk').version
-    last_release = get_last_remote_release_version()
-    if last_release and cur_version != last_release:
-        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
-                      f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
-    if version:
-        version = get_distribution('demisto-sdk').version
-        print(f'demisto-sdk {version}')
+    if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
+        cur_version = get_distribution('demisto-sdk').version
+        last_release = get_last_remote_release_version()
+        print_warning(f'You are using demisto-sdk {cur_version}.')
+        if last_release and cur_version != last_release:
+            print_warning(f'however version {last_release} is available.\n'
+                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
 
 
 # ====================== split-yml ====================== #

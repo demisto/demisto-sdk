@@ -12,7 +12,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import (
 
 
 class TestPostmanHelpers:
-    def test_create_body_format():
+    def test_create_body_format(self):
         request_body = {
             "key1": "val1",
             "key2": {

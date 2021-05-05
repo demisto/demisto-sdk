@@ -24,8 +24,15 @@ EMPTY_ID_SET = {
 }
 
 
+def mock_is_external_repo(mocker, is_external_repo_return):
+    return mocker.patch(
+        'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
+        return_value=is_external_repo_return
+    )
+
+
 class TestFindDependencies:  # Use classes to speed up test - multi threaded py pytest
-    def test_integration_find_dependencies__sanity(self, mocker, repo):
+    def test_integration_find_dependencies_sanity(self, mocker, repo):
         """
         Given
         - Valid pack folder
@@ -39,6 +46,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure no error occurs.
         - Ensure debug file is created.
         """
+        mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
         mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
         pack = repo.create_pack('FindDependencyPack')
@@ -79,7 +87,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert result.exit_code == 0
         assert result.stderr == ""
 
-    def test_integration_find_dependencies__sanity_with_id_set(self, repo):
+    def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
         """
         Given
         - Valid pack folder
@@ -91,6 +99,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure no error occurs.
         """
+        mock_is_external_repo(mocker, False)
         pack = repo.create_pack('FindDependencyPack')
         integration = pack.create_integration('integration')
         id_set = EMPTY_ID_SET.copy()
@@ -118,7 +127,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert result.exit_code == 0
         assert result.stderr == ""
 
-    def test_integration_find_dependencies__not_a_pack(self, repo):
+    def test_integration_find_dependencies_not_a_pack(self, repo):
         """
         Given
         - Valid pack folder
@@ -167,6 +176,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure dependency is printed.
         """
+        mock_is_external_repo(mocker, False)
         pack1 = repo.create_pack('FindDependencyPack1')
         integration = pack1.create_integration('integration1')
         integration.create_default_integration()

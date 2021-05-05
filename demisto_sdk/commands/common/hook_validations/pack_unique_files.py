@@ -455,7 +455,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation, use_pack_metadata=True
             )
 
             if not first_level_dependencies:

@@ -8,6 +8,7 @@
 * Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
 * When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
 * If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
+* Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

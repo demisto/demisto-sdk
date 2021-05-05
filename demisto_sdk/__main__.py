@@ -1077,12 +1077,15 @@ def update_pack_releasenotes(**kwargs):
     is_flag=True)
 @click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
               is_flag=True)
+@click.option("--use-pack-metadata", help="Whether to update the dependencies from the pack metadata.", required=False,
+              is_flag=True)
 def find_dependencies_command(**kwargs):
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
+    use_pack_metadata = kwargs.get('use_pack_metadata', False)
     try:
         assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
@@ -1094,7 +1097,8 @@ def find_dependencies_command(**kwargs):
         PackDependencies.find_dependencies(pack_name=pack_name,
                                            id_set_path=id_set_path,  # type: ignore[arg-type]
                                            verbose=verbose,
-                                           update_pack_metadata=update_pack_metadata)
+                                           update_pack_metadata=update_pack_metadata,
+                                           use_pack_metadata=use_pack_metadata)
     except ValueError as exp:
         print_error(str(exp))
 

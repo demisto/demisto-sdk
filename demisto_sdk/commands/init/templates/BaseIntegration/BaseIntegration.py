@@ -89,10 +89,8 @@ def test_module(client: Client) -> str:
 
 # TODO: REMOVE the following dummy command function
 def baseintegration_dummy_command(client: Client, args: Dict[str, Any]) -> CommandResults:
-    # dummy is a required argument
-    dummy = args['dummy']
-    # dummy2 is not a required argument
-    dummy2 = args.get('dummy2')
+    dummy = args.get('dummy')  # dummy is a required argument, no default
+    dummy2 = args.get('dummy2')  # dummy2 is not a required argument
 
     # Call the Client function and get the raw response
     result = client.baseintegration_dummy(dummy, dummy2)
@@ -115,16 +113,16 @@ def main():
 
     params = demisto.params()
     # get the service API url
-    base_url = urljoin(params['url'], '/api/v1')
+    base_url = urljoin(params.get('url'), '/api/v1')
 
     # if your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    verify_certificate = not argToBoolean(params['insecure'])
+    verify_certificate = not argToBoolean(params('insecure', False))
 
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = argToBoolean(params['proxy'])
+    proxy = argToBoolean(params.get('proxy', False))
 
     command = demisto.command()
     demisto.debug(f'Command being called is {command}')

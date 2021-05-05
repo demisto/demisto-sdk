@@ -119,13 +119,14 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
-        cur_version = get_distribution('demisto-sdk').version
-        last_release = get_last_remote_release_version()
-        print_warning(f'You are using demisto-sdk {cur_version}.')
-        if last_release and cur_version != last_release:
-            print_warning(f'however version {last_release} is available.\n'
-                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+    cur_version = get_distribution('demisto-sdk').version
+    last_release = get_last_remote_release_version()
+    if last_release and cur_version != last_release:
+        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
+                      f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+    if version:
+        version = get_distribution('demisto-sdk').version
+        print(f'demisto-sdk {version}')
 
 
 # ====================== split-yml ====================== #
@@ -1071,15 +1072,13 @@ def update_pack_releasenotes(**kwargs):
     is_flag=True)
 @click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
               is_flag=True)
-@click.option("--use-pack-metadata", help="Whether to update the dependencies from the pack metadata.", required=False,
-              is_flag=True)
 def find_dependencies(**kwargs):
+    """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
-    use_pack_metadata = kwargs.get('use_pack_metadata', False)
     try:
         assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
@@ -1088,13 +1087,10 @@ def find_dependencies(**kwargs):
         print_error("Input path is not a pack. For example: Packs/HelloWorld")
         sys.exit(1)
     try:
-        PackDependencies.find_dependencies(
-            pack_name=pack_name,
-            id_set_path=str(id_set_path),
-            verbose=verbose,
-            update_pack_metadata=update_pack_metadata,
-            use_pack_metadata=use_pack_metadata
-        )
+        PackDependencies.find_dependencies(pack_name=pack_name,
+                                           id_set_path=str(id_set_path),
+                                           verbose=verbose,
+                                           update_pack_metadata=update_pack_metadata)
     except ValueError as exp:
         print_error(str(exp))
 
@@ -1113,15 +1109,11 @@ def find_dependencies(**kwargs):
 @click.option(
     '-n', '--name', help='The output integration name', required=False)
 @click.option(
-    '-op', '--output-prefix', help='The global integration output prefix. By default it is the product name.',
-    required=False)
+    '-op', '--output-prefix', help='The global integration output prefix. By default it is the product name.', required=False)
 @click.option(
-    '-cp', '--command-prefix',
-    help='The prefix for each command in the integration. By default is the product name in lower case', required=False)
+    '-cp', '--command-prefix', help='The prefix for each command in the integration. By default is the product name in lower case', required=False)
 @click.option(
-    '--config-out',
-    help='Used for advanced integration customisation. Generates a config json file instead of integration.',
-    required=False, is_flag=True)
+    '--config-out', help='Used for advanced integration customisation. Generates a config json file instead of integration.', required=False, is_flag=True)
 @click.option(
     '--verbose', help='Print debug level logs', required=False, is_flag=True)
 def postman_codegen_command(**kwargs):
@@ -1161,8 +1153,7 @@ def postman_codegen_command(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', help='config json file produced by commands like postman-codegen and openapi-codegen',
-    required=True)
+    '-i', '--input', help='config json file produced by commands like postman-codegen and openapi-codegen', required=True)
 @click.option(
     '-o', '--output', help='The output directory to save the integration package', required=False)
 @click.option(

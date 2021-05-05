@@ -29,11 +29,10 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
     PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType,
-    GithubContentConfig, urljoin)
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME, PLAYBOOKS_DIR,
+    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -1762,25 +1761,3 @@ def get_approved_tags() -> list:
         'Tests/Marketplace/approved_tags.json',
         github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
-
-
-def get_pack_metadata(file_path: str) -> dict:
-    """ Get the pack_metadata dict, of the pack containing the given file path.
-
-    Args:
-        file_path(str): file path
-
-    Returns: pack_metadata of the pack, that source_file related to,
-        on failure returns {}
-
-    """
-    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
-    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
-    directory = match.group() if match else ''
-
-    try:
-        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
-        pack_metadata, _ = get_dict_from_file(metadata_path)
-        return pack_metadata
-    except Exception:
-        return {}

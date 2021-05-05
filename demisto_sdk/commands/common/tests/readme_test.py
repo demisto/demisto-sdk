@@ -210,7 +210,7 @@ ERROR_FOUND_CASES = [
 
 
 @pytest.mark.parametrize("readme_fake_path, readme_text",
-                         [('HelloWorld/README.md', 'getting started and learn how to build an integration')])
+                         [('/HelloWorld/README.md', 'getting started and learn how to build an integration')])
 def test_readme_ignore(integration, readme_fake_path, readme_text):
     """
     Check that packs in ignore list are ignored.
@@ -221,8 +221,14 @@ def test_readme_ignore(integration, readme_fake_path, readme_text):
         Then
             - Ensure validation ignored the pack
     """
-    readme_validator = ReadMeValidator(readme_fake_path, ignored_errors=True)
-    readme_validator.readme_content.write(readme_text)
+    integration.readme.write(readme_text)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    # change the pack path to readme_fake_path
+    from pathlib import Path
+    readme_validator.file_path = Path(readme_fake_path)
+    readme_validator.pack_path = readme_validator.file_path.parent
+
     result = readme_validator.verify_no_default_sections_left()
     assert result
 

@@ -1165,7 +1165,7 @@ class PackDependencies:
     def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
                           update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
                           debug_file_path: str = '', skip_id_set_creation: bool = False,
-                          complete_data: bool = False) -> dict:
+                          use_pack_metadata: bool = False, complete_data: bool = False) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1177,6 +1177,7 @@ class PackDependencies:
             silent_mode (bool): Determines whether to echo the dependencies or not.
             verbose(bool): Whether to print the log to the console.
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
+            use_pack_metadata: Whether to update the dependencies by the pack metadata.
             complete_data (bool): Whether to update complete data on the dependent packs.
 
         Returns:
@@ -1205,4 +1206,20 @@ class PackDependencies:
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
+
+        if use_pack_metadata:
+            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
+                                                                                               first_level_dependencies)
+
+        return first_level_dependencies
+
+    @staticmethod
+    def update_dependencies_from_pack_metadata(pack_name, first_level_dependencies):
+
+        with open(find_pack_path(pack_name)[0], "r") as pack_metadata:
+            pack_meta_file_content = json.loads(pack_metadata.read())
+
+        manual_dependencies = pack_meta_file_content.get('dependencies', {})
+        first_level_dependencies.update(manual_dependencies)
+
         return first_level_dependencies

@@ -35,6 +35,16 @@ SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
+INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
+                              '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
+                              '^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK[' \
+                              '^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook[' \
+                              '^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration[' \
+                              '^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION[' \
+                              '^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration[' \
+                              '^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script[' \
+                              '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
+                              '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -207,6 +217,18 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def validate_pack_name(self, pack_name):
+        if len(pack_name) < 3:
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
+                return False
+        if pack_name[0].islower():
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("capital"), self.pack_meta_file):
+                return False
+        if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
+                return False
+        return True
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -227,10 +249,12 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
 
             # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '').lower()
+            name_field = metadata.get(PACK_METADATA_NAME, '')
             if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
+            elif not self.validate_pack_name(name_field):
+                return False
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:

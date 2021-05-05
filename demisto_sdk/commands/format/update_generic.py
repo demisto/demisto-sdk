@@ -1,11 +1,11 @@
 import os
 import re
 from copy import deepcopy
-from typing import Set, Union, Optional
+from typing import Optional, Set, Union
 
 import click
 import yaml
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import INTEGRATION, FileType
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -237,7 +237,7 @@ class BaseUpdate:
             # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
             # if it is new contributed pack = setting version to 6.0.0
             elif should_set_from_version:
-                if self.data.get(self.from_version_key) != '5.5.0' or file_type != 'integration':
+                if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
 
         # If there is an existing file in content repo

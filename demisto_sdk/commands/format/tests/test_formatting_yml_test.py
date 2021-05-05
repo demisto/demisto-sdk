@@ -6,7 +6,8 @@ import click
 import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS)
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   INTEGRATION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -938,5 +939,5 @@ class TestFormatting:
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.5.0'})
         bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion(file_type='integration')
+        bs.set_fromVersion(file_type=INTEGRATION)
         assert bs.data['fromversion'] == '5.5.0', integration.yml.path

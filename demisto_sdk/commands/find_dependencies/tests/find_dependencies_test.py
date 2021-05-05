@@ -1390,7 +1390,14 @@ def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_r
 
 
 def test_find_dependencies_using_pack_metadata(mocker):
-
+    """
+        Given
+            - A dict of dependencies from id set.
+        When
+            - Running PackDependencies.update_dependencies_from_pack_metadata.
+        Then
+            - Assert the dependencies in the given dict is updated.
+    """
     mock_pack_meta_file = {
         "dependencies": {
             "dependency_pack1": {
@@ -1432,9 +1439,9 @@ def test_find_dependencies_using_pack_metadata(mocker):
 
     first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata('', dependencies_from_id_set)
 
-    assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory") and \
-        not first_level_dependencies.get("dependency_pack3", {}).get("mandatory") and \
-        first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
+    assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
+    assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
+    assert first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
 
 
 class TestDependencyGraph:

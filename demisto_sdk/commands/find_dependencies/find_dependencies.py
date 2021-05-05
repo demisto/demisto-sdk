@@ -1215,7 +1215,16 @@ class PackDependencies:
 
     @staticmethod
     def update_dependencies_from_pack_metadata(pack_name, first_level_dependencies):
+        """
+        Update the dependencies by the pack metadata.
 
+        Args:
+            pack_name (str): the pack name to take the metadata from.
+            first_level_dependencies (list): the given dependencies from the id set.
+
+        Returns:
+            A list of the updated dependencies.
+        """
         pack_meta_file_content = PackDependencies.get_metadata_from_pack(pack_name)
 
         manual_dependencies = pack_meta_file_content.get('dependencies', {})
@@ -1225,6 +1234,15 @@ class PackDependencies:
 
     @staticmethod
     def get_metadata_from_pack(pack_name):
+        """
+        Returns the pack metadata content of a given pack name.
+
+        Args:
+            pack_name (str): the pack name.
+
+        Return:
+            The pack metadata content.
+        """
 
         with open(find_pack_path(pack_name)[0], "r") as pack_metadata:
             pack_meta_file_content = json.loads(pack_metadata.read())

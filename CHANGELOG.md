@@ -5,6 +5,7 @@
 * Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
 * Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
 * Added support for running SDK commands in private repositories.
+* Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
 * Added a validation to ensure correct image and description file names.
 
 # 1.3.5

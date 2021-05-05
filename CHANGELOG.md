@@ -5,7 +5,9 @@
 * Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
 * Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
 * Added support for running SDK commands in private repositories.
+* Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
 * Fixed the field of ui_applicable for DS105 error, turned it to false.
+
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

@@ -1083,7 +1083,7 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_external_repository():
+def is_external_repository() -> bool:
     """
     Returns True if script executed from private repository
 

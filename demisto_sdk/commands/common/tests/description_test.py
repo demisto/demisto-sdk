@@ -98,7 +98,6 @@ def test_is_invalid_description_name(repo):
 
     if os.path.exists(integration.description.path):
         os.remove(integration.description.path)
-        integration.description = None
 
     integration.description = File(integration._tmpdir_integration_path / f'{integration.name}_desc.md',
                                    integration._repo.path)

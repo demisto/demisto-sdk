@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -75,7 +75,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.skip_id_set_creation = skip_id_set_creation
         self.prev_ver = prev_ver
         self.skip_pack_dependencies_print = skip_pack_dependencies_print
-        self.pack_metadata_file_content = self.get_metadata_file_content(self._get_pack_file_path(self.pack_meta_file))
+        self.pack_metadata_file_content = get_json(self._get_pack_file_path(self.pack_meta_file))
 
     # error handling
     def _add_error(self, error, file_path):

@@ -41,7 +41,7 @@ PACK_METADATA_PARTNER = {
 
 class TestPackUniqueFilesValidator:
     def __init__(self, mocker):
-        mocker.patch.object(BaseValidator, 'get_metadata_file_content',
+        mocker.patch.object(tools, 'get_json',
                             return_value=json.loads(self.metadata_file_path))
         self.FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
         self.FAKE_PACK_PATH = os.path.join(self.FILES_PATH, 'fake_pack')

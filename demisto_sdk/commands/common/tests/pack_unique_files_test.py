@@ -8,6 +8,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
+                                                   PACKS_PACK_META_FILE_NAME,
                                                    PACKS_README_FILE_NAME,
                                                    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
@@ -39,11 +40,15 @@ PACK_METADATA_PARTNER = {
 
 
 class TestPackUniqueFilesValidator:
-    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
-    FAKE_PATH_NAME = 'fake_pack'
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
-    validator.pack_path = FAKE_PACK_PATH
+    def __init__(self, mocker):
+        mocker.patch.object(BaseValidator, 'get_metadata_file_content',
+                            return_value=json.loads(self.metadata_file_path))
+        self.FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        self.FAKE_PACK_PATH = os.path.join(self.FILES_PATH, 'fake_pack')
+        self.FAKE_PATH_NAME = 'fake_pack'
+        self.metadata_file_path = os.path.join(self.FAKE_PACK_PATH, PACKS_PACK_META_FILE_NAME)
+        self.validator = PackUniqueFilesValidator(self.FAKE_PATH_NAME)
+        self.validator.pack_path = self.FAKE_PACK_PATH
 
     def test_is_error_added_name_only(self):
         self.validator._add_error(('boop', '101'), 'file_name')

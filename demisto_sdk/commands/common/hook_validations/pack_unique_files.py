@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -53,7 +53,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None,
+                 skip_pack_dependencies_print=False):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -73,6 +74,8 @@ class PackUniqueFilesValidator(BaseValidator):
         self.private_repo = private_repo
         self.skip_id_set_creation = skip_id_set_creation
         self.prev_ver = prev_ver
+        self.skip_pack_dependencies_print = skip_pack_dependencies_print
+        self.pack_metadata_file_content = self.get_metadata_file_content(self._get_pack_file_path(self.pack_meta_file))
 
     # error handling
     def _add_error(self, error, file_path):
@@ -191,7 +194,6 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_usecases(),
             self._is_approved_tags(),
             self._is_price_changed(),
-            self._is_approved_tags(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
         ]):
@@ -206,7 +208,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_version_bump(self):
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
         old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
-        current_meta_file_content = get_json(metadata_file_path)
+        current_meta_file_content = self.pack_metadata_file_content
         old_version = old_meta_file_content.get('currentVersion', '0.0.0')
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
@@ -232,7 +234,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
-            pack_meta_file_content = self._read_file_content(self.pack_meta_file)
+            pack_meta_file_content = self.pack_metadata_file_content
             if not pack_meta_file_content:
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
                     return False
@@ -305,7 +307,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def _is_valid_contributor_pack_support_details(self):
         """Checks if email or url exist in contributed pack details."""
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self.pack_metadata_file_content
             if pack_meta_file_content[PACK_METADATA_SUPPORT] in SUPPORTED_CONTRIBUTORS_LIST:
                 if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
                     if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
@@ -325,7 +327,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         """
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self.pack_metadata_file_content
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
                 self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
                 return False
@@ -345,7 +347,7 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_usecases = set()
         try:
             approved_usecases = tools.get_approved_usecases()
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self.pack_metadata_file_content
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
                 if self._add_error(
@@ -365,7 +367,7 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_tags = set()
         try:
             approved_tags = tools.get_approved_tags()
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self.pack_metadata_file_content
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
@@ -382,7 +384,7 @@ class PackUniqueFilesValidator(BaseValidator):
              bool: True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
         """
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self.pack_metadata_file_content
 
             if "Use Case" in pack_meta_file_content['tags']:
                 playbooks_path = os.path.join(self.pack_path, "Playbooks")
@@ -440,7 +442,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if not old_meta_file_content:
             return True
 
-        current_meta_file_content = get_json(metadata_file_path)
+        current_meta_file_content = self.pack_metadata_file_content
         current_price = current_meta_file_content.get('price')
         old_price = old_meta_file_content.get('price')
 
@@ -493,8 +495,10 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
-            click.echo(click.style(dependency_result, bold=True))
+
+            if not self.skip_pack_dependencies_print:
+                click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
+                click.echo(click.style(dependency_result, bold=True))
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):

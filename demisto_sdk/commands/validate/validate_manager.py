@@ -90,7 +90,7 @@ class ValidateManager:
         self.skip_pack_rn_validation = skip_pack_rn_validation
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
-        self.skip_dependencies = skip_dependencies or not use_git
+        self.skip_dependencies = skip_dependencies
         self.skip_id_set_creation = not create_id_set or skip_dependencies
         self.compare_type = '...'
         self.staged = staged
@@ -701,7 +701,8 @@ class ValidateManager:
                                                                private_repo=self.is_external_repo,
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver,
-                                                               json_file_path=self.json_file_path)
+                                                               json_file_path=self.json_file_path,
+                                                               skip_pack_dependencies_print=self.validate_all)
         pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")

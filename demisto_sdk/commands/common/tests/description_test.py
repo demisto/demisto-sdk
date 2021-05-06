@@ -100,6 +100,9 @@ def test_is_invalid_description_name(repo):
     if description_path:
         os.remove(description_path[0])
 
+    if os.path.exists(os.path.join(integration.path, 'CHANGELOG.md')):
+        os.remove(os.path.join(integration.path, 'CHANGELOG.md'))
+
     integration.description = File(integration._tmpdir_integration_path / f'{integration.name}_desc.md',
                                    integration._repo.path)
 

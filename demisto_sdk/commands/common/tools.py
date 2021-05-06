@@ -31,8 +31,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType,
-    GithubContentConfig, urljoin)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
+    FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -162,7 +162,8 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+core_pack_list: Optional[
+    list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
 def get_core_pack_list() -> list:
@@ -208,24 +209,37 @@ def get_remote_file(
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
-
     try:
-        headers = {}
-        if is_external_repository():
+        external_repo = is_external_repository()
+        if external_repo:
             githhub_config = GithubContentConfig()
             if githhub_config.Credentials.TOKEN:
-                headers = {
+                res = requests.get(github_path, verify=False, timeout=10, headers={
                     'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
                     'Accept': f'application/vnd.github.VERSION.raw',
-                }
+                })  # Sometime we need headers
+                if not res.ok:  # sometime we need param token
+                    res = requests.get(
+                        github_path,
+                        verify=False,
+                        timeout=10,
+                        params={'token': githhub_config.Credentials.TOKEN}
+                    )
+                res.raise_for_status()
             else:
-                print_color(
-                    f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
-                    f'Please define your github token in your environment.\n'
-                    f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
-                )
-        res = requests.get(github_path, verify=False, timeout=10, headers=headers)
-        res.raise_for_status()
+                # If no token defined, maybe it's a open repo. 🤷‍♀️
+                res = requests.get(github_path, verify=False, timeout=10)
+                # And maybe it's just not defined. 😢
+                if not res.ok:
+                    raise DemistoException(
+                        f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                        f'Please define your github token in your environment.\n'
+                        f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`',
+                        LOG_COLORS.RED
+                    )
+        else:
+            res = requests.get(github_path, verify=False, timeout=10)
+            res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
             print_warning(

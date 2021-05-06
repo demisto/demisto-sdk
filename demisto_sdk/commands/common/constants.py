@@ -817,7 +817,7 @@ class GithubContentConfig:
     def __init__(self, repo_name: Optional[str] = None):
         if not repo_name:
             try:
-                urls = GitUtil().repo.remote().urls
+                urls = list(GitUtil().repo.remote().urls)
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
                 self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
@@ -835,9 +835,9 @@ class GithubContentConfig:
         """
         try:
             for url in urls:
-                repo = re.findall(r'.com[/:](.*)\.', url)[0].replace('//github.com/', '')
+                repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
                 return repo
-        except (AttributeError, InvalidGitRepositoryError, IndexError):
+        except (AttributeError, IndexError):
             pass
 
         # default to content repo if the repo is not found

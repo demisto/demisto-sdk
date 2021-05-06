@@ -1,3 +1,4 @@
+import glob
 import os
 
 import pytest
@@ -94,10 +95,10 @@ def test_is_invalid_description_name(repo):
     pack = repo.create_pack('PackName')
 
     integration = pack.create_integration('IntName')
-    integration.create_default_integration()
 
-    if os.path.exists(integration.description.path):
-        os.remove(integration.description.path)
+    description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
+    if description_path:
+        os.remove(description_path[0])
 
     integration.description = File(integration._tmpdir_integration_path / f'{integration.name}_desc.md',
                                    integration._repo.path)

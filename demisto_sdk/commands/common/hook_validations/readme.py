@@ -251,7 +251,6 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            print("\n\n ignoring this pack \n\n")
             return errors
 
         for section in sections_list:
@@ -273,10 +272,6 @@ class ReadMeValidator(BaseValidator):
         errors += self._find_section_in_text(USER_FILL_SECTIONS)
         errors += self._find_section_in_text(DEFAULT_SENTENCES, PACKS_TO_IGNORE)
         is_valid = not bool(errors)
-        print("===================================================\n")
-        print(errors)
-        print("\n===================================================")
-
         if not is_valid:
             error_message, error_code = Errors.readme_error(errors)
             self.handle_error(error_message, error_code, file_path=self.file_path)

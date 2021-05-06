@@ -194,8 +194,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               self.readme_content.startswith('<!DOCTYPE html>') or \
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         invalid_paths = re.findall(
@@ -242,8 +242,8 @@ class ReadMeValidator(BaseValidator):
         """
         Find if sections from the sections list appear in the readme content and returns an error message.
         Arguments:
-            sections_list - list of strings, each string is a section to find in the text
-            ignore_packs - List of packs and integration names to be ignored
+            sections_list (List[str]) - list of strings, each string is a section to find in the text
+            ignore_packs (List[str]) - List of packs and integration names to be ignored
         Returns:
             An error message with the relevant sections.
         """
@@ -251,7 +251,7 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            return errors
+            return errors  # returns empty string
 
         for section in sections_list:
             required_section = re.findall(rf'{section}', self.readme_content, re.IGNORECASE)

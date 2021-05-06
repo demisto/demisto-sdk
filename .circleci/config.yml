@@ -159,7 +159,7 @@ jobs:
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              export ARTIFACTS_FOLDER="/builds/xsoar/content/artifacts"
+
               CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
             name: Merge Id Set
@@ -170,10 +170,10 @@ jobs:
 
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              export ARTIFACTS_FOLDER="/builds/xsoar/content/artifacts"
+              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              gsutil cp gs://marketplace-dist/content/private_id_set.json $ARTIFACTS_FOLDER/unified_id_set.json
-              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $ARTIFACTS_FOLDER/unified_id_set.json -o $ARTIFACTS_FOLDER/unified_id_set.json
+              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
         - run:
             name: Test validate files and yaml
             when: always
@@ -183,7 +183,7 @@ jobs:
 
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              export ARTIFACTS_FOLDER="/builds/xsoar/content/artifacts"
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
               CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh

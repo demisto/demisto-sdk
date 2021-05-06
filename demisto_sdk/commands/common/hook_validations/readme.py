@@ -9,6 +9,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Callable, List, Optional
 
+import click
 import requests
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
@@ -194,8 +195,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               self.readme_content.startswith('<!DOCTYPE html>') or \
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         invalid_paths = re.findall(
@@ -251,6 +252,7 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
+            click.secho(f"Default sentences check - Pack {current_pack_name} is ignored.", fg="yellow")
             return errors  # returns empty string
 
         for section in sections_list:

@@ -79,7 +79,6 @@ class ValidateManager:
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
             pykwalify_logs=False
     ):
-
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints

@@ -181,8 +181,8 @@ class ScriptValidator(ContentEntityValidator):
     def is_context_path_changed(self):
         # type: () -> bool
         """Check if the context path as been changed."""
-        current_context = [output['contextPath'] for output in self.current_file.get('outputs') or []]
-        old_context = [output['contextPath'] for output in self.old_file.get('outputs') or []]
+        current_context = [output['contextPath'] for output in self.current_file.get('outputs', [])]
+        old_context = [output['contextPath'] for output in self.old_file.get('outputs', [])]
 
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()

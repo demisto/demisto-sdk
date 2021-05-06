@@ -239,38 +239,33 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
                     return False
 
-            metadata = json.loads(pack_meta_file_content)
-            if not isinstance(metadata, dict):
-                if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
-                    return False
-
-            missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
+            missing_fields = [field for field in PACK_METADATA_FIELDS if field not in pack_meta_file_content.keys()]
             if missing_fields:
                 if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                                    self.pack_meta_file):
                     return False
 
             # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '')
+            name_field = pack_meta_file_content.get(PACK_METADATA_NAME, '')
             if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
             elif not self.validate_pack_name(name_field):
                 return False
 
-            description_name = metadata.get(PACK_METADATA_DESC, '').lower()
+            description_name = pack_meta_file_content.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
 
             # check non mandatory dependency field
-            dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
+            dependencies_field = pack_meta_file_content.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
                 if self._add_error(Errors.dependencies_field_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
 
             # check created field in iso format
-            created_field = metadata.get(PACK_METADATA_CREATED, '')
+            created_field = pack_meta_file_content.get(PACK_METADATA_CREATED, '')
             if created_field:
                 if not self.check_timestamp_format(created_field):
                     suggested_value = parser.parse(created_field).isoformat() + "Z"
@@ -283,7 +278,7 @@ class PackUniqueFilesValidator(BaseValidator):
             # check metadata list fields and validate that no empty values are contained in this fields
             for list_field in (PACK_METADATA_KEYWORDS, PACK_METADATA_TAGS, PACK_METADATA_CATEGORIES,
                                PACK_METADATA_USE_CASES):
-                field = metadata[list_field]
+                field = pack_meta_file_content[list_field]
                 if field and len(field) == 1:
                     value = field[0]
                     if not value:
@@ -292,7 +287,7 @@ class PackUniqueFilesValidator(BaseValidator):
                             return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
-            certification = metadata.get(PACK_METADATA_CERTIFICATION)
+            certification = pack_meta_file_content.get(PACK_METADATA_CERTIFICATION)
             if certification and certification not in ALLOWED_CERTIFICATION_VALUES:
                 if self._add_error(Errors.pack_metadata_certification_is_invalid(self.pack_meta_file),
                                    self.pack_meta_file):
@@ -485,7 +480,7 @@ class PackUniqueFilesValidator(BaseValidator):
             )
 
             if not first_level_dependencies:
-                if not self.suppress_print:
+                if not self.suppress_print or self.skip_pack_dependencies_print:
                     click.secho("No first level dependencies found", fg="yellow")
                 return True
 

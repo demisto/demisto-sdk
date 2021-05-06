@@ -99,6 +99,7 @@ def test_is_invalid_description_name(repo):
     description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
     if description_path:
         os.remove(description_path[0])
+        integration.description = None
 
     if os.path.exists(os.path.join(integration.path, 'CHANGELOG.md')):
         os.remove(os.path.join(integration.path, 'CHANGELOG.md'))

@@ -232,12 +232,14 @@ DIR_LIST = [
 
 
 class TestGithubContentConfig:
-    @pytest.mark.parametrize('url',
-                             [
-                                 'ssh://git@github.com/demisto/content.git',
-                                 'git@github.com:demisto/content.git',  # clone using github ssh example
-                                 'https://github.com/demisto/content.git',  # clone using github https example
-                             ])
+    @pytest.mark.parametrize(
+        'url',
+        [
+            'ssh://git@github.com/demisto/content.git',
+            'git@github.com:demisto/content.git',  # clone using github ssh example
+            'https://github.com/demisto/content.git',  # clone using github https example
+        ]
+    )
     def test_get_repo_name(self, url: str):
         """
         Given:
@@ -257,7 +259,7 @@ class TestGithubContentConfig:
         When:
             Searching for repository name
         Then:
-            Validate the correct repo got back
+            Validate the correct repo got back - demisto/content
         """
         github_config = constants.GithubContentConfig()
-        assert github_config._get_repository_name([]) == ''
+        assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME

@@ -112,9 +112,8 @@ def workflow_still_running(workflow_id: str, test_playbook) -> bool:
                 test_playbook.build_context.logging_module.debug(
                     f'Getting status for gitlab pipeline with id: {workflow_id}')
                 api_v4_url = os.environ.get('CI_API_V4_URL')
-                ci_project_id = os.environ.get('CI_PROJECT_ID')
                 workflow_details_response = requests.get(
-                    f'{api_v4_url}/projects/{ci_project_id}/pipelines/{workflow_id}',
+                    f'{api_v4_url}/projects/content/pipelines/{workflow_id}',
                     headers={'PRIVATE-TOKEN': GITLAB_STATUS_TOKEN})
                 workflow_details_response.raise_for_status()
             except Exception:

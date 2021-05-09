@@ -178,7 +178,10 @@ def test_valid_sections(integration, file_input):
                           ("##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
                            'FILL IN REQUIRED PERMISSIONS HERE'),
                           ("This integration was integrated and tested with version xx of integration v2",
-                           'version xx')])
+                           'version xx'),
+                          ("##Dummy Integration\n this integration is for getting started and learn how to build an "
+                           "integration. some extra text here",
+                           'getting started and learn how to build an integration')])
 def test_verify_no_default_sections_left(integration, capsys, file_input, section):
     """
     Given
@@ -206,6 +209,30 @@ ERROR_FOUND_CASES = [
 ]
 
 
+@pytest.mark.parametrize("readme_fake_path, readme_text",
+                         [('/HelloWorld/README.md', 'getting started and learn how to build an integration')])
+def test_readme_ignore(integration, readme_fake_path, readme_text):
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - README path of ignore pack
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    integration.readme.write(readme_text)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    # change the pack path to readme_fake_path
+    from pathlib import Path
+    readme_validator.file_path = Path(readme_fake_path)
+    readme_validator.pack_path = readme_validator.file_path.parent
+
+    result = readme_validator.verify_no_default_sections_left()
+    assert result
+
+
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
 def test_context_only_runs_once_when_error_exist(mocker, integration, errors_found, errors_ignore, expected):
     """
@@ -225,8 +252,10 @@ def test_context_only_runs_once_when_error_exist(mocker, integration, errors_fou
 
 
 DIFFERENCE_CONTEXT_RESULTS_CASE = [
-    ({'zoom-create-user': {'only in yml': {'Zoom.User.id'}, 'only in readme': set()}}, False),  # case path exists only in yml
-    ({'zoom-list-users': {'only in yml': set(), 'only in readme': {'Zoom.User.last_name', 'Zoom.User.first_name'}}}, False),  # case path exists only in readme
+    ({'zoom-create-user': {'only in yml': {'Zoom.User.id'}, 'only in readme': set()}}, False),
+    # case path exists only in yml
+    ({'zoom-list-users': {'only in yml': set(), 'only in readme': {'Zoom.User.last_name', 'Zoom.User.first_name'}}},
+     False),  # case path exists only in readme
     ({}, True),  # case no changes were found
 ]
 

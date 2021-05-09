@@ -10,6 +10,8 @@
 * When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
 * If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
 * Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
+* Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
 * Added a validation to ensure correct image and description file names.
 
 # 1.3.5
@@ -46,7 +48,6 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
-* Fixed an issue where **validate** was failing on editing existing release notes.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
@@ -64,7 +65,8 @@
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
-* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
+* Fixed an issue where the *c
+reate-id-set* flag in the *validate* command did not work while not using git.
 * Added the *hiddenusername* field to the integration schema.
 * Added a validation that images that are not integration images, do not ask for a new version or RN
 

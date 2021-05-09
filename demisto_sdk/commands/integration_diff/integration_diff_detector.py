@@ -50,11 +50,7 @@ class IntegrationDiffDetector:
     def check_command(self, old_command, new_commands):
         """Checks a specific old integration command and it's arguments and outputs if exist in the new integration"""
 
-        new_command = {}
-
-        for n_command in new_commands:
-            if n_command['name'] == old_command['name']:
-                new_command = n_command
+        new_command = IntegrationDiffDetector.check_if_item_exist(old_command, new_commands, 'name')
 
         if not new_command:
             self.add_changed_item(item_type='commands', item_name=old_command['name'],
@@ -76,11 +72,8 @@ class IntegrationDiffDetector:
         for argument in old_command_arguments:
             if argument not in new_command_arguments:
 
-                new_command_argument = {}
-                for new_command_arg in new_command_arguments:
-
-                    if new_command_arg['name'] == argument['name']:
-                        new_command_argument = new_command_arg
+                new_command_argument = IntegrationDiffDetector.check_if_item_exist(argument, new_command_arguments,
+                                                                                   'name')
 
                 if not new_command_argument:
                     self.add_changed_item(item_type='arguments', item_name=argument['name'],
@@ -117,11 +110,8 @@ class IntegrationDiffDetector:
         for output in old_command_outputs:
             if output not in new_command_outputs:
 
-                new_command_output = {}
-                for new_command_outp in new_command_outputs:
-
-                    if new_command_outp['contextPath'] == output['contextPath']:
-                        new_command_output = new_command_outp
+                new_command_output = IntegrationDiffDetector.check_if_item_exist(output, new_command_outputs,
+                                                                                 'contextPath')
 
                 if not new_command_output:
                     self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
@@ -152,6 +142,14 @@ class IntegrationDiffDetector:
 
         self.missing_details_report[item_type].append(item)
         self.fount_missing = True
+
+    @staticmethod
+    def check_if_item_exist(item_to_check, list_of_items, field_to_check):
+
+        for item in list_of_items:
+            if item[field_to_check] == item_to_check[field_to_check]:
+                return item
+        return {}
 
     def print_missing_items(self):
         if not self.fount_missing:

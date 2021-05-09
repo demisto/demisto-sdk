@@ -8,8 +8,11 @@ class IntegrationDiffDetector:
 
     def __init__(self, new: str = '', old: str = ''):
 
-        if not os.path.exists(new) or not os.path.exists(old):
-            print_error('No such file or directory.')
+        if not os.path.exists(new):
+            print_error('No such file or directory of the new integration.')
+
+        if not os.path.exists(old):
+            print_error('No such file or directory of the old integration.')
 
         self.new = new
         self.old = old
@@ -21,16 +24,23 @@ class IntegrationDiffDetector:
             'outputs': []
         }
 
-    def check_diff(self):
+    def check_diff(self) -> bool:
+        """
+        Checks differences between two integration yaml files.
+
+        Return:
+            bool. return true if the new integration contains everything in the old integration.
+        """
         old_yaml_data = get_yaml(self.old)
         new_yaml_data = get_yaml(self.new)
 
-        old_commands = old_yaml_data['script']['commands']
-        new_commands = new_yaml_data['script']['commands']
+        old_commands_data = old_yaml_data['script']['commands']
+        new_commands_data = new_yaml_data['script']['commands']
 
-        for old_command in old_commands:
-            if old_command not in new_commands:
-                self.check_command(old_command, new_commands)
+        # for each old integration command check if exist in the new, if not, check what is missing
+        for old_command in old_commands_data:
+            if old_command not in new_commands_data:
+                self.check_command(old_command, new_commands_data)
 
         self.print_missing_items()
         if self.missing_details_report:
@@ -38,6 +48,7 @@ class IntegrationDiffDetector:
         return False
 
     def check_command(self, old_command, new_commands):
+        """Checks a specific old integration command and it's arguments and outputs if exist in the new integration"""
 
         new_command = {}
 

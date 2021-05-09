@@ -1001,7 +1001,7 @@ class Errors:
     @error_code_decorator
     def invalid_description_name():
         return "The description's file name is invalid - " \
-               "please make sure the name looks like the following: <integration_name>_description.md"
+               "make sure the name looks like the following: <integration_name>_description.md"
 
     @staticmethod
     @error_code_decorator

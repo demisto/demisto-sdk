@@ -7,6 +7,7 @@
 * Added support for running SDK commands in private repositories.
 * Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
 * Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld README.
+
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
 * Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.

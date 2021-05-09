@@ -124,7 +124,7 @@ class DescriptionValidator(BaseValidator):
         description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), '*.md'))
 
-        # We need to check if exist an .md file only for description with a wrong name
+        # checking if there are any .md files only for description with a wrong name
         for path in md_paths:
             if path.endswith("README.md") or path.endswith("CHANGELOG.md"):
                 md_paths.remove(path)

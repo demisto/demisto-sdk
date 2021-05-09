@@ -6,7 +6,8 @@ import click
 import pytest
 import yaml
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS)
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   INTEGRATION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -768,7 +769,7 @@ class TestFormatting:
         click.echo.assert_called_once_with('Could not find sub-schema for input_schema', LOG_COLORS.YELLOW)
 
     @staticmethod
-    def exception_raise():
+    def exception_raise(file_type=''):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -891,3 +892,52 @@ class TestFormatting:
 
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
+
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
+        """
+        Given
+            - An integration from new contributed pack, with no fromversion key at yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        integration = pack.create_integration()
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion()
+        assert bs.data['fromversion'] == '6.0.0'
+
+    def test_set_fromversion_six_new_contributor_pack(self, pack):
+        """
+        Given
+            - A script, playbook and integration from new contributed pack with fromversion key at the yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        script = pack.create_script(yml={'fromversion': '5.0.0'})
+        playbook = pack.create_playbook(yml={'fromversion': '5.0.0'})
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
+            bs = BaseUpdate(input=path)
+            bs.set_fromVersion()
+            assert bs.data['fromversion'] == '6.0.0', path
+
+    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
+        """
+        Given
+            - An integration from new contributed pack with fromversion key at yml,
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is not set to 6.0.0
+            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        integration = pack.create_integration(yml={'fromversion': '5.5.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(file_type=INTEGRATION)
+        assert bs.data['fromversion'] == '5.5.0', integration.yml.path

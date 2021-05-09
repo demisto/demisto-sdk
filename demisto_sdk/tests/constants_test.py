@@ -235,9 +235,10 @@ class TestGithubContentConfig:
     @pytest.mark.parametrize(
         'url',
         [
-            'ssh://git@github.com/demisto/content.git',
-            'git@github.com:demisto/content.git',  # clone using github ssh example
-            'https://github.com/demisto/content.git',  # clone using github https example
+            'ssh://git@github.com/demisto/content-dist.git',
+            'git@github.com:demisto/content-dist.git',  # clone using github ssh example
+            'https://github.com/demisto/content-dist.git',  # clone using github https example
+            'https://github.com/demisto/content-dist'
         ]
     )
     def test_get_repo_name(self, url: str):
@@ -250,7 +251,7 @@ class TestGithubContentConfig:
             Validate the correct repo got back (demisto/content)
         """
         github_config = constants.GithubContentConfig()
-        assert github_config._get_repository_name([url]) == 'demisto/content'
+        assert github_config._get_repository_name([url]) == 'demisto/content-dist'
 
     def test_get_repo_name_empty_case(self):
         """

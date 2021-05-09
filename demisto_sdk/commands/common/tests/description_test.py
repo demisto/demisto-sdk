@@ -95,6 +95,7 @@ def test_is_invalid_description_name(repo):
     pack = repo.create_pack('PackName')
 
     integration = pack.create_integration('IntName')
+    integration.create_default_integration()
 
     description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
     if description_path:

@@ -130,7 +130,7 @@ class TestScriptValidator:
         (CONTEXT_NEW, CONTEXT_NEW, False),
         (CONTEXT_NEW, CONTEXT_MULTI_NEW, True),
         (CONTEXT_MULTI_NEW, CONTEXT_NEW, False),
-        (CONTEXT_EMPTY_OUTPUTS,CONTEXT_EMPTY_OUTPUTS, False)
+        (CONTEXT_EMPTY_OUTPUTS, CONTEXT_EMPTY_OUTPUTS, False)
     ]
 
     @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_CONTEXT_PATHS)

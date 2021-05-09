@@ -5,7 +5,6 @@ import pytest
 import yaml
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
-from TestSuite.file import File
 
 
 @pytest.mark.parametrize('integration_obj', [
@@ -95,18 +94,11 @@ def test_is_invalid_description_name(repo):
     pack = repo.create_pack('PackName')
 
     integration = pack.create_integration('IntName')
-    integration.create_default_integration()
 
     description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
-    if description_path:
-        os.remove(description_path[0])
-        integration.description = None
+    new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
 
-    if os.path.exists(os.path.join(integration.path, 'CHANGELOG.md')):
-        os.remove(os.path.join(integration.path, 'CHANGELOG.md'))
-
-    integration.description = File(integration._tmpdir_integration_path / f'{integration.name}_desc.md',
-                                   integration._repo.path)
+    os.rename(description_path[0], new_name)
 
     description_validator = DescriptionValidator(integration.yml.path)
 

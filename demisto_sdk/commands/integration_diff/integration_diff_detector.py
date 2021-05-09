@@ -50,13 +50,14 @@ class IntegrationDiffDetector:
     def check_command(self, old_command, new_commands):
         """Checks a specific old integration command and it's arguments and outputs if exist in the new integration"""
 
-        new_command = IntegrationDiffDetector.check_if_item_exist(old_command, new_commands, 'name')
+        new_command = IntegrationDiffDetector.check_if_element_exist(old_command, new_commands, 'name')
 
         if not new_command:
             self.add_changed_item(item_type='commands', item_name=old_command['name'],
                                   message=f'Missing the command {old_command["name"]}.')
         else:
-            changed_fields = [filed for filed in new_command if new_command[filed] != old_command[filed]]
+            # Gets all the fields that are different between the two commands
+            changed_fields = [field for field in new_command if new_command[field] != old_command[field]]
 
             if 'arguments' in changed_fields:
                 self.check_command_arguments(new_command, old_command)
@@ -65,6 +66,7 @@ class IntegrationDiffDetector:
                 self.check_command_outputs(new_command, old_command)
 
     def check_command_arguments(self, new_command, old_command):
+        """Checks the old integration command arguments if exists in the new integration command"""
 
         new_command_arguments = new_command['arguments']
         old_command_arguments = old_command['arguments']
@@ -72,17 +74,17 @@ class IntegrationDiffDetector:
         for argument in old_command_arguments:
             if argument not in new_command_arguments:
 
-                new_command_argument = IntegrationDiffDetector.check_if_item_exist(argument, new_command_arguments,
-                                                                                   'name')
+                new_command_argument = IntegrationDiffDetector.check_if_element_exist(argument, new_command_arguments,
+                                                                                      'name')
 
                 if not new_command_argument:
                     self.add_changed_item(item_type='arguments', item_name=argument['name'],
                                           message=f'Missing the argument {argument["name"]} in command '
                                                   f'{new_command["name"]}.', command_name=new_command['name'])
-
                 else:
-                    changed_fields = [filed for filed in new_command_argument
-                                      if new_command_argument[filed] != argument[filed]]
+                    # Gets all the fields that are different between the two arguments
+                    changed_fields = [field for field in new_command_argument
+                                      if new_command_argument[field] != argument[field]]
 
                     if 'default' in changed_fields:
                         self.add_changed_item(item_type='arguments', item_name=new_command_argument["name"],
@@ -103,6 +105,7 @@ class IntegrationDiffDetector:
                                               command_name=new_command["name"])
 
     def check_command_outputs(self, new_command, old_command):
+        """Checks the old integration command outputs if exists in the new integration command"""
 
         new_command_outputs = new_command['outputs']
         old_command_outputs = old_command['outputs']
@@ -110,8 +113,8 @@ class IntegrationDiffDetector:
         for output in old_command_outputs:
             if output not in new_command_outputs:
 
-                new_command_output = IntegrationDiffDetector.check_if_item_exist(output, new_command_outputs,
-                                                                                 'contextPath')
+                new_command_output = IntegrationDiffDetector.check_if_element_exist(output, new_command_outputs,
+                                                                                    'contextPath')
 
                 if not new_command_output:
                     self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
@@ -119,8 +122,9 @@ class IntegrationDiffDetector:
                                                   f'{new_command["name"]}.', command_name=new_command['name'])
 
                 else:
-                    changed_fields = [filed for filed in new_command_output
-                                      if new_command_output[filed] != output[filed]]
+                    # Gets all the fields that are different between the two outputs
+                    changed_fields = [field for field in new_command_output
+                                      if new_command_output[field] != output[field]]
 
                     if 'type' in changed_fields:
                         self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
@@ -144,21 +148,23 @@ class IntegrationDiffDetector:
         self.fount_missing = True
 
     @staticmethod
-    def check_if_item_exist(item_to_check, list_of_items, field_to_check):
+    def check_if_element_exist(element_to_check, list_of_elements, field_to_check):
 
-        for item in list_of_items:
-            if item[field_to_check] == item_to_check[field_to_check]:
-                return item
+        for element in list_of_elements:
+
+            if element[field_to_check] == element_to_check[field_to_check]:
+                return element
+
         return {}
 
     def print_missing_items(self):
         if not self.fount_missing:
-            print_success("No missing was found")
+            print_success("The integrations are backwards compatible")
             return
 
         for missing_type in self.missing_details_report:
             if self.missing_details_report[missing_type]:
-                print_error(f"\nFount missing {missing_type}:\n")
+                print_error(f"\nMissing {missing_type}:\n")
 
                 for item in self.missing_details_report[missing_type]:
                     print_error(item['message'] + "\n")

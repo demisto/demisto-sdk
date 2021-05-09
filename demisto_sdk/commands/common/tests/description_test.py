@@ -1,3 +1,6 @@
+import glob
+import os
+
 import pytest
 import yaml
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -52,3 +55,51 @@ def test_is_valid_file(integration, file_input, result):
 
     assert answer == result
     assert description_validator._is_valid == answer
+
+
+def test_is_valid_description_name(repo):
+    """
+        Given
+            - An integration description with a valid name
+
+        When
+            - Validating the integration description name
+
+        Then
+            - Ensure that description validator for integration passes.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    description_validator = DescriptionValidator(integration.yml.path)
+
+    assert description_validator.is_valid_description_name()
+
+
+def test_is_invalid_description_name(repo):
+    """
+        Given
+            - An integration description with a invalid name
+
+        When
+            - Validating the integration description name
+
+        Then
+            - Ensure that description validator for integration failed.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+
+    description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
+    new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
+
+    os.rename(description_path[0], new_name)
+
+    description_validator = DescriptionValidator(integration.yml.path)
+
+    assert not description_validator.is_valid_description_name()

@@ -23,7 +23,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_json, get_remote_file,
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
+                                               get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -34,6 +35,16 @@ SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
+INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
+                              '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
+                              '^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK[' \
+                              '^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook[' \
+                              '^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration[' \
+                              '^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION[' \
+                              '^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration[' \
+                              '^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script[' \
+                              '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
+                              '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -206,6 +217,18 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def validate_pack_name(self, pack_name):
+        if len(pack_name) < 3:
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
+                return False
+        if pack_name[0].islower():
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("capital"), self.pack_meta_file):
+                return False
+        if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
+                return False
+        return True
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -226,10 +249,12 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
 
             # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '').lower()
+            name_field = metadata.get(PACK_METADATA_NAME, '')
             if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
+            elif not self.validate_pack_name(name_field):
+                return False
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
@@ -319,8 +344,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_usecases = set()
         try:
-            approved_usecases = tools.get_remote_file(
-                'Tests/Marketplace/approved_usecases.json').get('approved_list') or []
+            approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
             if non_approved_usecases:
@@ -340,7 +364,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         non_approved_tags = set()
         try:
-            approved_tags = tools.get_remote_file('Tests/Marketplace/approved_tags.json').get('approved_list') or []
+            approved_tags = tools.get_approved_tags()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
             if non_approved_tags:
@@ -451,11 +475,11 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             click.secho(f'\nRunning pack dependencies validation on {self.pack}\n',
                         fg="bright_cyan")
-            core_pack_list = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+            core_pack_list = get_core_pack_list()
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation, use_pack_metadata=True
             )
 
             if not first_level_dependencies:
@@ -471,6 +495,11 @@ class PackUniqueFilesValidator(BaseValidator):
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
             click.echo(click.style(dependency_result, bold=True))
+
+            if self.pack in core_pack_list:
+                if not self.validate_core_pack_dependencies(first_level_dependencies):
+                    return False
+
             non_supported_pack = first_level_dependencies.get('NonSupported', {})
             deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
 
@@ -487,3 +516,16 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
             else:
                 raise
+
+    def validate_core_pack_dependencies(self, dependencies_packs):
+
+        found_dependencies = []
+        for dependency_pack in dependencies_packs:
+            if dependencies_packs.get(dependency_pack, {}).get('mandatory'):
+                found_dependencies.append(dependency_pack)
+
+        if found_dependencies:
+            error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True

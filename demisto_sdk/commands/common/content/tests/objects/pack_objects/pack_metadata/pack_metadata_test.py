@@ -302,7 +302,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
-    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.err
+    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.out
 
 
 def test_load_user_metadata_invalid_price(repo, capsys):
@@ -338,7 +338,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
     captured = capsys.readouterr()
 
-    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.err
+    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.out
 
 
 def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
@@ -365,4 +365,4 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
-    assert 'Failed loading Pack Number 1 user metadata.' in captured.err
+    assert 'Failed loading Pack Number 1 user metadata.' in captured.out

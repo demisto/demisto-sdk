@@ -1,5 +1,6 @@
 import ast
 import logging
+from copy import deepcopy
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
 
@@ -19,6 +20,7 @@ def update_server_configuration(client, server_configuration, error_msg, logging
     Returns:
         response_data: The response data
         status_code: The response status code
+        prev_system_conf: Previous stored system conf
     """
     if logging_manager:
         logging_manager.debug(f'Updating server configurations with {pformat(server_configuration)}')
@@ -34,6 +36,7 @@ def update_server_configuration(client, server_configuration, error_msg, logging
         logging_manager.debug(f'Current server configurations are {pformat(system_conf)}')
     else:
         logging.debug(f'Current server configurations are {pformat(system_conf)}')
+    prev_system_conf = deepcopy(system_conf)
     system_conf.update(server_configuration)
     data = {
         'data': system_conf,
@@ -62,7 +65,7 @@ def update_server_configuration(client, server_configuration, error_msg, logging
             logging_manager.error(f'{error_msg} {status_code}\n{message}')
         else:
             logging.error(f'{error_msg} {status_code}\n{message}')
-    return response_data, status_code
+    return response_data, status_code, prev_system_conf
 
 
 def is_redhat_instance(instance_ip: str) -> bool:

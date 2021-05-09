@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
@@ -25,8 +27,8 @@ class DescriptionValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
-
-        self.file_path = file_path
+        # Handling a case where the init function initiated with file path instead of structure validator
+        self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
 
     def is_valid(self):
         self.is_duplicate_description()

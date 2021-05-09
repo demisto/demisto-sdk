@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
@@ -23,16 +23,16 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
+    FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -162,36 +162,96 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-@lru_cache(maxsize=64)
-def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
+core_pack_list: Optional[
+    list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+
+
+def get_core_pack_list() -> list:
+    """Getting the core pack list from Github content
+
+    Returns:
+        Core pack list
+    """
+    global core_pack_list
+    if isinstance(core_pack_list, list):
+        return core_pack_list
+    if not is_external_repository():
+        core_pack_list = get_remote_file(
+            'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ) or []
+    else:
+        # no core packs in external repos.
+        core_pack_list = []
+    return core_pack_list
+
+
+# @lru_cache(maxsize=64)
+def get_remote_file(
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+        github_repo: Optional[str] = None
+):
     """
     Args:
-        full_file_path (string):The full path of the file.
-        tag (string): The branch name. default is 'master'
-        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print (bool): whether to suppress the warning message in case the file was not found.
+        full_file_path:The full path of the file.
+        tag: The branch name. default is 'master'
+        return_content: Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print: whether to suppress the warning message in case the file was not found.
+        github_repo: The repository to grab the file from
     Returns:
         The file content in the required format.
 
     """
+    github_config = GithubContentConfig(github_repo)
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
-    # The replace in the end is for Windows support
-    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
     try:
-        res = requests.get(github_path, verify=False, timeout=10)
-        res.raise_for_status()
+        external_repo = is_external_repository()
+        if external_repo:
+            githhub_config = GithubContentConfig()
+            if githhub_config.Credentials.TOKEN:
+                res = requests.get(github_path, verify=False, timeout=10, headers={
+                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
+                    'Accept': f'application/vnd.github.VERSION.raw',
+                })  # Sometime we need headers
+                if not res.ok:  # sometime we need param token
+                    res = requests.get(
+                        github_path,
+                        verify=False,
+                        timeout=10,
+                        params={'token': githhub_config.Credentials.TOKEN}
+                    )
+                res.raise_for_status()
+            else:
+                # If no token defined, maybe it's a open repo. 🤷‍♀️
+                res = requests.get(github_path, verify=False, timeout=10)
+                # And maybe it's just not defined. 😢
+                if not res.ok:
+                    raise DemistoException(
+                        f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                        f'Please define your github token in your environment.\n'
+                        f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`',
+                        LOG_COLORS.RED
+                    )
+        else:
+            res = requests.get(github_path, verify=False, timeout=10)
+            res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
-            print_warning('Could not find the old entity file under "{}".\n'
-                          'please make sure that you did not break backward compatibility. '
-                          'Reason: {}'.format(github_path, exc))
+            print_warning(
+                f'Could not find the old entity file under "{github_path}".\n'
+                'please make sure that you did not break backward compatibility.\n'
+                f'Reason: {exc}'
+            )
         return {}
     if return_content:
         return res.content
     if full_file_path.endswith('json'):
-        details = json.loads(res.content)
+        details = res.json()
     elif full_file_path.endswith('yml'):
         details = yaml.safe_load(res.content)
     # if neither yml nor json then probably a CHANGELOG or README file.
@@ -219,7 +279,7 @@ def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
-    Mark scripts/integrations that were removed and added as modifiied.
+    Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
@@ -305,7 +365,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -318,7 +378,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -332,7 +392,7 @@ def get_last_remote_release_version():
     """
     if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
+            releases_request = requests.get(GithubContentConfig.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()
             releases = releases_request.json()
             if isinstance(releases, list) and isinstance(releases[0], dict):
@@ -1037,14 +1097,17 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_external_repository():
+def is_external_repository() -> bool:
     """
     Returns True if script executed from private repository
 
     """
-    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
-    return os.path.exists(private_settings_path)
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        return os.path.exists(private_settings_path)
+    except git.InvalidGitRepositoryError:
+        return True
 
 
 def get_content_path() -> str:
@@ -1686,3 +1749,49 @@ def to_pascal_case(s: str):
         return new_s
 
     return s
+
+
+def get_approved_usecases() -> list:
+    """Gets approved list of usecases from content master
+
+    Returns:
+        List of approved usecases
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_usecases.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])
+
+
+def get_approved_tags() -> list:
+    """Gets approved list of tags from content master
+
+    Returns:
+        List of approved tags
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_tags.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])
+
+
+def get_pack_metadata(file_path: str) -> dict:
+    """ Get the pack_metadata dict, of the pack containing the given file path.
+
+    Args:
+        file_path(str): file path
+
+    Returns: pack_metadata of the pack, that source_file related to,
+        on failure returns {}
+
+    """
+    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
+    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
+    directory = match.group() if match else ''
+
+    try:
+        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
+        pack_metadata, _ = get_dict_from_file(metadata_path)
+        return pack_metadata
+    except Exception:
+        return {}

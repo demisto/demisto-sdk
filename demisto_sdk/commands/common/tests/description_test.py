@@ -100,11 +100,6 @@ def test_is_invalid_description_name(repo):
 
     os.rename(description_path[0], new_name)
 
-    # Preventing the CHANGELOG.md file from failing the test.
-    changelog_file_path = integration.changelog.path
-    if os.path.exists(changelog_file_path):
-        os.remove(changelog_file_path)
-
     description_validator = DescriptionValidator(integration.yml.path)
 
     assert not description_validator.is_valid_description_name()

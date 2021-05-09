@@ -1423,14 +1423,14 @@ def doc_review(**kwargs):
 
 # ====================== integration-diff ====================== #
 @main.command(name="integration-diff",
-              help='''Check differences between two integrations, one old and one new.''')
+              help='''Given two versions of integration, Check that everything in the old integration is covered in the new integration''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    '-n', '--new', type=str, help='The new integration.', required=True)
+    '-n', '--new', type=str, help='The path to the new version of the integration', required=True)
 @click.option(
-    '-o', '--old', type=str, help='The old integration.', required=True)
+    '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
 def integration_diff(**kwargs):
 
     integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))

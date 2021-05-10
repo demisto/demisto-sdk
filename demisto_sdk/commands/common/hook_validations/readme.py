@@ -39,7 +39,7 @@ USER_FILL_SECTIONS = [
 
 REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
-PACKS_TO_IGNORE = ['HelloWorld']
+PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 

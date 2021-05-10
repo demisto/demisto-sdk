@@ -15,6 +15,7 @@
 * Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
 * Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
 * Fixed an issue where **validate** was failing on editing existing release notes.
+* Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld or HelloWorldPremium README.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

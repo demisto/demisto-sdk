@@ -1389,6 +1389,61 @@ def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_r
     assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
 
 
+def test_find_dependencies_using_pack_metadata(mocker):
+    """
+        Given
+            - A dict of dependencies from id set.
+        When
+            - Running PackDependencies.update_dependencies_from_pack_metadata.
+        Then
+            - Assert the dependencies in the given dict is updated.
+    """
+    mock_pack_meta_file = {
+        "dependencies": {
+            "dependency_pack1": {
+                "mandatory": False,
+                "display_name": "dependency pack 1"
+            },
+            "dependency_pack2": {
+                "mandatory": False,
+                "display_name": "dependency pack 2"
+            },
+            "dependency_pack3": {
+                "mandatory": False,
+                "display_name": "dependency pack 3"
+            }
+        }
+    }
+
+    dependencies_from_id_set = {
+        "dependency_pack1": {
+            "mandatory": False,
+            "display_name": "dependency pack 1"
+        },
+        "dependency_pack2": {
+            "mandatory": True,
+            "display_name": "dependency pack 2"
+        },
+        "dependency_pack3": {
+            "mandatory": True,
+            "display_name": "dependency pack 3"
+        },
+        "dependency_pack4": {
+            "mandatory": True,
+            "display_name": "dependency pack 4"
+        }
+    }
+
+    mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.get_metadata_from_pack',
+                 return_value=mock_pack_meta_file)
+
+    first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata('', dependencies_from_id_set)
+
+    assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
+    assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
+    assert first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
+
+
 class TestDependencyGraph:
     @pytest.mark.parametrize('source_node, expected_nodes_in, expected_nodes_out',
                              [('pack1', ['pack1', 'pack2', 'pack3'], ['pack4']),

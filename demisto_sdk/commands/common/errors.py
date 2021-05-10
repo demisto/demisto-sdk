@@ -11,7 +11,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139']
+                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -195,6 +195,7 @@ ERROR_CODE = {
     "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
     "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
+    "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1227,6 +1228,19 @@ class Errors:
     @error_code_decorator
     def is_wrong_usage_of_usecase_tag():
         return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_name_is_not_in_xsoar_standards(reason):
+        if reason == "short":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
+                   f'characters long.'
+        if reason == "capital":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
+                   f'letter.'
+        if reason == "wrong_word":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words: ' \
+                   f'["Pack", "Playbook", "Integration", "Script"]'
 
     @staticmethod
     @error_code_decorator

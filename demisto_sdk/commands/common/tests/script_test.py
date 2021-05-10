@@ -118,6 +118,9 @@ class TestScriptValidator:
             }
         ]
     }
+    CONTEXT_EMPTY_OUTPUTS = {
+        'outputs': None
+    }
     INPUTS_CONTEXT_PATHS = [
         (CONTEXT_NEW, CONTEXT_OLD, True),
         (CONTEXT_OLD, CONTEXT_NEW, False),
@@ -126,7 +129,8 @@ class TestScriptValidator:
         (CONTEXT_MULTI_NEW, CONTEXT_OLD, False),
         (CONTEXT_NEW, CONTEXT_NEW, False),
         (CONTEXT_NEW, CONTEXT_MULTI_NEW, True),
-        (CONTEXT_MULTI_NEW, CONTEXT_NEW, False)
+        (CONTEXT_MULTI_NEW, CONTEXT_NEW, False),
+        (CONTEXT_EMPTY_OUTPUTS, CONTEXT_EMPTY_OUTPUTS, False)
     ]
 
     @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_CONTEXT_PATHS)

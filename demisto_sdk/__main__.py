@@ -119,14 +119,13 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    cur_version = get_distribution('demisto-sdk').version
-    last_release = get_last_remote_release_version()
-    if last_release and cur_version != last_release:
-        print_warning(f'You are using demisto-sdk {cur_version}, however version {last_release} is available.\n'
-                      f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
-    if version:
-        version = get_distribution('demisto-sdk').version
-        print(f'demisto-sdk {version}')
+    if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
+        cur_version = get_distribution('demisto-sdk').version
+        last_release = get_last_remote_release_version()
+        print_warning(f'You are using demisto-sdk {cur_version}.')
+        if last_release and cur_version != last_release:
+            print_warning(f'however version {last_release} is available.\n'
+                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
 
 
 # ====================== split-yml ====================== #
@@ -1078,12 +1077,15 @@ def update_pack_releasenotes(**kwargs):
     is_flag=True)
 @click.option('-v', "--verbose", help="Whether to print the log to the console.", required=False,
               is_flag=True)
+@click.option("--use-pack-metadata", help="Whether to update the dependencies from the pack metadata.", required=False,
+              is_flag=True)
 def find_dependencies_command(**kwargs):
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
+    use_pack_metadata = kwargs.get('use_pack_metadata', False)
     try:
         assert "Packs/" in str(input_path)
         pack_name = str(input_path).replace("Packs/", "")
@@ -1095,35 +1097,47 @@ def find_dependencies_command(**kwargs):
         PackDependencies.find_dependencies(pack_name=pack_name,
                                            id_set_path=id_set_path,  # type: ignore[arg-type]
                                            verbose=verbose,
-                                           update_pack_metadata=update_pack_metadata)
+                                           update_pack_metadata=update_pack_metadata,
+                                           use_pack_metadata=use_pack_metadata)
     except ValueError as exp:
         print_error(str(exp))
 
 
 # ====================== postman-codegen ====================== #
-@main.command(name="postman-codegen",
-              short_help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''',
-              help='''Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file.''')
-@click.help_option(
-    '-h', '--help'
+@main.command()
+@click.option(
+    '-i', '--input',
+    help='The Postman collection 2.1 JSON file',
+    required=True, type=click.File())
+@click.option(
+    '-o', '--output',
+    help='The output directory to save the config file or the integration',
+    type=click.Path(dir_okay=True, exists=True),
+    default=Path('.'),
+    show_default=True
 )
 @click.option(
-    '-i', '--input', help='The Postman collection 2.1 JSON file', required=True)
+    '-n', '--name',
+    help='The output integration name')
 @click.option(
-    '-o', '--output', help='The output directory to save the config file or the integration', required=False)
+    '-op', '--output-prefix',
+    help='The global integration output prefix. By default it is the product name.'
+)
 @click.option(
-    '-n', '--name', help='The output integration name', required=False)
+    '-cp', '--command-prefix',
+    help='The prefix for each command in the integration. By default is the product name in lower case'
+)
 @click.option(
-    '-op', '--output-prefix', help='The global integration output prefix. By default it is the product name.', required=False)
+    '--config-out',
+    help='Used for advanced integration customisation. Generates a config json file instead of integration.',
+    is_flag=True
+)
 @click.option(
-    '-cp', '--command-prefix', help='The prefix for each command in the integration. By default is the product name in lower case', required=False)
-@click.option(
-    '--config-out', help='Used for advanced integration customisation. Generates a config json file instead of integration.', required=False, is_flag=True)
-@click.option(
-    '--verbose', help='Print debug level logs', required=False, is_flag=True)
-def postman_codegen_command(**kwargs):
+    '--verbose', help='Print debug level logs', is_flag=True)
+def postman_codegen(**kwargs):
+    """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     collection_path = kwargs['input']
-    output_dir = kwargs['output'] or '.'
+    output_dir = kwargs['output']
     name = kwargs['name']
     context_path_prefix = kwargs['output_prefix']
     command_prefix = kwargs['command_prefix']
@@ -1134,15 +1148,15 @@ def postman_codegen_command(**kwargs):
         logger = logging.getLogger('demisto-sdk')
 
     config = postman_to_autogen_configuration(
-        collection_path=collection_path,
+        collection=json.load(collection_path),
         name=name,
         command_prefix=command_prefix,
         context_path_prefix=context_path_prefix
     )
 
     if kwargs['config_out']:
-        path = Path(output_dir, f'config-{config.name}.json')
-        with open(path, mode='w') as f:
+        path = output_dir / f'config-{config.name}.json'
+        with open(path, mode='w+') as f:
             json.dump(config.to_dict(), f, indent=4)
             logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
     else:
@@ -1151,19 +1165,25 @@ def postman_codegen_command(**kwargs):
 
 
 # ====================== generate-integration ====================== #
-@main.command(name="generate-integration",
-              short_help='''Generates a Cortex XSOAR integration from a config json file, which is generated by commands like postman-codegen''',
-              help='''Generates a Cortex XSOAR integration from a config json file, which is generated by commands like postman-codegen''')
-@click.help_option(
-    '-h', '--help'
+@main.command()
+@click.option(
+    '-i', '--input',
+    help='config json file produced by commands like postman-codegen and openapi-codegen',
+    required=True,
+    type=click.File()
 )
 @click.option(
-    '-i', '--input', help='config json file produced by commands like postman-codegen and openapi-codegen', required=True)
+    '-o', '--output',
+    help='The output directory to save the integration package',
+    type=click.Path(dir_okay=True, exists=True)
+)
 @click.option(
-    '-o', '--output', help='The output directory to save the integration package', required=False)
-@click.option(
-    '--verbose', help='Print debug level logs', required=False, is_flag=True)
-def generate_integration_command(**kwargs):
+    '--verbose',
+    help='Print debug level logs',
+    is_flag=True
+)
+def generate_integration(**kwargs):
+    """Generates a Cortex XSOAR integration from a config json file, which is generated by commands like postman-codegen"""
     path = kwargs['input']
     output_dir = kwargs['output'] or '.'
 

@@ -54,10 +54,11 @@ class IntegrationDiffDetector:
 
         if not new_command:
             self.add_changed_item(item_type='commands', item_name=old_command['name'],
-                                  message=f'Missing the command {old_command["name"]}.')
+                                  message=f'Missing the command \'{old_command["name"]}\'.')
         else:
             # Gets all the fields that are different between the two commands
-            changed_fields = [field for field in new_command if new_command[field] != old_command[field]]
+            changed_fields = [field for field in new_command if field in old_command and
+                              new_command[field] != old_command[field]]
 
             if 'arguments' in changed_fields:
                 self.check_command_arguments(new_command, old_command)
@@ -79,12 +80,12 @@ class IntegrationDiffDetector:
 
                 if not new_command_argument:
                     self.add_changed_item(item_type='arguments', item_name=argument['name'],
-                                          message=f'Missing the argument {argument["name"]} in command '
-                                                  f'{new_command["name"]}.', command_name=new_command['name'])
+                                          message=f'Missing the argument \'{argument["name"]}\' in command '
+                                                  f'\'{new_command["name"]}\'.', command_name=new_command['name'])
                 else:
                     # Gets all the fields that are different between the two arguments
-                    changed_fields = [field for field in new_command_argument
-                                      if new_command_argument[field] != argument[field]]
+                    changed_fields = [field for field in new_command_argument if field in argument and
+                                      new_command_argument[field] != argument[field]]
 
                     fields_to_check = ['default', 'required', 'isArray']
 
@@ -102,7 +103,7 @@ class IntegrationDiffDetector:
                     continue
 
                 self.add_changed_item(item_type='arguments', item_name=argument['name'],
-                                      message=f'The argument {argument["name"]} in command {command["name"]}'
+                                      message=f'The argument \'{argument["name"]}\' in command \'{command["name"]}\''
                                               f' was changed.', command_name=command["name"])
 
     def check_command_outputs(self, new_command, old_command):
@@ -119,18 +120,18 @@ class IntegrationDiffDetector:
 
                 if not new_command_output:
                     self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
-                                          message=f'The output {output["contextPath"]} was removed from command '
-                                                  f'{new_command["name"]}.', command_name=new_command['name'])
+                                          message=f'The output \'{output["contextPath"]}\' was missing from command '
+                                                  f'\'{new_command["name"]}\'.', command_name=new_command['name'])
 
                 else:
                     # Gets all the fields that are different between the two outputs
-                    changed_fields = [field for field in new_command_output
-                                      if new_command_output[field] != output[field]]
+                    changed_fields = [field for field in new_command_output if field in output and
+                                      new_command_output[field] != output[field]]
 
                     if 'type' in changed_fields:
                         self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
-                                              message=f'The output {output["contextPath"]} type in command '
-                                                      f'{new_command["name"]} was changed.',
+                                              message=f'The output \'{output["contextPath"]}\' type in command '
+                                                      f'\'{new_command["name"]}\' was changed.',
                                               command_name=new_command["name"])
 
     def add_changed_item(self, item_type, item_name, message, command_name=''):

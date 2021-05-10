@@ -1,4 +1,7 @@
 # Changelog
+* Added a validation to ensure correct image and description file names.
+
+# 1.3.6
 * Added a validation that core packs are not dependent on non-core packs.
 * Added a validation that a pack name follows XSOAR standards.
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.

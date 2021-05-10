@@ -133,6 +133,15 @@ class IntegrationDiffDetector:
                                               command_name=new_command["name"])
 
     def add_changed_item(self, item_type, item_name, message, command_name=''):
+        """
+        Added the missing item to the report list to print
+
+        Args:
+            item_type: The item type (command/argument/output).
+            item_name: The name of the item.
+            message: The message to print.
+            command_name: If the type is argument/output, then we get the command name that the item is missing.
+        """
 
         item = {
             'type': item_type,
@@ -148,7 +157,18 @@ class IntegrationDiffDetector:
         self.fount_missing = True
 
     @staticmethod
-    def check_if_element_exist(element_to_check, list_of_elements, field_to_check):
+    def check_if_element_exist(element_to_check, list_of_elements, field_to_check) -> dict:
+        """
+        Check if a given element exists in a given list.
+
+        Args:
+            element_to_check: The element to check.
+            list_of_elements: The list of elements.
+            field_to_check: The field being checked.
+
+        Return:
+            The element if exist and an empty dict if not.
+        """
 
         for element in list_of_elements:
 
@@ -158,6 +178,8 @@ class IntegrationDiffDetector:
         return {}
 
     def print_missing_items(self):
+        """Prints the missing elements report."""
+
         if not self.fount_missing:
             print_success("The integrations are backwards compatible")
             return

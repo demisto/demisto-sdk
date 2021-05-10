@@ -2,6 +2,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
+from pathlib import Path
 from typing import Iterable, List, Optional
 
 import click
@@ -813,11 +814,15 @@ class GithubContentConfig:
     CURRENT_REPOSITORY: str
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
+    REPOSITORY_LOCAL_ROOT_PATH: Optional[Path]
 
     def __init__(self, repo_name: Optional[str] = None):
+        self.REPOSITORY_LOCAL_ROOT_PATH = None
         if not repo_name:
             try:
-                urls = list(GitUtil().repo.remote().urls)
+                git_util = GitUtil()
+                urls = list(git_util.repo.remote().urls)
+                self.REPOSITORY_LOCAL_ROOT_PATH = git_util.repo.git.rev_parse('--show-toplevel')
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
                 self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME

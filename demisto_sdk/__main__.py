@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from functools import partial
 from pathlib import Path
 from typing import IO
 
@@ -11,12 +12,14 @@ from pkg_resources import get_distribution
 
 # Third party packages
 import click
+import click_config_file
 import git
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType,
+    GithubContentConfig)
 from demisto_sdk.commands.common.legacy_git_tools import get_packs
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
@@ -76,6 +79,12 @@ class DemistoSDK:
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
+configuration_option = partial(
+    click_config_file.configuration_option,
+    config_file_name='.demisto-sdk-conf',
+    configuration_dir=GithubContentConfig().REPOSITORY_LOCAL_ROOT_PATH
+)
+
 
 def check_configuration_file(command, args):
     config_file_path = '.demisto-sdk-conf'
@@ -129,17 +138,29 @@ def main(config, version):
                           f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
 
 
+@main.command()
+@configuration_option()
+def configuration_file_path():
+    """Gets a path to place the configuration file"""
+    print_warning(f'Put the configuration in {click_config_file.configuration_file_path}')
+
+
 # ====================== split-yml ====================== #
 @main.command()
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', help='The yml file to extract from', required=True
+    '-i', '--input',
+    type=click.Path(file_okay=True, exists=True),
+    help='The yml file to extract from',
+    required=True
 )
 @click.option(
-    '-o', '--output', required=True,
-    help="The output dir to write the extracted code/description/image to."
+    '-o', '--output',
+    help="The output dir to write the extracted code/description/image to.",
+    type=click.Path(dir_okay=True, exists=True),
+    required=True
 )
 @click.option(
     '--no-demisto-mock',
@@ -166,16 +187,34 @@ def main(config, version):
     show_default=True
 )
 @pass_config
-def split_yml(config, **kwargs):
+@configuration_option()
+def split_yml(
+        config,
+        input: Path,
+        output: Path,
+        no_demisto_mock: bool,
+        no_common_server: bool,
+        no_auto_create_dir: bool,
+        no_pipenv: bool
+
+):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
-    check_configuration_file('split-yml', kwargs)
-    file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    file_type: FileType = find_type(str(input), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
+    extractor = Extractor(
+        configuration=config.configuration,
+        file_type=file_type.value,
+        input=str(input),
+        output=str(output),
+        no_common_server=no_common_server,
+        no_auto_create_dir=no_auto_create_dir,
+        no_demisto_mock=no_demisto_mock,
+        no_pipenv=no_pipenv
+    )
     return extractor.extract_to_package_format()
 
 
@@ -225,25 +264,33 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input",
+    help="The directory path to the files to unify", required=True,
+    type=click.Path(dir_okay=True, exists=True)
 )
 @click.option(
-    "-o", "--output", help="The output dir to write the unified yml to", required=False
+    "-o", "--output",
+    help="The output dir to write the unified yml to",
+    type=click.Path(dir_okay=True, exists=True)
 )
 @click.option(
-    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    "--force",
+    help="Forcefully overwrites the preexisting yml if one exists",
     is_flag=True,
     show_default=False
 )
-def unify(**kwargs):
+@configuration_option()
+def unify(input: Path, output: Path, force: bool):
     """Unify code, image, description and yml files to a single Demisto yml file. Note that
        this should be used on a single integration/script and not a pack
        not multiple scripts/integrations
     """
-    check_configuration_file('unify', kwargs)
     # Input is of type Path.
-    kwargs['input'] = str(kwargs['input'])
-    unifier = Unifier(**kwargs)
+    unifier = Unifier(
+        str(input),
+        output=str(output) if output else '',
+        force=force
+    )
     unifier.merge_script_package_to_yml()
     return 0
 
@@ -332,13 +379,11 @@ def unify(**kwargs):
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
 @pass_config
+@configuration_option()
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
-
     file_path = kwargs['input']
-
     if kwargs['post_commit'] and kwargs['staged']:
         print_error('Could not supply the staged flag with the post-commit flag')
         sys.exit(1)
@@ -942,10 +987,10 @@ def generate_docs(**kwargs):
     help="Output file path, the default is the Tests directory.",
     default=''
 )
-def create_id_set(**kwargs):
+@configuration_option()
+def create_id_set(input: str, output: str):
     """Create the content dependency tree by ids."""
-    check_configuration_file('create-id-set', kwargs)
-    id_set_creator = IDSetCreator(**kwargs)
+    id_set_creator = IDSetCreator(input, output)
     id_set_creator.create_id_set()
 
 

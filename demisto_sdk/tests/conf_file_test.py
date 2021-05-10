@@ -1,3 +1,5 @@
+import os
+
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
@@ -29,10 +31,11 @@ def test_conf_file_custom(mocker, repo):
         assert '================= Validating file =================' in res.stdout
         assert 'DO106' in res.stdout
 
-    repo.make_file('.demisto-sdk-conf', '[validate]\nno_docker_checks=True')
+    repo.make_file('.demisto-sdk-conf', '[validate]\nno-docker-checks=True')
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
-        res = runner.invoke(main, f"validate -i {integration.yml.path}")
+        res = runner.invoke(main,
+                            f"validate -i {integration.yml.path} --config {os.path.join(repo.path, '.demisto-sdk-conf')}")
         assert '================= Validating file =================' in res.stdout
         assert 'DO106' not in res.stdout

@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
+from TestSuite.file import File
 
 
 def test_is_not_default_image():
@@ -144,3 +145,54 @@ def test_json_outputs_where_no_image_in_integration(repo):
         assert json_outputs[0]['filePath'] == image_path
         assert json_outputs[0]['fileType'] == 'png'
         assert json_outputs[0]['entityType'] == 'image'
+
+
+def test_is_valid_image_name_with_valid_name(repo):
+    """
+        Given
+            - An integration image with a valid name
+
+        When
+            - Validating the integration image name
+
+        Then
+            - Ensure that image validator for integration passes.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    image_validator = image.ImageValidator(integration.yml.path)
+
+    assert image_validator.is_valid_image_name()
+
+
+def test_is_valid_image_name_with_invalid_name(repo):
+    """
+        Given
+            - An integration image with a invalid name
+
+        When
+            - Validating the integration image name
+
+        Then
+            - Ensure that image validator for integration failed.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    integration.create_default_integration()
+
+    if os.path.exists(integration.image.path):
+        os.remove(integration.image.path)
+        integration.image = None
+
+    integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
+                             integration._repo.path)
+
+    image_validator = image.ImageValidator(integration.image.path)
+
+    assert not image_validator.is_valid_image_name()

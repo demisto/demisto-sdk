@@ -114,6 +114,7 @@ ERROR_CODE = {
     "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
     "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
     "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
     "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
@@ -149,6 +150,7 @@ ERROR_CODE = {
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -778,6 +780,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_image_name():
+        return "The image's file name is invalid - " \
+               "make sure the name looks like the following: <integration_name>_image.png"
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):
         return "Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
 
@@ -988,6 +996,12 @@ class Errors:
     def description_contains_contrib_details():
         return "Description file contains contribution/partner details that will be generated automatically "\
                "when the upload command is performed.\nDelete any details related to contribution/partner "
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_description_name():
+        return "The description's file name is invalid - " \
+               "make sure the name looks like the following: <integration_name>_description.md"
 
     @staticmethod
     @error_code_decorator

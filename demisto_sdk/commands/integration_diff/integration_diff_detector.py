@@ -86,23 +86,24 @@ class IntegrationDiffDetector:
                     changed_fields = [field for field in new_command_argument
                                       if new_command_argument[field] != argument[field]]
 
-                    if 'default' in changed_fields:
-                        self.add_changed_item(item_type='arguments', item_name=new_command_argument["name"],
-                                              message=f'The default of the argument {new_command_argument["name"]} in '
-                                                      f'command {new_command["name"]} was changed.',
-                                              command_name=new_command["name"])
+                    fields_to_check = ['default', 'required', 'isArray']
 
-                    if 'required' in changed_fields and new_command_argument['required']:
-                        self.add_changed_item(item_type='arguments', item_name=new_command_argument["name"],
-                                              message=f'The argument {new_command_argument["name"]} in command '
-                                                      f'{new_command["name"]} changed to be mandatory.',
-                                              command_name=new_command["name"])
+                    self.check_changed_fields_in_argument(command=new_command, argument=new_command_argument,
+                                                          fields_to_check=fields_to_check,
+                                                          changed_fields=changed_fields)
 
-                    if 'isArray' in changed_fields and new_command_argument['isArray']:
-                        self.add_changed_item(item_type='arguments', item_name=new_command_argument["name"],
-                                              message=f'The argument {new_command_argument["name"]} in command '
-                                                      f'{new_command["name"]} changed to be a comma separated.',
-                                              command_name=new_command["name"])
+    def check_changed_fields_in_argument(self, command, argument, fields_to_check, changed_fields):
+
+        for field in fields_to_check:
+
+            if field in changed_fields:
+
+                if (field == 'required' or field == 'isArray') and not argument[field]:
+                    continue
+
+                self.add_changed_item(item_type='arguments', item_name=argument['name'],
+                                      message=f'The argument {argument["name"]} in command {command["name"]}'
+                                              f' was changed.', command_name=command["name"])
 
     def check_command_outputs(self, new_command, old_command):
         """Checks the old integration command outputs if exists in the new integration command"""

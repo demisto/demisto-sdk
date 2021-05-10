@@ -166,7 +166,7 @@ def main(config, version):
     show_default=True
 )
 @pass_config
-def extract(config, **kwargs):
+def split_yml(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """

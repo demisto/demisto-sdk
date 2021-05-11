@@ -26,9 +26,10 @@ from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
+    PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
@@ -36,7 +37,6 @@ from demisto_sdk.commands.common.constants import (
 from packaging.version import parse
 from ruamel.yaml import YAML
 
-# disable insecure warnings
 urllib3.disable_warnings()
 
 # inialize color palette
@@ -1108,6 +1108,11 @@ def is_external_repository() -> bool:
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
+
+
+def get_content_id_set() -> dict:
+    """Getting the ID Set from official content's bucket"""
+    return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
 def get_content_path() -> str:

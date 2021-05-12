@@ -72,7 +72,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.update_yml()
+        base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location['version']
 

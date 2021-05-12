@@ -5,7 +5,8 @@ from typing import Optional, Set, Union
 
 import click
 import yaml
-from demisto_sdk.commands.common.constants import INTEGRATION, FileType
+from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -239,9 +240,15 @@ class BaseUpdate:
             elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
-            # If it is new pack, and it has from version lover than 5.5.0, set it to 5.5.0
-            elif self.from_version_key in self.data and self.data.get(self.from_version_key) == '5.0.0':
-                self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+            # If it is new pack, and it has from version lover than 5.5.0, ask to set it to 5.5.0
+            elif (current_fromversion := self.data.get(self.from_version_key)) in ['5.0.0', '4.5.0']\
+                    and file_type != PLAYBOOK:
+                click.secho(
+                    f"\nYour current fromversion is: '{current_fromversion}'. Do you want to set it to '5.5.0'? Y/N ",
+                    fg='red')
+                set_from_version = str(input()).lower()
+                if set_from_version in ['y', 'yes']:
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
         # If there is an existing file in content repo
         else:

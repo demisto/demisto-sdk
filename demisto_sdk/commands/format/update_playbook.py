@@ -4,17 +4,15 @@ import uuid
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.constants import (OLDEST_SUPPORTED_VERSION,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (find_type, get_yaml,
                                                is_string_uuid, write_yml)
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SCHEMAS_PATH,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from git import InvalidGitRepositoryError
 
@@ -66,8 +64,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                         click.echo(f"Adding `fromversion: {self.from_version}`")
 
                     else:
-                        click.echo(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
-                self.data['fromversion'] = self.from_version if self.from_version else OLDEST_SUPPORTED_VERSION
+                        click.echo(f"Adding `fromversion: {NEW_FILE_DEFAULT_5_5_0_FROMVERSION}`")
+                self.data[
+                    'fromversion'] = self.from_version if self.from_version else NEW_FILE_DEFAULT_5_5_0_FROMVERSION
                 return
 
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
@@ -108,7 +107,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def run_format(self):
         self.update_fromversion_by_user()
-        super().update_yml()
+        super().update_yml(file_type=PLAYBOOK)
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()

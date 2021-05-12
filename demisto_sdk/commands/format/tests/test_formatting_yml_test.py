@@ -942,16 +942,25 @@ class TestFormatting:
         bs.set_fromVersion(file_type=INTEGRATION)
         assert bs.data['fromversion'] == '5.5.0', integration.yml.path
 
-    def test_set_fromversion_new_pack(self, pack):
+    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '5.5.0'), ('N', '5.0.0')])
+    def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):
         """
+        Args: monkeypatch (MagicMock): Patch of the user input
+
         Given
-            - An integration from new pack with fromversion: 5.0.0 at yml
+            - An integration from new pack with fromversion: 5.0.0 at yml,
+            - User answer - update fromversion or not
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 5.5.0
+            - Ensure that the integration fromversion is set to 5.5.0 if user answers Y,
+            and the integration fromversion is reminds 5.0.0 if user answers N
         """
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
         integration = pack.create_integration(yml={'fromversion': '5.0.0'})
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
+        assert bs.data['fromversion'] == result_fromversion

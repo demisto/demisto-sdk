@@ -45,8 +45,6 @@ INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]p
                               '^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script[' \
                               '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
                               '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
-PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
-
 
 class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
@@ -54,7 +52,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None, empty_readme_check = True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -174,12 +172,8 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         Validates that README.md file is not empty for partner packs and packs with use cases
         """
-        if self.pack in PACKS_TO_IGNORE:
-            click.secho(f"Validate pack readme file is not empty - Pack {self.pack} is ignored.", fg="yellow")
-            return True
-
         if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
-            self._add_error(Errors.readme_error("Pack README.md is empty."), self.readme_file)
+            self._add_error(Errors.empty_readme_error(), self.readme_file)
             return False
 
         return True

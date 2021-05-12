@@ -214,8 +214,7 @@ class BaseUpdate:
         """
         metadata = get_pack_metadata(self.source_file)
         # if it is new contributed pack = setting version to 6.0.0
-        should_set_from_version = (
-                    (metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
 
         # If there is no existing file in content repo
         if not self.old_file:

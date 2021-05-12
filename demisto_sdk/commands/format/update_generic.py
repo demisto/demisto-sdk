@@ -241,7 +241,7 @@ class BaseUpdate:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
             # If it is new pack, and it has from version lover than 5.5.0, ask to set it to 5.5.0
-            elif (current_fromversion := self.data.get(self.from_version_key)) in ['5.0.0', '4.5.0']\
+            elif ((current_fromversion := self.data.get(self.from_version_key)) in ['5.0.0', '4.5.0'])\
                     and file_type != PLAYBOOK:
                 click.secho(
                     f"\nYour current fromversion is: '{current_fromversion}'. Do you want to set it to '5.5.0'? Y/N ",

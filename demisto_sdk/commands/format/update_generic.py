@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                is_file_from_content_repo,
                                                print_color)
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
+    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
 from ruamel.yaml import YAML
@@ -214,7 +214,8 @@ class BaseUpdate:
         """
         metadata = get_pack_metadata(self.source_file)
         # if it is new contributed pack = setting version to 6.0.0
-        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+        should_set_from_version = (
+                    (metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
 
         # If there is no existing file in content repo
         if not self.old_file:
@@ -228,9 +229,9 @@ class BaseUpdate:
                 # if it is new contributed pack = setting version to 6.0.0
                 elif should_set_from_version:
                     self.data[self.from_version_key] = VERSION_6_0_0
-                # Otherwise add fromversion key to current file and set to default 5.0.0
+                # Otherwise add fromversion key to current file and set to default 5.5.0
                 else:
-                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
             # If user wants to modify fromversion key and the key already existed
             elif from_version:
                 self.data[self.from_version_key] = from_version
@@ -239,6 +240,9 @@ class BaseUpdate:
             elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
+            # If it is new pack, and it has from version lover than 5.5.0, set it to 5.5.0
+            elif self.from_version_key in self.data and self.data.get(self.from_version_key) == '5.0.0':
+                self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
         # If there is an existing file in content repo
         else:

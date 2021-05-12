@@ -16,6 +16,7 @@
 * Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
 * Fixed an issue where **validate** was failing on editing existing release notes.
 * Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld or HelloWorldPremium README.
+* When formatting new pack, the **format** command will set the *fromversion* key to 5.5.0 in the new files without fromversion.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.

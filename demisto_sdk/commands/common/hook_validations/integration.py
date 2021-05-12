@@ -1166,6 +1166,7 @@ class IntegrationValidator(ContentEntityValidator):
             if file_name.endswith('_image.png') or file_name.endswith('_description.md') or \
                     file_name.endswith('_test.py'):
                 base_name = file_name.rsplit('_', 1)[0]
+
             else:
                 base_name = file_name.rsplit('.', 1)[0]
             separators.extend(self.check_separators_in_name(base_name))

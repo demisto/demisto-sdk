@@ -1,6 +1,6 @@
 # Changelog
 * Added a validation to ensure correct image and description file names.
-* Added a validation to ensure that the integration and script folder and file names will not contain separators.
+* Added a validation to ensure that the integration and script folder and file names will not contain separators (`_`, `-`, ` `).
 
 # 1.3.6
 * Added a validation that core packs are not dependent on non-core packs.

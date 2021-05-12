@@ -610,18 +610,18 @@ class TestFormatting:
     def test_run_format_on_tpb(self):
         """
         Given
-            - A Test Playbook file.
+            - A Test Playbook file, that does not have fromversion key
         When
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 5.0.0
+            - Ensure `fromversion` field set to 5.5.0
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '5.0.0'
+        assert formatter.data.get('fromversion') == '5.5.0'
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -938,6 +938,20 @@ class TestFormatting:
         """
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.5.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(file_type=INTEGRATION)
+        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
+
+    def test_set_fromversion_new_pack(self, pack):
+        """
+        Given
+            - An integration from new pack with fromversion: 5.0.0 at yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 5.5.0
+        """
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
         assert bs.data['fromversion'] == '5.5.0', integration.yml.path

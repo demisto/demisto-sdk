@@ -9,7 +9,6 @@ import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -574,7 +573,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == OLDEST_SUPPORTED_VERSION
+    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
 
 
 def test_format_playbook_without_fromversion_with_preset_flag(repo):

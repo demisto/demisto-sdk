@@ -1472,7 +1472,8 @@ def doc_review(**kwargs):
 
 # ====================== integration-diff ====================== #
 @main.command(name="integration-diff",
-              help='''Given two versions of an integration, Check that everything in the old integration is covered in the new integration''')
+              help='''Given two versions of an integration, Check that everything in the old integration is covered in
+              the new integration''')
 @click.help_option(
     '-h', '--help'
 )
@@ -1481,6 +1482,9 @@ def doc_review(**kwargs):
 @click.option(
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
 def integration_diff(**kwargs):
+    """
+    Checks for differences between two versions of an integration, and verified that the new version covered the old version.
+    """
 
     integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))
     result = integration_diff_detector.check_diff()

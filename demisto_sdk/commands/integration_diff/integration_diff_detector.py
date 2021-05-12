@@ -1,7 +1,8 @@
 import os
 
-from demisto_sdk.commands.common.tools import (get_yaml, print_error,
-                                               print_success)
+import click
+from demisto_sdk.commands.common.constants import ARGUMENT_FIELDS_TO_CHECK
+from demisto_sdk.commands.common.tools import get_yaml
 
 
 class IntegrationDiffDetector:
@@ -9,10 +10,10 @@ class IntegrationDiffDetector:
     def __init__(self, new: str = '', old: str = ''):
 
         if not os.path.exists(new):
-            print_error('No such file or directory of the new integration.')
+            click.secho('No such file or directory for the new integration.', fg='bright_red')
 
         if not os.path.exists(old):
-            print_error('No such file or directory of the old integration.')
+            click.secho('No such file or directory for the old integration.', fg='bright_red')
 
         self.new = new
         self.old = old
@@ -42,13 +43,18 @@ class IntegrationDiffDetector:
             if old_command not in new_commands_data:
                 self.check_command(old_command, new_commands_data)
 
-        self.print_missing_items()
-        if self.missing_details_report:
-            return True
-        return False
+        if self.print_missing_items():
+            return False
+        return True
 
     def check_command(self, old_command, new_commands):
-        """Checks a specific old integration command and it's arguments and outputs if exist in the new integration"""
+        """
+        Checks a specific old integration command and it's arguments and outputs if exist in the new integration
+
+        Args:
+            old_command: The command of the old integration.
+            new_commands: List of the new integration commands
+        """
 
         new_command = IntegrationDiffDetector.check_if_element_exist(old_command, new_commands, 'name')
 
@@ -67,7 +73,13 @@ class IntegrationDiffDetector:
                 self.check_command_outputs(new_command, old_command)
 
     def check_command_arguments(self, new_command, old_command):
-        """Checks the old integration command arguments if exists in the new integration command"""
+        """
+        Checks the old integration command arguments if exists in the new integration command
+
+        Args:
+            new_command: The new integration command.
+            old_command: The old integration command.
+        """
 
         new_command_arguments = new_command['arguments']
         old_command_arguments = old_command['arguments']
@@ -87,13 +99,20 @@ class IntegrationDiffDetector:
                     changed_fields = [field for field in new_command_argument if field in argument and
                                       new_command_argument[field] != argument[field]]
 
-                    fields_to_check = ['default', 'required', 'isArray']
-
                     self.check_changed_fields_in_argument(command=new_command, argument=new_command_argument,
-                                                          fields_to_check=fields_to_check,
+                                                          fields_to_check=ARGUMENT_FIELDS_TO_CHECK,
                                                           changed_fields=changed_fields)
 
     def check_changed_fields_in_argument(self, command, argument, fields_to_check, changed_fields):
+        """
+        Checks for changed fields in a given command argument.
+
+        Args:
+            command: The command to check his argument.
+            argument: The argument to check.
+            fields_to_check: List of fields to check if changed.
+            changed_fields: List of changed fields.
+        """
 
         for field in fields_to_check:
 
@@ -107,7 +126,13 @@ class IntegrationDiffDetector:
                                               f' was changed.', command_name=command["name"])
 
     def check_command_outputs(self, new_command, old_command):
-        """Checks the old integration command outputs if exists in the new integration command"""
+        """
+        Checks the old integration command outputs if exists in the new integration command.
+
+        Args:
+            new_command: The new integration command.
+            old_command: The old integration command.
+        """
 
         new_command_outputs = new_command['outputs']
         old_command_outputs = old_command['outputs']
@@ -120,7 +145,7 @@ class IntegrationDiffDetector:
 
                 if not new_command_output:
                     self.add_changed_item(item_type='outputs', item_name=output['contextPath'],
-                                          message=f'The output \'{output["contextPath"]}\' was missing from command '
+                                          message=f'Missing the output \'{output["contextPath"]}\' in command '
                                                   f'\'{new_command["name"]}\'.', command_name=new_command['name'])
 
                 else:
@@ -179,16 +204,22 @@ class IntegrationDiffDetector:
 
         return {}
 
-    def print_missing_items(self):
-        """Prints the missing elements report."""
+    def print_missing_items(self) -> bool:
+        """
+        Prints the missing elements report.
+
+        Return:
+            bool. return true if found items to print and false if not.
+        """
 
         if not self.fount_missing:
-            print_success("The integrations are backwards compatible")
-            return
+            click.secho("The integrations are backwards compatible", fg='green')
+            return False
 
         for missing_type in self.missing_details_report:
             if self.missing_details_report[missing_type]:
-                print_error(f"\nMissing {missing_type}:\n")
+                click.secho(f"\nMissing {missing_type}:\n", fg='bright_red')
 
                 for item in self.missing_details_report[missing_type]:
-                    print_error(item['message'] + "\n")
+                    click.secho(item['message'] + "\n", fg='bright_red')
+        return True

@@ -490,7 +490,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if API_MODULES_PACK not in self.pack:
             self.validate_pack_meta_file()
 
-        # self.validate_pack_readme_file_is_not_empty()
+        self.validate_pack_readme_file_is_not_empty()
 
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:

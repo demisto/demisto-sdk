@@ -469,7 +469,7 @@ class TestFormatting:
         (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
-    def test_set_fetch_params_in_config(self, source, target, path, answer):
+    def test_set_fetch_params_in_config(self, source, target, path, answer, monkeypatch):
         """
         Given
         - Integration yml with isfetch field labeled as true and correct fetch params.
@@ -484,6 +484,10 @@ class TestFormatting:
         """
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
             yaml_content = yaml.safe_load(f)
@@ -645,7 +649,7 @@ class TestFormatting:
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
 
-    def test_update_docker_format(self, tmpdir, mocker):
+    def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
         """
         test_tag = '1.0.0-test-tag'
@@ -664,6 +668,11 @@ class TestFormatting:
             'dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
         format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
                                      update_docker=True)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
+
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)

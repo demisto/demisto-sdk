@@ -49,23 +49,41 @@ from mock import patch
 
 class TestFormattingJson:
     FORMAT_FILES = [
-        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
-        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
-        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
         (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, INDICATORTYPE_PATH, 0),
         (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH, 0),
         (SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, LAYOUTS_CONTAINER_PATH, 0),
         (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
         (SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER, MAPPER_PATH, 0),
         (SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER, CLASSIFIER_PATH, 0),
-        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0),
         (SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET, WIDGET_PATH, 0)
+    ]
+    FORMAT_FILES_OLD_FROMVERSION = [
+        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
+        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
+        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
+        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0),
     ]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
+        res = format_manager(input=target, output=target, verbose=True)
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
+
+        assert res is answer
+
+    @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_OLD_FROMVERSION)
+    def test_format_file_old_fromversion(self, source, target, path, answer, monkeypatch):
+        os.makedirs(path, exist_ok=True)
+        shutil.copyfile(source, target)
+
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
+
         res = format_manager(input=target, output=target, verbose=True)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
@@ -82,7 +100,7 @@ class TestFormattingJson:
                              "  Please specify a correct output."
 
 
-def test_update_connection_removes_unnecessary_keys(tmpdir):
+def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     """
     Given
         - A connection json file with a key that's not exist in the schema
@@ -109,6 +127,10 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
         input=connection_file_path,
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
+    )
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: 'N'
     )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:

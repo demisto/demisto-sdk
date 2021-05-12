@@ -242,10 +242,9 @@ class BaseUpdate:
                     self.data[self.from_version_key] = VERSION_6_0_0
             # If it is new pack, and it has from version lover than 5.5.0, ask to set it to 5.5.0
             elif self.data.get(self.from_version_key) in ['5.0.0', '4.5.0'] and file_type != PLAYBOOK:
-                click.secho(
-                    f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want to set it to '5.5.0'? Y/N ",
-                    fg='red')
-                set_from_version = str(input()).lower()
+                set_from_version = str(
+                    input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want to "
+                          f"set it to '5.5.0'? Y/N ")).lower()
                 if set_from_version in ['y', 'yes']:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 

@@ -46,13 +46,15 @@ INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]p
                               '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
                               '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
 
+
 class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None, empty_readme_check = True):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None,
+                 empty_readme_check=True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack

@@ -77,8 +77,8 @@ ERROR_CODE = {
     "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
                                                               'related_field': ''},
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
-    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False, 'related_field':
-                                         'script.commands.name'},
+    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
+                                         'related_field': 'script.commands.name'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -149,7 +149,8 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True,
+                                             'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
@@ -996,7 +997,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_contains_contrib_details():
-        return "Description file contains contribution/partner details that will be generated automatically "\
+        return "Description file contains contribution/partner details that will be generated automatically " \
                "when the upload command is performed.\nDelete any details related to contribution/partner "
 
     @staticmethod
@@ -1272,7 +1273,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return f'README.md is empty'
+        return 'README.md is empty'
 
     @staticmethod
     @error_code_decorator

@@ -1423,7 +1423,7 @@ def doc_review(**kwargs):
 
 # ====================== integration-diff ====================== #
 @main.command(name="integration-diff",
-              help='''Given two versions of integration, Check that everything in the old integration is covered in the new integration''')
+              help='''Given two versions of an integration, Check that everything in the old integration is covered in the new integration''')
 @click.help_option(
     '-h', '--help'
 )

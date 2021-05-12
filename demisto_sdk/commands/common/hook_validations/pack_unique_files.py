@@ -45,6 +45,7 @@ INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]p
                               '^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script[' \
                               '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
                               '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
+PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -173,6 +174,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         Validates that README.md file is not empty for partner packs and packs with use cases
         """
+        if self.pack in PACKS_TO_IGNORE:
+            click.secho(f"Validate pack readme file is not empty - Pack {self.pack} is ignored.", fg="yellow")
+            return True
+
         if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
             self._add_error(Errors.readme_error("Pack README.md is empty."), self.readme_file)
             return False

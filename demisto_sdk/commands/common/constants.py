@@ -1151,6 +1151,8 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
+ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future

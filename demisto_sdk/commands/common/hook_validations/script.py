@@ -283,8 +283,17 @@ class ScriptValidator(ContentEntityValidator):
         Returns:
             true if the folder/files names are valid and there are no separators, and false if not.
         """
+        is_unified_script = self.current_file.get('script', '') not in ['-', '']
 
-        return self.check_separators_in_folder() and self.check_separators_in_files()
+        if is_unified_script:
+            return True
+
+        answers = [
+            self.check_separators_in_folder(),
+            self.check_separators_in_files()
+        ]
+
+        return all(answers)
 
     def check_separators_in_folder(self) -> bool:
         """

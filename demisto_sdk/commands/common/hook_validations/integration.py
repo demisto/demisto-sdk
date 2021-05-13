@@ -1123,8 +1123,17 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             true if the folder/files names are valid and there are no separators, and false if not.
         """
+        is_unified_integration = self.current_file.get('script', {}).get('script', '') not in ['-', '']
 
-        return self.check_separators_in_folder() and self.check_separators_in_files()
+        if is_unified_integration:
+            return True
+
+        answers = [
+            self.check_separators_in_folder(),
+            self.check_separators_in_files()
+        ]
+
+        return all(answers)
 
     def check_separators_in_folder(self) -> bool:
         """
@@ -1164,7 +1173,7 @@ class IntegrationValidator(ContentEntityValidator):
                 continue
 
             if file_name.endswith('_image.png') or file_name.endswith('_description.md') or \
-                    file_name.endswith('_test.py'):
+                    file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
                 base_name = file_name.rsplit('_', 1)[0]
 
             else:

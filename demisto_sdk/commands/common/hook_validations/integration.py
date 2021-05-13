@@ -139,6 +139,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
             self.is_valid_as_deprecated(),
+            self.is_there_separators_in_names()
         ]
         return all(answers)
 

@@ -330,7 +330,7 @@ class ScriptValidator(ContentEntityValidator):
 
             file_name = os.path.basename(file_path)
 
-            if file_name.endswith('_test.py'):
+            if file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
                 base_name = file_name.rsplit('_', 1)[0]
 
             else:

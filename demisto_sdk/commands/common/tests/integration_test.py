@@ -513,14 +513,18 @@ class TestIntegrationValidator:
         {"name": "unsecure", "type": 17, "required": False, "hidden": False}]
     INVALID_DISPLAY_TYPE_EXPIRATION = [
         {"name": "unsecure", "type": 17, "display": "some display", "required": False, "hidden": False}]
+    INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD = [
+        {"name": "credentials", "type": 9, "display": "", "displaypassword": "some display password", "required": True,
+         "hiddenusername": True}]
     IS_VALID_DISPLAY_INPUTS = [
         (VALID_DISPLAY_NON_HIDDEN, True),
         (VALID_DISPLAY_HIDDEN, True),
         (INVALID_DISPLAY_NON_HIDDEN, False),
-        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (INVALID_NO_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
         (INVALID_DISPLAY_TYPE_EXPIRATION, False),
         (FEED_REQUIRED_PARAMS_STRUCTURE, True),
+        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, True)
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)

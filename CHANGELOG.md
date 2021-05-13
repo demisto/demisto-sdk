@@ -1,5 +1,6 @@
 # Changelog
 * Added a validation to ensure correct image and description file names.
+* Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
 * Added a validation to ensure that the integration and script folder and file names will not contain separators (`_`, `-`, ` `).
 
 # 1.3.6

@@ -772,7 +772,7 @@ class IntegrationValidator(ContentEntityValidator):
                         self.is_valid = False
                         return True
 
-            elif not is_field_hidden and not configuration_display \
+            elif not is_field_hidden and not configuration_display and not configuration_param.get('displaypassword') \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

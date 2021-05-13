@@ -954,15 +954,15 @@ class Errors:
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
-               f"with a version that does not match the main playbook version. The version of" \
-               f" {entities_names} should be at most {main_playbook_version}."
+               f"with a version that does not match the main playbook version. The from version of" \
+               f" {entities_names} should be at least {main_playbook_version}."
 
     @staticmethod
     @error_code_decorator
     def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
                f"that not implemented in integration that match the main playbook version. This command should be " \
-               f"implemented in an integration from version {main_playbook_version} at most."
+               f"implemented in an integration with a from version of at least {main_playbook_version}."
 
     @staticmethod
     @error_code_decorator

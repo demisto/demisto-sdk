@@ -725,6 +725,74 @@ class TestIntegrationValidator:
 
         assert not validator.is_valid_integration_file_path()
 
+    def test_folder_name_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_folder()
+
+    def test_files_names_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_files()
+
+    def test_folder_name_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_folder()
+
+    def test_files_names_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_files()
+
 
 class TestIsFetchParamsExist:
     def setup(self):

@@ -5,7 +5,8 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
+from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   FEATURE_BRANCHES,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -224,3 +225,23 @@ class ContentEntityValidator(BaseValidator):
                     return False
 
         return True
+
+    @staticmethod
+    def check_separators_in_name(base_name) -> list:
+        """
+        Check if there are separators in a given name of folder or file.
+
+        Args:
+            base_name: The base name of the folder/file.
+
+        Return:
+            list of separators found in the name.
+        """
+        separators = []
+
+        for separator in ENTITY_NAME_SEPARATORS:
+
+            if separator in base_name:
+                separators.append(separator)
+
+        return separators

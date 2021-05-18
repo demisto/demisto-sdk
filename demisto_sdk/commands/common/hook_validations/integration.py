@@ -24,8 +24,9 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_core_pack_list, get_pack_name,
-    is_v2_file, print_error, server_version_compare)
+    compare_context_path_in_yml_and_readme, get_core_pack_list,
+    get_files_in_dir, get_pack_name, is_v2_file, print_error,
+    server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -105,7 +106,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_context_change_in_readme(),
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
-            self.has_no_duplicate_args()
+            self.has_no_duplicate_args(),
+            self.is_there_separators_in_names()
         ]
 
         if not skip_test_conf:
@@ -137,6 +139,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
             self.is_valid_as_deprecated(),
+            self.is_there_separators_in_names()
         ]
         return all(answers)
 
@@ -1113,3 +1116,78 @@ class IntegrationValidator(ContentEntityValidator):
                     valid = False
 
         return valid
+
+    def is_there_separators_in_names(self) -> bool:
+        """
+        Check if there are separators in the integration folder or files.
+
+        Returns:
+            true if the folder/files names are valid and there are no separators, and false if not.
+        """
+        is_unified_integration = self.current_file.get('script', {}).get('script', '') not in ['-', '']
+
+        if is_unified_integration:
+            return True
+
+        answers = [
+            self.check_separators_in_folder(),
+            self.check_separators_in_files()
+        ]
+
+        return all(answers)
+
+    def check_separators_in_folder(self) -> bool:
+        """
+        Check if there are separators in the integration folder.
+
+        Returns:
+            true if the name is valid and there are no separators, and false if not.
+        """
+
+        integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        separators = self.check_separators_in_name(integration_folder_name)
+
+        if separators:
+            error_message, error_code = Errors.folder_name_has_separators('integration', separators)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+
+    def check_separators_in_files(self):
+        """
+        Check if there are separators in the integration files names.
+
+        Returns:
+            true if the files names are valid and there is no separators, and false if not.
+        """
+
+        # Gets the all integration files that may have the integration name as base name
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py', 'md', 'png'], False)
+        separators = []
+
+        for file_path in files_to_check:
+
+            file_name = os.path.basename(file_path)
+            if file_name.startswith('README'):
+                continue
+
+            if file_name.endswith('_image.png') or file_name.endswith('_description.md') or \
+                    file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
+                base_name = file_name.rsplit('_', 1)[0]
+
+            else:
+                base_name = file_name.rsplit('.', 1)[0]
+            separators.extend(self.check_separators_in_name(base_name))
+
+        if separators:
+            # Remove duplicate separators
+            separators = list(dict.fromkeys(separators))
+
+            error_message, error_code = Errors.file_name_has_separators('integration', separators)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True

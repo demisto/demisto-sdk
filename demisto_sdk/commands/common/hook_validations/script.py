@@ -303,7 +303,7 @@ class ScriptValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        script_folder_name = self.file_path.rsplit('/', 2)[1]
+        script_folder_name = os.path.basename(os.path.dirname(self.file_path))
         separators = self.check_separators_in_name(script_folder_name)
 
         if separators:

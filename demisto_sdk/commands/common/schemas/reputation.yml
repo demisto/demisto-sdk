@@ -64,3 +64,5 @@ mapping:
     type: int
   layout:
     type: str
+  legacyName:
+    type: seq

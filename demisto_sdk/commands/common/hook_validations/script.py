@@ -8,7 +8,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_pack_name, is_v2_file,
+                                               get_files_in_dir, get_pack_name,
+                                               is_v2_file,
                                                server_version_compare)
 
 
@@ -65,7 +66,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
-            self.is_valid_script_file_path()
+            self.is_valid_script_file_path(),
+            self.is_there_separators_in_names()
         ])
         # check only on added files
         if not self.old_file:
@@ -271,5 +273,77 @@ class ScriptValidator(ContentEntityValidator):
                 error_message, error_code = Errors.is_valid_script_file_path_in_folder(script_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
+
+        return True
+
+    def is_there_separators_in_names(self) -> bool:
+        """
+        Check if there are separators in the script folder or files.
+
+        Returns:
+            true if the folder/files names are valid and there are no separators, and false if not.
+        """
+        is_unified_script = self.current_file.get('script', '') not in ['-', '']
+
+        if is_unified_script:
+            return True
+
+        answers = [
+            self.check_separators_in_folder(),
+            self.check_separators_in_files()
+        ]
+
+        return all(answers)
+
+    def check_separators_in_folder(self) -> bool:
+        """
+        Check if there are separators in the script folder name.
+
+        Returns:
+            true if the name is valid and there are no separators, and false if not.
+        """
+
+        script_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        separators = self.check_separators_in_name(script_folder_name)
+
+        if separators:
+            error_message, error_code = Errors.folder_name_has_separators('script', separators)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+
+    def check_separators_in_files(self):
+        """
+        Check if there are separators in the script files names.
+
+        Returns:
+            true if the files names are valid and there is no separators, and false if not.
+        """
+
+        # Gets the all script files that may have the script name as base name
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py'], False)
+        separators = []
+
+        for file_path in files_to_check:
+
+            file_name = os.path.basename(file_path)
+
+            if file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
+                base_name = file_name.rsplit('_', 1)[0]
+
+            else:
+                base_name = file_name.rsplit('.', 1)[0]
+            separators.extend(self.check_separators_in_name(base_name))
+
+        if separators:
+            # Remove duplicate separators
+            separators = list(dict.fromkeys(separators))
+
+            error_message, error_code = Errors.file_name_has_separators('script', separators)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True

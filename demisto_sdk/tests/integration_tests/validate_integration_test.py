@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.hook_validations.classifier import \
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -344,7 +346,7 @@ class TestIntegrationValidation:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack.create_integration(yml=valid_integration_yml)
+        integration = pack.create_integration('integration0', yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
@@ -523,6 +525,7 @@ class TestPackValidation:
         """
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
         assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
@@ -2193,7 +2196,7 @@ class TestAllFilesValidator:
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack1.create_integration(yml=valid_integration_yml)
+        integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
@@ -2281,7 +2284,7 @@ class TestValidationUsingGit:
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack1.create_integration(yml=valid_integration_yml)
+        integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 

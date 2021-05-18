@@ -2,6 +2,7 @@
 * Added a validation to ensure correct image and description file names.
 * Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
 * Added the **integration-diff** command to check differences between two versions of an integration and to return a report of missing and changed elements in the new version.
+* Added a validation verifying that the pack's README.md file is not missing or empty for partner packs or packs contains use cases.
 
 # 1.3.6
 * Added a validation that core packs are not dependent on non-core packs.

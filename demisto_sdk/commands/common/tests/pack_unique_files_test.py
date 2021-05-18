@@ -37,6 +37,13 @@ PACK_METADATA_PARTNER = {
     "url": "https://www.paloaltonetworks.com/cortex"
 }
 
+README_INPUT_RESULTS_LIST = [
+    ('', False),
+    (' ', False),
+    ('\t\t\n ', False),
+    ('Text', True),
+]
+
 
 class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -170,6 +177,7 @@ class TestPackUniqueFilesValidator:
 
         def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
+
         mocker.patch(
             'demisto_sdk.commands.common.hook_validations.pack_unique_files.get_core_pack_list',
             side_effect=error_raising_function
@@ -422,3 +430,40 @@ class TestPackUniqueFilesValidator:
         assert not res
         assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
                capsys.readouterr().out
+
+    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
+    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):
+        """
+       Given:
+            - partner pack
+
+        When:
+            - Running test_validate_pack_readme_file_is_not_empty_partner.
+
+        Then:
+            - Ensure result is False for empty README.md file and True otherwise.
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
+        self.validator.support = 'partner'
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        assert self.validator.validate_pack_readme_file_is_not_empty() == result
+
+    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
+    def test_validate_pack_readme_file_is_not_empty_use_case(self, mocker, text, result):
+        """
+       Given:
+            - pack with use case
+
+        When:
+            - Running test_validate_pack_readme_file_is_not_empty_partner.
+
+        Then:
+            - Ensure result is False for empty README.md file and True otherwise.
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'CortexXDR'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        assert self.validator.validate_pack_readme_file_is_not_empty() == result
+
+    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
+        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False

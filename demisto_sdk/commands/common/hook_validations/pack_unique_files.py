@@ -53,7 +53,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None,
+                 empty_readme_check=True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -73,6 +74,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.private_repo = private_repo
         self.skip_id_set_creation = skip_id_set_creation
         self.prev_ver = prev_ver
+        self.support = support
 
     # error handling
     def _add_error(self, error, file_path):
@@ -155,6 +157,28 @@ class PackUniqueFilesValidator(BaseValidator):
             return True
 
         return False
+
+    def _check_if_file_is_empty(self, file_name: str) -> bool:
+        """
+        Check if file exists and contains info other than space characters.
+        Returns false if the file does not exists or not empty
+        """
+        if self._is_pack_file_exists(file_name):
+            content = self._read_file_content(file_name)
+            if not content or content.isspace():
+                return True
+
+        return False
+
+    def validate_pack_readme_file_is_not_empty(self):
+        """
+        Validates that README.md file is not empty for partner packs and packs with use cases
+        """
+        if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
+            self._add_error(Errors.empty_readme_error(), self.readme_file)
+            return False
+
+        return True
 
     def _is_secrets_file_structure_valid(self):
         """Check if .secrets-ignore structure is parse-able"""
@@ -329,7 +353,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
                 self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
                 return False
-
+            self.support = pack_meta_file_content[PACK_METADATA_SUPPORT]
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
@@ -375,6 +399,22 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def _contains_use_case(self):
+        """
+        Return:
+            True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
+        """
+        playbooks_path = os.path.join(self.pack_path, "Playbooks")
+        incidents_path = os.path.join(self.pack_path, "IncidentTypes")
+        layouts_path = os.path.join(self.pack_path, "Layouts")
+
+        answers = [
+            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
+            os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
+            os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+        ]
+        return any(answers)
+
     def is_right_usage_of_usecase_tag(self):
         """Checks whether Use Case tag in pack_metadata is used properly
 
@@ -385,16 +425,7 @@ class PackUniqueFilesValidator(BaseValidator):
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
 
             if "Use Case" in pack_meta_file_content['tags']:
-                playbooks_path = os.path.join(self.pack_path, "Playbooks")
-                incidents_path = os.path.join(self.pack_path, "IncidentTypes")
-                layouts_path = os.path.join(self.pack_path, "Layouts")
-
-                answers = [
-                    os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
-                    os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
-                    os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
-                ]
-                if not any(answers):
+                if not self._contains_use_case():
                     if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
                         return False
         except (ValueError, TypeError):
@@ -458,6 +489,9 @@ class PackUniqueFilesValidator(BaseValidator):
         # We don't want to check the metadata file for this pack
         if API_MODULES_PACK not in self.pack:
             self.validate_pack_meta_file()
+
+        self.validate_pack_readme_file_is_not_empty()
+
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
             self.validate_pack_dependencies()

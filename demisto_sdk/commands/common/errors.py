@@ -10,8 +10,8 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125']
+                         'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
+                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -31,6 +31,8 @@ ERROR_CODE = {
     "invalid_id_set": {'code': "BA105", 'ui_applicable': False, 'related_field': ''},
     "no_minimal_fromversion_in_file": {'code': "BA106", 'ui_applicable': False, 'related_field': 'fromversion'},
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
+    "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
+    "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -77,8 +79,8 @@ ERROR_CODE = {
     "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
                                                               'related_field': ''},
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
-    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False, 'related_field':
-                                         'script.commands.name'},
+    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
+                                         'related_field': 'script.commands.name'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -149,7 +151,8 @@ ERROR_CODE = {
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
     "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
     "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True,
+                                             'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
@@ -202,6 +205,8 @@ ERROR_CODE = {
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
     "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
+    "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
+
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -336,6 +341,16 @@ class Errors:
     def running_on_master_with_git():
         return "Running on master branch while using git is ill advised." \
                "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def folder_name_has_separators(entity_type, separators):
+        return f"The {entity_type} folder name has the following separators - {separators}, remove them."
+
+    @staticmethod
+    @error_code_decorator
+    def file_name_has_separators(entity_type, separators):
+        return f"Some {entity_type} files has in their base name the following separators - {separators}, remove them."
 
     @staticmethod
     @error_code_decorator
@@ -994,7 +1009,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_contains_contrib_details():
-        return "Description file contains contribution/partner details that will be generated automatically "\
+        return "Description file contains contribution/partner details that will be generated automatically " \
                "when the upload command is performed.\nDelete any details related to contribution/partner "
 
     @staticmethod
@@ -1266,6 +1281,11 @@ class Errors:
     @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_readme_error():
+        return 'README.md is empty'
 
     @staticmethod
     @error_code_decorator

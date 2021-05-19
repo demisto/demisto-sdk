@@ -1,11 +1,13 @@
 import os
 import re
 from copy import deepcopy
+from distutils.version import LooseVersion
 from typing import Optional, Set, Union
 
 import click
 import yaml
-from demisto_sdk.commands.common.constants import INTEGRATION, FileType
+from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -15,7 +17,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                is_file_from_content_repo,
                                                print_color)
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
+    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
 from ruamel.yaml import YAML
@@ -228,9 +230,9 @@ class BaseUpdate:
                 # if it is new contributed pack = setting version to 6.0.0
                 elif should_set_from_version:
                     self.data[self.from_version_key] = VERSION_6_0_0
-                # Otherwise add fromversion key to current file and set to default 5.0.0
+                # Otherwise add fromversion key to current file and set to default 5.5.0
                 else:
-                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
             # If user wants to modify fromversion key and the key already existed
             elif from_version:
                 self.data[self.from_version_key] = from_version
@@ -239,6 +241,18 @@ class BaseUpdate:
             elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
+            # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
+            # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
+            elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+                    LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
+                if self.assume_yes:
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+                else:
+                    set_from_version = str(
+                        input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want "
+                              f"to set it to '5.5.0'? Y/N ")).lower()
+                    if set_from_version in ['y', 'yes']:
+                        self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
         # If there is an existing file in content repo
         else:

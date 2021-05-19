@@ -490,14 +490,12 @@ class SecretsValidator(object):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
-        is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
-        if not is_forked:
-            secrets_found = self.get_secrets(branch_name, is_circle)
-            if secrets_found:
-                return True
-            else:
-                print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
-                return False
+        secrets_found = self.get_secrets(branch_name, is_circle)
+        if secrets_found:
+            return True
+        else:
+            print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
+            return False
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:
         """Removes lines that have "disable-secrets-detection" from file content

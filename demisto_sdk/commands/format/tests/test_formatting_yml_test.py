@@ -72,7 +72,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.update_yml()
+        base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location['version']
 
@@ -469,7 +469,7 @@ class TestFormatting:
         (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
-    def test_set_fetch_params_in_config(self, source, target, path, answer):
+    def test_set_fetch_params_in_config(self, source, target, path, answer, monkeypatch):
         """
         Given
         - Integration yml with isfetch field labeled as true and correct fetch params.
@@ -484,6 +484,10 @@ class TestFormatting:
         """
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
             yaml_content = yaml.safe_load(f)
@@ -610,18 +614,18 @@ class TestFormatting:
     def test_run_format_on_tpb(self):
         """
         Given
-            - A Test Playbook file.
+            - A Test Playbook file, that does not have fromversion key
         When
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 5.0.0
+            - Ensure `fromversion` field set to 5.5.0
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '5.0.0'
+        assert formatter.data.get('fromversion') == '5.5.0'
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -645,7 +649,7 @@ class TestFormatting:
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
 
-    def test_update_docker_format(self, tmpdir, mocker):
+    def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
         """
         test_tag = '1.0.0-test-tag'
@@ -664,6 +668,11 @@ class TestFormatting:
             'dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
         format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
                                      update_docker=True)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
+
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)
@@ -941,3 +950,26 @@ class TestFormatting:
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
         assert bs.data['fromversion'] == '5.5.0', integration.yml.path
+
+    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '5.5.0'), ('N', '5.0.0')])
+    def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):
+        """
+        Args: monkeypatch (MagicMock): Patch of the user input
+
+        Given
+            - An integration from new pack with fromversion: 5.0.0 at yml,
+            - User answer - update fromversion or not
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 5.5.0 if user answers Y,
+            and the integration fromversion is reminds 5.0.0 if user answers N
+        """
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(file_type=INTEGRATION)
+        assert bs.data['fromversion'] == result_fromversion

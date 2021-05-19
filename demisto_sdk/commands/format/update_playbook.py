@@ -1,20 +1,19 @@
 import os
 import re
 import uuid
+from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.constants import (OLDEST_SUPPORTED_VERSION,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (find_type, get_yaml,
                                                is_string_uuid, write_yml)
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SCHEMAS_PATH,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from git import InvalidGitRepositoryError
 
@@ -66,8 +65,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                         click.echo(f"Adding `fromversion: {self.from_version}`")
 
                     else:
-                        click.echo(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
-                self.data['fromversion'] = self.from_version if self.from_version else OLDEST_SUPPORTED_VERSION
+                        click.echo(f"Adding `fromversion: {NEW_FILE_DEFAULT_5_5_0_FROMVERSION}`")
+                self.data[
+                    'fromversion'] = self.from_version if self.from_version else NEW_FILE_DEFAULT_5_5_0_FROMVERSION
                 return
 
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
@@ -93,6 +93,17 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 else:
                     click.secho('Version format is not valid', fg='red')
 
+        elif not self.old_file and LooseVersion(self.data.get('fromversion', '0.0.0')) < \
+                LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION):
+            if self.assume_yes:
+                self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+            else:
+                set_from_version = str(
+                    input(f"\nYour current fromversion is: '{self.data.get('fromversion')}'. Do you want "
+                          f"to set it to '5.5.0'? Y/N ")).lower()
+                if set_from_version in ['y', 'yes']:
+                    self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+
     def update_task_uuid(self):
         """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""
         for task_key, task in self.data.get('tasks', {}).items():
@@ -108,7 +119,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def run_format(self):
         self.update_fromversion_by_user()
-        super().update_yml()
+        super().update_yml(file_type=PLAYBOOK)
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()

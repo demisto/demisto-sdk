@@ -129,6 +129,8 @@ class TimestampReplacer:
         if ctx.options.debug:
             self._debug_request(flow)
         req = flow.request
+        if req.multipart_form and 'boundary' in req.headers.get('Content-Type', ''):
+            self.replace_boundary(req)
         if ctx.options.script_mode == 'record':
             if ctx.options.detect_timestamps:
                 self.run_all_key_detections(req)
@@ -139,6 +141,13 @@ class TimestampReplacer:
             flow.live = False
             logging.info(f'mode={ctx.options.script_mode} cleaning problematic key values from the request')
             self.clean_bad_keys(req)
+
+    @staticmethod
+    def replace_boundary(req: HTTPRequest):
+        fixed_boundary = 'fixed_boundary'
+        content_type_header, old_boundary = req.headers['Content-Type'].split('boundary=')
+        req.headers['Content-Type'] = 'boundary='.join([content_type_header, fixed_boundary])
+        req.content.replace(old_boundary, bytes(fixed_boundary))
 
     def clean_bad_keys(self, req: HTTPRequest) -> None:
         """Modify the request so that values of problematic keys are constant data

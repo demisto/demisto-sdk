@@ -286,8 +286,8 @@ class TestTimeStampReplacer:
         original_boundary = 'original_boundary'
         flow.request.headers['Content-Type'] = f'multipart/form-data; boundary={original_boundary}'
         flow.request.content = f'--{original_boundary}\nContent-Disposision: form-data; ' \
-                               f'name="test"\nsomething\n--{original_boundary}--'.encode()
+                               f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert flow.request.content == b'--fixed_boundary\nContent-Disposision: form-data; ' \
-                                       b'name="test"\nsomething\n--fixed_boundary--'
+                                       b'name="test"\n\nsomething\n--fixed_boundary--'

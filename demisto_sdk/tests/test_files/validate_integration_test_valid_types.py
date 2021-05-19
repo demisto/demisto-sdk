@@ -476,7 +476,8 @@ REPUTATION = {
     "expiration": 0,
     "defaultMapping": {},
     "manualMapping": None,
-    "fileHashesPriority": None
+    "fileHashesPriority": None,
+    "legacyName": ["Malware"]
 }
 
 WIDGET = {

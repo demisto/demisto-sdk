@@ -1,3 +1,4 @@
+import platform
 import uuid
 
 import pytest
@@ -5,12 +6,15 @@ from demisto_sdk.commands.common.docker_util import *
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+running_inside_docker = pytest.mark.skipif(platform.system().lower() == 'linux',
+                                           reason="probably running in docker and this test requires a connection to the docker deamon")
 
 
 def create():
     return ContainerRunner('demisto/python3', str(uuid.uuid4()))
 
 
+@running_inside_docker
 class TestContainerRunner:
 
     class TestExecCommand:
@@ -126,6 +130,7 @@ class TestContainerRunner:
                 self.container_runner.container.client.images.get(image)
 
 
+@running_inside_docker
 class TestDockerTools:
 
     class TestRemoveContainer:

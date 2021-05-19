@@ -244,11 +244,14 @@ class BaseUpdate:
             # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
             elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
                     LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
-                set_from_version = str(
-                    input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want to "
-                          f"set it to '5.5.0'? Y/N ")).lower()
-                if set_from_version in ['y', 'yes']:
+                if self.assume_yes:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+                else:
+                    set_from_version = str(
+                        input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want "
+                              f"to set it to '5.5.0'? Y/N ")).lower()
+                    if set_from_version in ['y', 'yes']:
+                        self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
         # If there is an existing file in content repo
         else:

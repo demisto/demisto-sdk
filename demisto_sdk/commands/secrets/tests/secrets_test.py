@@ -2,7 +2,6 @@ import io
 import json
 import os
 import shutil
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.secrets.secrets import SecretsValidator

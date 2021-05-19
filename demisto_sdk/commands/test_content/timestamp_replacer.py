@@ -147,7 +147,7 @@ class TimestampReplacer:
         fixed_boundary = 'fixed_boundary'
         content_type_header, old_boundary = req.headers['Content-Type'].split('boundary=')
         req.headers['Content-Type'] = 'boundary='.join([content_type_header, fixed_boundary])
-        req.content.replace(old_boundary, bytes(fixed_boundary))
+        req.content = req.content.replace(old_boundary.encode(), fixed_boundary.encode())
 
     def clean_bad_keys(self, req: HTTPRequest) -> None:
         """Modify the request so that values of problematic keys are constant data

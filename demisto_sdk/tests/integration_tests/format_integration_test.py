@@ -464,7 +464,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_relative_path_playbook(mocker, repo):
+def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     """
     Given
     - playbook to validate on with a relative path
@@ -484,6 +484,7 @@ def test_format_on_relative_path_playbook(mocker, repo):
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
+    monkeypatch.setattr('builtins.input', lambda _: 'N')
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)

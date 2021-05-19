@@ -1,6 +1,7 @@
 import os
 import re
 from copy import deepcopy
+from distutils.version import LooseVersion
 from typing import Optional, Set, Union
 
 import click
@@ -240,8 +241,9 @@ class BaseUpdate:
             elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
-            # If it is new pack, and it has from version lover than 5.5.0, ask to set it to 5.5.0
-            elif self.data.get(self.from_version_key) in ['5.0.0', '4.5.0'] and file_type != PLAYBOOK:
+            # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
+            elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+                    LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
                 set_from_version = str(
                     input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want to "
                           f"set it to '5.5.0'? Y/N ")).lower()

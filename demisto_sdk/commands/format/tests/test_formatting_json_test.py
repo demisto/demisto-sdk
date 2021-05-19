@@ -76,6 +76,14 @@ class TestFormattingJson:
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_OLD_FROMVERSION)
     def test_format_file_old_fromversion(self, source, target, path, answer, monkeypatch):
+        """
+        Given
+            - Incident field json file, Incident type json file, Indicator type json and classifier
+        When
+            - Run format_manager on files
+        Then
+            - Ensure that format finished without errors
+        """
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
 

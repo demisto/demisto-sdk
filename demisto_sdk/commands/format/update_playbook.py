@@ -1,6 +1,7 @@
 import os
 import re
 import uuid
+from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
@@ -91,6 +92,17 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     is_input_version_valid = True
                 else:
                     click.secho('Version format is not valid', fg='red')
+
+        elif not self.old_file and LooseVersion(self.data.get('fromversion', '0.0.0')) < \
+                LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION):
+            if self.assume_yes:
+                self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+            else:
+                set_from_version = str(
+                    input(f"\nYour current fromversion is: '{self.data.get('fromversion')}'. Do you want "
+                          f"to set it to '5.5.0'? Y/N ")).lower()
+                if set_from_version in ['y', 'yes']:
+                    self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
     def update_task_uuid(self):
         """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""

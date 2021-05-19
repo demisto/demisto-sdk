@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
+    PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME, FileType, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,

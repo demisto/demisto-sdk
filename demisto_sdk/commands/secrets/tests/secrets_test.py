@@ -357,4 +357,3 @@ my_email = "fooo@someorg.com"
         mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_secrets", return_value=True)
         result = self.validator.find_secrets()
         assert result
-

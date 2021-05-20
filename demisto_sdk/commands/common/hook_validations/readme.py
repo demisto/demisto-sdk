@@ -85,7 +85,7 @@ class ReadMeValidator(BaseValidator):
             self.verify_no_default_sections_left(),
             self.verify_readme_is_not_too_short(),
             self.is_context_different_in_yml(),
-
+            self.verify_Demisto_in_readme_content()
         ])
 
     def mdx_verify(self) -> bool:
@@ -356,6 +356,27 @@ class ReadMeValidator(BaseValidator):
                     valid = False
 
         return valid
+
+    def verify_Demisto_in_readme_content(self):
+        """
+        Checks if there are the word 'Demisto' in the README content.
+
+        Return:
+            True if 'Demisto' does not exist in the README content, and False if it does.
+        """
+
+        error = ''
+        is_valid = True
+
+        if 'Demisto ' in self.readme_content or 'demisto ' in self.readme_content:
+            error = 'Found the word "Demisto" in the readme content.'
+
+        if error:
+            error_message, error_code = Errors.readme_error(error)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            is_valid = False
+
+        return is_valid
 
     @staticmethod
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:

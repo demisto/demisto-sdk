@@ -1166,6 +1166,7 @@ class IntegrationValidator(ContentEntityValidator):
         # Gets the all integration files that may have the integration name as base name
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py', 'md', 'png'], False)
         separators = []
+        invalid_files = []
 
         for file_path in files_to_check:
 
@@ -1179,13 +1180,18 @@ class IntegrationValidator(ContentEntityValidator):
 
             else:
                 base_name = file_name.rsplit('.', 1)[0]
-            separators.extend(self.check_separators_in_name(base_name))
+
+            invalid_separators = self.check_separators_in_name(base_name)
+
+            if invalid_separators:
+                separators.extend(invalid_separators)
+                invalid_files.append(file_name)
 
         if separators:
             # Remove duplicate separators
             separators = list(dict.fromkeys(separators))
 
-            error_message, error_code = Errors.file_name_has_separators('integration', separators)
+            error_message, error_code = Errors.file_name_has_separators('integration', invalid_files, separators)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

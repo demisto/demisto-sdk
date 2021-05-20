@@ -349,8 +349,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_name_has_separators(entity_type, separators):
-        return f"Some {entity_type} files has in their base name the following separators - {separators}, remove them."
+    def file_name_has_separators(entity_type, invalid_files, separators):
+        return f"The {entity_type} files {invalid_files} have in their base name the following separators - {separators}, remove them."
 
     @staticmethod
     @error_code_decorator

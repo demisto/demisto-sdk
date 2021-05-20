@@ -17,4 +17,4 @@ exist in the new version. Running this command will give you a detailed report a
 
 ### Examples
 `demisto-sdk integration-diff -n Packs/MyPack/Integrations/MyIntegration_v2/MyIntegration_v2.yml -o Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml`
-This will return you a report of the all missing commands/arguments/outputs in the new integration version, and 'The integrations are backwards compatible' if no missing details.
+This will return you a report of all the missing commands/arguments/outputs in the new integration version, and 'The integrations are backward compatible' if no missing details were found.

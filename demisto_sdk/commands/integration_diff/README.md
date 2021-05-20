@@ -4,7 +4,7 @@ Check the differences between two versions of an integration and return a report
 ### Use-Cases
 This command is used to identify missing or modified details in a new integration version. This is useful when
 developing a new version of an integration, and you want to make sure that all old integration version commands/arguments/outputs
-are exist in the new version. Running this command will give you a detailed report about the all missing or changed commands/arguments/outputs.
+exist in the new version. Running this command will give you a detailed report about all the missing or changed commands/arguments/outputs.
 
 ### Arguments
 * **-n, --new**

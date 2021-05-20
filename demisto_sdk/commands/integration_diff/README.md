@@ -10,6 +10,7 @@ are exist in the new version. Running this command will give you a detailed repo
 * **-n, --new**
 
     The path to the new integration yml file.
+
 * **-o**, **--old**
 
     The path to the old integration yml file.

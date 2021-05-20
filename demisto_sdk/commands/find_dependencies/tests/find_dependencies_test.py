@@ -881,33 +881,10 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
-    """
-    Given
-        - A pack with a layout of type incident/indicator.
-
-    When
-        - Building dependency graph for pack.
-
-    Then
-        - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
-    """
-
-    @pytest.mark.parametrize('pack, dependencies', [
-        ('pack3', 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
-        ('pack4', 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
-    ])
-    def test_layouts_dependencies(self, pack, dependencies):
-        result = PackDependencies.find_dependencies(pack,
-                                                    id_set_path='../../../tests/test_files/id_set/id_set.json',
-                                                    update_pack_metadata=False,
-                                                    silent_mode=True)
-
-        assert result == {dependencies: {'mandatory': True, 'display_name': dependencies}}
-
-    def test_collect_incident_layout_dependencies(self, id_set):
+    def test_collect_incident_layouts_dependencies(self, id_set):
         """
         Given
-            - A layout of type incident entry in the id_set.
+            - An incident layout entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -944,10 +921,10 @@ class TestDependsOnLayout:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    def test_collect_indicator_layout_dependencies(self, id_set):
+    def test_collect_indicator_layouts_dependencies(self, id_set):
         """
         Given
-            - A layout of type indicator entry in the id_set.
+            - An indicator layout entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -987,7 +964,7 @@ class TestDependsOnLayout:
     def test_collect_layouts_dependencies_filter_toversion(self, id_set):
         """
         Given
-            - A layout entry in the id_set.
+            - An indicator layout entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -1004,7 +981,7 @@ class TestDependsOnLayout:
                     "typeID": "dummy_layout",
                     "name": "Dummy Layout",
                     "pack": "dummy_pack",
-                    "kind": "indicatorsDetails",
+                    "group": "indicator",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
                         "accountRep",

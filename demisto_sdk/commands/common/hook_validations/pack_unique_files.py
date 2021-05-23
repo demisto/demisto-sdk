@@ -35,6 +35,16 @@ SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
+INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
+                              '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
+                              '^a-z]|^playbook$|^playbook[^a-z]|[^a-zA-Z]playbook$|[^A-Z]PLAYBOOK[' \
+                              '^A-Z]|^PLAYBOOK$|^PLAYBOOK[^A-Z]|[^A-Z]PLAYBOOK$|[^A-Z]Playbook[' \
+                              '^a-z]|^Playbook$|^Playbook[^a-z]|[^A-Z]Playbook$|[^a-zA-Z]integration[' \
+                              '^a-z]|^integration$|^integration[^a-z]|[^a-zA-Z]integration$|[^A-Z]INTEGRATION[' \
+                              '^A-Z]|^INTEGRATION$|^INTEGRATION[^A-Z]|[^A-Z]INTEGRATION$|[^A-Z]Integration[' \
+                              '^a-z]|^Integration$|^Integration[^a-z]|[^A-Z]Integration$|[^a-zA-Z]script[' \
+                              '^a-z]|^script$|^script[^a-z]|[^a-zA-Z]script$|[^A-Z]SCRIPT[^A-Z]|^SCRIPT$|^SCRIPT[' \
+                              '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
 
 
 class PackUniqueFilesValidator(BaseValidator):
@@ -43,7 +53,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None):
+                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None,
+                 empty_readme_check=True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
         :param pack: content package name, which is the directory name of the pack
@@ -63,6 +74,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.private_repo = private_repo
         self.skip_id_set_creation = skip_id_set_creation
         self.prev_ver = prev_ver
+        self.support = support
 
     # error handling
     def _add_error(self, error, file_path):
@@ -146,6 +158,28 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
+    def _check_if_file_is_empty(self, file_name: str) -> bool:
+        """
+        Check if file exists and contains info other than space characters.
+        Returns false if the file does not exists or not empty
+        """
+        if self._is_pack_file_exists(file_name):
+            content = self._read_file_content(file_name)
+            if not content or content.isspace():
+                return True
+
+        return False
+
+    def validate_pack_readme_file_is_not_empty(self):
+        """
+        Validates that README.md file is not empty for partner packs and packs with use cases
+        """
+        if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
+            self._add_error(Errors.empty_readme_error(), self.readme_file)
+            return False
+
+        return True
+
     def _is_secrets_file_structure_valid(self):
         """Check if .secrets-ignore structure is parse-able"""
         if self._parse_file_into_list(self.secrets_file):
@@ -207,6 +241,18 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def validate_pack_name(self, pack_name):
+        if len(pack_name) < 3:
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
+                return False
+        if pack_name[0].islower():
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("capital"), self.pack_meta_file):
+                return False
+        if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
+                return False
+        return True
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -227,10 +273,12 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
 
             # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '').lower()
+            name_field = metadata.get(PACK_METADATA_NAME, '')
             if not name_field or 'fill mandatory field' in name_field:
                 if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                     return False
+            elif not self.validate_pack_name(name_field):
+                return False
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
@@ -305,7 +353,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
                 self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
                 return False
-
+            self.support = pack_meta_file_content[PACK_METADATA_SUPPORT]
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
@@ -351,6 +399,22 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def _contains_use_case(self):
+        """
+        Return:
+            True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
+        """
+        playbooks_path = os.path.join(self.pack_path, "Playbooks")
+        incidents_path = os.path.join(self.pack_path, "IncidentTypes")
+        layouts_path = os.path.join(self.pack_path, "Layouts")
+
+        answers = [
+            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
+            os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
+            os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+        ]
+        return any(answers)
+
     def is_right_usage_of_usecase_tag(self):
         """Checks whether Use Case tag in pack_metadata is used properly
 
@@ -361,16 +425,7 @@ class PackUniqueFilesValidator(BaseValidator):
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
 
             if "Use Case" in pack_meta_file_content['tags']:
-                playbooks_path = os.path.join(self.pack_path, "Playbooks")
-                incidents_path = os.path.join(self.pack_path, "IncidentTypes")
-                layouts_path = os.path.join(self.pack_path, "Layouts")
-
-                answers = [
-                    os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
-                    os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
-                    os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
-                ]
-                if not any(answers):
+                if not self._contains_use_case():
                     if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
                         return False
         except (ValueError, TypeError):
@@ -434,6 +489,9 @@ class PackUniqueFilesValidator(BaseValidator):
         # We don't want to check the metadata file for this pack
         if API_MODULES_PACK not in self.pack:
             self.validate_pack_meta_file()
+
+        self.validate_pack_readme_file_is_not_empty()
+
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:
             self.validate_pack_dependencies()
@@ -455,7 +513,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             first_level_dependencies = PackDependencies.find_dependencies(
                 self.pack, id_set_path=self.id_set_path, silent_mode=True, exclude_ignored_dependencies=False,
-                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation
+                update_pack_metadata=False, skip_id_set_creation=self.skip_id_set_creation, use_pack_metadata=True
             )
 
             if not first_level_dependencies:

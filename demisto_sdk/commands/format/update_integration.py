@@ -5,7 +5,7 @@ import click
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
-                                                   TYPE_PWSH)
+                                                   INTEGRATION, TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -134,7 +134,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            super().update_yml()
+            super().update_yml(file_type=INTEGRATION)
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()

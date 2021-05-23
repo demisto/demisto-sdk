@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
@@ -26,16 +26,17 @@ from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, FileType, GithubContentConfig, urljoin)
+    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
+    PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
+    FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
-# disable insecure warnings
 urllib3.disable_warnings()
 
 # inialize color palette
@@ -161,7 +162,8 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+core_pack_list: Optional[
+    list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
 def get_core_pack_list() -> list:
@@ -207,24 +209,37 @@ def get_remote_file(
     tag = tag.replace('origin/', '').replace('demisto/', '')
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
-
     try:
-        headers = {}
-        if is_external_repository():
+        external_repo = is_external_repository()
+        if external_repo:
             githhub_config = GithubContentConfig()
             if githhub_config.Credentials.TOKEN:
-                headers = {
+                res = requests.get(github_path, verify=False, timeout=10, headers={
                     'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
                     'Accept': f'application/vnd.github.VERSION.raw',
-                }
+                })  # Sometime we need headers
+                if not res.ok:  # sometime we need param token
+                    res = requests.get(
+                        github_path,
+                        verify=False,
+                        timeout=10,
+                        params={'token': githhub_config.Credentials.TOKEN}
+                    )
+                res.raise_for_status()
             else:
-                print_color(
-                    f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
-                    f'Please define your github token in your environment.\n'
-                    f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`', LOG_COLORS.RED
-                )
-        res = requests.get(github_path, verify=False, timeout=10, headers=headers)
-        res.raise_for_status()
+                # If no token defined, maybe it's a open repo. 🤷‍♀️
+                res = requests.get(github_path, verify=False, timeout=10)
+                # And maybe it's just not defined. 😢
+                if not res.ok:
+                    raise DemistoException(
+                        f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                        f'Please define your github token in your environment.\n'
+                        f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`',
+                        LOG_COLORS.RED
+                    )
+        else:
+            res = requests.get(github_path, verify=False, timeout=10)
+            res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
             print_warning(
@@ -990,7 +1005,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict and not ignore_sub_categories:
+            if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
@@ -1082,15 +1097,22 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-@lru_cache()
-def is_external_repository():
+def is_external_repository() -> bool:
     """
     Returns True if script executed from private repository
 
     """
-    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
-    return os.path.exists(private_settings_path)
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        return os.path.exists(private_settings_path)
+    except git.InvalidGitRepositoryError:
+        return True
+
+
+def get_content_id_set() -> dict:
+    """Getting the ID Set from official content's bucket"""
+    return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
 def get_content_path() -> str:
@@ -1756,3 +1778,25 @@ def get_approved_tags() -> list:
         'Tests/Marketplace/approved_tags.json',
         github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
+
+
+def get_pack_metadata(file_path: str) -> dict:
+    """ Get the pack_metadata dict, of the pack containing the given file path.
+
+    Args:
+        file_path(str): file path
+
+    Returns: pack_metadata of the pack, that source_file related to,
+        on failure returns {}
+
+    """
+    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
+    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
+    directory = match.group() if match else ''
+
+    try:
+        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
+        pack_metadata, _ = get_dict_from_file(metadata_path)
+        return pack_metadata
+    except Exception:
+        return {}

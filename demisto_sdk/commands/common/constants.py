@@ -4,6 +4,7 @@ from enum import Enum
 from functools import reduce
 from typing import Iterable, List, Optional
 
+import click
 from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
@@ -816,10 +817,10 @@ class GithubContentConfig:
     def __init__(self, repo_name: Optional[str] = None):
         if not repo_name:
             try:
-                urls = GitUtil().repo.remote().urls
+                urls = list(GitUtil().repo.remote().urls)
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = ''
+                self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.CURRENT_REPOSITORY = repo_name
         # DO NOT USE os.path.join on URLs, it may cause errors
@@ -834,11 +835,17 @@ class GithubContentConfig:
         """
         try:
             for url in urls:
-                repo = re.findall(r'.com/(.*)\.', url)[0].replace('//github.com/', '')
+                repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
                 return repo
-        except (AttributeError, InvalidGitRepositoryError, IndexError):
+        except (AttributeError, IndexError):
             pass
-        return ''
+
+        # default to content repo if the repo is not found
+        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
+        return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+
+
+OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
 
 # Run all test signal
@@ -1143,6 +1150,8 @@ UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
+
+ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
 
 
 class ContentItems(Enum):

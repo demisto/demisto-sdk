@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_ignore_pack_skipped_tests,
                                                get_last_release_version,
                                                get_latest_release_notes_text,
+                                               get_pack_metadata,
                                                get_release_notes_file_path,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
@@ -919,3 +920,25 @@ def test_get_file_displayed_name__image(repo):
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
         assert display_name == os.path.basename(integration.image.rel_path)
+
+
+def test_get_pack_metadata(repo):
+    """
+    Given
+    - The path to some file in the repo.
+
+    When
+    - Running get_pack_metadata.
+
+    Then:
+    - Ensure the returned pack metadata of the file's pack.
+    """
+    metadata_json = {"name": "MyPack", "support": "xsoar", "currentVersion": "1.1.0"}
+
+    pack = repo.create_pack('MyPack')
+    pack_metadata = pack.pack_metadata
+    pack_metadata.update(metadata_json)
+
+    result = get_pack_metadata(pack.path)
+
+    assert metadata_json == result

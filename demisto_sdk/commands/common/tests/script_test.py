@@ -118,6 +118,9 @@ class TestScriptValidator:
             }
         ]
     }
+    CONTEXT_EMPTY_OUTPUTS = {
+        'outputs': None
+    }
     INPUTS_CONTEXT_PATHS = [
         (CONTEXT_NEW, CONTEXT_OLD, True),
         (CONTEXT_OLD, CONTEXT_NEW, False),
@@ -126,7 +129,8 @@ class TestScriptValidator:
         (CONTEXT_MULTI_NEW, CONTEXT_OLD, False),
         (CONTEXT_NEW, CONTEXT_NEW, False),
         (CONTEXT_NEW, CONTEXT_MULTI_NEW, True),
-        (CONTEXT_MULTI_NEW, CONTEXT_NEW, False)
+        (CONTEXT_MULTI_NEW, CONTEXT_NEW, False),
+        (CONTEXT_EMPTY_OUTPUTS, CONTEXT_EMPTY_OUTPUTS, False)
     ]
 
     @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_CONTEXT_PATHS)
@@ -432,3 +436,71 @@ class TestScriptValidator:
         validator = get_validator(content)
         assert validator.no_incident_in_core_pack() is answer
         assert validator.is_valid is answer
+
+    def test_folder_name_without_separators(self, pack):
+        """
+        Given
+            - An script without separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script('myScr')
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert validator.check_separators_in_folder()
+
+    def test_files_names_without_separators(self, pack):
+        """
+        Given
+            - An script without separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script('myScr')
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert validator.check_separators_in_files()
+
+    def test_folder_name_with_separators(self, pack):
+        """
+        Given
+            - An script with separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script('my_Scr')
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert not validator.check_separators_in_folder()
+
+    def test_files_names_with_separators(self, pack):
+        """
+        Given
+            - An script with separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script('my_Int')
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert not validator.check_separators_in_files()

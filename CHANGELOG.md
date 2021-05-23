@@ -1,11 +1,28 @@
 # Changelog
+
+# 1.3.7
+* Added a validation to ensure correct image and description file names.
+* Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
+* Added the **integration-diff** command to check differences between two versions of an integration and to return a report of missing and changed elements in the new version.
+* Added a validation verifying that the pack's README.md file is not missing or empty for partner packs or packs contains use cases.
+* Added a validation to ensure that the integration and script folder and file names will not contain separators (`_`, `-`, ` `).
+* When formatting new pack, the **format** command will set the *fromversion* key to 5.5.0 in the new files without fromversion.
+
+# 1.3.6
 * Added a validation that core packs are not dependent on non-core packs.
+* Added a validation that a pack name follows XSOAR standards.
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
 * Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
 * Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
 * Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
 * Added support for running SDK commands in private repositories.
-* Fixed the field of ui_applicable for DS105 error, turned it to false.
+* Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
+* When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
+* If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
+* Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
+* Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
+* Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld or HelloWorldPremium README.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
@@ -41,7 +58,6 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
-* Fixed an issue where **validate** was failing on editing existing release notes.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
@@ -59,7 +75,8 @@
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
-* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
+* Fixed an issue where the *c
+reate-id-set* flag in the *validate* command did not work while not using git.
 * Added the *hiddenusername* field to the integration schema.
 * Added a validation that images that are not integration images, do not ask for a new version or RN
 

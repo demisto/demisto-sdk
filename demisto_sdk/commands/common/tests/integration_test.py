@@ -513,14 +513,18 @@ class TestIntegrationValidator:
         {"name": "unsecure", "type": 17, "required": False, "hidden": False}]
     INVALID_DISPLAY_TYPE_EXPIRATION = [
         {"name": "unsecure", "type": 17, "display": "some display", "required": False, "hidden": False}]
+    INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD = [
+        {"name": "credentials", "type": 9, "display": "", "displaypassword": "some display password", "required": True,
+         "hiddenusername": True}]
     IS_VALID_DISPLAY_INPUTS = [
         (VALID_DISPLAY_NON_HIDDEN, True),
         (VALID_DISPLAY_HIDDEN, True),
         (INVALID_DISPLAY_NON_HIDDEN, False),
-        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (INVALID_NO_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
         (INVALID_DISPLAY_TYPE_EXPIRATION, False),
         (FEED_REQUIRED_PARAMS_STRUCTURE, True),
+        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, True)
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -720,6 +724,74 @@ class TestIntegrationValidator:
         mocker.patch.object(validator, "handle_error", return_value=True)
 
         assert not validator.is_valid_integration_file_path()
+
+    def test_folder_name_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_folder()
+
+    def test_files_names_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_files()
+
+    def test_folder_name_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_folder()
+
+    def test_files_names_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_files()
 
 
 class TestIsFetchParamsExist:

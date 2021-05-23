@@ -1,74 +1,114 @@
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
+import pytest
 import yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import \
     IntegrationGeneratorConfig
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, postman_to_autogen_configuration)
+    create_body_format, flatten_collections, postman_to_autogen_configuration)
 
 
-def test_create_body_format():
-    request_body = {
-        "key1": "val1",
-        "key2": {
-            "key3": "val3"
-        },
-        "key4": [
+class TestPostmanHelpers:
+    def test_create_body_format(self):
+        request_body = {
+            "key1": "val1",
+            "key2": {
+                "key3": "val3"
+            },
+            "key4": [
+                {
+                    "key5": "val5"
+                },
+                {
+                    "key5": "val51"
+                },
+            ],
+            "key7": [
+                "a",
+                "b",
+                "c"
+            ]
+        }
+        body_format = create_body_format(request_body)
+
+        assert body_format == {
+            "key1": "{key1}",
+            "key2": {
+                "key3": "{key3}"
+            },
+            "key4": [
+                {
+                    "key5": "{key5}"
+                }
+            ],
+            "key7": "{key7}"
+        }
+
+    def test_create_body_format_list_of_dicts(self):
+        request_body = [
             {
-                "key5": "val5"
+                "key1": "val1"
             },
             {
-                "key5": "val51"
-            },
-        ],
-        "key7": [
-            "a",
-            "b",
-            "c"
-        ]
-    }
-    body_format = create_body_format(request_body)
-
-    assert body_format == {
-        "key1": "{key1}",
-        "key2": {
-            "key3": "{key3}"
-        },
-        "key4": [
-            {
-                "key5": "{key5}"
+                "key1": "val11"
             }
-        ],
-        "key7": "{key7}"
-    }
+        ]
 
+        body_format = create_body_format(request_body)
 
-def test_create_body_format_list_of_dicts():
-    request_body = [
-        {
-            "key1": "val1"
-        },
-        {
-            "key1": "val11"
-        }
-    ]
+        assert body_format == [
+            {
+                "key1": "{key1}"
+            }
+        ]
 
-    body_format = create_body_format(request_body)
-
-    assert body_format == [
-        {
-            "key1": "{key1}"
-        }
-    ]
+    @pytest.mark.parametrize('collection, outputs', [
+        ([], []),
+        ([[], []], []),
+        ([{}, [], [{}]], [{}, {}]),
+        ([{'item': [{}]}, [], [{}]], [{}, {}])
+    ])
+    def test_flatten_collections(self, collection: list, outputs: list):
+        assert flatten_collections(collection) == outputs
 
 
 class TestPostmanCodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
-    postman_collection_path = os.path.join(test_files_path, 'VirusTotal.postman_collection.json')
-    autogen_config_path = os.path.join(test_files_path, 'VirusTotal-autogen-config.json')
+    postman_collection_stream = None
+    autogen_config_stream = None
+    postman_collection: dict
+    autogen_config: dict
+
+    @classmethod
+    def setup_class(cls):
+        collection_path = os.path.join(cls.test_files_path, 'VirusTotal.postman_collection.json')
+        autogen_config_path = os.path.join(cls.test_files_path, 'VirusTotal-autogen-config.json')
+        with open(collection_path) as f:
+            cls.postman_collection = json.load(f)
+
+        with open(autogen_config_path) as f:
+            cls.autogen_config = json.load(f)
+
+        cls.postman_collection_stream = open(collection_path)
+        cls.autogen_config_stream = open(autogen_config_path)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.postman_collection_stream.close()
+        cls.autogen_config_stream.close()
+
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def function_setup(cls):
+        """
+        Cleaning the content repo before every function
+        """
+        cls.postman_collection_stream.seek(0)
+        cls.autogen_config_stream.seek(0)
 
     def test_config_generated_successfully(self, mocker):
         """
@@ -94,14 +134,13 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             name='VirusTotal Test',
             command_prefix='vt-test',
             context_path_prefix='VirusTotalTest'
         )
 
-        with open(self.autogen_config_path, 'r') as config_file:
-            expected_config = json.load(config_file)
+        expected_config = json.load(self.autogen_config_stream)
 
         assert expected_config == autogen_config.to_dict()
 
@@ -118,7 +157,7 @@ class TestPostmanCodeGen:
 
         """
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             command_prefix=None,
 
             name=None,
@@ -140,7 +179,7 @@ class TestPostmanCodeGen:
         - ensure context_output_path of the whole integration is VirusTotal
         """
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             context_path_prefix=None,
 
             command_prefix=None,
@@ -192,7 +231,7 @@ class TestPostmanCodeGen:
         })
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name='VirusTotal',
             context_path_prefix=None,
             command_prefix=None
@@ -262,7 +301,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -375,7 +414,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -430,10 +469,17 @@ class TestPostmanCodeGen:
         pass
 
 
-def _testutil_create_postman_collection(dest_path, with_request: dict = None, no_auth: bool = False):
-    default_collection_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files',
-                                           'VirusTotal.postman_collection.json')
-    with open(default_collection_path, mode='r') as f:
+def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):
+    default_collection_path = os.path.join(
+        git_path(),
+        'demisto_sdk',
+        'commands',
+        'postman_codegen',
+        'tests',
+        'test_files',
+        'VirusTotal.postman_collection.json'
+    )
+    with open(default_collection_path) as f:
         collection = json.load(f)
 
     if with_request:
@@ -447,22 +493,17 @@ def _testutil_create_postman_collection(dest_path, with_request: dict = None, no
 
 
 def _testutil_get_param(config: IntegrationGeneratorConfig, param_name: str):
-    if config.params is None:
-        return None
-
-    for param in config.params:
-        if param.name == param_name:
-            return param
+    if config.params is not None:
+        for param in config.params:
+            if param.name == param_name:
+                return param
 
     return None
 
 
 def _testutil_get_command(config: IntegrationGeneratorConfig, command_name: str):
-    if config.commands is None:
-        return None
-
-    for command in config.commands:
-        if command.name == command_name:
-            return command
-
+    if config.commands is not None:
+        for command in config.commands:
+            if command.name == command_name:
+                return command
     return None

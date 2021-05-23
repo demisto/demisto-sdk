@@ -106,6 +106,11 @@ def workflow_still_running(workflow_id: str, test_playbook) -> bool:
                                                      auth=(CIRCLE_STATUS_TOKEN, ''))
             workflow_details_response.raise_for_status()
         except Exception:
+            if os.getenv('CIRCLECI'):
+                test_playbook.build_context.logging_module.warning(
+                    f'Failed to check status for circle workflow with id {workflow_id}, '
+                    'assuming it\'s a working gitlab pipeline')
+                return True
             test_playbook.build_context.logging_module.exception(
                 f'Failed to get circleci response about workflow with id {workflow_id}. will try again with gitlab CI')
             try:

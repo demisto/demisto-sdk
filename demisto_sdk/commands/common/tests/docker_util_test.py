@@ -29,6 +29,15 @@ class TestContainerRunner:
 
         @pytest.mark.parametrize('command, status', data_test_exec_status)
         def test_exec_status(self, command, status):
+            """
+            Given:
+                a general command (including illegal)
+            When:
+                run on the container
+            Then:
+                verify that we got the correct exit code
+
+            """
             assert self.container_runner.exec(command=command)['StatusCode'] == status
 
         data_test_exec_outputs = [
@@ -38,6 +47,15 @@ class TestContainerRunner:
 
         @pytest.mark.parametrize('command, outputs', data_test_exec_outputs)
         def test_exec_outputs(self, command, outputs):
+            """
+            Given:
+                a legal command
+            When:
+                run on the container
+            Then:
+                verify that we got the correct output
+
+            """
             assert self.container_runner.exec(command=command)['Outputs'] == outputs
 
         data_test_exec_errors = [
@@ -54,9 +72,26 @@ class TestContainerRunner:
 
         @pytest.mark.parametrize('command, error', data_test_exec_errors)
         def test_exec_errors(self, command, error):
+            """
+            Given:
+                an illegal command
+            When:
+                run on the container
+            Then:
+                verify that we got the correct error
+
+            """
             assert self.container_runner.exec(command=command)['Error'] == error
 
         def test_exec_committed(self):
+            """
+            Given:
+                commands running in a flow
+            When:
+                run on the container
+            Then:
+                verify that we committed the container after the command runs.
+            """
             self.container_runner.exec('echo test')
             file_name = 'just_a_txt_file.txt'
             file_full_path = os.path.join(FILES_PATH, file_name)
@@ -73,6 +108,14 @@ class TestContainerRunner:
 
         @pytest.mark.parametrize('file_name', ['just_a_txt_file.txt'])
         def test_import_file(self, file_name):
+            """
+            Given:
+                file to import to the container
+            When:
+                importing the file
+            Then:
+                verify that the file exist in the container.
+            """
             file_path = FILES_PATH
             file_full_path = os.path.join(FILES_PATH, file_name)
             self.container_runner.exec(f'mkdir -p {file_path}')
@@ -87,6 +130,14 @@ class TestContainerRunner:
 
         @pytest.mark.parametrize('file_name', ['just_a_txt_file.txt'])
         def test_export_file(self, file_name):
+            """
+            Given:
+                file to export from the container
+            When:
+                export the file
+            Then:
+                verify that we got the file with the right data.
+            """
             file_full_path = os.path.join(FILES_PATH, file_name)
             self.container_runner.exec(f'mkdir -p {FILES_PATH}')
             with open(file_full_path, 'rb') as _file:
@@ -99,12 +150,28 @@ class TestContainerRunner:
             self.container_runner = create()
 
         def test_with_container(self, mocker):
+            """
+            Given:
+                container_runner.container is called in the code
+            When:
+                the container still doesn't exist.
+            Then:
+                verify that "_create_container" was called.
+            """
             assert self.container_runner._container_obj is None
             caller = mocker.patch.object(self.container_runner, '_create_container')
             self.container_runner.container
             assert caller.called.numerator == 1
 
         def test_with_create_container(self):
+            """
+            Given:
+                "_create_container" is called in the code
+            When:
+                the container already exist.
+            Then:
+                verify that "_create_container" is able to be called.
+            """
             self.container_runner.container
             assert self.container_runner._container_obj is not None
             self.container_runner._create_container()
@@ -114,6 +181,14 @@ class TestContainerRunner:
             self.container_runner = create()
 
         def test_remove_container(self):
+            """
+            Given:
+                a container
+            When:
+                "remove_container" is called
+            Then:
+                verify that container was successfully removed.
+            """
             self.container_runner.exec('echo test')
             container_id = self.container_runner.container.id
             self.container_runner.remove_container()
@@ -121,6 +196,14 @@ class TestContainerRunner:
                 self.container_runner.container.client.containers.get(container_id)
 
         def test_remove_images(self):
+            """
+            Given:
+                a container
+            When:
+                "remove_images" is called
+            Then:
+                verify that the images was successfully removed.
+            """
             self.container_runner.exec('echo test1')
             self.container_runner.exec('echo test2')
             self.container_runner.exec('echo test3')
@@ -144,6 +227,14 @@ class TestDockerTools:
 
         @pytest.mark.parametrize('container_name', ['test_remove_running_container'])
         def test_remove_running_container(self, container_name):
+            """
+            Given:
+                a running container
+            When:
+                "remove_container" is called with Force=True
+            Then:
+                verify that container was successfully removed.
+            """
             self.remove(container_name)
             client.containers.run('demisto/python3', name=container_name, command='sleep 60', detach=True)
             DockerTools.remove_container(container_name, ignore_container_not_found=False, force=True)
@@ -153,6 +244,14 @@ class TestDockerTools:
         @pytest.mark.parametrize('container_name', ['test_remove_existing_container'])
         def test_remove_existing_container(self, container_name):
             self.remove(container_name)
+            """
+            Given:
+                a created container
+            When:
+                "remove_container" is called
+            Then:
+                verify that container was successfully removed.
+            """
             client.containers.create('demisto/python3', name=container_name, command='sleep 60', detach=True)
             DockerTools.remove_container(container_name, ignore_container_not_found=False)
             with pytest.raises(docker.errors.NotFound):
@@ -160,10 +259,21 @@ class TestDockerTools:
 
         @pytest.mark.parametrize('container_name', ['test_remove_non_existing_container'])
         def test_remove_non_existing_container(self, container_name):
+            """
+            Given:
+                a non existing container
+            When:
+                "remove_container" is called with ignore_container_not_found=True
+            Then:
+                verify that no Exception was raised.
+            """
             self.remove(container_name)
             DockerTools.remove_container(container_name, ignore_container_not_found=True)
 
     class TestRemoveImages:
+
+        images = ['demisto/python3']
+        tag = 'test-docker'
 
         def setup(self):
             self.to_delete = []
@@ -182,11 +292,16 @@ class TestDockerTools:
                 except:     # noqa: E722
                     pass
 
-        images = ['demisto/python3']
-        tag = 'test-docker'
-
         @pytest.mark.parametrize('image_name', images)
         def test_remove_running_image(self, image_name):
+            """
+            Given:
+                a running container
+            When:
+                "remove_image" is called with force=True
+            Then:
+                verify that image was successfully removed.
+            """
             image_name = f'{image_name}:{self.tag}'
             container = client.containers.run(image=image_name, command='sleep 60', detach=True)
             DockerTools.remove_image(image_name, ignore_image_not_found=False, force=True)
@@ -197,6 +312,14 @@ class TestDockerTools:
 
         @pytest.mark.parametrize('image_name', images)
         def test_remove_existing_image(self, image_name):
+            """
+            Given:
+                a created container
+            When:
+                "remove_image" is called
+            Then:
+                verify that image was successfully removed.
+            """
             image_name = f'{image_name}:{self.tag}'
             client.containers.create(image=image_name).remove()
             DockerTools.remove_image(image_name, ignore_image_not_found=False)
@@ -208,7 +331,15 @@ class TestHelperFunctions:
 
     @pytest.mark.parametrize('data', [b'test'])
     def test_create_tar_info(self, data):
-        tar_info = create_tar_info(name='test.txt', file_bytes=data)
+        """
+        Given:
+            data like in a file
+        When:
+            creating the tar info object
+        Then:
+            verify that the tar info object created correct.
+        """
+        tar_info = ContainerRunner._create_tar_info(name='test.txt', file_bytes=data)
         file_obj = tar_info['fileobj']
         tar_info = tar_info['tarinfo']
         assert file_obj.read() == data

@@ -1,4 +1,5 @@
 # Changelog
+* Made sure that  format's **Assume yes** flag does work for all entities.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

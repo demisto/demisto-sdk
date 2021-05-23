@@ -1,4 +1,5 @@
 # Changelog
+* Updated the **secrets** command to work on forked branches.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

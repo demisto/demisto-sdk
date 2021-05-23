@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation to ensure that description and README does not contains the word 'Demisto'.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

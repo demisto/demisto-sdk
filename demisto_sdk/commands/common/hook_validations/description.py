@@ -32,6 +32,7 @@ class DescriptionValidator(BaseValidator):
 
     def is_valid(self):
         self.is_duplicate_description()
+        self.verify_demisto_in_description_content()
 
         data_dictionary = get_yaml(self.file_path)
         if not data_dictionary.get('detaileddescription'):
@@ -135,5 +136,39 @@ class DescriptionValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+
+        return True
+
+    def verify_demisto_in_description_content(self):
+        """
+        Checks if there are the word 'Demisto' in the description content.
+
+        Return:
+            True if 'Demisto' does not exist in the description content, and False if it does.
+        """
+
+        data_dictionary = get_yaml(self.file_path)
+        is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
+
+        if is_unified_integration:
+            description_content = data_dictionary.get('detaileddescription', '')
+
+        else:
+            try:
+                description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+
+            except IndexError:
+                error_message, error_code = Errors.no_description_file_warning()
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                return True
+
+            with open(description_path) as f:
+                description_content = f.read()
+
+        if 'demisto ' in description_content.lower():
+            error_message, error_code = Errors.description_contains_demisto_word()
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            self._is_valid = False
+            return False
 
         return True

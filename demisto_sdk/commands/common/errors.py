@@ -154,6 +154,7 @@ ERROR_CODE = {
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': True,
                                              'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -1017,6 +1018,11 @@ class Errors:
     def invalid_description_name():
         return "The description's file name is invalid - " \
                "make sure the name looks like the following: <integration_name>_description.md"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_demisto_word():
+        return 'Found the word \'Demisto\' in the description content.'
 
     @staticmethod
     @error_code_decorator

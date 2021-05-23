@@ -51,11 +51,9 @@ class ContainerRunner:
                 2. (StatusCode) the command exit code
                 3. (Error) the container stderr
         """
-        """
-            one important thing that you need to know about docker is that a dead container is basically an image
-            and that is the reason why do we need to commit to create the image.
-            so we can build a new container on the basis of this dead container.
-        """
+        # one important thing that you need to know about docker is that a dead container is basically an image.
+        # and that is the reason why do we need to commit to create the image.
+        # so we can build a new container on the basis of this dead container.
         if self._container_obj is not None:
             self._image_name = self.container.commit().id
             self.remove_container()

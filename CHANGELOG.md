@@ -1,4 +1,5 @@
 # Changelog
+* Updated the **secrets** command to work on forked branches.
 * Added a validation to ensure that description and README does not contains the word 'Demisto'.
 
 # 1.3.7

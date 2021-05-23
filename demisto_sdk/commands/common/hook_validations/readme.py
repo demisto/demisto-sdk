@@ -368,7 +368,7 @@ class ReadMeValidator(BaseValidator):
         error = ''
         is_valid = True
 
-        if 'demisto ' in self.readme_content.lower():
+        if 'demisto ' in self.readme_content.lower() or ' demisto' in self.readme_content.lower():
             error = 'Found the word \'Demisto\' in the readme content.'
 
         if error:

@@ -165,7 +165,7 @@ class DescriptionValidator(BaseValidator):
             with open(description_path) as f:
                 description_content = f.read()
 
-        if 'demisto ' in description_content.lower():
+        if 'demisto ' in description_content.lower() or ' demisto' in description_content.lower():
             error_message, error_code = Errors.description_contains_demisto_word()
             self.handle_error(error_message, error_code, file_path=self.file_path)
             self._is_valid = False

@@ -110,7 +110,7 @@ class ContainerRunner:
 
     def remove_images(self):
         """
-        removing the images created by the commits along the containers live (see the explanation in the class docs)
+        removing the images created by the commits along the containers live (see the explanation in the exec comment)
         """
         self.remove_container()
         if not (self._image_name == self._base_image_name):

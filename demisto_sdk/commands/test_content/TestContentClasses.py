@@ -138,6 +138,7 @@ class Conf:
         self.unmockable_integrations: Dict[str, str] = conf.get('unmockable_integrations')  # type: ignore
         self.parallel_integrations: List[str] = conf['parallel_integrations']
         self.docker_thresholds = conf.get('docker_thresholds', {}).get('images', {})
+        self.performance_tests = conf.get('performance_tests', {})  # type: ignore
 
 
 class TestPlaybook:
@@ -169,6 +170,10 @@ class TestPlaybook:
 
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
+        performance_tests_collected = self.build_context.conf.performance_tests  # TODO: Complete
+        if self.configuration.playbook_id in performance_tests_collected and not self.build_context.is_performance_test:
+            self.build_context.logging_module.debug(f'Skipping {self} because it\'s not performance env')
+            return False
         # If There are a list of filtered tests and the playbook is not in them
         if not self.build_context.filtered_tests or self.configuration.playbook_id not in self.build_context.filtered_tests:
             self.build_context.logging_module.debug(f'Skipping {self} because it\'s not in filtered tests')
@@ -446,6 +451,8 @@ class BuildContext:
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
         self.slack_user_id = self._retrieve_slack_user_id()
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
+        self.is_performance_test = len(self.env_json) == 1 and self.env_json[0].get("Role") == "Performance " \
+                                                                                               "Server Master"
 
     def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
         """
@@ -1402,10 +1409,11 @@ class TestContext:
         Args:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
-        test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-        if self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
-            self.playbook.delete_integration_instances(self.client)
+        if not self.build_context.is_performance_test:
+            test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
+            if self.incident_id and test_passed:
+                self.playbook.delete_incident(self.client, self.incident_id)
+                self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()

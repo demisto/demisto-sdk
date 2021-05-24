@@ -11,8 +11,6 @@ from pathlib import Path
 
 import click
 from dateutil import parser
-from git import GitCommandError, Repo
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
@@ -30,6 +28,7 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -188,9 +187,10 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         pack_meta_file_content = self._read_file_content(self.pack_meta_file)
         metadata = json.loads(pack_meta_file_content)
-        metadata_description = metadata.get(PACK_METADATA_DESC, '').lower()
+        metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
         if not self._check_if_file_is_empty(self.readme_file):
-            readme_content = self._read_file_content(self.readme_file).lower()
+            readme = self._read_file_content(self.readme_file)
+            readme_content = readme.lower().strip()
             if metadata_description == readme_content:
                 self._add_error(Errors.readme_equal_description_error(), self.readme_file)
                 return False

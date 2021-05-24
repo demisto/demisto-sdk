@@ -65,6 +65,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
 
 class DemistoSDK:
@@ -1493,6 +1494,34 @@ def integration_diff(**kwargs):
         sys.exit(0)
 
     sys.exit(1)
+
+
+# ====================== convert ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), required=True,
+    help='The path of the content pack/directory/file to convert.'
+)
+@click.option(
+    '-v', '--version', required=True, help="Version the input to be compatible with."
+)
+@pass_config
+def convert(config, **kwargs):
+    """
+    Convert the content of the pack/directory/file in the given input to be compatible with the version given by
+    version command.
+    """
+    check_configuration_file('convert', kwargs)
+
+    input_path = kwargs['input']
+    server_version = kwargs['version']
+    convert_manager = ConvertManager(input_path, server_version)
+    convert_manager.convert()
+
+
 
 
 @main.resultcallback()

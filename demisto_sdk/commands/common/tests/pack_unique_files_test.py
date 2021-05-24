@@ -498,4 +498,3 @@ class TestPackUniqueFilesValidator:
         if not is_valid:
             assert 'README.md content is equal to pack description. ' \
                    'Please remove the duplicate description from README.md file' in self.validator.get_errors()
-

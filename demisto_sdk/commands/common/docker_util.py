@@ -43,7 +43,7 @@ class ContainerRunner:
         """
         Args:
             command: the command to run inside the docker container
-            **kwargs: extra ags to pass to the docker container (according to the docker API)
+            **kwargs: extra args to pass to the docker container (according to the docker API)
 
         Returns:
             a dict contains 3 elements:

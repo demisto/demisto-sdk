@@ -473,6 +473,19 @@ class TestPackUniqueFilesValidator:
         ('This is a test. All good!', False),
     ])
     def test_pack_readme_is_different_then_pack_description(self, repo, readme_content, is_valid):
+        """
+        Given:
+            - Case A: A unique pack readme.
+            - Case B: Pack readme that is equal to pack description
+
+        When:
+            - Validating pack readme vs pack description
+
+        Then:
+            - Case A: Ensure validation passes as the pack readme and pack description are different.
+            - Case B: Ensure validation fails as the pack readme is the same as the pack description.
+                      Verify expected error is printed
+        """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.readme.write_text(readme_content)

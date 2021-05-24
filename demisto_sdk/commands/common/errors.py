@@ -1292,7 +1292,7 @@ class Errors:
     @error_code_decorator
     def readme_equal_description_error():
         return 'README.md content is equal to pack description. ' \
-               'Please remove the duplicate description from README.md file'
+               'Please remove the duplicate description from README.md file.'
 
     @staticmethod
     @error_code_decorator

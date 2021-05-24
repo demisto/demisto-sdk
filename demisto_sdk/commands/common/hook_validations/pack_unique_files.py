@@ -180,6 +180,22 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
+    def validate_pack_readme_and_pack_description(self):
+        """
+        Validates that README.md file is not the same as the pack description.
+        Returns False if the pack readme is different than the pack description.
+        """
+        pack_meta_file_content = self._read_file_content(self.pack_meta_file)
+        metadata = json.loads(pack_meta_file_content)
+        metadata_description = metadata.get(PACK_METADATA_DESC, '').lower()
+        if not self._check_if_file_is_empty(self.readme_file):
+            readme_content = self._read_file_content(self.readme_file).lower()
+            if metadata_description == readme_content:
+                self._add_error(Errors.readme_equal_description_error(), self.readme_file)
+                return False
+
+        return True
+
     def _is_secrets_file_structure_valid(self):
         """Check if .secrets-ignore structure is parse-able"""
         if self._parse_file_into_list(self.secrets_file):
@@ -491,6 +507,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self.validate_pack_meta_file()
 
         self.validate_pack_readme_file_is_not_empty()
+        self.validate_pack_readme_and_pack_description()
 
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:

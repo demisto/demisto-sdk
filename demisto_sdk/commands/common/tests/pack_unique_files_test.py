@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT)
+                                                   XSOAR_SUPPORT, PACK_METADATA_DESC)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -467,3 +467,22 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_readme_file_is_not_empty_missing_file(self):
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
+
+    @pytest.mark.parametrize('readme_content, is_valid', [
+        ('Hey there, just testing', True),
+        ('This is a test. All good!', False),
+    ])
+    def test_pack_readme_is_different_then_pack_description(self, repo, readme_content, is_valid):
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.readme.write_text(readme_content)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_DESC: 'This is a test. All good!',
+        })
+
+        self.validator.pack_path = pack.path
+        assert self.validator.validate_pack_readme_and_pack_description() == is_valid
+        if not is_valid:
+            assert 'README.md content is equal to pack description. ' \
+                   'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+

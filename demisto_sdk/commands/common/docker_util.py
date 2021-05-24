@@ -144,8 +144,8 @@ class DockerTools:
             in your code
         Args:
             name_or_id: the name or id of the container
-            ignore_container_not_found: dont raise an exception in that the container is already not existing
-            force: like the -f in docker rm command
+            ignore_container_not_found: don't raise an exception in case the container already removed
+            force: same as the -f option in the "docker rm" command
 
         Raises:
             docker.errors.NotFound in case that the container doesn't exist

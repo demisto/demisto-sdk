@@ -166,8 +166,8 @@ class DockerTools:
             in your code
         Args:
             name_or_id: the name or id of the image
-            ignore_image_not_found: dont raise an exception in that the image is already not existing
-            force: like the -f in docker rmi command
+            ignore_image_not_found: don't raise an exception in case the image already removed
+            force: same as the -f option in the "docker rmi" command
 
         Raises:
             docker.errors.ImageNotFound in case that the image doesn't exist

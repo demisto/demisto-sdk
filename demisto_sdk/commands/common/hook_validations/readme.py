@@ -365,14 +365,10 @@ class ReadMeValidator(BaseValidator):
             True if 'Demisto' does not exist in the README content, and False if it does.
         """
 
-        error = ''
         is_valid = True
 
         if 'demisto ' in self.readme_content.lower() or ' demisto' in self.readme_content.lower():
-            error = 'Found the word \'Demisto\' in the readme content.'
-
-        if error:
-            error_message, error_code = Errors.readme_error(error)
+            error_message, error_code = Errors.readme_contains_demisto_word()
             self.handle_error(error_message, error_code, file_path=self.file_path)
             is_valid = False
 

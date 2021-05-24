@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, Layout, OldClassifier, PackIgnore,
+    IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
     PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
     Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
@@ -103,7 +103,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def layouts(self) -> Iterator[Layout]:
+    def layouts(self) -> Iterator[LayoutObject]:
         return self._content_files_list_generator_factory(dir_name=LAYOUTS_DIR,
                                                           suffix="json")
 

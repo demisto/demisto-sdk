@@ -227,7 +227,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     @staticmethod
-    def check_separators_in_name(base_name) -> list:
+    def remove_separators_from_name(base_name) -> str:
         """
         Check if there are separators in a given name of folder or file.
 
@@ -237,11 +237,10 @@ class ContentEntityValidator(BaseValidator):
         Return:
             list of separators found in the name.
         """
-        separators = []
 
         for separator in ENTITY_NAME_SEPARATORS:
 
             if separator in base_name:
-                separators.append(separator)
+                base_name = base_name.replace(separator, '')
 
-        return separators
+        return base_name

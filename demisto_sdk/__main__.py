@@ -576,9 +576,6 @@ def format(
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
     """
-    # if not input:
-    #     input = 'use-git'
-
     return format_manager(
         str(input),
         str(output) if output else None,

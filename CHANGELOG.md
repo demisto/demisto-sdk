@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+* Added new validation of unimplemented test-module command in the code to `XSOAR-linter`.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

@@ -3,13 +3,14 @@ from pathlib import Path
 import pytest
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.tests.constants_test import (
-    GIT_ROOT, XSOAR_LINTER_PY3_INVALID, XSOAR_LINTER_PY3_INVALID_WARNINGS,
+    GIT_ROOT, XSOAR_LINTER_PY3_INVALID,
+    XSOAR_LINTER_PY3_INVALID_NO_TEST_MODULE, XSOAR_LINTER_PY3_INVALID_WARNINGS,
     XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER, XSOAR_LINTER_PY3_VALID)
 
 files = [
     (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, [], []),
     (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', True, 0, [],
-     ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list']),
+     ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', True, 1, [
         'Print is found, Please remove all prints from the code.'], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
@@ -17,9 +18,12 @@ files = [
         'Sleep is found, Please remove all sleep statements from the code.',
         'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
         'Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.',
-        "Some commands from yml file are not implemented in the python file, Please make sure that every command is"
-        " implemented in your code. The commands that are not implemented are ['error']"],
-     ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
+        "Some commands from yml file / test-module are not implemented in the python file, Please make sure that every "
+        "command is implemented in your code. The commands that are not implemented are ['error']"],
+     ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_NO_TEST_MODULE}"), 3.8, 'base', False, 1, [
+        "Some commands from yml file / test-module are not implemented in the python file, Please make sure that every "
+        "command is implemented in your code. The commands that are not implemented are ['test-module']"], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
       'Main function wasnt found in the file, Please add main()',

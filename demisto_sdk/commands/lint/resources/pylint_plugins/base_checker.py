@@ -22,11 +22,11 @@ base_msg = {
     "E9007": ("Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.",
               "commandresults-indicators-exists",
               "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."),
-    "E9010": ("Some commands from yml file are not implemented in the python file, Please make sure that every "
-              "command is implemented in your code. The commands that are not implemented are %s",
+    "E9010": ("Some commands from yml file / test-module are not implemented in the python file, Please make sure that "
+              "every command is implemented in your code. The commands that are not implemented are %s",
               "unimplemented-commands-exist",
-              "Some commands from yml file are not implemented in the python file, Please make sure that every "
-              "command is implemented in your code.")
+              "Some commands from yml file / test-module are not implemented in the python file, Please make sure that "
+              "every command is implemented in your code.")
 }
 
 
@@ -42,6 +42,10 @@ class CustomBaseChecker(BaseChecker):
     def __init__(self, linter=None):
         super(CustomBaseChecker, self).__init__(linter)
         self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
+        self.is_script = True if os.getenv('is_script') == 'True' else False
+        if not self.is_script:
+            # scripts doesn't have test-module
+            self.commands.append('test-module')  # add test-module to list of commands to be implemented
 
     def visit_call(self, node):
         self._print_checker(node)

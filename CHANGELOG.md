@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.3.8
 * Updated the **secrets** command to work on forked branches.
 
 # 1.3.7

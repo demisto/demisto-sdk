@@ -1,4 +1,5 @@
 # Changelog
+* Added more reasonable explanation to PB110 error.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

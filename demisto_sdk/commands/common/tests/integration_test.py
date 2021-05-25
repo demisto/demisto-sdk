@@ -844,6 +844,7 @@ class TestIntegrationValidator:
 
         assert validator.does_name_contains_the_type()
 
+
 class TestIsFetchParamsExist:
     def setup(self):
         config = {

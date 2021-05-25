@@ -1,4 +1,4 @@
-xfrom typing import Optional
+from typing import Optional
 
 import pytest
 from demisto_sdk.commands.common.hook_validations.playbook import \

@@ -1,5 +1,8 @@
 # Changelog
+
+# 1.3.8
 * Updated the **secrets** command to work on forked branches.
+* Added a validation verifying that the pack's README.md file is not equal to pack description.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

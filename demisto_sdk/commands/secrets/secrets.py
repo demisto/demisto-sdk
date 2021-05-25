@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, FileType, re)
+    PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
+    FileType, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -490,14 +490,12 @@ class SecretsValidator(object):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
-        is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
-        if not is_forked:
-            secrets_found = self.get_secrets(branch_name, is_circle)
-            if secrets_found:
-                return True
-            else:
-                print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
-                return False
+        secrets_found = self.get_secrets(branch_name, is_circle)
+        if secrets_found:
+            return True
+        else:
+            print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
+            return False
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:
         """Removes lines that have "disable-secrets-detection" from file content

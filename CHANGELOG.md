@@ -1,4 +1,6 @@
 # Changelog
+* Added a validation to ensure that the integration name, integration display name, script name, and playbook name will not contain the entity type.
+
 * Added a validation to ensure correct image and description file names.
 * Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
 * Added the **integration-diff** command to check differences between two versions of an integration and to return a report of missing and changed elements in the new version.

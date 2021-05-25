@@ -107,7 +107,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.does_name_contains_the_type()
+
         ]
 
         if not skip_test_conf:
@@ -139,7 +141,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
             self.is_valid_as_deprecated(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.does_name_contains_the_type()
+
         ]
         return all(answers)
 
@@ -1186,6 +1190,30 @@ class IntegrationValidator(ContentEntityValidator):
             separators = list(dict.fromkeys(separators))
 
             error_message, error_code = Errors.file_name_has_separators('integration', separators)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+
+    def does_name_contains_the_type(self):
+        """
+        Check that the entity name or display name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        display_name = self.current_file.get('display', '')
+        error_in = ''
+        if 'integration' in name.lower():
+            error_in = 'name'
+            if 'integration' in display_name.lower():
+                error_in += "' and 'display"
+        elif 'integration' in display_name.lower():
+            error_in = 'display'
+
+        if error_in:
+            error_message, error_code = Errors.entity_name_contains_type(error_in)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

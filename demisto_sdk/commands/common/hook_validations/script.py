@@ -67,7 +67,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.does_name_contains_the_type()
         ])
         # check only on added files
         if not self.old_file:
@@ -346,4 +347,18 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
 
+        return True
+
+    def does_name_contains_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'script' in name.lower():
+            error_message, error_code = Errors.entity_name_contains_type('name')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
         return True

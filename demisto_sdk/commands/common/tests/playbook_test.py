@@ -1,4 +1,4 @@
-from typing import Optional
+xfrom typing import Optional
 
 import pytest
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -416,3 +416,37 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An playbook with a name that contains the type.
+        When
+            - running does_name_contains_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        playbook = pack.create_playbook(yml={"name": "test_playbook"})
+
+        structure_validator = StructureValidator(playbook.yml.path)
+        validator = PlaybookValidator(structure_validator)
+
+        assert not validator.does_name_contains_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An playbook with a name that does not contains the type.
+        When
+            - running does_name_contains_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        playbook = pack.create_playbook(yml={"name": "test"})
+
+        structure_validator = StructureValidator(playbook.yml.path)
+        validator = PlaybookValidator(structure_validator)
+
+        assert validator.does_name_contains_the_type()

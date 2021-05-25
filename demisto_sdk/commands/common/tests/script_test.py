@@ -504,3 +504,37 @@ class TestScriptValidator:
         validator = ScriptValidator(structure_validator)
 
         assert not validator.check_separators_in_files()
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that contains the type.
+        When
+            - running does_name_contains_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script(yml={"name": "test_script"})
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert not validator.does_name_contains_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that does not contains the type.
+        When
+            - running does_name_contains_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script(yml={"name": "test"})
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert validator.does_name_contains_the_type()

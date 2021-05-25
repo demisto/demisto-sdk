@@ -33,6 +33,7 @@ ERROR_CODE = {
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
+    "entity_name_contains_type": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -351,6 +352,11 @@ class Errors:
     @error_code_decorator
     def file_name_has_separators(entity_type, separators):
         return f"Some {entity_type} files has in their base name the following separators - {separators}, remove them."
+
+    @staticmethod
+    @error_code_decorator
+    def entity_name_contains_type(field_name):
+        return f"The field '{field_name}' shouldn't contain the entity type"
 
     @staticmethod
     @error_code_decorator

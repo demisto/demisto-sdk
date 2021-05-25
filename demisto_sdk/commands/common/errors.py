@@ -958,7 +958,9 @@ class Errors:
     def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
                f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be at least {main_playbook_version}."
+               f" {entities_names} should be at least {main_playbook_version}.\n" \
+               f"Possible reason for such an error, would be that the name of the sub-Pb in the parent Pb's yml file" \
+               f" is not identical to its name in the yml file of the sub-Pb itself"
 
     @staticmethod
     @error_code_decorator

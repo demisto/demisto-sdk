@@ -703,7 +703,8 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
 
     Then:
         - Ensure format runs successfully
-        - Ensure format removes `_copy` from both name and id.
+        - Ensure format removes `_copy` from both name and id and id equal to the name.
+
     """
     pack = repo.create_pack('Temp')
     playbook = pack.create_playbook('my_temp_playbook')
@@ -718,5 +719,5 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('id') == playbook_id
+    assert playbook.yml.read_dict().get('id') == playbook_name
     assert playbook.yml.read_dict().get('name') == playbook_name

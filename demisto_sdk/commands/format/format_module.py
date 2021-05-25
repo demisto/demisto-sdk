@@ -86,8 +86,9 @@ def format_manager(input: str = None,
     Returns:
         int 0 in case of success 1 otherwise
     """
-    if input:
-        files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
+    if input != 'None':
+        if isinstance(input, str):
+            files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
     else:
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]

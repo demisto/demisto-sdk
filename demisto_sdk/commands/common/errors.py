@@ -155,7 +155,6 @@ ERROR_CODE = {
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
                                              'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -208,7 +207,9 @@ ERROR_CODE = {
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
     "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
-    "readme_contains_demisto_word": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
+    "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
+
+    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -1022,11 +1023,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word():
-        return 'Found the word \'Demisto\' in the description content.'
-
-    @staticmethod
-    @error_code_decorator
     def no_beta_disclaimer_in_description():
         return f"The detailed description in beta integration package " \
                f"does not contain the beta disclaimer note. Add the following to the description:\n" \
@@ -1293,6 +1289,12 @@ class Errors:
     @error_code_decorator
     def empty_readme_error():
         return 'README.md is empty'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_equal_description_error():
+        return 'README.md content is equal to pack description. ' \
+               'Please remove the duplicate description from README.md file.'
 
     @staticmethod
     @error_code_decorator

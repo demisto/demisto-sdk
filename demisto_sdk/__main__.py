@@ -577,7 +577,7 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
     """
     return format_manager(
-        str(input),
+        str(input) if input else None,
         str(output) if output else None,
         from_version=from_version,
         no_validate=no_validate,

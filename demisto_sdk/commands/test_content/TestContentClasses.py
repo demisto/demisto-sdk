@@ -171,8 +171,8 @@ class TestPlaybook:
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
         performance_tests_collected = self.build_context.conf.performance_tests  # TODO: Complete
-        logging.debug(f'Build context class name: {type(self.build_context).__name__}')
-        logging.debug(f'is_performance_test exists: {hasattr(self.build_context, "is_performance_test")}')
+        logging.info(f'Build context class name: {type(self.build_context).__name__}')
+        logging.info(f'is_performance_test exists: {hasattr(self.build_context, "is_performance_test")}')
         is_performance_test = True
         if self.configuration.playbook_id in performance_tests_collected and not is_performance_test:
             self.build_context.logging_module.debug(f'Skipping {self} because it\'s not performance env')

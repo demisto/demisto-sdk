@@ -1,5 +1,5 @@
 # Changelog
-* Made sure that  format's **Assume yes** flag does work for all entities.
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

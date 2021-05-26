@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
 * Added a validation to ensure that description and README does not contains the word 'Demisto'.
 
 # 1.3.8

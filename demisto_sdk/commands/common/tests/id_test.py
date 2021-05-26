@@ -808,6 +808,15 @@ class TestPlaybookEntitiesVersionsValid:
             "SubPlaybook_version_5_5"
         ]
     }}
+    playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_not_in_id_set"
+        ]
+    }}
     playbook_with_invalid_integration_version = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
@@ -920,6 +929,10 @@ class TestPlaybookEntitiesVersionsValid:
         is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
             self.playbook_with_invalid_sub_playbook_version, pack.path)
         assert not is_sub_playbook_version_invalid
+
+        is_sub_playbook_invalid = self.validator._are_playbook_entities_versions_valid(
+            self.playbook_with_sub_playbook_not_in_id_set, pack.path)
+        assert not is_sub_playbook_invalid
 
         # playbook uses integration's commands with invalid versions
         mocker.patch.object(self.validator, 'handle_error', return_value=True)

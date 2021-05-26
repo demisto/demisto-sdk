@@ -508,9 +508,9 @@ class TestScriptValidator:
     def test_name_contains_the_type(self, pack):
         """
         Given
-            - An script with a name that contains the type.
+            - An script with a name that contains the word "script".
         When
-            - running does_name_contains_the_type.
+            - running name_dnot_contains_the_type.
         Then
             - Ensure the validate failed.
         """
@@ -520,14 +520,14 @@ class TestScriptValidator:
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
 
-        assert not validator.does_name_contains_the_type()
+        assert not validator.name_dnot_contains_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """
         Given
-            - An script with a name that does not contains the type.
+            - An script with a name that does not contains the "script" string.
         When
-            - running does_name_contains_the_type.
+            - running name_dnot_contains_the_type.
         Then
             - Ensure the validate passes.
         """
@@ -537,4 +537,4 @@ class TestScriptValidator:
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
 
-        assert validator.does_name_contains_the_type()
+        assert validator.name_dnot_contains_the_type()

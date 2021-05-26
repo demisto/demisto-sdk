@@ -796,9 +796,9 @@ class TestIntegrationValidator:
     def test_name_contains_the_type(self, pack):
         """
         Given
-            - An integration with a name that contains the type.
+            - An integration with a name that contains the word "integration".
         When
-            - running does_name_contains_the_type.
+            - running name_dnot_contains_the_type.
         Then
             - Ensure the validate failed.
         """
@@ -808,14 +808,14 @@ class TestIntegrationValidator:
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)
 
-        assert not validator.does_name_contains_the_type()
+        assert not validator.name_dnot_contains_the_type()
 
     def test_display_name_contains_the_type(self, pack):
         """
         Given
-            - An integration with a display name that contains the type.
+            - An integration with a display name that contains the word "integration".
         When
-            - running does_name_contains_the_type.
+            - running name_dnot_contains_the_type.
         Then
             - Ensure the validate failed.
         """
@@ -825,14 +825,14 @@ class TestIntegrationValidator:
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)
 
-        assert not validator.does_name_contains_the_type()
+        assert not validator.name_dnot_contains_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """
         Given
-            - An integration with a name that does not contains the type.
+            - An integration with a name that does not contains "integration" string.
         When
-            - running does_name_contain_the_type.
+            - running name_dnot_contains_the_type.
         Then
             - Ensure the validate passes.
         """
@@ -842,7 +842,7 @@ class TestIntegrationValidator:
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)
 
-        assert validator.does_name_contains_the_type()
+        assert validator.name_dnot_contains_the_type()
 
 
 class TestIsFetchParamsExist:

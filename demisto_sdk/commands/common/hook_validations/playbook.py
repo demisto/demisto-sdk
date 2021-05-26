@@ -40,7 +40,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
                 self._is_taskid_equals_id(),
-                self.does_name_contains_the_type()
+                self.name_dnot_contains_the_type()
             ]
             answers = all(new_playbook_checks)
         else:
@@ -57,7 +57,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
                 self._is_taskid_equals_id(),
-                self.does_name_contains_the_type()
+                self.name_dnot_contains_the_type()
             ]
             answers = all(modified_playbook_checks)
 
@@ -404,7 +404,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
-    def does_name_contains_the_type(self):
+    def name_dnot_contains_the_type(self):
         """
         Check that the entity name does not contain the entity type
         Returns: True if the name is valid
@@ -412,9 +412,8 @@ class PlaybookValidator(ContentEntityValidator):
 
         name = self.current_file.get('name', '')
         if 'playbook' in name.lower():
-            error_message, error_code = Errors.entity_name_contains_type('name')
+            error_message, error_code = Errors.field_contains_not_allowed_word(field_names=['name'], word='playbook')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
-

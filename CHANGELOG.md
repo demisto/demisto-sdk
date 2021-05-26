@@ -1,5 +1,5 @@
 # Changelog
-* Added a validation to ensure that the integration name, integration display name, script name, and playbook name will not contain the entity type.
+* Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

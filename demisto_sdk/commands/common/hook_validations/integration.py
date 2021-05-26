@@ -108,7 +108,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
-            self.does_name_contains_the_type()
+            self.name_dnot_contains_the_type()
 
         ]
 
@@ -142,7 +142,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=True),
             self.is_valid_as_deprecated(),
             self.is_there_separators_in_names(),
-            self.does_name_contains_the_type()
+            self.name_dnot_contains_the_type()
 
         ]
         return all(answers)
@@ -1196,7 +1196,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def does_name_contains_the_type(self):
+    def name_dnot_contains_the_type(self):
         """
         Check that the entity name or display name does not contain the entity type
         Returns: True if the name is valid
@@ -1204,16 +1204,16 @@ class IntegrationValidator(ContentEntityValidator):
 
         name = self.current_file.get('name', '')
         display_name = self.current_file.get('display', '')
-        error_in = ''
+        field_names = []
         if 'integration' in name.lower():
-            error_in = 'name'
-            if 'integration' in display_name.lower():
-                error_in += "' and 'display"
-        elif 'integration' in display_name.lower():
-            error_in = 'display'
+            field_names.append('name')
+        if 'integration' in display_name.lower():
+            field_names.append('display')
 
-        if error_in:
-            error_message, error_code = Errors.entity_name_contains_type(error_in)
+        if field_names:
+            error_message, error_code = Errors.field_contains_not_allowed_word(
+                field_names=field_names, word='integration')
+
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

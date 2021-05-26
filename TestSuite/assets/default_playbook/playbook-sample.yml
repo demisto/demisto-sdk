@@ -1,6 +1,6 @@
 id: sample playbook
 version: -1
-name: sample
+name: sample playbook
 description: Sample playbook for testing
 starttaskid: "0"
 tasks:

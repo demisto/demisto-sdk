@@ -23,7 +23,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:

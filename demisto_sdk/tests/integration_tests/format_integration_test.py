@@ -704,7 +704,6 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
     Then:
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
-
     """
     pack = repo.create_pack('Temp')
     playbook = pack.create_playbook('my_temp_playbook')

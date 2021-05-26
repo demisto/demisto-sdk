@@ -1,6 +1,10 @@
 # Changelog
 * Made sure that  format's **Assume yes** flag does work for all entities.
 
+# 1.3.8
+* Updated the **secrets** command to work on forked branches.
+* Added a validation verifying that the pack's README.md file is not equal to pack description.
+
 # 1.3.7
 * Added a validation to ensure correct image and description file names.
 * Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.

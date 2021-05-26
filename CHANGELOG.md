@@ -1,5 +1,6 @@
 # Changelog
-* Fixed **format** to use git as a default value.
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

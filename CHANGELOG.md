@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.2.18
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
 
 # 1.3.8

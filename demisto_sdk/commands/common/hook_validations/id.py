@@ -293,7 +293,7 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         for entity_data_dict in entity_set_from_id_set:
             if not implemented_entity_list_from_playbook:
-                return is_valid
+                break
 
             entity_id = list(entity_data_dict.keys())[0]
             all_entity_fields = entity_data_dict[entity_id]

@@ -229,13 +229,13 @@ class ContentEntityValidator(BaseValidator):
     @staticmethod
     def remove_separators_from_name(base_name) -> str:
         """
-        Check if there are separators in a given name of folder or file.
+        Removes separators from a given name of folder or file.
 
         Args:
             base_name: The base name of the folder/file.
 
         Return:
-            list of separators found in the name.
+            The base name without separators.
         """
 
         for separator in ENTITY_NAME_SEPARATORS:

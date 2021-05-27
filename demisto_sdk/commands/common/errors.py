@@ -621,7 +621,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return "Every deprecated script's comment has to start with 'Deprecated.'"
+        return 'The comment of all deprecated scripts should follow one of the formats:' \
+               '1. "Deprecated. Use <SCRIPT_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -944,7 +946,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description has to start with "Deprecated."'
+        return 'The description of all deprecated playbooks should follow one of the formats:' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator

@@ -290,6 +290,26 @@ class TestPlaybookValidator:
         (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
     ]
 
+    DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
+    DEPRECATED_VALID2 = {"deprecated": True, "description": "Deprecated. Feodo Tracker no longer supports this feed "
+                                                            "No available replacement."}
+    DEPRECATED_VALID3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported scraping"
+                                                            " API. Use Proofpoint Protection Server v2 playbook"
+                                                            " instead."}
+
+    DEPRECATED_INVALID_DESC = {"deprecated": True, "description": "Deprecated."}
+    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "description": "Use the ServiceNow playbook to manage..."}
+    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported"
+                                                                   " scraping API."}
+    DEPRECATED_INPUTS = [
+        (DEPRECATED_VALID, True),
+        (DEPRECATED_VALID2, True),
+        (DEPRECATED_VALID3, True),
+        (DEPRECATED_INVALID_DESC, False),
+        (DEPRECATED_INVALID_DESC2, False),
+        (DEPRECATED_INVALID_DESC3, False)
+    ]
+
     @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
     def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
         """
@@ -416,3 +436,20 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
+
+    @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
+    def test_is_valid_deprecated_playbook(self, current, answer):
+        """
+        Given
+            - A deprecated playbook with a description.
+
+        When
+            - running is_valid_as_deprecated.
+
+        Then
+            - a playbook with an invalid description will be errored.
+        """
+        structure = mock_structure("", current)
+        validator = PlaybookValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_as_deprecated() is answer

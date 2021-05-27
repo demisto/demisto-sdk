@@ -1,4 +1,5 @@
 import os
+import re
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
@@ -246,8 +247,12 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
+        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
         if is_deprecated:
-            if not comment.startswith('Deprecated.'):
+            if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_script()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False

@@ -1,3 +1,4 @@
+import re
 from typing import Dict
 
 import click
@@ -257,10 +258,14 @@ class PlaybookValidator(ContentEntityValidator):
 
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
-        is_hidden = self.current_file.get('hidden', False)
+        is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        if is_hidden:
-            if not description.startswith('Deprecated.'):
+        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+        if is_deprecated:
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False

@@ -1240,10 +1240,7 @@ class ValidateManager:
             False if current_file is deprecated and invalid.
             None if current_file is not deprecated.
         """
-        if file_type == FileType.PLAYBOOK:
-            is_deprecated = "hidden" in current_file and current_file["hidden"]
-        else:
-            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+        is_deprecated = "deprecated" in current_file and current_file["deprecated"]
 
         toversion_is_old = "toversion" in current_file and \
                            version.parse(current_file.get("toversion", "99.99.99")) < \

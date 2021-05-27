@@ -1,0 +1,161 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: True
+  group:
+    type: str
+    required: True
+    enum: ['incident', 'indicator']
+  version:
+    type: number
+    required: True
+  name:
+    type: str
+    required: True
+  fromVersion:
+    type: str
+    required: True
+  toVersion:
+    type: str
+  description:
+    type: str
+  system:
+    type: bool
+  edit:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  indicatorsDetails:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  indicatorsQuickView:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  quickView:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  close:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  details:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  detailsV2:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+  mobile:
+    type: map
+    mapping:
+      tabs:
+        type: seq
+        sequence:
+        - include: tabs_schema
+      sections:
+        type: seq
+        sequence:
+        - include: section_schema
+
+schema;tabs_schema:
+  type: any
+
+schema;section_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+    version:
+      type: number
+    modified:
+      type: str
+    name:
+      type: str
+    type:
+      type: str
+    isVisible:
+      type: bool
+    readOnly:
+      type: bool
+    description:
+      type: str
+    query:
+      type: any
+    queryType:
+      type: str
+    sortValues:
+      type: str
+    fields:
+      type: seq
+      sequence:
+      - include: field_schema
+
+schema;field_schema:
+  type: map
+  mapping:
+      id:
+        type: str
+      version:
+        type: number
+      modified:
+        type: str
+      fieldId:
+        type: str
+      isVisible:
+        type: bool
+      sortValues:
+        type: str

@@ -14,6 +14,9 @@ class ConvertManager:
 
     # TODO signature
     def convert(self):
+        if not self.server_version_not_supported():
+            # TODO error
+            return 1
         pack = self.create_pack_object()
         # if self.version_requested_is_below_pack_version(pack):
         #     click.secho('Given version is lower than pack version.\n'
@@ -44,7 +47,7 @@ class ConvertManager:
             (Pack): Pack object of the pack the conversion was requested for.
         """
         path_dir = os.path.dirname(self.input_path)
-        pack_path = self.input_path if path_dir == PACKS_DIR else path_dir
+        pack_path = self.input_path if os.path.basename(path_dir) == PACKS_DIR else path_dir
         return Pack(pack_path)
 
     def version_requested_is_below_pack_version(self, pack: Pack) -> bool:
@@ -61,7 +64,7 @@ class ConvertManager:
         """
         return (pack_version := pack.metadata.get('serverMinVersion')) and self.server_version >= Version(pack_version)
 
-    def server_version_is_not_supported(self) -> bool:
+    def server_version_not_supported(self) -> bool:
         """
         Checks whether the requested version is supported for conversion.
         This is needed to make sure that the requested versions do have a corresponding converter

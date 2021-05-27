@@ -1,25 +1,22 @@
-import json
-import re
 from typing import Set, List, Dict
 
-from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS, FileType
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
 
 
 class LayoutSixConverter(LayoutBaseConverter):
-    ENTITY_NAME_SEPARATORS_REGEX = re.compile(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''')
 
     def __init__(self, pack: Pack):
         super().__init__(pack)
         self.layout_indicator_fields = self.get_layout_indicator_fields()
 
-    def convert_dir(self) -> None:
+    def convert_dir(self) -> int:
         """
         Converts old layouts in Layouts dir to the 6.0.0 layouts convention.
         Returns:
-            (None): Creates and updates files in Layouts directory if needed.
+            (int): 0 if convert finished successfully, 1 otherwise.
         """
         # We will convert layouts below 6_0_0 versions that don't have a corresponding layout 6_0_0 and above version.
         old_layout_id_to_layouts_dict = self.group_layouts_needing_conversion_by_layout_id()
@@ -39,8 +36,9 @@ class LayoutSixConverter(LayoutBaseConverter):
             self.update_incident_types_related_to_old_layouts(old_corresponding_layouts, layout_id)
 
             new_layout_path = self.calculate_new_layout_relative_path(layout_id)
-            with open(new_layout_path, 'w') as jf:
-                json.dump(obj=new_layout_dict, fp=jf, indent=2)
+            self.dump_new_layout(new_layout_path, new_layout_dict)
+
+        return 0
 
     def get_layout_indicator_fields(self) -> Set[str]:
         """
@@ -48,7 +46,7 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (Set[str]): Set of all of the indicator field names in the layouts container schema.
         """
-        return {schema_field for schema_field in self.get_layout_dynamic_fields() if 'indicator' in schema_field}
+        return {schema_field for schema_field in self.get_layout_dynamic_fields().keys() if 'indicator' in schema_field}
 
     def group_layouts_needing_conversion_by_layout_id(self) -> Dict[str, List[LayoutObject]]:
         """
@@ -95,7 +93,7 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (str): The path of the new layout to be created.
         """
-        layout_base_name = re.sub(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''', '_', layout_id)
+        layout_base_name = self.entity_separators_to_underscore(layout_id)
         layout_file_name = f'{FileType.LAYOUTS_CONTAINER.value}-{layout_base_name}.json'
         new_layout_path = f'{str(self.pack.path)}/Layouts/{layout_file_name}'
 

@@ -207,6 +207,8 @@ class UpdateRN:
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)
+        elif 'layout' in file_data:
+            name = file_data['layout'].get('id')
         elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
@@ -215,8 +217,6 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
-        elif 'layout' in file_data:
-            name = file_data['layout'].get('id')
         else:
             name = os.path.basename(file_path)
         return name

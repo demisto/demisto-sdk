@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+* Inproved the error messages for separators in folder and file names in the **validate** command.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 
 # 1.3.8

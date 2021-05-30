@@ -26,10 +26,12 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
         """
         layout_id_to_incident_type = self.layout_to_indicators_or_incidents_dict(self.pack.incident_types)
         layout_id_to_indicators_dict = self.layout_to_indicators_or_incidents_dict(self.pack.indicator_types)
-        layout_ids_to_convert = [layout for layout in self.get_layouts_by_layout_type(FileType.LAYOUTS_CONTAINER) if
+        layout_ids_to_convert = [layout for layout in
+                                 self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUTS_CONTAINER) if
                                  layout_id_to_incident_type.get(layout.layout_id()) or layout_id_to_indicators_dict.get(
                                      layout.layout_id())]
-        current_old_layouts = [layout for layout in self.get_layouts_by_layout_type(FileType.LAYOUT)]
+        current_old_layouts = [layout for layout in
+                               self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUT)]
         layout_dynamic_fields = self.get_layout_dynamic_fields()
 
         for layout in layout_ids_to_convert:
@@ -78,7 +80,7 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
                 continue
             if not (id_ := incident_or_indicator.get('id')):
                 continue
-            result[id_] = result.get(layout_id, []) + [id_]
+            result[layout_id] = result.get(layout_id, []) + [id_]
         return result
 
     def build_old_layout(self, layout_id: str, type_id: str, dynamic_field_key: str, dynamic_field_value: Any,

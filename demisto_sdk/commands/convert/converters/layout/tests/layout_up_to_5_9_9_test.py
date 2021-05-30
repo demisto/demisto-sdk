@@ -64,9 +64,8 @@ class TestLayoutBelowSixConverter:
         - Ensure expected dict is returned.
 
         """
-        assert self.layout_converter.layout_to_indicators_or_incidents_dict(
-            self.layout_converter.pack.incident_types) == {
-                   'ExtraHop Detection': ['ExtraHop Detection', 'ExtraHop Detection 2']}
+        result = self.layout_converter.layout_to_indicators_or_incidents_dict(self.layout_converter.pack.incident_types)
+        assert result == { 'ExtraHop Detection': ['ExtraHop Detection', 'ExtraHop Detection 2']}
 
     def test_layout_to_indicators_dict(self):
         """
@@ -81,9 +80,8 @@ class TestLayoutBelowSixConverter:
         - Ensure expected dict is returned.
 
         """
-        assert self.layout_converter.layout_to_indicators_or_incidents_dict(
-            self.layout_converter.pack.indicator_types) == {
-                   'ExtraHop Detection': ['ExtraHop Detection', 'ExtraHop Detection 2']}
+        res = self.layout_converter.layout_to_indicators_or_incidents_dict(self.layout_converter.pack.indicator_types)
+        assert res == {'ExtraHop Detection': ['Cryptocurrency Address']}
 
     BUILD_OLD_LAYOUT_INPUTS = [('ExtraHop Detection', 'ExtraHop Detect', 'close', None,
                                 {'fromVersion': '4.1.0',

@@ -2,19 +2,17 @@ import json
 import os
 import re
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
                                                    FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
-    LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.convert.converters.abstract_converter import \
-    AbstractConverter
+from demisto_sdk.commands.convert.converters.base_converter import \
+    BaseConverter
 
 
-class LayoutBaseConverter(AbstractConverter):
+class LayoutBaseConverter(BaseConverter):
     ENTITY_NAME_SEPARATORS_REGEX = re.compile(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''')
     DEFAULT_SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
                                                         f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
@@ -26,17 +24,6 @@ class LayoutBaseConverter(AbstractConverter):
     @abstractmethod
     def convert_dir(self) -> int:
         pass
-
-    def get_layouts_by_layout_type(self, layout_type: FileType) -> List[LayoutObject]:
-        """
-        Returns all layouts in the given pack whom layout type matches the 'layout_type' argument given.
-        Args:
-            layout_type (FileType): The layout type.
-
-        Returns:
-            (List[LayoutObject]): List of layouts whom type matches 'layout_type'.
-        """
-        return [layout for layout in self.pack.layouts if layout.type() == layout_type and layout.layout_id()]
 
     @staticmethod
     def get_layout_dynamic_fields(schema_path: str = DEFAULT_SCHEMA_PATH) -> Dict[str, Any]:

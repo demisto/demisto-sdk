@@ -2,10 +2,11 @@ from abc import abstractmethod
 from typing import List, Optional, Union
 
 import demisto_client
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
-from wcmatch.pathlib import Path
 
 
 class LayoutObject(JSONContentObject):
@@ -40,6 +41,7 @@ class LayoutObject(JSONContentObject):
         Returns:
             (Optional[List]): Sections of layout if exists.
         """
+        pass
 
     @abstractmethod
     def get_layout_tabs(self) -> Optional[List]:
@@ -48,6 +50,7 @@ class LayoutObject(JSONContentObject):
         Returns:
             (Optional[List]): Sections of tabs if exists.
         """
+        pass
 
     def type(self) -> FileType:
         return self.layout_type

@@ -65,7 +65,7 @@ class LayoutSixConverter(LayoutBaseConverter):
             (Dict[str, List[LayoutObject]]): Dict of (layoutID, [List of layouts with the corresponding layout ID).
         """
         layout_id_to_layouts_dict: Dict[str, List[LayoutObject]] = dict()
-        for layout in self.get_layouts_by_layout_type(FileType.LAYOUT):
+        for layout in self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUT):
             layout_id = layout.layout_id()
             layout_id_to_layouts_dict[layout_id] = layout_id_to_layouts_dict.get(layout_id, []) + [layout]
         return layout_id_to_layouts_dict

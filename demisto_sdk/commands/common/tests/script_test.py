@@ -536,5 +536,4 @@ class TestScriptValidator:
 
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
-
         assert validator.name_not_contain_the_type()

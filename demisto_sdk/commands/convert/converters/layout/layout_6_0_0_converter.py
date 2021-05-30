@@ -4,6 +4,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
+import shutil
 
 
 class LayoutSixConverter(LayoutBaseConverter):
@@ -14,11 +15,11 @@ class LayoutSixConverter(LayoutBaseConverter):
 
     def convert_dir(self) -> int:
         """
+        TODO tests
         Converts old layouts in Layouts dir to the 6.0.0 layouts convention.
         Returns:
             (int): 0 if convert finished successfully, 1 otherwise.
         """
-        # We will convert layouts below 6_0_0 versions that don't have a corresponding layout 6_0_0 and above version.
         old_layout_id_to_layouts_dict = self.group_layouts_needing_conversion_by_layout_id()
         for layout_id, old_corresponding_layouts in old_layout_id_to_layouts_dict.items():
             new_layout_dict = self.create_layout_dict(from_version='6.0.0', layout_id=layout_id)
@@ -26,7 +27,6 @@ class LayoutSixConverter(LayoutBaseConverter):
 
             for old_layout in old_corresponding_layouts:
                 if not (layout_kind := old_layout.get('kind')):
-                    # TODO log statement
                     continue
                 if sections := old_layout.get_layout_sections():
                     new_layout_dict[layout_kind] = {'sections': sections}
@@ -40,13 +40,16 @@ class LayoutSixConverter(LayoutBaseConverter):
 
         return 0
 
-    def get_layout_indicator_fields(self) -> Set[str]:
+    def get_layout_indicator_fields(self, schema_path: str = LayoutBaseConverter.DEFAULT_SCHEMA_PATH) -> Set[str]:
         """
         Calculates all the indicator fields in the layouts container schema.
+        Args:
+            schema_path (str): Path to the layouts container schema.
         Returns:
             (Set[str]): Set of all of the indicator field names in the layouts container schema.
         """
-        return {schema_field for schema_field in self.get_layout_dynamic_fields().keys() if 'indicator' in schema_field}
+        return {schema_field for schema_field in self.get_layout_dynamic_fields(schema_path).keys()
+                if 'indicator' in schema_field}
 
     def group_layouts_needing_conversion_by_layout_id(self) -> Dict[str, List[LayoutObject]]:
         """
@@ -60,16 +63,10 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (Dict[str, List[LayoutObject]]): Dict of (layoutID, [List of layouts with the corresponding layout ID).
         """
-        # layouts_6_0_0_and_above_ids: Set[str] = {layout.layout_id() for layout in layouts
-        #                                          if find_type(str(layout.path)) == FileType.LAYOUTS_CONTAINER
-        #                                          and layout.layout_id() is not None}
-        # layouts_needed_conversions = [layout for layout in layouts if find_type(str(layout.path)) == FileType.LAYOUT
-        #                               if layout.layout_id() not in layouts_6_0_0_and_above_ids]
         layout_id_to_layouts_dict = dict()
         for layout in self.get_layouts_by_layout_type(FileType.LAYOUT):
-            if (layout_id := layout.layout_id()) not in layout_id_to_layouts_dict:
-                layout_id_to_layouts_dict[layout_id] = []
-            layout_id_to_layouts_dict[layout_id].append(layout)
+            layout_id = layout.layout_id()
+            layout_id_to_layouts_dict[layout_id] = layout_id_to_layouts_dict.get(layout_id, []) + [layout]
         return layout_id_to_layouts_dict
 
     def calculate_new_layout_group(self, old_layouts: List[LayoutObject]) -> str:
@@ -114,4 +111,7 @@ class LayoutSixConverter(LayoutBaseConverter):
                                   if incident_type.get('id') in old_layouts_type_ids]
         for bounded_incident_type in bounded_incident_types:
             bounded_incident_type['layout'] = layout_id
-            bounded_incident_type.dump()
+            try:
+                bounded_incident_type.dump()
+            except shutil.SameFileError:
+                pass

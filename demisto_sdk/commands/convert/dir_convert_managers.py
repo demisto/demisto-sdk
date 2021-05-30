@@ -6,6 +6,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import LayoutSixConverter
+from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import LayoutBelowSixConverter
 
 
 class AbstractDirConvertManager:
@@ -15,7 +16,6 @@ class AbstractDirConvertManager:
         self.server_version = server_version
         self.entity_dir_name = entity_dir_name
 
-    # TODO maybe add to signature interface of base converter.
     @abstractmethod
     def convert(self):
         pass
@@ -84,8 +84,7 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
         if self.server_version >= self.VERSION_6_0_0:
             layout_converter = LayoutSixConverter(self.pack)
         else:
-            layout_converter = LayoutSixConverter(self.pack)
-            # TODO - layout below 6
+            layout_converter = LayoutBelowSixConverter(self.pack)
         layout_converter.convert_dir()
 
 

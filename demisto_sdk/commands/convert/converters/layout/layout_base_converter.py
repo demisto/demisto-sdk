@@ -12,7 +12,7 @@ import os
 
 class LayoutBaseConverter(AbstractConverter):
     ENTITY_NAME_SEPARATORS_REGEX = re.compile(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''')
-    DEFAULT_SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', 'common/schemas/',
+    DEFAULT_SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
                                                         f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
 
     def __init__(self, pack: Pack):
@@ -38,6 +38,8 @@ class LayoutBaseConverter(AbstractConverter):
     def get_layout_dynamic_fields(schema_path: str = DEFAULT_SCHEMA_PATH) -> Dict[str, Any]:
         """
         Calculates all the indicator fields in the layouts container schema.
+        Args:
+            schema_path (str): Path to the layouts container schema.
         Returns:
             (Set[str]): Set of all of the indicator field names in the layouts container schema.
         """

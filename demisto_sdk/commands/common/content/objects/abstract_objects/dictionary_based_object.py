@@ -61,3 +61,6 @@ class DictionaryBasedObject(GeneralObject):
             value = default
 
         return value
+
+    def __contains__(self, item):
+        return item in self._as_dict

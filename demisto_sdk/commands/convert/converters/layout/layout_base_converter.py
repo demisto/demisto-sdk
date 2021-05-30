@@ -1,13 +1,17 @@
-from abc import abstractmethod
-from typing import List, Set, Dict, Optional, Any
-from demisto_sdk.commands.common.constants import FileType, ENTITY_NAME_SEPARATORS
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.tools import (get_yaml)
-from demisto_sdk.commands.convert.converters.abstract_converter import AbstractConverter
-import re
 import json
 import os
+import re
+from abc import abstractmethod
+from typing import Any, Dict, List, Optional
+
+from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
+    LayoutObject
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.convert.converters.abstract_converter import \
+    AbstractConverter
 
 
 class LayoutBaseConverter(AbstractConverter):
@@ -41,7 +45,7 @@ class LayoutBaseConverter(AbstractConverter):
         Args:
             schema_path (str): Path to the layouts container schema.
         Returns:
-            (Set[str]): Set of all of the indicator field names in the layouts container schema.
+            (Dict[str, Any]): Dict of all of the dynamic field names and their value in the layouts container schema.
         """
         schema_data: dict = get_yaml(schema_path)
         schema_mapping = schema_data.get('mapping', dict())
@@ -82,6 +86,16 @@ class LayoutBaseConverter(AbstractConverter):
         return re.sub(self.ENTITY_NAME_SEPARATORS_REGEX, '_', name)
 
     @staticmethod
-    def dump_new_layout(new_layout_path: str, new_layout_dict: Dict):
+    def dump_new_layout(new_layout_path: str, new_layout_dict: Dict) -> None:
+        """
+        Receives the path of the layout to be created, and its data represented as a dict.
+        Creates a file in the expected path and with the expected data.
+        Args:
+            new_layout_path (str): The new layout path.
+            new_layout_dict (Dict): The new layout data.
+
+        Returns:
+            (None): Creates a new file.
+        """
         with open(new_layout_path, 'w') as jf:
             json.dump(obj=new_layout_dict, fp=jf, indent=2)

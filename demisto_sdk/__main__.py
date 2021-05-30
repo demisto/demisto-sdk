@@ -7,8 +7,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
 import git
@@ -21,10 +19,10 @@ from demisto_sdk.commands.common.legacy_git_tools import get_packs
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
-                                               get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
+from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -65,7 +63,6 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
 
 class DemistoSDK:
@@ -1520,8 +1517,6 @@ def convert(config, **kwargs):
     server_version = kwargs['version']
     convert_manager = ConvertManager(input_path, server_version)
     convert_manager.convert()
-
-
 
 
 @main.resultcallback()

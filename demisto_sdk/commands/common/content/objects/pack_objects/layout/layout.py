@@ -1,13 +1,11 @@
 from abc import abstractmethod
-from typing import Optional
-from typing import Union, List
+from typing import List, Optional, Union
 
 import demisto_client
-from wcmatch.pathlib import Path
-
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
+from wcmatch.pathlib import Path
 
 
 class LayoutObject(JSONContentObject):

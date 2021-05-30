@@ -26,6 +26,7 @@ mapping:
     type: str
   toVersion:
     type: str
+#    does not exist in 6.0.0
   brandName:
     type: str
     required: True
@@ -33,6 +34,7 @@ mapping:
     type: str
   defaultIncidentType:
     type: str
+# diff in 6.0.0
   mapping:
     type: map
     allowempty: True

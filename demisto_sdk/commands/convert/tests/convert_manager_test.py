@@ -1,5 +1,4 @@
 import pytest
-
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 

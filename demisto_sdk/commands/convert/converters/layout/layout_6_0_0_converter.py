@@ -1,10 +1,12 @@
-from typing import Set, List, Dict
+import shutil
+from typing import Dict, List, Set
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
+    LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
-import shutil
+from demisto_sdk.commands.convert.converters.layout.layout_base_converter import \
+    LayoutBaseConverter
 
 
 class LayoutSixConverter(LayoutBaseConverter):
@@ -15,7 +17,6 @@ class LayoutSixConverter(LayoutBaseConverter):
 
     def convert_dir(self) -> int:
         """
-        TODO tests
         Converts old layouts in Layouts dir to the 6.0.0 layouts convention.
         Returns:
             (int): 0 if convert finished successfully, 1 otherwise.
@@ -63,7 +64,7 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (Dict[str, List[LayoutObject]]): Dict of (layoutID, [List of layouts with the corresponding layout ID).
         """
-        layout_id_to_layouts_dict = dict()
+        layout_id_to_layouts_dict: Dict[str, List[LayoutObject]] = dict()
         for layout in self.get_layouts_by_layout_type(FileType.LAYOUT):
             layout_id = layout.layout_id()
             layout_id_to_layouts_dict[layout_id] = layout_id_to_layouts_dict.get(layout_id, []) + [layout]

@@ -1,31 +1,31 @@
 type: map
 mapping:
-  feed:
-    type: bool
-  incidentSamples:
-    type: seq
-    sequence:
-      - type: str
-  indicatorSamples:
-    type: seq
-    sequence:
-      - type: str
-  propagationLabels:
-    type: any
-  isDefault:
-    type: bool
-  sortValues:
-    type: any
-  id:
-    type: str
-    required: True
-  version:
-    type: number
-    required: True
-  fromVersion:
-    type: str
-  toVersion:
-    type: str
+#  feed:
+#    type: bool
+#  incidentSamples:
+#    type: seq
+#    sequence:
+#      - type: str
+#  indicatorSamples:
+#    type: seq
+#    sequence:
+#      - type: str
+#  propagationLabels:
+#    type: any
+#  isDefault:
+#    type: bool
+#  sortValues:
+#    type: any
+#  id:
+#    type: str
+#    required: True
+#  version:
+#    type: number
+#    required: True
+#  fromVersion:
+#    type: str
+#  toVersion:
+#    type: str
   name:
     type: str
     required: True
@@ -35,20 +35,20 @@ mapping:
   description:
     type: str
     required: True
-  modified:
-    type: str
-  defaultIncidentType:
-    type: str
-  unclassifiedCases:
-    type: map
-    allowempty: True
-  transformer:
-    type: map
-    required: True
-    allowempty: True
-  keyTypeMap:
-    type: map
-    required: True
-    allowempty: True
-  custom:
-    type: bool
+#  modified:
+#    type: str
+#  defaultIncidentType:
+#    type: str
+#  unclassifiedCases:
+#    type: map
+#    allowempty: True
+#  transformer:
+#    type: map
+#    required: True
+#    allowempty: True
+#  keyTypeMap:
+#    type: map
+#    required: True
+#    allowempty: True
+#  custom:
+#    type: bool

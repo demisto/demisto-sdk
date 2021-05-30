@@ -260,8 +260,6 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     # Modify the entity
     script = yaml.safe_load(open("./HelloWorldScript.yml"))
     script['args'][0]["description"] = "new description"
-    script['name'] = "Hello World"
-    script['id'] = "Hello World"
 
     yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")

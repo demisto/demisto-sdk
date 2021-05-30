@@ -422,7 +422,7 @@ class TestPlaybookValidator:
         Given
             - An playbook with a name that contains the word "playbook".
         When
-            - running name_dnot_contains_the_type.
+            - running name_not_contain_the_type.
         Then
             - Ensure the validate failed.
         """
@@ -432,14 +432,14 @@ class TestPlaybookValidator:
         structure_validator = StructureValidator(playbook.yml.path)
         validator = PlaybookValidator(structure_validator)
 
-        assert not validator.name_dnot_contains_the_type()
+        assert not validator.name_not_contain_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """
         Given
             - An playbook with a name that does not contains the "playbook" string.
         When
-            - running name_dnot_contains_the_type.
+            - running name_not_contain_the_type.
         Then
             - Ensure the validate passes.
         """
@@ -449,4 +449,4 @@ class TestPlaybookValidator:
         structure_validator = StructureValidator(playbook.yml.path)
         validator = PlaybookValidator(structure_validator)
 
-        assert validator.name_dnot_contains_the_type()
+        assert validator.name_not_contain_the_type()

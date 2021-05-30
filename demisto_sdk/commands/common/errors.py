@@ -33,7 +33,7 @@ ERROR_CODE = {
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
-    "field_contains_not_allowed_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
+    "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -356,7 +356,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def field_contains_not_allowed_word(field_names: list, word: str):
+    def field_contain_forbidden_word(field_names: list, word: str):
         return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
 
     @staticmethod

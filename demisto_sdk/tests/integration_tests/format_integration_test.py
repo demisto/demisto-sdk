@@ -483,7 +483,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
-    mocker.patch.object(PlaybookValidator, 'name_dnot_contains_the_type', return_value=True)
+    mocker.patch.object(PlaybookValidator, 'name_not_contain_the_type', return_value=True)
 
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
     monkeypatch.setattr('builtins.input', lambda _: 'N')

@@ -87,6 +87,4 @@ class BaseUpdateJSON(BaseUpdate):
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
             return
-        one = self.data['id']
-        two = self.data[field]
         self.data['id'] = self.data[field]

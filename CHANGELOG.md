@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+* Inproved the error messages for separators in folder and file names in the **validate** command.
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 
 # 1.3.8

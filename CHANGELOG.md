@@ -1,6 +1,7 @@
 # Changelog
+* Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
-* Added new validation of unimplemented test-module command in the code to `XSOAR-linter`.
+* Improved the error messages for separators in folder and file names in the **validate** command.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

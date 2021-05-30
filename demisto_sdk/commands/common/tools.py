@@ -390,7 +390,7 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment varablie
+    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             releases_request = requests.get(GithubContentConfig.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
             releases_request.raise_for_status()

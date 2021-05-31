@@ -1,6 +1,6 @@
 # Changelog
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
-* Fixed **format** to use git as a default value.
+* Inproved the error messages for separators in folder and file names in the **validate** command.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

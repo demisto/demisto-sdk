@@ -374,6 +374,29 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
+    def test_test_module_checker(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - if else claus exists when the if contains all commands and test-module.
+        Then:
+            - Ensure no errors
+        """
+        self.checker.commands = ['test-1']
+        node_a = astroid.extract_node("""
+            if a == 'test-1': #@
+                return True
+            elif a == 'test-module':
+                return True
+            else:
+                return False
+        """)
+        assert node_a
+        with self.assertNoMessages():
+            self.checker.visit_if(node_a)
+            self.checker.leave_module(node_a)
+
     def test_not_command_dict_checker(self):
         """
         Given:

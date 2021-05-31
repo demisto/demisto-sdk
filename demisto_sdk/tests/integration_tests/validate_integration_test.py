@@ -1598,7 +1598,7 @@ class TestPlaybookValidateDeprecated:
                                catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
-        assert 'The playbook description has to start with "Deprecated."' in result.stdout
+        assert 'Deprecated.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_playbook(self, mocker, repo):
@@ -1926,7 +1926,7 @@ class TestScriptDeprecatedValidation:
                                    catch_exceptions=False)
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
         assert 'SC101' in result.stdout
-        assert "Deprecated." in result.stdout
+        assert 'Deprecated.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_script(self, mocker, repo):

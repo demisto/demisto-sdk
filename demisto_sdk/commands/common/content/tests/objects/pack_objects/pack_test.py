@@ -171,3 +171,8 @@ def test_sign_pack_success(repo, capsys, fake_process):
 
     captured = capsys.readouterr()
     assert f'Signed {content_object_pack.path.name} pack successfully' in captured.out
+
+
+def test_get_contributors():
+    # TODO
+    pass

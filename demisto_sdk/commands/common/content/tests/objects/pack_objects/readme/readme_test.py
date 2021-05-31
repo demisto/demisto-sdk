@@ -21,3 +21,8 @@ def test_objects_factory(file: Path):
 def test_prefix():
     obj = Readme(README)
     assert obj.normalize_file_name() == README.name
+
+
+def test_dump():
+    # TODO
+    pass

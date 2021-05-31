@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
+                                               generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
 from wcmatch.pathlib import Path
@@ -247,7 +248,7 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
-                         no_pylint: bool,
+                         no_pylint: bool, run_coverage: bool,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -261,6 +262,7 @@ class LintManager:
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
+            run_coverage(bool): Run pytest with coverage report
             no_test(bool): Whether to skip pytest
             no_pwsh_analyze(bool): Whether to skip powershell code analyzing
             no_pwsh_test(bool): whether to skip powershell tests
@@ -330,7 +332,8 @@ class LintManager:
                                                no_pwsh_test=no_pwsh_test,
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
-                                               test_xml=test_xml))
+                                               test_xml=test_xml,
+                                               run_coverage=run_coverage))
             try:
                 for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
@@ -369,7 +372,8 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              return_warning_code=return_warning_code,
                              skipped_code=int(skipped_code),
-                             pkgs_type=pkgs_type)
+                             pkgs_type=pkgs_type,
+                             cov_report=run_coverage)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
@@ -380,7 +384,8 @@ class LintManager:
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
                         skipped_code: int,
-                        pkgs_type: list):
+                        pkgs_type: list,
+                        cov_report: bool):
         """ Log report to console
 
         Args:
@@ -390,6 +395,7 @@ class LintManager:
             return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
+            cov_report(bool): Report coverage
 
      """
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
@@ -409,6 +415,8 @@ class LintManager:
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
+        if cov_report:
+            generate_coverage_report(html=True)
         self.create_json_output()
 
     @staticmethod

@@ -531,6 +531,7 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(resolve_path=True))
+@click.option("--run-coverage", is_flag=True, help="Report coverage")
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -566,7 +567,8 @@ def lint(**kwargs):
         no_pwsh_test=kwargs.get('no_pwsh_test'),  # type: ignore[arg-type]
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
-        failure_report=kwargs.get('failure_report')  # type: ignore[arg-type]
+        failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
+        run_coverage=kwargs.get('run_coverage')     # type: ignore[arg-type]
     )
 
 

@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import shutil
+import sqlite3
 import tarfile
 import textwrap
 from contextlib import contextmanager
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
 
 # Third party packages
+import coverage
 import docker
 import docker.errors
 import git
@@ -457,3 +459,38 @@ def split_warnings_errors(output: str):
             other_msg_list.append(msg)
 
     return error_list, warnings_list, other_msg_list
+
+
+def coverage_report_editor(coverage_file, code_file_absolute_path):
+    with sqlite3.connect(coverage_file) as sql_connection:
+        cursor = sql_connection.cursor()
+        index = cursor.execute('SELECT id FROM file').fetchall()
+        if not len(index) == 1:
+            logger.error('unexpected file list in coverage report')
+        else:
+            cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, index[0][0]))
+            sql_connection.commit()
+        cursor.close()
+
+
+def coverage_files():
+    for pack in Path('Packs').rglob('*'):
+        for code_type in ['Integrations', 'Scripts']:
+            code_dirs_path = Path(f'{pack}/{code_type}')
+            if code_dirs_path.exists():
+                for code_dir in code_dirs_path.glob('*'):
+                    cov_path = Path(f'{code_dir}/.coverage')
+                    if cov_path.exists():
+                        yield str(cov_path)
+
+
+def generate_coverage_report(html=False):
+    cov = coverage.Coverage()
+    cov.combine(coverage_files())
+    if os.path.exists('.coverage'):
+        cov.report()
+        if html:
+            cov.html_report()
+        os.remove('.coverage')
+    else:
+        logger.debug('skipping coverage report .coverage file not found.')

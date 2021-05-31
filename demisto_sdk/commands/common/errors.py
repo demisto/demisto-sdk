@@ -345,13 +345,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def folder_name_has_separators(entity_type, separators):
-        return f"The {entity_type} folder name has the following separators - {separators}, remove them."
+    def folder_name_has_separators(entity_type, invalid_name, valid_name):
+        return f"The {entity_type} folder name '{invalid_name}' should be named '{valid_name}' without any separator."
 
     @staticmethod
     @error_code_decorator
-    def file_name_has_separators(entity_type, separators):
-        return f"Some {entity_type} files has in their base name the following separators - {separators}, remove them."
+    def file_name_has_separators(entity_type, invalid_files, valid_files):
+        return f"The {entity_type} files {invalid_files} should be named {valid_files} " \
+               f"without any separator in the base name."
 
     @staticmethod
     @error_code_decorator

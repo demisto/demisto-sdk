@@ -386,7 +386,7 @@ def is_origin_content_repo():
 
 def get_last_remote_release_version():
     """
-    Get latest release tag from remote github page
+    Get latest release tag from PYPI.
 
     :return: tag
     """

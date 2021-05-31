@@ -35,7 +35,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                is_v2_file,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare)
+                                               server_version_compare, get_last_remote_release_version)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -942,3 +942,16 @@ def test_get_pack_metadata(repo):
     result = get_pack_metadata(pack.path)
 
     assert metadata_json == result
+
+
+def test_get_last_remote_release_version(requests_mock):
+    """
+    When
+    - Get latest release tag from remote pypi api
+
+    Then:
+    - Ensure the returned version is as expected
+    """
+    expected_version = '1.3.8'
+    requests_mock.get(r"https://pypi.org/pypi/demisto-sdk/json", json={'info': {'version': expected_version}})
+    assert get_last_remote_release_version() == expected_version

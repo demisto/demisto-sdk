@@ -1,11 +1,8 @@
-import json
 import os
-import re
 from abc import abstractmethod
 from typing import Any, Dict, Optional
 
-from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.convert.converters.base_converter import \
@@ -13,7 +10,6 @@ from demisto_sdk.commands.convert.converters.base_converter import \
 
 
 class LayoutBaseConverter(BaseConverter):
-    ENTITY_NAME_SEPARATORS_REGEX = re.compile(fr'''[{'|'.join(ENTITY_NAME_SEPARATORS)}]''')
     DEFAULT_SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
                                                         f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
 
@@ -58,31 +54,3 @@ class LayoutBaseConverter(BaseConverter):
         dict_with_maybe_none_values = dict(fromVersion=from_version, toVersion=to_version, name=layout_id, id=layout_id,
                                            version=-1, typeId=type_id, kind=kind)
         return {k: v for k, v in dict_with_maybe_none_values.items() if v is not None}
-
-    def entity_separators_to_underscore(self, name: str) -> str:
-        """
-        Receives a string, replaces every char in 'ENTITY_NAME_SEPARATORS' with '_'.
-        Examples:
-            - entity_separators_to_underscore('a b_c-d') --> a_b_c_d
-        Args:
-            name (str): Name to replace separators with underscore.
-
-        Returns:
-            (str): The string replaced.
-        """
-        return re.sub(self.ENTITY_NAME_SEPARATORS_REGEX, '_', name)
-
-    @staticmethod
-    def dump_new_layout(new_layout_path: str, new_layout_dict: Dict) -> None:
-        """
-        Receives the path of the layout to be created, and its data represented as a dict.
-        Creates a file in the expected path and with the expected data.
-        Args:
-            new_layout_path (str): The new layout path.
-            new_layout_dict (Dict): The new layout data.
-
-        Returns:
-            (None): Creates a new file.
-        """
-        with open(new_layout_path, 'w') as jf:
-            json.dump(obj=new_layout_dict, fp=jf, indent=2)

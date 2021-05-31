@@ -18,9 +18,12 @@ def util_load_json(path):
 
 
 class TestLayoutBelowSixConverter:
-    TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
+    TEST_PACK_PATH = os.path.join(__file__,
+                                  f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data/Packs'
+                                  f'/ExtraHop')
     PACK_WITH_NEW_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
+                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                              '/test_data/Packs'
                                               '/PackWithNewLayout')
     PACK = Pack(TEST_PACK_PATH)
 
@@ -162,7 +165,8 @@ class TestLayoutBelowSixConverter:
             os.remove(expected_new_layout_path)
 
     OLD_LAYOUT_PATH = os.path.join(__file__,
-                                   f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
+                                   f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                   '/test_data/Packs'
                                    '/PackWithOldLayout/Layouts/layout-close-ExtraHop_Detection.json')
     CALCULATE_FROM_VERSION_INPUTS = [('ExtraHop Detection', 'close', [Layout(OLD_LAYOUT_PATH)], '5.0.0'),
                                      ('ExtraHop Detection2', 'close', [Layout(OLD_LAYOUT_PATH)], '4.1.0'),

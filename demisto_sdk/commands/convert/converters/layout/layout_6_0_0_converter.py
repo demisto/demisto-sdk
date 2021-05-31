@@ -37,7 +37,7 @@ class LayoutSixConverter(LayoutBaseConverter):
             self.update_incident_types_related_to_old_layouts(old_corresponding_layouts, layout_id)
 
             new_layout_path = self.calculate_new_layout_relative_path(layout_id)
-            self.dump_new_layout(new_layout_path, new_layout_dict)
+            self.dump_new_entity(new_layout_path, new_layout_dict)
 
         return 0
 

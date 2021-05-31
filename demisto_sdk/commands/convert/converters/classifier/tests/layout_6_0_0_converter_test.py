@@ -19,9 +19,12 @@ def util_load_json(path):
 
 
 class TestLayoutSixConverter:
-    TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
+    TEST_PACK_PATH = os.path.join(__file__,
+                                  f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data/Packs'
+                                  '/ExtraHop')
     PACK_WITH_OLD_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
+                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                              '/test_data/Packs'
                                               '/PackWithOldLayout')
     SCHEMA_PATH = os.path.normpath(
         os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data',
@@ -63,13 +66,13 @@ class TestLayoutSixConverter:
 
     CALCULATE_NEW_LAYOUT_GROUP_INPUTS = [([], 'incident'),
                                          ([Layout(os.path.join(__file__,
-                                                               f'{git_path()}/demisto_sdk/commands/convert/'
-                                                               'tests/test_data/Packs/ExtraHop/Layouts/'
-                                                               'layout-mobile-ExtraHop_Detection.json'))], 'incident'),
+                                                               f'{git_path()}/demisto_sdk/commands/convert/converters/'
+                                                               f'layout/tests/test_data/Packs/ExtraHop/Layouts/'
+                                                               f'layout-mobile-ExtraHop_Detection.json'))], 'incident'),
                                          ([Layout(os.path.join(__file__,
                                                                f'{git_path()}/demisto_sdk/commands/convert/converters/'
-                                                               'layout/tests/test_data/layout-indicatorsDetails-Crypto'
-                                                               'currency_Address-V3.json'))], 'indicator')]
+                                                               f'layout/tests/test_data/layout-indicatorsDetails-Crypto'
+                                                               f'currency_Address-V3.json'))], 'indicator')]
 
     @pytest.mark.parametrize('old_layouts, expected', CALCULATE_NEW_LAYOUT_GROUP_INPUTS)
     def test_calculate_new_layout_group(self, old_layouts: List[LayoutObject], expected: str):

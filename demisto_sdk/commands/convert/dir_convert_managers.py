@@ -5,15 +5,18 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import \
-    LayoutSixConverter
-from demisto_sdk.commands.convert.converters.layout.layout_base_converter import \
-    LayoutBaseConverter
-from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import \
-    LayoutBelowSixConverter
+from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import ClassifierSixConverter
+from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import ClassifierBaseConverter
+from demisto_sdk.commands.convert.converters.classifier.classifier_up_to_5_9_9_converter import \
+    ClassifierBelowSixConverter
+from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import LayoutSixConverter
+from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
+from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import LayoutBelowSixConverter
 
 
 class AbstractDirConvertManager:
+    VERSION_6_0_0 = Version('6.0.0')
+
     def __init__(self, pack: Pack, input_path: str, server_version: Version, entity_dir_name: str = ''):
         self.pack = pack
         self.input_path = input_path
@@ -75,7 +78,6 @@ class AbstractDirConvertManager:
 
 
 class LayoutsDirConvertManager(AbstractDirConvertManager):
-    VERSION_6_0_0 = Version('6.0.0')
 
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
         super().__init__(pack, input_path, server_version, entity_dir_name='Layouts')
@@ -93,7 +95,11 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
 
 class ClassifiersDirConvertManager(AbstractDirConvertManager):
     def convert(self):
-        pass
+        if self.server_version >= self.VERSION_6_0_0:
+            classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(self.pack)
+        else:
+            classifier_converter = ClassifierBelowSixConverter(self.pack)
+        classifier_converter.convert_dir()
 
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
         super().__init__(pack, input_path, server_version, entity_dir_name='Classifiers')

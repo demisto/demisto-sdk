@@ -36,15 +36,15 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
 
         for layout in layout_ids_to_convert:
             layout_id = layout.layout_id()
-            type_ids = layout_id_to_incident_type[layout_id] + layout_id_to_indicators_dict[layout_id]
+            type_ids = layout_id_to_incident_type.get(layout_id, []) + layout_id_to_indicators_dict.get(layout_id, [])
             for type_id in type_ids:
                 dynamic_fields = {k: layout.get(k) for k, v in layout_dynamic_fields.items() if k in layout}
                 for dynamic_field_key, dynamic_field_value in dynamic_fields.items():
                     from_version = self.calculate_from_version(layout_id, dynamic_field_key, current_old_layouts)
                     new_layout_dict = self.build_old_layout(layout_id, type_id, dynamic_field_key,
                                                             dynamic_field_value, from_version)
-                    new_layout_path = self.calculate_new_layout_relative_path(type_id, dynamic_field_key)
-                    self.dump_new_layout(new_layout_path, new_layout_dict)
+                    new_layout_path = self.calculate_new_layout_relative_path(dynamic_field_key, type_id)
+                    self.dump_new_entity(new_layout_path, new_layout_dict)
         return 0
 
     def calculate_new_layout_relative_path(self, dynamic_field_key: str, type_id: str) -> str:

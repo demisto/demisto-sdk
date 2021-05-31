@@ -50,16 +50,16 @@ class BaseConverter:
         return re.sub(self.ENTITY_NAME_SEPARATORS_REGEX, '_', name)
 
     @staticmethod
-    def dump_new_entity(new_layout_path: str, new_entity_dict: Dict) -> None:
+    def dump_new_entity(new_entity_path: str, new_entity_dict: Dict) -> None:
         """
         Receives the path of the entity to be created, and its data represented as a dict.
         Creates a file in the expected path and with the expected data.
         Args:
-            new_layout_path (str): The new entity path.
+            new_entity_path (str): The new entity path.
             new_entity_dict (Dict): The new entity data.
 
         Returns:
             (None): Creates a new file.
         """
-        with open(new_layout_path, 'w') as jf:
+        with open(new_entity_path, 'w') as jf:
             json.dump(obj=new_entity_dict, fp=jf, indent=2)

@@ -10,7 +10,9 @@ from demisto_sdk.commands.convert.converters.layout.layout_base_converter import
 
 
 class TestLayoutBaseConverter:
-    TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
+    TEST_PACK_PATH = os.path.join(__file__,
+                                  f'{git_path()}/demisto_sdk/commands/convert/converters/classifier/tests/test_data/Packs'
+                                  f'/ExtraHop')
     SCHEMA_PATH = os.path.normpath(
         os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data',
                      'layoutscontainer.yml'))

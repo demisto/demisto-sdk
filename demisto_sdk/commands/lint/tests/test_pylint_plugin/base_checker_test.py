@@ -343,8 +343,11 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     msg_id='unimplemented-commands-exist',
                     node=node_a,
                     args=str(['test2']),
-
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -362,8 +365,11 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     msg_id='unimplemented-commands-exist',
                     node=node_a,
                     args=str(['test2']),
-
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -390,6 +396,10 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     node=node_a,
                     args=str(['test3']),
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_dict(node_a)
             self.checker.visit_call(node_a)
@@ -411,6 +421,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_dict(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_not_all_if_command_in_list_checker(self):
@@ -438,6 +454,10 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     node=node_a,
                     args=str(['test3']),
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_if(node_a)
             self.checker.visit_if(node_b)
@@ -460,6 +480,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_not_all_if_command_in_tuple_checker(self):
@@ -487,6 +513,10 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     node=node_a,
                     args=str(['test3']),
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -508,6 +538,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_not_all_if_command_in_set_checker(self):
@@ -535,6 +571,10 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
                     node=node_a,
                     args=str(['test3']),
                 ),
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -556,6 +596,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_infer_if_checker(self):
@@ -576,6 +622,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_infer_dict_checker(self):
@@ -595,6 +647,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_dict(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
     def test_commands_dismiss_for_feeds_checker(self):
@@ -616,6 +674,12 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_importfrom(node_a)
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='unimplemented-test-module',
+                    node=node_a
+                )
+        ):
             self.checker.leave_module(node_a)
 
 

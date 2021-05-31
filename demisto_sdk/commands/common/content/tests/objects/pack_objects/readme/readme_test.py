@@ -23,7 +23,14 @@ def test_prefix():
     assert obj.normalize_file_name() == README.name
 
 
-def test_dump(mock):
+def test_dump():
+    """
+    Given: pack README
+
+    When: creating artifacts, if CONTRIBUTORS file exist in the pack
+
+    Then: Thanks to contributors
+    """
     pack_path = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'
     obj = Readme(README, pack_path)
     obj.mention_contributors_in_readme()

@@ -23,6 +23,9 @@ def test_prefix():
     assert obj.normalize_file_name() == README.name
 
 
-def test_dump():
-    # TODO
-    pass
+def test_dump(mock):
+    pack_path = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'
+    obj = Readme(README, pack_path)
+    obj.mention_contributors_in_readme()
+    with open(README, 'r') as readme_file:
+        assert 'This pack was co-authored by:' in readme_file.read()

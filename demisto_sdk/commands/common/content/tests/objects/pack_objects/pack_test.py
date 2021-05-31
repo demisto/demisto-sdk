@@ -7,10 +7,10 @@ import pytest
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content import Pack
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, Classifier, Connection, Dashboard, DocFile, IncidentField,
-    IncidentType, IndicatorField, IndicatorType, Integration, LayoutsContainer,
-    PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget)
+    AgentTool, Classifier, Connection, Contributors, Dashboard, DocFile,
+    IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
+    LayoutsContainer, PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote,
+    Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 
@@ -74,6 +74,7 @@ def test_generators_detection(attribute: str, content_type: Tuple[type], items: 
                              ('readme', Readme),
                              ('pack_metadata', PackMetaData),
                              ('secrets_ignore', SecretIgnore),
+                             ('contributors', Contributors)
                          ])
 def test_detection(attribute: str, content_type: type):
     pack = Pack(PACK)
@@ -171,8 +172,3 @@ def test_sign_pack_success(repo, capsys, fake_process):
 
     captured = capsys.readouterr()
     assert f'Signed {content_object_pack.path.name} pack successfully' in captured.out
-
-
-def test_get_contributors():
-    # TODO
-    pass

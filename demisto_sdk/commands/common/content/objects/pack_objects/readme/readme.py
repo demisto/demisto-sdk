@@ -16,7 +16,7 @@ class Readme(TextObject):
     def type(self):
         return FileType.README
 
-    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
+    def mention_contributors_in_readme(self):
         """Mention contributors in pack readme"""
         contributors_file_path = os.path.join(self._pack_path, "CONTRIBUTORS.md")
         try:
@@ -29,4 +29,6 @@ class Readme(TextObject):
         except Exception as e:
             print(e)
 
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
+        self.mention_contributors_in_readme()
         return super().dump(dest_dir)

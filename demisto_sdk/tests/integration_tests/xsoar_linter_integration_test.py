@@ -22,7 +22,9 @@ files = [
         " implemented in your code. The commands that are not implemented are ['error']"],
      ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_NO_TEST_MODULE}"), 3.8, 'base', False, 1, [
-        "test-module command is not implemented in the python file, Please add it to your code."], []),
+        "test-module command is not implemented in the python file, it is essential for every"
+        " integration. Please add it to your code. For more information see: "
+        "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"], []),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
      ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
       'Main function wasnt found in the file, Please add main()',

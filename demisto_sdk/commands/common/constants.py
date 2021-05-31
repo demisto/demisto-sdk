@@ -809,6 +809,7 @@ class GithubContentConfig:
     OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
     CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
     CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+    SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
     CURRENT_REPOSITORY: str
     CONTENT_GITHUB_LINK: str

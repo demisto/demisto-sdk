@@ -392,14 +392,11 @@ def get_last_remote_release_version():
     """
     if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
         try:
-            releases_request = requests.get(GithubContentConfig.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
-            releases_request.raise_for_status()
-            releases = releases_request.json()
-            if isinstance(releases, list) and isinstance(releases[0], dict):
-                latest_release = releases[0].get('tag_name')
-                if isinstance(latest_release, str):
-                    # remove v prefix
-                    return latest_release[1:]
+            pypi_request = requests.get(GithubContentConfig.SDK_PYPI_VERSION, verify=False, timeout=5)
+            pypi_request.raise_for_status()
+            pypi_json = pypi_request.json()
+            version = pypi_json.get('info', {}).get('version', '')
+            return version
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):

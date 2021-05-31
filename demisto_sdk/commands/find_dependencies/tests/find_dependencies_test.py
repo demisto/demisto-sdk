@@ -881,85 +881,282 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
-    def test_collect_incident_layouts_dependencies(self, id_set):
-        """
-        Given
-            - An incident layout entry in the id_set.
+    # def test_collect_incident_layouts_dependencies(self, id_set):
+    #     """
+    #     Given
+    #         - An incident layout entry in the id_set.
+    #
+    #     When
+    #         - Building dependency graph for pack.
+    #
+    #     Then
+    #         - Extracting the packs that the layout depends on.
+    #     """
+    #     expected_result = {("PrismaCloudCompute", True)}
+    #
+    #     test_input = [
+    #         {
+    #             "Dummy Layout": {
+    #                 "typeID": "dummy_layout",
+    #                 "name": "Dummy Layout",
+    #                 "pack": "dummy_pack",
+    #                 "kind": "edit",
+    #                 "path": "dummy_path",
+    #                 "incident_and_indicator_types": [
+    #                     "MITRE ATT&CK",
+    #                     "Prisma Cloud Compute Cloud Discovery"
+    #                 ],
+    #                 "incident_and_indicator_fields": [
+    #                     "indicator_adminname",
+    #                     "indicator_jobtitle"
+    #                 ]
+    #             }
+    #         }
+    #     ]
+    #
+    #     found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+    #                                                                   id_set=id_set,
+    #                                                                   verbose=False,
+    #                                                                   )
+    #
+    #     assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+    #
+    # def test_collect_indicator_layouts_dependencies(self, id_set):
+    #     """
+    #     Given
+    #         - An indicator layout entry in the id_set.
+    #
+    #     When
+    #         - Building dependency graph for pack.
+    #
+    #     Then
+    #         - Extracting the packs that the layout depends on.
+    #     """
+    #     expected_result = {("FeedMitreAttack", True), ("CommonTypes", True), ("CrisisManagement", True)}
+    #
+    #     test_input = [
+    #         {
+    #             "Dummy Layout": {
+    #                 "typeID": "dummy_layout",
+    #                 "name": "Dummy Layout",
+    #                 "pack": "dummy_pack",
+    #                 "kind": "indicatorsDetails",
+    #                 "path": "dummy_path",
+    #                 "incident_and_indicator_types": [
+    #                     "MITRE ATT&CK",
+    #                     "Prisma Cloud Compute Cloud Discovery"
+    #                 ],
+    #                 "incident_and_indicator_fields": [
+    #                     "indicator_adminname",
+    #                     "indicator_jobtitle"
+    #                 ]
+    #             }
+    #         }
+    #     ]
+    #
+    #     found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+    #                                                                   id_set=id_set,
+    #                                                                   verbose=False,
+    #                                                                   )
+    #
+    #     assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-        When
-            - Building dependency graph for pack.
+    def test_collect_layouts_dependencies(self, mocker, repo):
+        INCIDENT_FIELD = {
+            "id": "incident_example",
+            "version": -1,
+            "modified": "2021-05-31T08:04:56.168259Z",
+            "name": "example",
+            "ownerOnly": False,
+            "cliName": "example",
+            "type": "shortText",
+            "closeForm": False,
+            "editForm": True,
+            "required": False,
+            "neverSetAsRequired": False,
+            "isReadOnly": False,
+            "useAsKpi": False,
+            "locked": False,
+            "system": False,
+            "content": True,
+            "group": 0,
+            "hidden": False,
+            "associatedToAll": True,
+            "unmapped": False,
+            "unsearchable": False,
+            "caseInsensitive": True,
+            "sla": 0,
+            "threshold": 72,
+            "fromVersion": "6.0.0"
+        }
 
-        Then
-            - Extracting the packs that the layout depends on.
-        """
-        expected_result = {("PrismaCloudCompute", True)}
+        INDICATOR_FIELD = {
+            "id": "indicator_example",
+            "version": -1,
+            "modified": "2021-05-31T08:05:36.813002Z",
+            "name": "example",
+            "ownerOnly": False,
+            "cliName": "example",
+            "type": "shortText",
+            "closeForm": False,
+            "editForm": True,
+            "required": False,
+            "neverSetAsRequired": False,
+            "isReadOnly": False,
+            "useAsKpi": False,
+            "locked": False,
+            "system": False,
+            "content": True,
+            "group": 2,
+            "hidden": False,
+            "associatedToAll": True,
+            "unmapped": False,
+            "unsearchable": False,
+            "caseInsensitive": True,
+            "sla": 0,
+            "threshold": 72,
+            "fromVersion": "6.0.0"
+        }
 
-        test_input = [
-            {
-                "Dummy Layout": {
-                    "typeID": "dummy_layout",
-                    "name": "Dummy Layout",
-                    "pack": "dummy_pack",
-                    "kind": "edit",
-                    "path": "dummy_path",
-                    "incident_and_indicator_types": [
-                        "MITRE ATT&CK",
-                        "Prisma Cloud Compute Cloud Discovery"
-                    ],
-                    "incident_and_indicator_fields": [
-                        "indicator_adminname",
-                        "indicator_jobtitle"
-                    ]
-                }
-            }
-        ]
+        LAYOUT = {
+            "TypeName": "my-layout",
+            "kind": "details",
+            "fromVersion": "5.0.0",
+            "toVersion": "5.9.9",
+            "layout": {
+                "TypeName": "",
+                "id": "example",
+                "kind": "details",
+                "modified": "2019-09-22T11:09:50.039511463Z",
+                "name": "example",
+                "system": False,
+                "tabs": [
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "i": "caseinfoid",
+                                "isVisible": True,
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "example",
+                                        "height": 24,
+                                        "id": "incident-example-field",
+                                        "index": 0,
+                                        "startCol": 0
+                                    },
+                                ],
+                                "moved": False,
+                                "name": "Details",
+                                "static": False,
+                                "w": 1,
+                                "x": 0,
+                                "y": 0
+                            },
+                        ],
+                        "type": "custom",
+                        "hidden": False
+                    },
+                ],
+                "typeId": "some-id",
+                "version": -1
+            },
+            "typeId": "some-id",
+            "version": -1
+        }
 
-        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
-                                                                      id_set=id_set,
-                                                                      verbose=False,
-                                                                      )
+        LAYOUTS_CONTAINER = {
+            "detailsV2": {
+                "tabs": [
+                    {
+                        "id": "summary",
+                        "name": "Legacy Summary",
+                        "type": "summary"
+                    },
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "hideName": False,
+                                "i": "caseinfoid-313783a0-c1e7-11eb-9598-a1a56eba0bb0",
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "example",
+                                        "height": 22,
+                                        "id": "incident_example",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0
+                                    }
+                                ],
+                                "maxW": 3,
+                                "minH": 1,
+                                "minW": 1,
+                                "moved": False,
+                                "name": "New Section",
+                                "static": False,
+                                "w": 1,
+                                "x": 0,
+                                "y": 0
+                            }
+                        ],
+                        "type": "custom"
+                    },
+                    {
+                        "id": "warRoom",
+                        "name": "War Room",
+                        "type": "warRoom"
+                    },
+                    {
+                        "id": "workPlan",
+                        "name": "Work Plan",
+                        "type": "workPlan"
+                    },
+                    {
+                        "id": "evidenceBoard",
+                        "name": "Evidence Board",
+                        "type": "evidenceBoard"
+                    },
+                    {
+                        "id": "relatedIncidents",
+                        "name": "Related Incidents",
+                        "type": "relatedIncidents"
+                    },
+                    {
+                        "id": "canvas",
+                        "name": "Canvas",
+                        "type": "canvas"
+                    }
+                ]
+            },
+            "group": "incident",
+            "id": "example_incident",
+            "name": "example_incident",
+            "system": False,
+            "version": -1,
+            "fromVersion": "6.0.0",
+            "description": ""
+        }
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        pack1 = repo.create_pack('pack1')
+        pack2 = repo.create_pack('pack2')
+        pack3 = repo.create_pack('pack3')
+        incident = pack1.create_incident_field('example', INCIDENT_FIELD)
+        indicator = pack2.create_indicator_field('example', INDICATOR_FIELD)
+        # layout = pack3.create_layout('details-pack3_Layout', LAYOUT)
+        layout_container = pack3.create_layout('layoutscontainer-pack3_Layout', LAYOUTS_CONTAINER)
 
-    def test_collect_indicator_layouts_dependencies(self, id_set):
-        """
-        Given
-            - An indicator layout entry in the id_set.
+        dependencies = PackDependencies.find_dependencies('/private/var/folders/rt/l0stg4d57k77kdndcmdyw94d3_c379/T/pytest-of-meichler/pytest-54/test_collect_layouts_dependenc0/Packs/pack3', update_pack_metadata=False)
 
-        When
-            - Building dependency graph for pack.
-
-        Then
-            - Extracting the packs that the layout depends on.
-        """
-        expected_result = {("FeedMitreAttack", True), ("CommonTypes", True), ("CrisisManagement", True)}
-
-        test_input = [
-            {
-                "Dummy Layout": {
-                    "typeID": "dummy_layout",
-                    "name": "Dummy Layout",
-                    "pack": "dummy_pack",
-                    "kind": "indicatorsDetails",
-                    "path": "dummy_path",
-                    "incident_and_indicator_types": [
-                        "MITRE ATT&CK",
-                        "Prisma Cloud Compute Cloud Discovery"
-                    ],
-                    "incident_and_indicator_fields": [
-                        "indicator_adminname",
-                        "indicator_jobtitle"
-                    ]
-                }
-            }
-        ]
-
-        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
-                                                                      id_set=id_set,
-                                                                      verbose=False,
-                                                                      )
-
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert IsEqualFunctions.is_sets_equal(dependencies, pack1)
 
     def test_collect_layouts_dependencies_filter_toversion(self, id_set):
         """

@@ -1,6 +1,8 @@
 import os
 from abc import abstractmethod
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import \
@@ -9,7 +11,6 @@ from demisto_sdk.commands.convert.converters.layout.layout_base_converter import
     LayoutBaseConverter
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import \
     LayoutBelowSixConverter
-from packaging.version import Version
 
 
 class AbstractDirConvertManager:
@@ -70,7 +71,6 @@ class AbstractDirConvertManager:
             - True if the path ends with 'entity_dir_name'.
             - False if path does not end with 'entity_dir_name'.
         """
-        # TODO validate outside input is not empty
         return os.path.basename(self.input_path) == self.entity_dir_name
 
 

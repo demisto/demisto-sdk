@@ -1,16 +1,22 @@
+import io
+import json
 import os
-from typing import Union, Iterator, List
 
+import pytest
+
+from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import ClassifierObject
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.base_converter import BaseConverter
-from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS
+from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import LayoutSixConverter
+
+
 def util_load_json(path):
     with io.open(path, mode='r', encoding='utf-8') as f:
         return json.loads(f.read())
+
+
 class TestBaseConverter:
     TEST_PACK_PATH = os.path.join(__file__,
                                   f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data/Packs'
@@ -69,7 +75,8 @@ class TestBaseConverter:
         Then:
         - Ensure expected string is returned.
         """
-        assert self.layout_converter.entity_separators_to_underscore(name) == expected
+        layout_converter = LayoutSixConverter(self.PACK)
+        assert layout_converter.entity_separators_to_underscore(name) == expected
 
     def test_dump_new_entity(self):
         """
@@ -83,7 +90,7 @@ class TestBaseConverter:
         Then:
         - Ensure the file is created in the expected path and expected data.
         """
-        self.layout_converter.('test_layout', {'id': 'dummy_layout'})
+        BaseConverter.dump_new_entity('test_layout', {'id': 'dummy_layout'})
         assert os.path.exists('test_layout')
         layout_data = util_load_json('test_layout')
         assert layout_data == {'id': 'dummy_layout'}

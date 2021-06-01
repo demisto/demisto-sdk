@@ -39,13 +39,13 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         Returns:
             (None): Creates a new corresponding classifier to 'old_classifier' by 6_0_0 file structure.
         """
-        if not (old_classifier_brand := old_classifier.get('brandName')):
+        if not (classifier_name_and_id := self.extract_classifier_name(old_classifier)):
             return
         new_classifier = {k: v for k, v in old_classifier.to_dict().items() if k in intersection_fields}
-        new_classifier = dict(new_classifier, type='classification', name=f'{old_classifier_brand} - Classifier',
-                              description='TODO - Add description', fromVersion='6.0.0')
+        new_classifier = dict(new_classifier, type='classification', name=f'{classifier_name_and_id} - Classifier',
+                              description='TODO - Add description', fromVersion='6.0.0', id=classifier_name_and_id)
 
-        new_classifier_path = self.calculate_new_path(old_classifier_brand, is_mapper=False)
+        new_classifier_path = self.calculate_new_path(classifier_name_and_id, is_mapper=False)
         self.dump_new_entity(new_classifier_path, new_classifier)
 
     def create_mapper_from_old_classifier(self, old_classifier: ClassifierObject) -> None:
@@ -58,17 +58,17 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         Returns:
             (None): Creates a new corresponding mapper to 'old_classifier' by 6_0_0 file structure, if mapping exists.
         """
+        if not (classifier_name_and_id := self.extract_classifier_name(old_classifier)):
+            return
         if not (mapping := old_classifier.get('mapping')):
             return
-        if not (old_classifier_brand := old_classifier.get('brandName')):
-            return
-        mapper = dict(id=f'{old_classifier_brand}-mapper', name=f'{old_classifier_brand} - Incoming Mapper',
+        mapper = dict(id=f'{classifier_name_and_id}-mapper', name=f'{classifier_name_and_id} - Incoming Mapper',
                       type='mapping-incoming', description='TODO - Add description', version=-1,
                       fromVersion='6.0.0', mapping=mapping, feed=old_classifier.get('feed', False))
         if default_incident_type := old_classifier.get('defaultIncidentType'):
             mapper['defaultIncidentType'] = default_incident_type
 
-        new_mapper_path = self.calculate_new_path(old_classifier_brand, is_mapper=True)
+        new_mapper_path = self.calculate_new_path(classifier_name_and_id, is_mapper=True)
         self.dump_new_entity(new_mapper_path, mapper)
 
     def calculate_new_path(self, old_classifier_brand: str, is_mapper: bool) -> str:

@@ -7,8 +7,6 @@ from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import ClassifierSixConverter
 from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import ClassifierBaseConverter
-from demisto_sdk.commands.convert.converters.classifier.classifier_up_to_5_9_9_converter import \
-    ClassifierBelowSixConverter
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import LayoutSixConverter
 from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import LayoutBelowSixConverter
@@ -24,7 +22,7 @@ class AbstractDirConvertManager:
         self.entity_dir_name = entity_dir_name
 
     @abstractmethod
-    def convert(self):
+    def convert(self) -> int:
         pass
 
     def should_convert(self) -> bool:
@@ -85,24 +83,35 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
         self.server_version = server_version
         self.pack = pack
 
-    def convert(self):
+    def convert(self) -> int:
         if self.server_version >= self.VERSION_6_0_0:
             layout_converter: LayoutBaseConverter = LayoutSixConverter(self.pack)
         else:
             layout_converter = LayoutBelowSixConverter(self.pack)
-        layout_converter.convert_dir()
+        return layout_converter.convert_dir()
 
 
 class ClassifiersDirConvertManager(AbstractDirConvertManager):
-    def convert(self):
-        if self.server_version >= self.VERSION_6_0_0:
-            classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(self.pack)
-        else:
-            classifier_converter = ClassifierBelowSixConverter(self.pack)
-        classifier_converter.convert_dir()
 
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
         super().__init__(pack, input_path, server_version, entity_dir_name='Classifiers')
         self.files_path: str = input_path
         self.server_version = server_version
         self.pack = pack
+
+    def convert(self) -> int:
+        if self.server_version >= self.VERSION_6_0_0:
+            classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(self.pack)
+            return classifier_converter.convert_dir()
+        else:
+            raise NotImplementedError('Version requested to convert is not supported.')
+
+    def should_convert(self) -> bool:
+        """
+        Returns whether conversion for classifiers should be made.
+        Currently, conversion for versions 6_0_0 and above are supported, but
+        conversion to 5_9_9 and below are not.
+        Returns:
+            (bool): True if server version is 6_0_0 and above, false otherwise.
+        """
+        return self.server_version >= self.VERSION_6_0_0

@@ -4,33 +4,31 @@ from demisto_sdk.commands.convert.dir_convert_managers import *
 
 
 class ConvertManager:
-    SERVER_MAX_VERSION_SUPPORTED = Version('6.1.0')
-    SERVER_MIN_VERSION_SUPPORTED = Version('5.5.0')
+    MAX_VERSION_SUPPORTED = Version('6.1.0')
+    MIN_VERSION_SUPPORTED = Version('5.5.0')
 
     def __init__(self, input_path: str, server_version: str):
         self.input_path: str = input_path
         self.server_version: Version = Version(server_version)
 
-    # TODO signature
-    # TODO tests
-    def convert(self):
+    def convert(self) -> int:
+        """
+        Manages the conversions of entities between versions.
+        Returns:
+            (int): Returns 0 upon success, 1 if failure occurred.
+        """
         if not self.server_version_not_supported():
-            # TODO error
+            click.secho(f'Version requested: {str(self.server_version)} should be between '
+                        f'{str(self.MIN_VERSION_SUPPORTED)} to {str(self.MAX_VERSION_SUPPORTED)}', fg='red')
             return 1
         pack = self.create_pack_object()
-        # if self.version_requested_is_below_pack_version(pack):
-        #     click.secho('Given version is lower than pack version.\n'
-        #                 f'Requested version: {self.server_version}.\n'
-        #                 f'Pack version: {str(pack.metadata.server_min_version)}', fg='red')
-        #     # TODO check str on version works as expected
-        #     return 1
         all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)
                               for dir_converter in AbstractDirConvertManager.__subclasses__()]
         relevant_dir_converters = [dir_converter for dir_converter in all_dir_converters
                                    if dir_converter.should_convert()]
         if not relevant_dir_converters:
-            click.secho('No entities were found to convert. Please validate your input path and version are'
-                        f'valid: {self.input_path}, {self.server_version}', fg='red')
+            click.secho(f'No entities were found to convert. Please validate your input path is '
+                        f'valid: {self.input_path}', fg='red')
             return 1
         for dir_converter in relevant_dir_converters:
             dir_converter.convert()
@@ -74,4 +72,4 @@ class ConvertManager:
             - True if server version requested for conversion is not supported.
             - False if server version requested for conversion is supported.
         """
-        return self.SERVER_MIN_VERSION_SUPPORTED <= self.server_version <= self.SERVER_MAX_VERSION_SUPPORTED
+        return self.MIN_VERSION_SUPPORTED <= self.server_version <= self.MAX_VERSION_SUPPORTED

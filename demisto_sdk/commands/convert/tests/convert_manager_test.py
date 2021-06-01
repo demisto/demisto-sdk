@@ -27,8 +27,8 @@ class TestConvertManager:
         pack_obj = convert_manager.create_pack_object()
         assert str(pack_obj.path) == expected_pack_path
 
-    TEST_SERVER_VERSION_IS_NOT_SUPPORTED_INPUTS = [(str(ConvertManager.SERVER_MIN_VERSION_SUPPORTED), True),
-                                                   (str(ConvertManager.SERVER_MAX_VERSION_SUPPORTED), True),
+    TEST_SERVER_VERSION_IS_NOT_SUPPORTED_INPUTS = [(str(ConvertManager.MIN_VERSION_SUPPORTED), True),
+                                                   (str(ConvertManager.MAX_VERSION_SUPPORTED), True),
                                                    ('5.4.0', False),
                                                    ('9.0.0', False)]
 

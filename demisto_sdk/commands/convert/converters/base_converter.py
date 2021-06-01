@@ -1,3 +1,4 @@
+import json
 import re
 from abc import abstractmethod
 from typing import Iterator, List, Union, Dict
@@ -8,8 +9,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classif
     ClassifierObject
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
     LayoutObject
-import json
-import io
 
 
 class BaseConverter:

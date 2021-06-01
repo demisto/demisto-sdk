@@ -189,7 +189,7 @@ class BaseValidator:
         json_contents = []
         if os.path.exists(self.json_file_path):
             existing_json = get_json(self.json_file_path)
-            if existing_json:
+            if isinstance(existing_json, list):
                 json_contents = existing_json
 
         file_type = find_type(file_path)
@@ -197,7 +197,8 @@ class BaseValidator:
 
         # handling unified yml image errors
         if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):
-            entity_type = FileType.IMAGE.valuectiv  # type: ignore[attr-defined]
+            entity_type = FileType.IMAGE.value
+
         formatted_error_output = {
             'filePath': file_path,
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),

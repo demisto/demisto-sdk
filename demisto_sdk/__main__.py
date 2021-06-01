@@ -122,7 +122,7 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
+    if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
         last_release = get_last_remote_release_version()
         print_warning(f'You are using demisto-sdk {cur_version}.')

@@ -28,6 +28,7 @@ class PlaybookValidator(ContentEntityValidator):
         if is_new_playbook:
             new_playbook_checks = [
                 super().is_valid_file(validate_rn),
+                self.is_valid_with_indicators_input(),
                 self.is_valid_version(),
                 self.is_id_equals_name(),
                 self.is_no_rolename(),
@@ -46,6 +47,7 @@ class PlaybookValidator(ContentEntityValidator):
             # for new playbooks - run all playbook checks.
             # for modified playbooks - id may not be equal to name.
             modified_playbook_checks = [
+                self.is_valid_with_indicators_input(),
                 self.is_valid_version(),
                 self.is_no_rolename(),
                 self.is_root_connected_to_all_tasks(),
@@ -401,3 +403,23 @@ class PlaybookValidator(ContentEntityValidator):
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
+
+    def is_valid_with_indicators_input(self):
+        input_data = self.current_file['inputs']
+        for item in input_data:
+            entity = item['playbookInputQuery']['queryEntity'] if item['playbookInputQuery'] else None
+            if entity == 'indicators':
+                return self.is_valid_with_indicators()
+        return True
+
+    def is_valid_with_indicators(self):
+        if not self.current_file.get('quiet', False):
+            # add error
+            return False
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            quiet_mode = task.get('quietmode', '')
+            if quiet_mode == 1:
+                return False
+        return True
+

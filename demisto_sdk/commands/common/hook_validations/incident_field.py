@@ -232,7 +232,7 @@ class IncidentFieldValidator(ContentEntityValidator):
             for word in name.split():
                 if word.lower() in bad_words:
                     error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return True
 

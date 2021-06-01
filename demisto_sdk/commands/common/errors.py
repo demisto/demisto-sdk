@@ -1048,7 +1048,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name, please update the file."
+        return f"The word {word} cannot be used as a name." \
+               f" To fix the problem, remove it, or add them to the allow-list named argsExceptionsList in the" \
+               f" TestForIncidentTermInCommands test under:\n" \
+               f"https://github.com/demisto/server/blob/330fb1291d3e50376689d1a530468f9f90d5ae75/services/" \
+               f"servicemodule_test.go#L8847"
 
     @staticmethod
     @error_code_decorator

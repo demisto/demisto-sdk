@@ -22,16 +22,18 @@ class ConvertManager:
                         f'{str(self.MIN_VERSION_SUPPORTED)} to {str(self.MAX_VERSION_SUPPORTED)}', fg='red')
             return 1
         pack = self.create_pack_object()
-        all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)
-                              for dir_converter in AbstractDirConvertManager.__subclasses__()]
+        all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)  # type: ignore
+                              for dir_converter in AbstractDirConvertManager.__subclasses__()]  # type: ignore
         relevant_dir_converters = [dir_converter for dir_converter in all_dir_converters
                                    if dir_converter.should_convert()]
         if not relevant_dir_converters:
             click.secho(f'No entities were found to convert. Please validate your input path is '
                         f'valid: {self.input_path}', fg='red')
             return 1
+        exit_code = 0
         for dir_converter in relevant_dir_converters:
-            dir_converter.convert()
+            exit_code = max(dir_converter.convert(), exit_code)
+        return exit_code
 
     def create_pack_object(self) -> Pack:
         """

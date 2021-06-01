@@ -37,7 +37,7 @@ class Classifier(ClassifierObject):
         return FileType.CLASSIFIER
 
 
-class OldClassifier(JSONContentObject):
+class OldClassifier(ClassifierObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, CLASSIFIER)
 

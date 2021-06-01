@@ -542,6 +542,8 @@ class PackUniqueFilesValidator(BaseValidator):
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
+                if not self.suppress_print:
+                    click.secho("Found first level dependencies only on core packs", fg="yellow")
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)

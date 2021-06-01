@@ -37200,6 +37200,14 @@
     ],
     "IncidentFields": [
         {
+            "incident_example": {
+                "name": "example",
+                "file_path": "Packs/pack1/IncidentFields/incidentfield-example.json",
+                "fromversion": "6.0.0",
+                "pack": "pack1"
+            }
+        },
+        {
             "incident_accountgroups": {
                 "name": "Account Groups",
                 "file_path": "Packs/BruteForce/IncidentFields/incidentfield-Account_Groups.json",
@@ -42085,6 +42093,14 @@
     ],
     "IndicatorFields": [
         {
+            "indicator_example": {
+                "name": "example",
+                "file_path": "Packs/pack2/IndicatorFields/indicatorfield-example.json",
+                "fromversion": "6.0.0",
+                "pack": "pack2"
+            }
+        },
+        {
             "indicator_accounttype": {
                 "file_path": "Packs/CommonTypes/IndicatorFields/incidentfield-accounttype.json",
                 "name": "Account Type",
@@ -43383,6 +43399,140 @@
         }
     ],
     "Layouts": [
+        {
+            "example_incident": {
+                "group": "incident",
+                "detailsV2": {
+                    "tabs": [
+                        {
+                            "id": "summary",
+                            "name": "Legacy Summary",
+                            "type": "summary"
+                        },
+                        {
+                            "id": "caseinfoid",
+                            "name": "Incident Info",
+                            "sections": [
+                                {
+                                    "displayType": "ROW",
+                                    "h": 2,
+                                    "hideName": false,
+                                    "i": "caseinfoid-313783a0-c1e7-11eb-9598-a1a56eba0bb0",
+                                    "items": [
+                                        {
+                                            "endCol": 2,
+                                            "fieldId": "example",
+                                            "height": 22,
+                                            "id": "incident_example",
+                                            "index": 0,
+                                            "sectionItemType": "field",
+                                            "startCol": 0
+                                        }
+                                    ],
+                                    "maxW": 3,
+                                    "minH": 1,
+                                    "minW": 1,
+                                    "moved": false,
+                                    "name": "New Section",
+                                    "static": false,
+                                    "w": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            ],
+                            "type": "custom"
+                        },
+                        {
+                            "id": "warRoom",
+                            "name": "War Room",
+                            "type": "warRoom"
+                        },
+                        {
+                            "id": "workPlan",
+                            "name": "Work Plan",
+                            "type": "workPlan"
+                        },
+                        {
+                            "id": "evidenceBoard",
+                            "name": "Evidence Board",
+                            "type": "evidenceBoard"
+                        },
+                        {
+                            "id": "relatedIncidents",
+                            "name": "Related Incidents",
+                            "type": "relatedIncidents"
+                        },
+                        {
+                            "id": "canvas",
+                            "name": "Canvas",
+                            "type": "canvas"
+                        }
+                    ]
+                },
+                "name": "example_incident",
+                "fromversion": "6.0.0",
+                "pack": "pack3",
+                "file_path": "Packs/pack3/Layouts/layoutscontainer-example_incident.json",
+                "incident_and_indicator_types": [
+                    "example_incident"
+                ],
+                "incident_and_indicator_fields": [
+                    "example"
+                ]
+            }
+        },
+        {
+            "example_indicator": {
+                "group": "indicator",
+                "indicatorsDetails": {
+                    "tabs": [
+                        {
+                            "id": "default-main",
+                            "name": "Info",
+                            "sections": [
+                                {
+                                    "displayType": "ROW",
+                                    "h": 2,
+                                    "hideName": false,
+                                    "i": "default-main-6d7a16a0-c1f8-11eb-9598-a1a56eba0bb0",
+                                    "items": [
+                                        {
+                                            "endCol": 2,
+                                            "fieldId": "example",
+                                            "height": 22,
+                                            "id": "indicator_example",
+                                            "index": 0,
+                                            "sectionItemType": "field",
+                                            "startCol": 0
+                                        }
+                                    ],
+                                    "maxW": 3,
+                                    "minH": 1,
+                                    "minW": 1,
+                                    "moved": false,
+                                    "name": "New Section",
+                                    "static": false,
+                                    "w": 1,
+                                    "x": 0,
+                                    "y": 0
+                                }
+                            ],
+                            "type": "custom"
+                        }
+                    ]
+                },
+                "name": "example_indicator",
+                "fromversion": "6.0.0",
+                "pack": "pack4",
+                "file_path": "Packs/pack4/Layouts/layoutscontainer-example_indicator.json",
+                "incident_and_indicator_types": [
+                    "example_indicator"
+                ],
+                "incident_and_indicator_fields": [
+                    "example"
+                ]
+            }
+        },
         {
             "Access": {
                 "typeID": "Access",

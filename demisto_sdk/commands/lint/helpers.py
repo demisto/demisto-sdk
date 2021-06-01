@@ -464,11 +464,11 @@ def split_warnings_errors(output: str):
 def coverage_report_editor(coverage_file, code_file_absolute_path):
     with sqlite3.connect(coverage_file) as sql_connection:
         cursor = sql_connection.cursor()
-        index = cursor.execute('SELECT id FROM file').fetchall()
-        if not len(index) == 1:
+        index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]
+        if not index == 1:
             logger.error('unexpected file list in coverage report')
         else:
-            cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, index[0][0]))
+            cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
             sql_connection.commit()
         cursor.close()
 

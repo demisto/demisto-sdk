@@ -20,8 +20,8 @@ def util_load_json(path):
 class TestLayoutSixConverter:
     TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
     PACK_WITH_OLD_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
-                                              '/PackWithOldLayout')
+                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
+                                              'tests/test_data/Packs/PackWithOldLayout')
     SCHEMA_PATH = os.path.normpath(
         os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data',
                      'layoutscontainer.yml'))
@@ -104,7 +104,16 @@ class TestLayoutSixConverter:
         assert self.layout_converter.calculate_new_layout_relative_path(layout_id) == expected
 
     def test_convert_dir(self):
-        # TODO docs
+        """
+        Given:
+        - Pack.
+
+        When:
+        - Converting every layout of version 6.0.0 and above to version 5.9.9 and below.
+
+        Then:
+        - Ensure expected layouts are created with expected values.
+        """
         layout_converter = LayoutSixConverter(Pack(self.PACK_WITH_OLD_LAYOUTS_PATH))
         layout_converter.convert_dir()
         expected_new_layout_path = f'{self.PACK_WITH_OLD_LAYOUTS_PATH}/Layouts/layoutscontainer-ExtraHop_Detection.json'

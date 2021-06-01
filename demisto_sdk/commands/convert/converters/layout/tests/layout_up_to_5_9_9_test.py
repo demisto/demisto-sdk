@@ -20,8 +20,8 @@ def util_load_json(path):
 class TestLayoutBelowSixConverter:
     TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
     PACK_WITH_NEW_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
-                                              '/PackWithNewLayout')
+                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
+                                              'tests/test_data/Packs/PackWithNewLayout')
     PACK = Pack(TEST_PACK_PATH)
 
     def setup(self):

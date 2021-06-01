@@ -4,8 +4,8 @@ import os
 from typing import Dict, List
 
 import pytest
-
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject, Layout
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+    Layout, LayoutObject)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import \

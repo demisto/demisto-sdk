@@ -2,7 +2,6 @@ import os
 from typing import Dict
 
 import pytest
-
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_base_converter import \

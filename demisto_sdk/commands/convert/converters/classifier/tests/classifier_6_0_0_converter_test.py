@@ -3,11 +3,12 @@ import json
 import os
 
 import pytest
-
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import ClassifierObject
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
+    ClassifierObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import ClassifierSixConverter
+from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import \
+    ClassifierSixConverter
 
 
 def util_load_json(path):

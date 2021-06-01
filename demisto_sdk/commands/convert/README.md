@@ -2,7 +2,7 @@
 
 **Convert layouts and classifiers from a new version to an old version and vice versa.**
 
-##Note: 
+##Note:
 **Classifiers/Mappers conversion from 6.0.0 and above to versions 5.9.9 and below is currently not supported. Request for converting a pack for versions below 6.0.0 will result on layouts conversion only.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
@@ -13,7 +13,7 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 ```
 
 ### Use Cases
-This command is used to convert entities such as Layouts/Classifiers between XSOAR versions. 
+This command is used to convert entities such as Layouts/Classifiers between XSOAR versions.
 
 
 ### Arguments

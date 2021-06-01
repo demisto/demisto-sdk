@@ -1,10 +1,10 @@
 import json
 import re
 from abc import abstractmethod
-from typing import Iterator, List, Union, Dict
+from typing import Dict, Iterator, List, Union
 
-from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
     ClassifierObject
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \

@@ -120,5 +120,9 @@ class TestLayoutSixConverter:
         assert os.path.exists(expected_new_layout_path)
         with open(expected_new_layout_path, 'r') as f:
             layout_data = json.loads(f.read())
-        assert layout_data == util_load_json('test_data/layout_6_0_0_expected_convert_dir_test_file_output.json')
+        test_data_json = util_load_json(os.path.join(__file__,
+                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                                     '/test_data'
+                                                     '/layout_6_0_0_expected_convert_dir_test_file_output.json'))
+        assert layout_data == test_data_json
         os.remove(expected_new_layout_path)

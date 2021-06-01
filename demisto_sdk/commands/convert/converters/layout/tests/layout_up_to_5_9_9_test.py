@@ -153,7 +153,10 @@ class TestLayoutBelowSixConverter:
         """
         layout_converter = LayoutBelowSixConverter(Pack(self.PACK_WITH_NEW_LAYOUTS_PATH))
         layout_converter.convert_dir()
-        test_data_json = util_load_json('test_data/layout_up_to_5_9_9_expected_convert_dir_test_file_output.json')
+        test_data_json = util_load_json(os.path.join(__file__,
+                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                                     '/test_data'
+                                                     '/layout_up_to_5_9_9_expected_convert_dir_test_file_output.json'))
         for layout_field_name, layout_data in test_data_json.items():
             expected_new_layout_path = f'{self.PACK_WITH_NEW_LAYOUTS_PATH}/Layouts/layout-{layout_field_name}-' \
                                        'ExtraHop_Detection.json'

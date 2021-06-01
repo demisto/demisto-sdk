@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
-* Inproved the error messages for separators in folder and file names in the **validate** command.
+* Improved the error messages for separators in folder and file names in the **validate** command.
+* Fixed the **generate-docs** to handle integration authentication parameter.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

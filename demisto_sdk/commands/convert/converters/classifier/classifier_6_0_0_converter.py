@@ -40,7 +40,8 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         Returns:
             (None): Creates a new corresponding classifier to 'old_classifier' by 6_0_0 file structure.
         """
-        if not (classifier_name_and_id := self.extract_classifier_name(old_classifier)):
+        classifier_name_and_id = self.extract_classifier_name(old_classifier)
+        if not classifier_name_and_id:
             return
         new_classifier = {k: v for k, v in old_classifier.to_dict().items() if k in intersection_fields}
         new_classifier = dict(new_classifier, type='classification', name=f'{classifier_name_and_id} - Classifier',
@@ -59,14 +60,17 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         Returns:
             (None): Creates a new corresponding mapper to 'old_classifier' by 6_0_0 file structure, if mapping exists.
         """
-        if not (classifier_name_and_id := self.extract_classifier_name(old_classifier)):
+        classifier_name_and_id = self.extract_classifier_name(old_classifier)
+        mapping = old_classifier.get('mapping')
+        if not classifier_name_and_id:
             return
-        if not (mapping := old_classifier.get('mapping')):
+        if not mapping:
             return
         mapper = dict(id=f'{classifier_name_and_id}-mapper', name=f'{classifier_name_and_id} - Incoming Mapper',
                       type='mapping-incoming', description='TODO - Add description', version=-1,
                       fromVersion='6.0.0', mapping=mapping, feed=old_classifier.get('feed', False))
-        if default_incident_type := old_classifier.get('defaultIncidentType'):
+        default_incident_type = old_classifier.get('defaultIncidentType')
+        if default_incident_type:
             mapper['defaultIncidentType'] = default_incident_type
 
         new_mapper_path = self.calculate_new_path(classifier_name_and_id, is_mapper=True)

@@ -27,11 +27,14 @@ class LayoutSixConverter(LayoutBaseConverter):
             new_layout_dict['group'] = self.calculate_new_layout_group(old_corresponding_layouts)
 
             for old_layout in old_corresponding_layouts:
-                if not (layout_kind := old_layout.get('kind')):
+                layout_kind = old_layout.get('kind')
+                sections = old_layout.get_layout_sections()
+                tabs = old_layout.get_layout_tabs()
+                if not layout_kind:
                     continue
-                if sections := old_layout.get_layout_sections():
+                if sections:
                     new_layout_dict[layout_kind] = {'sections': sections}
-                if tabs := old_layout.get_layout_tabs():
+                if tabs:
                     new_layout_dict[layout_kind] = {'tabs': tabs}
 
             self.update_incident_types_related_to_old_layouts(old_corresponding_layouts, layout_id)

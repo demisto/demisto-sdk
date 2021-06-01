@@ -76,9 +76,9 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
         """
         result: Dict[str, List[str]] = dict()
         for incident_or_indicator in indicators_or_incidents:
-            if not (layout_id := incident_or_indicator.get('layout')):
-                continue
-            if not (id_ := incident_or_indicator.get('id')):
+            layout_id = incident_or_indicator.get('layout')
+            id_ = incident_or_indicator.get('id')
+            if not layout_id or not id_:
                 continue
             result[layout_id] = result.get(layout_id, []) + [id_]
         return result

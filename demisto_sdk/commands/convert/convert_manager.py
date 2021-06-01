@@ -50,20 +50,6 @@ class ConvertManager:
         pack_path = self.input_path if os.path.basename(path_dir) == PACKS_DIR else path_dir
         return Pack(pack_path)
 
-    def version_requested_is_below_pack_version(self, pack: Pack) -> bool:
-        """
-        Receives Pack object, returns whether the version requested by user for conversion is below the minimal
-        server version of the pack.
-        Args:
-            pack (Pack): Pack object of the corresponding pack of the requested conversion.
-
-        Returns:
-            (bool):
-            - True if pack minimum version > requested version.
-            - false if pack minimum version <= requested version.
-        """
-        return (pack_version := pack.metadata.get('serverMinVersion')) and self.server_version >= Version(pack_version)
-
     def server_version_not_supported(self) -> bool:
         """
         Checks whether the requested version is supported for conversion.

@@ -1,7 +1,9 @@
 # Changelog
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
 * Improved the error messages for separators in folder and file names in the **validate** command.
+* Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
 * Fixed an issue where the demisto-sdk version check failed due to a rate limit.
+
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

@@ -7,6 +7,8 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
+from pkg_resources import get_distribution
+
 # Third party packages
 import click
 import git
@@ -19,6 +21,7 @@ from demisto_sdk.commands.common.legacy_git_tools import get_packs
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
+                                               get_last_remote_release_version,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
@@ -120,13 +123,13 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    # if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
-    #     cur_version = get_distribution('demisto-sdk').version
-    #     last_release = get_last_remote_release_version()
-    #     print_warning(f'You are using demisto-sdk {cur_version}.')
-    #     if last_release and cur_version != last_release:
-    #         print_warning(f'however version {last_release} is available.\n'
-    #                       f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+    if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
+        cur_version = get_distribution('demisto-sdk').version
+        last_release = get_last_remote_release_version()
+        print_warning(f'You are using demisto-sdk {cur_version}.')
+        if last_release and cur_version != last_release:
+            print_warning(f'however version {last_release} is available.\n'
+                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
 
 
 # ====================== split-yml ====================== #
@@ -1511,12 +1514,18 @@ def convert(config, **kwargs):
     Convert the content of the pack/directory/file in the given input to be compatible with the version given by
     version command.
     """
-    check_configuration_file('convert', kwargs)
+    check_configuration_file('validate', kwargs)
+    sys.path.append(config.configuration.env_dir)
 
     input_path = kwargs['input']
     server_version = kwargs['version']
     convert_manager = ConvertManager(input_path, server_version)
-    convert_manager.convert()
+    result = convert_manager.convert()
+
+    if result:
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @main.resultcallback()

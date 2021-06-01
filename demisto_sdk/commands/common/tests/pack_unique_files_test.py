@@ -5,7 +5,8 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
+                                                   PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,
@@ -76,12 +77,14 @@ class TestPackUniqueFilesValidator:
 
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.are_valid_files(id_set_validations=False)
@@ -467,3 +470,34 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_readme_file_is_not_empty_missing_file(self):
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
+
+    @pytest.mark.parametrize('readme_content, is_valid', [
+        ('Hey there, just testing', True),
+        ('This is a test. All good!', False),
+    ])
+    def test_pack_readme_is_different_then_pack_description(self, repo, readme_content, is_valid):
+        """
+        Given:
+            - Case A: A unique pack readme.
+            - Case B: Pack readme that is equal to pack description
+
+        When:
+            - Validating pack readme vs pack description
+
+        Then:
+            - Case A: Ensure validation passes as the pack readme and pack description are different.
+            - Case B: Ensure validation fails as the pack readme is the same as the pack description.
+                      Verify expected error is printed
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.readme.write_text(readme_content)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_DESC: 'This is a test. All good!',
+        })
+
+        self.validator.pack_path = pack.path
+        assert self.validator.validate_pack_readme_and_pack_description() == is_valid
+        if not is_valid:
+            assert 'README.md content is equal to pack description. ' \
+                   'Please remove the duplicate description from README.md file' in self.validator.get_errors()

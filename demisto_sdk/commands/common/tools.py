@@ -59,6 +59,7 @@ LOG_VERBOSE = False
 
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
+SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
 
 def set_log_verbose(verbose: bool):
@@ -386,20 +387,17 @@ def is_origin_content_repo():
 
 def get_last_remote_release_version():
     """
-    Get latest release tag from remote github page
+    Get latest release tag from PYPI.
 
     :return: tag
     """
     if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
-            releases_request = requests.get(GithubContentConfig.SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
-            releases_request.raise_for_status()
-            releases = releases_request.json()
-            if isinstance(releases, list) and isinstance(releases[0], dict):
-                latest_release = releases[0].get('tag_name')
-                if isinstance(latest_release, str):
-                    # remove v prefix
-                    return latest_release[1:]
+            pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
+            pypi_request.raise_for_status()
+            pypi_json = pypi_request.json()
+            version = pypi_json.get('info', {}).get('version', '')
+            return version
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):

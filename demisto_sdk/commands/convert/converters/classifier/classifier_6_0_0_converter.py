@@ -62,9 +62,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         """
         classifier_name_and_id = self.extract_classifier_name(old_classifier)
         mapping = old_classifier.get('mapping')
-        if not classifier_name_and_id:
-            return
-        if not mapping:
+        if not classifier_name_and_id or not mapping:
             return
         mapper = dict(id=f'{classifier_name_and_id}-mapper', name=f'{classifier_name_and_id} - Incoming Mapper',
                       type='mapping-incoming', description='TODO - Add description', version=-1,

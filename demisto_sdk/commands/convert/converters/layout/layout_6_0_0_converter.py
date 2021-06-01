@@ -28,10 +28,10 @@ class LayoutSixConverter(LayoutBaseConverter):
 
             for old_layout in old_corresponding_layouts:
                 layout_kind = old_layout.get('kind')
-                sections = old_layout.get_layout_sections()
-                tabs = old_layout.get_layout_tabs()
                 if not layout_kind:
                     continue
+                sections = old_layout.get_layout_sections()
+                tabs = old_layout.get_layout_tabs()
                 if sections:
                     new_layout_dict[layout_kind] = {'sections': sections}
                 if tabs:

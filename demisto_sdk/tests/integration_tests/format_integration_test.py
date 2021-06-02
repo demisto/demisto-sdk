@@ -7,14 +7,14 @@ from typing import List
 import pytest
 import yaml
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
-from demisto_sdk.commands.format import update_generic
-from demisto_sdk.commands.format import format_module
+from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat

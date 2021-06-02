@@ -198,6 +198,22 @@ class ValidateManager:
             is_valid = self.run_validation_using_git()
         return self.print_final_report(is_valid)
 
+    @staticmethod
+    def detect_file_level(file_path):
+        if os.path.isfile(file_path):
+            return 'File'
+
+        file_path = file_path.rstrip('/')
+        dir_name = os.path.basename(file_path)
+        if dir_name in CONTENT_ENTITIES_DIRS:
+            'ContentDir'
+
+        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
+            return 'Pack'
+
+        else:
+            return 'Package'
+
     def run_validation_on_specific_files(self):
         """Run validations only on specific files
         """
@@ -205,28 +221,26 @@ class ValidateManager:
 
         for path in self.file_path.split(','):
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
+            file_level = self.detect_file_level(path)
 
-            if os.path.isfile(path):
+            if file_level == 'File':
                 click.secho('\n================= Validating file =================', fg="bright_cyan")
                 files_validation_result.add(self.run_validations_on_file(path, error_ignore_list))
 
-            else:
-                path = path.rstrip('/')
-                dir_name = os.path.basename(path)
-                if dir_name in CONTENT_ENTITIES_DIRS:
-                    click.secho(f'\n================= Validating content directory {path} =================',
-                                fg="bright_cyan")
-                    files_validation_result.add(self.run_validation_on_content_entities(path, error_ignore_list))
-                else:
-                    if os.path.basename(os.path.dirname(path)) == PACKS_DIR:
-                        click.secho(f'\n================= Validating pack {path} =================',
-                                    fg="bright_cyan")
-                        files_validation_result.add(self.run_validations_on_pack(path))
+            elif file_level == 'ContentDir':
+                click.secho(f'\n================= Validating content directory {path} =================',
+                            fg="bright_cyan")
+                files_validation_result.add(self.run_validation_on_content_entities(path, error_ignore_list))
 
-                    else:
-                        click.secho(f'\n================= Validating package {path} =================',
-                                    fg="bright_cyan")
-                        files_validation_result.add(self.run_validation_on_package(path, error_ignore_list))
+            elif file_level == 'Pack':
+                click.secho(f'\n================= Validating pack {path} =================',
+                            fg="bright_cyan")
+                files_validation_result.add(self.run_validations_on_pack(path))
+
+            else:
+                click.secho(f'\n================= Validating package {path} =================',
+                            fg="bright_cyan")
+                files_validation_result.add(self.run_validation_on_package(path, error_ignore_list))
 
         return all(files_validation_result)
 
@@ -444,6 +458,63 @@ class ValidateManager:
 
         return True
 
+    @staticmethod
+    def get_file_by_status(modified_files: Set, old_format_files: Set,
+                           file_path: str) -> Tuple[Set, Set, Set]:
+        """Given a specific file path identify in which git status set
+        it exists and return a set containing that file and 2 additional empty sets."""
+        filtered_modified_files = set()
+        filtered_added_files = set()
+        filtered_old_format = set()
+
+        if file_path in modified_files:
+            filtered_modified_files.add(file_path)
+
+        elif file_path in old_format_files:
+            filtered_old_format.add(file_path)
+
+        else:
+            # consider the file newly added
+            filtered_added_files.add(file_path)
+
+        return filtered_modified_files, filtered_added_files, filtered_old_format
+
+    @staticmethod
+    def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
+        """Filter a set of file paths to only include ones which are from a specified directory."""
+        filtered_set = set()
+        for file in file_set:
+            if directory_path in str(file):
+                filtered_set.add(file)
+
+        return filtered_set
+
+    def specify_files_by_status(self, modified_files: Set, added_files: Set, old_format_files: Set) -> \
+            Tuple[Set, Set, Set]:
+        """Filter the files identified from git to only specified files"""
+        filtered_modified_files: Set = set()
+        filtered_added_files: Set = set()
+        filtered_old_format: Set = set()
+
+        for path in self.file_path.split(','):
+            file_level = self.detect_file_level(path)
+            if file_level == 'File':
+                temp_modified, temp_added, temp_old_format = self.get_file_by_status(modified_files,
+                                                                                     old_format_files, path)
+                filtered_modified_files = filtered_modified_files.union(temp_modified)
+                filtered_added_files = filtered_added_files.union(temp_added)
+                filtered_old_format = filtered_old_format.union(temp_old_format)
+
+            else:
+                filtered_modified_files = filtered_modified_files.union(
+                    self.specify_files_from_directory(modified_files, path))
+                filtered_added_files = filtered_added_files.union(
+                    self.specify_files_from_directory(added_files, path))
+                filtered_old_format = filtered_old_format.union(
+                    self.specify_files_from_directory(old_format_files, path))
+
+        return filtered_modified_files, filtered_added_files, filtered_old_format
+
     def run_validation_using_git(self):
         """Runs validation on only changed packs/files (g)
         """
@@ -453,6 +524,11 @@ class ValidateManager:
 
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git()
+
+        # filter to only specified paths if given
+        if self.file_path:
+            modified_files, added_files, old_format_files = self.specify_files_by_status(modified_files, added_files,
+                                                                                         old_format_files)
 
         validation_results = {valid_git_setup}
 
@@ -922,6 +998,10 @@ class ValidateManager:
 
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
+
+        # # when checking a specific file and using git - do not check RN
+        # if self.file_path:
+        #     self.skip_pack_rn_validation = True
 
         # on master don't check RN
         elif self.branch_name == 'master':

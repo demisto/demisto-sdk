@@ -431,7 +431,7 @@ class TestPlaybook:
                 "query": "${}"
             }
             res = demisto_client.generic_request_func(self=client, method='POST',
-                                                      path=f'/incident/{incident_id}/context', body=body)
+                                                      path=f'/investigation/{incident_id}/context', body=body)
         except ApiException:
             self.build_context.logging_module.exception(
                 'Failed to get context, error trying to communicate with demisto server')

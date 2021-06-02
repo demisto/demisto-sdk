@@ -999,10 +999,6 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
 
-        # # when checking a specific file and using git - do not check RN
-        # if self.file_path:
-        #     self.skip_pack_rn_validation = True
-
         # on master don't check RN
         elif self.branch_name == 'master':
             self.skip_pack_rn_validation = True

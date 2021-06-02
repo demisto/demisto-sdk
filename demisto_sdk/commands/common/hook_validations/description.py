@@ -156,7 +156,9 @@ class DescriptionValidator(BaseValidator):
 
             with open(self.file_path, 'r') as f:
                 yml_line_num = [line_n for line_n, line in enumerate(f.read().split('\n'))
-                                if 'detaileddescription:' in line][0] + 1
+                                if 'detaileddescription:' in line]
+                if yml_line_num:
+                    yml_line_num = yml_line_num[0] + 1
         else:
             try:
                 description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
@@ -171,8 +173,8 @@ class DescriptionValidator(BaseValidator):
 
         for line_num, line in enumerate(description_content.split('\n')):
             if 'demisto ' in line.lower() or ' demisto' in line.lower():
-                error_message, error_code = Errors.description_contains_demisto_word()
-                self.handle_error(error_message, error_code, file_path=f'{self.file_path}:{line_num+yml_line_num+1}')
+                error_message, error_code = Errors.description_contains_demisto_word(line_num + yml_line_num + 1)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
                 self._is_valid = False
                 return False
 

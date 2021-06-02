@@ -3,6 +3,7 @@
 * Improved the error messages for separators in folder and file names in the **validate** command.
 * Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
 * Fixed an issue where the demisto-sdk version check failed due to a rate limit.
+* Fixed an issue with playbooks scheme validation.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 
 # 1.3.8

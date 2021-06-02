@@ -323,7 +323,6 @@ schema;arg_filter_schema:
           required: true
         iscontext:
           type: bool
-          required: true
     right:
       type: map
       mapping:

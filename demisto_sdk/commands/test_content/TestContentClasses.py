@@ -170,7 +170,7 @@ class TestPlaybook:
 
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
-        performance_tests_collected = self.build_context.conf.performance_tests  # TODO: Complete
+        performance_tests_collected = self.build_context.conf.performance_tests
         if self.configuration.playbook_id in performance_tests_collected and not self.build_context.is_performance_test:
             self.build_context.logging_module.debug(f'Skipping {self} because it\'s not performance env')
             return False
@@ -424,6 +424,25 @@ class TestPlaybook:
             return False
 
         return True
+
+    def get_incident_context(self, client: DefaultApi, incident_id: str) -> dict:
+        try:
+            body = {
+                "query": "${}"
+            }
+            res = demisto_client.generic_request_func(self=client, method='POST',
+                                                      path=f'/incident/{incident_id}/context', body=body)
+        except ApiException:
+            self.build_context.logging_module.exception(
+                'Failed to get context, error trying to communicate with demisto server')
+            return {}
+
+        if int(res[1]) != 200:
+            self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
+            self.build_context.logging_module.error(pformat(res))
+            return {}
+
+        return res[0]
 
 
 class BuildContext:
@@ -750,6 +769,7 @@ class TestResults:
         self.empty_files = []
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration = set()
+        self.performance_results = []
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe
@@ -765,6 +785,8 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
+        with open('./Tests/performance_results.txt', "w") as performance_results:
+            performance_results.write('\n'.join(self.performance_results))
 
     def print_test_summary(self,
                            is_ami: bool = True,
@@ -1399,6 +1421,8 @@ class TestContext:
             playbook_state = self._poll_for_playbook_state()
 
             self.playbook.disable_integrations(self.client, self.server_context)
+            if self.build_context.is_performance_test:
+                self._add_to_performance_results()
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
@@ -1411,11 +1435,10 @@ class TestContext:
         Args:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
-        if not self.build_context.is_performance_test:
-            test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-            if self.incident_id and test_passed:
-                self.playbook.delete_incident(self.client, self.incident_id)
-                self.playbook.delete_integration_instances(self.client)
+        test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
+        if self.incident_id and test_passed:
+            self.playbook.delete_incident(self.client, self.incident_id)
+            self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()
@@ -1502,6 +1525,13 @@ class TestContext:
             playbook_name_to_add += ' (Second Playback)'
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
+
+    def _add_to_performance_results(self) -> None:
+        """
+        Adds the incident context to the performance results list
+        """
+        inc_context = self.playbook.get_incident_context(self.client, self.incident_id)
+        self.build_context.tests_data_keeper.performance_results.append(inc_context)
 
     @staticmethod
     def _get_circle_memory_data() -> Tuple[str, str]:

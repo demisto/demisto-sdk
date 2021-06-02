@@ -1,4 +1,5 @@
 # Changelog
+* Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 
 # 1.3.9

@@ -1,5 +1,6 @@
 # Changelog
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
+* Fixed the **generate-docs** to handle integration authentication parameter.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

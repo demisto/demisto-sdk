@@ -165,8 +165,8 @@ class DescriptionValidator(BaseValidator):
 
             except IndexError:
                 error_message, error_code = Errors.no_description_file_warning()
-                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
-                    return True
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                return True
 
             with open(description_path) as f:
                 description_content = f.read()
@@ -174,8 +174,8 @@ class DescriptionValidator(BaseValidator):
         for line_num, line in enumerate(description_content.split('\n')):
             if 'demisto ' in line.lower() or ' demisto' in line.lower():
                 error_message, error_code = Errors.description_contains_demisto_word(line_num + yml_line_num + 1)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                self._is_valid = False
-                return False
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
 
         return True

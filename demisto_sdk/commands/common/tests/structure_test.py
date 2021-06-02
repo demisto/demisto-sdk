@@ -119,7 +119,7 @@ class TestStructureValidator:
     def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
         validator = StructureValidator(file_path=path)
         with open(old_file_path) as f:
-            validator.old_file = YAML(typ='unsafe', pure=True).load(f)
+            validator.old_file = YAML(typ='safe', pure=True).load(f)
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [

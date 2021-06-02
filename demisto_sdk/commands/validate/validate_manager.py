@@ -875,7 +875,9 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        error_message, error_code,
+                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                ):
                     is_valid.add(True)
 
                 else:

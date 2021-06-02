@@ -24,7 +24,6 @@ class Readme(TextObject):
                 with open(contributors_file_path, 'r') as contributors_file:
                     contributor_data = contributors_file.read()
                 with open(self._path, 'a+') as readme_file:
-
                     readme_file.write(contributor_data)
         except Exception as e:
             print(e)

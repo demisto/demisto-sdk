@@ -31,8 +31,7 @@ def test_mention_contributors_in_readme():
 
     Then: Ensure credit to contributors is appended to the readme file
     """
-    pack_path = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'
-    obj = Readme(README, pack_path)
+    obj = Readme(README)
     obj.mention_contributors_in_readme()
     with open(README, 'r') as readme_file:
         assert 'This pack was co-authored by:' in readme_file.read()

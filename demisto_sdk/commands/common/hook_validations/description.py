@@ -153,6 +153,7 @@ class DescriptionValidator(BaseValidator):
 
         if is_unified_integration:
             description_content = data_dictionary.get('detaileddescription', '')
+
             with open(self.file_path, 'r') as f:
                 yml_line_num = [line_n for line_n, line in enumerate(f.read().split('\n'))
                                 if 'detaileddescription:' in line][0] + 1

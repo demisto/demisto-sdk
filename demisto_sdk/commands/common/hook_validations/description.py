@@ -155,10 +155,10 @@ class DescriptionValidator(BaseValidator):
             description_content = data_dictionary.get('detaileddescription', '')
 
             with open(self.file_path, 'r') as f:
-                yml_line_num = [line_n for line_n, line in enumerate(f.read().split('\n'))
-                                if 'detaileddescription:' in line]
-                if yml_line_num:
-                    yml_line_num = yml_line_num[0] + 1
+
+                for line_n, line in enumerate(f.read().split('\n')):
+                    if 'detaileddescription:' in line:
+                        yml_line_num = line_n + 1
         else:
             try:
                 description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]

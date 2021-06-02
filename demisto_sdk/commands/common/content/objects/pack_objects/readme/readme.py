@@ -26,6 +26,7 @@ class Readme(TextObject):
                 with open(self._path, 'a+') as readme_file:
                     readme_file.write('<br><br>')
                     readme_file.write('<hr>')
+                    readme_file.write('Hello World')
                     readme_file.write(contributor_data)
         except Exception as e:
             print(e)

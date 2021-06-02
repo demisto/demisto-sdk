@@ -7,7 +7,6 @@ from typing import List
 import pytest
 import yaml
 from click.testing import CliRunner
-
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.hook_validations.playbook import \

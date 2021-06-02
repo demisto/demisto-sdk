@@ -42,11 +42,16 @@ class TestPlaybookValidator(ContentEntityValidator):
         return self._is_valid_version()
 
     def is_unskipped_playbook(self):
+        """Check whether the playbook is not skipped.
+
+        Return:
+            bool. True if the the playbook is unskipped, False otherwise.
+        """
         skipped_tests = self._load_conf_file()['skipped_tests']
         playbook_name = self.current_file.get('id', '')
         if playbook_name in skipped_tests:
-            return True
-        return False
+            return False
+        return True
 
     def _is_id_uuid(self):
         """

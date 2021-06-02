@@ -1,7 +1,12 @@
 import pytest
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_with_test_playbooks_validator import \
+    ContentEntityWithTestPlaybooksValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from mock import patch
 
 
@@ -504,3 +509,44 @@ class TestScriptValidator:
         validator = ScriptValidator(structure_validator)
 
         assert not validator.check_separators_in_files()
+
+    IS_SKIPPED_TESTS_INPUTS = [
+        (["SomeTestPlaybook"],
+         {"skipped_tests": {"SomeTestPlaybook": "Some Issue"}},
+         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}}]},
+         False),
+        (["SomeTestPlaybook"],
+         {"skipped_tests": {"SomeOtherTestPlaybook": "Some Issue"}},
+         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}}]},
+         True),
+        (["SomeTestPlaybook", "SomeSecondTestPlaybook"],
+         {"skipped_tests": {"SomeTestPlaybook": "Some Issue"}},
+         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}},
+                            {"SomeSecondTestPlaybook": {"file_path": "SomeSecondTestPlaybook"}}]},
+         True)
+    ]
+
+    @pytest.mark.parametrize("test_playbooks, conf_dict, id_set, answer", IS_SKIPPED_TESTS_INPUTS)
+    def test_has_unskipped_test_playbook(self, mocker, test_playbooks, conf_dict, id_set, answer):
+        """
+        Given:
+            - A Script.
+            - conf file with skipped tests.
+            - id_set with paths for the testPlaybooks files.
+
+        When: running validate specifically on the script.
+
+        Then: Validate the script has at least one unskipped test playbook.
+        """
+        mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=conf_dict)
+
+        def side_effect(test_playbook):
+            return mock_structure("", {"id": test_playbook})
+
+        mocker.patch.object(ContentEntityWithTestPlaybooksValidator, 'get_struct_validator_for_test_playbook',
+                            side_effect=side_effect)
+        current = {"id": "SomeScript", "tests": test_playbooks}
+        structure = mock_structure("", current)
+        validator = ScriptValidator(structure)
+        validator.current_file = current
+        assert validator.has_unskipped_test_playbook(id_set_file=id_set) is answer

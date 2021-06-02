@@ -253,8 +253,9 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
-    "integration_is_skipped": {'code': "DDDD1", 'ui_applicable': False, 'related_field': ''},
-    "all_integration_test_playbooks_are_skipped": {'code': "DDDD2", 'ui_applicable': False, 'related_field': ''}
+    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
+    "all_integration_test_playbooks_are_skipped": {'code': "IN141", 'ui_applicable': False, 'related_field': ''},
+    "all_script_test_playbooks_are_skipped": {'code': "SC106", 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -1550,13 +1551,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_is_skipped(integration_name):
-        return f"Integration {integration_name} is currently in skipped. Please add working tests and unskip."
+    def integration_is_skipped(integration_id):
+        return f"Integration {integration_id} is currently in skipped. Please add working tests and unskip."
 
     @staticmethod
     @error_code_decorator
-    def all_integration_test_playbooks_are_skipped():
-        return "All test playbooks in this pack are currently skipped. Please unskip relevant test playbooks."
+    def all_integration_test_playbooks_are_skipped(integration_id):
+        return f"All test playbooks for integration {integration_id} in this pack are currently skipped. " \
+               f"Please unskip at least one of the relevant test playbooks."
+
+    @staticmethod
+    @error_code_decorator
+    def all_script_test_playbooks_are_skipped(script_id):
+        return f"All test playbooks for script {script_id} in this pack are currently skipped. " \
+               f"Please unskip at least one of the relevant test playbooks."
 
     @staticmethod
     def wrong_filename(file_type):

@@ -77,7 +77,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False
+            pykwalify_logs=False, check_unskipped_playbooks=True
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -98,6 +98,7 @@ class ValidateManager:
         self.debug_git = debug_git
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
+        self.check_unskipped_playbooks = check_unskipped_playbooks
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -157,6 +158,7 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.print_percent = True
+            self.check_unskipped_playbooks = False
 
         if no_docker_checks:
             self.skip_docker_checks = True
@@ -550,10 +552,13 @@ class ValidateManager:
             return deprecated_result
 
         if is_modified and self.is_backward_check:
-            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
+            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                            check_unskipped_playbooks=self.check_unskipped_playbooks,
+                                                            id_set_file=self.id_set_file),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                       check_unskipped_playbooks=self.check_unskipped_playbooks,
                                                        id_set_file=self.id_set_file)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
@@ -572,10 +577,14 @@ class ValidateManager:
             return deprecated_result
 
         if is_modified and self.is_backward_check:
-            return all([script_validator.is_valid_file(validate_rn=False),
+            return all([script_validator.is_valid_file(validate_rn=False,
+                                                       check_unskipped_playbooks=self.check_unskipped_playbooks,
+                                                       id_set_file=self.id_set_file),
                         script_validator.is_backward_compatible()])
         else:
-            return script_validator.is_valid_file(validate_rn=False)
+            return script_validator.is_valid_file(validate_rn=False,
+                                                  check_unskipped_playbooks=self.check_unskipped_playbooks,
+                                                  id_set_file=self.id_set_file)
 
     def validate_beta_integration(self, structure_validator, pack_error_ignore_list):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,

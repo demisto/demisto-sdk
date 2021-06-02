@@ -16,24 +16,20 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_with_test_playbooks_validator import \
+    ContentEntityWithTestPlaybooksValidator
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.hook_validations.test_playbook import \
-    TestPlaybookValidator
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_files_in_dir, get_pack_name, is_v2_file, print_error,
     server_version_compare)
 
 
-class IntegrationValidator(ContentEntityValidator):
+class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
@@ -72,13 +68,15 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False, id_set_file: Dict = {}) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
+                      check_unskipped_playbooks: bool = True, id_set_file: Dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
+                check_unskipped_playbooks (bool): Whether to check for unskipped test playbooks or not.
                 id_set_file (Dict): id_set.json file information in Dict structure.
 
             Returns:
@@ -113,9 +111,11 @@ class IntegrationValidator(ContentEntityValidator):
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
-            self.is_unskipped_integration(),
-            self.has_unskipped_test_playbook(id_set_file)
         ]
+
+        if check_unskipped_playbooks:
+            answers.append(self.is_unskipped_integration())
+            answers.append(self.has_unskipped_test_playbook(id_set_file))
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
@@ -159,8 +159,9 @@ class IntegrationValidator(ContentEntityValidator):
         return all(answers)
 
     def is_unskipped_integration(self):
+        """Validated the integration testing is not skipped."""
         skipped_integrations = self._load_conf_file()['skipped_integrations'].keys()
-        integration_name = self.current_file.get('name', '')
+        integration_name = self.current_file.get('id', '')
         if integration_name in skipped_integrations:
             error_message, error_code = Errors.integration_is_skipped(integration_name)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -168,22 +169,16 @@ class IntegrationValidator(ContentEntityValidator):
             return False
         return True
 
-    def has_unskipped_test_playbook(self, id_set_file):
-        test_playbooks_unskip_status = {}
+    def has_unskipped_test_playbook(self, id_set_file, test_playbook_ids: list = []):
+        """Validate there is at least one unskipped test playbook."""
         conf_tests = self._load_conf_file()['tests']
-
         for test in conf_tests:
             if 'integrations' in test:
                 if self.current_file.get('id') in test['integrations']:
-                    test_playbook_id = test['playbookID']
-                    test_playbook_file_path = id_set_file.get('TestPlaybooks', {}).get(test_playbook_id,
-                                                                                       {}).get('file_path', None)
-                    test_playbook_validator = TestPlaybookValidator(structure_validator=StructureValidator(
-                        test_playbook_file_path))
-                    test_playbooks_unskip_status[test_playbook_id] = test_playbook_validator.is_unskipped_playbook()
+                    test_playbook_ids.append(test['playbookID'])
 
-        if not any(test_playbooks_unskip_status.values()):
-            error_message, error_code = Errors.all_integration_test_playbooks_are_skipped(test_playbooks_unskip_status.keys())
+        if not super().has_unskipped_test_playbook(id_set_file, test_playbook_ids):
+            error_message, error_code = Errors.all_integration_test_playbooks_are_skipped(self.current_file.get('id'))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
             return False

@@ -553,7 +553,8 @@ class ValidateManager:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:
-            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
+            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                       id_set_file=self.id_set_file)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,

@@ -252,7 +252,9 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''}
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "integration_is_skipped": {'code': "DDDD1", 'ui_applicable': False, 'related_field': ''},
+    "all_integration_test_playbooks_are_skipped": {'code': "DDDD2", 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -1545,6 +1547,16 @@ class Errors:
     def taskid_different_from_id(task_key, id, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def integration_is_skipped(integration_name):
+        return f"Integration {integration_name} is currently in skipped. Please add working tests and unskip."
+
+    @staticmethod
+    @error_code_decorator
+    def all_integration_test_playbooks_are_skipped():
+        return "All test playbooks in this pack are currently skipped. Please unskip relevant test playbooks."
 
     @staticmethod
     def wrong_filename(file_type):

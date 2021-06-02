@@ -41,6 +41,13 @@ class TestPlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    def is_unskipped_playbook(self):
+        skipped_tests = self._load_conf_file()['skipped_tests']
+        playbook_name = self.current_file.get('id', '')
+        if playbook_name in skipped_tests:
+            return True
+        return False
+
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format

@@ -116,7 +116,7 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        with io.open(meta_file_path, mode="r", encoding="utf-8") as file:
+        with io.open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)
@@ -182,13 +182,14 @@ class BaseValidator:
             'errorCode': error_code,
             'message': error_message,
             'ui': error_data.get('ui_applicable'),
-            'relatedField': error_data.get('related_field')
+            'relatedField': error_data.get('related_field'),
+            'linter': 'validate'
         }
 
         json_contents = []
         if os.path.exists(self.json_file_path):
             existing_json = get_json(self.json_file_path)
-            if existing_json:
+            if isinstance(existing_json, list):
                 json_contents = existing_json
 
         file_type = find_type(file_path)
@@ -204,6 +205,7 @@ class BaseValidator:
             'entityType': entity_type,
             'errorType': 'Settings',
             'name': get_file_displayed_name(file_path),
+            'linter': 'validate',
             **output
         }
         json_contents.append(formatted_error_output)

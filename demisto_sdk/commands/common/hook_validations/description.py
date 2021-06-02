@@ -165,8 +165,8 @@ class DescriptionValidator(BaseValidator):
 
             except IndexError:
                 error_message, error_code = Errors.no_description_file_warning()
-                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
-                return True
+                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
+                    return True
 
             with open(description_path) as f:
                 description_content = f.read()

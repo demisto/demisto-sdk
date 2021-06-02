@@ -370,8 +370,8 @@ class ReadMeValidator(BaseValidator):
         for line_num, line in enumerate(self.readme_content.split('\n')):
             if 'demisto ' in line.lower() or ' demisto' in line.lower():
                 error_message, error_code = Errors.readme_contains_demisto_word(line_num)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                is_valid = False
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
 
         return is_valid
 

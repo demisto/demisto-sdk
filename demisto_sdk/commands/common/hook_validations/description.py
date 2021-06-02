@@ -171,11 +171,15 @@ class DescriptionValidator(BaseValidator):
             with open(description_path) as f:
                 description_content = f.read()
 
+        invalid_lines = []
         for line_num, line in enumerate(description_content.split('\n')):
             if 'demisto ' in line.lower() or ' demisto' in line.lower():
-                error_message, error_code = Errors.description_contains_demisto_word(line_num + yml_line_num + 1)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self._is_valid = False
-                    return False
+                invalid_lines.append(line_num + yml_line_num + 1)
+
+        if invalid_lines:
+            error_message, error_code = Errors.description_contains_demisto_word(invalid_lines)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
 
         return True

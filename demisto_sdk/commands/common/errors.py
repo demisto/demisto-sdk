@@ -1024,8 +1024,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word(line_num):
-        return f'Found the word \'Demisto\' in the description content in line {line_num}.'
+    def description_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -1304,8 +1304,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def readme_contains_demisto_word(line_num):
-        return f'Found the word \'Demisto\' in the readme content in line {line_num}.'
+    def readme_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator

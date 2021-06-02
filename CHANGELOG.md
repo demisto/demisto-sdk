@@ -3,7 +3,7 @@
 * Improved the error messages for separators in folder and file names in the **validate** command.
 * Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
 * Fixed an issue where the demisto-sdk version check failed due to a rate limit.
-* Added the ability to append pack README with credit to contributors.
+* Added the ability to append to the pack README credit to contributors.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

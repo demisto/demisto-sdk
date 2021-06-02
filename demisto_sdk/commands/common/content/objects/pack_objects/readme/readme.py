@@ -8,9 +8,9 @@ from wcmatch.pathlib import Path
 
 
 class Readme(TextObject):
-    def __init__(self, path: Union[Path, str], pack_path: Union[Path, str] = ''):
+    def __init__(self, path: Union[Path, str]):
         self._path = path
-        self._pack_path = pack_path
+        self._pack_path = os.path.dirname(path)
         super().__init__(path)
 
     def type(self):

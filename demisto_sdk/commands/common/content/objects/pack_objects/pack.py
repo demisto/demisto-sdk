@@ -191,7 +191,7 @@ class Pack:
         obj = None
         file = self._path / "README.md"
         if file.exists():
-            obj = Readme(path=file, pack_path=self._path)
+            obj = Readme(path=file)
 
         return obj
 

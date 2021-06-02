@@ -74,7 +74,7 @@ def test_generators_detection(attribute: str, content_type: Tuple[type], items: 
                              ('readme', Readme),
                              ('pack_metadata', PackMetaData),
                              ('secrets_ignore', SecretIgnore),
-                             ('contributors', Contributors)
+                             ('contributors', Contributors),
                          ])
 def test_detection(attribute: str, content_type: type):
     pack = Pack(PACK)

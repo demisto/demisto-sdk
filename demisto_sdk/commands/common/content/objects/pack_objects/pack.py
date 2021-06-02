@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, Layout, OldClassifier, PackIgnore,
     PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget)
+    Widget, Contributors)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
@@ -192,6 +192,15 @@ class Pack:
         file = self._path / "README.md"
         if file.exists():
             obj = Readme(file)
+
+        return obj
+
+    @property
+    def contributors(self) -> Optional[Contributors]:
+        obj = None
+        file = self._path / "CONTRIBUTORS.md"
+        if file.exists():
+            obj = Contributors(path=file)
 
         return obj
 

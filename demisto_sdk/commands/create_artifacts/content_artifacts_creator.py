@@ -615,7 +615,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
-    if pack.readme:
+    if pack.readme or pack.contributors:
         pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)
     if pack.author_image:

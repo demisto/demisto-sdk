@@ -28,6 +28,7 @@ from .script.script import *  # lgtm [py/polluting-import]
 from .secret_ignore.secret_ignore import *  # lgtm [py/polluting-import]
 from .tool.agent_tool import *  # lgtm [py/polluting-import]
 from .widget.widget import *  # lgtm [py/polluting-import]
+from .contributors.contributors import *  # lgtm [py/polluting-import]
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

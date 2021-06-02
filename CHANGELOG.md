@@ -1,4 +1,5 @@
 # Changelog
+* Fixed the **generate-docs** to handle integration authentication parameter.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

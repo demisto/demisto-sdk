@@ -416,7 +416,7 @@ class LintManager:
                                           lint_status=lint_status)
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         if cov_report:
-            generate_coverage_report(html=True)
+            generate_coverage_report(html=True, xml=True)
         self.create_json_output()
 
     @staticmethod

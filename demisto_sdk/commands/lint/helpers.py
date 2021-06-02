@@ -484,13 +484,23 @@ def coverage_files():
                         yield str(cov_path)
 
 
-def generate_coverage_report(html=False):
-    cov = coverage.Coverage()
+def generate_coverage_report(html=False, xml=False, report=True):
+    cov_dir = 'coverage_report'
+    cov_file = os.path.join(cov_dir, '.coverage')
+    cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
-    if os.path.exists('.coverage'):
-        cov.report()
+    if os.path.exists(cov_file):
+        export_msg = 'exporting {0} coverage report to {1}'
+        if report:
+            print('############################\n unit-tests coverage report\n############################')
+            cov.report()
         if html:
-            cov.html_report()
-        os.remove('.coverage')
+            html_dir = os.path.join(cov_dir, 'html')
+            logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
+            cov.html_report(directory=html_dir)
+        if xml:
+            xml_file = os.path.join(cov_dir, 'coverage.xml')
+            logger.info(export_msg.format('xml', xml_file))
+            cov.xml_report(outfile=xml_file)
     else:
-        logger.debug('skipping coverage report .coverage file not found.')
+        logger.debug(f'skipping coverage report {cov_file} file not found.')

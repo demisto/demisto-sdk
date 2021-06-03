@@ -1021,90 +1021,14 @@ def merge_id_sets(**kwargs):
     type=click.Path(resolve_path=True))
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
+    from demisto_sdk.commands.update_release_notes.update_rn_new import UpdateReleaseNotesManager
     check_configuration_file('update-release-notes', kwargs)
-    _pack = kwargs.get('input')
-    update_type = kwargs.get('update_type')
-    pre_release: bool = kwargs.get('pre_release', False)
-    is_all = kwargs.get('all')
-    text: str = kwargs.get('text', '')
-    specific_version = kwargs.get('version')
-    id_set_path = kwargs.get('id_set_path')
-    prev_ver = kwargs.get('prev_ver')
-    existing_rn_version = ''
-    # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
-    if _pack and is_all:
-        print_error("Please remove the --all flag when specifying only one pack.")
-        sys.exit(0)
-    print("Starting to update release notes.")
-    if _pack and '/' in _pack:
-        _pack = get_pack_name(_pack)
-    try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True)
-        validate_manager.setup_git_params()
-        modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
-        _packs = get_packs(modified).union(get_packs(old)).union(
-            get_packs(added))
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
-                    "Please run `cd content` from your terminal and run the command again")
-        sys.exit(1)
 
-    packs_existing_rn = {}
-    for file_path in added:
-        if 'ReleaseNotes' in file_path:
-            packs_existing_rn[get_pack_name(file_path)] = file_path
-
-    filtered_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-    filtered_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-
-    if _pack and API_MODULES_PACK in _pack:
-        # case: ApiModules
-        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified,
-                                         id_set_path=id_set_path, text=text)
-
-    # create release notes:
-    if _pack:
-        _packs = {_pack}
-    elif not is_all and len(_packs) > 1:
-        # case: multiple packs
-        pack_list = ' ,'.join(_packs)
-        print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
-                    f"To update release notes in a specific pack, please use the -i parameter "
-                    f"along with the pack name.")
-        sys.exit(0)
-    if _packs:
-        for pack in _packs:
-            if pack in packs_existing_rn and update_type is None:
-                existing_rn_version = packs_existing_rn[pack]
-            elif pack in packs_existing_rn and update_type is not None:
-                print_error(f"New release notes file already found for {pack}. "
-                            f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-i {pack}` without specifying the update_type.")
-                continue
-
-            pack_modified = filter_files_on_pack(pack, filtered_modified)
-            pack_added = filter_files_on_pack(pack, filtered_added)
-            pack_old = filter_files_on_pack(pack, old)
-
-            # default case:
-            if pack_modified or pack_added or pack_old:
-                update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
-                                          modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
-                                          added_files=pack_added, specific_version=specific_version, text=text,
-                                          existing_rn_version_path=existing_rn_version)
-                updated = update_pack_rn.execute_update()
-                # if new release notes were created and if previous release notes existed, remove previous
-                if updated and update_pack_rn.should_delete_existing_rn:
-                    os.unlink(packs_existing_rn[pack])
-
-            else:
-                print_warning(f'Either no changes were found in {pack} pack '
-                              f'or the changes found should not be documented in the release notes file '
-                              f'If relevant changes were made, please commit the changes and rerun the command')
-    else:
-        print_warning('No changes that require release notes were detected. If such changes were made, '
-                      'please commit the changes and rerun the command')
-    sys.exit(0)
+    rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
+                                       pre_release=kwargs.get('pre_release'), is_all=kwargs.get('all'),
+                                       text=kwargs.get('text'), specific_version=kwargs.get('version'),
+                                       id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'))
+    rn_mng.manage_rn_update()
 
 
 # ====================== find-dependencies ====================== #

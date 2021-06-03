@@ -28,6 +28,6 @@ class Report(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return client.import_report(file=self.path)
+        return client.upload_report(file=self.path)
 
 

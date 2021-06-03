@@ -12,7 +12,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
                          'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104',
-                         'PB104', 'SC101']
+                         'RM106', 'DS107', 'PB104', 'SC101']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -1027,6 +1027,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def description_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
+
+    @staticmethod
+    @error_code_decorator
     def no_beta_disclaimer_in_description():
         return f"The detailed description in beta integration package " \
                f"does not contain the beta disclaimer note. Add the following to the description:\n" \
@@ -1299,6 +1304,11 @@ class Errors:
     def readme_equal_description_error():
         return 'README.md content is equal to pack description. ' \
                'Please remove the duplicate description from README.md file.'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator

@@ -241,7 +241,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -251,7 +251,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -266,7 +266,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if is_valid:
             return True
         error_message, error_code = Errors.invalid_incident_field_type(self.current_file.get('type'), TypeFields)
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
             return False
         return True
 
@@ -276,7 +276,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if GroupFieldTypes.is_valid_group(group):
             return True
         error_message, error_code = Errors.invalid_incident_field_group_value(group)
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
             return False
         return True
 
@@ -291,7 +291,7 @@ class IncidentFieldValidator(ContentEntityValidator):
             return True
         error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
             INCIDENT_FIELD_CLINAME_VALIDATION_REGEX)
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
             return False
         return True
 
@@ -308,7 +308,7 @@ class IncidentFieldValidator(ContentEntityValidator):
             is_valid = cliname not in BleveMapping[GroupFieldTypes.INCIDENT_FIELD]
         if not is_valid:
             error_message, error_code = Errors.invalid_incident_field_cli_name_value(cliname)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
                 is_valid = True
         return is_valid
 
@@ -323,7 +323,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         required = self.current_file.get('required', False)
         if required:
             error_message, error_code = Errors.new_incident_field_required()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.quite_bc):
                 is_valid = False
 
         return is_valid
@@ -341,7 +341,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_fromversion_changed = True
 
         return is_fromversion_changed
@@ -355,7 +356,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_type_changed = True
 
         return is_type_changed
@@ -373,7 +375,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         if current_version < LooseVersion('5.5.0'):
             error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
 
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return False
 
         return True

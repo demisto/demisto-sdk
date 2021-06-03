@@ -111,7 +111,8 @@ class ScriptValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_message, file_path=self.file_path):
+                    if self.handle_error(error_message, error_message, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
 
         return False
@@ -138,7 +139,8 @@ class ScriptValidator(ContentEntityValidator):
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
                     error_message, error_code = Errors.added_required_fields(arg)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
         return False
 
@@ -163,7 +165,7 @@ class ScriptValidator(ContentEntityValidator):
         # type: () -> bool
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if len(args) != len(set(args)):
+        if len(args) != len(set(args)) and not self.structure_validator.quite_bc:
             return True
         return False
 
@@ -175,7 +177,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_args, old_args):
             error_message, error_code = Errors.breaking_backwards_arg_changed()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False
@@ -188,7 +191,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False

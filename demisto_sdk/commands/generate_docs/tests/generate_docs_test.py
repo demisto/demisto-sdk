@@ -17,6 +17,8 @@ FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integration.yml')
+TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credentials-none/integration-display'
+                                                   '-credentials-none.yml')
 
 
 # common tests
@@ -582,6 +584,27 @@ class TestGenerateIntegrationDoc:
         assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
                in open(fake_readme).read()
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+
+    def test_integration_doc_display_none(self):
+        """
+        Given
+            - YML file representing an integration, containing display None for credentials parameter.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly, specifically that line numbers are not being
+              reset after a table.
+            - Test that the predefined values and default values are added to the README.
+            - Test that credentials parameter name shown in README is using display password field.
+    """
+        readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_2_PATH)
+        readme_data = open(readme).read()
+        assert readme_data == open(
+            os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
+        assert '| None | The API key to use for the connection. | False |' not in readme_data
+        assert '| API Token | The API key to use for the connection. | False |'
 
 
 def test_get_command_examples_with_exclamation_mark(tmp_path):

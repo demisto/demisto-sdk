@@ -823,11 +823,10 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            pytest_command_builder_args = {'test_xml': test_xml, 'json': True}
-            if run_coverage:
-                pytest_command_builder_args['cov'] = self._pack_abs_dir.stem
+            cov = self._pack_abs_dir.stem if run_coverage else ''
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image=test_image, command=[build_pytest_command(**pytest_command_builder_args)],
+                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
+                                                                                     cov=cov)],
                 user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
@@ -850,9 +849,11 @@ class Linter:
 
                 if run_coverage:
                     cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                    cov_data = get_file_from_container(container_obj=container_obj,
+                                                       container_path="/devwork/.coverage")
+                    cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
                     with open(cov_file_path, 'wb') as coverage_file:
-                        coverage_file.write(get_file_from_container(container_obj=container_obj,
-                                                                    container_path="/devwork/.coverage"))
+                        coverage_file.write(cov_data)
                     coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container_obj,

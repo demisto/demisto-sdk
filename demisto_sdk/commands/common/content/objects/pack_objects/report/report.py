@@ -5,15 +5,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     JSONContentObject
 from wcmatch.pathlib import Path
 
-import tempfile
+
 from typing import Union
 
 import demisto_client
 from demisto_sdk.commands.common.constants import SCRIPT, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
-from demisto_sdk.commands.common.tools import get_demisto_version
-from packaging.version import parse
 from wcmatch.pathlib import Path
 
 class Report(JSONContentObject):
@@ -32,6 +28,6 @@ class Report(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return client.import_widget(file=self.path)
+        return client.import_report(file=self.path)
 
 

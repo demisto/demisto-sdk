@@ -28,6 +28,9 @@ from demisto_sdk.commands.common.tools import (
     get_files_in_dir, get_pack_name, is_v2_file, print_error,
     server_version_compare)
 
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
 
 class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
@@ -166,8 +169,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+        deprecated_v2_regex = DEPRECATED_DESC_REGEX
+        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass

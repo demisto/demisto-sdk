@@ -13,6 +13,9 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                is_v2_file,
                                                server_version_compare)
 
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
 
 class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And
@@ -247,8 +250,8 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
-        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+        deprecated_v2_regex = DEPRECATED_DESC_REGEX
+        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
         if is_deprecated:
             if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
                 pass

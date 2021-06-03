@@ -7,6 +7,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
 
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
@@ -241,8 +244,8 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+        deprecated_v2_regex = DEPRECATED_DESC_REGEX
+        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass

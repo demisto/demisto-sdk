@@ -441,8 +441,18 @@ class TestPlaybookValidator:
     def test_is_valid_deprecated_playbook(self, current, answer):
         """
         Given
-            - A deprecated playbook with a description.
-
+            1. A deprecated playbook with a valid description according to 'deprecated regex' (including the replacement
+               playbook name).
+            2. A deprecated playbook with a valid description according to the 'deprecated no replacement regex'.
+            3. A deprecated playbook with a valid description according to 'deprecated regex' (including the replacement
+               playbook name, and the reason for deprecation.).
+            4. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't include a replacement playbook name, or declare there isn't a replacement).
+            5. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't start with the phrase: 'Deprecated.').
+            6. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (Includes the reason for deprecation, but doesn't include a replacement playbook name,
+               or declare there isn't a replacement).
         When
             - running is_valid_as_deprecated.
 

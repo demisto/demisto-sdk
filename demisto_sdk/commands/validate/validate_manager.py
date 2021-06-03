@@ -1240,7 +1240,7 @@ class ValidateManager:
             False if current_file is deprecated and invalid.
             None if current_file is not deprecated.
         """
-        is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+        is_deprecated = current_file.get("deprecated")
 
         toversion_is_old = "toversion" in current_file and \
                            version.parse(current_file.get("toversion", "99.99.99")) < \

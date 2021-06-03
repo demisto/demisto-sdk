@@ -139,7 +139,8 @@ class TestRunLintInContainer:
                                              no_pwsh_analyze=no_pwsh_analyze,
                                              no_pwsh_test=no_pwsh_test,
                                              test_xml="",
-                                             keep_container=False)
+                                             keep_container=False,
+                                             run_coverage=False)
         assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
         if not no_test and pack_type == TYPE_PYTHON:
             linter_obj._docker_run_pytest.assert_called_once()

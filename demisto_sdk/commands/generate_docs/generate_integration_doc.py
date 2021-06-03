@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Any, List, Optional, Tuple, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
@@ -158,7 +158,7 @@ def generate_setup_section(yaml_data: dict):
         '2. Search for {}.'.format(yaml_data['name']),
         '3. Click **Add instance** to create and configure a new integration instance.'
     ]
-    access_data = []
+    access_data: List[Dict] = []
 
     for conf in yaml_data['configuration']:
         if conf['type'] == CREDENTIALS:

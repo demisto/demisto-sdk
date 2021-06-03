@@ -899,7 +899,6 @@ class TestDependsOnLayout:
     def test_layouts_dependencies(self, pack, dependencies):
         result = PackDependencies.find_dependencies(pack,
                                                     id_set_path='../../../tests/test_files/id_set/id_set.json',
-                                                    skip_id_set_creation=True,
                                                     update_pack_metadata=False,
                                                     silent_mode=True)
 

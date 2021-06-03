@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Dict
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
@@ -10,6 +10,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
+
+CREDENTIALS = 9
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, command_name: str) -> Tuple[str, list]:
@@ -159,15 +161,12 @@ def generate_setup_section(yaml_data: dict):
     access_data = []
 
     for conf in yaml_data['configuration']:
-        access_data.append(
-            {'Parameter': conf.get('display'),
-             'Description': string_escape_md(conf.get('additionalinfo', '')),
-             'Required': conf.get('required', '')})
-
-        if conf['type'] == 9:
+        if conf['type'] == CREDENTIALS:
+            add_access_data_of_type_credentials(access_data, conf)
+        else:
             access_data.append(
-                {'Parameter': conf.get('displaypassword', 'Password'),
-                 'Description': '',
+                {'Parameter': conf.get('display'),
+                 'Description': string_escape_md(conf.get('additionalinfo', '')),
                  'Required': conf.get('required', '')})
 
     # Check if at least one parameter has additional info field.
@@ -421,3 +420,27 @@ def command_permissions_filter(permission):
     elif permission.startswith('!'):
         return f'{permission}'
     return permission
+
+
+def add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict) -> None:
+    """
+    Adds to 'access_data' the parameter data of credentials configuration parameter.
+    Args:
+        access_data (List[Dict]): Access data to add the credentials conf data to.
+        credentials_conf (Dict): Credentials conf data.
+
+    Returns:
+        (None): Adds the data to 'access_data'.
+    """
+    display_name = credentials_conf.get('display')
+    display_password_name = credentials_conf.get('displaypassword', 'Password')
+    if display_name:
+        access_data.append(
+            {'Parameter': display_name,
+             'Description': string_escape_md(credentials_conf.get('additionalinfo', '')),
+             'Required': credentials_conf.get('required', '')})
+    if display_password_name:
+        access_data.append(
+            {'Parameter': credentials_conf.get('displaypassword', 'Password'),
+             'Description': '',
+             'Required': credentials_conf.get('required', '')})

@@ -1,6 +1,6 @@
 import json
 import os
-
+from typing import List, Dict
 import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
@@ -585,7 +585,7 @@ class TestGenerateIntegrationDoc:
                in open(fake_readme).read()
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
 
-    def test_integration_doc_display_none(self):
+    def test_integration_doc_credentials_display_missing(self):
         """
         Given
             - YML file representing an integration, containing display None for credentials parameter.
@@ -838,3 +838,39 @@ def test_scripts_in_playbook(repo):
 
     assert "test_1" in scripts
     assert "test_2" in scripts
+
+
+TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'Password', 'Required': True}]),
+    ([], {'displaypassword': 'specialPassword', 'additionalinfo': 'Username', 'required': False},
+     [{'Description': '', 'Parameter': 'specialPassword', 'Required': False}]),
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True, 'displaypassword': 'specialPassword'},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'specialPassword', 'Required': True}])
+]
+
+
+@pytest.mark.parametrize('access_data, credentials_conf, expected', TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS)
+def test_add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict, expected: List[Dict]):
+    """
+    Given:
+    - 'access_data': Containing parameter data to be added to README file.
+    - 'credentials_conf': Credentials configuration data represented as a dict.
+
+    When:
+    - Adding to README the parameter credential conf configuration details.
+    Case a: Only display name exists, display password does not.
+    Case b: Only display password name exists, display not.
+    Case c: Both display name and display password name exists.
+
+    Then:
+    - Ensure the expected credentials data is added to 'access_data'.
+    Case a: Display name is added, also 'Password' is added as default for display password name missing.
+    Case b: 'Password' is added as default for display password name missing.
+    Case c: Both display name and display password name are added.
+    """
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    add_access_data_of_type_credentials(access_data, credentials_conf)
+    assert access_data == expected

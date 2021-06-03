@@ -1117,30 +1117,28 @@ class TestisContextChanged:
             'name': 'test-command',
             'outputs': [{'contextPath': 'Test.test', 'description': '-', 'type': '-'}]}]
         }},  # case README and YML are synced
-         True  # expected results
-         ),
+            True  # expected results
+        ),
 
         (invalid_readme, {"script": {'commands': [{
             'name': 'test-command',
             'outputs': [{'contextPath': 'Test.test', 'description': '-', 'type': '-'}]}]
         }},  # case context missing from README
-         False  # expected results
-         ),
+            False  # expected results
+        ),
         (valid_readme, {"script": {'commands': [{
             'name': 'test-command',
             'outputs': [{'contextPath': 'Test', 'description': '-', 'type': '-'}]}]
         }},  # case context missing from YML
-         False  # expected results
-         ),
+            False  # expected results
+        ),
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
     def test_is_context_change_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
-
         When: running validate on integration with at least one command
-
         Then: Validate it's synced with the README.
         """
         patcher = patch('os.path.exists')

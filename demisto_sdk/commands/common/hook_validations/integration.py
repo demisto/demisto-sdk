@@ -917,11 +917,10 @@ class IntegrationValidator(ContentEntityValidator):
             contained_key_values: Dict = required_param.get('must_contain', dict())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
-                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and \
-                           all(k in param_details and param_details[k] == v
-                               for k, v in equal_key_values.items()) and \
-                           all(k in param_details and v in param_details[k]
-                               for k, v in contained_key_values.items())
+                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and all(
+                    k in param_details and param_details[k] == v for k, v in equal_key_values.items()) and all(
+                    k in param_details and v in param_details[k]
+                    for k, v in contained_key_values.items())
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),

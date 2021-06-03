@@ -250,7 +250,6 @@ class TestScriptValidator:
         validator.structure_validator.quite_bc = True
         assert validator.is_there_duplicates_args() is False
 
-
     REQUIRED_ARGS_BASE = {
         'args': [
             {

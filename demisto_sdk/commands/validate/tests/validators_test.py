@@ -1133,6 +1133,7 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'PackWithModifiedTestPlaybook' not in packs_that_should_have_version_raised
         assert 'NewPack' not in packs_that_should_have_version_raised
 
+
 def test_quite_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')

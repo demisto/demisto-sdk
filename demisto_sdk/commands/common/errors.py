@@ -815,7 +815,7 @@ class Errors:
     @error_code_decorator
     def test_not_in_conf_json(file_id):
         return f"You've failed to add the {file_id} to conf.json\n" \
-                "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
+               "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
     @error_code_decorator

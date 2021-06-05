@@ -153,7 +153,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if strings_with_incident_list:
             error_message, error_code = Errors.incident_in_script_arg(strings_with_incident_list)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 

@@ -789,7 +789,7 @@ class ValidateManager:
             yaml_data = get_yaml(file_path)
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if 'toversion' not in yaml_data and not yaml_data.get('deprecated'):
-                error_message, error_code = Errors.invalid_package_structure(file_path)
+                error_message, error_code = Errors.invalid_package_structure()
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False
         return handle_error

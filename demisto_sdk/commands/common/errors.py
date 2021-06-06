@@ -146,6 +146,9 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
+    "playbook_not_quiet_mode": {'code': "PB112", 'ui_applicable': False, 'related_field': ''},
+    "playbook_tasks_not_quiet_mode": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_tasks_continue_on_error": {'code': "PB114", 'ui_applicable': False, 'related_field': 'tasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -1546,6 +1549,22 @@ class Errors:
     def taskid_different_from_id(task_key, id, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_not_quiet_mode():
+        return "The playbook's quiet mode is off, it should be on, if it's done on purpose, then add this error to " \
+               "the pack's 'pack ignore' file"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_not_quiet_mode(tasks):
+        return f"The following tasks of the playbook have the quiet mode turned off:\n{tasks}\n"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_continue_on_error(tasks):
+        return f"The following tasks of the playbook do not stop on error:\n{tasks}"
 
     @staticmethod
     def wrong_filename(file_type):

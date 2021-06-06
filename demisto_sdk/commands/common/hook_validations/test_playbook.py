@@ -47,7 +47,7 @@ class TestPlaybookValidator(ContentEntityValidator):
         Return:
             bool. True if the the playbook is unskipped, False otherwise.
         """
-        skipped_tests = self._load_conf_file()['skipped_tests']
+        skipped_tests = self._load_conf_file().get('skipped_tests', {})
         playbook_name = self.current_file.get('id', '')
         if playbook_name in skipped_tests:
             return False

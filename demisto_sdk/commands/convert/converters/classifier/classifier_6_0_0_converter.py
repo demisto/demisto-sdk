@@ -2,7 +2,7 @@ from typing import List, Set
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
-    ClassifierObject
+    Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import \
     ClassifierBaseConverter
@@ -20,7 +20,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         Returns:
             (int): 0 if convert finished successfully, 1 otherwise.
         """
-        old_classifiers: List[ClassifierObject] = self.get_entities_by_entity_type(self.pack.classifiers,
+        old_classifiers: List[Classifier] = self.get_entities_by_entity_type(self.pack.classifiers,
                                                                                    FileType.OLD_CLASSIFIER)
         intersection_fields = self.get_classifiers_schema_intersection_fields()
         for old_classifier in old_classifiers:
@@ -29,12 +29,12 @@ class ClassifierSixConverter(ClassifierBaseConverter):
 
         return 0
 
-    def create_classifier_from_old_classifier(self, old_classifier: ClassifierObject,
+    def create_classifier_from_old_classifier(self, old_classifier: Classifier,
                                               intersection_fields: Set[str]) -> None:
         """
         Receives classifier of format 5_9_9. Builds classifier of format 6_0_0 and above.
         Args:
-            old_classifier (ClassifierObject): Old classifier object
+            old_classifier (Classifier): Old classifier object
             intersection_fields (Set[str]): Intersection fields of 6_0_0 and 5_9_9 formats.
 
         Returns:
@@ -45,17 +45,17 @@ class ClassifierSixConverter(ClassifierBaseConverter):
             return
         new_classifier = {k: v for k, v in old_classifier.to_dict().items() if k in intersection_fields}
         new_classifier = dict(new_classifier, type='classification', name=f'{classifier_name_and_id} - Classifier',
-                              description='TODO - Add description', fromVersion='6.0.0', id=classifier_name_and_id)
+                              description='', fromVersion='6.0.0', id=classifier_name_and_id)
 
         new_classifier_path = self.calculate_new_path(classifier_name_and_id, is_mapper=False)
         self.dump_new_entity(new_classifier_path, new_classifier)
 
-    def create_mapper_from_old_classifier(self, old_classifier: ClassifierObject) -> None:
+    def create_mapper_from_old_classifier(self, old_classifier: Classifier) -> None:
         """
         Receives classifier of format 5_9_9. Builds mapper of format 6_0_0 and above, if mapping exists in
         the old classifier.
         Args:
-            old_classifier (ClassifierObject): Old classifier object
+            old_classifier (Classifier): Old classifier object
 
         Returns:
             (None): Creates a new corresponding mapper to 'old_classifier' by 6_0_0 file structure, if mapping exists.
@@ -65,8 +65,8 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         if not classifier_name_and_id or not mapping:
             return
         mapper = dict(id=f'{classifier_name_and_id}-mapper', name=f'{classifier_name_and_id} - Incoming Mapper',
-                      type='mapping-incoming', description='TODO - Add description', version=-1,
-                      fromVersion='6.0.0', mapping=mapping, feed=old_classifier.get('feed', False))
+                      type='mapping-incoming', description='', version=-1, fromVersion='6.0.0', mapping=mapping,
+                      feed=old_classifier.get('feed', False))
         default_incident_type = old_classifier.get('defaultIncidentType')
         if default_incident_type:
             mapper['defaultIncidentType'] = default_incident_type

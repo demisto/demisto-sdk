@@ -83,9 +83,6 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
 
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
         super().__init__(pack, input_path, server_version, entity_dir_name='Layouts')
-        self.input_path: str = input_path
-        self.server_version = server_version
-        self.pack = pack
 
     def convert(self) -> int:
         if self.server_version >= self.VERSION_6_0_0:
@@ -99,9 +96,6 @@ class ClassifiersDirConvertManager(AbstractDirConvertManager):
 
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
         super().__init__(pack, input_path, server_version, entity_dir_name='Classifiers')
-        self.files_path: str = input_path
-        self.server_version = server_version
-        self.pack = pack
 
     def convert(self) -> int:
         if self.server_version >= self.VERSION_6_0_0:
@@ -118,4 +112,4 @@ class ClassifiersDirConvertManager(AbstractDirConvertManager):
         Returns:
             (bool): True if server version is 6_0_0 and above, false otherwise.
         """
-        return self.server_version >= self.VERSION_6_0_0
+        return self.server_version >= self.VERSION_6_0_0 and super().should_convert()

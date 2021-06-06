@@ -1,7 +1,9 @@
 import shutil
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Union
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.content.objects.pack_objects.indicator_type.indicator_type import IndicatorType
+from demisto_sdk.commands.common.content.objects.pack_objects.incident_type.incident_type import IncidentType
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
     LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -100,7 +102,9 @@ class LayoutSixConverter(LayoutBaseConverter):
 
         return new_layout_path
 
-    def update_incident_types_related_to_old_layouts(self, old_layouts: List[LayoutObject], layout_id: str) -> None:
+    # def update_incident_types_related_to_old_layouts(self, old_layouts: List[LayoutObject], layout_id: str) -> None:
+    def update_incident_and_indicator_types_related_to_old_layouts(self, old_layouts: List[LayoutObject],
+                                                                   layout_id: str) -> None:
         """
         Receives list of old layouts, updates related incident types with the layout field.
         Args:
@@ -113,9 +117,17 @@ class LayoutSixConverter(LayoutBaseConverter):
         old_layouts_type_ids = {layout.get('typeId') for layout in old_layouts}
         bounded_incident_types = [incident_type for incident_type in self.pack.incident_types
                                   if incident_type.get('id') in old_layouts_type_ids]
+        bounded_indicator_types = [indicator_type for indicator_type in self.pack.indicator_types
+                                   if indicator_type.get('id') in old_layouts_type_ids]
         for bounded_incident_type in bounded_incident_types:
             bounded_incident_type['layout'] = layout_id
             try:
                 bounded_incident_type.dump()
+            except shutil.SameFileError:
+                pass
+        for bounded_indicator_type in bounded_indicator_types:
+            bounded_indicator_type['layout'] = layout_id
+            try:
+                bounded_indicator_type.dump()
             except shutil.SameFileError:
                 pass

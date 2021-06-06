@@ -2,7 +2,7 @@
     "id": "Cymulate-mapper",
     "name": "Cymulate - Incoming Mapper",
     "type": "mapping-incoming",
-	"description": "TODO - Add description",
+	"description": "",
 	"feed": false,
 	"defaultIncidentType": "Cymulate Immediate Threats",
 	"mapping": {

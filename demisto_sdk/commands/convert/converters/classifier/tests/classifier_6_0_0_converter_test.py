@@ -4,7 +4,7 @@ import os
 
 import pytest
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
-    ClassifierObject
+    Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import \
@@ -48,7 +48,7 @@ class TestClassifierSixConverter:
         - Ensure expected classifier is created in the expected path with the expected data.
 
         """
-        old_classifier = ClassifierObject(self.OLD_CLASSIFIER_PATH, 'classifier')
+        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH, 'classifier')
         intersecting_fields = self.classifier_converter.get_classifiers_schema_intersection_fields()
         self.classifier_converter.create_classifier_from_old_classifier(old_classifier, intersecting_fields)
         expected_new_classifier_path = f'{self.TEST_PACK_PATH}/Classifiers/classifier-Cymulate.json'
@@ -66,7 +66,7 @@ class TestClassifierSixConverter:
         - Ensure expected mapper is created in the expected path with the expected data.
 
         """
-        old_classifier = ClassifierObject(self.OLD_CLASSIFIER_PATH, 'classifier')
+        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH, 'classifier')
         self.classifier_converter.create_mapper_from_old_classifier(old_classifier)
         expected_new_mapper_path = f'{self.TEST_PACK_PATH}/Classifiers/classifier-mapper-incoming-Cymulate.json'
         self.assert_expected_file_output(expected_new_mapper_path, 'classifier-mapper-incoming-Cymulate')

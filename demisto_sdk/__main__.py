@@ -1511,10 +1511,10 @@ def integration_diff(**kwargs):
 @pass_config
 def convert(config, **kwargs):
     """
-    Convert the content of the pack/directory/file in the given input to be compatible with the version given by
+    Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
     """
-    check_configuration_file('validate', kwargs)
+    check_configuration_file('convert', kwargs)
     sys.path.append(config.configuration.env_dir)
 
     input_path = kwargs['input']

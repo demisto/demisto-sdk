@@ -4,7 +4,7 @@ from typing import Optional, Set
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
-    ClassifierObject
+    Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.convert.converters.base_converter import \
@@ -47,12 +47,12 @@ class ClassifierBaseConverter(BaseConverter):
         return {field for field in intersecting_fields if field not in self.INTERSECTION_FIELDS_TO_EXCLUDE}
 
     @staticmethod
-    def extract_classifier_name(classifier: ClassifierObject) -> Optional[str]:
+    def extract_classifier_name(classifier: Classifier) -> Optional[str]:
         """
         Receives classifier object, returns the name given to the classifier object, if follows the expected file
         naming conventions.
         Args:
-            classifier (ClassifierObject): The classifier object.
+            classifier (Classifier): The classifier object.
 
         Returns:
             (Optional[str]):

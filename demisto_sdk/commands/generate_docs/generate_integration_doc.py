@@ -433,14 +433,12 @@ def add_access_data_of_type_credentials(access_data: List[Dict], credentials_con
         (None): Adds the data to 'access_data'.
     """
     display_name = credentials_conf.get('display')
-    display_password_name = credentials_conf.get('displaypassword', 'Password')
     if display_name:
         access_data.append(
             {'Parameter': display_name,
              'Description': string_escape_md(credentials_conf.get('additionalinfo', '')),
              'Required': credentials_conf.get('required', '')})
-    if display_password_name:
-        access_data.append(
-            {'Parameter': credentials_conf.get('displaypassword', 'Password'),
-             'Description': '',
-             'Required': credentials_conf.get('required', '')})
+    access_data.append(
+        {'Parameter': credentials_conf.get('displaypassword', 'Password'),
+         'Description': '' if display_name else string_escape_md(credentials_conf.get('additionalinfo', '')),
+         'Required': credentials_conf.get('required', '')})

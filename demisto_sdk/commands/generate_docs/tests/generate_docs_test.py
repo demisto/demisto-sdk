@@ -605,7 +605,7 @@ class TestGenerateIntegrationDoc:
         assert readme_data == open(
             os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
         assert '| None | The API key to use for the connection. | False |' not in readme_data
-        assert '| API Token | The API key to use for the connection. | False |'
+        assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
 def test_get_command_examples_with_exclamation_mark(tmp_path):

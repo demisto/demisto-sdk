@@ -1,6 +1,7 @@
 # Changelog
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
 
 # 1.3.9

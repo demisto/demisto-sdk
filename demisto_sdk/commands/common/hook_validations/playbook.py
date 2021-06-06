@@ -138,8 +138,6 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the task handles all condition branches correctly.
         """
-        if task.get('id') == '24':
-            a = 2
         is_all_condition_branches_handled: bool = True
         # ADD all possible conditions to task_condition_labels (UPPER)
         # #default# condition should always exist in a builtin condition

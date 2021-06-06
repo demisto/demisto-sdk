@@ -69,7 +69,8 @@ class MapperValidator(ContentEntityValidator):
             for removed in removed_incident_types:
                 removed_dict[removed] = old_mapper[removed]
             error_message, error_code = Errors.removed_incident_types(removed_dict)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 self.is_valid = False
                 return True
         else:
@@ -86,7 +87,8 @@ class MapperValidator(ContentEntityValidator):
 
             if removed_incident_fields:
                 error_message, error_code = Errors.changed_incident_field_in_mapper(removed_incident_fields)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     self.is_valid = False
                     return True
 
@@ -182,7 +184,7 @@ class MapperValidator(ContentEntityValidator):
                 # for outgoing mapper
                 if self.current_file.get('type', {}) == "mapping-outgoing":
                     # for inc timer type: "field.StartDate, and for using filters: "simple": "".
-                    if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields\
+                    if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields \
                             and inc_info['simple'].split('.')[0] not in content_incident_fields and inc_info['simple']:
                         invalid_inc_fields_list.append(inc_name) if inc_info['simple'] else None
 

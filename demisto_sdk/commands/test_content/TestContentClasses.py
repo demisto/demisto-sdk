@@ -101,6 +101,7 @@ class TestConfiguration:
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
         self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
         self.is_mockable = test_configuration.get('is_mockable')
+        self.performance_result_dt = test_configuration.get('performance_result_dt', '')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -428,7 +429,7 @@ class TestPlaybook:
     def get_incident_context(self, client: DefaultApi, incident_id: str) -> dict:
         try:
             body = {
-                "query": "${}"
+                "query": f"${self.configuration.performance_result_dt}"
             }
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path=f'/investigation/{incident_id}/context', body=body)

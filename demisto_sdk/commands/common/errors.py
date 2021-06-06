@@ -480,14 +480,17 @@ class Errors:
                f"the removed fields are: {removed} "
 
     @staticmethod
-    @error_code_decorator
-    def incident_in_command_name_or_args(commands, args):
-        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
-               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}\n" \
-               f"To fix the problem, remove the word incident, " \
+    def suggest_server_allowlist_fix(word='incident'):
+        return f"To fix the problem, remove the word {word}, " \
                f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_in_command_name_or_args(commands, args):
+        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
+               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}"
 
     @staticmethod
     @error_code_decorator
@@ -700,7 +703,7 @@ class Errors:
     @error_code_decorator
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
-               f' Please create or update to an updated versioned image\n'
+               f' Please create or update to an updated versioned image.'
 
     @staticmethod
     @error_code_decorator
@@ -721,7 +724,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path) -> str:
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
@@ -814,7 +817,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def test_not_in_conf_json(file_id):
-        return "You've failed to add the {file_id} to conf.json\n" \
+        return f"You've failed to add the {file_id} to conf.json\n" \
                "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
@@ -1000,11 +1003,7 @@ class Errors:
     @error_code_decorator
     def incident_in_script_arg(arguments):
         return f"The script is part of a core pack. Therefore, the use of the word `incident` in argument names is" \
-               f" forbidden. problematic argument" \
-               f" names:\n {arguments}. \n, To fix the problem, remove the word incident, " \
-               f"or add the argument name to the allowlist named argsExceptionsList in:\n" \
-               f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
-               f"servicemodule_test.go#L8273"
+               f" forbidden. problematic argument names:\n {arguments}."
 
     @staticmethod
     @error_code_decorator
@@ -1058,7 +1057,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name, please update the file."
+        return f"The word {word} cannot be used as a name."
 
     @staticmethod
     @error_code_decorator
@@ -1072,9 +1071,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_type, TypeFields):
+    def invalid_incident_field_type(file_type, type_fields):
         return f"Type: `{file_type}` is not one of available types.\n" \
-               f"available types: {[value.value for value in TypeFields]}"
+               f"available types: {[value.value for value in type_fields]}"
 
     @staticmethod
     @error_code_decorator
@@ -1231,7 +1230,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_invalid_support_type(pack_meta_file):
+    def pack_metadata_invalid_support_type():
         return 'Support field should be one of the following: xsoar, partner, developer or community.'
 
     @staticmethod
@@ -1274,14 +1273,14 @@ class Errors:
     @error_code_decorator
     def pack_name_is_not_in_xsoar_standards(reason):
         if reason == "short":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
-                   f'characters long.'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
+                   f' characters long.'
         if reason == "capital":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
-                   f'letter.'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital' \
+                   f' letter.'
         if reason == "wrong_word":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words: ' \
-                   f'["Pack", "Playbook", "Integration", "Script"]'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' ["Pack", "Playbook", "Integration", "Script"]'
 
     @staticmethod
     @error_code_decorator
@@ -1375,7 +1374,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_package_structure(invalid_files):
+    def invalid_package_structure():
         return 'You should update the following file to the package format, for further details please visit ' \
                'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
@@ -1552,14 +1551,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_uuid(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+    def invalid_uuid(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be from uuid format."
 
     @staticmethod
     @error_code_decorator
-    def taskid_different_from_id(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+    def taskid_different_from_id(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
 
     @staticmethod

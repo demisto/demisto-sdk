@@ -417,7 +417,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
                 if missing_outputs:
                     error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
                                                                            context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         output_for_reputation_valid = False
 
@@ -431,7 +432,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
                 if reputation_output and not reputation_output.intersection(context_outputs_paths):
                     error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
                                                                           context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         output_for_reputation_valid = False
 
@@ -461,7 +463,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
                 old_subtype = self.old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         return True
 
@@ -569,7 +572,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         if commands_with_incident or args_with_incident:
             error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,
                                                                                 args_with_incident)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 
@@ -631,7 +635,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
                 error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     self.is_valid = False
                     return True
 
@@ -685,13 +690,15 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         if not old_command_to_context_paths:
             return False
         # if new integration command has no outputs, and old one does, a change of context will occur.
-        if not current_command_to_context_paths and old_command_to_context_paths:
+        if not current_command_to_context_paths and old_command_to_context_paths \
+                and not self.structure_validator.quite_bc:
             return True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
                     error_message, error_code = Errors.breaking_backwards_command(old_command)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         return True
 
@@ -708,7 +715,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         if not old_param_names.issubset(current_param_names):
             removed_parameters = old_param_names - current_param_names
             error_message, error_code = Errors.removed_integration_parameters(repr(removed_parameters))
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 self.is_valid = False
                 is_removed_parameter = True
 
@@ -751,7 +759,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
 
         if removed or changed:
             error_message, error_code = Errors.changed_integration_yml_fields(repr(removed), repr(changed))
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 self.is_valid = False
                 return True
         return False
@@ -767,14 +776,16 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
                     error_message, error_code = Errors.added_required_fields(field)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         is_added_required = True
 
             # if required is True but no old field.
             elif required:
                 error_message, error_code = Errors.added_required_fields(field)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     self.is_valid = False
                     is_added_required = True
 
@@ -804,14 +815,16 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
             if field_type == self.EXPIRATION_FIELD_TYPE:
                 if configuration_display:
                     error_message, error_code = Errors.not_used_display_name(configuration_param['name'])
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         self.is_valid = False
                         return True
 
             elif not is_field_hidden and not configuration_display and not configuration_param.get('displaypassword') \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
                 error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     self.is_valid = False
                     return True
 
@@ -936,15 +949,14 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         for required_param in FEED_REQUIRED_PARAMS:
             is_valid = False
             param_details = params.get(required_param.get('name'))  # type: ignore
-            equal_key_values: Dict = required_param.get('must_equal', dict())   # type: ignore
+            equal_key_values: Dict = required_param.get('must_equal', dict())  # type: ignore
             contained_key_values: Dict = required_param.get('must_contain', dict())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
-                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and \
-                    all(k in param_details and param_details[k] == v
-                        for k, v in equal_key_values.items()) and \
-                    all(k in param_details and v in param_details[k]
-                        for k, v in contained_key_values.items())
+                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and all(
+                    k in param_details and param_details[k] == v for k, v in equal_key_values.items()) and all(
+                    k in param_details and v in param_details[k]
+                    for k, v in contained_key_values.items())
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),

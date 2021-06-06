@@ -77,7 +77,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_unskipped_playbooks=True
+            pykwalify_logs=False, check_unskipped_playbooks=True, quite_bc=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -98,6 +98,7 @@ class ValidateManager:
         self.debug_git = debug_git
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
+        self.quite_bc = quite_bc
         self.check_unskipped_playbooks = check_unskipped_playbooks
 
         if json_file_path:
@@ -355,7 +356,8 @@ class ValidateManager:
                                                  is_new_file=not is_modified,
                                                  json_file_path=self.json_file_path,
                                                  skip_schema_check=self.skip_schema_check,
-                                                 pykwalify_logs=self.pykwalify_logs)
+                                                 pykwalify_logs=self.pykwalify_logs,
+                                                 quite_bc=self.quite_bc)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
@@ -540,7 +542,8 @@ class ValidateManager:
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
-                                                     json_file_path=self.json_file_path)
+                                                     json_file_path=self.json_file_path,
+                                                     )
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -550,7 +553,6 @@ class ValidateManager:
                                                                validator=integration_validator)
         if deprecated_result is not None:
             return deprecated_result
-
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
                                                             check_unskipped_playbooks=self.check_unskipped_playbooks,
@@ -799,7 +801,7 @@ class ValidateManager:
             yaml_data = get_yaml(file_path)
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if 'toversion' not in yaml_data and not yaml_data.get('deprecated'):
-                error_message, error_code = Errors.invalid_package_structure(file_path)
+                error_message, error_code = Errors.invalid_package_structure()
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False
         return handle_error

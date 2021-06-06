@@ -111,7 +111,8 @@ class ScriptValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_message, file_path=self.file_path):
+                    if self.handle_error(error_message, error_message, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
 
         return False
@@ -138,7 +139,8 @@ class ScriptValidator(ContentEntityValidator):
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
                     error_message, error_code = Errors.added_required_fields(arg)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
         return False
 
@@ -153,7 +155,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if strings_with_incident_list:
             error_message, error_code = Errors.incident_in_script_arg(strings_with_incident_list)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 
@@ -163,7 +166,7 @@ class ScriptValidator(ContentEntityValidator):
         # type: () -> bool
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if len(args) != len(set(args)):
+        if len(args) != len(set(args)) and not self.structure_validator.quite_bc:
             return True
         return False
 
@@ -175,7 +178,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_args, old_args):
             error_message, error_code = Errors.breaking_backwards_arg_changed()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False
@@ -188,7 +192,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False
@@ -304,10 +309,11 @@ class ScriptValidator(ContentEntityValidator):
         """
 
         script_folder_name = os.path.basename(os.path.dirname(self.file_path))
-        separators = self.check_separators_in_name(script_folder_name)
+        valid_folder_name = self.remove_separators_from_name(script_folder_name)
 
-        if separators:
-            error_message, error_code = Errors.folder_name_has_separators('script', separators)
+        if valid_folder_name != script_folder_name:
+            error_message, error_code = Errors.folder_name_has_separators('script', script_folder_name,
+                                                                          valid_folder_name)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -324,7 +330,8 @@ class ScriptValidator(ContentEntityValidator):
 
         # Gets the all script files that may have the script name as base name
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py'], False)
-        separators = []
+        valid_files = []
+        invalid_files = []
 
         for file_path in files_to_check:
 
@@ -335,13 +342,16 @@ class ScriptValidator(ContentEntityValidator):
 
             else:
                 base_name = file_name.rsplit('.', 1)[0]
-            separators.extend(self.check_separators_in_name(base_name))
 
-        if separators:
-            # Remove duplicate separators
-            separators = list(dict.fromkeys(separators))
+            valid_base_name = self.remove_separators_from_name(base_name)
 
-            error_message, error_code = Errors.file_name_has_separators('script', separators)
+            if valid_base_name != base_name:
+                valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
+                invalid_files.append(file_name)
+
+        if invalid_files:
+
+            error_message, error_code = Errors.file_name_has_separators('script', invalid_files, valid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

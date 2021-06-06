@@ -162,7 +162,7 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         """Validated the integration testing is not skipped."""
         skipped_integrations = self._load_conf_file().get('skipped_integrations', {})
         integration_id = _get_file_id('integration', self.current_file)
-        if integration_id in skipped_integrations:
+        if skipped_integrations and integration_id in skipped_integrations:
             error_message, error_code = Errors.integration_is_skipped(integration_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False

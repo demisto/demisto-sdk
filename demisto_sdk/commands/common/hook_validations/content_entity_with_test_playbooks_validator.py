@@ -13,7 +13,7 @@ class ContentEntityWithTestPlaybooksValidator(ContentEntityValidator, ABC):
         """Check if the content entity has at least one unskipped test playbook."""
         test_playbooks_unskip_status = {}
 
-        if self.current_file.get('tests') is list:
+        if type(self.current_file.get('tests')) is list:
             test_playbook_ids.extend(self.current_file.get('tests', []))
 
         for test_playbook_id in set(test_playbook_ids):
@@ -30,7 +30,6 @@ class ContentEntityWithTestPlaybooksValidator(ContentEntityValidator, ABC):
         for test_playbook in test_playbooks:
             if test_playbook_id in test_playbook.keys():
                 test_playbook_file_path = test_playbook.get(test_playbook_id, {}).get('file_path', None)
-                print(f"DDDD1:{test_playbook_file_path}")
 
         structure_validator = self.get_struct_validator_for_test_playbook(test_playbook_file_path)
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator)
@@ -40,4 +39,4 @@ class ContentEntityWithTestPlaybooksValidator(ContentEntityValidator, ABC):
     @staticmethod
     def get_struct_validator_for_test_playbook(test_playbook_file_path: str) -> StructureValidator:
         """Return StructureValidator of a test playbook file path."""
-        return StructureValidator(test_playbook_file_path)
+        return StructureValidator(test_playbook_file_path, predefined_scheme='playbook')

@@ -814,7 +814,7 @@ class TestIntegrationValidator:
         Then: Validate the integration is not skipped.
         """
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=conf_dict)
-        current = {"id": "SomeIntegration"}
+        current = {"commonfields": {"id": "SomeIntegration"}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
@@ -858,7 +858,7 @@ class TestIntegrationValidator:
 
         mocker.patch.object(ContentEntityWithTestPlaybooksValidator, 'get_struct_validator_for_test_playbook',
                             side_effect=side_effect)
-        current = {"id": "SomeIntegration", "tests": ["SomeTestPlaybook"]}
+        current = {"commonfields": {"id": "SomeIntegration"}, "tests": ["SomeTestPlaybook"]}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current

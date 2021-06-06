@@ -8,7 +8,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_with_test_playb
     ContentEntityWithTestPlaybooksValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
+from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_core_pack_list,
                                                get_files_in_dir, get_pack_name,
                                                is_v2_file,
                                                server_version_compare)
@@ -110,7 +111,8 @@ class ScriptValidator(ContentEntityWithTestPlaybooksValidator):
     def has_unskipped_test_playbook(self, id_set_file, test_playbook_ids: list = []):
         """Validate there is at least one unskipped test playbook."""
         if not super().has_unskipped_test_playbook(id_set_file, test_playbook_ids):
-            error_message, error_code = Errors.all_script_test_playbooks_are_skipped(self.current_file.get('id'))
+            error_message, error_code = Errors.all_script_test_playbooks_are_skipped(_get_file_id('script',
+                                                                                                  self.current_file))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
             return False

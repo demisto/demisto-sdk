@@ -545,7 +545,7 @@ class TestScriptValidator:
 
         mocker.patch.object(ContentEntityWithTestPlaybooksValidator, 'get_struct_validator_for_test_playbook',
                             side_effect=side_effect)
-        current = {"id": "SomeScript", "tests": test_playbooks}
+        current = {"commonfields": {"id": "SomeScript"}, "tests": test_playbooks}
         structure = mock_structure("", current)
         validator = ScriptValidator(structure)
         validator.current_file = current

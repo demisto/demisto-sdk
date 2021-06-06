@@ -407,7 +407,7 @@ class PlaybookValidator(ContentEntityValidator):
     def is_valid_with_indicators_input(self):
         input_data = self.current_file.get('inputs', [])
         for item in input_data:
-            entity = item['playbookInputQuery']['queryEntity'] if item['playbookInputQuery'] else None
+            entity = item['playbookInputQuery'].get('queryEntity', '') if item.get('playbookInputQuery', None) else None
             if entity == 'indicators':
                 answer = [
                     self.is_playbook_quiet_mode(),
@@ -447,4 +447,3 @@ class PlaybookValidator(ContentEntityValidator):
             self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
         return True
-

@@ -21,7 +21,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
             (int): 0 if convert finished successfully, 1 otherwise.
         """
         old_classifiers: List[Classifier] = self.get_entities_by_entity_type(self.pack.classifiers,
-                                                                                   FileType.OLD_CLASSIFIER)
+                                                                             FileType.OLD_CLASSIFIER)
         intersection_fields = self.get_classifiers_schema_intersection_fields()
         for old_classifier in old_classifiers:
             self.create_classifier_from_old_classifier(old_classifier, intersection_fields)

@@ -1,9 +1,7 @@
 import shutil
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Set
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.indicator_type.indicator_type import IndicatorType
-from demisto_sdk.commands.common.content.objects.pack_objects.incident_type.incident_type import IncidentType
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
     LayoutObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -39,7 +37,7 @@ class LayoutSixConverter(LayoutBaseConverter):
                 if tabs:
                     new_layout_dict[layout_kind] = {'tabs': tabs}
 
-            self.update_incident_types_related_to_old_layouts(old_corresponding_layouts, layout_id)
+            self.update_incident_and_indicator_types_related_to_old_layouts(old_corresponding_layouts, layout_id)
 
             new_layout_path = self.calculate_new_layout_relative_path(layout_id)
             self.dump_new_entity(new_layout_path, new_layout_dict)

@@ -881,10 +881,33 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
-    def test_collect_layouts_dependencies(self, id_set):
+    """
+    Given
+        - A pack with a layout of type incident/indicator.
+
+    When
+        - Building dependency graph for pack.
+
+    Then
+        - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
+    """
+
+    @pytest.mark.parametrize('pack, dependencies', [
+        ('pack3', 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
+        ('pack4', 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
+    ])
+    def test_layouts_dependencies(self, pack, dependencies):
+        result = PackDependencies.find_dependencies(pack,
+                                                    id_set_path='../../../tests/test_files/id_set/id_set.json',
+                                                    update_pack_metadata=False,
+                                                    silent_mode=True)
+
+        assert result == {dependencies: {'mandatory': True, 'display_name': dependencies}}
+
+    def test_collect_incident_layout_dependencies(self, id_set):
         """
         Given
-            - A layout entry in the id_set.
+            - A layout of type incident entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -892,8 +915,7 @@ class TestDependsOnLayout:
         Then
             - Extracting the packs that the layout depends on.
         """
-        expected_result = {("FeedMitreAttack", True), ("PrismaCloudCompute", True), ("CommonTypes", True),
-                           ("CrisisManagement", True)}
+        expected_result = {("PrismaCloudCompute", True)}
 
         test_input = [
             {
@@ -902,6 +924,46 @@ class TestDependsOnLayout:
                     "name": "Dummy Layout",
                     "pack": "dummy_pack",
                     "kind": "edit",
+                    "path": "dummy_path",
+                    "incident_and_indicator_types": [
+                        "MITRE ATT&CK",
+                        "Prisma Cloud Compute Cloud Discovery"
+                    ],
+                    "incident_and_indicator_fields": [
+                        "indicator_adminname",
+                        "indicator_jobtitle"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose=False,
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_indicator_layout_dependencies(self, id_set):
+        """
+        Given
+            - A layout of type indicator entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
+        expected_result = {("FeedMitreAttack", True), ("CommonTypes", True), ("CrisisManagement", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "indicatorsDetails",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
                         "MITRE ATT&CK",
@@ -942,7 +1004,7 @@ class TestDependsOnLayout:
                     "typeID": "dummy_layout",
                     "name": "Dummy Layout",
                     "pack": "dummy_pack",
-                    "kind": "edit",
+                    "kind": "indicatorsDetails",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
                         "accountRep",

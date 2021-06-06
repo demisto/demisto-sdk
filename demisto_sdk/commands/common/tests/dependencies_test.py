@@ -884,11 +884,15 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                 pack_to_take_entity_from = random.choice(range(1, number_of_packs))
                 input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
                                                                                 LIST_ARGUMENTS_TO_METHODS[arg_type]))
+                if arg_type == 'indicators_fields':
+                    continue
                 dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         else:
             pack_to_take_entity_from = random.choice(range(1, number_of_packs))
             input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg_type)
+            if arg_type == 'indicator_type':
+                continue
             dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         inputs_values[arg] = input_argument

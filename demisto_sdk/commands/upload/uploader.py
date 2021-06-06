@@ -7,6 +7,7 @@ import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
+
 from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,

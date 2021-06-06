@@ -1180,10 +1180,11 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
         """
 
         integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
-        separators = self.check_separators_in_name(integration_folder_name)
+        valid_folder_name = self.remove_separators_from_name(integration_folder_name)
 
-        if separators:
-            error_message, error_code = Errors.folder_name_has_separators('integration', separators)
+        if valid_folder_name != integration_folder_name:
+            error_message, error_code = Errors.folder_name_has_separators('integration', integration_folder_name,
+                                                                          valid_folder_name)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -1200,7 +1201,8 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
 
         # Gets the all integration files that may have the integration name as base name
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py', 'md', 'png'], False)
-        separators = []
+        invalid_files = []
+        valid_files = []
 
         for file_path in files_to_check:
 
@@ -1214,13 +1216,16 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
 
             else:
                 base_name = file_name.rsplit('.', 1)[0]
-            separators.extend(self.check_separators_in_name(base_name))
 
-        if separators:
-            # Remove duplicate separators
-            separators = list(dict.fromkeys(separators))
+            valid_base_name = self.remove_separators_from_name(base_name)
 
-            error_message, error_code = Errors.file_name_has_separators('integration', separators)
+            if valid_base_name != base_name:
+                invalid_files.append(file_name)
+                valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
+
+        if invalid_files:
+
+            error_message, error_code = Errors.file_name_has_separators('integration', invalid_files, valid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

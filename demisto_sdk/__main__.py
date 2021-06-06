@@ -122,7 +122,7 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version):
     config.configuration = Configuration()
-    if not os.getenv('DISABLE_SDK_VERSION_CHECK') or version:  # If the key exists/called to version
+    if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
         last_release = get_last_remote_release_version()
         print_warning(f'You are using demisto-sdk {cur_version}.')
@@ -299,7 +299,8 @@ def unify(**kwargs):
     help='Whether to run all validation on all files or not.'
 )
 @click.option(
-    '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
+    '-i', '--input', type=click.Path(exists=True, resolve_path=True),
+    help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
@@ -498,9 +499,9 @@ def secrets(config, **kwargs):
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -577,7 +578,7 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
     """
     return format_manager(
-        str(input),
+        str(input) if input else None,
         str(output) if output else None,
         from_version=from_version,
         no_validate=no_validate,

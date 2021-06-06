@@ -1,3 +1,4 @@
+import glob
 import io
 import os
 import sys
@@ -299,3 +300,53 @@ def test_invalid_short_file(capsys):
                          'Pack README files are expected to include a few sentences about the pack and/or images.'
     assert not result
     assert short_readme_error in stdout
+
+
+def test_demisto_in_readme(repo):
+    """
+        Given
+            - An integration README contains the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_readme_content.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the word Demisto in the README.')
+
+    readme_validator = ReadMeValidator(integration.readme.path)
+
+    assert not readme_validator.verify_demisto_in_readme_content()
+
+
+def test_demisto_not_in_readme(repo):
+    """
+        Given
+            - An integration README without the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_readme_content.
+
+        Then
+            - Ensure that the validation passes.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the word XSOAR in the README.')
+
+    readme_validator = ReadMeValidator(integration.readme.path)
+
+    assert readme_validator.verify_demisto_in_readme_content()

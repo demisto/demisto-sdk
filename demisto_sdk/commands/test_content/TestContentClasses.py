@@ -429,7 +429,7 @@ class TestPlaybook:
     def get_incident_context(self, client: DefaultApi, incident_id: str) -> dict:
         try:
             body = {
-                "query": f"${self.configuration.performance_result_dt}"
+                "query": f"$({self.configuration.performance_result_dt})"
             }
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path=f'/investigation/{incident_id}/context', body=body)

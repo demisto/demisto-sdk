@@ -13,10 +13,10 @@ class ContentEntityWithTestPlaybooksValidator(ContentEntityValidator, ABC):
         """Check if the content entity has at least one unskipped test playbook."""
         test_playbooks_unskip_status = {}
 
-        if self.current_file.get('tests'):
-            test_playbook_ids.append(self.current_file.get('tests'))
+        if self.current_file.get('tests') is list:
+            test_playbook_ids.extend(self.current_file.get('tests', []))
 
-        for test_playbook_id in list(set(test_playbook_ids)):
+        for test_playbook_id in set(test_playbook_ids):
             test_playbooks_unskip_status[test_playbook_id] = self.is_test_playbook_unskipped(test_playbook_id,
                                                                                              id_set_file)
         if not any(test_playbooks_unskip_status.values()):
@@ -26,9 +26,11 @@ class ContentEntityWithTestPlaybooksValidator(ContentEntityValidator, ABC):
     def is_test_playbook_unskipped(self, test_playbook_id: str, id_set_file: dict) -> bool:
         """Check if a certain test playbook is unskipped."""
         test_playbooks = id_set_file.get('TestPlaybooks', [])
+        test_playbook_file_path = ''
         for test_playbook in test_playbooks:
             if test_playbook_id in test_playbook.keys():
                 test_playbook_file_path = test_playbook.get(test_playbook_id, {}).get('file_path', None)
+                print(f"DDDD1:{test_playbook_file_path}")
 
         structure_validator = self.get_struct_validator_for_test_playbook(test_playbook_file_path)
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator)

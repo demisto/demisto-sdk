@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_core_pack_list,
+    _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_files_in_dir, get_pack_name, is_v2_file, print_error,
     server_version_compare)
 
@@ -161,9 +161,9 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
     def is_unskipped_integration(self):
         """Validated the integration testing is not skipped."""
         skipped_integrations = self._load_conf_file()['skipped_integrations'].keys()
-        integration_name = self.current_file.get('id', '')
-        if integration_name in skipped_integrations:
-            error_message, error_code = Errors.integration_is_skipped(integration_name)
+        integration_id = _get_file_id('integration', self.current_file)
+        if integration_id in skipped_integrations:
+            error_message, error_code = Errors.integration_is_skipped(integration_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
             return False
@@ -172,13 +172,15 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
     def has_unskipped_test_playbook(self, id_set_file, test_playbook_ids: list = []):
         """Validate there is at least one unskipped test playbook."""
         conf_tests = self._load_conf_file()['tests']
+        integration_id = _get_file_id('integration', self.current_file)
         for test in conf_tests:
             if 'integrations' in test:
-                if self.current_file.get('id') in test['integrations']:
+                if (type(test['integrations']) is str and integration_id == test['integrations']) or \
+                        integration_id in list(test['integrations']):
                     test_playbook_ids.append(test['playbookID'])
 
         if not super().has_unskipped_test_playbook(id_set_file, test_playbook_ids):
-            error_message, error_code = Errors.all_integration_test_playbooks_are_skipped(self.current_file.get('id'))
+            error_message, error_code = Errors.all_integration_test_playbooks_are_skipped(integration_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
             return False

@@ -250,6 +250,28 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
 
 
+def test_upload_report_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A report named report-dummy_report.json to upload
+
+    When
+        - Uploading a report
+
+    Then
+        - Ensure report is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+
+    report_name = "report-dummy_report.json"
+    report_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Reports/{report_name}"
+    uploader = Uploader(input=report_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+
+    assert [(report_name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
+
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """
     Given

@@ -6,6 +6,9 @@ from typing import List, Tuple, Union
 import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
+from tabulate import tabulate
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONTENT_ENTITIES_DIRS,
                                                    DASHBOARDS_DIR,
@@ -15,9 +18,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType, REPORTS_DIR)
+                                                   WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)
@@ -28,8 +32,6 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_demisto_version,
                                                get_parent_directory_name,
                                                print_v)
-from packaging.version import Version
-from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = [

@@ -160,7 +160,7 @@ class IntegrationValidator(ContentEntityWithTestPlaybooksValidator):
 
     def is_unskipped_integration(self):
         """Validated the integration testing is not skipped."""
-        skipped_integrations = self._load_conf_file().get('skipped_integrations', {}).keys()
+        skipped_integrations = self._load_conf_file().get('skipped_integrations', {})
         integration_id = _get_file_id('integration', self.current_file)
         if integration_id in skipped_integrations:
             error_message, error_code = Errors.integration_is_skipped(integration_id)

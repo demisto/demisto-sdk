@@ -443,6 +443,7 @@ class TestPlaybook:
             self.build_context.logging_module.error(pformat(res))
             return {}
         logging.info(res[0])
+        logging.info(type(res[0]))
         return res[0]
 
 
@@ -1422,7 +1423,7 @@ class TestContext:
             playbook_state = self._poll_for_playbook_state()
 
             self.playbook.disable_integrations(self.client, self.server_context)
-            if self.build_context.is_performance_test:
+            if self.build_context.is_performance_test and self.playbook.configuration.performance_result_dt:
                 self._add_to_performance_results()
             self._clean_incident_if_successful(playbook_state)
             return playbook_state

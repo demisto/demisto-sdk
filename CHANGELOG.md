@@ -2,6 +2,7 @@
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 * Improved the deprecated message validation required from playbooks and scripts.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

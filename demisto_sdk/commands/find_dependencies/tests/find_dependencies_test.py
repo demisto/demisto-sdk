@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from TestSuite.utils import IsEqualFunctions
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture(scope="module")
@@ -881,28 +882,224 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
-    """
-    Given
-        - A pack with a layout of type incident/indicator.
 
-    When
-        - Building dependency graph for pack.
-
-    Then
-        - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
-    """
-
-    @pytest.mark.parametrize('pack, dependencies', [
-        ('pack3', 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
-        ('pack4', 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
+    @pytest.mark.parametrize('pack, pack_in_repo, expected_dependencies', [
+        ('pack3', 2, 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
+        ('pack4', 3, 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
     ])
-    def test_layouts_dependencies(self, pack, dependencies):
-        result = PackDependencies.find_dependencies(pack,
-                                                    id_set_path='../../../tests/test_files/id_set/id_set.json',
-                                                    update_pack_metadata=False,
-                                                    silent_mode=True)
+    def test_layouts_dependencies(self, mocker, repo, pack, pack_in_repo, expected_dependencies):
+        """
+        Given
+            - A repo with 4 packs,
+            'pack1' has an incident_field called 'example',
+            'pack2' has an indicator_field also called 'example',
+            'pack3' has a layout of type 'incident' that depends on the 'example' incident,
+            'pack4' has a layout of type 'indicator' that depends on the 'example' indicator,
 
-        assert result == {dependencies: {'mandatory': True, 'display_name': dependencies}}
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
+        """
+
+        incident = {
+            "id": "incident_example",
+            "version": -1,
+            "modified": "2021-05-31T08:04:56.168259Z",
+            "name": "example",
+            "ownerOnly": "false",
+            "cliName": "example",
+            "type": "shortText",
+            "closeForm": "false",
+            "editForm": "true",
+            "required": "false",
+            "neverSetAsRequired": "false",
+            "isReadOnly": "false",
+            "useAsKpi": "false",
+            "locked": "false",
+            "system": "false",
+            "content": "true",
+            "group": 0,
+            "hidden": "false",
+            "associatedToAll": "true",
+            "unmapped": "false",
+            "unsearchable": "false",
+            "caseInsensitive": "true",
+            "sla": 0,
+            "threshold": 72,
+            "fromVersion": "5.5.0"
+        }
+        indicator = {
+            "id": "indicator_example",
+            "version": -1,
+            "modified": "2021-05-31T08:05:36.813002Z",
+            "name": "example",
+            "ownerOnly": "false",
+            "cliName": "example",
+            "type": "shortText",
+            "closeForm": "false",
+            "editForm": "true",
+            "required": "false",
+            "neverSetAsRequired": "false",
+            "isReadOnly": "false",
+            "useAsKpi": "false",
+            "locked": "false",
+            "system": "false",
+            "content": "true",
+            "group": 2,
+            "hidden": "false",
+            "associatedToAll": "true",
+            "unmapped": "false",
+            "unsearchable": "false",
+            "caseInsensitive": "true",
+            "sla": 0,
+            "threshold": 72,
+            "fromVersion": "5.5.0"
+        }
+        incident_layout = {
+            "detailsV2": {
+                "tabs": [
+                    {
+                        "id": "summary",
+                        "name": "Legacy Summary",
+                        "type": "summary"
+                    },
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "hideName": "false",
+                                "i": "caseinfoid-313783a0-c1e7-11eb-9598-a1a56eba0bb0",
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "incident_example",
+                                        "height": 22,
+                                        "id": "example",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0
+                                    }
+                                ],
+                                "maxW": 3,
+                                "minH": 1,
+                                "minW": 1,
+                                "moved": "false",
+                                "name": "New Section",
+                                "static": "false",
+                                "w": 1,
+                                "x": 0,
+                                "y": 0
+                            }
+                        ],
+                        "type": "custom"
+                    },
+                    {
+                        "id": "warRoom",
+                        "name": "War Room",
+                        "type": "warRoom"
+                    },
+                    {
+                        "id": "workPlan",
+                        "name": "Work Plan",
+                        "type": "workPlan"
+                    },
+                    {
+                        "id": "evidenceBoard",
+                        "name": "Evidence Board",
+                        "type": "evidenceBoard"
+                    },
+                    {
+                        "id": "relatedIncidents",
+                        "name": "Related Incidents",
+                        "type": "relatedIncidents"
+                    },
+                    {
+                        "id": "canvas",
+                        "name": "Canvas",
+                        "type": "canvas"
+                    }
+                ]
+            },
+            "group": "incident",
+            "id": "example",
+            "name": "example",
+            "system": "false",
+            "version": -1,
+            "fromVersion": "6.0.0",
+            "description": ""
+        }
+        indicator_layout = {
+            "group": "indicator",
+            "id": "example",
+            "indicatorsDetails": {
+                "tabs": [
+                    {
+                        "id": "default-main",
+                        "name": "Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "hideName": "false",
+                                "i": "default-main-6d7a16a0-c1f8-11eb-9598-a1a56eba0bb0",
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "indicator_example",
+                                        "height": 22,
+                                        "id": "example",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0
+                                    }
+                                ],
+                                "maxW": 3,
+                                "minH": 1,
+                                "minW": 1,
+                                "moved": "false",
+                                "name": "New Section",
+                                "static": "false",
+                                "w": 1,
+                                "x": 0,
+                                "y": 0
+                            }
+                        ],
+                        "type": "custom"
+                    }
+                ]
+            },
+            "name": "example",
+            "system": "false",
+            "version": -1,
+            "fromVersion": "6.0.0",
+            "description": ""
+        }
+
+        pack1 = repo.create_pack('pack1')
+        pack2 = repo.create_pack('pack2')
+        pack3 = repo.create_pack('pack3')
+        pack4 = repo.create_pack('pack4')
+
+        pack1.create_incident_field('example', incident)
+        pack2.create_indicator_field('example', indicator)
+        pack3.create_layoutcontainer('example', incident_layout)
+        pack4.create_layoutcontainer('example', indicator_layout)
+
+        with ChangeCWD(repo.path):
+            # Circle froze on 3.7 dut to high usage of processing power.
+            # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+            # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+            # and not the maximum amount.
+            import demisto_sdk.commands.common.update_id_set as uis
+            mocker.patch.object(uis, 'cpu_count', return_value=1)
+            PackDependencies.find_dependencies(pack, silent_mode=True)
+            dependencies = list(repo.packs[pack_in_repo].pack_metadata.read_json_as_dict().get('dependencies').keys())
+            assert dependencies == [expected_dependencies]
 
     def test_collect_incident_layout_dependencies(self, id_set):
         """

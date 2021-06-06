@@ -442,9 +442,11 @@ class TestPlaybook:
             self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
             self.build_context.logging_module.error(pformat(res))
             return {}
-        logging.info(res[0])
-        logging.info(type(res[0]))
-        return res[0]
+        try:
+            result = json.dumps(res[0], indent=4)
+        except TypeError:
+            result = res[0]
+        return result
 
 
 class BuildContext:

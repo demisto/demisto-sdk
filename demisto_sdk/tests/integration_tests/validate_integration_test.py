@@ -131,7 +131,7 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -158,7 +158,7 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'IN127' in result.stdout
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
@@ -186,7 +186,7 @@ class TestDeprecatedIntegration:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'IN128' in result.stdout
         assert 'Deprecated' in result.stdout
         assert result.exit_code == 1
@@ -217,7 +217,7 @@ class TestDeprecatedIntegration:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks',
                                           '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -286,7 +286,7 @@ class TestDeprecatedIntegration:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks',
                                           '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -351,7 +351,7 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -412,7 +412,7 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.path} as integration' in result.stdout
         assert 'IN119' in result.stdout
         assert 'This is a feed and has wrong fromversion.' in result.stdout
         assert result.exit_code == 1
@@ -504,7 +504,7 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {integration.yml.rel_path} as integration' in result.stdout
+        assert f'{integration.yml.rel_path} as integration' in result.stdout
         assert 'IN113' in result.stdout
         assert 'IN114' in result.stdout
         assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
@@ -1623,7 +1623,7 @@ class TestPlaybookValidateDeprecated:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', playbook.yml.rel_path, '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert f'{playbook.yml.path} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1689,7 +1689,7 @@ class TestPlaybookValidateDeprecated:
             result = runner.invoke(main,
                                    [VALIDATE_CMD, '-i', playbook.yml.rel_path, '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {playbook.yml.rel_path} as playbook' in result.stdout
+        assert f'{playbook.yml.path} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1846,7 +1846,7 @@ class TestScriptValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1871,7 +1871,7 @@ class TestScriptValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
         assert result.exit_code == 1
@@ -1899,7 +1899,7 @@ class TestScriptDeprecatedValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -1924,7 +1924,7 @@ class TestScriptDeprecatedValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'SC101' in result.stdout
         assert "Deprecated." in result.stdout
         assert result.exit_code == 1
@@ -1953,7 +1953,7 @@ class TestScriptDeprecatedValidation:
                                    [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks',
                                     '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -2019,7 +2019,7 @@ class TestScriptDeprecatedValidation:
                                    [VALIDATE_CMD, '-i', script.yml.rel_path, '--no-docker-checks',
                                     '--print-ignored-files'],
                                    catch_exceptions=False)
-        assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert f'{script.yml.path} as script' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 

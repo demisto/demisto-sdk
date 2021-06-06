@@ -299,7 +299,8 @@ def unify(**kwargs):
     help='Whether to run all validation on all files or not.'
 )
 @click.option(
-    '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
+    '-i', '--input', type=click.Path(exists=True, resolve_path=True),
+    help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
@@ -333,6 +334,10 @@ def unify(**kwargs):
 @click.option(
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
+@click.option(
+    "--quite-bc-validation",
+    help="Set backwards compatibility validation's errors as warnings",
+    is_flag=True)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -370,7 +375,8 @@ def validate(config, **kwargs):
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
-            include_untracked=kwargs.get('include_untracked')
+            include_untracked=kwargs.get('include_untracked'),
+            quite_bc=kwargs.get('quite_bc_validation')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -498,9 +504,9 @@ def secrets(config, **kwargs):
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -577,7 +583,7 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
     """
     return format_manager(
-        str(input),
+        str(input) if input else None,
         str(output) if output else None,
         from_version=from_version,
         no_validate=no_validate,

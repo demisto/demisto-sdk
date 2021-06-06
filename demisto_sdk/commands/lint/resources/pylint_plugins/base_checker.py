@@ -209,6 +209,7 @@ class CustomBaseChecker(BaseChecker):
             # as a result we will remove them from param list.
             if 'ApiModule' in node.modname:
                 self.commands = []
+                self.test_module_implemented = True
         except Exception:
             pass
 

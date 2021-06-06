@@ -697,12 +697,6 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_importfrom(node_a)
-        with self.assertAddsMessages(
-                pylint.testutils.Message(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
-        ):
             self.checker.leave_module(node_a)
 
 

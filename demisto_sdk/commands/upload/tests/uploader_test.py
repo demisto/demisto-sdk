@@ -272,6 +272,7 @@ def test_upload_report_positive(demisto_client_configure, mocker):
 
     assert [(report_name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
+
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """
     Given

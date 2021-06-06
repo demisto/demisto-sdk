@@ -845,8 +845,8 @@ TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
     ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True},
      [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
       {'Description': '', 'Parameter': 'Password', 'Required': True}]),
-    ([], {'displaypassword': 'specialPassword', 'additionalinfo': 'Username', 'required': False},
-     [{'Description': '', 'Parameter': 'specialPassword', 'Required': False}]),
+    ([], {'displaypassword': 'specialPassword', 'additionalinfo': 'Enter your password', 'required': False},
+     [{'Description': 'Enter your password', 'Parameter': 'specialPassword', 'Required': False}]),
     ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True, 'displaypassword': 'specialPassword'},
      [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
       {'Description': '', 'Parameter': 'specialPassword', 'Required': True}])

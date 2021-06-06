@@ -50,17 +50,24 @@ Options:
     Path to store json results
 *  **-lp, --log-path PATH**
     Path to store all levels of logs
+*  **-coverage**
+    Report coverage
 
 
 **Examples**:
 ---
-`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy `
+`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy`
 Details:
 1. lint and test check will execute on Packages `Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript`
 2. Mypy check will not be execute.
-3.
 ---
 `demisto-sdk lint -g -p 2`
 1. lint and test check will execute on all Packages which are changed from `origin/master` and from in staging.
 2. 2 Threads will be used inorder to preform the lint.
+---
+`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --coverage`
+Details:
+1. lint and test check will execute on Packages `Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript`
+2. coverage report will be printed.
+3. coverage report files will be exported.
 ---

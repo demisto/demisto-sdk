@@ -91,6 +91,7 @@ class FileType(Enum):
     METADATA = 'metadata'
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
+    CONTRIBUTORS = 'contributors'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -480,6 +481,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,

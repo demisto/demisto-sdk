@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import parse
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
-from packaging.version import parse
+from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
 
@@ -261,7 +261,7 @@ def test_upload_report_positive(demisto_client_configure, mocker, repo):
         - Uploading a report
 
     Then
-        - Ensure report is uploaded successfully.
+        - Ensure report is uploaded successfully
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")

@@ -21,10 +21,10 @@ class IntegrationDiffDetector:
 
         self.fount_missing = False
         self.missing_details_report: dict = {
+            'parameters': [],
             'commands': [],
             'arguments': [],
-            'outputs': [],
-            'parameters': []
+            'outputs': []
         }
 
     def check_diff(self) -> bool:

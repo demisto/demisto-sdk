@@ -1,10 +1,20 @@
 # Changelog
+* Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
+* Fixed the **generate-docs** to handle integration authentication parameter.
+* Added a validation to ensure that description and README do not contain the word 'Demisto'.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
+* Fixed the **update release notes** command to display a name for old layouts.
+
+# 1.3.9
+* Added a validation verifying that the pack's README.md file is not equal to pack description.
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
-* Inproved the error messages for separators in folder and file names in the **validate** command.
+* Improved the error messages for separators in folder and file names in the **validate** command.
+* Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
+* Fixed an issue where the demisto-sdk version check failed due to a rate limit.
+* Fixed an issue with playbooks scheme validation.
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.
-* Added a validation verifying that the pack's README.md file is not equal to pack description.
 
 # 1.3.7
 * Added a validation to ensure correct image and description file names.

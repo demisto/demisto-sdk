@@ -368,7 +368,7 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
-                self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
+                self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file)
                 return False
             self.support = pack_meta_file_content[PACK_METADATA_SUPPORT]
         except (ValueError, TypeError):
@@ -542,6 +542,8 @@ class PackUniqueFilesValidator(BaseValidator):
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
+                if not self.suppress_print:
+                    click.secho("Found first level dependencies only on core packs", fg="yellow")
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)

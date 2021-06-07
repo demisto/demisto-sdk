@@ -706,17 +706,18 @@ class LintManager:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))
 
-    def create_json_output(self) -> None:
+    def create_json_output(self):
         """Creates a JSON file output for lints"""
         if not self.json_file_path:
             return
 
         if os.path.exists(self.json_file_path):
             json_contents = get_json(self.json_file_path)
-
+            if not (isinstance(json_contents, list)):
+                json_contents = []
         else:
             json_contents = []
-
+        logger.info('Collecting results to write to file')
         # format all linters to JSON format -
         # if any additional linters are added, please add a formatting function here
         for check in self.linters_error_list:
@@ -731,8 +732,10 @@ class LintManager:
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
 
-        with open(self.json_file_path, 'w') as f:
+        with open(self.json_file_path, 'w+') as f:
             json.dump(json_contents, f, indent=4)
+
+        logger.info(f'Logs saved to {self.json_file_path}')
 
     def flake8_error_formatter(self, errors: Dict, json_contents: List) -> None:
         """Format flake8 error strings to JSON format and add them the json_contents

@@ -4,6 +4,7 @@
 * Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
 * Fixed **format** to use git as a default value.
 
+
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.

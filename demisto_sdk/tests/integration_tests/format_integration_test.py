@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
-from demisto_sdk.commands.format import update_generic
+from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -717,6 +717,38 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('id') == playbook_id
+    assert playbook.yml.read_dict().get('name') == playbook_name
+
+
+def test_format_playbook_no_input_specified(mocker, repo):
+    """
+    Given:
+        - A playbook with name and id ending in `_copy`
+
+    When:
+        - Running format on the pack
+        - The path of the playbook was not provided
+
+    Then:
+        - The command will find the changed playbook
+        - Ensure format runs successfully
+        - Ensure format removes `_copy` from both name and id.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    playbook_id = playbook_content['id']
+    playbook_name = playbook_content['name']
+    playbook_content['id'] = playbook_id + '_copy'
+    playbook_content['name'] = playbook_name + '_copy'
+    playbook.yml.write_dict(playbook_content)
+    playbook_file = {'name': str(playbook.yml.path)}
+    mocker.patch.object(format_module, 'get_changed_files', return_value=[playbook_file])
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-v'], input='y\n5.5.0')
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('id') == playbook_id
     assert playbook.yml.read_dict().get('name') == playbook_name

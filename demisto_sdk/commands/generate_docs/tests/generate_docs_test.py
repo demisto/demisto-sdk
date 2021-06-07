@@ -685,6 +685,28 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have no displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | Password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
 
 ]

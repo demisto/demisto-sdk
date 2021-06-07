@@ -4,7 +4,6 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
-import yaml
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
@@ -37,6 +36,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
+from ruamel.yaml import YAML
 
 
 class TestStructureValidator:
@@ -119,7 +119,7 @@ class TestStructureValidator:
     def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
         validator = StructureValidator(file_path=path)
         with open(old_file_path) as f:
-            validator.old_file = yaml.safe_load(f)
+            validator.old_file = YAML(typ='safe', pure=True).load(f)
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [
@@ -131,7 +131,7 @@ class TestStructureValidator:
     def test_is_id_modified(self, current_file, old_file, answer, error):
         validator = StructureValidator(file_path=current_file)
         with open(old_file) as f:
-            validator.old_file = yaml.safe_load(f)
+            validator.old_file = YAML(typ='safe', pure=True).load(f)
             assert validator.is_id_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."

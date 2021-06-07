@@ -232,7 +232,12 @@ class IncidentFieldValidator(ContentEntityValidator):
             for word in name.split():
                 if word.lower() in bad_words:
                     error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        suggested_fix=Errors.suggest_server_allowlist_fix(word=word),
+                    )
 
         return True
 
@@ -341,7 +346,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_fromversion_changed = True
 
         return is_fromversion_changed
@@ -355,7 +361,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_type_changed = True
 
         return is_type_changed
@@ -373,7 +380,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         if current_version < LooseVersion('5.5.0'):
             error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
 
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return False
 
         return True

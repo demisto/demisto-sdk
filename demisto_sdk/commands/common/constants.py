@@ -1155,9 +1155,9 @@ CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
 ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
 
-INTEGRATION_ENTITIES = ['command', 'argument', 'output']
-
 PARAM_FIELDS_TO_CHECK = ['type', 'required']
+
+INTEGRATION_ENTITIES = ['command', 'argument', 'output']
 
 
 class ContentItems(Enum):

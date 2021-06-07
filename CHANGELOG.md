@@ -4,6 +4,7 @@
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 * Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
 * Fixed the **update release notes** command to display a name for old layouts.
+* Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

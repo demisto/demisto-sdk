@@ -3,7 +3,8 @@ import re
 from typing import Any, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import (
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX,
+    INTEGRATION_ENTITIES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -111,6 +112,10 @@ def generate_integration_doc(
                 errors.extend(err)
         else:
             docs = []  # type: list
+            integration_version = re.findall("[vV][1-4].yml$", input_path)
+            if integration_version:
+                version = integration_version[0].lower().replace('.yml', '').replace('v', '')
+                docs.extend(generate_versions_differences_section(version))
             docs.extend(add_lines(yml_data.get('description')))
             docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
             # Integration use cases
@@ -303,6 +308,34 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     errors.extend(example_errors)
 
     return section, errors
+
+
+def generate_versions_differences_section(version):
+
+    section = [
+        '',
+        '~~~~~run `demisro-sdk integration-diff`~~~~~',
+        f'## V{version} important information',
+        '### New in this version:'
+    ]
+
+    for entity in INTEGRATION_ENTITIES:
+        section.append(f'- Added the following {entity}s:')
+        section.append(f'   - {entity}-1')
+        section.append(f'   - {entity}-2')
+        section.append('')
+
+    section.append('### Removed from this version:')
+
+    for entity in INTEGRATION_ENTITIES:
+        section.append(f'- Removed the following {entity}s:')
+        section.append(f'   - {entity}-1')
+        section.append(f'   - {entity}-2')
+        section.append('')
+
+    section.append('')
+
+    return section
 
 
 def generate_command_example(cmd, cmd_example=None):

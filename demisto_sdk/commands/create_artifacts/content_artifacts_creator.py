@@ -616,6 +616,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
             pack.metadata.tags.append('TIM')
         pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
     if pack.readme or pack.contributors:
+        if not pack.readme:
+            readme_file = os.path.join(pack.path, 'README.md')
+            open(readme_file, 'a+').close()
         pack_report += ObjectReport(pack.readme, content_packs=True)
         pack.readme.dump(artifact_manager.content_packs_path / pack.id)
     if pack.author_image:

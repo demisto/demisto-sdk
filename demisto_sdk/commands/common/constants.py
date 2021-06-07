@@ -1157,6 +1157,8 @@ ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
 
 INTEGRATION_ENTITIES = ['command', 'argument', 'output']
 
+PARAM_FIELDS_TO_CHECK = ['type', 'required']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future

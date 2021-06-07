@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
+
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
@@ -250,7 +252,7 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
 
 
-def test_upload_report_positive(demisto_client_configure, mocker, pack):
+def test_upload_report_positive(demisto_client_configure, mocker, repo):
     """
     Given
         - A report named report-dummy_report.json to upload
@@ -263,11 +265,12 @@ def test_upload_report_positive(demisto_client_configure, mocker, pack):
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
+    pack = repo.create_pack('pack')
     report = pack.create_report('test-report')
-    uploader = Uploader(input=report.path, insecure=False, verbose=False)
-    mocker.patch.object(uploader, 'client')
-    uploader.upload()
-
+    with ChangeCWD(repo.path):
+        uploader = Uploader(input=report.path, insecure=False, verbose=False)
+        mocker.patch.object(uploader, 'client')
+        uploader.upload()
     assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
 

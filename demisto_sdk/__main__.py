@@ -67,6 +67,19 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
+class MultiPathParamType(click.Path):
+    name = "path[,path]"
+
+    def convert(self, value, param, ctx):
+        if ',' not in value:
+            return super(MultiPathParamType, self).convert(value, param, ctx)
+
+        split_paths = value.split(',')
+        # check the validity of each of the paths
+        _ = [super(MultiPathParamType, self).convert(path, param, ctx) for path in split_paths]
+        return value
+
+
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -480,8 +493,10 @@ def secrets(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
-                                                                                               resolve_path=True))
+@click.option(
+    "-i", "--input", help="Specify directory(s) of integration/script",
+    type=MultiPathParamType(exists=True, resolve_path=True)
+)
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",

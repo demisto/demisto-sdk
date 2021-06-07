@@ -897,7 +897,6 @@ def main():
         LOG(f'Command being called is {command}')
         # Commands dict
         commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
-            'test-module': test_module,
             'kace-machines-list': get_machines_list_command,
             'kace-assets-list': get_assets_list_command,
             'kace-queues-list': get_queues_list_command,

@@ -261,7 +261,7 @@ def test_upload_report_positive(demisto_client_configure, mocker, repo):
         - Uploading a report
 
     Then
-        - Ensure report is uploaded successfully
+        - Ensure report is uploaded successfully.
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")

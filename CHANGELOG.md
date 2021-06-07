@@ -4,6 +4,7 @@
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
 * Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
 * Fixed the **update release notes** command to display a name for old layouts.
+* Added the ability to append to the pack README credit to contributors.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

@@ -57,6 +57,3 @@ class TextObject(GeneralObject):
             self._unserialize()
 
         return self._text
-
-    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
-        return super().dump(dest_dir)

@@ -10,7 +10,7 @@ from wcmatch.pathlib import Path
 class Readme(TextObject):
     def __init__(self, path: Union[Path, str]):
         self._path = path
-        self._pack_path = os.path.dirname(path)
+        self.contributors = None
         super().__init__(path)
 
     def type(self):
@@ -18,10 +18,9 @@ class Readme(TextObject):
 
     def mention_contributors_in_readme(self):
         """Mention contributors in pack readme"""
-        contributors_file_path = os.path.join(self._pack_path, "CONTRIBUTORS.md")
         try:
-            if os.path.exists(contributors_file_path):
-                with open(contributors_file_path, 'r') as contributors_file:
+            if self.contributors:
+                with open(self.contributors.path, 'r') as contributors_file:
                     contributor_data = contributors_file.read()
                 with open(self._path, 'a+') as readme_file:
                     readme_file.write(contributor_data)

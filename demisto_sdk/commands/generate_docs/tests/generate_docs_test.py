@@ -815,3 +815,52 @@ def test_scripts_in_playbook(repo):
 
     assert "test_1" in scripts
     assert "test_2" in scripts
+
+
+def test_generate_versions_differences_section():
+    """
+        Given
+            - A new version of an integration.
+        When
+            - Running the generate_versions_differences_section command.
+        Then
+            - Add a section of differences between versions in README.
+    """
+
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
+
+    section = generate_versions_differences_section('2')
+
+    expected_section = [
+        '',
+        '~~~~~run `demisro-sdk integration-diff`~~~~~',
+        '## V2 important information',
+        '### New in this version:',
+        '- Added the following commands:',
+        '   - command-1',
+        '   - command-2',
+        '',
+        '- Added the following arguments:',
+        '   - argument-1',
+        '   - argument-2',
+        '',
+        '- Added the following outputs:',
+        '   - output-1',
+        '   - output-2',
+        '',
+        '### Removed from this version:',
+        '- Removed the following commands:',
+        '   - command-1',
+        '   - command-2',
+        '',
+        '- Removed the following arguments:',
+        '   - argument-1',
+        '   - argument-2',
+        '',
+        '- Removed the following outputs:',
+        '   - output-1',
+        '   - output-2',
+        ''
+    ]
+
+    assert section == expected_section

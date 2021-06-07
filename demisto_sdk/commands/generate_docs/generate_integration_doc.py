@@ -339,8 +339,6 @@ def generate_versions_differences_section(version):
         section.append(f'   - {entity}-2')
         section.append('')
 
-    section.append('')
-
     return section
 
 

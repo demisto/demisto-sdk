@@ -1224,9 +1224,11 @@ def test_get_from_version_at_update_rn(integration):
     assert fromversion is None
 
 
-@pytest.mark.parametrize('key, val', [('brandName', 'TestBrand'), ('id', 'TestID'), ('name', 'TestName'),
-                                      ('TypeName', 'TestType'), ('display', 'TestDisplay')])
-def test_get_display_name(key, val, mocker):
+@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
+                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
+                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout')])
+def test_get_display_name(data, answer, mocker):
     """
         Given
             - Pack to update release notes
@@ -1238,7 +1240,7 @@ def test_get_display_name(key, val, mocker):
     from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
     mock_object = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.StructureValidator')
     mock_structure_validator = mock_object.return_value
-    mock_structure_validator.load_data_from_file.return_value = {key: val}
+    mock_structure_validator.load_data_from_file.return_value = data
     client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
         'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-    assert client.get_display_name('Packs/Test/test.yml') == val
+    assert client.get_display_name('Packs/Test/test.yml') == answer

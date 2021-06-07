@@ -477,8 +477,8 @@ class Errors:
                f"the removed fields are: {removed} "
 
     @staticmethod
-    def suggest_server_allowlist_fix(word='incident'):
-        return f"To fix the problem, remove the word {word}, " \
+    def suggest_server_allowlist_fix(words=['incident']):
+        return f"To fix the problem, remove the words {words}, " \
                f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
@@ -1053,8 +1053,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name."
+    def invalid_incident_field_name(words):
+        return f"The words: {words} cannot be used as a name."
 
     @staticmethod
     @error_code_decorator

@@ -132,10 +132,10 @@ class IntegrationDiffDetector:
                                           message=f'The argument \'{element["name"]}\' in command \'{command["name"]}\''
                                                   f' was changed in field {field}.', command_name=command["name"])
 
-                elif element_type == 'params':
+                elif element_type == 'parameters':
 
                     self.add_changed_item(item_type=element_type, item_name=element['display'],
-                                          message=f'The parameter \'{element["display"]}\' was changed in field {field}.')
+                                          message=f'The parameter \'{element["display"]}\' was changed in field \'{field}\'.')
 
     def check_command_outputs(self, new_command, old_command):
         """
@@ -188,7 +188,7 @@ class IntegrationDiffDetector:
 
                 if not param:
                     self.add_changed_item(item_type='parameters', item_name=old_param['display'],
-                                          message=f'Missing the parameter {old_param["display"]}')
+                                          message=f'Missing the parameter \'{old_param["display"]}\'.')
 
                 else:
                     # Gets all the fields that are different between the two params

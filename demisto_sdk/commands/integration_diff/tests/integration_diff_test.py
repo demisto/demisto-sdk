@@ -310,11 +310,11 @@ class TestIntegrationDiffDetector:
     def test_check_params(self, pack):
         """
         Given
-            - A old version command and a new version command.
+            - The old integration version params and the new integration version params.
         When
-            - Running IntegrationDiffDetector.check_command_outputs().
+            - Running IntegrationDiffDetector.check_params().
         Then
-            - Verify that the function detected that one output is missing and that one output changed.
+            - Verify that the function detected that one param is missing and that one param changed.
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)

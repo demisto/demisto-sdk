@@ -112,7 +112,7 @@ def generate_integration_doc(
                 errors.extend(err)
         else:
             docs = []  # type: list
-            integration_version = re.findall("[vV][1-4].yml$", input_path)
+            integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version:
                 version = integration_version[0].lower().replace('.yml', '').replace('v', '')
                 docs.extend(generate_versions_differences_section(version))

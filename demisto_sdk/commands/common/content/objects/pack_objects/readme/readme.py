@@ -1,4 +1,3 @@
-import os
 from typing import List, Optional, Union
 
 from demisto_sdk.commands.common.constants import FileType

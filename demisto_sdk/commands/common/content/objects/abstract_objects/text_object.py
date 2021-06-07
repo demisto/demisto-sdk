@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Union
 
 import demisto_sdk.commands.common.content.errors as exc
 from wcmatch.pathlib import Path

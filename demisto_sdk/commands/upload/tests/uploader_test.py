@@ -254,7 +254,7 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
 def test_upload_report_positive(demisto_client_configure, mocker, repo):
     """
     Given
-        - A report named report-dummy_report.json to upload
+        - A report to upload
 
     When
         - Uploading a report

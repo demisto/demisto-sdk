@@ -789,8 +789,8 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
-        with open('./Tests/performance_results.txt', "w") as performance_results:
-            performance_results.write('\n'.join(self.performance_results))
+        with open('./Tests/performance_results.json', "w") as performance_results:
+            json.dump(self.performance_results, performance_results)
 
     def print_test_summary(self,
                            is_ami: bool = True,

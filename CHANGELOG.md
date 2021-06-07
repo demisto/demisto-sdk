@@ -1,4 +1,5 @@
 # Changelog
+* Updated the **upload** command to support reports. 
 * Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
 * Improved the error messages for separators in folder and file names in the **validate** command.
 * Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.

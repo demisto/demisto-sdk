@@ -1,6 +1,9 @@
 # Changelog
+* Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
+* Fixed the **update release notes** command to display a name for old layouts.
 * Added identification for parameter differences in **integration-diff** command.
 
 # 1.3.9

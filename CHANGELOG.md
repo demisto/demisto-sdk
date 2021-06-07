@@ -6,6 +6,7 @@
 * Fixed the **update release notes** command to display a name for old layouts.
 * Added the ability to append to the pack README credit to contributors.
 * Added identification for parameter differences in **integration-diff** command.
+* Fixed **format** to use git as a default value.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

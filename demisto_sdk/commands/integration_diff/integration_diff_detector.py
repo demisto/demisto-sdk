@@ -1,7 +1,8 @@
 import os
 
 import click
-from demisto_sdk.commands.common.constants import ARGUMENT_FIELDS_TO_CHECK
+from demisto_sdk.commands.common.constants import (ARGUMENT_FIELDS_TO_CHECK,
+                                                   PARAM_FIELDS_TO_CHECK)
 from demisto_sdk.commands.common.tools import get_yaml
 
 
@@ -20,6 +21,7 @@ class IntegrationDiffDetector:
 
         self.fount_missing = False
         self.missing_details_report: dict = {
+            'parameters': [],
             'commands': [],
             'arguments': [],
             'outputs': []
@@ -42,6 +44,8 @@ class IntegrationDiffDetector:
         for old_command in old_commands_data:
             if old_command not in new_commands_data:
                 self.check_command(old_command, new_commands_data)
+
+        self.check_params(old_yaml_data['configuration'], new_yaml_data['configuration'])
 
         if self.print_missing_items():
             return False
@@ -99,31 +103,39 @@ class IntegrationDiffDetector:
                     changed_fields = [field for field in new_command_argument if field in argument and
                                       new_command_argument[field] != argument[field]]
 
-                    self.check_changed_fields_in_argument(command=new_command, argument=new_command_argument,
-                                                          fields_to_check=ARGUMENT_FIELDS_TO_CHECK,
-                                                          changed_fields=changed_fields)
+                    self.check_changed_fields(element=new_command_argument, element_type='arguments',
+                                              fields_to_check=ARGUMENT_FIELDS_TO_CHECK, changed_fields=changed_fields,
+                                              command=new_command)
 
-    def check_changed_fields_in_argument(self, command, argument, fields_to_check, changed_fields):
+    def check_changed_fields(self, element, element_type, fields_to_check, changed_fields, command=None):
         """
-        Checks for changed fields in a given command argument.
+        Checks for changed fields in a given element.
 
         Args:
-            command: The command to check his argument.
-            argument: The argument to check.
+            element: The element to check.
+            element_type: The element type.
             fields_to_check: List of fields to check if changed.
             changed_fields: List of changed fields.
+            command: The command to check his argument.
         """
 
         for field in fields_to_check:
 
             if field in changed_fields:
 
-                if (field == 'required' or field == 'isArray') and not argument[field]:
+                if (field == 'required' or field == 'isArray') and not element[field]:
                     continue
 
-                self.add_changed_item(item_type='arguments', item_name=argument['name'],
-                                      message=f'The argument \'{argument["name"]}\' in command \'{command["name"]}\''
-                                              f' was changed.', command_name=command["name"])
+                if element_type == 'arguments':
+
+                    self.add_changed_item(item_type=element_type, item_name=element['name'],
+                                          message=f'The argument \'{element["name"]}\' in command \'{command["name"]}\''
+                                                  f' was changed in field {field}.', command_name=command["name"])
+
+                elif element_type == 'parameters':
+
+                    self.add_changed_item(item_type=element_type, item_name=element['display'],
+                                          message=f'The parameter \'{element["display"]}\' was changed in field \'{field}\'.')
 
     def check_command_outputs(self, new_command, old_command):
         """
@@ -158,6 +170,33 @@ class IntegrationDiffDetector:
                                               message=f'The output \'{output["contextPath"]}\' type in command '
                                                       f'\'{new_command["name"]}\' was changed.',
                                               command_name=new_command["name"])
+
+    def check_params(self, old_params, new_params):
+        """
+        Checks the old integration params if exists in the new integration.
+
+        Args:
+            old_params: The old integration parameters.
+            new_params: The new integration parameters.
+        """
+
+        for old_param in old_params:
+
+            if old_param not in new_params:
+
+                param = self.check_if_element_exist(old_param, new_params, 'display')
+
+                if not param:
+                    self.add_changed_item(item_type='parameters', item_name=old_param['display'],
+                                          message=f'Missing the parameter \'{old_param["display"]}\'.')
+
+                else:
+                    # Gets all the fields that are different between the two params
+                    changed_fields = [field for field in param if field in old_param and
+                                      param[field] != old_param[field]]
+
+                    self.check_changed_fields(element=param, element_type='parameters',
+                                              fields_to_check=PARAM_FIELDS_TO_CHECK, changed_fields=changed_fields)
 
     def add_changed_item(self, item_type, item_name, message, command_name=''):
         """

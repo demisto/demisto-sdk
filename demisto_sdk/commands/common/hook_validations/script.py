@@ -2,7 +2,7 @@ import os
 import re
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH, DEPRECATED_REGEXES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -12,9 +12,6 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                get_files_in_dir, get_pack_name,
                                                is_v2_file,
                                                server_version_compare)
-
-DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -254,8 +251,8 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
-        deprecated_v2_regex = DEPRECATED_DESC_REGEX
-        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
             if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
                 pass

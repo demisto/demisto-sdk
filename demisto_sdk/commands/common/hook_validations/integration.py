@@ -12,7 +12,8 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH,
+                                                   DEPRECATED_REGEXES)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -27,9 +28,6 @@ from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_files_in_dir, get_pack_name, is_v2_file, print_error,
     server_version_compare)
-
-DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -169,8 +167,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = DEPRECATED_DESC_REGEX
-        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass

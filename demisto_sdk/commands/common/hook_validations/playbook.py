@@ -2,13 +2,11 @@ import re
 from typing import Dict
 
 import click
+from demisto_sdk.commands.common.constants import (DEPRECATED_REGEXES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
-
-DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -244,8 +242,8 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = DEPRECATED_DESC_REGEX
-        deprecated_no_replace_regex = DEPRECATED_NO_REPLACE_DESC_REGEX
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass

@@ -12,7 +12,7 @@ dictor>=0.1.5
 docker==4.3.0  # Issue #27819
 flake8>=3.8.3
 flatten_dict>=0.3.0
-git+https://github.com/demisto/demisto-py.git@upload_zipped_pack_to_marketplce
+git+git@github.com:demisto/demisto-py.git@upload_zipped_pack_to_marketplce#egg=demisto-py
 gitdb>=4.0.5
 gitpython>=3.1.0
 google-cloud-storage==1.29.0

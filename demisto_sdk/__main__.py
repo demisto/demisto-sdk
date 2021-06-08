@@ -1487,13 +1487,20 @@ def doc_review(**kwargs):
     '-n', '--new', type=str, help='The path to the new version of the integration', required=True)
 @click.option(
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
+@click.option(
+    '--docs-format', is_flag=True,
+    help='will return the output in docs format for the version differences section in readme')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
 
-    integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))
-    result = integration_diff_detector.check_diff()
+    integration_diff_detector = IntegrationDiffDetector(
+        new=kwargs.get('new', ''),
+        old=kwargs.get('old', ''),
+        docs_format=kwargs.get('docs_format', False)
+    )
+    result = integration_diff_detector.check_different()
 
     if result:
         sys.exit(0)

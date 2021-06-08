@@ -8,11 +8,19 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+ALLOWED_IGNORE_ERRORS = [
+    'BA101', 'BA106', 'BA108', 'BA109',
+    'DS107',
+    'IF100', 'IF106',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'MP106',
+    'PA113', 'PA116', 'PA124', 'PA125',
+    'PB105', 'PB106', 'PB110', 'PB111',
+    'RM100', 'RM102', 'RM104', 'RM106',
+    'RP102', 'RP104',
+    'SC100', 'SC105',
+]
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104',
-                         'RM106', 'DS107']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -477,7 +485,8 @@ class Errors:
                f"the removed fields are: {removed} "
 
     @staticmethod
-    def suggest_server_allowlist_fix(words=['incident']):
+    def suggest_server_allowlist_fix(words=None):
+        words = words if words else ['incident']
         return f"To fix the problem, remove the words {words}, " \
                f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \

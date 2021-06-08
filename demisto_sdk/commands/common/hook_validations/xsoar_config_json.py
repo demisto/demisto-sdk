@@ -19,13 +19,13 @@ class XSOARConfigJsonValidator(BaseValidator):
         schema_json (dict): The data from the schema file.
     """
 
-    def __init__(self, configuration_file_path,
+    def __init__(self, configuration_file_path, json_file_path=None,
                  ignored_errors=None, print_as_warnings=False, suppress_print=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=configuration_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
         self.configuration_file_path = configuration_file_path
-        self.schema_path = os.path.normpath(os.path.join(__file__, "..", 'schemas', 'xsoar_config.json'))
+        self.schema_path = os.path.normpath(os.path.join(__file__, '..', '..', 'schemas', 'xsoar_config.json'))
         self.config_json = self.load_configuration_file()
         self.schema_json = self.load_schema_file()
 
@@ -68,11 +68,11 @@ class XSOARConfigJsonValidator(BaseValidator):
             bool. Whether there were errors in the validation.
         """
         errors_table = PrettyTable()
-        errors_table.field_names = ['Instance', 'Error Message']
+        errors_table.field_names = ['', 'Error Message']
 
         errors_found = False
-        for error in errors:
-            errors_table.add_row([error.instance, error.message])
+        for index, error in enumerate(errors):
+            errors_table.add_row([index, error.message])
             errors_found = True
 
         return errors_table, errors_found

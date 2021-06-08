@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 from typing import Optional
 
 import click
@@ -115,17 +116,29 @@ class BaseValidator:
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
-    def get_metadata_file_content(meta_file_path):
-        with io.open(meta_file_path, encoding="utf-8") as file:
-            metadata_file_content = file.read()
-
-        return json.loads(metadata_file_content)
-
-    def update_checked_flags_by_support_level(self, file_path):
+    def get_metadata_file_content_from_file_path(file_path):
         pack_name = get_pack_name(file_path)
+
         if pack_name:
             metadata_path = os.path.join(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
-            metadata_json = self.get_metadata_file_content(metadata_path)
+
+            if not os.path.exists(metadata_path):
+                match = re.match(r'.*[/\\]Packs', file_path)
+                if match:
+                    metadata_path = os.path.join(match.group(), pack_name, PACKS_PACK_META_FILE_NAME)
+                else:
+                    # No pack metadata file was found
+                    return None
+
+            with io.open(metadata_path, encoding="utf-8") as file:
+                metadata_file_content = file.read()
+
+            return json.loads(metadata_file_content)
+
+    def update_checked_flags_by_support_level(self, file_path):
+        metadata_json = self.get_metadata_file_content_from_file_path(file_path)
+
+        if metadata_json:
             support = metadata_json.get(PACK_METADATA_SUPPORT)
 
             if support in ('partner', 'community'):

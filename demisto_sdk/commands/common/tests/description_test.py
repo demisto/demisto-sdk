@@ -135,7 +135,7 @@ def test_demisto_not_in_description(repo):
         Given
             - An integration description without the word 'Demisto'.
 
-        When
+        Whentest_is_valid_file
             - Running verify_demisto_in_description_content.
 
         Then

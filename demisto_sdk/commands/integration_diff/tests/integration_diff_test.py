@@ -7,6 +7,26 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import \
 class TestIntegrationDiffDetector:
 
     NEW_INTEGRATION_YAML = {
+        'configuration': [
+            {
+                'display': 'Credentials',
+                'name': 'credentials',
+                'required': 'true',
+                'type': '9'
+            },
+            {
+                'display': 'API key',
+                'name': 'api_key',
+                'required': 'false',
+                'type': '0'
+            },
+            {
+                'display': 'URL',
+                'name': 'url',
+                'required': 'true',
+                'type': '0'
+            }
+        ],
         'script': {
             'commands': [
                 {
@@ -75,6 +95,20 @@ class TestIntegrationDiffDetector:
     }
 
     OLD_INTEGRATION_YAML = {
+        'configuration': [
+            {
+                'display': 'Credentials',
+                'name': 'credentials',
+                'required': 'true',
+                'type': '9'
+            },
+            {
+                'display': 'API key',
+                'name': 'api_key',
+                'required': 'false',
+                'type': '0'
+            }
+        ],
         'script': {
             'commands': [
                 {
@@ -217,7 +251,7 @@ class TestIntegrationDiffDetector:
             'type': 'arguments',
             'name': 'argument_2',
             'command_name': 'command_2',
-            'message': "The argument 'argument_2' in command 'command_2' was changed."
+            'message': "The argument 'argument_2' in command 'command_2' was changed in field isArray."
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -272,3 +306,41 @@ class TestIntegrationDiffDetector:
 
         assert missing_output in integration_detector.missing_details_report['outputs']
         assert changed_output in integration_detector.missing_details_report['outputs']
+
+    def test_check_params(self, pack):
+        """
+        Given
+            - The old integration version params and the new integration version params.
+        When
+            - Running IntegrationDiffDetector.check_params().
+        Then
+            - Verify that the function detected that one param is missing and that one param changed.
+        """
+
+        new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
+        new_integration_yml['configuration'].remove(new_integration_yml['configuration'][0])
+        new_integration_yml['configuration'][0]['required'] = 'true'
+
+        missing_param = {
+            'type': 'parameters',
+            'name': 'Credentials',
+            'message': "Missing the parameter 'Credentials'."
+        }
+
+        changed_param = {
+            'type': 'parameters',
+            'name': 'API key',
+            'message': "The parameter 'API key' was changed in field 'required'."
+        }
+
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=new_integration_yml)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+
+        old_params = self.OLD_INTEGRATION_YAML['configuration']
+        new_params = new_integration_yml['configuration']
+        integration_detector.check_params(old_params, new_params)
+
+        assert missing_param in integration_detector.missing_details_report['parameters']
+        assert changed_param in integration_detector.missing_details_report['parameters']

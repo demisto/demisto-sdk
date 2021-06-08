@@ -176,7 +176,7 @@ class TestIntegrationDiffDetector:
 
         integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
-        assert integration_detector.check_diff()
+        assert integration_detector.check_different()
 
     def test_invalid_integration_diff(self, pack):
         """
@@ -193,16 +193,16 @@ class TestIntegrationDiffDetector:
 
         integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
-        assert not integration_detector.check_diff()
+        assert not integration_detector.check_different()
 
-    def test_check_command(self, pack):
+    def test_get_different_commands(self, pack):
         """
         Given
-            - A old version command and a list of new version commands.
+            - A list of the old integration commands and a list of the new integration commands.
         When
-            - Running IntegrationDiffDetector.check_command().
+            - Running IntegrationDiffDetector.get_different_commands().
         Then
-            - Verify that the function detected that the old command is missing.
+            - Verify that the function detected the missed old command.
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
@@ -219,20 +219,21 @@ class TestIntegrationDiffDetector:
 
         integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
-        old_command = self.OLD_INTEGRATION_YAML['script']['commands'][0]
+        old_commands = self.OLD_INTEGRATION_YAML['script']['commands']
         new_commands = new_integration_yml['script']['commands']
-        integration_detector.check_command(old_command, new_commands)
 
-        assert missing_command in integration_detector.missing_details_report['commands']
+        commands, _, _ = integration_detector.get_different_commands(old_commands, new_commands)
 
-    def test_check_command_arguments(self, pack):
+        assert missing_command in commands
+
+    def test_get_different_arguments(self, pack):
         """
         Given
-            - A old version command and a new version command.
+            - A old integration command and a new integration command.
         When
-            - Running IntegrationDiffDetector.check_command_arguments().
+            - Running IntegrationDiffDetector.get_different_arguments().
         Then
-            - Verify that the function detected that one argument is missing and that one argument changed.
+            - Verify that the function detect the missed argument and the changed argument.
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
@@ -251,7 +252,7 @@ class TestIntegrationDiffDetector:
             'type': 'arguments',
             'name': 'argument_2',
             'command_name': 'command_2',
-            'message': "The argument 'argument_2' in command 'command_2' was changed in field isArray."
+            'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -261,19 +262,20 @@ class TestIntegrationDiffDetector:
 
         old_command = self.OLD_INTEGRATION_YAML['script']['commands'][1]
         new_command = new_integration_yml['script']['commands'][1]
-        integration_detector.check_command_arguments(new_command, old_command)
 
-        assert missing_argument in integration_detector.missing_details_report['arguments']
-        assert changed_argument in integration_detector.missing_details_report['arguments']
+        arguments = integration_detector.get_different_arguments(new_command, old_command)
 
-    def test_check_command_outputs(self, pack):
+        assert missing_argument in arguments
+        assert changed_argument in arguments
+
+    def test_get_different_outputs(self, pack):
         """
         Given
-            - A old version command and a new version command.
+            - A old integration command and a new integration command.
         When
-            - Running IntegrationDiffDetector.check_command_outputs().
+            - Running IntegrationDiffDetector.get_different_outputs().
         Then
-            - Verify that the function detected that one output is missing and that one output changed.
+            - Verify that the function detect the missed output and the changed output.
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
@@ -292,7 +294,7 @@ class TestIntegrationDiffDetector:
             'type': 'outputs',
             'name': 'contextPath_2',
             'command_name': 'command_2',
-            'message': "The output 'contextPath_2' type in command 'command_2' was changed."
+            'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -302,19 +304,19 @@ class TestIntegrationDiffDetector:
 
         old_command = self.OLD_INTEGRATION_YAML['script']['commands'][1]
         new_commands = new_integration_yml['script']['commands'][1]
-        integration_detector.check_command_outputs(new_commands, old_command)
+        outputs = integration_detector.get_different_outputs(new_commands, old_command)
 
-        assert missing_output in integration_detector.missing_details_report['outputs']
-        assert changed_output in integration_detector.missing_details_report['outputs']
+        assert missing_output in outputs
+        assert changed_output in outputs
 
-    def test_check_params(self, pack):
+    def test_get_different_params(self, pack):
         """
         Given
             - The old integration version params and the new integration version params.
         When
-            - Running IntegrationDiffDetector.check_params().
+            - Running IntegrationDiffDetector.get_different_params().
         Then
-            - Verify that the function detected that one param is missing and that one param changed.
+            - Verify that the function detect the missed param and the changed param.
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
@@ -340,7 +342,7 @@ class TestIntegrationDiffDetector:
 
         old_params = self.OLD_INTEGRATION_YAML['configuration']
         new_params = new_integration_yml['configuration']
-        integration_detector.check_params(old_params, new_params)
+        parameters = integration_detector.get_different_params(old_params, new_params)
 
-        assert missing_param in integration_detector.missing_details_report['parameters']
-        assert changed_param in integration_detector.missing_details_report['parameters']
+        assert missing_param in parameters
+        assert changed_param in parameters

@@ -7,6 +7,7 @@
 * Added the ability to append to the pack README credit to contributors.
 * Added identification for parameter differences in **integration-diff** command.
 * Fixed **format** to use git as a default value.
+* Updated the **upload** command to support reports.
 * Added the **convert** command to convert entities between XSOAR versions.
 
 # 1.3.9

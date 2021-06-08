@@ -245,9 +245,9 @@ class ValidateManager:
             conf_json_validator = ConfJsonValidator()
             all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
-        num_of_packs = len(os.listdir(PACKS_DIR))
         count = 1
         all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
+        num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
         for pack_name in all_packs:

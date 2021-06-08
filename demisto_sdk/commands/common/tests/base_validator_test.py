@@ -183,7 +183,7 @@ def test_check_support_status_xsoar_file(repo, mocker):
     meta_json = {
         PACK_METADATA_SUPPORT: "xsoar"
     }
-    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content_from_file_path', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
@@ -208,7 +208,7 @@ def test_check_support_status_partner_file(repo, mocker):
     meta_json = {
         PACK_METADATA_SUPPORT: "partner"
     }
-    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content_from_file_path', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
@@ -233,7 +233,7 @@ def test_check_support_status_community_file(repo, mocker):
     meta_json = {
         PACK_METADATA_SUPPORT: "community"
     }
-    mocker.patch.object(BaseValidator, 'get_metadata_file_content', return_value=meta_json)
+    mocker.patch.object(BaseValidator, 'get_metadata_file_content_from_file_path', return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})

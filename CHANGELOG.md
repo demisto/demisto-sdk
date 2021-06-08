@@ -6,6 +6,8 @@
 * Fixed the **update release notes** command to display a name for old layouts.
 * Added the ability to append to the pack README credit to contributors.
 * Added identification for parameter differences in **integration-diff** command.
+* Fixed **format** to use git as a default value.
+* Updated the **upload** command to support reports.
 * Updated the **find_dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 
 # 1.3.9

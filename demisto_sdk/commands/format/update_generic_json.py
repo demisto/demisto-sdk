@@ -33,8 +33,6 @@ class BaseUpdateJSON(BaseUpdate):
         if self.verbose:
             click.echo('Updating required default values')
         for field in ARGUMENTS_DEFAULT_VALUES:
-            if field in self.data:
-                continue
             if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
                 self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]
 

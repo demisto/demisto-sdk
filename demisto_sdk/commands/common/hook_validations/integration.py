@@ -537,7 +537,8 @@ class IntegrationValidator(ContentEntityValidator):
         if commands_with_incident or args_with_incident:
             error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,
                                                                                 args_with_incident)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 

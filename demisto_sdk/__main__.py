@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
+from demisto_sdk.commands.compile_packs.packs_compiler import PacksCompiler
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -247,6 +249,37 @@ def unify(**kwargs):
     kwargs['input'] = str(kwargs['input'])
     unifier = Unifier(**kwargs)
     unifier.merge_script_package_to_yml()
+    return 0
+
+
+# ====================== unify-packs ====================== #
+@main.command(hidden=True)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-i', '--input',
+              help=("The packs to create artifacts for. Optional values are: `all` or "
+                    "csv list of pack names. "))
+@click.option('-o', '--output', help='The destination directory to create the packs.',
+              type=click.Path(file_okay=False, resolve_path=True), required=True)
+@click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
+@click.option('-u', '--upload', is_flag=True, help='Upload the compiled packs to the marketplace.', default=False)
+@click.option('--zip_all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
+def compile_packs(**kwargs) -> int:
+    """Generating the following artifacts:
+       1. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
+    """
+    logging_setup(3)
+    check_configuration_file('unify-packs', kwargs)
+
+    upload = kwargs.pop('upload', False)
+    zip_all = kwargs.pop('zip_all', False) or upload  # if upload is true - all packs will be compressed to one zip file
+
+    zip_path = PacksCompiler(zip_all=zip_all, **kwargs).compile_packs()
+
+    if upload:
+        Uploader(input=zip_path).upload()
+
     return 0
 
 
@@ -608,6 +641,10 @@ def format(
          "helloWorld.yml", required=True
 )
 @click.option(
+    "-c", "--compile",
+    help="Compile the pack to zip before upload", is_flag=True
+)
+@click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
 )
@@ -616,14 +653,20 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """"Upload integration to Demisto instance.
+    """"Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
+    if kwargs.pop('compile', False):
+        pack_name = Path(kwargs['input']).name
+        packs_compiler = PacksCompiler(input=pack_name, output=tempfile.gettempdir(),
+                                       content_version='0.0.0', zip_all=True)
+        packs_zip_path = packs_compiler.compile_packs()
+        kwargs['input'] = packs_zip_path
+
     check_configuration_file('upload', kwargs)
-    uploader = Uploader(**kwargs)
-    return uploader.upload()
+    return Uploader(**kwargs).upload()
 
 
 # ====================== download ====================== #
@@ -1504,7 +1547,6 @@ def integration_diff(**kwargs):
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
-
 
 # todo: add download from demisto command
 

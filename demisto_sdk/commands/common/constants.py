@@ -56,6 +56,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
 
 
 class FileType(Enum):
@@ -92,6 +93,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
 
 
 RN_HEADER_BY_FILE_TYPE = {

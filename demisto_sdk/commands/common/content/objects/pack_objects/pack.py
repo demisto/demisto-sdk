@@ -2,6 +2,7 @@ import logging
 import subprocess
 from typing import Any, Iterator, Optional, Union
 
+import demisto_client
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -11,7 +12,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
+                                                   LAYOUTS_DIR,
+                                                   PACK_VERIFY_KEY,
+                                                   PLAYBOOKS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -24,13 +27,18 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.test_content import tools
 from wcmatch.pathlib import Path
+
+TURN_VERIFICATION_ERROR_MSG = "Can not turn on the pack verification, In the server - go to Settings -> troubleshooting\
+ and manually delete the key content.pack.verify"
 
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
-        self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
+        if not str(path).endswith('.zip'):
+            self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objcets iterable generator
@@ -236,3 +244,30 @@ class Pack:
             logger.info(f'Signed {self.path.name} pack successfully')
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
+
+    def upload(self, client: demisto_client):
+        """
+        Upload the pack zip to demisto_client
+        Args:
+            client: The demisto_client object of the desired XSOAR machine to upload to.
+
+        Returns:
+            The result of the upload command from demisto_client
+        """
+
+        # turn off the sign check
+        # upload
+        # turn on the check
+        tools.update_server_configuration(client=client,
+                                          server_configuration={PACK_VERIFY_KEY: False},
+                                          error_msg='Can not turn off the pack verification')
+        try:
+            return client.zipped_pack_upload(file=self.path)  # type: ignore
+        finally:
+            try:
+                tools.update_server_configuration(client=client,
+                                                  server_configuration=None,
+                                                  configs_to_delete={PACK_VERIFY_KEY},
+                                                  error_msg=TURN_VERIFICATION_ERROR_MSG)
+            except Exception:
+                raise Exception(TURN_VERIFICATION_ERROR_MSG)

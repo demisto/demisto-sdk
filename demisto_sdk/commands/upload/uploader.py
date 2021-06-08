@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (find_type,
@@ -106,9 +107,13 @@ class Uploader:
 
         status_code = 0
         click.secho(f"Uploading {self.path} ...")
-        if not os.path.exists(self.path):
+        if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
             return 1
+
+        # uploading a pack zip
+        elif self.path.endswith('.zip'):
+            status_code = self.zipped_pack_uploader(path=self.path)
 
         # Uploading a file
         elif os.path.isfile(self.path):
@@ -256,6 +261,27 @@ class Uploader:
             if os.path.basename(entity_folder.rstrip('/')) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
+
+    def compile_pack(self):
+        return
+
+    def zipped_pack_uploader(self, path: str) -> int:
+
+        zipped_pack = Pack(path)
+        file_name = zipped_pack.path.name  # type: ignore
+
+        try:
+            zipped_pack.upload(self.client)
+
+            if self.log_verbose:
+                click.secho(f'Uploaded {FileType.PACK} - \'{os.path.basename(path)}\': successfully', fg='green')
+
+            self.successfully_uploaded_files.append((file_name, FileType.PACK.value))
+            return 0
+        except Exception as err:
+            message = parse_error_response(err, FileType.PACK.value, file_name, self.log_verbose)
+            self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
+            return 1
 
 
 def parse_error_response(error: ApiException, file_type: str, file_name: str, print_error: bool = False):

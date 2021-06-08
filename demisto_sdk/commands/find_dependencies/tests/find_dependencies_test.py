@@ -907,7 +907,7 @@ class TestDependsOnLayout:
             "id": "incident_example",
             "name": "example",
             "cliName": "example",
-         }
+        }
         indicator = {
             "id": "indicator_example",
             "name": "example",

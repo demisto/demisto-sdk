@@ -1,7 +1,7 @@
 import json
 import os
 import yaml
-
+from collections import OrderedDict
 import networkx as nx
 import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -20,8 +20,9 @@ def id_set(repo):
     # with open(id_set_path, 'r') as id_set_file:
     #     id_set = json.load(id_set_file)
     #     yield id_set
-    repo.setup_content_repo(20)
+    repo.setup_content_repo(5)
 
+    # Create a pack called 'PrismaCloudCompute' with 4 scripts
     prisma_cloud_compute = repo.create_pack('PrismaCloudCompute')
     with open('test_content/PrismaCloudComputeParseAuditAlert.yml') as yml_file:
         yml = yaml.load(yml_file, Loader=yaml.FullLoader)
@@ -36,13 +37,29 @@ def id_set(repo):
         yml = yaml.load(yml_file, Loader=yaml.FullLoader)
         prisma_cloud_compute.create_script("PrismaCloudComputeParseVulnerabilityAlert", yml)
 
-    # script2 = prisma_cloud_compute.create_script("PrismaCloudComputeParseCloudDiscoveryAlert")
-    # script2.create_default_script()
+    # Create a pack called 'Expanse' with 1 playbook
+    expanse = repo.create_pack('Expanse')
+    with open('test_content/Expanse_Incident_Playbook.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        expanse.create_playbook('ExpanseParseRawIncident', yml)
 
-    # script3 = prisma_cloud_compute.create_script("PrismaCloudComputeParseComplianceAlert")
-    # script4 = prisma_cloud_compute.create_script("PrismaCloudComputeParseVulnerabilityAlert")
+    # Create a pack called 'GetServerURL' with 1 script
+    get_server_url = repo.create_pack('GetServerURL')
+    with open('test_content/GetServerURL.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        get_server_url.create_script("GetServerURL", yml)
 
-    # repo.packs[0].layoutcontainers
+    # Create a pack called 'HelloWorld' with 1 script
+    hello_world = repo.create_pack('HelloWorld')
+    with open('test_content/HelloWorldScript.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        hello_world.create_script("HelloWorldScript", yml)
+
+    feedsslabusech = repo.create_pack('Feedsslabusech')
+    with open('test_content/Feedsslabusech.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        feedsslabusech.create_integration('Feedsslabusech', yml=yml)
+
     with ChangeCWD(repo.path):
         ids = cis.IDSetCreator()
         ids.create_id_set()
@@ -75,6 +92,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
+                    "fromversion": '5.0.0',
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -82,6 +100,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
+                    "fromversion": '5.0.0',
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -89,6 +108,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
+                    "fromversion": '5.0.0',
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -96,6 +116,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
+                    "fromversion": '5.0.0',
                     "pack": "PrismaCloudCompute"
                 }
             }
@@ -105,7 +126,7 @@ class TestIdSetFilters:
 
         assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
-    @pytest.mark.parametrize("pack_id", ["Claroty", "Code42", "Cymulate"])
+    @pytest.mark.parametrize("pack_id", ["pack_0", "pack_1", "pack_2"])
     def test_search_for_pack_playbook_item(self, pack_id, id_set):
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
 
@@ -116,18 +137,14 @@ class TestIdSetFilters:
 
         expected_result = [
             {
-                "ExpanseParseRawIncident": {
-                    "name": "Expanse Incident Playbook",
-                    "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
-                    "fromversion": "5.0.0",
-                    "implementing_scripts": [
-                        "ExpanseParseRawIncident"
-                    ],
-                    "tests": [
-                        "No tests (auto formatted)"
-                    ],
-                    "pack": "Expanse"
-                }
+                'ExpanseParseRawIncident': OrderedDict([
+                    ('name', 'Expanse Incident Playbook'),
+                    ('file_path', 'Packs/Expanse/Playbooks/ExpanseParseRawIncident.yml'),
+                    ('fromversion', '5.0.0'),
+                    ('pack', 'Expanse'),
+                    ('implementing_scripts', ['ExpanseParseRawIncident']),
+                    ('tests', ['No tests (auto formatted)'])
+                ])
             }
         ]
 
@@ -176,8 +193,8 @@ class TestDependsOnScriptAndIntegration:
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
                              [("sslbl-get-indicators", {("Feedsslabusech", True)}),
-                              ("activemq-subscribe", {("ActiveMQ", True)}),
-                              ("alienvault-get-indicators", {("FeedAlienVault", True)})
+                              # ("activemq-subscribe", {("ActiveMQ", True)}),
+                              # ("alienvault-get-indicators", {("FeedAlienVault", True)})
                               ])
     def test_collect_scripts_depends_on_integration(self, dependency_integration_command, expected_result, id_set):
         """

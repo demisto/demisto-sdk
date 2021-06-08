@@ -7,6 +7,7 @@
 * Added the ability to append to the pack README credit to contributors.
 * Added identification for parameter differences in **integration-diff** command.
 * Fixed **format** to use git as a default value.
+* Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
 
 # 1.3.9

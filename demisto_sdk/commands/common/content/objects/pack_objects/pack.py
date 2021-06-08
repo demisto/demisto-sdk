@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
     PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget)
+    Widget, Contributors)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
@@ -33,7 +33,7 @@ class Pack:
         self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
-        """Generic content objcets iterable generator
+        """Generic content objects iterable generator
 
         Args:
             dir_name: Directory name, for example: Integrations, Documentations etc.
@@ -191,7 +191,7 @@ class Pack:
         obj = None
         file = self._path / "README.md"
         if file.exists():
-            obj = Readme(file)
+            obj = Readme(path=file)
 
         return obj
 
@@ -201,6 +201,15 @@ class Pack:
         file = self._path / "Author_image.png"
         if file.exists():
             obj = AuthorImage(file)
+
+        return obj
+
+    @property
+    def contributors(self) -> Optional[Contributors]:
+        obj = None
+        file = self._path / "CONTRIBUTORS.md"
+        if file.exists():
+            obj = Contributors(path=file)
 
         return obj
 

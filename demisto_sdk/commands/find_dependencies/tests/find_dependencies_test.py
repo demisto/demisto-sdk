@@ -1,22 +1,56 @@
 import json
 import os
+import yaml
 
 import networkx as nx
 import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+import demisto_sdk.commands.create_id_set.create_id_set as cis
+from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 
-@pytest.fixture(scope="module")
-def id_set():
-    id_set_path = os.path.normpath(
-        os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+@pytest.fixture()
+def id_set(repo):
+    # id_set_path = os.path.normpath(
+    #     os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+    #
+    # with open(id_set_path, 'r') as id_set_file:
+    #     id_set = json.load(id_set_file)
+    #     yield id_set
+    repo.setup_content_repo(20)
 
-    with open(id_set_path, 'r') as id_set_file:
-        id_set = json.load(id_set_file)
-        yield id_set
+    prisma_cloud_compute = repo.create_pack('PrismaCloudCompute')
+    with open('test_content/PrismaCloudComputeParseAuditAlert.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        prisma_cloud_compute.create_script("PrismaCloudComputeParseAuditAlert", yml)
+    with open('test_content/PrismaCloudComputeParseCloudDiscoveryAlert.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        prisma_cloud_compute.create_script("PrismaCloudComputeParseCloudDiscoveryAlert", yml)
+    with open('test_content/PrismaCloudComputeParseComplianceAlert.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        prisma_cloud_compute.create_script("PrismaCloudComputeParseComplianceAlert", yml)
+    with open('test_content/PrismaCloudComputeParseVulnerabilityAlert.yml') as yml_file:
+        yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+        prisma_cloud_compute.create_script("PrismaCloudComputeParseVulnerabilityAlert", yml)
+
+    # script2 = prisma_cloud_compute.create_script("PrismaCloudComputeParseCloudDiscoveryAlert")
+    # script2.create_default_script()
+
+    # script3 = prisma_cloud_compute.create_script("PrismaCloudComputeParseComplianceAlert")
+    # script4 = prisma_cloud_compute.create_script("PrismaCloudComputeParseVulnerabilityAlert")
+
+    # repo.packs[0].layoutcontainers
+    with ChangeCWD(repo.path):
+        ids = cis.IDSetCreator()
+        ids.create_id_set()
+        return ids.id_set
+
+
+def test_id_set(id_set):
+    return id_set
 
 
 class TestIdSetFilters:
@@ -27,7 +61,7 @@ class TestIdSetFilters:
 
         assert len(found_filtered_result) == 0
 
-    @pytest.mark.parametrize("pack_id", ["CalculateTimeDifference", "Expanse", "HelloWorld"])
+    @pytest.mark.parametrize("pack_id", ["pack_0", "pack_1", "pack_2"])
     def test_search_for_pack_script_item(self, pack_id, id_set):
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
 

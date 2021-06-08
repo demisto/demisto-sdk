@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_last_remote_release_version,
                                                get_latest_release_notes_text,
                                                get_pack_metadata,
+                                               get_pack_name,
                                                get_release_notes_file_path,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
@@ -207,6 +208,17 @@ class TestGenericFunctions:
         snake = tools.camel_to_snake('CamelCase')
 
         assert snake == 'camel_case'
+
+    FILE_PATH = [
+        ('Packs/Pack1/Integrations/test1/integration.yml', 'Pack1'),
+        ('/test/test/test/test/test/Packs/Pack2/Integrations/test2', 'Pack2'),
+        ('/Packs/Pack3/Integrations/', 'Pack3')
+    ]
+
+    @pytest.mark.parametrize('path, pack', FILE_PATH)
+    def test_get_pack_name(self, path, pack):
+        output = get_pack_name(path)
+        assert output == pack
 
 
 class TestGetRemoteFile:

@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
 
-CAN_START_WITH_DOT_SLASH = '(?:./)?'
+CAN_START_WITH_DOT_SLASH = '(?:/.*)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'

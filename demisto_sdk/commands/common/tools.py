@@ -737,7 +737,7 @@ def get_pack_name(file_path):
     if isinstance(file_path, Path):
         file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
+    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 

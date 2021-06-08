@@ -239,7 +239,7 @@ class Initiator:
 
     def create_pack_base_files(self):
         """
-        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
         click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
@@ -250,6 +250,9 @@ class Initiator:
         fp.close()
 
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
+        fp.close()
+
+        fp = open(os.path.join(self.full_output_path, 'Author_image.png'), 'a')
         fp.close()
 
     @staticmethod

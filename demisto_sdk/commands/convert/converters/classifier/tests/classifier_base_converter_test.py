@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import pytest
+
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
     Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -60,4 +61,4 @@ class TestLayoutBaseConverter:
                                                             f'{git_path()}/demisto_sdk/commands/convert/converters/'
                                                             f'classifier/tests/test_data/{name_suffix}.json'))
         assert self.classifier_converter.extract_classifier_name(
-            Classifier(old_classifier_path, 'classifier')) == expected
+            Classifier(old_classifier_path)) == expected

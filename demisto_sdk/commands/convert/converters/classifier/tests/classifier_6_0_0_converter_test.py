@@ -3,6 +3,7 @@ import json
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
     Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -48,7 +49,7 @@ class TestClassifierSixConverter:
         - Ensure expected classifier is created in the expected path with the expected data.
 
         """
-        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH, 'classifier')
+        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH)
         intersecting_fields = self.classifier_converter.get_classifiers_schema_intersection_fields()
         self.classifier_converter.create_classifier_from_old_classifier(old_classifier, intersecting_fields)
         expected_new_classifier_path = f'{self.TEST_PACK_PATH}/Classifiers/classifier-Cymulate.json'
@@ -66,7 +67,7 @@ class TestClassifierSixConverter:
         - Ensure expected mapper is created in the expected path with the expected data.
 
         """
-        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH, 'classifier')
+        old_classifier = Classifier(self.OLD_CLASSIFIER_PATH)
         self.classifier_converter.create_mapper_from_old_classifier(old_classifier)
         expected_new_mapper_path = f'{self.TEST_PACK_PATH}/Classifiers/classifier-mapper-incoming-Cymulate.json'
         self.assert_expected_file_output(expected_new_mapper_path, 'classifier-mapper-incoming-Cymulate')
@@ -93,7 +94,8 @@ class TestClassifierSixConverter:
         file_full_expected_path = f'{pack_path}/{expected_suffix}'
         assert self.classifier_converter.calculate_new_path(old_classifier_brand, is_mapper) == file_full_expected_path
 
-    def assert_expected_file_output(self, result_path: str, file_name: str):
+    @staticmethod
+    def assert_expected_file_output(result_path: str, file_name: str):
         expected_result_path = os.path.join(__file__,
                                             f'{git_path()}/demisto_sdk/commands/convert/converters/classifier/'
                                             f'tests/test_data/{file_name}.json')

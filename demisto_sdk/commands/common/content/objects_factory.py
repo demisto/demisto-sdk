@@ -3,7 +3,7 @@ from typing import Union
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Dashboard, DocFile, IncidentField, IncidentType,
+    Connection, Contributors, Dashboard, DocFile, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
     OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
     Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
@@ -42,6 +42,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.JAVASCRIPT_FILE: '',
     FileType.POWERSHELL_FILE: '',
     FileType.PYTHON_FILE: '',
+    FileType.CONTRIBUTORS: Contributors,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

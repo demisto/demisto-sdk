@@ -44,7 +44,7 @@ This will create a new pack named "My_Pack" under the "Packs" directory in conte
 
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
 
-This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory. 
+This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 
 `demisto-sdk init --script --id "My Script ID" -n MyScript`
@@ -54,5 +54,5 @@ This will create a named "MyScript" under the "Scripts" directory and the yml fi
 
 `demisto-sdk init --pack -n My_Pack -a path/yourAuthorImage.png`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that 
-will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory. 
+This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
+will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory.

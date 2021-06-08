@@ -881,7 +881,7 @@ class Errors:
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
         return f"Release notes were not found. Please run `demisto-sdk " \
-               f"update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
+               f"update-release-notes -i Packs/{pack} -u (major|minor|revision|maintenance|documentation)` to " \
                f"generate release notes according to the new standard. You can refer to the documentation " \
                f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -904,7 +904,7 @@ class Errors:
     def modified_existing_release_notes(pack_name):
         return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
                f"if needed by running:\n`demisto-sdk update-release-notes -i Packs/{pack_name} -u " \
-               f"(major|minor|revision)`\n" \
+               f"(major|minor|revision|maintenance|documentation)`\n" \
                f"You can refer to the documentation found here: " \
                f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -1231,7 +1231,8 @@ class Errors:
                f"make sure you are merged from master and " \
                f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
-               f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
+               f"`demisto-sdk update-release-notes -i Packs/{pack} -u " \
+               f"(major|minor|revision|maintenance|documentation)` to " \
                f"generate them according to the new standard."
 
     @staticmethod

@@ -2,6 +2,7 @@ import os
 from os.path import join
 
 import conftest  # noqa: F401
+import demisto_sdk.commands.common.tools as tools
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -49,6 +50,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=True)
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_new.get_pack_name', return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
@@ -363,15 +365,16 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.get_packs', return_value={'FeedAzureValid'})
+    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.get_pack_names_from_files', return_value={'FeedAzureValid'})
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
         print(result.stdout)
     assert result.exit_code == 0
-    assert 'No changes that require release notes were detected. If such changes were made, ' \
-           'please commit the changes and rerun the command' in result.stdout
+    assert 'Either no changes were found in FeedAzureValid pack or the changes found should not be documented ' \
+           'in the release notes file If relevant changes were made, please commit the changes and ' \
+           'rerun the command' in result.stdout
 
 
 def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, repo):

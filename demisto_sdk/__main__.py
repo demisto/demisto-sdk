@@ -15,15 +15,11 @@ import git
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
-from demisto_sdk.commands.common.legacy_git_tools import get_packs
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import (filter_files_by_type,
-                                               filter_files_on_pack, find_type,
+from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
-                                               print_warning)
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
@@ -61,8 +57,8 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
+from demisto_sdk.commands.update_release_notes.update_rn_new import \
+    UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -1021,8 +1017,13 @@ def merge_id_sets(**kwargs):
     type=click.Path(resolve_path=True))
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
-    from demisto_sdk.commands.update_release_notes.update_rn_new import UpdateReleaseNotesManager
     check_configuration_file('update-release-notes', kwargs)
+
+    if not kwargs.get('all') and not kwargs.get('input'):
+        update_all = click.prompt('No specific pack was given, do you want to update all changed packs? (y/n)',
+                                  type=bool)
+        if not update_all:
+            sys.exit(0)
 
     rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
                                        pre_release=kwargs.get('pre_release'), is_all=kwargs.get('all'),

@@ -365,7 +365,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-    mocker.patch('demisto_sdk.commands.common.legacy_git_tools.get_pack_names_from_files', return_value={'FeedAzureValid'})
+    mocker.patch('demisto_sdk.commands.common.tools.get_pack_names_from_files', return_value={'FeedAzureValid'})
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)

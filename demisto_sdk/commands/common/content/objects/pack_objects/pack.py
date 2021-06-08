@@ -262,7 +262,7 @@ class Pack:
                                           server_configuration={PACK_VERIFY_KEY: False},
                                           error_msg='Can not turn off the pack verification')
         try:
-            return client.zipped_pack_upload(file=self.path)  # type: ignore
+            return client.upload_content_packs(file=self.path)  # type: ignore
         finally:
             try:
                 tools.update_server_configuration(client=client,

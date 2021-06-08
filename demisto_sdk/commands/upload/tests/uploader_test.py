@@ -692,12 +692,12 @@ class TestZippedPackUpload:
         When:
             - call to upload command
         Then:
-            - validate the zipped_pack_upload in the api client was called correct
+            - validate the upload_content_packs in the api client was called correct
               and the pack verification ws turned on and off
         """
         # prepare
         mocker.patch.object(tools, 'update_server_configuration')
-        mocker.patch.object(DefaultApi, 'zipped_pack_upload')
+        mocker.patch.object(DefaultApi, 'upload_content_packs')
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
@@ -708,7 +708,7 @@ class TestZippedPackUpload:
 
         assert first_call_args['server_configuration'][constants.PACK_VERIFY_KEY] is False
         assert constants.PACK_VERIFY_KEY in second_call_args['configs_to_delete']
-        uploaded_file_path = DefaultApi.zipped_pack_upload.call_args.kwargs['file']
+        uploaded_file_path = DefaultApi.upload_content_packs.call_args.kwargs['file']
         assert str(uploaded_file_path) == input
 
     def test_compile_and_upload(self, mocker):
@@ -756,20 +756,20 @@ class TestZippedPackUpload:
         When:
             - upload zipped pack
         Then:
-            - validate the result status are 1 (error) and the zipped_pack_upload was not called
+            - validate the result status are 1 (error) and the upload_content_packs was not called
         """
 
         # prepare
 
         mocker.patch.object(tools, 'update_server_configuration', new=exception_raiser)
-        mocker.patch.object(DefaultApi, 'zipped_pack_upload')
+        mocker.patch.object(DefaultApi, 'upload_content_packs')
 
         # run
         status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
-        assert DefaultApi.zipped_pack_upload.call_count == 0
+        assert DefaultApi.upload_content_packs.call_count == 0
 
     def test_error_in_enable_pack_verification(self, mocker):
         """
@@ -778,7 +778,7 @@ class TestZippedPackUpload:
         When:
             - run the upload for zipped pack
         Then:
-            - validate DefaultApi.zipped_pack_upload was called (as the error occurred after that)
+            - validate DefaultApi.upload_content_packs was called (as the error occurred after that)
               and validate the detailed error message
         """
 
@@ -790,14 +790,14 @@ class TestZippedPackUpload:
 
         mocker.patch.object(uploader, 'parse_error_response')
         mocker.patch.object(tools, 'update_server_configuration', new=conditional_exception_raiser)
-        mocker.patch.object(DefaultApi, 'zipped_pack_upload')
+        mocker.patch.object(DefaultApi, 'upload_content_packs')
 
         # run
         status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
-        assert DefaultApi.zipped_pack_upload.call_count == 1
+        assert DefaultApi.upload_content_packs.call_count == 1
         assert str(uploader.parse_error_response.call_args[0][0]) == TURN_VERIFICATION_ERROR_MSG
 
     def test_error_in_upload_to_marketplace(self, mocker):
@@ -810,7 +810,7 @@ class TestZippedPackUpload:
             - validate the status result are 1 (error) and the pack verification was enabled again
         """
         mocker.patch.object(tools, 'update_server_configuration')
-        mocker.patch.object(DefaultApi, 'zipped_pack_upload', new=exception_raiser)
+        mocker.patch.object(DefaultApi, 'upload_content_packs', new=exception_raiser)
 
         # run
         status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)

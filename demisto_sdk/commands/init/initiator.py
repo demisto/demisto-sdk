@@ -90,13 +90,15 @@ class Initiator:
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 script: bool = False, pack: bool = False, author_image: str = '' , demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.author_image = author_image
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.configuration = Configuration()

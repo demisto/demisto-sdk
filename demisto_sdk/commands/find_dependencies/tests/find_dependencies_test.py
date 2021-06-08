@@ -905,75 +905,22 @@ class TestDependsOnLayout:
 
         incident = {
             "id": "incident_example",
-            "version": -1,
-            "modified": "2021-05-31T08:04:56.168259Z",
             "name": "example",
-            "ownerOnly": "false",
             "cliName": "example",
-            "type": "shortText",
-            "closeForm": "false",
-            "editForm": "true",
-            "required": "false",
-            "neverSetAsRequired": "false",
-            "isReadOnly": "false",
-            "useAsKpi": "false",
-            "locked": "false",
-            "system": "false",
-            "content": "true",
-            "group": 0,
-            "hidden": "false",
-            "associatedToAll": "true",
-            "unmapped": "false",
-            "unsearchable": "false",
-            "caseInsensitive": "true",
-            "sla": 0,
-            "threshold": 72,
-            "fromVersion": "5.5.0"
-        }
+         }
         indicator = {
             "id": "indicator_example",
-            "version": -1,
-            "modified": "2021-05-31T08:05:36.813002Z",
             "name": "example",
-            "ownerOnly": "false",
             "cliName": "example",
-            "type": "shortText",
-            "closeForm": "false",
-            "editForm": "true",
-            "required": "false",
-            "neverSetAsRequired": "false",
-            "isReadOnly": "false",
-            "useAsKpi": "false",
-            "locked": "false",
-            "system": "false",
-            "content": "true",
-            "group": 2,
-            "hidden": "false",
-            "associatedToAll": "true",
-            "unmapped": "false",
-            "unsearchable": "false",
-            "caseInsensitive": "true",
-            "sla": 0,
-            "threshold": 72,
-            "fromVersion": "5.5.0"
         }
         incident_layout = {
             "detailsV2": {
                 "tabs": [
                     {
-                        "id": "summary",
-                        "name": "Legacy Summary",
-                        "type": "summary"
-                    },
-                    {
                         "id": "caseinfoid",
                         "name": "Incident Info",
                         "sections": [
                             {
-                                "displayType": "ROW",
-                                "h": 2,
-                                "hideName": "false",
-                                "i": "caseinfoid-313783a0-c1e7-11eb-9598-a1a56eba0bb0",
                                 "items": [
                                     {
                                         "endCol": 2,
@@ -984,45 +931,11 @@ class TestDependsOnLayout:
                                         "sectionItemType": "field",
                                         "startCol": 0
                                     }
-                                ],
-                                "maxW": 3,
-                                "minH": 1,
-                                "minW": 1,
-                                "moved": "false",
-                                "name": "New Section",
-                                "static": "false",
-                                "w": 1,
-                                "x": 0,
-                                "y": 0
+                                ]
                             }
                         ],
                         "type": "custom"
                     },
-                    {
-                        "id": "warRoom",
-                        "name": "War Room",
-                        "type": "warRoom"
-                    },
-                    {
-                        "id": "workPlan",
-                        "name": "Work Plan",
-                        "type": "workPlan"
-                    },
-                    {
-                        "id": "evidenceBoard",
-                        "name": "Evidence Board",
-                        "type": "evidenceBoard"
-                    },
-                    {
-                        "id": "relatedIncidents",
-                        "name": "Related Incidents",
-                        "type": "relatedIncidents"
-                    },
-                    {
-                        "id": "canvas",
-                        "name": "Canvas",
-                        "type": "canvas"
-                    }
                 ]
             },
             "group": "incident",
@@ -1039,14 +952,8 @@ class TestDependsOnLayout:
             "indicatorsDetails": {
                 "tabs": [
                     {
-                        "id": "default-main",
-                        "name": "Info",
                         "sections": [
                             {
-                                "displayType": "ROW",
-                                "h": 2,
-                                "hideName": "false",
-                                "i": "default-main-6d7a16a0-c1f8-11eb-9598-a1a56eba0bb0",
                                 "items": [
                                     {
                                         "endCol": 2,
@@ -1057,16 +964,7 @@ class TestDependsOnLayout:
                                         "sectionItemType": "field",
                                         "startCol": 0
                                     }
-                                ],
-                                "maxW": 3,
-                                "minH": 1,
-                                "minW": 1,
-                                "moved": "false",
-                                "name": "New Section",
-                                "static": "false",
-                                "w": 1,
-                                "x": 0,
-                                "y": 0
+                                ]
                             }
                         ],
                         "type": "custom"
@@ -1077,7 +975,6 @@ class TestDependsOnLayout:
             "system": "false",
             "version": -1,
             "fromVersion": "6.0.0",
-            "description": ""
         }
 
         pack1 = repo.create_pack('pack1')

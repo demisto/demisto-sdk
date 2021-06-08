@@ -219,7 +219,7 @@ class PackDependencies:
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
                                             exclude_ignored_dependencies: bool = True,
-                                            incident_or_indicator: Optional[str] = None) -> set:
+                                            incident_or_indicator: Optional[str] = 'both') -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -227,8 +227,10 @@ class PackDependencies:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-            incident_or_indicator (str): 'indicator' if should focus on indicator fields,
-                 'incident' if should focus on incident fields and None to focus on both.
+            incident_or_indicator (str):
+                'indicator' to search packs with indicator fields,
+                'incident' to search packs with incident fields,
+                'both' to search packs with indicator fields and incident fields.
         Returns:
             set: found pack ids.
 
@@ -238,13 +240,11 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
-            if incident_or_indicator:
-                if incident_or_indicator == 'incident':
-                    item_possible_names = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
-                elif incident_or_indicator == 'indicator':
-                    item_possible_names = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
-
-            else:
+            if incident_or_indicator == 'incident':
+                item_possible_names = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'indicator':
+                item_possible_names = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'both':
                 item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
                                        f'{item_name}-mapper']
 

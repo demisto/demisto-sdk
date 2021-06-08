@@ -63,11 +63,18 @@ class XsoarChecker(BaseChecker):
                 if node.name == 'main':
                     not_implemented_error_exist = False
                     for child in self._inner_search_return_error(node):
+                        if isinstance(child, astroid.Raise) and child.exc.func.name == "NotImplementedError":
+                            not_implemented_error_exist = True
                         if isinstance(child, astroid.If):
-                            else_cluse = child.orelse
-                            for line in else_cluse:
+                            if_clause = child.body
+                            else_clause = child.orelse
+                            clauses = if_clause + else_clause
+                            for line in clauses:
                                 if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
                                     not_implemented_error_exist = True
+                                    break
+                        if not_implemented_error_exist:
+                            break
                     if not not_implemented_error_exist:
                         self.add_message("not-implemented-error-doesnt-exist", node=node)
         except Exception:

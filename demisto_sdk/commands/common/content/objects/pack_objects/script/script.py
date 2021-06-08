@@ -33,3 +33,6 @@ class Script(YAMLContentUnifiedObject):
                         # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                         return client.import_script(file=file)
+
+    def type(self):
+        return FileType.SCRIPT

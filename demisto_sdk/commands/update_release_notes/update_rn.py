@@ -5,9 +5,10 @@ import copy
 import errno
 import json
 import os
+import re
 import sys
 from distutils.version import LooseVersion
-from typing import Union
+from typing import Optional, Union
 
 import click
 from demisto_sdk.commands.common.constants import (
@@ -30,7 +31,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', prev_rn_text: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
@@ -50,7 +51,8 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.text = text
-        self.prev_rn_text = prev_rn_text
+        self.existing_rn_version_path = existing_rn_version_path
+        self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
 
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -91,26 +93,33 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            is_docker_image_changed = False
+            docker_image_name: Optional[str] = None
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == FileType.INTEGRATION:
-                    is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
+                if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
+                    docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
                     'is_new_file': True if packfile in self.added_files else False,
                     'fromversion': get_from_version_at_update_rn(packfile)
                 }
-            rn_string = self.prev_rn_text
+
+            rn_string = ''
+            if self.existing_rn_version_path:
+                self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
+                try:
+                    with open(self.existing_rn_version_path, 'r') as f:
+                        rn_string = f.read()
+                except Exception as e:
+                    print_error(f'Failed to load the previous release notes file content: {e}')
+
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
-                self.create_markdown(rn_path, rn_string, changed_files)
-                if is_docker_image_changed:
-                    self.update_markdown(rn_path, f'- Updated the Docker image to: *{docker_image_name}*.')
+                self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
@@ -141,12 +150,12 @@ class UpdateRN:
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
         master_current_version = '0.0.0'
+        master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path)
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")
-            pass
         if master_metadata:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
@@ -198,6 +207,8 @@ class UpdateRN:
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)
+        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+            name = file_data['layout'].get('id')
         elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
@@ -388,27 +399,50 @@ class UpdateRN:
                     new_rn += new_rn_part
         return new_rn
 
-    def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):
+    def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict,
+                        docker_image_name: Optional[str]):
         if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
         elif self.update_type is None and self.specific_version is None:
             current_rn = get_latest_release_notes_text(release_notes_path)
             updated_rn = self.update_existing_rn(current_rn, changed_files)
+            updated_rn = self.rn_with_docker_image(updated_rn, docker_image_name)
             with open(release_notes_path, 'w') as fp:
                 fp.write(updated_rn)
         else:
             self.existing_rn_changed = True
+            updated_rn = self.rn_with_docker_image(rn_string, docker_image_name)
             with open(release_notes_path, 'w') as fp:
-                fp.write(rn_string)
+                fp.write(updated_rn)
 
-    def update_markdown(self, release_notes_path: str, rn_string: str):
-        if os.path.exists(release_notes_path):
-            self.existing_rn_changed = True
-            with open(release_notes_path, 'a') as fp:
-                fp.write(rn_string)
-        else:
-            print_warning(f"Changes were detected, but could not find release notes file to update."
-                          f"\ngiven path: {release_notes_path}")
+    def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
+        """
+        Receives existing release notes, if docker image was updated, adds docker_image to release notes.
+        Taking care of cases s.t:
+        1) no docker image update have occurred ('docker_image' is None).
+        2) Release notes did not contain updated docker image note.
+        3) Release notes contained updated docker image notes, with the newest updated docker image.
+        4) Release notes contained updated docker image notes, but docker image was updated again since last time
+           release notes have been updated.
+
+        Args:
+            rn_string (str): The current text contained in the release note.
+            docker_image (Optional[str]): The docker image str, if given.
+        Returns:
+            (str): The release notes, with the most updated docker image release note, if given.
+        """
+        if not docker_image:
+            return rn_string
+        docker_image_str = f'- Updated the Docker image to: *{docker_image}*.'
+        if docker_image_str in rn_string:
+            return rn_string
+        self.existing_rn_changed = True
+        if '- Updated the Docker image to' not in rn_string:
+            return rn_string + f'{docker_image_str}\n'
+        update_docker_image_regex = r'- Updated the Docker image to: \*.*\*\.'
+        updated_rn = re.sub(update_docker_image_regex, docker_image_str, rn_string)
+        self.existing_rn_changed = True
+        return updated_rn
 
 
 def get_file_description(path, file_type):
@@ -458,17 +492,17 @@ def check_docker_image_changed(added_or_modified_yml):
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):
-            return False, ''
+            return None
         else:
             print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
-            return False, ''
+            return None
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
             if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
-                return True, diff_line.split()[-1]
-        return False, ''
+                return diff_line.split()[-1]
+        return None
 
 
 def get_from_version_at_update_rn(path: str):

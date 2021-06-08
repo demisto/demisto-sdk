@@ -13,7 +13,8 @@ To do so, you can do the following:\
   b. If needed, trigger the nightly Content build from the Content repository by running:\
   `./Utils/trigger_content_nightly_build.sh <circle_token> <branch_name>` and make sure to wait until the build is finished.\
   circle_token is a private key, if you don't have one - you can generate your own in your circle user settings under `Personal API Tokens`. \
-6) Update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
+6) Create a new content branch and update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
+7) Open a PR for that content branch, and verify that the build triggered is green. Note that in order to trigger the build, opening the PR is requiered.
 
 ### Release process:
 1) In demisto-sdk repository's main page click on **releases**.
@@ -24,6 +25,6 @@ To do so, you can do the following:\
 6) Update the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file again, this time with the release tag.
 7) Run the regular build again or force merge your PR to the Content repository.
 8) Announce regarding the SDK release in the content-team slack channel.
-9) Update **CHANGELOG.md** file - create header with the release version instead of `# Changelog` in the format `# X.X.X` e.g. `# 1.0.0`.
+9) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.
 
 Your release was completed successfully!

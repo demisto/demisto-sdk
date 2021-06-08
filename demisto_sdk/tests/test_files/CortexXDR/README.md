@@ -4,7 +4,7 @@
 </p>
 <h2>Automation</h2>
 <p>
-  <span>To sync incidents between Demisto and Cortex XDR, you should use the <code>XDRSyncScript</code> script, which you can find in the automation page.</span>
+  <span>To sync incidents between Cortex XSOAR and Cortex XDR, you should use the <code>XDRSyncScript</code> script, which you can find in the automation page.</span>
 </p>
 <h2>Use Cases</h2>
 <ol>
@@ -13,11 +13,11 @@
   <li>Update incident in XDR</li>
 </ol>
 <h2>
-  Configure Palo Alto Networks Cortex XDR - Investigation and Response on Demisto
+  Configure Palo Alto Networks Cortex XDR - Investigation and Response on Cortex XSOAR
 </h2>
 <p>
   You need to collect several pieces of information in order to configure the integration
-  on Demisto.
+  on Cortex XSOAR.
 </p>
 <h3>Generate an API Key and API Key ID</h3>
 <ol>
@@ -114,7 +114,7 @@ xdr_url:https://1111.paloaltonetworks.com/incident-view/31
 </pre>
 <h2>Commands</h2>
 <p>
-  You can execute these commands from the Demisto CLI, as part of an automation,
+  You can execute these commands from the Cortex XSOAR CLI, as part of an automation,
   or in a playbook.<br>
   After you successfully execute a command, a DBot message appears in the War Room
   with the command details.

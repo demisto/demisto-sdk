@@ -47,6 +47,53 @@ class MapperValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    def is_backward_compatible(self):
+        # type: () -> bool
+        """Check whether the Mapper is backward compatible or not, update the _is_valid field to determine that"""
+
+        answers = [
+            self.is_field_mapping_removed(),
+        ]
+        return not any(answers)
+
+    def is_field_mapping_removed(self):
+        """checks if some incidents fields or incidents types were removed"""
+        old_mapper = self.old_file.get('mapping', {})
+        current_mapper = self.current_file.get('mapping', {})
+
+        old_incidents_types = {inc for inc in old_mapper}
+        current_incidents_types = {inc for inc in current_mapper}
+        if not old_incidents_types.issubset(current_incidents_types):
+            removed_incident_types = old_incidents_types - current_incidents_types
+            removed_dict = {}
+            for removed in removed_incident_types:
+                removed_dict[removed] = old_mapper[removed]
+            error_message, error_code = Errors.removed_incident_types(removed_dict)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
+                self.is_valid = False
+                return True
+        else:
+            removed_incident_fields = {}
+            for inc in old_incidents_types:
+                old_incident_fields = old_mapper[inc].get('internalMapping', {})
+                current_incident_fields = current_mapper[inc].get('internalMapping', {})
+                old_fields = {inc for inc in old_incident_fields}
+                current_fields = {inc for inc in current_incident_fields}
+
+                if not old_fields.issubset(current_fields):
+                    removed_fields = old_fields - current_fields
+                    removed_incident_fields[inc] = removed_fields
+
+            if removed_incident_fields:
+                error_message, error_code = Errors.changed_incident_field_in_mapper(removed_incident_fields)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
+                    self.is_valid = False
+                    return True
+
+        return False
+
     def is_valid_from_version(self):
         """Checks if from version field is valid.
 
@@ -137,7 +184,7 @@ class MapperValidator(ContentEntityValidator):
                 # for outgoing mapper
                 if self.current_file.get('type', {}) == "mapping-outgoing":
                     # for inc timer type: "field.StartDate, and for using filters: "simple": "".
-                    if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields\
+                    if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields \
                             and inc_info['simple'].split('.')[0] not in content_incident_fields and inc_info['simple']:
                         invalid_inc_fields_list.append(inc_name) if inc_info['simple'] else None
 

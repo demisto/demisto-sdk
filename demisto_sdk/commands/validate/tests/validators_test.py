@@ -25,6 +25,8 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.old_release_notes import \
     OldReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
@@ -206,6 +208,7 @@ class TestValidators:
             structure = StructureValidator(source)
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -378,7 +381,9 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -460,7 +465,7 @@ class TestValidators:
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
-    def test_validate_pack_dependencies__invalid(self):
+    def test_validate_pack_dependencies__invalid(self, mocker):
         """
             Given:
                 - A file path with invalid pack dependencies
@@ -472,6 +477,7 @@ class TestValidators:
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -495,6 +501,7 @@ class TestValidators:
         """
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
@@ -610,7 +617,7 @@ class TestValidators:
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107",
+        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
@@ -927,16 +934,6 @@ class TestValidators:
         assert validate_manager.validate_no_old_format(old_format_file)
         assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
-    def test_setup_git_params_release_branch(self, mocker):
-        mocker.patch.object(ValidateManager, 'get_content_release_identifier', return_value='')
-
-        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='21.0.7')
-        validate_manager = ValidateManager()
-        validate_manager.setup_git_params()
-
-        assert validate_manager.always_valid
-        assert validate_manager.skip_pack_rn_validation
-
     def test_setup_git_params_master_branch(self, mocker):
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
         validate_manager = ValidateManager()
@@ -999,24 +996,6 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
-    def test_validate_release_notes__invalid_modified_rn(self, mocker):
-        """
-        Given
-            - A modified release note file.
-        When
-            - Run the validate command.
-        Then
-            - validate_release_notes returns False
-        """
-
-        file_path = 'Packs/CortexXDR/ReleaseNotes/1_1_1.md'
-        modified_files = {'Packs/CortexXDR/ReleaseNotes/1_1_1.md'}
-        mocker.patch.object(ReleaseNotesValidator, '__init__', return_value=None)
-        mocker.patch.object(ReleaseNotesValidator, 'is_file_valid', return_value=True)
-        mocker.patch.object(BaseValidator, 'handle_error', return_value="Modified existing release notes")
-        validate_manager = ValidateManager(skip_conf_json=True)
-        assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, True) is False
-
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),
@@ -1048,7 +1027,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'Packs/TestPack/pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {'/Packs/TestPack/pack_metadata.json'}, set()))
 
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()
@@ -1153,3 +1132,9 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'PackWithModifiedOldFile' in packs_that_should_have_version_raised
         assert 'PackWithModifiedTestPlaybook' not in packs_that_should_have_version_raised
         assert 'NewPack' not in packs_that_should_have_version_raised
+
+
+def test_quite_bc_flag(repo):
+    existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
+    moodified_integration = existing_pack1.create_integration('MyIn')
+    moodified_integration.create_default_integration()

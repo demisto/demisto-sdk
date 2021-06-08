@@ -32,11 +32,10 @@ def test_baseintegration_dummy():
 
     client = Client(base_url='some_mock_url', verify=False)
     args = {
-        'dummy': 'this is a dummy response'
+        'dummy': 'this is a dummy response',
+        'dummy2': 'a dummy value'
     }
     response = baseintegration_dummy_command(client, args)
 
-    mock_response = util_load_json('test_data/baseintegration-dummy.json')
-
-    assert response.outputs == mock_response
+    assert response.outputs == args
 # TODO: ADD HERE unit tests for every command

@@ -8,7 +8,7 @@ from typing import Any, Dict, Set
 
 import coloredlogs
 
-ARTIFACTS_PATH = os.environ.get('CIRCLE_ARTIFACTS', '.')
+ARTIFACTS_PATH = os.environ.get('ARTIFACTS_FOLDER', '.')
 LOGGING_FORMAT = '[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'
 LEVEL_STYLES = {
     'critical': {'bold': True, 'color': 'red'},

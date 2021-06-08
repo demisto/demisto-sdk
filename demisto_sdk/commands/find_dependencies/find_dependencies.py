@@ -10,8 +10,12 @@ import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import (get_content_id_set,
+                                               is_external_repository,
+                                               print_error, print_warning)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from requests import RequestException
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -137,6 +141,29 @@ def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_de
         pack_metadata_file.seek(0)
         json.dump(pack_metadata, pack_metadata_file, indent=4)
         pack_metadata_file.truncate()
+
+
+def get_merged_official_and_local_id_set(local_id_set: dict, silent_mode: bool = False) -> dict:
+    """Merging local idset with content id_set
+    Args:
+        local_id_set: The local ID set (when running in a local repo)
+        silent_mode: When True, will not print logs. False will print logs.
+    Returns:
+        A unified id_set from local and official content
+    """
+    try:
+        official_id_set = get_content_id_set()
+    except RequestException as exception:
+        raise RequestException(
+            f'Could not download official content from {constants.OFFICIAL_CONTENT_ID_SET_PATH}\n'
+            f'Stopping execution.'
+        ) from exception
+    unified_id_set, duplicates = merge_id_sets(
+        official_id_set,
+        local_id_set,
+        print_logs=not silent_mode
+    )
+    return unified_id_set.get_dict()
 
 
 class PackDependencies:
@@ -1162,10 +1189,18 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
-                          update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
-                          debug_file_path: str = '', skip_id_set_creation: bool = False,
-                          complete_data: bool = False) -> dict:
+    def find_dependencies(
+            pack_name: str,
+            id_set_path: str = '',
+            exclude_ignored_dependencies: bool = True,
+            update_pack_metadata: bool = True,
+            silent_mode: bool = False,
+            verbose: bool = False,
+            debug_file_path: str = '',
+            skip_id_set_creation: bool = False,
+            use_pack_metadata: bool = False,
+            complete_data: bool = False
+    ) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1191,13 +1226,23 @@ class PackDependencies:
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
+        if is_external_repository():
+            print_warning('Running in a private repository, will download the id set from official content')
+            id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
 
         dependency_graph = PackDependencies.build_dependency_graph(
-            pack_id=pack_name, id_set=id_set, verbose=verbose,
-            exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose,
-                                                              complete_data=complete_data, id_set_data=id_set,
-                                                              )
+            pack_id=pack_name,
+            id_set=id_set,
+            verbose=verbose,
+            exclude_ignored_dependencies=exclude_ignored_dependencies
+        )
+        first_level_dependencies, _ = parse_for_pack_metadata(
+            dependency_graph,
+            pack_name,
+            verbose,
+            complete_data=complete_data,
+            id_set_data=id_set,
+        )
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:
@@ -1205,4 +1250,45 @@ class PackDependencies:
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
+
+        if use_pack_metadata:
+            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
+                                                                                               first_level_dependencies)
+
         return first_level_dependencies
+
+    @staticmethod
+    def update_dependencies_from_pack_metadata(pack_name, first_level_dependencies):
+        """
+        Update the dependencies by the pack metadata.
+
+        Args:
+            pack_name (str): the pack name to take the metadata from.
+            first_level_dependencies (list): the given dependencies from the id set.
+
+        Returns:
+            A list of the updated dependencies.
+        """
+        pack_meta_file_content = PackDependencies.get_metadata_from_pack(pack_name)
+
+        manual_dependencies = pack_meta_file_content.get('dependencies', {})
+        first_level_dependencies.update(manual_dependencies)
+
+        return first_level_dependencies
+
+    @staticmethod
+    def get_metadata_from_pack(pack_name):
+        """
+        Returns the pack metadata content of a given pack name.
+
+        Args:
+            pack_name (str): the pack name.
+
+        Return:
+            The pack metadata content.
+        """
+
+        with open(find_pack_path(pack_name)[0], "r") as pack_metadata:
+            pack_meta_file_content = json.loads(pack_metadata.read())
+
+        return pack_meta_file_content

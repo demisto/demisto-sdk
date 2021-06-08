@@ -343,3 +343,17 @@ my_email = "fooo@someorg.com"
         assert "8.8.8.8" not in file_contents1
         assert "4.4.4.4" not in file_contents1
         assert "8.8.8.4" in file_contents1
+
+    def test_find_secrets(self, mocker):
+        """
+        Given
+            Working on a forked branch
+        When
+            Find_secrets is running
+        Then
+            Ensure we are looking for secrets in this branch
+        """
+        mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_branch_name", return_value='pull/123')
+        mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_secrets", return_value=True)
+        result = self.validator.find_secrets()
+        assert result

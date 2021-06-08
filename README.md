@@ -62,21 +62,55 @@ export DEMISTO_SDK_SKIP_VERSION_CHECK=yes
 Supported commands:
 
 1. [init](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/init/README.md)
-2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
-3. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
-4. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
-5. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/unify/README.md)
-6. [Split-yml](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split_yml/README.md)
-7. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
-8. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
-9. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
-10. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
-11. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
-12. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
-13. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-14. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
-15. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
-16. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
+1. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
+1. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
+1. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
+1. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/unify/README.md)
+1. [Split-yml](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split_yml/README.md)
+1. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+1. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
+1. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
+1. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
+1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
+1. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
+1. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
+1. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
+1. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
+1. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
+1. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
+
+---
+
+### Customizable command configuration
+
+You can create your own configuration for the `demisto-sdk` commands by creating a file named `.demisto-sdk-conf` within the directory from which you run the commands.
+This file will enable you to set a default value to the existing command flags that will take effect whenever the command is run.
+This can be done by entering the following structure into the file:
+```buildoutcfg
+[command_name]
+flag_name=flag_default_value
+```
+Note: Make sure to use the flag's full name and input `_` instead of a `-` if it exists in the flag name (e.g. instead of `no-docker-checks` use `no_docker_checks`).
+
+Here are a few examples:
+ -  As a user, I would like to not use the `mypy` linter in my environment when using the `lint` command. In the `.demisto-sdk-conf` file I'll enter:
+ ```buildoutcfg
+[lint]
+no_mypy=true
+```
+
+- As a user, I would like to include untracked git files in my validation when running the `validate` command. In the `.demisto-sdk-conf` file I'll enter:
+```buildoutcfg
+[validate]
+include_untracked=true
+```
+
+- As a user, I would like to automatically use minor version changes when running the `update-release-notes` command. In the `.demisto-sdk-conf` file I'll enter:
+```buildoutcfg
+[update-release-notes]
+update_type=minor
+```
 
 ---
 

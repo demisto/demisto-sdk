@@ -14,8 +14,11 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
 
+FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
+                                       name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
+
+def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
@@ -26,6 +29,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.quite_bc = quite_bc
         return structure
 
 
@@ -56,6 +60,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
+        structure.quite_bc = True
+        assert validator.is_added_required_fields() is False  # if quite_bc is true should always succeed
 
     IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
         ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
@@ -83,6 +89,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_removed_yml_fields() is answer
         assert validator.is_valid is not answer
+        structure.quite_bc = True
+        assert validator.is_changed_removed_yml_fields() is False  # if quite_bc is true should always succeed
 
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
@@ -108,6 +116,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_removed_integration_parameters() is answer
         assert validator.is_valid is not answer
+        structure.quite_bc = True
+        assert validator.is_removed_integration_parameters() is False  # if quite_bc is true should always succeed
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -143,6 +153,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_context_path() is False  # if quite_bc is true should always succeed
 
     CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
     CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
@@ -169,10 +181,12 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_command_name_or_arg() is False  # if quite_bc is true should always succeed
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
-        (WITHOUT_DUP, False)
+        (WITHOUT_DUP, True)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_PARAMS_INPUTS)
@@ -180,7 +194,7 @@ class TestIntegrationValidator:
         current = {'configuration': current}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
-        assert validator.is_there_duplicate_params() is answer
+        assert validator.has_no_duplicate_params() is answer
 
     @patch('demisto_sdk.commands.common.hook_validations.integration.print_error')
     def test_with_duplicate_params(self, print_error):
@@ -189,7 +203,7 @@ class TestIntegrationValidator:
         - integration configuration contains duplicate parameter (called test)
 
         When
-        - running the validation is_there_duplicate_params()
+        - running the validation has_no_duplicate_params()
 
         Then
         - it should set is_valid to False
@@ -208,22 +222,43 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
 
-        assert validator.is_there_duplicate_params() is True
+        assert validator.has_no_duplicate_params() is False
         assert validator.is_valid is False
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
     DUPLICATE_ARGS_INPUTS = [
-        (WITHOUT_DUP_ARGS, False),
-        (WITH_DUP_ARGS, True)
+        (WITHOUT_DUP_ARGS, True),
+        (WITH_DUP_ARGS, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)
-    def test_is_there_duplicate_args(self, current, answer):
+    def test_has_no_duplicate_args(self, current, answer):
         current = {'script': {'commands': current}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
-        assert validator.is_there_duplicate_args() is answer
+        assert validator.has_no_duplicate_args() is answer
+
+    NO_INCIDENT_INPUT = [
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),
+        ({"script": {"commands": [{"name": "command_incident", "arguments": [{"name": "arg1"}]}]}}, False),
+        ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "incident_arg"}]}]}}, False)
+    ]
+
+    @pytest.mark.parametrize("content, answer", NO_INCIDENT_INPUT)
+    def test_no_incident_in_core_pack(self, content, answer):
+        """
+        Given
+            - An integration with commands' names and arguments.
+        When
+            - running no_incident_in_core_packs.
+        Then
+            - validate that commands' names and arguments do not contain the word incident.
+        """
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        assert validator.no_incident_in_core_packs() is answer
+        assert validator.is_valid is answer
 
     PYTHON3_SUBTYPE = {
         "type": "python",
@@ -251,6 +286,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_subtype() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_subtype() is False  # if quite_bc is true should always succeed
 
     INPUTS_VALID_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, True),
@@ -362,6 +399,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_outputs_for_reputations_commands_valid() is answer
+        structure.quite_bc = True
+        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quite_bc is true should succeed
 
     VALID_BETA = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                   "display": "newIntegration (Beta)", "beta": True}
@@ -489,14 +528,18 @@ class TestIntegrationValidator:
         {"name": "unsecure", "type": 17, "required": False, "hidden": False}]
     INVALID_DISPLAY_TYPE_EXPIRATION = [
         {"name": "unsecure", "type": 17, "display": "some display", "required": False, "hidden": False}]
+    INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD = [
+        {"name": "credentials", "type": 9, "display": "", "displaypassword": "some display password", "required": True,
+         "hiddenusername": True}]
     IS_VALID_DISPLAY_INPUTS = [
         (VALID_DISPLAY_NON_HIDDEN, True),
         (VALID_DISPLAY_HIDDEN, True),
         (INVALID_DISPLAY_NON_HIDDEN, False),
-        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (INVALID_NO_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
         (INVALID_DISPLAY_TYPE_EXPIRATION, False),
-        (FEED_REQUIRED_PARAMS, True),
+        (FEED_REQUIRED_PARAMS_STRUCTURE, True),
+        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, True)
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -506,6 +549,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
+        structure.quite_bc = True
+        assert validator.is_not_valid_display_configuration() is False  # if quite_bc is true should always succeed
 
     VALID_FEED = [
         # Valid feed
@@ -523,7 +568,7 @@ class TestIntegrationValidator:
         current = {
             "script": {"feed": feed},
             "fromversion": fromversion,
-            'configuration': deepcopy(FEED_REQUIRED_PARAMS)
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE)
         }
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
@@ -697,6 +742,74 @@ class TestIntegrationValidator:
 
         assert not validator.is_valid_integration_file_path()
 
+    def test_folder_name_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_folder()
+
+    def test_files_names_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_files()
+
+    def test_folder_name_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_folder()
+
+    def test_files_names_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.check_separators_in_files()
+
 
 class TestIsFetchParamsExist:
     def setup(self):
@@ -802,7 +915,7 @@ class TestIsFeedParamsExist:
 
     def setup(self):
         config = {
-            'configuration': deepcopy(FEED_REQUIRED_PARAMS),
+            'configuration': deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             'script': {'feed': True}
         }
         self.validator = IntegrationValidator(mock_structure("", config))
@@ -843,6 +956,24 @@ class TestIsFeedParamsExist:
                 item['hidden'] = True
         assert self.validator.all_feed_params_exist() is True, \
             'all_feed_params_exist() returns False instead True for feedReputation param'
+
+    def test_additional_info_contained(self):
+        """
+        Given:
+        - Parameters of feed integration.
+
+        When:
+        - Integration has all feed required params, and additionalinfo containing the expected additionalinfo parameter.
+
+        Then:
+        - Ensure that all_feed_params_exists() returns true.
+        """
+        configuration = self.validator.current_file['configuration']
+        for item in configuration:
+            if item.get('additionalinfo'):
+                item['additionalinfo'] = f'''{item['additionalinfo']}.'''
+        assert self.validator.all_feed_params_exist() is True, \
+            'all_feed_params_exist() returns False instead True'
 
     NO_HIDDEN = {"configuration": [{"id": "new", "name": "new", "display": "test"}, {"d": "123", "n": "s", "r": True}]}
     HIDDEN_FALSE = {"configuration": [{"id": "n", "hidden": False}, {"display": "123", "name": "serer"}]}
@@ -1007,9 +1138,7 @@ class TestisContextChanged:
     def test_is_context_change_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
-
         When: running validate on integration with at least one command
-
         Then: Validate it's synced with the README.
         """
         patcher = patch('os.path.exists')

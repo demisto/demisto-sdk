@@ -4,13 +4,13 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL,
                                                    ContentItems)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
+from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from packaging.version import Version, parse
@@ -20,7 +20,8 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 PARTNER_SUPPORT = 'partner'
 XSOAR_CERTIFIED = 'certified'
 XSOAR_EULA_URL = 'https://github.com/demisto/content/blob/master/LICENSE'
-CORE_PACKS_LIST = tools.get_remote_file('Tests/Marketplace/core_packs_list.json') or []
+
+CORE_PACKS_LIST = get_core_pack_list()
 
 
 class PackMetaData(JSONObject):

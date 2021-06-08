@@ -18,7 +18,6 @@ def mock_lint_manager(mocker):
                        all_packs=False,
                        quiet=False,
                        verbose=False,
-                       log_path='',
                        prev_ver='master',
                        json_file_path='path')
 
@@ -383,36 +382,36 @@ def test_create_json_output_flake8(repo, mocker):
                     'Packs/myPack/Integrations/INT2/INT2.py:160:9: E225 missing whitespace around operator'
 
     }
-    json_contents = {}
+    json_contents = []
     mocked_lint_manager.flake8_error_formatter(check, json_contents)
-    expected_format = {
-        "Packs/myPack/Integrations/INT1/INT1.py": {
-            'file-type': 'py',
-            'entity-type': 'integration',
-            'display-name': 'Display',
-            'outputs': [{
-                'linter': 'flake8',
-                'severity': 'error',
-                'code': 'E225',
-                'message': 'missing whitespace around operator',
-                'line-number': "160",
-                'column-number': "9"
-            }]
+    expected_format = [
+        {
+            'filePath': 'Packs/myPack/Integrations/INT1/INT1.py',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'flake8',
+            'severity': 'error',
+            'errorCode': 'E225',
+            'message': 'missing whitespace around operator',
+            'row': '160',
+            'col': '9'
         },
-        "Packs/myPack/Integrations/INT2/INT2.py": {
-            'file-type': 'py',
-            'entity-type': 'integration',
-            'display-name': 'Display',
-            'outputs': [{
-                'linter': 'flake8',
-                'severity': 'error',
-                'code': 'E225',
-                'message': 'missing whitespace around operator',
-                'line-number': "160",
-                'column-number': "9"
-            }]
+        {
+            'filePath': 'Packs/myPack/Integrations/INT2/INT2.py',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'flake8',
+            'severity': 'error',
+            'errorCode': 'E225',
+            'message': 'missing whitespace around operator',
+            'row': '160',
+            'col': '9'
         }
-    }
+    ]
     assert json_contents == expected_format
 
 
@@ -451,44 +450,52 @@ def test_create_json_output_mypy(repo, mocker):
                     f'Found 6 errors in 1 file (checked 1 source file)'
 
     }
-    json_contents = {}
+    json_contents = []
     with ChangeCWD(repo.path):
         mocked_lint_manager.mypy_error_formatter(check, json_contents)
 
-    expected_format = {
-        f"{integration.code.path}": {
-            'file-type': 'py',
-            'entity-type': 'integration',
-            'display-name': 'Display',
-            'outputs': [
-                {
-                    'linter': 'mypy',
-                    'severity': 'error',
-                    'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
-                               '            if incident_created_time.timestamp() > latest_created_time.tim...\n'
-                               '               ^',
-                    'line-number': "280",
-                    'column-number': "12"
-                },
-                {
-                    'linter': 'mypy',
-                    'severity': 'error',
-                    'message': 'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports',
-                    'line-number': "11",
-                    'column-number': "2"
-                },
-                {
-                    'linter': 'mypy',
-                    'severity': 'error',
-                    'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
-                               '            if last_fetch.timestamp() < incident_created_time.timestamp():\n'
-                               '                                        ^',
-                    'line-number': "284",
-                    'column-number': "37"
-                },
-            ]
+    expected_format = [
+        {
+            'filePath': f'{integration.code.path}',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'mypy',
+            'severity': 'error',
+            'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                        '            if incident_created_time.timestamp() > latest_created_time.tim...\n'
+                        '               ^',
+            'row': '280',
+            'col': '12'
+        },
+        {
+            'filePath': f'{integration.code.path}',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'mypy',
+            'severity': 'error',
+            'message': 'See https://mypy.readthedocs.io/en/latest/running_mypy.html#missing-imports',
+            'row': '11',
+            'col': '2'
+        },
+        {
+            'filePath': f'{integration.code.path}',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'mypy',
+            'severity': 'error',
+            'message': 'Item "None" of "Optional[datetime]" has no attribute "timestamp"  [union-attr]\n'
+                        '            if last_fetch.timestamp() < incident_created_time.timestamp():\n'
+                        '                                        ^',
+            'row': '284',
+            'col': '37'
         }
-    }
+    ]
     assert json_contents == expected_format
 
 
@@ -515,22 +522,22 @@ def test_create_json_output_bandit(repo, mocker):
                     'B110 [Severity: LOW Confidence: HIGH] Try, Except, Pass detected.'
 
     }
-    json_contents = {}
+    json_contents = []
     mocked_lint_manager.bandit_error_formatter(check, json_contents)
-    expected_format = {
-        "Packs/myPack/Integrations/INT1/INT1.py": {
-            'file-type': 'py',
-            'display-name': 'Display',
-            'entity-type': 'integration',
-            'outputs': [{
-                'linter': 'bandit',
-                'severity': 'error',
-                'code': 'B110',
-                'message': 'Severity: LOW Confidence: HIGH - Try, Except, Pass detected.',
-                'line-number': "117",
-            }]
+    expected_format = [
+        {
+            'filePath': 'Packs/myPack/Integrations/INT1/INT1.py',
+            'fileType': 'py',
+            'errorType': 'Code',
+            'name': 'Display',
+            'entityType': 'integration',
+            'linter': 'bandit',
+            'severity': 'error',
+            'errorCode': 'B110',
+            'message': 'Severity: LOW Confidence: HIGH - Try, Except, Pass detected.',
+            'row': '117'
         }
-    }
+    ]
     assert json_contents == expected_format
 
 
@@ -556,21 +563,21 @@ def test_create_json_output_vulture(repo, mocker):
         'type': 'error',
         'messages': "INT1.py:289: unreachable code after 'return' (100% confidence)"
     }
-    json_contents = {}
+    json_contents = []
     mocked_lint_manager.vulture_error_formatter(check, json_contents)
-    expected_format = {
-        "Packs/myPack/Integrations/INT1/INT1.py": {
-            'file-type': 'py',
-            'display-name': 'Display',
-            'entity-type': 'integration',
-            'outputs': [{
-                'linter': 'vulture',
-                'severity': 'error',
-                'message': "unreachable code after 'return' (100% confidence)",
-                'line-number': "289",
-            }]
+    expected_format = [
+        {
+            'filePath': 'Packs/myPack/Integrations/INT1/INT1.py',
+            'fileType': 'py',
+            'errorType': 'Code',
+            'name': 'Display',
+            'entityType': 'integration',
+            'linter': 'vulture',
+            'severity': 'error',
+            'message': 'unreachable code after \'return\' (100% confidence)',
+            'row': '289',
         }
-    }
+    ]
     assert json_contents == expected_format
 
 
@@ -596,21 +603,21 @@ def test_create_json_output_xsoar_linter(repo, mocker):
         'messages': 'Packs/myPack/Integrations/INT1/INT1.py:105:8: '
                     'E9001 FileShareLink.prepare_request_object: Sys.exit use is found, Please use return instead.'
     }
-    json_contents = {}
+    json_contents = []
     mocked_lint_manager.xsoar_linter_error_formatter(check, json_contents)
-    expected_format = {
-        "Packs/myPack/Integrations/INT1/INT1.py": {
-            'file-type': 'py',
-            'entity-type': 'integration',
-            'display-name': 'Display',
-            'outputs': [{
-                'linter': 'xsoar_linter',
-                'severity': 'error',
-                'code': 'E9001',
-                'message': 'FileShareLink.prepare_request_object: Sys.exit use is found, Please use return instead.',
-                'line-number': "105",
-                "column-number": '8'
-            }]
+    expected_format = [
+        {
+            'filePath': 'Packs/myPack/Integrations/INT1/INT1.py',
+            'fileType': 'py',
+            'entityType': 'integration',
+            'errorType': 'Code',
+            'name': 'Display',
+            'linter': 'xsoar_linter',
+            'severity': 'error',
+            'errorCode': 'E9001',
+            'message': 'FileShareLink.prepare_request_object: Sys.exit use is found, Please use return instead.',
+            'row': '105',
+            'col': '8'
         }
-    }
+    ]
     assert json_contents == expected_format

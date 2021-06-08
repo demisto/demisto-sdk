@@ -5,7 +5,8 @@ import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
+                                                   PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
                                                    PACKS_README_FILE_NAME,
@@ -36,6 +37,13 @@ PACK_METADATA_PARTNER = {
     "email": "some@mail.com",
     "url": "https://www.paloaltonetworks.com/cortex"
 }
+
+README_INPUT_RESULTS_LIST = [
+    ('', False),
+    (' ', False),
+    ('\t\t\n ', False),
+    ('Text', True),
+]
 
 
 class TestPackUniqueFilesValidator:
@@ -69,15 +77,17 @@ class TestPackUniqueFilesValidator:
 
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.are_valid_files()
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.are_valid_files()
+        assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        assert not self.validator.are_valid_files()
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
-        assert fake_validator.are_valid_files()
+        assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """
@@ -168,12 +178,34 @@ class TestPackUniqueFilesValidator:
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
 
-        def error_raising_function(argument):
+        def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
 
-        mocker.patch.object(tools, 'get_remote_file', side_effect=error_raising_function)
+        mocker.patch(
+            'demisto_sdk.commands.common.hook_validations.pack_unique_files.get_core_pack_list',
+            side_effect=error_raising_function
+        )
         assert not self.validator.validate_pack_dependencies()
         assert Errors.invalid_id_set()[0] in self.validator.get_errors()
+
+    def test_validate_core_pack_dependencies(self):
+        """
+        Given
+        - A list of non-core packs
+
+        When
+        - Running validate_core_pack_dependencies.
+
+        Then
+        - Ensure that the validation fails and that the invalid core pack dependencies error is printed.
+        """
+        dependencies_packs = {'dependency_pack_1': {'mandatory': True, 'display_name': 'dependency pack 1'},
+                              'dependency_pack_2': {'mandatory': False, 'display_name': 'dependency pack 2'},
+                              'dependency_pack_3': {'mandatory': True, 'display_name': 'dependency pack 3'}}
+
+        assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
+        assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
+            in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
@@ -258,6 +290,33 @@ class TestPackUniqueFilesValidator:
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('pack_content, tags, is_valid', [
+        ("none", [], True),
+        ("none", ["Use Case"], False),
+        ("playbook", ["Use Case"], True),
+        ("incident", ["Use Case"], True),
+        ("layout", ["Use Case"], True),
+        ("playbook", [], True),
+    ])
+    def test_is_right_usage_of_usecase_tag(self, repo, pack_content, tags, is_valid):
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags,
+        })
+
+        if pack_content == "playbook":
+            pack.create_playbook(name="PlaybookName")
+        elif pack_content == "incident":
+            pack.create_incident_type(name="IncidentTypeName")
+        elif pack_content == "layout":
+            pack.create_layout(name="Layout")
+
+        self.validator.pack_path = pack.path
+        assert self.validator.is_right_usage_of_usecase_tag() == is_valid
 
     @pytest.mark.parametrize('type, is_valid', [
         ('community', True),
@@ -374,3 +433,71 @@ class TestPackUniqueFilesValidator:
         assert not res
         assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
                capsys.readouterr().out
+
+    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
+    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):
+        """
+       Given:
+            - partner pack
+
+        When:
+            - Running test_validate_pack_readme_file_is_not_empty_partner.
+
+        Then:
+            - Ensure result is False for empty README.md file and True otherwise.
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
+        self.validator.support = 'partner'
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        assert self.validator.validate_pack_readme_file_is_not_empty() == result
+
+    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
+    def test_validate_pack_readme_file_is_not_empty_use_case(self, mocker, text, result):
+        """
+       Given:
+            - pack with use case
+
+        When:
+            - Running test_validate_pack_readme_file_is_not_empty_partner.
+
+        Then:
+            - Ensure result is False for empty README.md file and True otherwise.
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'CortexXDR'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        assert self.validator.validate_pack_readme_file_is_not_empty() == result
+
+    def test_validate_pack_readme_file_is_not_empty_missing_file(self):
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
+        assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
+
+    @pytest.mark.parametrize('readme_content, is_valid', [
+        ('Hey there, just testing', True),
+        ('This is a test. All good!', False),
+    ])
+    def test_pack_readme_is_different_then_pack_description(self, repo, readme_content, is_valid):
+        """
+        Given:
+            - Case A: A unique pack readme.
+            - Case B: Pack readme that is equal to pack description
+
+        When:
+            - Validating pack readme vs pack description
+
+        Then:
+            - Case A: Ensure validation passes as the pack readme and pack description are different.
+            - Case B: Ensure validation fails as the pack readme is the same as the pack description.
+                      Verify expected error is printed
+        """
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.readme.write_text(readme_content)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_DESC: 'This is a test. All good!',
+        })
+
+        self.validator.pack_path = pack.path
+        assert self.validator.validate_pack_readme_and_pack_description() == is_valid
+        if not is_valid:
+            assert 'README.md content is equal to pack description. ' \
+                   'Please remove the duplicate description from README.md file' in self.validator.get_errors()

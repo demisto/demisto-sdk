@@ -1,6 +1,7 @@
 from functools import partial
 
 from demisto_sdk.commands.common.constants import PB_Status
+from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
     TestConfiguration, TestContext, TestPlaybook)
 from demisto_sdk.commands.test_content.tests.build_context_test import (
@@ -80,3 +81,51 @@ def test_second_playback_enforcement(mocker, tmp_path):
     server_context.execute_tests()
     assert 'mocked_playbook (Second Playback)' in build_context.tests_data_keeper.failed_playbooks
     assert 'mocked_playbook' not in build_context.tests_data_keeper.succeeded_playbooks
+
+
+def test_docker_thresholds_for_non_pwsh_integrations(mocker):
+    """
+    Given:
+        - A test context with a playbook that uses a python integration
+    When:
+        - Running 'get_threshold_values' method
+    Then:
+        - Ensure that the memory threshold is the default python memory threshold value
+        - Ensure that the pis threshold is the default python pid threshold value
+    """
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(playbook_id='playbook_runnable_only_on_docker',
+                                    integrations=['integration']), default_test_timeout=30)
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
+    test_context = TestContext(build_context=mocker.MagicMock(),
+                               playbook=playbook_instance,
+                               client=mocker.MagicMock(),
+                               server_context=mocker.MagicMock())
+    memory_threshold, pid_threshold = test_context.get_threshold_values()
+    assert memory_threshold == Docker.DEFAULT_CONTAINER_MEMORY_USAGE
+    assert pid_threshold == Docker.DEFAULT_CONTAINER_PIDS_USAGE
+
+
+def test_docker_thresholds_for_pwsh_integrations(mocker):
+    """
+    Given:
+        - A test context with a playbook that uses a powershell integration
+    When:
+        - Running 'get_threshold_values' method
+    Then:
+        - Ensure that the memory threshold is the default powershell memory threshold value
+        - Ensure that the pis threshold is the default powershell pid threshold value
+    """
+    test_playbook_configuration = TestConfiguration(
+        generate_test_configuration(playbook_id='playbook_runnable_only_on_docker',
+                                    integrations=['integration']), default_test_timeout=30)
+    playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+    playbook_instance.integrations[0].integration_type = Docker.POWERSHELL_INTEGRATION_TYPE
+    test_context = TestContext(build_context=mocker.MagicMock(),
+                               playbook=playbook_instance,
+                               client=mocker.MagicMock(),
+                               server_context=mocker.MagicMock())
+    memory_threshold, pid_threshold = test_context.get_threshold_values()
+    assert memory_threshold == Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE
+    assert pid_threshold == Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE

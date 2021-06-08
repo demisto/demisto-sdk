@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from typing import Union
 
 import demisto_client
-from demisto_sdk.commands.common.constants import INCIDENT_TYPE
+from demisto_sdk.commands.common.constants import INCIDENT_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from wcmatch.pathlib import Path
@@ -31,3 +31,6 @@ class IncidentType(JSONContentObject):
             incident_type_unified_file.write(bytes(json.dumps(incident_type_unified_data), 'utf-8'))
             incident_type_unified_file.seek(0)
             return client.import_incident_types_handler(file=incident_type_unified_file.name)
+
+    def type(self):
+        return FileType.INCIDENT_TYPE

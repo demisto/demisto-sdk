@@ -6,7 +6,8 @@ import json
 import logging
 import os
 import re
-from typing import Optional, Tuple
+import string
+from typing import List, Optional, Tuple
 
 import click
 import yaml
@@ -17,8 +18,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
-                                               get_remote_file,
+from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
@@ -47,13 +47,16 @@ class StructureValidator(BaseValidator):
 
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
-                 suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False):
+                 suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False,
+                 pykwalify_logs=False, quite_bc=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
         self.valid_extensions = ['.yml', '.json', '.md', '.png']
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
+        self.pykwalify_logs = pykwalify_logs
+        self.quite_bc = quite_bc
 
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         if isinstance(self.scheme_name, str):
@@ -130,11 +133,12 @@ class StructureValidator(BaseValidator):
         click.secho(f'Validating scheme for {self.file_path}')
 
         try:
-            # disabling massages of level INFO and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
+            # disabling massages of level ERROR and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid
             log = logging.getLogger('pykwalify.core')
-            log.setLevel(logging.WARNING)
-            if self.suppress_print:
-                logging.disable(logging.CRITICAL)
+            log.setLevel(logging.CRITICAL)
+            if self.pykwalify_logs:
+                # reactivating pykwalify ERROR level logs
+                logging.disable(logging.ERROR)
             scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value  # type: ignore
             path = os.path.normpath(
                 os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
@@ -143,11 +147,7 @@ class StructureValidator(BaseValidator):
             core.validate(raise_exception=True)
         except Exception as err:
             try:
-                error_message, error_code = self.parse_error_msg(err)
-                if self.handle_error(error_message, error_code, self.file_path,
-                                     suggested_fix=Errors.suggest_fix(self.file_path)):
-                    self.is_valid = False
-                    return False
+                return self.parse_error_msg(err)
             except Exception:
                 error_message, error_code = Errors.pykwalify_general_error(err)
                 if self.handle_error(error_message, error_code, self.file_path):
@@ -304,86 +304,184 @@ class StructureValidator(BaseValidator):
                 is_valid_path = True
         return is_valid_path
 
-    def parse_error_msg(self, err) -> Tuple[str, str]:
-        """A wrapper which runs the print error message for a list of errors in yaml
+    def parse_error_msg(self, err) -> bool:
+        """A wrapper which handles pykwalify error messages.
         Returns:
-            str, str: parsed error message from pykwalify
+            bool. Indicating if the schema is valid.
         """
-        if ".\n" in str(err):
-            for error in str(err).split('.\n'):
-                return self.parse_error_line(error)
+        lines = str(err).split('\n')
+        valid = True
+        for line in lines:
+            if line.lstrip().startswith('-'):
+                error_message, error_code, suggest_format = self.parse_error_line(line)
+
+                if suggest_format:
+                    if self.handle_error(error_message, error_code, self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
+                        self.is_valid = False
+                        valid = False
+
+                elif self.handle_error(error_message, error_code, self.file_path):
+                    self.is_valid = False
+                    valid = False
+
+        return valid
+
+    def parse_error_line(self, error_line: str) -> Tuple[str, str, bool]:
+        """Identifies the pykwalify error type and reformat it to a more readable output.
+
+        Arguments:
+            error_line (str): pykwalify error line.
+
+        Returns:
+            str, str, bool: the validate error message, error code
+            and whether to suggest running format as a possible fix.
+        """
+
+        error_path = self.get_error_path(error_line)
+        if 'Cannot find required key' in error_line:
+            return self.parse_missing_key_line(error_path, error_line)
+
+        elif 'was not defined' in error_line:
+            return self.parse_undefined_key_line(error_path, error_line)
+
+        elif 'Enum' in error_line:
+            return self.parse_enum_error_line(error_path, error_line)
+
         else:
-            return self.parse_error_line(str(err))
+            raise ValueError("Could not identify error type")
 
-        # should not get here
-        return '', ''
+    def get_error_path(self, error_line: str) -> List[str]:
+        """Extract the error path from the pykwalify error line.
 
-    def parse_error_line(self, err) -> Tuple[str, str]:
-        """Returns a parsed error message from pykwalify
-        Args: an schema error message from pykwalify
+        Arguments:
+            error_line (str): pykwalify error line.
+
+        Returns:
+            list: A list of strings indicating the path to the pykwalify error location.
         """
-        # err example: '<SchemaError: error code 2: Schema validation failed:
-        #  - Cannot find required key \'description\'. Path: \'\''
-        step_1 = str(err).split('Path: ')
-        # step_1 example: ["<SchemaError: error code 2: Schema validation failed:\n - Cannot find required key
-        # 'description'. ", "'/script/commands/0/outputs/20'.: ", "'/'>"]
+        # err example: '- Cannot find required key \'description\'. Path: \'\''
+        step_1 = str(error_line).split('Path: ')
+        # step_1 example: ["- Cannot find required key description'. ", "'/script/commands/0/outputs/20'.: ", "'/'>"]
         step_2 = step_1[1]
-        # step_2 example: '\'/script/commands/0/outputs/20\'.: '
-        step_3 = step_2[2:-4]
-        # step_3 example: 'script/commands/0/outputs/20'
-        error_path = step_3.split('/')
+        # step_2 example: "'/category' Enum: ['Analytics & SIEM', 'Utilities', 'Messaging']"
+        step_3 = step_2.split('Enum')[0] if 'Enum' in step_2 else step_2
+        # step_3 example: '\'/script/commands/0/outputs/20\'.: '
+        step_4 = step_3.split('/')
+        # step_4 example: ["\'script", "commands", "0", "outputs" "20\'.: "]'
+        error_path = self.clean_path(step_4)
         # error_path example: ['script', 'commands', '0', 'outputs', '20']
+        return error_path
 
-        # check if the Path from the error is '' :
-        if isinstance(error_path, list) and error_path[0]:
-            curr = self.current_file
-            key_from_error = str(err).split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
-            key_list = []
-            for single_path in error_path:
-                if type(curr) is list:
-                    curr = curr[int(single_path)]
-                    # if the error is from arguments of file
-                    if curr.get('name'):
-                        key_list.append(curr.get('name'))
-                    # if the error is from outputs of file
-                    elif curr.get('contextPath'):
-                        key_list.append(curr.get('contextPath'))
-                    else:
-                        key_list.append(single_path)
-                else:
-                    curr = curr.get(single_path)  # type: ignore
-                    key_list.append(single_path)
+    def clean_path(self, path: List[str]) -> List[str]:
+        """Cleans extra punctuation from pykwalify error path
 
-            curr_string_transformer = get_content_file_type_dump(self.file_path)
+        Arguments:
+            path (list): list indicating the pykwalify error path.
 
-            # if the error is from arguments of file
-            if curr.get('name'):
-                return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('name')),  # type: ignore
-                                                          str(key_list).strip('[]').replace(',', '->'))
+        Returns:
+            list: A list of strings indicating the path to the pykwalify error location.
+        """
+        clean_path = []
+        table = str.maketrans(dict.fromkeys(string.punctuation))
+        for part in path:
+            clean_part = part.translate(table).strip()
+            if clean_part:
+                clean_path.append(clean_part)
 
-            # if the error is from outputs of file
-            elif curr.get('contextPath'):
-                return Errors.pykwalify_missing_parameter(str(key_from_error),
-                                                          curr_string_transformer(curr.get('contextPath')),  # type: ignore
-                                                          str(key_list).strip('[]').replace(',', '->'))
-            # if the error is from neither arguments , outputs nor root
-            else:
-                return Errors.pykwalify_missing_parameter(str(key_from_error), curr_string_transformer(curr),  # type: ignore
-                                                          str(key_list).strip('[]').replace(',', '->'))
+        return clean_path
+
+    def parse_missing_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
+        """Parse a missing key pykwalify error.
+
+        Arguments:
+            error_path (list): list indicating the pykwalify error path.
+            error_msg (str): The pykwalify error line.
+
+        Returns:
+            str, str, bool: the validate error message, code and whether to suggest format as a possible fix
+        """
+        # error message example:  - Cannot find required key 'version'. Path: '/commonfields'.
+        error_key = str(error_msg).split('key')[1].split('.')[0].replace("'", "").strip()
+        if error_path:
+            error_path_str = self.translate_error_path(error_path)
+            error_message, error_code = Errors.pykwalify_missing_parameter(str(error_key), error_path_str)
+            return error_message, error_code, True
+
+        # if no path found this is an error in root
         else:
-            err_msg = str(err).lower()
-            if 'key' in err_msg:
-                key_from_error = err_msg.split('key')[1].split('.')[0].replace("'", '-').split('-')[1]
+            error_message, error_code = Errors.pykwalify_missing_in_root(str(error_key))
+            return error_message, error_code, True
 
-                if 'not defined' in err_msg:
-                    return Errors.pykwalify_field_undefined(str(key_from_error))
+    def parse_undefined_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
+        """Parse a undefined key pykwalify error.
+
+        Arguments:
+            error_path (list): list indicating the pykwalify error path.
+            error_msg (str): The pykwalify error line.
+
+        Returns:
+            str, str, bool: the validate error message, code and whether to suggest format as a possible fix
+        """
+        # error message example: - Key 'ok' was not defined. Path: '/configuration/0'.
+        error_key = str(error_msg).split('Key')[1].split(' ')[1].replace("'", "").strip()
+        if error_path:
+            error_path_str = self.translate_error_path(error_path)
+            error_message, error_code = Errors.pykwalify_field_undefined_with_path(str(error_key), error_path_str)
+            return error_message, error_code, True
+
+        else:
+            error_message, error_code = Errors.pykwalify_field_undefined(str(error_key))
+            return error_message, error_code, True
+
+    def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
+        """Parse a wrong enum value pykwalify error.
+
+        Arguments:
+            error_path (list): list indicating the pykwalify error path.
+            error_msg (str): The pykwalify error line.
+
+        Returns:
+            str, str, bool: the validate error message, code and whether to suggest format as a possible fix
+        """
+        # error message example: - Enum 'Network Securitys' does not exist.
+        # Path: '/category' Enum: ['Analytics & SIEM', 'Utilities', 'Messaging'].
+        wrong_enum = str(error_msg).split('Enum ')[1].split('does')[0].replace("'", "").strip()
+        possible_values = str(error_msg).split('Enum:')[-1].strip(' [].')
+        error_message, error_code = Errors.pykwalify_incorrect_enum(self.translate_error_path(error_path),
+                                                                    wrong_enum, possible_values)
+        return error_message, error_code, False
+
+    def translate_error_path(self, error_path: List[str]) -> str:
+        """Parse pykwalify error path to a more easy to read path.
+
+        Arguments:
+            error_path (list): list indicating the pykwalify error path.
+
+        Returns:
+            str: a string indicating a path to the pykwalify error.
+        """
+        curr = self.current_file
+        key_list = []
+        for single_path in error_path:
+            if type(curr) is list:
+                curr = curr[int(single_path)]
+
+                # if the error is from arguments of file
+                if curr.get('name'):
+                    key_list.append(curr.get('name'))
+
+                # if the error is from outputs of file
+                elif curr.get('contextPath'):
+                    key_list.append(curr.get('contextPath'))
 
                 else:
-                    return Errors.pykwalify_missing_in_root(str(key_from_error))
+                    key_list.append(single_path)
+            else:
+                curr = curr.get(single_path)  # type: ignore
+                key_list.append(single_path)
 
-        # should not get here
-        return '', ''
+        return str(key_list).strip('[]').replace(',', '->')
 
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)

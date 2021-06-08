@@ -76,7 +76,8 @@ def generate_integration_doc(
         errors: list = []
         example_dict = {}
         if examples and os.path.isfile(examples):
-            command_examples = get_command_examples(examples)
+            specific_commands = command.split(',') if command else None
+            command_examples = get_command_examples(examples, specific_commands)
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
@@ -100,7 +101,7 @@ def generate_integration_doc(
             with open(readme_path) as f:
                 doc_text = f.read()
             for specific_command in specific_commands:
-                print(f'Generating docs for command `{command}`')
+                print(f'Generating docs for command `{specific_command}`')
                 command_section, command_errors = generate_commands_section(
                     yml_data, example_dict,
                     command_permissions_dict, command=specific_command
@@ -162,6 +163,12 @@ def generate_setup_section(yaml_data: dict):
             {'Parameter': conf.get('display'),
              'Description': string_escape_md(conf.get('additionalinfo', '')),
              'Required': conf.get('required', '')})
+
+        if conf['type'] == 9:
+            access_data.append(
+                {'Parameter': conf.get('displaypassword', 'Password'),
+                 'Description': '',
+                 'Required': conf.get('required', '')})
 
     # Check if at least one parameter has additional info field.
     # If not, remove the description column from the access data table section.
@@ -337,29 +344,39 @@ def generate_command_example(cmd, cmd_example=None):
     return example, errors
 
 
-def get_command_examples(commands_file_path):
+def get_command_examples(commands_file_path, specific_commands):
     """
     get command examples from command file
 
     @param commands_file_path: command file or the content of such file
+    @param specific_commands: commands specified by the user
 
     @return: a list of command examples
     """
-    commands = []  # type: list
+    command_examples = []  # type: list
 
     if commands_file_path is None:
-        return commands
+        return command_examples
 
     if os.path.isfile(commands_file_path):
         with open(commands_file_path, 'r') as examples_file:
-            commands = examples_file.read().splitlines()
+            command_examples = examples_file.read().splitlines()
     else:
         print('failed to open command file')
-        commands = commands_file_path.split('\n')
+        command_examples = commands_file_path.split('\n')
+
+    # Filter from the examples only the commands specified by the user
+    commands = []
+    if specific_commands:
+        for command_ex in command_examples:
+            if command_ex.split(' ')[0].strip('!') in specific_commands:
+                commands.append(command_ex)
+    else:
+        commands = command_examples
 
     commands: list = list(filter(None, map(command_example_filter, commands)))
 
-    print('found the following commands:\n{}'.format('\n '.join(commands)))
+    print('found the following commands:\n{}'.format('\n'.join(commands)))
     return commands
 
 

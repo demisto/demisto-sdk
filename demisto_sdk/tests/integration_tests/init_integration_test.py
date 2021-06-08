@@ -29,14 +29,16 @@ def test_integration_init_integration_positive(tmp_path):
     pack_author = "SuperMario"
     pack_url = "https://www.github.com/supermario"
     pack_email = "mario@super.com"
+    pack_dev_email = "mario1@super.com,mario2@super.com"
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"
     create_integration = 'Y'
+    use_category_from_pack_metadata = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
     inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
-              pack_author, pack_url, pack_email, pack_tags, pack_reviewers, create_integration, integration_name,
-              use_dir_name_as_id]
+              pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
+              use_category_from_pack_metadata, integration_name, use_dir_name_as_id]
 
     d = tmp_path / 'TestPacks'
     d.mkdir()
@@ -64,6 +66,7 @@ def test_integration_init_integration_positive(tmp_path):
             "author": pack_author,
             "url": pack_url,
             "email": pack_email,
+            "devEmail": ["mario1@super.com", "mario2@super.com"],
             "categories": [
                        "Endpoint"
             ],

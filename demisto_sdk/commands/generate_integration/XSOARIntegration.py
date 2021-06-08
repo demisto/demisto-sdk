@@ -1,7 +1,8 @@
 import json
 from typing import Optional
 
-import yaml
+import demisto_sdk.commands.common.tools as tools
+from ruamel.yaml.scalarstring import FoldedScalarString
 
 
 class XSOARIntegration:
@@ -18,8 +19,8 @@ class XSOARIntegration:
         return json.dumps(self, default=lambda o: o.__dict__,
                           sort_keys=True, indent=4)
 
-    def to_yaml(self) -> dict:
-        return yaml.safe_load(self.to_json())
+    def to_dict(self) -> dict:
+        return tools.to_dict(self)
 
     @classmethod
     def get_base_integration(cls):
@@ -108,7 +109,11 @@ class XSOARIntegration:
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,
                      commands: list = None):
-            self.script = script
+            if script and isinstance(script, str):
+                self.script = FoldedScalarString(script)
+            else:
+                self.script = script
+
             self.type = type_
             self.subtype = subtype
             self.dockerimage = dockerimage

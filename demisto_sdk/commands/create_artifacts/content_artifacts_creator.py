@@ -20,10 +20,6 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-####################
-# Global variables #
-####################
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import arg_to_list
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -31,12 +27,16 @@ from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
+####################
+# Global variables #
+####################
+
 FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
-logger: logging.Logger
+logger = logging.getLogger('demisto-sdk')
 EX_SUCCESS = 0
 EX_FAIL = 1
 
@@ -91,9 +91,6 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
     def create_content_artifacts(self) -> int:
-        global logger
-        logger = logging_setup(3)
-
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
             futures: List[ProcessFuture] = []
             # content/Packs
@@ -280,6 +277,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
+    global logger
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool
@@ -312,6 +310,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
     Raises:
         Exception: Raise caught exception for further cleanups.
     """
+    global logger
     for future in as_completed(futures):
         try:
             result = future.result()
@@ -616,9 +615,14 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
-    if pack.readme:
-        pack_report += ObjectReport(pack.readme, content_packs=True)
-        pack.readme.dump(artifact_manager.content_packs_path / pack.id)
+    if pack.readme or pack.contributors:
+        if not pack.readme:
+            readme_file = os.path.join(pack.path, 'README.md')
+            open(readme_file, 'a+').close()
+        readme_obj = pack.readme
+        readme_obj.contributors = pack.contributors
+        pack_report += ObjectReport(readme_obj, content_packs=True)
+        readme_obj.dump(artifact_manager.content_packs_path / pack.id)
     if pack.author_image:
         pack_report += ObjectReport(pack.author_image, content_packs=True)
         pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
@@ -922,6 +926,8 @@ def zip_packs(artifact_manager: ArtifactsManager):
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
     """Report artifacts results destination"""
+    global logger
+
     logger.info("\nArtifacts created:")
     if artifact_manager.zip_artifacts:
         template = "\n\t - {}.zip"
@@ -941,6 +947,8 @@ def report_artifacts_paths(artifact_manager: ArtifactsManager):
 
 def sign_packs(artifact_manager: ArtifactsManager):
     """Sign packs directories"""
+    global logger
+
     if artifact_manager.signDirectory and artifact_manager.signature_key:
         with ProcessPoolHandler(artifact_manager) as pool:
             with open('keyfile', 'wb') as keyfile:

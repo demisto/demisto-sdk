@@ -1,7 +1,7 @@
 id: ddb8454b-0c29-47bb-8534-250c7087ed12
 version: 2
 name: File Enrichment - Generic v2_copy
-fromversion: "5.0.0"
+fromversion: "5.5.0"
 description: |-
   Enrich a file using one or more integrations.
 

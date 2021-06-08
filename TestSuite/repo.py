@@ -193,3 +193,8 @@ class Repo:
         dir_path = os.path.join(self.path, dir_name)
         os.mkdir(dir_path)
         return dir_path
+
+    def make_file(self, file_name: str, file_content: str):
+        file_path = os.path.join(self.path, file_name)
+        with open(file_path, 'w') as f:
+            f.write(file_content)

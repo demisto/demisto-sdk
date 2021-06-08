@@ -8,7 +8,7 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc, generate_setup_section,
-    generate_single_command_section)
+    generate_single_command_section, get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -584,6 +584,56 @@ class TestGenerateIntegrationDoc:
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
 
 
+def test_get_command_examples_with_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file with exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+
+
+def test_get_command_examples_without_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file without exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+
+
 def test_generate_table_section_numbered_section():
     """
         Given
@@ -635,6 +685,28 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have no displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | Password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
 
 ]
@@ -653,3 +725,93 @@ def test_generate_setup_section_with_additional_info(yml_input, expected_results
     """
     section = generate_setup_section(yml_input)
     assert section == expected_results
+
+
+def test_scripts_in_playbook(repo):
+    """
+        Given
+            - A test playbook file
+        When
+            - Run get_playbook_dependencies command
+        Then
+            - Ensure that the scripts we get are from both the script and scriptName fields.
+    """
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+        get_playbook_dependencies
+    pack = repo.create_pack('pack')
+    playbook = pack.create_playbook('LargePlaybook')
+    test_task_1 = {
+        "id": "1",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["2"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "scriptName": "test_1",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    test_task_2 = {
+        "id": "2",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["3"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "script": "test_2",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    playbook.create_default_playbook()
+    playbook_data = playbook.yml.read_dict()
+    playbook_data['tasks']['1'] = test_task_1
+    playbook_data['tasks']['2'] = test_task_2
+    playbook.yml.write_dict(playbook_data)
+
+    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook_data,
+                                                                           playbook_path=playbook.yml.rel_path)
+
+    assert "test_1" in scripts
+    assert "test_2" in scripts

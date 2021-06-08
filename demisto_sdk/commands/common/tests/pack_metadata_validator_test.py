@@ -31,7 +31,11 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_list.json')
+                                          os.path.join(FILES_PATH, 'pack_metadata_list.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_short_name.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_lower.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_incorrect.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_pack_in_name.json'),
                                           ])
     def test_metadata_validator_invalid(self, mocker, metadata):
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',

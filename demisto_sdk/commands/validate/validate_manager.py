@@ -3,6 +3,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
 
 import click
+from colorama import Fore
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
@@ -344,7 +345,11 @@ class ValidateManager:
         if not self.check_only_schema:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
-                validation_print += f' [{self.completion_percentage}%]'
+                if FOUND_FILES_AND_ERRORS:
+                    validation_print += f' {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}'
+                else:
+                    validation_print += f' {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}'
+
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,

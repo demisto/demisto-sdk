@@ -32,8 +32,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
-    FileType, GithubContentConfig, urljoin)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
+    DemistoException, FileType, GithubContentConfig, urljoin)
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -992,6 +992,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if path.endswith('.js'):
         return FileType.JAVASCRIPT_FILE
+
+    if path.endswith(XSOAR_CONFIG_FILE):
+        return FileType.XSOAR_CONFIG
 
     try:
         if not _dict and not file_type:

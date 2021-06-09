@@ -1542,7 +1542,6 @@ class TestPlaybookValidation:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
-        print(result.stdout)
         assert f'Validating {VALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1560,8 +1559,7 @@ class TestPlaybookValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH],
-                               catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB103' in result.stdout
         assert 'The following tasks ids have no previous tasks: {\'5\'}' in result.stdout

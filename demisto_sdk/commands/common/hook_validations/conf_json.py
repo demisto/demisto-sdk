@@ -99,12 +99,13 @@ class ConfJsonValidator(BaseValidator):
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, error_func, test_playbook_ids: list = []):
         """Check if the content entity has at least one unskipped test playbook."""
         test_playbooks_unskip_status = {}
+        all_test_playbook_ids = test_playbook_ids.copy()
         skipped_tests = self.conf_data.get('skipped_tests', {})
 
         if type(current_file.get('tests')) is list:
-            test_playbook_ids.extend(current_file.get('tests', []))
+            all_test_playbook_ids.extend(current_file.get('tests', []))
 
-        for test_playbook_id in set(test_playbook_ids):
+        for test_playbook_id in set(all_test_playbook_ids):
             if skipped_tests and test_playbook_id in skipped_tests:
                 test_playbooks_unskip_status[test_playbook_id] = False
             else:

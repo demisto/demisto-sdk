@@ -69,15 +69,14 @@ class IntegrationValidator(ContentEntityValidator):
         return not any(answers)
 
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
-                      check_unskipped_playbooks: bool = True, id_set_file: Dict = {}) -> bool:
+                      check_is_unskipped: bool = True) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
-                check_unskipped_playbooks (bool): Whether to check for unskipped test playbooks or not.
-                id_set_file (Dict): id_set.json file information in Dict structure.
+                check_is_unskipped (bool): Whether to check if the integration is unskipped.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -113,7 +112,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
         ]
 
-        if check_unskipped_playbooks:
+        if check_is_unskipped:
             answers.append(self.is_unskipped_integration())
 
         if not skip_test_conf:

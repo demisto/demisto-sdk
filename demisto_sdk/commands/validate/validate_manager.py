@@ -3,6 +3,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
 
 import click
+from colorama import Fore
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
@@ -244,10 +245,12 @@ class ValidateManager:
             conf_json_validator = ConfJsonValidator()
             all_packs_valid.add(conf_json_validator.is_valid_conf_json())
 
-        num_of_packs = len(os.listdir(PACKS_DIR))
         count = 1
+        all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
+        num_of_packs = len(all_packs)
+        all_packs.sort(key=str.lower)
 
-        for pack_name in os.listdir(PACKS_DIR):
+        for pack_name in all_packs:
             self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
@@ -344,7 +347,11 @@ class ValidateManager:
         if not self.check_only_schema:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
-                validation_print += f' [{self.completion_percentage}%]'
+                if FOUND_FILES_AND_ERRORS:
+                    validation_print += f' {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}'
+                else:
+                    validation_print += f' {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}'
+
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,

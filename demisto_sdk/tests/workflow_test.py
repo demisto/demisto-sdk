@@ -131,17 +131,19 @@ class ContentGitRepo:
             res = runner.invoke(
                 main,
                 "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
-                "--no-docker-checks --debug-git"
+                "--no-docker-checks --debug-git --allow-all-skipped-playbooks"
             )
 
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             # build flow - validate on all changed files
-            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
+                                      "--allow-all-skipped-playbooks")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             # local run - validation with untracked files
-            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu")
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu "
+                                      "--allow-all-skipped-playbooks")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
     def git_cleanup(self):

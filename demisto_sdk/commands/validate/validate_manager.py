@@ -374,6 +374,13 @@ class ValidateManager:
                                                                                         pack_error_ignore_list):
             return False
 
+        # conf.json validation
+        if self.check_unskipped_playbooks:
+            conf_json_validator = ConfJsonValidator()
+            if not conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
+                                                                  file_path):
+                return False
+
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
             return True
@@ -554,14 +561,10 @@ class ValidateManager:
         if deprecated_result is not None:
             return deprecated_result
         if is_modified and self.is_backward_check:
-            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
-                                                            check_unskipped_playbooks=self.check_unskipped_playbooks,
-                                                            id_set_file=self.id_set_file),
+            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
                         integration_validator.is_backward_compatible()])
         else:
-            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
-                                                       check_unskipped_playbooks=self.check_unskipped_playbooks,
-                                                       id_set_file=self.id_set_file)
+            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -579,14 +582,10 @@ class ValidateManager:
             return deprecated_result
 
         if is_modified and self.is_backward_check:
-            return all([script_validator.is_valid_file(validate_rn=False,
-                                                       check_unskipped_playbooks=self.check_unskipped_playbooks,
-                                                       id_set_file=self.id_set_file),
+            return all([script_validator.is_valid_file(validate_rn=False),
                         script_validator.is_backward_compatible()])
         else:
-            return script_validator.is_valid_file(validate_rn=False,
-                                                  check_unskipped_playbooks=self.check_unskipped_playbooks,
-                                                  id_set_file=self.id_set_file)
+            return script_validator.is_valid_file(validate_rn=False)
 
     def validate_beta_integration(self, structure_validator, pack_error_ignore_list):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,

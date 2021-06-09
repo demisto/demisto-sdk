@@ -82,12 +82,15 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
+    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
+    "all_integration_test_playbooks_are_skipped": {'code': "IN141", 'ui_applicable': False, 'related_field': ''},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
+    "all_script_test_playbooks_are_skipped": {'code': "SC106", 'ui_applicable': False, 'related_field': ''},
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -254,10 +257,7 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
-    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
-    "all_integration_test_playbooks_are_skipped": {'code': "IN141", 'ui_applicable': False, 'related_field': ''},
-    "all_script_test_playbooks_are_skipped": {'code': "SC106", 'ui_applicable': False, 'related_field': ''}
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -1564,19 +1564,25 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_skipped(integration_id):
-        return f"Integration {integration_id} is currently in skipped. Please add working tests and unskip."
+        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
 
     @staticmethod
     @error_code_decorator
     def all_integration_test_playbooks_are_skipped(integration_id):
         return f"All test playbooks for integration {integration_id} in this pack are currently skipped. " \
-               f"Please unskip at least one of the relevant test playbooks."
+               f"Please unskip at least one of the relevant test playbooks.\n" \
+               f"You can do this by deleting the line relevant to one of the test playbooks " \
+               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"with the matching issue, or create a new active test playbook from scratch."
 
     @staticmethod
     @error_code_decorator
     def all_script_test_playbooks_are_skipped(script_id):
         return f"All test playbooks for script {script_id} in this pack are currently skipped. " \
-               f"Please unskip at least one of the relevant test playbooks."
+               f"Please unskip at least one of the relevant test playbooks. " \
+               f"You can do this by deleting the line relevant to one of the test playbooks " \
+               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"with the matching issue, or create a new active test playbook from scratch."
 
     @staticmethod
     def wrong_filename(file_type):

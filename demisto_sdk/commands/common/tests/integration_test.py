@@ -9,8 +9,6 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    MAX_FETCH_PARAM)
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_with_test_playbooks_validator import \
-    ContentEntityWithTestPlaybooksValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -836,50 +834,6 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_unskipped_integration() is answer
-
-    IS_SKIPPED_TESTS_INPUTS = [
-        ({"tests": [{"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}],
-          "skipped_tests": {"SomeTestPlaybook": "Some Issue"}},
-         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}}]},
-         False),
-        ({"tests": [{"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}],
-          "skipped_tests": {"SomeOtherTestPlaybook": "Some Issue"}},
-         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}},
-                            {"SomeOtherTestPlaybook": {"file_path": "SomeOtherTestPlaybook"}}]},
-         True),
-        ({"tests": [{"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"},
-                    {"integrations": ["SomeIntegration", "SomeOtherIntegration"],
-                     "playbookID": "SomeCombinedTestPlaybook"}],
-          "skipped_tests": {"SomeTestPlaybook": "Some Issue"}},
-         {"TestPlaybooks": [{"SomeTestPlaybook": {"file_path": "SomeTestPlaybook"}},
-                            {"SomeCombinedTestPlaybook": {"file_path": "SomeCombinedTestPlaybook"}}]},
-         True)
-    ]
-
-    @pytest.mark.parametrize("conf_dict, id_set, answer", IS_SKIPPED_TESTS_INPUTS)
-    def test_has_unskipped_test_playbook(self, mocker, conf_dict, id_set, answer):
-        """
-        Given:
-            - An integration.
-            - conf file with configurations for the integration.
-            - id_set with paths for the testPlaybooks files.
-
-        When: running validate specifically on integration.
-
-        Then: Validate the integration has at least one unskipped test playbook.
-        """
-        mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=conf_dict)
-
-        def side_effect(test_playbook):
-            return mock_structure("", {"id": test_playbook})
-
-        mocker.patch.object(ContentEntityWithTestPlaybooksValidator, 'get_struct_validator_for_test_playbook',
-                            side_effect=side_effect)
-        current = {"commonfields": {"id": "SomeIntegration"}, "tests": ["SomeTestPlaybook"]}
-        structure = mock_structure("", current)
-        validator = IntegrationValidator(structure)
-        validator.current_file = current
-        assert validator.has_unskipped_test_playbook(id_set_file=id_set) is answer
 
 
 class TestIsFetchParamsExist:

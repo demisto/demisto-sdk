@@ -1,21 +1,19 @@
 import os
-from typing import Dict
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.content_entity_with_test_playbooks_validator import \
-    ContentEntityWithTestPlaybooksValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (_get_file_id,
-                                               get_core_pack_list,
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                get_files_in_dir, get_pack_name,
                                                is_v2_file,
                                                server_version_compare)
 
 
-class ScriptValidator(ContentEntityWithTestPlaybooksValidator):
+class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
@@ -59,8 +57,7 @@ class ScriptValidator(ContentEntityWithTestPlaybooksValidator):
             return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
-    def is_valid_file(self, validate_rn=True, check_unskipped_playbooks: bool = True,
-                      id_set_file: Dict = {}) -> bool:
+    def is_valid_file(self, validate_rn=True, check_unskipped_playbooks: bool = True) -> bool:
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
@@ -71,9 +68,6 @@ class ScriptValidator(ContentEntityWithTestPlaybooksValidator):
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names()
         ])
-
-        if check_unskipped_playbooks:
-            is_script_valid = all([is_script_valid, self.has_unskipped_test_playbook(id_set_file)])
 
         # check only on added files
         if not self.old_file:
@@ -107,16 +101,6 @@ class ScriptValidator(ContentEntityWithTestPlaybooksValidator):
         for arg in args:
             arg_to_required[arg.get('name')] = arg.get('required', False)
         return arg_to_required
-
-    def has_unskipped_test_playbook(self, id_set_file, test_playbook_ids: list = []):
-        """Validate there is at least one unskipped test playbook."""
-        if not super().has_unskipped_test_playbook(id_set_file, test_playbook_ids):
-            error_message, error_code = Errors.all_script_test_playbooks_are_skipped(_get_file_id('script',
-                                                                                                  self.current_file))
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-            return False
-        return True
 
     def is_changed_subtype(self):
         """Validate that the subtype was not changed."""

@@ -1,5 +1,6 @@
 from typing import Iterator, List
 
+import pytest
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from jsonschema import ValidationError
@@ -197,4 +198,67 @@ class TestSchemaValidation:
 
         is_valid = validator.is_valid_xsoar_config_file()
 
-        assert is_valid
+        assert not is_valid
+
+    @pytest.mark.parametrize('key1, key2, key3, key4', [
+        ('bad', 'id', 'name', 'name'),
+        ('id', 'bad', 'name', 'name'),
+        ('id', 'id', 'bad', 'name'),
+        ('id', 'id', 'name', 'bad'),
+    ])
+    def test_invalid_file_bad_keys(self, key1, key2, key3, key4):
+        """
+        Given:
+            Invalid configuration file which has a bad key in one of the sections.
+        When:
+            Validating the file schema.
+        Then:
+            Validates verification returns that the file is invalid.
+        """
+        file_content = {
+            "custom_packs": [
+                {
+                    key1: "id1",
+                    "url": "url1"
+                }
+            ],
+            "marketplace_packs": [
+                {
+                    key2: "id1",
+                    "version": "*"
+                }
+            ],
+            "lists": [
+                {
+                    key3: "List #1",
+                    "value": "Value #1"
+                }
+            ],
+            "jobs": [
+                {
+                    "type": "Unclassified",
+                    key4: "name1",
+                    "playbookId": "playbook1",
+                    "scheduled": True,
+                    "recurrent": True,
+                    "cronView": True,
+                    "cron": "0 10,15 * * *",
+                    "startDate": "2021-01-07T15:10:04.000Z",
+                    "endingDate": "2021-01-07T15:10:04.000Z",
+                    "endingType": "never",
+                    "timezoneOffset": -120,
+                    "timezone": "Asia/Jerusalem",
+                    "shouldTriggerNew": True,
+                    "closePrevRun": True
+                }
+            ]
+        }
+
+        validator = XSOARConfigJsonValidator('./')
+        # it gets False from failing load the configuration file, which is expected here.
+        validator._is_valid = True
+        validator.configuration_json = file_content
+
+        is_valid = validator.is_valid_xsoar_config_file()
+
+        assert not is_valid

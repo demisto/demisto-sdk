@@ -2,7 +2,8 @@ import os
 import re
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH, DEPRECATED_REGEXES)
+                                                   DEPRECATED_REGEXES,
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

@@ -5,6 +5,7 @@ from typing import Dict
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
+                                                   DEPRECATED_REGEXES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH,
@@ -12,8 +13,7 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION_CATEGORIES,
                                                    IOC_OUTPUTS_DICT, MAX_FETCH,
                                                    MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH,
-                                                   DEPRECATED_REGEXES)
+                                                   PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)

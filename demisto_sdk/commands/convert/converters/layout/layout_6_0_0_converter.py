@@ -30,6 +30,7 @@ class LayoutSixConverter(LayoutBaseConverter):
                 layout_kind = old_layout.get('kind')
                 if not layout_kind:
                     continue
+                layout_kind = 'detailsV2' if layout_kind == 'details' else layout_kind
                 sections = old_layout.get_layout_sections()
                 tabs = old_layout.get_layout_tabs()
                 if sections:

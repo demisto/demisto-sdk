@@ -5,6 +5,7 @@ import shutil
 import textwrap
 import traceback
 import zipfile
+from collections import defaultdict
 from datetime import datetime
 from string import punctuation
 from typing import Dict, List, Union
@@ -28,6 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 class ContributionConverter:
@@ -49,12 +51,16 @@ class ContributionConverter:
         create_new (bool): True if creating a new pack (default), False if updating an existing pack
         gh_user (str): The github username of the person contributing the pack
         readme_files (List[str]): The readme files paths that is generated for new content items.
+        update_type (str): The type of update being done. For exiting pack only.
+        release_notes (str): The release note text. For exiting pack only.
+        detected_content_items (list):
     """
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
-                 gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
-                 base_dir: Union[str] = None, no_pipenv: bool = False):
+                 gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None, update_type: str = '',
+                 release_notes: str = '', detected_content_items: list = None, base_dir: Union[str] = None,
+                 no_pipenv: bool = False):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -80,6 +86,9 @@ class ContributionConverter:
         self.contribution = contribution
         self.description = description
         self.author = author
+        self.update_type = update_type or 'revision'
+        self.release_notes = release_notes
+        self.detected_content_items = detected_content_items or []
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
@@ -327,7 +336,10 @@ class ContributionConverter:
 
             if self.create_new:
                 self.generate_readmes_for_new_content_pack()
-
+            else:
+                # Creating a release notes file according to the user input and
+                # bump the version using the update_type chosen by the user.
+                self.execute_update_rn()
             # format
             self.format_converted_pack()
         except Exception as e:
@@ -477,3 +489,53 @@ class ContributionConverter:
             pack_metadata.update(data)
 
         return pack_metadata
+
+    def execute_update_rn(self):
+        """
+        IMPORTANT NOTE - WILL GET CHANGED ONCE DAN's CHANGES TAKE PLACE
+        Bump the pack version in the pack metadata according to the update type
+        and create a release-note file using the release-notes text.
+
+        """
+        # TODO: remove comment after tests
+        # modified_files = {"Packs/ServiceNow/Layouts/layoutscontainer-ServiceNow_Ticket.json",
+        #                   "Packs/ServiceNow/Integrations/ServiceNowv2/ServiceNowv2.yml"}
+        # self.update_type = 'revision'
+        modified_files = set([content_item.get('source_file_name') for content_item in self.detected_content_items])
+        update_rn = UpdateRN(pack_path=self.pack_dir_path, update_type=self.update_type,
+                             modified_files_in_pack=modified_files, added_files=set())
+        update_rn.execute_update()
+        self.replace_RN_template_with_value(update_rn.rn_path)
+
+    def replace_RN_template_with_value(self, rn_path: str):
+        """
+        Replace the rn template with the contributor's text - self.release_notes
+        Args:
+            rn_path: path to the rn file created.
+        """
+        entity_identifier = '### '
+        template_entity_identifier = '##### '
+        template_text = '%%UPDATE_RN%%'
+        rn = self.release_notes.splitlines()
+        entity_content_items = defaultdict(str)
+
+        entity_name = 'NonEntityRelated'
+        for line in rn:
+            if line.startswith(entity_identifier):
+                entity_name = line.lstrip(entity_identifier)
+            else:
+                entity_content_items[entity_name] = entity_content_items[entity_name] + line + '\n'
+
+        with open(rn_path, 'r+') as rn_file:
+            lines = rn_file.readlines()
+            for index in range(len(lines)):
+                if template_text in lines[index]:
+                    template_entity = lines[index - 1].lstrip(template_entity_identifier).rstrip('\n')
+                    curr_content_items = entity_content_items.get(template_entity)
+                    if curr_content_items:
+                        lines[index] = curr_content_items
+
+            rn_file.seek(0)
+            rn_file.writelines(lines)
+            rn_file.truncate()
+

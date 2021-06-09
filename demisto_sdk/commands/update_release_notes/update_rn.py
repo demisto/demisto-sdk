@@ -57,6 +57,7 @@ class UpdateRN:
 
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
+        self.rn_path = None
 
     @staticmethod
     def check_for_release_notes_valid_file_path(file_path):
@@ -91,6 +92,7 @@ class UpdateRN:
                 sys.exit(1)
             rn_path = self.return_release_notes_path(new_version)
             self.check_rn_dir(rn_path)
+            self.rn_path = rn_path
             changed_files = {}
             self.find_added_pack_files()
             docker_image_name: Optional[str] = None

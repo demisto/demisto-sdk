@@ -8,11 +8,19 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+ALLOWED_IGNORE_ERRORS = [
+    'BA101', 'BA106', 'BA108', 'BA109',
+    'DS107',
+    'IF100', 'IF106',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'MP106',
+    'PA113', 'PA116', 'PA124', 'PA125',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111',
+    'RM100', 'RM102', 'RM104', 'RM106',
+    'RP102', 'RP104',
+    'SC100', 'SC101', 'SC105',
+]
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104',
-                         'RM106', 'DS107','PB112']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -478,8 +486,9 @@ class Errors:
                f"the removed fields are: {removed} "
 
     @staticmethod
-    def suggest_server_allowlist_fix(word='incident'):
-        return f"To fix the problem, remove the word {word}, " \
+    def suggest_server_allowlist_fix(words=None):
+        words = words if words else ['incident']
+        return f"To fix the problem, remove the words {words}, " \
                f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
@@ -627,7 +636,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return "Every deprecated script's comment has to start with 'Deprecated.'"
+        return 'The comment of all deprecated scripts should follow one of the formats:' \
+               '1. "Deprecated. Use <SCRIPT_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -950,7 +961,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description has to start with "Deprecated."'
+        return 'The description of all deprecated playbooks should follow one of the formats:' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -1054,8 +1067,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name."
+    def invalid_incident_field_name(words):
+        return f"The words: {words} cannot be used as a name."
 
     @staticmethod
     @error_code_decorator

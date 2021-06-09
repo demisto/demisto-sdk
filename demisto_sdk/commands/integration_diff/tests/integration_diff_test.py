@@ -162,12 +162,50 @@ class TestIntegrationDiffDetector:
         }
     }
 
+    DIFFERENCES_REPORT = {
+        'parameters': [
+            {
+                'type': 'parameters',
+                'name': 'Credentials',
+                'message': "Missing the parameter 'Credentials'."
+            },
+            {
+                'type': 'parameters',
+                'name': 'API key',
+                'message': "The parameter 'API key' was changed in field 'required'."
+            }
+        ],
+        'commands': [
+            {
+                'type': 'commands',
+                'name': 'command_1',
+                'message': "Missing the command 'command_1'."
+            }
+        ],
+        'arguments': [
+            {
+                'type': 'arguments',
+                'name': 'argument_2',
+                'command_name': 'command_2',
+                'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
+            }
+        ],
+        'outputs': [
+            {
+                'type': 'outputs',
+                'name': 'contextPath_2',
+                'command_name': 'command_2',
+                'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+            }
+        ]
+    }
+
     def test_valid_integration_diff(self, pack):
         """
         Given
             - Two integrations of a pack.
         When
-            - Running IntegrationDiffDetector.check_diff().
+            - Running check_diff().
         Then
             - Ensure the integrations are backwards compatible.
         """
@@ -184,7 +222,7 @@ class TestIntegrationDiffDetector:
         Given
             - Two integrations of a pack, when the new version are not backward compatible.
         When
-            - Running IntegrationDiffDetector.check_diff().
+            - Running check_diff().
         Then
             - Ensure the integrations are not backwards compatible.
         """
@@ -197,45 +235,14 @@ class TestIntegrationDiffDetector:
         assert not integration_detector.check_different()
 
     def test_get_differences(self, pack):
-
-        excepted_result = {
-            'parameters': [
-                {
-                    'type': 'parameters',
-                    'name': 'Credentials',
-                    'message': "Missing the parameter 'Credentials'."
-                },
-                {
-                    'type': 'parameters',
-                    'name': 'API key',
-                    'message': "The parameter 'API key' was changed in field 'required'."
-                }
-            ],
-            'commands': [
-                {
-                    'type': 'commands',
-                    'name': 'command_1',
-                    'message': "Missing the command 'command_1'."
-                }
-            ],
-            'arguments': [
-                {
-                    'type': 'arguments',
-                    'name': 'argument_2',
-                    'command_name': 'command_2',
-                    'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
-                }
-            ],
-            'outputs': [
-                {
-                    'type': 'outputs',
-                    'name': 'contextPath_2',
-                    'command_name': 'command_2',
-                    'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
-                }
-            ]
-        }
-
+        """
+        Given
+            - Two integration yaml data, when the new version are not backward compatible.
+        When
+            - Running get_differences().
+        Then
+            - Verify the result as excepted.
+        """
         new_integration_yaml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
 
         # Make some changes in the new integration
@@ -253,14 +260,14 @@ class TestIntegrationDiffDetector:
         old_integration_yml = get_yaml(old_integration.yml.path)
         new_integration_yml = get_yaml(new_integration.yml.path)
 
-        assert excepted_result == integration_detector.get_differences(old_integration_yml, new_integration_yml)
+        assert self.DIFFERENCES_REPORT == integration_detector.get_differences(old_integration_yml, new_integration_yml)
 
     def test_get_different_commands(self, pack):
         """
         Given
             - A list of the old integration commands and a list of the new integration commands.
         When
-            - Running IntegrationDiffDetector.get_different_commands().
+            - Running get_different_commands().
         Then
             - Verify that the function detected the missed old command.
         """
@@ -291,7 +298,7 @@ class TestIntegrationDiffDetector:
         Given
             - A old integration command and a new integration command.
         When
-            - Running IntegrationDiffDetector.get_different_arguments().
+            - Running get_different_arguments().
         Then
             - Verify that the function detect the missed argument and the changed argument.
         """
@@ -333,7 +340,7 @@ class TestIntegrationDiffDetector:
         Given
             - A old integration command and a new integration command.
         When
-            - Running IntegrationDiffDetector.get_different_outputs().
+            - Running get_different_outputs().
         Then
             - Verify that the function detect the missed output and the changed output.
         """
@@ -374,7 +381,7 @@ class TestIntegrationDiffDetector:
         Given
             - The old integration version params and the new integration version params.
         When
-            - Running IntegrationDiffDetector.get_different_params().
+            - Running get_different_params().
         Then
             - Verify that the function detect the missed param and the changed param.
         """
@@ -406,3 +413,100 @@ class TestIntegrationDiffDetector:
 
         assert missing_param in parameters
         assert changed_param in parameters
+
+    def test_print_without_items(self, pack, capsys):
+        """
+        Given
+            - Two integration versions when the new version are backward compatible .
+        When
+            - Running print_items().
+        Then
+            - Verify there are no items to print and that the printed output as excepted.
+        """
+
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+
+        assert not integration_detector.print_items()
+
+        captured = capsys.readouterr()
+        assert 'The integrations are backwards compatible' in captured.out
+
+    def test_print_items(self, pack, capsys):
+        """
+        Given
+            - Dict contains all the differences between two integration versions.
+        When
+            - Running print_items().
+        Then
+            - Verify that.
+        """
+
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+
+        assert integration_detector.print_items()
+
+    def test_print_missing_items(self, pack, capsys):
+        """
+        Given
+            - Missing items to print.
+        When
+            - Running print_missing_items().
+        Then
+            - Verify that all the items are printed.
+        """
+
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+
+        integration_detector.print_missing_items()
+
+        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\n" \
+                          "The parameter 'API key' was changed in field 'required'.\n\n\n" \
+                          "Missing commands:\n\nMissing the command 'command_1'.\n\n\n" \
+                          "Missing arguments:\n\nThe argument 'argument_2' in command 'command_2' was changed in " \
+                          "field 'isArray'.\n\n\nMissing outputs:\n\n" \
+                          "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+        captured = capsys.readouterr()
+        assert excepted_output in captured.out
+
+    def test_print_items_in_docs_format(self, pack, capsys, mocker):
+        """
+        Given
+            - Missing items to print in docs format.
+        When
+            - Running print_missing_items().
+        Then
+            - Verify that all the items are printed in docs format.
+        """
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=self.NEW_INTEGRATION_YAML)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path,
+                                                       docs_format=True)
+
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
+
+        mocker.patch.object(IntegrationDiffDetector, 'get_new_version', return_value='2')
+        integration_detector.print_items_in_docs_format()
+
+        excepted_output = "## V2 important information\n### New in this version:\n" \
+                          "- Added the following parameters:\n    - `URL`\n\n- Added the following commands:\n" \
+                          "    - `command_3`\n\n### Changed in this version:\n- Changed the following parameters:\n" \
+                          "    - `API key`\n\n- Changed the following arguments:\n" \
+                          "    - `argument_2` in command command_2\n\n### Removed in this version:\n" \
+                          "- Removed the following parameters:\n    - `Credentials`\n\n" \
+                          "- Removed the following commands:\n    - `command_1`\n"
+        captured = capsys.readouterr()
+        assert excepted_output in captured.out

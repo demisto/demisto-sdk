@@ -252,6 +252,7 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
+        return is_valid
 
     def is_delete_context_all_in_playbook(self) -> bool:
         """

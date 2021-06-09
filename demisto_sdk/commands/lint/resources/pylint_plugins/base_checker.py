@@ -26,9 +26,18 @@ base_msg = {
               "command is implemented in your code. The commands that are not implemented are %s",
               "unimplemented-commands-exist",
               "Some commands from yml file are not implemented in the python file, Please make sure that every "
-              "command is implemented in your code.")
+              "command is implemented in your code."),
+    "E9011": ("test-module command is not implemented in the python file, it is essential for every"
+              " integration. Please add it to your code. For more information see: "
+              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
+              "unimplemented-test-module",
+              "test-module command is not implemented in the python file, it is essential for every"
+              " integration. Please add it to your code. For more information see: "
+              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module")
 }
 
+
+TEST_MODULE = "test-module"
 
 # -------------------------------------------- Messages for all linters ------------------------------------------------
 
@@ -42,6 +51,9 @@ class CustomBaseChecker(BaseChecker):
     def __init__(self, linter=None):
         super(CustomBaseChecker, self).__init__(linter)
         self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
+        self.is_script = True if os.getenv('is_script') == 'True' else False
+        # we treat scripts as they already implement the test-module
+        self.test_module_implemented = False if not self.is_script else True
 
     def visit_call(self, node):
         self._print_checker(node)
@@ -66,6 +78,7 @@ class CustomBaseChecker(BaseChecker):
 
     def leave_module(self, node):
         self._all_commands_implemented(node)
+        self._test_module_implemented(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -125,6 +138,8 @@ class CustomBaseChecker(BaseChecker):
                     for command in commands:
                         if command in self.commands:
                             self.commands.remove(command)
+                        if not self.test_module_implemented and command == TEST_MODULE:
+                            self.test_module_implemented = True
             except Exception:
                 pass
         # for py3
@@ -135,6 +150,8 @@ class CustomBaseChecker(BaseChecker):
                     for command in commands:
                         if command in self.commands:
                             self.commands.remove(command)
+                        if not self.test_module_implemented and command == TEST_MODULE:
+                            self.test_module_implemented = True
             except Exception:
                 pass
 
@@ -145,6 +162,8 @@ class CustomBaseChecker(BaseChecker):
             for command in commands:
                 if command in self.commands:
                     self.commands.remove(command)
+                if not self.test_module_implemented and command == TEST_MODULE:
+                    self.test_module_implemented = True
 
             # for if command in ['command1','command2'] or for if command in {'command1','command2'}
             if isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
@@ -153,6 +172,8 @@ class CustomBaseChecker(BaseChecker):
                     for command in commands:
                         if command in self.commands:
                             self.commands.remove(command)
+                        if not self.test_module_implemented and command == TEST_MODULE:
+                            self.test_module_implemented = True
 
             # for if command in ('command1','command2')
             elif isinstance(comp_with, astroid.Tuple):
@@ -161,6 +182,8 @@ class CustomBaseChecker(BaseChecker):
                     for command in commands:
                         if command in self.commands:
                             self.commands.remove(command)
+                        if not self.test_module_implemented and command == TEST_MODULE:
+                            self.test_module_implemented = True
 
         try:
             # for if command == 'command1' or command == 'commands2'
@@ -186,8 +209,13 @@ class CustomBaseChecker(BaseChecker):
             # as a result we will remove them from param list.
             if 'ApiModule' in node.modname:
                 self.commands = []
+                self.test_module_implemented = True
         except Exception:
             pass
+
+    def _test_module_implemented(self, node):
+        if not self.test_module_implemented:
+            self.add_message("unimplemented-test-module", node=node)
 
     def _commandresults_indicator_check(self, node):
         try:

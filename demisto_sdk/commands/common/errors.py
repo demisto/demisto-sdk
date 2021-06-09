@@ -15,10 +15,10 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
-    'PB105', 'PB106', 'PB110', 'PB111',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
-    'SC100', 'SC105',
+    'SC100', 'SC101', 'SC105',
 ]
 
 
@@ -635,7 +635,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return "Every deprecated script's comment has to start with 'Deprecated.'"
+        return 'The comment of all deprecated scripts should follow one of the formats:' \
+               '1. "Deprecated. Use <SCRIPT_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -958,7 +960,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description has to start with "Deprecated."'
+        return 'The description of all deprecated playbooks should follow one of the formats:' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator

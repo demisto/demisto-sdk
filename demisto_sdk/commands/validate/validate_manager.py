@@ -1128,7 +1128,7 @@ class ValidateManager:
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
-        if not os.path.exists(pack_ignore_path) and pack_path:
+        if not os.path.isfile(pack_ignore_path) and pack_path:
             pack_ignore_path = os.path.join(pack_path, PACKS_PACK_IGNORE_FILE_NAME)
 
         if pack_ignore_path and os.path.isfile(pack_ignore_path):

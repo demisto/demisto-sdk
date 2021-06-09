@@ -112,7 +112,7 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['display'])])
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -120,7 +120,7 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['display']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands

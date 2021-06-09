@@ -10,12 +10,11 @@ from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
             this will also determine whether a new id_set can be created by validate.
-            is_new_playbook (bool): whether the playbook is new or modified
             validate_rn (bool):  whether we need to validate release notes or not
             id_set_file (dict): id_set.json file if exists, None otherwise
 
@@ -25,41 +24,22 @@ class PlaybookValidator(ContentEntityValidator):
         if 'TestPlaybooks' in self.file_path:
             click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
             return True
-        if is_new_playbook:
-            new_playbook_checks = [
-                super().is_valid_file(validate_rn),
-                self.is_valid_version(),
-                self.is_id_equals_name(),
-                self.is_no_rolename(),
-                self.is_root_connected_to_all_tasks(),
-                self.is_using_instance(),
-                self.is_condition_branches_handled(),
-                self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured(),
-                self.is_valid_as_deprecated(),
-                self.is_script_id_valid(id_set_file),
-                self._is_id_uuid(),
-                self._is_taskid_equals_id(),
-                self.name_not_contain_the_type()
-            ]
-            answers = all(new_playbook_checks)
-        else:
-            # for new playbooks - run all playbook checks.
-            # for modified playbooks - id may not be equal to name.
-            modified_playbook_checks = [
-                self.is_valid_version(),
-                self.is_no_rolename(),
-                self.is_root_connected_to_all_tasks(),
-                self.is_using_instance(),
-                self.is_condition_branches_handled(),
-                self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured(),
-                self.is_script_id_valid(id_set_file),
-                self._is_id_uuid(),
-                self._is_taskid_equals_id(),
-                self.name_not_contain_the_type()
-            ]
-            answers = all(modified_playbook_checks)
+        playbook_checks = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_version(),
+            self.is_id_equals_name(),
+            self.is_no_rolename(),
+            self.is_root_connected_to_all_tasks(),
+            self.is_using_instance(),
+            self.is_condition_branches_handled(),
+            self.is_delete_context_all_in_playbook(),
+            self.are_tests_configured(),
+            self.is_script_id_valid(id_set_file),
+            self._is_id_uuid(),
+            self._is_taskid_equals_id(),
+            self.name_not_contain_the_type()
+        ]
+        answers = all(playbook_checks)
 
         return answers
 

@@ -609,7 +609,7 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'BA106']
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):

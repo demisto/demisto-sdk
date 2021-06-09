@@ -305,7 +305,6 @@ class IDSetValidations(BaseValidator):
                     main_playbook_version)
                 if not is_version_valid:
                     invalid_version_entities.append(entity_name)
-                    is_valid = False
                 implemented_entity_list_from_playbook.remove(entity_name)
 
         if invalid_version_entities:

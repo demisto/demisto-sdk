@@ -442,7 +442,7 @@ class TestPlaybook:
             self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
             self.build_context.logging_module.error(pformat(res))
             return {}
-        return res[0]
+        return ast.literal_eval(res[0])
 
 
 class BuildContext:
@@ -786,7 +786,7 @@ class TestResults:
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
         with open('./Tests/performance_results.json', "w") as performance_results:
-            json.dump(self.performance_results, performance_results, indent=4)
+            json.dump(self.performance_results, performance_results)
 
     def print_test_summary(self,
                            is_ami: bool = True,

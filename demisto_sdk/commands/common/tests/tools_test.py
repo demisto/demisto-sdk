@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_last_remote_release_version,
                                                get_latest_release_notes_text,
                                                get_pack_metadata,
+                                               get_pack_path,
                                                get_release_notes_file_path,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
@@ -958,3 +959,38 @@ def test_get_last_remote_release_version(requests_mock):
     expected_version = '1.3.8'
     requests_mock.get(r"https://pypi.org/pypi/demisto-sdk/json", json={'info': {'version': expected_version}})
     assert get_last_remote_release_version() == expected_version
+
+
+def test_get_pack_path_relative_path(repo):
+    """
+    Given:
+        Relative path to an integration file.
+    When:
+        Getting .pack-ignore file path.
+    Then:
+        Validates that the function finds the right pack path.
+    """
+    repo.setup_one_pack('pack1')
+    os.chdir(repo.path)
+
+    pack_name = get_pack_path('Packs/pack1/Integrations/pack1_integration.py')
+
+    assert pack_name == 'Packs/pack1/'
+
+
+def test_get_pack_path_absolute_path(repo):
+    """
+    Given:
+        Absolute path to an integration file.
+    When:
+        Getting .pack-ignore file path.
+    Then:
+        Validates that the function finds the right pack path.
+    """
+    repo.setup_one_pack('pack1')
+    integration_path = repo.packs[0].integrations[0].path
+    os.chdir(repo.path)
+
+    pack_name = get_pack_path(integration_path)
+
+    assert pack_name == f'{repo.packs[0].path}/'

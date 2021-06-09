@@ -391,7 +391,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -739,6 +740,31 @@ def get_pack_name(file_path):
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
     match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
+
+
+def get_pack_path(file_path):
+    """Extract pack path (folder path) from file path.
+
+    Arguments:
+        file_path (str): path of a file inside the pack.
+
+    Returns:
+        str. pack path.
+    """
+    if isinstance(file_path, Path):
+        file_path = str(file_path)
+    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
+    relative_path_match = re.match(rf'^{PACKS_DIR_REGEX}[/\\][^/\\]+[/\\]?', file_path)
+    if relative_path_match:
+        return relative_path_match.group()
+
+    # the regex extracts pack path from absolute paths,
+    # for example: /dev/my_repo/Packs/EWSv2/Integrations/EWSv2.py -> /dev/my_repo/Packs/EWSv2
+    absolute_path_match = re.match(r'.*[/\\]Packs[/\\]([^/\\]+)[/\\]?', file_path)
+    if absolute_path_match:
+        return absolute_path_match.group()
+
+    return None
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):

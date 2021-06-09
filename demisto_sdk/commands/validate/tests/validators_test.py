@@ -612,6 +612,24 @@ class TestValidators:
         assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
         assert 'SC100' not in ignore_errors_list['file_name']
 
+    def test_get_error_ignore_list_pack_path(self):
+        """
+            Given:
+                - A file path to pack ignore
+            When:
+                - running get_error_ignore_list from validate manager
+            Then:
+                - verify that the created ignored_errors list is correct
+        """
+        files_path = os.path.normpath(
+            os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files')
+        )
+
+        validate_manager = ValidateManager()
+        ignore_errors_list = validate_manager.get_error_ignore_list(pack_path=f'{files_path}/fake_pack')
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
+        assert 'SC100' not in ignore_errors_list['file_name']
+
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",

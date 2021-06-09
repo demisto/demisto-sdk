@@ -110,7 +110,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
-            self.is_there_separators_in_names(),
+            self.is_there_separators_in_names()
         ]
 
         if check_is_unskipped:

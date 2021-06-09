@@ -59,7 +59,8 @@ class ScriptValidator(ContentEntityValidator):
             return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
-    def is_valid_file(self, validate_rn=True, check_unskipped_playbooks: bool = True) -> bool:
+    def is_valid_file(self, validate_rn=True):
+        # type: (bool) -> bool
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
@@ -70,7 +71,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names()
         ])
-
         # check only on added files
         if not self.old_file:
             is_script_valid = all([

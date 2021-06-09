@@ -1,6 +1,8 @@
+import re
 from typing import Dict
 
 import click
+from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -239,14 +241,17 @@ class PlaybookValidator(ContentEntityValidator):
 
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
-        is_hidden = self.current_file.get('hidden', False)
+        is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        if is_hidden:
-            if not description.startswith('Deprecated.'):
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
+        if is_deprecated:
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
-        return is_valid
 
     def is_delete_context_all_in_playbook(self) -> bool:
         """

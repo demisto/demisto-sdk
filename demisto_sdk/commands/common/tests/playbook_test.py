@@ -280,54 +280,6 @@ class TestPlaybookValidator:
               "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"}
     }
 
-    PLAYBOOK_JSON_INDICATORS_INPUT_VALID = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0}
-        }
-    }
-
-    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': False,
-        'tasks': {
-            "0": {'quietmode': 1}
-        }
-    }
-
-    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0},
-            "1": {'quietmode': 2}
-        }
-    }
-
-    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR = {
-        'inputs': [
-            {'playbookInputQuery': {'queryEntity': 'indicators'}}
-        ],
-        'quiet': True,
-        'tasks': {
-            "0": {'quietmode': 0},
-            "1": {'quietmode': 1, 'continueonerror': True}
-        }
-    }
-    IS_VALID_INDICATORS_INPUT = [
-        (PLAYBOOK_JSON_INDICATORS_INPUT_VALID, True),
-        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET, False),
-        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK, False),
-        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR, False)
-
-    ]
     IS_ID_UUID = [
         (PlAYBOOK_JSON_VALID_TASKID, True),
         (PlAYBOOK_JSON_INVALID_TASKID, False)
@@ -336,6 +288,26 @@ class TestPlaybookValidator:
     IS_TASK_ID_EQUALS_ID = [
         (PLAYBOOK_JSON_ID_EQUALS_TASKID, True),
         (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
+    ]
+
+    DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
+    DEPRECATED_VALID2 = {"deprecated": True, "description": "Deprecated. Feodo Tracker no longer supports this feed "
+                                                            "No available replacement."}
+    DEPRECATED_VALID3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported scraping"
+                                                            " API. Use Proofpoint Protection Server v2 playbook"
+                                                            " instead."}
+
+    DEPRECATED_INVALID_DESC = {"deprecated": True, "description": "Deprecated."}
+    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "description": "Use the ServiceNow playbook to manage..."}
+    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "description": "Deprecated. The playbook uses an unsupported"
+                                                                   " scraping API."}
+    DEPRECATED_INPUTS = [
+        (DEPRECATED_VALID, True),
+        (DEPRECATED_VALID2, True),
+        (DEPRECATED_VALID3, True),
+        (DEPRECATED_INVALID_DESC, False),
+        (DEPRECATED_INVALID_DESC2, False),
+        (DEPRECATED_INVALID_DESC3, False)
     ]
 
     @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
@@ -447,24 +419,47 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator._is_id_uuid() is expected_result
 
-    @pytest.mark.parametrize("playbook_json, expected_result", IS_VALID_INDICATORS_INPUT)
-    def test_is_valid_with_indicators_input(self, playbook_json, expected_result):
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_TASK_ID_EQUALS_ID)
+    def test_is_taskid_equals_id(self, playbook_json, expected_result):
         """
         Given
         - A playbook
 
         When
-        - The playbook with input from indicators, includes all valid fields.
-        - The playbook with input from indicators, is not set on quietmode.
-        - The playbook with input from indicators, one of the tasks does not have quiet mode on.
-        -The playbook with input from indicators, one of the tasks continues on error
+        - The playbook include taskid and inside task field an id that are both have the same value.
+        - The playbook include taskid and inside task field an id that are different values.
 
         Then
-        - Ensure validation passes.
-        - Ensure validation fails.
-        - Ensure validation fails.
-        - Ensure validation fails.
+        - Ensure validation passes if the taskid field and the id inside task field have the same value
+        - Ensure validation fails if the taskid field and the id inside task field are have different value
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        assert validator.is_valid_with_indicators_input() is expected_result
+        validator._is_taskid_equals_id() is expected_result
+
+    @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
+    def test_is_valid_deprecated_playbook(self, current, answer):
+        """
+        Given
+            1. A deprecated playbook with a valid description according to 'deprecated regex' (including the replacement
+               playbook name).
+            2. A deprecated playbook with a valid description according to the 'deprecated no replacement regex'.
+            3. A deprecated playbook with a valid description according to 'deprecated regex' (including the replacement
+               playbook name, and the reason for deprecation.).
+            4. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't include a replacement playbook name, or declare there isn't a replacement).
+            5. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't start with the phrase: 'Deprecated.').
+            6. A deprecated playbook with an invalid description that isn't according to the 'deprecated regex'
+               (Includes the reason for deprecation, but doesn't include a replacement playbook name,
+               or declare there isn't a replacement).
+        When
+            - running is_valid_as_deprecated.
+
+        Then
+            - a playbook with an invalid description will be errored.
+        """
+        structure = mock_structure("", current)
+        validator = PlaybookValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_as_deprecated() is answer

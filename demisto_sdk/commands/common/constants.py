@@ -91,6 +91,7 @@ class FileType(Enum):
     METADATA = 'metadata'
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
+    CONTRIBUTORS = 'contributors'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -431,6 +432,15 @@ CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_STAR
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
 
+# deprecated regex
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
+DEPRECATED_REGEXES: List[str] = [
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX
+]
+
 PACK_METADATA_NAME = 'name'
 PACK_METADATA_DESC = 'description'
 PACK_METADATA_SUPPORT = 'support'
@@ -480,6 +490,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -1152,6 +1163,8 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
 ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+
+PARAM_FIELDS_TO_CHECK = ['type', 'required']
 
 
 class ContentItems(Enum):

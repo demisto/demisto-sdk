@@ -304,6 +304,7 @@ class IDSetValidations(BaseValidator):
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
                 if not is_version_valid:
+                    print(f'====================={playbook_name}=================')
                     invalid_version_entities.append(entity_name)
                 implemented_entity_list_from_playbook.remove(entity_name)
 

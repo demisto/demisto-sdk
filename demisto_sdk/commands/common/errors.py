@@ -1586,7 +1586,8 @@ class Errors:
                f"Please unskip at least one of the relevant test playbooks.\n" \
                f"You can do this by deleting the line relevant to one of the test playbooks " \
                f"in the 'skipped_tests' section inside the conf.json file and deal " \
-               f"with the matching issue, or create a new active test playbook from scratch."
+               f"with the matching issue, or create a new active test playbook from scratch " \
+               f"and add the id to the integration's 'tests' field in the yml."
 
     @staticmethod
     @error_code_decorator
@@ -1595,7 +1596,8 @@ class Errors:
                f"Please unskip at least one of the relevant test playbooks. " \
                f"You can do this by deleting the line relevant to one of the test playbooks " \
                f"in the 'skipped_tests' section inside the conf.json file and deal " \
-               f"with the matching issue, or create a new active test playbook from scratch."
+               f"with the matching issue, or create a new active test playbook from scratch " \
+               f"and add the id to the script's 'tests' field in the yml."
 
     @staticmethod
     def wrong_filename(file_type):

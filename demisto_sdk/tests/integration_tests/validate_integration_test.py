@@ -383,7 +383,8 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', new_integration.yml.rel_path, '--no-docker-checks',
                                           '--no-conf-json',
-                                          '--skip-pack-release-notes'],
+                                          '--skip-pack-release-notes',
+                                          '--allow-all-skipped-playbooks'],
                                    catch_exceptions=False)
 
         assert 'The required field of the test parameter should be False' in result.stdout
@@ -431,7 +432,8 @@ class TestIntegrationValidation:
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json",
+                                      "--allow-all-skipped-playbooks"])
 
         assert f"Validating {pack_integration_path} as integration" in result.stdout
         assert "The docker image tag is not the latest numeric tag, please update it" in result.stdout
@@ -453,7 +455,8 @@ class TestIntegrationValidation:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json",
+                                      "--allow-all-skipped-playbooks"])
         assert result.exit_code == 1
         assert f"Validating {integration_path} as integration" in result.stdout
         assert "can't be hidden. Please remove this field" in result.stdout
@@ -527,7 +530,8 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
+                                      "--allow-all-skipped-playbooks"])
         assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
         assert f"Validating pack {VALID_PACK_PATH}" in result.stdout
         assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.stdout
@@ -550,7 +554,8 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",
+                                      "--allow-all-skipped-playbooks"])
 
         assert f'{AZURE_FEED_PACK_PATH}' in result.output
         assert f'{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json' in result.output
@@ -1537,6 +1542,7 @@ class TestPlaybookValidation:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        print(result.stdout)
         assert f'Validating {VALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1554,7 +1560,8 @@ class TestPlaybookValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH],
+                               catch_exceptions=False)
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB103' in result.stdout
         assert 'The following tasks ids have no previous tasks: {\'5\'}' in result.stdout

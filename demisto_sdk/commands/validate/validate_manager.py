@@ -384,7 +384,7 @@ class ValidateManager:
             return False
 
         # conf.json validation
-        if self.check_unskipped_playbooks:
+        if self.check_unskipped_playbooks and file_type in {FileType.INTEGRATION, FileType.SCRIPT}:
             conf_json_validator = ConfJsonValidator()
             if not conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
                                                                   file_path):

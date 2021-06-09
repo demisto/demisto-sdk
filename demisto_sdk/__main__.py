@@ -338,6 +338,18 @@ def unify(**kwargs):
     "--quite-bc-validation",
     help="Set backwards compatibility validation's errors as warnings",
     is_flag=True)
+@click.option(
+    "--quite-bc-validation",
+    help="Set backwards compatibility validation's errors as warnings",
+    is_flag=True)
+@click.option(
+    "--allow-skipped",
+    help="Don't fail on skipped integrations",
+    is_flag=True)
+@click.option(
+    "--allow-all-skipped-playbooks",
+    help="Don't fail when all test playbooks are skipped",
+    is_flag=True)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -376,7 +388,9 @@ def validate(config, **kwargs):
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
-            quite_bc=kwargs.get('quite_bc_validation')
+            quite_bc=kwargs.get('quite_bc_validation'),
+            check_is_unskipped=not kwargs.get('allow_skipped', False),
+            check_unskipped_playbooks=not kwargs.get('allow_all_skipped_playbooks', False)
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

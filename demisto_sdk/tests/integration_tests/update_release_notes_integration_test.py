@@ -50,7 +50,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=True)
-    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_new.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name', return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')

@@ -57,7 +57,7 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn_new import \
+from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager

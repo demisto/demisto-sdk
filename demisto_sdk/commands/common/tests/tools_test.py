@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Union
 
 import pytest
+import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -298,6 +299,21 @@ class TestGetRemoteFile:
             github_repo=self.content_repo
         )
         assert hello_world_readme == {}
+
+    def test_get_file_from_master_when_in_private_repo(self, mocker):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+
+        class Response:
+            ok = False
+
+        mocker.patch.object(requests, 'get', return_value=Response)
+        mocker.patch.object(os, 'getenv', return_value=False)
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            github_repo=self.content_repo
+        )
+        assert hello_world_yml
+        assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_should_file_skip_validation_negative(self):
         should_skip = tools.should_file_skip_validation(

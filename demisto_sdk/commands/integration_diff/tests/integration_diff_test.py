@@ -1,5 +1,6 @@
 import copy
 
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
 
@@ -194,6 +195,65 @@ class TestIntegrationDiffDetector:
         integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         assert not integration_detector.check_different()
+
+    def test_get_differences(self, pack):
+
+        excepted_result = {
+            'parameters': [
+                {
+                    'type': 'parameters',
+                    'name': 'Credentials',
+                    'message': "Missing the parameter 'Credentials'."
+                },
+                {
+                    'type': 'parameters',
+                    'name': 'API key',
+                    'message': "The parameter 'API key' was changed in field 'required'."
+                }
+            ],
+            'commands': [
+                {
+                    'type': 'commands',
+                    'name': 'command_1',
+                    'message': "Missing the command 'command_1'."
+                }
+            ],
+            'arguments': [
+                {
+                    'type': 'arguments',
+                    'name': 'argument_2',
+                    'command_name': 'command_2',
+                    'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
+                }
+            ],
+            'outputs': [
+                {
+                    'type': 'outputs',
+                    'name': 'contextPath_2',
+                    'command_name': 'command_2',
+                    'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+                }
+            ]
+        }
+
+        new_integration_yaml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
+
+        # Make some changes in the new integration
+        new_integration_yaml['configuration'].remove(new_integration_yaml['configuration'][0])
+        new_integration_yaml['configuration'][0]['required'] = 'true'
+        new_integration_yaml['script']['commands'].remove(new_integration_yaml['script']['commands'][0])
+        new_integration_yaml['script']['commands'][0]['arguments'][1]['isArray'] = 'true'
+        new_integration_yaml['script']['commands'][0]['outputs'][1]['type'] = 'String'
+
+        old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration('newIntegration', yml=new_integration_yaml)
+
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+
+        old_integration_yml = get_yaml(old_integration.yml.path)
+        new_integration_yml = get_yaml(new_integration.yml.path)
+
+        assert excepted_result == integration_detector.get_differences(old_integration_yml, new_integration_yml)
 
     def test_get_different_commands(self, pack):
         """

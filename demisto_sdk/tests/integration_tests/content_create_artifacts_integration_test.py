@@ -16,6 +16,7 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 ARTIFACTS_EXPEXTED_RESULTS = TEST_DATA / 'artifacts'
 
 
+
 @pytest.fixture()
 def mock_git(mocker):
     from demisto_sdk.commands.common.content import Content

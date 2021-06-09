@@ -9,6 +9,7 @@
 * Added identification for parameter differences in **integration-diff** command.
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
+* Added validations to playbooks with input from indicators.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

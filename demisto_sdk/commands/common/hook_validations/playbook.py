@@ -39,6 +39,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
+            self.is_valid_with_indicators_input(),
         ]
         answers = all(playbook_checks)
 
@@ -388,3 +389,47 @@ class PlaybookValidator(ContentEntityValidator):
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
+
+    def is_valid_with_indicators_input(self):
+        input_data = self.current_file.get('inputs', [])
+        for item in input_data:
+            entity = item['playbookInputQuery'].get('queryEntity', '') if item.get('playbookInputQuery', None) else None
+            if entity == 'indicators':
+                answer = [
+                    self.is_playbook_quiet_mode(),
+                    self.is_tasks_quiet_mode(),
+                    self.is_stopping_on_error(),
+                ]
+                return all(answer)
+        return True
+
+    def is_playbook_quiet_mode(self):
+        if not self.current_file.get('quiet', False):
+            error_message, error_code = Errors.playbook_not_quiet_mode()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_tasks_quiet_mode(self):
+        not_quiet = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('quietmode', 0) == 2:
+                not_quiet.append(task_key)
+        if not_quiet:
+            error_message, error_code = Errors.playbook_tasks_not_quiet_mode(not_quiet)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_stopping_on_error(self):
+        continue_tasks = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('continueonerror', False):
+                continue_tasks.append(task_key)
+        if continue_tasks:
+            error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

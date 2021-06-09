@@ -280,6 +280,55 @@ class TestPlaybookValidator:
               "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"}
     }
 
+    PLAYBOOK_JSON_INDICATORS_INPUT_VALID = {
+        'inputs': [
+            {'playbookInputQuery': {'queryEntity': 'indicators'}}
+        ],
+        'quiet': True,
+        'tasks': {
+            "0": {'quietmode': 0}
+        }
+    }
+
+    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET = {
+        'inputs': [
+            {'playbookInputQuery': {'queryEntity': 'indicators'}}
+        ],
+        'quiet': False,
+        'tasks': {
+            "0": {'quietmode': 1}
+        }
+    }
+
+    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK = {
+        'inputs': [
+            {'playbookInputQuery': {'queryEntity': 'indicators'}}
+        ],
+        'quiet': True,
+        'tasks': {
+            "0": {'quietmode': 0},
+            "1": {'quietmode': 2}
+        }
+    }
+
+    PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR = {
+        'inputs': [
+            {'playbookInputQuery': {'queryEntity': 'indicators'}}
+        ],
+        'quiet': True,
+        'tasks': {
+            "0": {'quietmode': 0},
+            "1": {'quietmode': 1, 'continueonerror': True}
+        }
+    }
+    IS_VALID_INDICATORS_INPUT = [
+        (PLAYBOOK_JSON_INDICATORS_INPUT_VALID, True),
+        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET, False),
+        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_QUIET_TASK, False),
+        (PLAYBOOK_JSON_INDICATORS_INPUT_INVALID_ON_ERROR, False),
+
+    ]
+
     IS_ID_UUID = [
         (PlAYBOOK_JSON_VALID_TASKID, True),
         (PlAYBOOK_JSON_INVALID_TASKID, False)
@@ -463,3 +512,25 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_VALID_INDICATORS_INPUT)
+    def test_is_valid_with_indicators_input(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook with input from indicators, includes all valid fields.
+        - The playbook with input from indicators, is not set on quietmode.
+        - The playbook with input from indicators, one of the tasks does not have quiet mode on.
+        -The playbook with input from indicators, one of the tasks continues on error
+
+        Then
+        - Ensure validation passes.
+        - Ensure validation fails.
+        - Ensure validation fails.
+        - Ensure validation fails.
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.is_valid_with_indicators_input() is expected_result

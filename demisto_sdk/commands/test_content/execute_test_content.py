@@ -53,7 +53,6 @@ def _add_pr_comment(comment, logging_module):
 
 def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager('Run_Tests.log', real_time_logs_only=not kwargs['nightly'])
-    # TODO: here all servers get the same context
     build_context = BuildContext(kwargs, logging_manager)
     threads_list = []
     for server_ip, port in build_context.instances_ips.items():

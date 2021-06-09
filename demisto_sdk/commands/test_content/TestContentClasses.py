@@ -882,9 +882,8 @@ class Integration:
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
 
         # Finding possible configuration matches
-        # TODO: deep copy here ?
         integration_params: List[IntegrationConfiguration] = [
-            conf for conf in
+            deepcopy(conf) for conf in
             self.build_context.secret_conf.integrations if
             conf.name == self.name
         ]

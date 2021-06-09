@@ -131,14 +131,15 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
     assert pid_threshold == Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE
 
 
-def test_server_ip_tests(mocker, tmp_path):
+def test_replacing_placeholders(mocker, tmp_path):
     """
     Given:
-        -
+        - Integration with placeholders, different servers
     When:
-        -
+        - Calling _set_integration_params during creating integrations configurations
     Then:
-        -
+        - Ensure that replacing placeholders happens not in place,
+        and next integration with same build_context, will able to replace '%%SERVER_HOST%%' placeholder.
     """
     # Setting up the build context
     filtered_tests = ['playbook_integration',

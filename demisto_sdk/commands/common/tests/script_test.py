@@ -14,6 +14,7 @@ def get_validator(current_file=None, old_file=None, file_path=""):
         structure.is_valid = True
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.quite_bc = False
         validator = ScriptValidator(structure)
         validator.old_script = old_file
         validator.current_script = current_file
@@ -137,6 +138,8 @@ class TestScriptValidator:
     def test_deleted_context_path(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_context_path_changed() is answer
+        validator.structure_validator.quite_bc = True
+        assert validator.is_context_path_changed() is False
 
     OLD_ARGS = {
         'args': [
@@ -212,6 +215,8 @@ class TestScriptValidator:
     def test_is_arg_changed(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_arg_changed() is answer
+        validator.structure_validator.quite_bc = True
+        assert validator.is_arg_changed() is False
 
     DUP_1 = {
         'args': [
@@ -242,6 +247,8 @@ class TestScriptValidator:
     def test_is_there_duplicates_args(self, current_file, answer):
         validator = get_validator(current_file)
         assert validator.is_there_duplicates_args() is answer
+        validator.structure_validator.quite_bc = True
+        assert validator.is_there_duplicates_args() is False
 
     REQUIRED_ARGS_BASE = {
         'args': [
@@ -271,6 +278,8 @@ class TestScriptValidator:
     def test_is_added_required_args(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_added_required_args() is answer
+        validator.structure_validator.quite_bc = True
+        assert validator.is_added_required_args() is False
 
     INPUT_CONFIGURATION_1 = {
         'args': [
@@ -322,6 +331,8 @@ class TestScriptValidator:
         validator.current_file = current_file
         validator.old_file = old_file
         assert validator.is_changed_subtype() is answer
+        validator.structure_validator.quite_bc = True
+        assert validator.is_changed_subtype() is False
 
     INPUTS_IS_VALID_SUBTYPE = [
         (BLA_BLA_SUBTYPE, False),

@@ -8,10 +8,18 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
-
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'BA108', 'BA109', 'BA110', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104']
+ALLOWED_IGNORE_ERRORS = [
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
+    'DS107',
+    'IF100', 'IF106',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'MP106',
+    'PA113', 'PA116', 'PA124', 'PA125',
+    'PB105', 'PB106', 'PB110', 'PB111',
+    'RM100', 'RM102', 'RM104', 'RM106',
+    'RP102', 'RP104',
+    'SC100', 'SC105',
+]
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -33,7 +41,6 @@ ERROR_CODE = {
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
-    "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -354,11 +361,6 @@ class Errors:
     def file_name_has_separators(entity_type, invalid_files, valid_files):
         return f"The {entity_type} files {invalid_files} should be named {valid_files} " \
                f"without any separator in the base name."
-
-    @staticmethod
-    @error_code_decorator
-    def field_contain_forbidden_word(field_names: list, word: str):
-        return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
 
     @staticmethod
     @error_code_decorator

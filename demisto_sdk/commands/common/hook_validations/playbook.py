@@ -40,6 +40,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
                 self._is_taskid_equals_id(),
+                self.is
             ]
             answers = all(new_playbook_checks)
         else:
@@ -56,6 +57,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_script_id_valid(id_set_file),
                 self._is_id_uuid(),
                 self._is_taskid_equals_id(),
+                self.validate_else_in_conditions()
             ]
             answers = all(modified_playbook_checks)
 
@@ -360,6 +362,22 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
+
+    def verify_condition_tasks_has_else_path(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks has all optional branches handled
+
+        Return:
+            bool. if the Playbook handles all condition branches correctly.
+        """
+
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                next_tasks: Dict = task.get('nexttasks', {})
+                if not '#default#' in next_tasks:
+                    return False
+        return True
+
 
     def _is_id_uuid(self):
         """

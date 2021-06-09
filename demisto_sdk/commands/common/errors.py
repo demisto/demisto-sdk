@@ -12,7 +12,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
                          'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
                          'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104',
-                         'RM106', 'DS107']
+                         'RM106', 'DS107','PB112']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -147,6 +147,7 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'conditions'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -1599,3 +1600,9 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_condition_has_no_else_path(task_id):
+        return f'Playbook conditional task with id:{task_id} has no else path'
+

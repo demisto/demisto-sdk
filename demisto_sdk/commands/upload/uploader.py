@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
@@ -51,7 +52,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.INDICATOR_FIELD,
 
     FileType.WIDGET,
-    # FileType.REPORT,  currently not supported by demisto-py
+    FileType.REPORT,
     FileType.DASHBOARD,
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
@@ -72,7 +73,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    REPORTS_DIR
 ]
 
 
@@ -160,8 +162,8 @@ class Uploader:
             return 1
 
         file_name = upload_object.path.name  # type: ignore
-        entity_type = find_type(str(upload_object.path))
 
+        entity_type = find_type(str(upload_object.path))
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:

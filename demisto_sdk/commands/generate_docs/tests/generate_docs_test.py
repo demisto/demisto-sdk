@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict, List
 
 import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -17,6 +18,8 @@ FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integration.yml')
+TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credentials-none/integration-display'
+                                                   '-credentials-none.yml')
 
 
 # common tests
@@ -583,6 +586,27 @@ class TestGenerateIntegrationDoc:
                in open(fake_readme).read()
         assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
 
+    def test_integration_doc_credentials_display_missing(self):
+        """
+        Given
+            - YML file representing an integration, containing display None for credentials parameter.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly, specifically that line numbers are not being
+              reset after a table.
+            - Test that the predefined values and default values are added to the README.
+            - Test that credentials parameter name shown in README is using display password field.
+    """
+        readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_2_PATH)
+        readme_data = open(readme).read()
+        assert readme_data == open(
+            os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
+        assert '| None | The API key to use for the connection. | False |' not in readme_data
+        assert '| API Token | The API key to use for the connection. | False |' in readme_data
+
 
 def test_get_command_examples_with_exclamation_mark(tmp_path):
     """
@@ -815,6 +839,42 @@ def test_scripts_in_playbook(repo):
 
     assert "test_1" in scripts
     assert "test_2" in scripts
+
+
+TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'Password', 'Required': True}]),
+    ([], {'displaypassword': 'specialPassword', 'additionalinfo': 'Enter your password', 'required': False},
+     [{'Description': 'Enter your password', 'Parameter': 'specialPassword', 'Required': False}]),
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True, 'displaypassword': 'specialPassword'},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'specialPassword', 'Required': True}])
+]
+
+
+@pytest.mark.parametrize('access_data, credentials_conf, expected', TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS)
+def test_add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict, expected: List[Dict]):
+    """
+    Given:
+    - 'access_data': Containing parameter data to be added to README file.
+    - 'credentials_conf': Credentials configuration data represented as a dict.
+
+    When:
+    - Adding to README the parameter credential conf configuration details.
+    Case a: Only display name exists, display password does not.
+    Case b: Only display password name exists, display not.
+    Case c: Both display name and display password name exists.
+
+    Then:
+    - Ensure the expected credentials data is added to 'access_data'.
+    Case a: Display name is added, also 'Password' is added as default for display password name missing.
+    Case b: 'Password' is added as default for display password name missing.
+    Case c: Both display name and display password name are added.
+    """
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    add_access_data_of_type_credentials(access_data, credentials_conf)
+    assert access_data == expected
 
 
 def test_generate_versions_differences_section():

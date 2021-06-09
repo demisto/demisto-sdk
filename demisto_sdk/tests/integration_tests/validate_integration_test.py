@@ -1598,7 +1598,7 @@ class TestPlaybookValidateDeprecated:
                                catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
-        assert 'The playbook description has to start with "Deprecated."' in result.stdout
+        assert 'Deprecated.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_playbook(self, mocker, repo):
@@ -1893,7 +1893,7 @@ class TestScriptDeprecatedValidation:
         pack = repo.create_pack('PackName')
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml['deprecated'] = True
-        valid_script_yml['comment'] = 'Deprecated.'
+        valid_script_yml['comment'] = 'Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead.'
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -1926,7 +1926,7 @@ class TestScriptDeprecatedValidation:
                                    catch_exceptions=False)
         assert f'{script.yml.path} as script' in result.stdout
         assert 'SC101' in result.stdout
-        assert "Deprecated." in result.stdout
+        assert 'Deprecated.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_script(self, mocker, repo):
@@ -1945,7 +1945,7 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml['deprecated'] = True
         valid_script_yml['commonfields']['version'] = -2
-        valid_script_yml['comment'] = 'Deprecated.'
+        valid_script_yml['comment'] = 'Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead.'
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -1978,7 +1978,7 @@ class TestScriptDeprecatedValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         valid_script_yml['deprecated'] = True
         valid_script_yml['commonfields']['version'] = -2
-        valid_script_yml['comment'] = 'Deprecated.'
+        valid_script_yml['comment'] = 'Deprecated. Use the EntryWidgetNumberHostsXDR v2 script instead.'
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},

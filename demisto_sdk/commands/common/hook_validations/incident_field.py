@@ -228,16 +228,21 @@ class IncidentFieldValidator(ContentEntityValidator):
             "XDR Alerts",  # Needed for XDR_Alerts.json
             "Indeni Issue ID",  # Needed for incidentfield-Indeni_Device_ID.json
         }
+        found_words = []
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_server_allowlist_fix(word=word),
-                    )
+                    found_words.append(word)
+
+        if found_words:
+            error_message, error_code = Errors.invalid_incident_field_name(found_words)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix=Errors.suggest_server_allowlist_fix(words=found_words),
+            ):
+                return False
 
         return True
 

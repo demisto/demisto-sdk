@@ -882,9 +882,12 @@ class Integration:
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
 
         # Finding possible configuration matches
-        integration_params: List[IntegrationConfiguration] = [conf for conf in
-                                                              self.build_context.secret_conf.integrations if
-                                                              conf.name == self.name]
+        # TODO: deep copy here ?
+        integration_params: List[IntegrationConfiguration] = [
+            conf for conf in
+            self.build_context.secret_conf.integrations if
+            conf.name == self.name
+        ]
         # Modifying placeholders if exists
         integration_params: List[IntegrationConfiguration] = [
             self._change_placeholders_to_values(server_url, conf) for conf in integration_params]

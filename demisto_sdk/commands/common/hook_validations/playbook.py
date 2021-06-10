@@ -350,18 +350,21 @@ class PlaybookValidator(ContentEntityValidator):
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
 
+    def _is_else_path_in_condition_task(self, task):
+        next_tasks: Dict = task.get('nexttasks', {})
+        return '#default#' in next_tasks
+
     def verify_condition_tasks_has_else_path(self):  # type: () -> bool
         """Check whether the playbook conditional tasks has else path
 
         Return:
-            bool. if the Playbook
+            bool. if the Playbook has else path to all condition task
         """
         all_conditions_has_else_path: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
             if task.get('type') == 'condition':
-                next_tasks: Dict = task.get('nexttasks', {})
-                if '#default#' not in next_tasks:
+                if not self._is_else_path_in_condition_task(task):
                     error_message, error_code = Errors.playbook_condition_has_no_else_path(task.get('id'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
                         self.is_valid = all_conditions_has_else_path = False

@@ -107,8 +107,10 @@ class Downloader:
         self.log_files_downloaded()
         self.log_files_not_downloaded()
 
-        if self.files_not_downloaded:
-            return 1
+        for entry in self.files_not_downloaded:
+            file, reason = entry
+            if reason != FILE_EXIST_REASON:
+                return 1
 
         return 0
 

@@ -10,7 +10,7 @@
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
-* Added to the **update-release-notes** command automatic addition to git when new release notes file is created. 
+* Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

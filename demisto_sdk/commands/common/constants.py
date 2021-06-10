@@ -1162,9 +1162,9 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
-ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
 
-PARAM_FIELDS_TO_CHECK = ['type', 'required']
+PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
 
 INTEGRATION_ENTITIES = ['command', 'argument', 'output']
 

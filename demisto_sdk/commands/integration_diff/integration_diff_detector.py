@@ -142,7 +142,7 @@ class IntegrationDiffDetector:
                         'type': 'arguments',
                         'name': argument['name'],
                         'command_name': new_command['name'],
-                        'message': f'Missing the argument \'{argument["name"]}\' in command \'{new_command["name"]}\'.'
+                        'message': f'Missing the argument \'{argument["name"]}\' in the command \'{new_command["name"]}\'.'
                     })
 
                 else:
@@ -187,7 +187,7 @@ class IntegrationDiffDetector:
                         'type': element_type,
                         'name': element['name'],
                         'command_name': command["name"],
-                        'message': f'The argument \'{element["name"]}\' in command \'{command["name"]}\' '
+                        'message': f'The argument \'{element["name"]}\' in the command \'{command["name"]}\' '
                                    f'was changed in field \'{field}\'.',
                         'changed_field': field,
                         'changed_value': element[field]
@@ -232,7 +232,7 @@ class IntegrationDiffDetector:
                         'type': 'outputs',
                         'name': output['contextPath'],
                         'command_name': new_command["name"],
-                        'message': f'Missing the output \'{output["contextPath"]}\' in command '
+                        'message': f'Missing the output \'{output["contextPath"]}\' in the command '
                                    f'\'{new_command["name"]}\'.'
                     })
 
@@ -246,7 +246,7 @@ class IntegrationDiffDetector:
                             'type': 'outputs',
                             'name': output['contextPath'],
                             'command_name': new_command["name"],
-                            'message': f'The output \'{output["contextPath"]}\' in command '
+                            'message': f'The output \'{output["contextPath"]}\' in the command '
                                        f'\'{new_command["name"]}\' was changed in field \'type\'.'
                         })
 
@@ -330,81 +330,74 @@ class IntegrationDiffDetector:
         # Gets the added items in the new integration
         new_items_report = self.get_differences(old_data=new_yaml_data, new_data=old_yaml_data)
 
-        result = f'## V{self.get_new_version(new_yaml_data)} important information\n' \
-                 '### New in this version:\n'
+        result = f'## V{self.get_new_version(new_yaml_data)} important information\n'
 
-        for entity in new_items_report:
-            entity_result = ''
+        if new_in_version := self.get_items_in_docs_format(new_items_report, "Added"):
+            result += f'### New in this version:\n{new_in_version}'
 
-            if entity == 'outputs':
-                splited_outputs = self.get_outputs_per_command(new_items_report[entity])
+        if changed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Changed"):
+            result += f'### Changed in this version:\n{changed_in_version}'
 
-                for command_name in splited_outputs:
-                    entity_result += f'    - There are added outputs in command {command_name}\n'
-
-            else:
-                for new_item in new_items_report[entity]:
-                    if new_item['message'].startswith('Missing'):
-                        entity_result += f'    - `{new_item["name"]}`\n' if entity != 'arguments' else \
-                            f'    - `{new_item["name"]}` in command `{new_item["command_name"]}`\n'
-
-            if entity_result:
-                result += f'- Added the following {entity}:\n' + entity_result + '\n'
-
-        result += '### Changed in this version:\n'
-
-        for entity in self.missing_items_report:
-            entity_result = ''
-
-            if entity == 'outputs':
-                splited_outputs = self.get_outputs_per_command(self.missing_items_report[entity])
-
-                for command_name in splited_outputs:
-                    entity_result += f'    - There are changed outputs in command {command_name}\n'
-
-            else:
-
-                for changed_item in self.missing_items_report[entity]:
-                    if 'changed_field' in changed_item:
-                        changed_message = ''
-
-                        if changed_item['changed_field'] in ['defaultValue', 'defaultvalue', 'type']:
-                            changed_message = f'**{changed_item["changed_field"]}** changed to be \'{changed_item["changed_value"]}\'.'
-
-                        elif changed_item['changed_field'] == 'required':
-                            changed_message = 'Is now required.'
-
-                        elif changed_item['changed_field'] == 'isArray':
-                            changed_message = 'Is now comma separated.'
-
-                        entity_result += f'    - `{changed_item["name"]}` - {changed_message}\n' \
-                            if entity != 'arguments' else f'    - `{changed_item["name"]}` in command ' \
-                                                          f'`{changed_item["command_name"]}` - {changed_message}\n'
-
-            if entity_result:
-                result += f'- Changed the following {entity}:\n' + entity_result + '\n'
-
-        result += '### Removed in this version:\n'
-
-        for entity in self.missing_items_report:
-            entity_result = ''
-
-            if entity == 'outputs':
-                splited_outputs = self.get_outputs_per_command(self.missing_items_report[entity])
-
-                for command_name in splited_outputs:
-                    entity_result += f'    - There are Removed outputs in command {command_name}\n'
-
-            else:
-                for removed_item in self.missing_items_report[entity]:
-                    if removed_item['message'].startswith('Missing'):
-                        entity_result += f'    - `{removed_item["name"]}`\n' if entity != 'arguments' else \
-                            f'    - `{removed_item["name"]}` in command `{removed_item["command_name"]}`\n'
-
-            if entity_result:
-                result += f'- Removed the following {entity}:\n' + entity_result + '\n'
+        if removed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Removed"):
+            result += f'### Removed in this version:\n{removed_in_version}'
 
         click.secho(result)
+
+    def get_items_in_docs_format(self, items_report, type_of_difference) -> str:
+        """
+        Gets the differences in docs format.
+
+        Args:
+            items_report: A report of the items to print.
+            type_of_difference: The type of the difference (Added, Changed or Removed).
+
+        Return:
+            String of the items in docs format to print.
+        """
+        result = ''
+
+        for entity in items_report:
+            entity_result = ''
+            if entity == 'outputs':
+                split_outputs = self.get_outputs_per_command(items_report[entity])
+
+                for command_name in split_outputs:
+                    entity_result += f'- There are {type_of_difference.lower()} outputs in the command `{command_name}`\n'
+
+            else:
+                for item in items_report[entity]:
+
+                    if type_of_difference == 'Changed':
+                        # If it's not a changed item we won't want to print this here
+                        if 'changed_field' not in item:
+                            continue
+
+                        changed_message = ''
+                        if item['changed_field'] in ['defaultValue', 'defaultvalue', 'type']:
+                            changed_message = f' - **{item["changed_field"]}** changed to be \'{item["changed_value"]}\''
+
+                        elif item['changed_field'] == 'required':
+                            changed_message = ' - Is now required'
+
+                        elif item['changed_field'] == 'isArray':
+                            changed_message = ' - Is now comma separated'
+
+                        entity_result += f'- `{item["name"]}`{changed_message}\n' \
+                            if entity != 'arguments' else f'- `{item["name"]}` in the command `{item["command_name"]}`'\
+                                                          f'{changed_message}\n'
+
+                    else:
+                        # If it's a changed item it's already printed in the changed section
+                        if 'changed_field' in item:
+                            continue
+
+                        entity_result += f'- `{item["name"]}`\n' \
+                            if entity != 'arguments' else f'- `{item["name"]}` in the command `{item["command_name"]}`\n'
+
+            if entity_result:
+                result += f'#### {type_of_difference} the following {entity}:\n' + entity_result + '\n'
+
+        return result
 
     def print_items(self) -> bool:
         """

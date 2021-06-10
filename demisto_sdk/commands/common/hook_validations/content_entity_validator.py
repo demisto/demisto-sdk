@@ -48,8 +48,7 @@ class ContentEntityValidator(BaseValidator):
         # type: () -> bool
         pass
 
-    def _is_valid_version(self, allow_missing_version_value=False):
-        # type: () -> bool
+    def _is_valid_version(self, allow_missing_version_value: bool = False) -> bool:
         """Base is_valid_version method for files that version is their root.
 
         Return:

@@ -172,7 +172,9 @@ class TestIntegrationDiffDetector:
             {
                 'type': 'parameters',
                 'name': 'API key',
-                'message': "The parameter 'API key' was changed in field 'required'."
+                'message': "The parameter 'API key' was changed in field 'required'.",
+                'changed_field': 'required',
+                'changed_value': 'true'
             }
         ],
         'commands': [
@@ -187,7 +189,9 @@ class TestIntegrationDiffDetector:
                 'type': 'arguments',
                 'name': 'argument_2',
                 'command_name': 'command_2',
-                'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
+                'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'.",
+                'changed_field': 'isArray',
+                'changed_value': 'true'
             }
         ],
         'outputs': [
@@ -319,7 +323,9 @@ class TestIntegrationDiffDetector:
             'type': 'arguments',
             'name': 'argument_2',
             'command_name': 'command_2',
-            'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'."
+            'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'.",
+            'changed_field': 'isArray',
+            'changed_value': True
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -399,7 +405,9 @@ class TestIntegrationDiffDetector:
         changed_param = {
             'type': 'parameters',
             'name': 'API key',
-            'message': "The parameter 'API key' was changed in field 'required'."
+            'message': "The parameter 'API key' was changed in field 'required'.",
+            'changed_field': 'required',
+            'changed_value': 'true'
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -503,10 +511,13 @@ class TestIntegrationDiffDetector:
 
         excepted_output = "## V2 important information\n### New in this version:\n" \
                           "- Added the following parameters:\n    - `URL`\n\n- Added the following commands:\n" \
-                          "    - `command_3`\n\n### Changed in this version:\n- Changed the following parameters:\n" \
-                          "    - `API key`\n\n- Changed the following arguments:\n" \
-                          "    - `argument_2` in command command_2\n\n### Removed in this version:\n" \
-                          "- Removed the following parameters:\n    - `Credentials`\n\n" \
-                          "- Removed the following commands:\n    - `command_1`\n"
+                          "    - `command_3`\n\n- Added the following outputs:\n    - There are added outputs in" \
+                          " command command_2\n\n### Changed in this version:\n- Changed the following parameters:\n" \
+                          "    - `API key` - Is now required.\n\n- Changed the following arguments:\n" \
+                          "    - `argument_2` in command `command_2` - Is now comma separated.\n\n- Changed the " \
+                          "following outputs:\n    - There are changed outputs in command command_2\n\n### Removed in "\
+                          "this version:\n- Removed the following parameters:\n    - `Credentials`\n\n" \
+                          "- Removed the following commands:\n    - `command_1`\n\n- Removed the following outputs:\n" \
+                          "    - There are Removed outputs in command command_2\n\n\n"
         captured = capsys.readouterr()
         assert excepted_output in captured.out

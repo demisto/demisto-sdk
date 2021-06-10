@@ -592,6 +592,14 @@ class TestValidators:
         assert validate_manager.run_validations_on_file(IGNORED_PNG, None) is False
 
     def test_test_playbook_with_no_default_version(self):
+        """
+            Given
+            - A test playbook file, with version not being default version.
+            When
+            - Validating it.
+            Then
+            -  validator should return False for test playbook not having default version.
+        """
         validate_manager = ValidateManager(create_id_set=False, silence_init_prints=True)
         is_valid = validate_manager.run_validations_on_file(INVALID_TEST_PLAYBOOK_NO_DEFAULT_VERSION, None)
         assert not is_valid

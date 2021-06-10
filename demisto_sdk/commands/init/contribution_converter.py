@@ -503,7 +503,7 @@ class ContributionConverter:
         # self.update_type = 'revision'
         modified_files = set([content_item.get('source_file_name') for content_item in self.detected_content_items])
         update_rn = UpdateRN(pack_path=self.pack_dir_path, update_type=self.update_type,
-                             modified_files_in_pack=modified_files, added_files=set(), pack=self.dir_name)
+                             modified_files_in_pack=modified_files, added_files=set(), pack='ServiceNow')
         update_rn.execute_update()
         self.replace_RN_template_with_value(update_rn.rn_path)
 

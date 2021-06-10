@@ -20,6 +20,9 @@ class IntegrationDiffDetector:
         self.old = old
         self.docs_format_output = docs_format
 
+        self.old_yaml_data = get_yaml(self.old)
+        self.new_yaml_data = get_yaml(self.new)
+
         self.fount_missing = False
         self.missing_items_report: dict = {}
 
@@ -30,10 +33,8 @@ class IntegrationDiffDetector:
         Return:
             bool. return true if the new integration contains everything in the old integration.
         """
-        old_yaml_data = get_yaml(self.old)
-        new_yaml_data = get_yaml(self.new)
 
-        self.missing_items_report = self.get_differences(old_yaml_data, new_yaml_data)
+        self.missing_items_report = self.get_differences(self.old_yaml_data, self.new_yaml_data)
 
         if self.print_items():
             return False
@@ -324,13 +325,10 @@ class IntegrationDiffDetector:
         Prints the version differences report in docs format so the user will can copy it to the README file.
         """
 
-        old_yaml_data = get_yaml(self.old)
-        new_yaml_data = get_yaml(self.new)
-
         # Gets the added items in the new integration
-        new_items_report = self.get_differences(old_data=new_yaml_data, new_data=old_yaml_data)
+        new_items_report = self.get_differences(old_data=self.new_yaml_data, new_data=self.old_yaml_data)
 
-        result = f'## V{self.get_new_version(new_yaml_data)} important information\n'
+        result = f'## V{self.get_new_version(self.new_yaml_data)} important information\n'
 
         if new_in_version := self.get_items_in_docs_format(new_items_report, "Added"):
             result += f'### New in this version:\n{new_in_version}'

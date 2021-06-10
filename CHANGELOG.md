@@ -10,7 +10,8 @@
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
-* Added a version differences section to readme in **generate-docs** command and added the `--docs-format` flag in **integration-diff** command to get the output in readme format.
+* Added a version differences section to readme in **generate-docs** command.
+* Added the `--docs-format` flag in **integration-diff** command to get the output in readme format.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

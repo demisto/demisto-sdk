@@ -308,16 +308,22 @@ class IDSetValidations(BaseValidator):
                     invalid_version_entities.append(entity_name)
                 implemented_entity_list_from_playbook.remove(entity_name)
 
+        print(f'===first list of invalid version: {invalid_version_entities}====')
+        print(f'===first list of not in id set: {implemented_entity_list_from_playbook}====')
         if invalid_version_entities:
+            print('entered if invalid version')
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
                 playbook_name, invalid_version_entities, main_playbook_version)
             if self.handle_error(error_message, error_code, file_path):
+                print('=============will turn is_valid to false')
                 is_valid = False
 
         if implemented_entity_list_from_playbook:
+            print('entered is not implemented')
             error_message, error_code = Errors.content_entity_is_not_in_id_set(
                 playbook_name, implemented_entity_list_from_playbook)
             if self.handle_error(error_message, error_code, file_path):
+                print('will turn is_valid to false')
                 is_valid = False
 
         return is_valid

@@ -65,7 +65,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    WIDGET_TARGET, INVALID_TEST_PLAYBOOK_NO_DEFAULT_VERSION)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from mock import patch
@@ -590,6 +590,11 @@ class TestValidators:
         """
         validate_manager = ValidateManager()
         assert validate_manager.run_validations_on_file(IGNORED_PNG, None) is False
+
+    def test_test_playbook_with_no_default_version(self):
+        validate_manager = ValidateManager(create_id_set=False, silence_init_prints=True)
+        is_valid = validate_manager.run_validations_on_file(INVALID_TEST_PLAYBOOK_NO_DEFAULT_VERSION, None)
+        assert not is_valid
 
     def test_get_error_ignore_list(self, mocker):
         """

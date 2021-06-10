@@ -185,6 +185,9 @@ PLAYBOOK_PATH = "Playbook"
 SOURCE_FORMAT_TEST_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_test_playbook.yml"
 DESTINATION_FORMAT_TEST_PLAYBOOK = "TestPlaybook/test-playbook.yml"
 TEST_PLAYBOOK_PATH = "TestPlaybook"
+INVALID_TEST_PLAYBOOK_NO_DEFAULT_VERSION = f'{GIT_ROOT}/demisto_sdk/tests/test_files' \
+                                           '/TestPlaybookWithoutDefaultVersion/TestPlaybooks/' \
+                                           'playbook-Bluecat_Address_Manager_test.yml'
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'

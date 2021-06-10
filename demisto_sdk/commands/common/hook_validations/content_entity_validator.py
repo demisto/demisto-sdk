@@ -48,14 +48,17 @@ class ContentEntityValidator(BaseValidator):
         # type: () -> bool
         pass
 
-    def _is_valid_version(self):
+    def _is_valid_version(self, allow_missing_version_value=False):
         # type: () -> bool
         """Base is_valid_version method for files that version is their root.
 
         Return:
             True if version is valid, else False
         """
-        if self.current_file.get('version') != self.DEFAULT_VERSION:
+        current_file_version = self.current_file.get('version')
+        if current_file_version != self.DEFAULT_VERSION:
+            if current_file_version is None and allow_missing_version_value:
+                return True
             error_message, error_code = Errors.wrong_version(self.DEFAULT_VERSION)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):

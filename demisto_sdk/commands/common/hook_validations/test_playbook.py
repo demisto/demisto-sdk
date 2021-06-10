@@ -40,7 +40,7 @@ class TestPlaybookValidator(ContentEntityValidator):
         Return:
             bool. whether the version is valid or not
         """
-        return self._is_valid_version()
+        return self._is_valid_version(allow_missing_version_value=True)
 
     def _is_id_uuid(self):
         """

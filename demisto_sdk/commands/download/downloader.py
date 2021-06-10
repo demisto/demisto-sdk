@@ -99,12 +99,17 @@ class Downloader:
         self.handle_all_custom_content_flag()
         if not self.verify_output_pack_is_pack():
             return 1
+
         self.build_pack_content()
         self.build_custom_content()
         self.update_pack_hierarchy()
         self.merge_into_pack()
         self.log_files_downloaded()
         self.log_files_not_downloaded()
+
+        if self.files_not_downloaded:
+            return 1
+
         return 0
 
     def verify_flags(self) -> bool:

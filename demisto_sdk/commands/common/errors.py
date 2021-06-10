@@ -1617,5 +1617,4 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def playbook_condition_has_no_else_path(task_id):
-        return f'Playbook conditional task with id:{task_id} has no else path'
-
+        return f'Playbook conditional task with id: {task_id} has no else path'

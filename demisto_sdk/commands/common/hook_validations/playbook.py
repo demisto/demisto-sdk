@@ -351,23 +351,21 @@ class PlaybookValidator(ContentEntityValidator):
              for key in id_set_dict])
 
     def verify_condition_tasks_has_else_path(self):  # type: () -> bool
-        """Check whether the playbook conditional tasks has all optional branches handled
+        """Check whether the playbook conditional tasks has else path
 
         Return:
-            bool. if the Playbook handles all condition branches correctly.
+            bool. if the Playbook
         """
         all_conditions_has_else_path: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
         for task in tasks.values():
             if task.get('type') == 'condition':
                 next_tasks: Dict = task.get('nexttasks', {})
-                if not '#default#' in next_tasks:
+                if '#default#' not in next_tasks:
                     error_message, error_code = Errors.playbook_condition_has_no_else_path(task.get('id'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
                         self.is_valid = all_conditions_has_else_path = False
         return all_conditions_has_else_path
-
-
 
     def _is_id_uuid(self):
         """

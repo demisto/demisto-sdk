@@ -10,6 +10,7 @@
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
 * Added new validation for the `xsoar_config.json` file in the **validate** command.
 
 # 1.3.9

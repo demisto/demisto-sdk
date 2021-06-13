@@ -101,9 +101,8 @@ def test_is_invalid_description_name(repo):
     new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
 
     os.rename(description_path[0], new_name)
-    os.chdir(repo.path)
-
-    description_validator = DescriptionValidator(integration.yml.path)
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(integration.yml.path)
 
     assert not description_validator.is_valid_description_name()
 
@@ -128,8 +127,8 @@ def test_demisto_in_description(repo):
     with open(description_path, 'w') as f:
         f.write('This checks if we have the word Demisto in the description.')
 
-    os.chdir(repo.path)
-    description_validator = DescriptionValidator(integration.yml.path)
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(integration.yml.path)
 
     assert not description_validator.verify_demisto_in_description_content()
 

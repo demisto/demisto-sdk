@@ -474,7 +474,7 @@ class TestIntegrationValidation:
         """
         integration_path = join(TEST_FILES_PATH, 'integration-valid-no-unallowed-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json"])
+        result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"])
         assert f"Validating {integration_path} as integration" in result.stdout
         assert "can't be hidden. Please remove this field" not in result.stdout
         assert result.stderr == ""
@@ -1540,7 +1540,8 @@ class TestPlaybookValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH, '--allow-skipped',
+                                      '--no-conf-json'], catch_exceptions=False)
         assert f'Validating {VALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1558,7 +1559,8 @@ class TestPlaybookValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH, '--allow-skipped',
+                                      '--no-conf-json'], catch_exceptions=False)
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB103' in result.stdout
         assert 'The following tasks ids have no previous tasks: {\'5\'}' in result.stdout
@@ -1580,7 +1582,8 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_DEPRECATED_PLAYBOOK_FILE_PATH, '--no-conf-json',
+                                      '--allow-skipped'], catch_exceptions=False)
         assert f'Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -1598,8 +1601,8 @@ class TestPlaybookValidateDeprecated:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH],
-                               catch_exceptions=False)
+        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH, '--no-conf-json',
+                                      '--allow-skipped'], catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
         assert 'Deprecated.' in result.stdout

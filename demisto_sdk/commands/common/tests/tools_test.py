@@ -344,7 +344,9 @@ class TestGetRemoteFileLocally:
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
             somefile.write(self.FILE_CONTENT)
         example_repo.git.add(self.FILE_NAME)
-        example_repo.git.commit('-m', 'test_commit', '-a', '--author=AutomaticTest <some@email.com>')
+        example_repo.git.config('user.email', 'automatic@example.com')
+        example_repo.git.config('user.name', 'AutomaticTest')
+        example_repo.git.commit('-m', 'test_commit', '-a')
         example_repo.git.checkout('-b', 'master')
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):

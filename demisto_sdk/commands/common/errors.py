@@ -1617,4 +1617,4 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
-        return f'Playbook conditional tasks with ids: {" ".join(tasks_ids)} have no else path'
+        return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'

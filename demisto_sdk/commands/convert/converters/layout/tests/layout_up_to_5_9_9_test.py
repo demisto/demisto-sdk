@@ -1,15 +1,18 @@
 import io
 import json
 import os
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict
 
 import pytest
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
-    Layout, LayoutObject)
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
+    Layout
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import \
     LayoutBelowSixConverter
+from TestSuite.pack import Pack as MockPack
+from TestSuite.repo import Repo
 
 
 def util_load_json(path):
@@ -18,20 +21,27 @@ def util_load_json(path):
 
 
 class TestLayoutBelowSixConverter:
-    TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
-    PACK_WITH_NEW_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
-                                              'tests/test_data/Packs/PackWithNewLayout')
-    PACK = Pack(TEST_PACK_PATH)
-
-    def setup(self):
-        self.layout_converter = LayoutBelowSixConverter(TestLayoutBelowSixConverter.PACK)
+    INCIDENT_TYPE_ONE = os.path.join(__file__,
+                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                     '/test_data/incidenttype-ExtraHop_Detection.json')
+    INCIDENT_TYPE_TWO = os.path.join(__file__,
+                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                     '/test_data/incidenttype-ExtraHop_Detection_2.json')
+    INDICATOR_TYPE_ONE = os.path.join(__file__,
+                                      f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                      '/test_data/reputation-cryptocurrency.json')
+    LAYOUT_CONTAINER = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                              '/test_data/layoutscontainer-ExtraHop_Detection.json')
+    OLD_LAYOUT_PATH = os.path.join(__file__,
+                                   f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data'
+                                   '/layout-close-ExtraHop_Detection.json')
 
     CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [('ExtraHop Detect', 'close', 'layout-close-ExtraHop_Detect.json')]
 
     @pytest.mark.parametrize('dynamic_field_key, type_id, expected_suffix',
                              CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS)
-    def test_calculate_new_layout_relative_path(self, dynamic_field_key: str, type_id: str, expected_suffix: str):
+    def test_calculate_new_layout_relative_path(self, tmpdir, dynamic_field_key: str, type_id: str,
+                                                expected_suffix: str):
         """
         Given:
         - 'layout_id': Layout ID of the new layout created.
@@ -45,10 +55,11 @@ class TestLayoutBelowSixConverter:
         - Ensure the expected path is returned.
 
         """
-        expected = f'{self.layout_converter.pack.path}/Layouts/{expected_suffix}'
-        assert self.layout_converter.calculate_new_layout_relative_path(type_id, dynamic_field_key) == expected
+        layout_converter = LayoutBelowSixConverter(Pack(tmpdir))
+        expected = f'{layout_converter.pack.path}/Layouts/{expected_suffix}'
+        assert layout_converter.calculate_new_layout_relative_path(type_id, dynamic_field_key) == expected
 
-    def test_layout_to_incidents_dict(self):
+    def test_layout_to_incidents_dict(self, tmpdir):
         """
         Given:
         - Incident types of the pack.
@@ -61,10 +72,18 @@ class TestLayoutBelowSixConverter:
         - Ensure expected dict is returned.
 
         """
-        result = self.layout_converter.layout_to_indicators_or_incidents_dict(self.layout_converter.pack.incident_types)
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_incident_type('ExtraHop_Detection', util_load_json(self.INCIDENT_TYPE_ONE))
+        fake_pack.create_incident_type('ExtraHop_Detection_2', util_load_json(self.INCIDENT_TYPE_TWO))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
+        result = LayoutBelowSixConverter.layout_to_indicators_or_incidents_dict(layout_converter.pack.incident_types)
         assert result == {'ExtraHop Detection': ['ExtraHop Detection', 'ExtraHop Detection 2']}
 
-    def test_layout_to_indicators_dict(self):
+    def test_layout_to_indicators_dict(self, tmpdir):
         """
         Given:
         - Indicator types of the pack.
@@ -77,7 +96,14 @@ class TestLayoutBelowSixConverter:
         - Ensure expected dict is returned.
 
         """
-        res = self.layout_converter.layout_to_indicators_or_incidents_dict(self.layout_converter.pack.indicator_types)
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_indicator_type('Cryptocurrency Address', util_load_json(self.INDICATOR_TYPE_ONE))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
+        res = layout_converter.layout_to_indicators_or_incidents_dict(layout_converter.pack.indicator_types)
         assert res == {'ExtraHop Detection': ['Cryptocurrency Address']}
 
     BUILD_OLD_LAYOUT_INPUTS = [('ExtraHop Detection', 'ExtraHop Detect', 'close', None,
@@ -121,7 +147,7 @@ class TestLayoutBelowSixConverter:
 
     @pytest.mark.parametrize('layout_id, incident_type_id, dynamic_field_key, dynamic_field_value, expected',
                              BUILD_OLD_LAYOUT_INPUTS)
-    def test_build_old_layout(self, layout_id: str, incident_type_id: str, dynamic_field_key: str,
+    def test_build_old_layout(self, tmpdir, layout_id: str, incident_type_id: str, dynamic_field_key: str,
                               dynamic_field_value: str, expected: Dict):
         """
         Given:
@@ -137,10 +163,11 @@ class TestLayoutBelowSixConverter:
         - Ensure expected dict is returned.
 
         """
-        assert self.layout_converter.build_old_layout(layout_id, incident_type_id, dynamic_field_key,
-                                                      dynamic_field_value, from_version='4.1.0') == expected
+        assert LayoutBelowSixConverter(Pack(tmpdir)).build_old_layout(layout_id, incident_type_id, dynamic_field_key,
+                                                                      dynamic_field_value,
+                                                                      from_version='4.1.0') == expected
 
-    def test_convert_dir(self):
+    def test_convert_dir(self, tmpdir):
         """
         Given:
         - Pack.
@@ -151,29 +178,32 @@ class TestLayoutBelowSixConverter:
         Then:
         - Ensure expected layouts are created with expected values.
         """
-        layout_converter = LayoutBelowSixConverter(Pack(self.PACK_WITH_NEW_LAYOUTS_PATH))
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_incident_type('ExtraHop_Detection', util_load_json(self.INCIDENT_TYPE_ONE))
+        fake_pack.create_layoutcontainer('ExtraHop Detection', util_load_json(self.LAYOUT_CONTAINER))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
         layout_converter.convert_dir()
         test_data_json = util_load_json(os.path.join(__file__,
-                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
-                                                     '/test_data'
+                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
+                                                     'tests/test_data'
                                                      '/layout_up_to_5_9_9_expected_convert_dir_test_file_output.json'))
         for layout_field_name, layout_data in test_data_json.items():
-            expected_new_layout_path = f'{self.PACK_WITH_NEW_LAYOUTS_PATH}/Layouts/layout-{layout_field_name}-' \
+            expected_new_layout_path = f'{str(layout_converter.pack.path)}/Layouts/layout-{layout_field_name}-' \
                                        'ExtraHop_Detection.json'
             assert os.path.exists(expected_new_layout_path)
             assert util_load_json(expected_new_layout_path) == layout_data
             os.remove(expected_new_layout_path)
 
-    OLD_LAYOUT_PATH = os.path.join(__file__,
-                                   f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
-                                   '/PackWithOldLayout/Layouts/layout-close-ExtraHop_Detection.json')
-    CALCULATE_FROM_VERSION_INPUTS = [('ExtraHop Detection', 'close', [Layout(OLD_LAYOUT_PATH)], '5.0.0'),
-                                     ('ExtraHop Detection2', 'close', [Layout(OLD_LAYOUT_PATH)], '4.1.0'),
-                                     ('ExtraHop Detection', 'mobile', [Layout(OLD_LAYOUT_PATH)], '4.1.0')]
+    CALCULATE_FROM_VERSION_INPUTS = [('ExtraHop Detection', 'close', '5.0.0'),
+                                     ('ExtraHop Detection2', 'close', '4.1.0'),
+                                     ('ExtraHop Detection', 'mobile', '4.1.0')]
 
-    @pytest.mark.parametrize('layout_id, layout_kind, current_old_layouts, expected', CALCULATE_FROM_VERSION_INPUTS)
-    def test_calculate_from_version(self, layout_id: str, layout_kind: str, current_old_layouts: List[LayoutObject],
-                                    expected: str):
+    @pytest.mark.parametrize('layout_id, layout_kind, expected', CALCULATE_FROM_VERSION_INPUTS)
+    def test_calculate_from_version(self, tmpdir, layout_id: str, layout_kind: str, expected: str):
         """
         Given:
         - 'layout_id' Layout ID.
@@ -187,4 +217,7 @@ class TestLayoutBelowSixConverter:
         - Ensure that from version from existing layout is returned if corresponding layout exists with from version,
           else 'MINIMAL_FROM_VERSION' is returned.
         """
-        assert self.layout_converter.calculate_from_version(layout_id, layout_kind, current_old_layouts) == expected
+        full_layout_path = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/'
+                                                  'test_data/layout-close-ExtraHop_Detection.json')
+        assert LayoutBelowSixConverter(Pack(tmpdir)).calculate_from_version(layout_id, layout_kind,
+                                                                            [Layout(full_layout_path)]) == expected

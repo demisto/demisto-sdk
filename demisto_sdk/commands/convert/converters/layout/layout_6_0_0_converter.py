@@ -45,15 +45,13 @@ class LayoutSixConverter(LayoutBaseConverter):
 
         return 0
 
-    def get_layout_indicator_fields(self, schema_path: str = LayoutBaseConverter.DEFAULT_SCHEMA_PATH) -> Set[str]:
+    def get_layout_indicator_fields(self) -> Set[str]:
         """
         Calculates all the indicator fields in the layouts container schema.
-        Args:
-            schema_path (str): Path to the layouts container schema.
         Returns:
             (Set[str]): Set of all of the indicator field names in the layouts container schema.
         """
-        return {schema_field for schema_field in self.get_layout_dynamic_fields(schema_path).keys()
+        return {schema_field for schema_field in self.get_layout_dynamic_fields().keys()
                 if 'indicator' in schema_field}
 
     def group_layouts_needing_conversion_by_layout_id(self) -> Dict[str, List[LayoutObject]]:

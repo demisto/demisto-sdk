@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from pathlib import Path
 
 import pytest
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
@@ -11,6 +12,8 @@ from demisto_sdk.commands.convert.converters.base_converter import \
     BaseConverter
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import \
     LayoutSixConverter
+from TestSuite.pack import Pack as MockPack
+from TestSuite.repo import Repo
 
 
 def util_load_json(path):
@@ -19,12 +22,24 @@ def util_load_json(path):
 
 
 class TestBaseConverter:
-    TEST_PACK_PATH = os.path.join(__file__,
-                                  f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs'
-                                  f'/ExtraHop')
-    PACK = Pack(TEST_PACK_PATH)
+    LAYOUT_CONTAINER = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                              '/test_data/layoutscontainer-ExtraHop_Detection.json')
+    LAYOUT_CLOSE_PATH = os.path.join(__file__,
+                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                     '/test_data/layout-close-ExtraHop_Detection.json')
+    LAYOUT_DETAILS_PATH = os.path.join(__file__,
+                                       f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                       '/test_data/layout-details-ExtraHop_Detection.json')
+    LAYOUT_EDIT_PATH = os.path.join(__file__,
+                                    f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                    '/test_data/layout-edit-ExtraHop_Detection.json')
+    LAYOUT_QUICK_VIEW_PATH = os.path.join(__file__,
+                                          f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                          '/test_data/layout-quickView-ExtraHop_Detection.json')
+    LAYOUT_MOBILE_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                                '/test_data/layout-mobile-ExtraHop_Detection.json')
 
-    def test_get_layouts_by_layout_container_type(self):
+    def test_get_layouts_by_layout_container_type(self, tmpdir):
         """
         Given:
         - Layout container FileType.
@@ -35,11 +50,17 @@ class TestBaseConverter:
         Then:
         - Ensure only layout-containers in the pack are returned.
         """
-        layouts = BaseConverter.get_entities_by_entity_type(self.PACK.layouts, FileType.LAYOUTS_CONTAINER)
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_layoutcontainer('ExtraHop Detection', util_load_json(self.LAYOUT_CONTAINER))
+        fake_pack_path = fake_pack.path
+        layouts = BaseConverter.get_entities_by_entity_type(Pack(fake_pack_path).layouts, FileType.LAYOUTS_CONTAINER)
         assert all(layout.type() == FileType.LAYOUTS_CONTAINER for layout in layouts)
         assert [layout.layout_id() for layout in layouts] == ['ExtraHop Detection']
 
-    def test_get_layouts_by_layout_type(self):
+    def test_get_layouts_by_layout_type(self, tmpdir):
         """
         Given:
         - Layout FileType.
@@ -50,7 +71,18 @@ class TestBaseConverter:
         Then:
         - Ensure only layouts below 6.0.0 version in the pack are returned.
         """
-        layouts = BaseConverter.get_entities_by_entity_type(self.PACK.layouts, FileType.LAYOUT)
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_layout('close-ExtraHop_Detection', util_load_json(self.LAYOUT_CLOSE_PATH))
+        fake_pack.create_layout('details-ExtraHop_Detection', util_load_json(self.LAYOUT_DETAILS_PATH))
+        fake_pack.create_layout('edit-ExtraHop_Detection', util_load_json(self.LAYOUT_EDIT_PATH))
+        fake_pack.create_layout('quickView-ExtraHop_Detection',
+                                util_load_json(self.LAYOUT_QUICK_VIEW_PATH))
+        fake_pack.create_layout('mobile-ExtraHop_Detection', util_load_json(self.LAYOUT_MOBILE_PATH))
+        fake_pack_path = fake_pack.path
+        layouts = BaseConverter.get_entities_by_entity_type(Pack(fake_pack_path).layouts, FileType.LAYOUT)
         assert len(layouts) == 5
         assert all(layout.type() == FileType.LAYOUT for layout in layouts)
         assert {layout.get('kind') for layout in layouts} == {'close', 'details', 'edit', 'mobile', 'quickView'}
@@ -61,7 +93,7 @@ class TestBaseConverter:
                                                f'''a{'a'.join(['_'] * len(ENTITY_NAME_SEPARATORS))}a''')]
 
     @pytest.mark.parametrize('name, expected', ENTITY_SEPARATORS_TO_UNDERSCORE_INPUTS)
-    def test_entity_separators_to_underscore(self, name: str, expected: str):
+    def test_entity_separators_to_underscore(self, tmpdir, name: str, expected: str):
         """
         Given:
         - string, possibly containing one of the chars in 'ENTITY_NAME_SEPARATORS'.
@@ -72,7 +104,7 @@ class TestBaseConverter:
         Then:
         - Ensure expected string is returned.
         """
-        layout_converter = LayoutSixConverter(self.PACK)
+        layout_converter = LayoutSixConverter(Pack(tmpdir))
         assert layout_converter.entity_separators_to_underscore(name) == expected
 
     def test_dump_new_entity(self):

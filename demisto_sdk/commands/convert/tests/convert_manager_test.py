@@ -25,23 +25,3 @@ class TestConvertManager:
         convert_manager = ConvertManager(dir_path, '6.0.0')
         pack_obj = convert_manager.create_pack_object()
         assert str(pack_obj.path) == expected_pack_path
-
-    TEST_SERVER_VERSION_IS_NOT_SUPPORTED_INPUTS = [(str(ConvertManager.MIN_VERSION_SUPPORTED), True),
-                                                   (str(ConvertManager.MAX_VERSION_SUPPORTED), True),
-                                                   ('5.4.0', False),
-                                                   ('9.0.0', False)]
-
-    @pytest.mark.parametrize('server_version, expected', TEST_SERVER_VERSION_IS_NOT_SUPPORTED_INPUTS)
-    def test_server_version_not_supported(self, server_version: str, expected: bool):
-        """
-        Given:
-        - ConvertManager with its initialized server version, given by -v argument in convert command.
-
-        When:
-        - Checking if given version is supported by convert command.
-
-        Then:
-        - Ensure expected boolean is returned indicating whether version is supported or not.
-        """
-        convert_manager = ConvertManager(input_path='', server_version=server_version)
-        assert convert_manager.server_version_not_supported() == expected

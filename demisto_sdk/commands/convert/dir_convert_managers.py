@@ -1,8 +1,8 @@
 import os
 from abc import abstractmethod
 
-from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.tools import is_pack_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import \
     ClassifierSixConverter
 from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import \
@@ -41,22 +41,7 @@ class AbstractDirConvertManager:
             - True if conversion should be done.
             - False if conversion should not be done.
         """
-        return self.is_dir_convert_manager_path() or self.is_pack_path()
-
-    def is_pack_path(self) -> bool:
-        """
-        Checks whether pack given in input path is for a pack.
-        Examples
-            - self.input_path = 'Packs/BitcoinAbuse
-              Returns: True
-            - self.input_path = 'Packs/BitcoinAbuse/Layouts'
-              Returns: False
-        Returns:
-            (bool):
-            - True if the input path is for a given pack.
-            - False if the input path is not for a given pack.
-        """
-        return os.path.basename(os.path.dirname(self.input_path)) == PACKS_DIR
+        return self.is_dir_convert_manager_path() and is_pack_path(self.input_path)
 
     def is_dir_convert_manager_path(self) -> bool:
         """

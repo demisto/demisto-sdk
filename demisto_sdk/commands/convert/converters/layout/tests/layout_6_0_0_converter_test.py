@@ -1,15 +1,15 @@
 import io
 import json
 import os
-from typing import List
+from pathlib import Path
 
 import pytest
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
-    Layout, LayoutObject)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import \
     LayoutSixConverter
+from TestSuite.pack import Pack as MockPack
+from TestSuite.repo import Repo
 
 
 def util_load_json(path):
@@ -18,18 +18,22 @@ def util_load_json(path):
 
 
 class TestLayoutSixConverter:
-    TEST_PACK_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/tests/test_data/Packs/ExtraHop')
-    PACK_WITH_OLD_LAYOUTS_PATH = os.path.join(__file__,
-                                              f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
-                                              'tests/test_data/Packs/PackWithOldLayout')
-    SCHEMA_PATH = os.path.normpath(
-        os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests/test_data',
-                     'layoutscontainer.yml'))
+    LAYOUT_CLOSE_PATH = os.path.join(__file__,
+                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                     '/test_data/layout-close-ExtraHop_Detection.json')
+    LAYOUT_DETAILS_PATH = os.path.join(__file__,
+                                       f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                       '/test_data/layout-details-ExtraHop_Detection.json')
+    LAYOUT_EDIT_PATH = os.path.join(__file__,
+                                    f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                    '/test_data/layout-edit-ExtraHop_Detection.json')
+    LAYOUT_QUICK_VIEW_PATH = os.path.join(__file__,
+                                          f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                          '/test_data/layout-quickView-ExtraHop_Detection.json')
+    LAYOUT_MOBILE_PATH = os.path.join(__file__, f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
+                                                '/test_data/layout-mobile-ExtraHop_Detection.json')
 
-    def setup(self):
-        self.layout_converter = LayoutSixConverter(Pack(self.TEST_PACK_PATH))
-
-    def test_get_layout_indicator_fields(self):
+    def test_get_layout_indicator_fields(self, tmpdir):
         """
         Given:
         - Schema path of the layouts-container.
@@ -40,10 +44,11 @@ class TestLayoutSixConverter:
         Then:
         - Ensure indicator dynamic fields are returned.
         """
-        dynamic_fields = set(self.layout_converter.get_layout_indicator_fields(self.SCHEMA_PATH))
+        layout_converter = LayoutSixConverter(Pack(tmpdir))
+        dynamic_fields = set(layout_converter.get_layout_indicator_fields())
         assert dynamic_fields == {'indicatorsDetails', 'indicatorsQuickView'}
 
-    def test_group_layouts_needing_conversion_by_layout_id(self):
+    def test_group_layouts_needing_conversion_by_layout_id(self, tmpdir):
         """
         Given:
         -
@@ -54,24 +59,35 @@ class TestLayoutSixConverter:
         Then:
         - Ensure expected dict object is returned.
         """
-        result = self.layout_converter.group_layouts_needing_conversion_by_layout_id()
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_layout('close-ExtraHop_Detection', util_load_json(self.LAYOUT_CLOSE_PATH))
+        fake_pack.create_layout('details-ExtraHop_Detection', util_load_json(self.LAYOUT_DETAILS_PATH))
+        fake_pack.create_layout('edit-ExtraHop_Detection', util_load_json(self.LAYOUT_EDIT_PATH))
+        fake_pack.create_layout('quickView-ExtraHop_Detection',
+                                util_load_json(self.LAYOUT_QUICK_VIEW_PATH))
+        fake_pack.create_layout('mobile-ExtraHop_Detection', util_load_json(self.LAYOUT_MOBILE_PATH))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutSixConverter(Pack(fake_pack_path))
+        result = layout_converter.group_layouts_needing_conversion_by_layout_id()
         assert len(result) == 1 and 'ExtraHop Detection' in result
         layout_kinds = {layout['kind'] for layout in result['ExtraHop Detection']}
         assert all(layout.layout_id() == 'ExtraHop Detection' for layout in result['ExtraHop Detection'])
         assert layout_kinds == {'close', 'details', 'edit', 'mobile', 'quickView'}
 
-    CALCULATE_NEW_LAYOUT_GROUP_INPUTS = [([], 'incident'),
-                                         ([Layout(os.path.join(__file__,
-                                                               f'{git_path()}/demisto_sdk/commands/convert/'
-                                                               'tests/test_data/Packs/ExtraHop/Layouts/'
-                                                               'layout-mobile-ExtraHop_Detection.json'))], 'incident'),
-                                         ([Layout(os.path.join(__file__,
-                                                               f'{git_path()}/demisto_sdk/commands/convert/converters/'
-                                                               'layout/tests/test_data/layout-indicatorsDetails-Crypto'
-                                                               'currency_Address-V3.json'))], 'indicator')]
+    CALCULATE_NEW_LAYOUT_GROUP_INPUTS = [(os.path.join(__file__,
+                                                       f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
+                                                       'tests/test_data/layout-mobile-ExtraHop_Detection.json'),
+                                          'incident'),
+                                         (os.path.join(__file__,
+                                                       f'{git_path()}/demisto_sdk/commands/convert/converters/'
+                                                       'layout/tests/test_data/layout-indicatorsDetails-Crypto'
+                                                       'currency_Address-V3.json'), 'indicator')]
 
-    @pytest.mark.parametrize('old_layouts, expected', CALCULATE_NEW_LAYOUT_GROUP_INPUTS)
-    def test_calculate_new_layout_group(self, old_layouts: List[LayoutObject], expected: str):
+    @pytest.mark.parametrize('old_layout_path, expected', CALCULATE_NEW_LAYOUT_GROUP_INPUTS)
+    def test_calculate_new_layout_group(self, tmpdir, old_layout_path: str, expected: str):
         """
         Given:
         - 'old_layouts': List of old layout objects.
@@ -82,13 +98,21 @@ class TestLayoutSixConverter:
         Then:
         - Ensure the expected group value is returned.
         """
-        assert self.layout_converter.calculate_new_layout_group(old_layouts) == expected
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_layout('test', util_load_json(old_layout_path))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutSixConverter(Pack(fake_pack_path))
+        assert layout_converter.calculate_new_layout_group(
+            [layout for layout in layout_converter.pack.layouts]) == expected
 
     CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [('ExtraHop Detection', 'layoutscontainer-ExtraHop_Detection.json')]
 
     @pytest.mark.parametrize('layout_id, expected_suffix',
                              CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS)
-    def test_calculate_new_layout_relative_path(self, layout_id: str, expected_suffix: str):
+    def test_calculate_new_layout_relative_path(self, tmpdir, layout_id: str, expected_suffix: str):
         """
         Given:
         - 'layout_id': Layout ID of the new layout created.
@@ -100,10 +124,11 @@ class TestLayoutSixConverter:
         - Ensure the expected path is returned.
 
         """
-        expected = f'{self.layout_converter.pack.path}/Layouts/{expected_suffix}'
-        assert self.layout_converter.calculate_new_layout_relative_path(layout_id) == expected
+        layout_converter = LayoutSixConverter(Pack(tmpdir))
+        expected = f'{layout_converter.pack.path}/Layouts/{expected_suffix}'
+        assert layout_converter.calculate_new_layout_relative_path(layout_id) == expected
 
-    def test_convert_dir(self):
+    def test_convert_dir(self, tmpdir):
         """
         Given:
         - Pack.
@@ -114,15 +139,26 @@ class TestLayoutSixConverter:
         Then:
         - Ensure expected layouts are created with expected values.
         """
-        layout_converter = LayoutSixConverter(Pack(self.PACK_WITH_OLD_LAYOUTS_PATH))
+        fake_pack_name = 'FakeTestPack'
+        repo = Repo(tmpdir)
+        repo_path = Path(repo.path)
+        fake_pack = MockPack(repo_path / 'Packs', fake_pack_name, repo)
+        fake_pack.create_layout('close-ExtraHop_Detection', util_load_json(self.LAYOUT_CLOSE_PATH))
+        fake_pack.create_layout('details-ExtraHop_Detection', util_load_json(self.LAYOUT_DETAILS_PATH))
+        fake_pack.create_layout('edit-ExtraHop_Detection', util_load_json(self.LAYOUT_EDIT_PATH))
+        fake_pack.create_layout('quickView-ExtraHop_Detection',
+                                util_load_json(self.LAYOUT_QUICK_VIEW_PATH))
+        fake_pack.create_layout('mobile-ExtraHop_Detection', util_load_json(self.LAYOUT_MOBILE_PATH))
+        fake_pack_path = fake_pack.path
+        layout_converter = LayoutSixConverter(Pack(fake_pack_path))
         layout_converter.convert_dir()
-        expected_new_layout_path = f'{self.PACK_WITH_OLD_LAYOUTS_PATH}/Layouts/layoutscontainer-ExtraHop_Detection.json'
+        expected_new_layout_path = f'{str(layout_converter.pack.path)}/Layouts/layoutscontainer-ExtraHop_Detection.json'
         assert os.path.exists(expected_new_layout_path)
         with open(expected_new_layout_path, 'r') as f:
             layout_data = json.loads(f.read())
         test_data_json = util_load_json(os.path.join(__file__,
-                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/tests'
-                                                     '/test_data'
-                                                     '/layout_6_0_0_expected_convert_dir_test_file_output.json'))
+                                                     f'{git_path()}/demisto_sdk/commands/convert/converters/layout/'
+                                                     'tests/test_data'
+                                                     '/layoutscontainer-ExtraHop_Detection.json'))
         assert layout_data == test_data_json
         os.remove(expected_new_layout_path)

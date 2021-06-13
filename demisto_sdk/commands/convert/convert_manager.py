@@ -4,7 +4,6 @@ from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/poll
 
 
 class ConvertManager:
-    MAX_VERSION_SUPPORTED = Version('6.1.0')
     MIN_VERSION_SUPPORTED = Version('5.5.0')
 
     def __init__(self, input_path: str, server_version: str):
@@ -17,13 +16,13 @@ class ConvertManager:
         Returns:
             (int): Returns 0 upon success, 1 if failure occurred.
         """
-        if not self.server_version_not_supported():
-            click.secho(f'Version requested: {str(self.server_version)} should be between '
-                        f'{str(self.MIN_VERSION_SUPPORTED)} to {str(self.MAX_VERSION_SUPPORTED)}', fg='red')
+        if self.MIN_VERSION_SUPPORTED > self.server_version:
+            click.secho(f'Version requested: {str(self.server_version)} should be higher or equal to '
+                        f'{str(self.MIN_VERSION_SUPPORTED)}', fg='red')
             return 1
         pack = self.create_pack_object()
-        all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)  # type: ignore
-                              for dir_converter in AbstractDirConvertManager.__subclasses__()]  # type: ignore
+        all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)  # type: ignore[abstract]
+                              for dir_converter in AbstractDirConvertManager.__subclasses__()]  # type: ignore[abstract]
         relevant_dir_converters = [dir_converter for dir_converter in all_dir_converters
                                    if dir_converter.should_convert()]
         if not relevant_dir_converters:
@@ -46,18 +45,5 @@ class ConvertManager:
         Returns:
             (Pack): Pack object of the pack the conversion was requested for.
         """
-        path_dir = os.path.dirname(self.input_path)
-        pack_path = self.input_path if os.path.basename(path_dir) == PACKS_DIR else path_dir
+        pack_path = self.input_path if is_pack_path(self.input_path) else os.path.dirname(self.input_path)
         return Pack(pack_path)
-
-    def server_version_not_supported(self) -> bool:
-        """
-        Checks whether the requested version is supported for conversion.
-        This is needed to make sure that the requested versions do have a corresponding converter
-        before starting the conversion process.
-        Returns:
-            (bool):
-            - True if server version requested for conversion is not supported.
-            - False if server version requested for conversion is supported.
-        """
-        return self.MIN_VERSION_SUPPORTED <= self.server_version <= self.MAX_VERSION_SUPPORTED

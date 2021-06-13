@@ -38,7 +38,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
             intersection_fields (Set[str]): Intersection fields of 6_0_0 and 5_9_9 formats.
 
         Returns:
-            (None): Creates a new corresponding classifier to 'old_classifier' by 6_0_0 file structure.
+            (None): (path to new created classifier, classifier dict obj).
         """
         classifier_name_and_id = self.extract_classifier_name(old_classifier)
         if not classifier_name_and_id:
@@ -58,7 +58,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
             old_classifier (Classifier): Old classifier object
 
         Returns:
-            (None): Creates a new corresponding mapper to 'old_classifier' by 6_0_0 file structure, if mapping exists.
+            (None): (path to new created mapper, mapper dict obj).
         """
         classifier_name_and_id = self.extract_classifier_name(old_classifier)
         mapping = old_classifier.get('mapping')

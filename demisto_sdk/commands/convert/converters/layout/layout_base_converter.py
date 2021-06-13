@@ -10,8 +10,8 @@ from demisto_sdk.commands.convert.converters.base_converter import \
 
 
 class LayoutBaseConverter(BaseConverter):
-    DEFAULT_SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
-                                                        f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
+    SCHEMA_PATH = os.path.normpath(os.path.join(__file__, '..', '..', '..', '..', 'common/schemas/',
+                                                f'{FileType.LAYOUTS_CONTAINER.value}.yml'))
 
     def __init__(self, pack: Pack):
         super().__init__()
@@ -21,16 +21,13 @@ class LayoutBaseConverter(BaseConverter):
     def convert_dir(self) -> int:
         pass
 
-    @staticmethod
-    def get_layout_dynamic_fields(schema_path: str = DEFAULT_SCHEMA_PATH) -> Dict[str, Any]:
+    def get_layout_dynamic_fields(self) -> Dict[str, Any]:
         """
         Calculates all the indicator fields in the layouts container schema.
-        Args:
-            schema_path (str): Path to the layouts container schema.
         Returns:
             (Dict[str, Any]): Dict of all of the dynamic field names and their value in the layouts container schema.
         """
-        schema_data: dict = get_yaml(schema_path)
+        schema_data: dict = get_yaml(self.SCHEMA_PATH)
         schema_mapping = schema_data.get('mapping', dict())
         return {schema_field: schema_value for schema_field, schema_value in schema_mapping.items()
                 if 'mapping' in schema_value}

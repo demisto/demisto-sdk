@@ -64,6 +64,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
+                                               get_pack_name_for_ignores_file,
                                                get_pack_names_from_files,
                                                get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -206,7 +207,7 @@ class ValidateManager:
         files_validation_result = set()
 
         for path in self.file_path.split(','):
-            error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
+            error_ignore_list = self.get_error_ignore_list(get_pack_name(path), path)
 
             if os.path.isfile(path):
                 click.secho('\n================= Validating file =================', fg="bright_cyan")
@@ -884,8 +885,8 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code,
-                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                    error_message, error_code,
+                    file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
                     is_valid.add(True)
 
@@ -1119,26 +1120,31 @@ class ValidateManager:
             ignored_errors_list.extend(
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key)))
 
-    def get_error_ignore_list(self, pack_name):
+    def get_error_ignore_list(self, pack_name, file_path=''):
         ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
+        else:
+            pack_ignore_path = get_pack_ignore_file_path(get_pack_name_for_ignores_file(file_path))
 
-            if os.path.isfile(pack_ignore_path):
-                try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
+        if not os.path.isfile(pack_ignore_path):
+            return ignored_errors_list
 
-                    # create file specific ignored errors list
-                    for section in config.sections():
-                        if section.startswith("file:"):
-                            file_name = section[5:]
-                            ignored_errors_list[file_name] = []
-                            for key in config[section]:
-                                self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
+        if os.path.isfile(pack_ignore_path):
+            try:
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
 
-                except MissingSectionHeaderError:
-                    pass
+                # create file specific ignored errors list
+                for section in config.sections():
+                    if section.startswith("file:"):
+                        file_name = section[5:]
+                        ignored_errors_list[file_name] = []
+                        for key in config[section]:
+                            self.add_ignored_errors_to_list(config, section, key, ignored_errors_list[file_name])
+
+            except MissingSectionHeaderError:
+                pass
 
         return ignored_errors_list
 

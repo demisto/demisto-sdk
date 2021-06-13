@@ -104,7 +104,7 @@ def test_is_invalid_description_name(repo):
     with ChangeCWD(repo.path):
         description_validator = DescriptionValidator(integration.yml.path)
 
-    assert not description_validator.is_valid_description_name()
+        assert not description_validator.is_valid_description_name()
 
 
 def test_demisto_in_description(repo):
@@ -130,7 +130,7 @@ def test_demisto_in_description(repo):
     with ChangeCWD(repo.path):
         description_validator = DescriptionValidator(integration.yml.path)
 
-    assert not description_validator.verify_demisto_in_description_content()
+        assert not description_validator.verify_demisto_in_description_content()
 
 
 def test_demisto_not_in_description(repo):

@@ -134,6 +134,8 @@ def test_json_outputs_where_no_image_in_integration(repo):
     if os.path.exists(image_path):
         os.remove(image_path)
 
+    os.chdir(repo.path)
+
     # Run the image validator with a json file path
     json_file_path = os.path.join(integration.path, 'json_outputs.json')
     image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
@@ -192,6 +194,8 @@ def test_is_valid_image_name_with_invalid_name(repo):
 
     integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
                              integration._repo.path)
+
+    os.chdir(repo.path)
 
     image_validator = image.ImageValidator(integration.image.path)
 

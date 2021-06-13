@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import pytest
@@ -6,7 +7,7 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
-    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from mock import patch
 
@@ -362,9 +363,12 @@ class TestPlaybookValidator:
             -  Ensure the unhandled condition is ignored if it's a test playbook
             -  Ensure validation fails if it's a not test playbook
         """
+        os.chdir(CONTENT_REPO_EXAMPLE_ROOT)
+
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
         mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
+
         assert validator.is_valid_playbook() is expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_DELETECONTEXT)

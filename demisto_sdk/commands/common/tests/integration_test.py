@@ -689,6 +689,9 @@ class TestIntegrationValidator:
             {'display': 'token'},
             {'display': 'User_name'}
         ]})
+
+        os.chdir(integration.repo_path)
+
         structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
         validator = IntegrationValidator(structure_validator)
 
@@ -788,6 +791,8 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration('my_Int')
 
+        os.chdir(integration.repo_path)
+
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)
 
@@ -804,6 +809,8 @@ class TestIntegrationValidator:
         """
 
         integration = pack.create_integration('my_Int')
+
+        os.chdir(integration.repo_path)
 
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)

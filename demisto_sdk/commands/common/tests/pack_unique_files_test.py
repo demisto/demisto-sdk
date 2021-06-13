@@ -254,6 +254,9 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_TAGS: []
         })
         self.validator.pack_path = pack.path
+
+        os.chdir(repo.path)
+
         assert self.validator._is_approved_usecases() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
@@ -287,6 +290,9 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_TAGS: tags
         })
         self.validator.pack_path = pack.path
+
+        os.chdir(repo.path)
+
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
@@ -316,6 +322,9 @@ class TestPackUniqueFilesValidator:
             pack.create_layout(name="Layout")
 
         self.validator.pack_path = pack.path
+
+        os.chdir(repo.path)
+
         assert self.validator.is_right_usage_of_usecase_tag() == is_valid
 
     @pytest.mark.parametrize('type, is_valid', [
@@ -345,6 +354,9 @@ class TestPackUniqueFilesValidator:
         })
 
         self.validator.pack_path = pack.path
+
+        os.chdir(repo.path)
+
         assert self.validator._is_valid_support_type() == is_valid
         if not is_valid:
             assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
@@ -497,6 +509,9 @@ class TestPackUniqueFilesValidator:
         })
 
         self.validator.pack_path = pack.path
+
+        os.chdir(repo.path)
+
         assert self.validator.validate_pack_readme_and_pack_description() == is_valid
         if not is_valid:
             assert 'README.md content is equal to pack description. ' \

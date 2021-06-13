@@ -109,6 +109,9 @@ def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missi
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
+
+    os.chdir(integration.repo_path)
+
     readme_validator = ReadMeValidator(readme_path)
     result = readme_validator.verify_no_empty_sections()
 
@@ -133,6 +136,9 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
+
+    os.chdir(integration.repo_path)
+
     readme_validator = ReadMeValidator(readme_path)
     result = readme_validator.verify_no_empty_sections()
 
@@ -194,6 +200,9 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     """
     integration.readme.write(file_input)
     readme_path = integration.readme.path
+
+    os.chdir(integration.repo_path)
+
     readme_validator = ReadMeValidator(readme_path)
     result = readme_validator.verify_no_default_sections_left()
 
@@ -321,6 +330,8 @@ def test_demisto_in_readme(repo):
 
     with open(readme_path, 'w') as f:
         f.write('This checks if we have the word Demisto in the README.')
+
+    os.chdir(repo.path)
 
     readme_validator = ReadMeValidator(integration.readme.path)
 

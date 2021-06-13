@@ -286,6 +286,7 @@ class TestDockerImage:
             "https://hub.docker.com/v2/repositories/demisto/nonexistingdocker/tags",
             json={'results': []}
         )
+        os.chdir(integration.repo_path)
         validator = DockerImageValidator(integration.yml.path, True, True)
         assert validator.is_docker_image_valid() is False
         captured = capsys.readouterr()

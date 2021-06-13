@@ -1,3 +1,5 @@
+import os
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 
@@ -905,6 +907,8 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
+
+        os.chdir(repo.path)
 
         # all playbook's entities has valid versions
         is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(

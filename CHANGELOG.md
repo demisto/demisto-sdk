@@ -1,4 +1,5 @@
 # Changelog
+* Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
@@ -10,6 +11,7 @@
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
 * Added the **convert** command to convert entities between XSOAR versions.
 
 # 1.3.9

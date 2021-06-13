@@ -12,6 +12,7 @@
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
 * Fixed an issue where **download** did not return exit code 1 on failure.
+* Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

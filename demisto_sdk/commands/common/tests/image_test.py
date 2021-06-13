@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.file import File
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_is_not_default_image():
@@ -134,19 +135,18 @@ def test_json_outputs_where_no_image_in_integration(repo):
     if os.path.exists(image_path):
         os.remove(image_path)
 
-    os.chdir(repo.path)
+    with ChangeCWD(repo.path):
+        # Run the image validator with a json file path
+        json_file_path = os.path.join(integration.path, 'json_outputs.json')
+        image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
 
-    # Run the image validator with a json file path
-    json_file_path = os.path.join(integration.path, 'json_outputs.json')
-    image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
+        # Check the outputs in the json file
+        with open(image_validator.json_file_path, "r") as r:
+            json_outputs = json.loads(r.read())
 
-    # Check the outputs in the json file
-    with open(image_validator.json_file_path, "r") as r:
-        json_outputs = json.loads(r.read())
-
-        assert json_outputs[0]['filePath'] == image_path
-        assert json_outputs[0]['fileType'] == 'png'
-        assert json_outputs[0]['entityType'] == 'image'
+            assert json_outputs[0]['filePath'] == image_path
+            assert json_outputs[0]['fileType'] == 'png'
+            assert json_outputs[0]['entityType'] == 'image'
 
 
 def test_is_valid_image_name_with_valid_name(repo):
@@ -195,8 +195,8 @@ def test_is_valid_image_name_with_invalid_name(repo):
     integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
                              integration._repo.path)
 
-    os.chdir(repo.path)
+    with ChangeCWD(repo.path):
 
-    image_validator = image.ImageValidator(integration.image.path)
+        image_validator = image.ImageValidator(integration.image.path)
 
-    assert not image_validator.is_valid_image_name()
+        assert not image_validator.is_valid_image_name()

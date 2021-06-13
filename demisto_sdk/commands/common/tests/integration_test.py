@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
+from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
@@ -690,12 +691,11 @@ class TestIntegrationValidator:
             {'display': 'User_name'}
         ]})
 
-        os.chdir(integration.repo_path)
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
 
-        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
-        validator = IntegrationValidator(structure_validator)
-
-        assert not validator.is_valid_parameters_display_name()
+            assert not validator.is_valid_parameters_display_name()
 
     def test_valid_integration_path(self, integration):
         """
@@ -791,12 +791,11 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration('my_Int')
 
-        os.chdir(integration.repo_path)
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
 
-        structure_validator = StructureValidator(integration.yml.path)
-        validator = IntegrationValidator(structure_validator)
-
-        assert not validator.check_separators_in_folder()
+            assert not validator.check_separators_in_folder()
 
     def test_files_names_with_separators(self, pack):
         """
@@ -810,12 +809,11 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration('my_Int')
 
-        os.chdir(integration.repo_path)
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
 
-        structure_validator = StructureValidator(integration.yml.path)
-        validator = IntegrationValidator(structure_validator)
-
-        assert not validator.check_separators_in_files()
+            assert not validator.check_separators_in_files()
 
 
 class TestIsFetchParamsExist:

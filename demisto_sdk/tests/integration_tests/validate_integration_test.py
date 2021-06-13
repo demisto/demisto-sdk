@@ -1,4 +1,3 @@
-import os
 from os.path import join
 
 from click.testing import CliRunner
@@ -432,10 +431,9 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        os.chdir(CONTENT_REPO_EXAMPLE_ROOT)
-
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json"])
+        with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json"])
 
         assert f"Validating {pack_integration_path} as integration" in result.stdout
         assert "The docker image tag is not the latest numeric tag, please update it" in result.stdout
@@ -1557,10 +1555,9 @@ class TestPlaybookValidation:
         - Ensure validate fails on PB103 - unconnected tasks error.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
-        os.chdir(TEST_FILES_PATH)
-
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
+        with ChangeCWD(TEST_FILES_PATH):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB103' in result.stdout
         assert 'The following tasks ids have no previous tasks: {\'5\'}' in result.stdout
@@ -1599,11 +1596,10 @@ class TestPlaybookValidateDeprecated:
         - Ensure validate fails on PB104 - deprecated tasks error.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
-        os.chdir(TEST_FILES_PATH)
-
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH],
-                               catch_exceptions=False)
+        with ChangeCWD(TEST_FILES_PATH):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH],
+                                   catch_exceptions=False)
         assert f'Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
         assert 'PB104' in result.stdout
         assert 'Deprecated.' in result.stdout

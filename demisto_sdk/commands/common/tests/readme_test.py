@@ -6,6 +6,7 @@ import sys
 import pytest
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -110,16 +111,15 @@ def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missi
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
-    os.chdir(integration.repo_path)
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_empty_sections()
 
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_empty_sections()
+        stdout, _ = capsys.readouterr()
+        section_error = f'{missing_section} is empty, please elaborate or delete the section.'
 
-    stdout, _ = capsys.readouterr()
-    section_error = f'{missing_section} is empty, please elaborate or delete the section.'
-
-    assert not result
-    assert section_error in stdout
+        assert not result
+        assert section_error in stdout
 
 
 @pytest.mark.parametrize("file_input",
@@ -137,17 +137,16 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
-    os.chdir(integration.repo_path)
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_empty_sections()
 
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_empty_sections()
+        stdout, _ = capsys.readouterr()
+        error = 'Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the' \
+                ' section.\nAdditional Information is empty, please elaborate or delete the section.'
 
-    stdout, _ = capsys.readouterr()
-    error = 'Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the' \
-            ' section.\nAdditional Information is empty, please elaborate or delete the section.'
-
-    assert not result
-    assert error in stdout
+        assert not result
+        assert error in stdout
 
 
 @pytest.mark.parametrize("file_input",
@@ -201,15 +200,14 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
-    os.chdir(integration.repo_path)
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_default_sections_left()
 
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_default_sections_left()
-
-    stdout, _ = capsys.readouterr()
-    section_error = f'Replace "{section}" with a suitable info.'
-    assert not result
-    assert section_error in stdout
+        stdout, _ = capsys.readouterr()
+        section_error = f'Replace "{section}" with a suitable info.'
+        assert not result
+        assert section_error in stdout
 
 
 ERROR_FOUND_CASES = [
@@ -331,11 +329,10 @@ def test_demisto_in_readme(repo):
     with open(readme_path, 'w') as f:
         f.write('This checks if we have the word Demisto in the README.')
 
-    os.chdir(repo.path)
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator(integration.readme.path)
 
-    readme_validator = ReadMeValidator(integration.readme.path)
-
-    assert not readme_validator.verify_demisto_in_readme_content()
+        assert not readme_validator.verify_demisto_in_readme_content()
 
 
 def test_demisto_not_in_readme(repo):

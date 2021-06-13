@@ -255,11 +255,10 @@ class TestPackUniqueFilesValidator:
         })
         self.validator.pack_path = pack.path
 
-        os.chdir(repo.path)
-
-        assert self.validator._is_approved_usecases() == is_valid
-        if not is_valid:
-            assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_usecases() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid', [
         ([], True),
@@ -291,11 +290,10 @@ class TestPackUniqueFilesValidator:
         })
         self.validator.pack_path = pack.path
 
-        os.chdir(repo.path)
-
-        assert self.validator._is_approved_tags() == is_valid
-        if not is_valid:
-            assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_tags() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),
@@ -323,9 +321,8 @@ class TestPackUniqueFilesValidator:
 
         self.validator.pack_path = pack.path
 
-        os.chdir(repo.path)
-
-        assert self.validator.is_right_usage_of_usecase_tag() == is_valid
+        with ChangeCWD(repo.path):
+            assert self.validator.is_right_usage_of_usecase_tag() == is_valid
 
     @pytest.mark.parametrize('type, is_valid', [
         ('community', True),
@@ -355,12 +352,11 @@ class TestPackUniqueFilesValidator:
 
         self.validator.pack_path = pack.path
 
-        os.chdir(repo.path)
-
-        assert self.validator._is_valid_support_type() == is_valid
-        if not is_valid:
-            assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
-                   self.validator.get_errors()
+        with ChangeCWD(repo.path):
+            assert self.validator._is_valid_support_type() == is_valid
+            if not is_valid:
+                assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
+                       self.validator.get_errors()
 
     def test_get_master_private_repo_meta_file_running_on_master(self, mocker, repo, capsys):
         """
@@ -510,9 +506,8 @@ class TestPackUniqueFilesValidator:
 
         self.validator.pack_path = pack.path
 
-        os.chdir(repo.path)
-
-        assert self.validator.validate_pack_readme_and_pack_description() == is_valid
-        if not is_valid:
-            assert 'README.md content is equal to pack description. ' \
-                   'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+        with ChangeCWD(repo.path):
+            assert self.validator.validate_pack_readme_and_pack_description() == is_valid
+            if not is_valid:
+                assert 'README.md content is equal to pack description. ' \
+                       'Please remove the duplicate description from README.md file' in self.validator.get_errors()

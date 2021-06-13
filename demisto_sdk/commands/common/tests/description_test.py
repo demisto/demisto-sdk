@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
 from ruamel.yaml import YAML
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize('integration_obj', [
@@ -50,10 +51,9 @@ def test_is_valid_file(integration, file_input, result):
 
     integration.description.write(file_input)
     description_path = integration.description.path
-    os.chdir(integration.repo_path)
-
-    description_validator = DescriptionValidator(description_path)
-    answer = description_validator.is_valid_file()
+    with ChangeCWD(integration.repo_path):
+        description_validator = DescriptionValidator(description_path)
+        answer = description_validator.is_valid_file()
 
     assert answer == result
     assert description_validator._is_valid == answer

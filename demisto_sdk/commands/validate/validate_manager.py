@@ -78,7 +78,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, check_unskipped_playbooks=True, quite_bc=False
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -100,7 +100,6 @@ class ValidateManager:
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
         self.quite_bc = quite_bc
-        self.check_unskipped_playbooks = check_unskipped_playbooks
         self.check_is_unskipped = check_is_unskipped
 
         if json_file_path:
@@ -161,11 +160,13 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.print_percent = True
-            self.check_unskipped_playbooks = False
             self.check_is_unskipped = False
 
         if no_docker_checks:
             self.skip_docker_checks = True
+
+        if self.check_is_unskipped or not self.skip_conf_json:
+            self.conf_json_validator = ConfJsonValidator()
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -246,8 +247,7 @@ class ValidateManager:
         all_packs_valid = set()
 
         if not self.skip_conf_json:
-            conf_json_validator = ConfJsonValidator()
-            all_packs_valid.add(conf_json_validator.is_valid_conf_json())
+            all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
         count = 1
         all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
@@ -385,10 +385,9 @@ class ValidateManager:
 
         # conf.json validation
         valid_in_conf = True
-        if self.check_unskipped_playbooks and file_type in {FileType.INTEGRATION, FileType.SCRIPT}:
-            conf_json_validator = ConfJsonValidator()
-            if not conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
-                                                                  file_path):
+        if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT}:
+            if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
+                                                                       file_path):
                 valid_in_conf = False
 
         # Note: these file are not ignored but there are no additional validators for connections

@@ -165,8 +165,7 @@ class IntegrationValidator(ContentEntityValidator):
             error_message, error_code = Errors.integration_is_skipped(integration_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
-            return False
-        return True
+        return self.is_valid
 
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_valid = True

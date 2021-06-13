@@ -91,14 +91,12 @@ ERROR_CODE = {
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
-    "all_integration_test_playbooks_are_skipped": {'code': "IN141", 'ui_applicable': False, 'related_field': ''},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
-    "all_script_test_playbooks_are_skipped": {'code': "SC106", 'ui_applicable': False, 'related_field': ''},
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -134,6 +132,7 @@ ERROR_CODE = {
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
     "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
     "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
+    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
     "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
     "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
@@ -1581,23 +1580,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def all_integration_test_playbooks_are_skipped(integration_id):
-        return f"All test playbooks for integration {integration_id} in this pack are currently skipped. " \
+    def all_entity_test_playbooks_are_skipped(entity_id):
+        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
                f"Please unskip at least one of the relevant test playbooks.\n " \
                f"You can do this by deleting the line relevant to one of the test playbooks " \
                f"in the 'skipped_tests' section inside the conf.json file and deal " \
-               f"with the matching issue,\n  or create a new active test playbook from scratch " \
-               f"and add the id to the integration's 'tests' field in the yml."
-
-    @staticmethod
-    @error_code_decorator
-    def all_script_test_playbooks_are_skipped(script_id):
-        return f"All test playbooks for script {script_id} in this pack are currently skipped. " \
-               f"Please unskip at least one of the relevant test playbooks.\n " \
-               f"You can do this by deleting the line relevant to one of the test playbooks " \
-               f"in the 'skipped_tests' section inside the conf.json file and deal " \
-               f"with the matching issue,\n or create a new active test playbook from scratch " \
-               f"and add the id to the script's 'tests' field in the yml."
+               f"with the matching issue,\n  or create a new active test playbook " \
+               f"and add the id to the 'tests' field in the yml."
 
     @staticmethod
     def wrong_filename(file_type):

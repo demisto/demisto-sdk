@@ -85,11 +85,10 @@ class ConfJsonValidator(BaseValidator):
         if file_type == FileType.SCRIPT:
             return self.has_unskipped_test_playbook(current_file=current_file,
                                                     entity_id=entity_id,
-                                                    file_path=file_path,
-                                                    error_func=Errors.all_script_test_playbooks_are_skipped)
+                                                    file_path=file_path)
         return True
 
-    def has_unskipped_test_playbook(self, current_file, entity_id, file_path, error_func, test_playbook_ids: list = []):
+    def has_unskipped_test_playbook(self, current_file, entity_id, file_path, test_playbook_ids: list = []):
         """Check if the content entity has at least one unskipped test playbook."""
         test_playbooks_unskip_status = {}
         all_test_playbook_ids = test_playbook_ids.copy()
@@ -105,11 +104,10 @@ class ConfJsonValidator(BaseValidator):
                 test_playbooks_unskip_status[test_playbook_id] = True
 
         if not any(test_playbooks_unskip_status.values()):
-            error_message, error_code = error_func(entity_id)
+            error_message, error_code = Errors.all_entity_test_playbooks_are_skipped(entity_id)
             if self.handle_error(error_message, error_code, file_path=file_path):
                 self._is_valid = False
-            return False
-        return True
+        return self._is_valid
 
     def integration_has_unskipped_test_playbook(self, integration_data, integration_id, file_path):
         """Validate there is at least one unskipped test playbook."""
@@ -121,6 +119,4 @@ class ConfJsonValidator(BaseValidator):
                         integration_id in list(test['integrations']):
                     test_playbook_ids.append(test['playbookID'])
 
-        return self.has_unskipped_test_playbook(integration_data, integration_id, file_path,
-                                                Errors.all_integration_test_playbooks_are_skipped,
-                                                test_playbook_ids)
+        return self.has_unskipped_test_playbook(integration_data, integration_id, file_path, test_playbook_ids)

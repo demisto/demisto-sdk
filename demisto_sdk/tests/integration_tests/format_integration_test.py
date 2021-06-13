@@ -489,8 +489,10 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
-        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
-                                        catch_exceptions=False)
+
+        with ChangeCWD(repo.path):
+            result_validate = runner.invoke(main, ['validate', '-i', 'Packs/PackName/Playbooks/playbook.yml',
+                                                   '--no-docker-checks'], catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout
     assert success_reg.search(result_format.stdout)

@@ -1,3 +1,4 @@
+import os
 from os.path import join
 
 from click.testing import CliRunner
@@ -24,7 +25,8 @@ from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import NOT_VALID_IMAGE_PATH
+from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
+                                              NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
     LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
@@ -430,6 +432,8 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        os.chdir(CONTENT_REPO_EXAMPLE_ROOT)
+
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json"])
 
@@ -1553,6 +1557,8 @@ class TestPlaybookValidation:
         - Ensure validate fails on PB103 - unconnected tasks error.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        os.chdir(TEST_FILES_PATH)
+
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_PLAYBOOK_FILE_PATH], catch_exceptions=False)
         assert f'Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook' in result.stdout
@@ -1593,6 +1599,8 @@ class TestPlaybookValidateDeprecated:
         - Ensure validate fails on PB104 - deprecated tasks error.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        os.chdir(TEST_FILES_PATH)
+
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', INVALID_DEPRECATED_PLAYBOOK_FILE_PATH],
                                catch_exceptions=False)

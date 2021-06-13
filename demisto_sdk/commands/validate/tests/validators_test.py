@@ -441,6 +441,8 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
 
+        os.chdir(integration.repo_path)
+
         validate_manager = ValidateManager(skip_conf_json=True)
         assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
                                                             pack_error_ignore_list=[], is_modified=True)
@@ -916,6 +918,8 @@ class TestValidators:
                 - return True for the first script as the file is valid
                 - return False for script2 and scrupt3 - validate should fail and raise [ST106] error.
         """
+        os.chdir(repo.path)
+
         validate_manager = ValidateManager()
         pack1 = repo.create_pack('Pack1')
         script = pack1.create_script('Script1')
@@ -1027,7 +1031,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/TestPack/pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
 
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()
@@ -1074,6 +1078,9 @@ def test_mapping_fields_command_dont_exist(integration):
         }],
         'ismappable': True
     }})
+
+    os.chdir(integration.repo_path)
+
     structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
     validator = IntegrationValidator(structure_validator)
 

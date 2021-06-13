@@ -486,7 +486,7 @@ class TestPlaybookValidator:
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
 
-    @pytest.mark.parametrize("playbook_json, expected_result", (CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True))
+    @pytest.mark.parametrize("playbook_json, expected_result", [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True)])
     def test_verify_all_conditional_tasks_has_else_path(self, playbook_json, expected_result):
         """
                  Given

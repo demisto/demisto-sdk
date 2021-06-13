@@ -68,6 +68,16 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class PathsParamType(click.Path):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string of comma-separated values where each individual value adheres
+    to the definition for the click.Path type. The class accepts the same parameters as the
+    click.Path type, applying those arguments for each comma-separated value in the list.
+    See https://click.palletsprojects.com/en/8.0.x/parameters/#implementing-custom-types for
+    more details.
+    """
+
     def convert(self, value, param, ctx):
         if ',' not in value:
             return super(PathsParamType, self).convert(value, param, ctx)

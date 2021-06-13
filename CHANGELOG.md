@@ -9,6 +9,8 @@
 * Added identification for parameter differences in **integration-diff** command.
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
+* Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 
 # 1.3.9

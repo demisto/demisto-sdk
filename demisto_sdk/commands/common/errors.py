@@ -265,7 +265,7 @@ ERROR_CODE = {
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
-    "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''}
+    "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
 }
 
 

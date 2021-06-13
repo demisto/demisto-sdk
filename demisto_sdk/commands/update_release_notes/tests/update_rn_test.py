@@ -778,7 +778,7 @@ class TestRNUpdateUnit:
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
         assert self.EXPECTED_RN_RES == new_rn
 
-    def test_commit_to_bump(self, mocker):
+    def test_write_metadata_To_file(self, mocker):
         """
             Given:
                 - No inputs, but a condition where bumping the version is ready
@@ -796,7 +796,7 @@ class TestRNUpdateUnit:
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
-        update_rn.commit_to_bump(data_dict)
+        update_rn.write_metadata_To_file(data_dict)
         os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 

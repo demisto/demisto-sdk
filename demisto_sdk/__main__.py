@@ -1020,10 +1020,7 @@ def update_release_notes(**kwargs):
     check_configuration_file('update-release-notes', kwargs)
 
     if not kwargs.get('all') and not kwargs.get('input'):
-        update_all = click.prompt('No specific pack was given, do you want to update all changed packs? (y/n)',
-                                  type=bool)
-        if not update_all:
-            sys.exit(0)
+        click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
 
     rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
                                        pre_release=kwargs.get('pre_release'), is_all=kwargs.get('all'),

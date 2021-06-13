@@ -121,6 +121,9 @@ class UpdateReleaseNotesManager:
         elif self.changed_packs_from_git:  # update all changed packs
             for pack in self.changed_packs_from_git:
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
+        else:
+            print_warning('No changes that require release notes were detected. If such changes were made, '
+                          'please commit the changes and rerun the command')
 
     def create_pack_release_notes(self, pack: str, filtered_modified_files: set, filtered_added_files: set,
                                   old_format_files: set):
@@ -149,13 +152,10 @@ class UpdateReleaseNotesManager:
             # If new release notes were created and if previous release notes existed, remove previous
             if updated and update_pack_rn.should_delete_existing_rn:
                 os.unlink(self.packs_existing_rn[pack])
-            else:
-                print_warning(f'Either no changes were found in {pack} pack '
-                              f'or the changes found should not be documented in the release notes file '
-                              f'If relevant changes were made, please commit the changes and rerun the command')
         else:
-            print_warning('No changes that require release notes were detected. If such changes were made, '
-                          'please commit the changes and rerun the command')
+            print_warning(f'Either no changes were found in {pack} pack '
+                          f'or the changes found should not be documented in the release notes file '
+                          f'If relevant changes were made, please commit the changes and rerun the command')
 
     def get_existing_rn(self, pack) -> str:
         """ Gets the existing rn of the pack is exists

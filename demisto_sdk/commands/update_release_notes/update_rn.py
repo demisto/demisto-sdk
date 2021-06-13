@@ -13,7 +13,7 @@ from typing import Optional, Union
 import click
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, PACKS_PACK_META_FILE_NAME, RN_HEADER_BY_FILE_TYPE,
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE,
     FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
@@ -34,17 +34,12 @@ class UpdateRN:
                  pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
-        self.pack_meta_file = PACKS_PACK_META_FILE_NAME
-        try:
-            self.pack_path = pack_name_to_path(self.pack)
-        except TypeError:
-            click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
-            sys.exit(1)
+        self.pack_path = pack_path
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
         for file_path in modified_files_in_pack:
-            self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(file_path))
+            self.modified_files_in_pack.add(self.change_image_and_desc_to_yml(file_path))
 
         self.added_files = added_files
         self.pre_release = pre_release
@@ -59,9 +54,15 @@ class UpdateRN:
         self.master_version = self.get_master_version()
 
     @staticmethod
-    def check_for_release_notes_valid_file_path(file_path):
-        """A method to change image and description file paths to the corresponding yml file path
-        if a non-image or description file path is given, it remains unchanged
+    def change_image_and_desc_to_yml(file_path: str) -> str:
+        """ Changes image and description file paths to the corresponding yml file path
+        if a non-image or description file path is given, it remains unchanged.
+
+        :param file_path: The file path to check.
+
+        :rtype: ``str``
+        :return
+            The new file path if was changed.
         """
         if file_path.endswith('_image.png'):
             return file_path.replace('_image.png', '.yml')
@@ -71,31 +72,44 @@ class UpdateRN:
 
         return file_path
 
-    def execute_update(self):
+    def handle_existing_rn_version_path(self, rn_path: str) -> str:
+        """ Checks whether the existing RN version path exists and return it's content.
+
+        :param rn_path: The rn path to check.
+
+        :rtype: ``str``
+        :return
+            The content of the rn.
+        """
+        if self.existing_rn_version_path:
+            self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
+            try:
+                with open(self.existing_rn_version_path, 'r') as f:
+                    return f.read()
+            except Exception as e:
+                print_error(f'Failed to load the previous release notes file content: {e}')
+        return ''
+
+    def execute_update(self) -> bool:
+        """ Obtains the information needed in order to update the pack and executes the update.
+
+            :rtype: ``bool``
+            :return
+                Whether the RN was updated successfully or not.
+        """
         if self.pack in IGNORED_PACK_NAMES:
             print_warning(f"Release notes are not required for the {self.pack} pack since this pack"
                           f" is not versioned.")
+            return False
         else:
-            try:
-                if self.is_bump_required():
-                    if self.update_type is None:
-                        self.update_type = "revision"
-                    new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
-                    print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
-                                LOG_COLORS.NATIVE)
-                else:
-                    new_metadata = self.get_pack_metadata()
-                    new_version = new_metadata.get('currentVersion', '99.99.99')
-            except ValueError as e:
-                click.secho(str(e), fg='red')
-                sys.exit(1)
-            rn_path = self.return_release_notes_path(new_version)
+            new_version, new_metadata = self.get_new_version_and_metadata()
+            rn_path = self.get_release_notes_path(new_version)
             self.check_rn_dir(rn_path)
-            changed_files = {}
             self.find_added_pack_files()
             docker_image_name: Optional[str] = None
+            changed_files = {}
             for packfile in self.modified_files_in_pack:
-                file_name, file_type = self.identify_changed_file_type(packfile)
+                file_name, file_type = self.get_changed_file_name_type(packfile)
                 if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
                     docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {
@@ -105,49 +119,90 @@ class UpdateRN:
                     'fromversion': get_from_version_at_update_rn(packfile)
                 }
 
-            rn_string = ''
-            if self.existing_rn_version_path:
-                self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
-                try:
-                    with open(self.existing_rn_version_path, 'r') as f:
-                        rn_string = f.read()
-                except Exception as e:
-                    print_error(f'Failed to load the previous release notes file content: {e}')
+            return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
 
-            if not rn_string:
-                rn_string = self.build_rn_template(changed_files)
-            if len(rn_string) > 0:
-                if self.is_bump_required():
-                    self.commit_to_bump(new_metadata)
-                self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
-                if self.existing_rn_changed:
-                    print_color(f"Finished updating release notes for {self.pack}."
-                                f"\nNext Steps:\n - Please review the "
-                                f"created release notes found at {rn_path} and document any changes you "
-                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
-                                f"the new release notes to your branch.\nFor information regarding proper"
-                                f" format of the release notes, please refer to "
-                                f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
-                    return True
-                else:
-                    click.secho("No changes to pack files were detected from the previous time "
-                                "this command was run. The release notes have not been "
-                                "changed.", fg='green')
+    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict, docker_image_name: str) -> bool:
+        """ Checks whether the pack requires a new rn and if so, creates it.
+
+        :param
+            rn_path: The rn path.
+            changed_files: The changed files details.
+            new_metadata: The new pack metadata.
+            docker_image_name: The docker image name.
+
+
+        :rtype: ``bool``
+        :return
+            Whether the RN was updated successfully or not.
+        """
+        rn_string = self.handle_existing_rn_version_path(rn_path)
+        if not rn_string:
+            rn_string = self.build_rn_template(changed_files)
+        if len(rn_string) > 0:
+            if self.is_bump_required():
+                self.write_metadata_to_file(new_metadata)
+            self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
+            if self.existing_rn_changed:
+                print_color(f"Finished updating release notes for {self.pack}."
+                            f"\nNext Steps:\n - Please review the "
+                            f"created release notes found at {rn_path} and document any changes you "
+                            f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                            f"the new release notes to your branch.\nFor information regarding proper"
+                            f" format of the release notes, please refer to "
+                            f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                return True
             else:
-                click.secho("No changes which would belong in release notes were detected.", fg='yellow')
+                click.secho("No changes to pack files were detected from the previous time "
+                            "this command was run. The release notes have not been "
+                            "changed.", fg='green')
+        else:
+            click.secho("No changes which would belong in release notes were detected.", fg='yellow')
         return False
 
-    def _does_pack_metadata_exist(self):
-        """Check if pack_metadata.json exists"""
+    def get_new_version_and_metadata(self) -> (str, dict):
+        """
+            Gets the new version and the new metadata after version bump or by getting it from the pack metadata if
+            bump is not required.
+
+            :rtype: ``(str, dict)``
+            :return: The new version and new metadata dictionary.
+        """
+        try:
+            if self.is_bump_required():
+                if self.update_type is None:
+                    self.update_type = "revision"
+                new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
+                print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
+                            LOG_COLORS.NATIVE)
+            else:
+                new_metadata = self.get_pack_metadata()
+                new_version = new_metadata.get('currentVersion', '99.99.99')
+            return new_version, new_metadata
+        except ValueError as e:
+            click.secho(str(e), fg='red')
+            sys.exit(1)
+
+    def _does_pack_metadata_exist(self) -> bool:
+        """Check if pack_metadata.json exists
+
+        :rtype: ``bool``
+        :return
+            Whether the pack metadata exists.
+        """
         if not os.path.isfile(self.metadata_path):
             print_error(f'"{self.metadata_path}" file does not exist, create one in the root of the pack')
             return False
 
         return True
 
-    def get_master_version(self):
+    def get_master_version(self) -> str:
         """
-        Get the current version from origin/master if available, otherwise return '0.0.0'
+        Gets the current version from origin/master if available, otherwise return '0.0.0'.
+
+        :rtype: ``str``
+        :return
+            The master version.
+
         """
         master_current_version = '0.0.0'
         master_metadata = None
@@ -160,11 +215,14 @@ class UpdateRN:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
 
-    def is_bump_required(self):
+    def is_bump_required(self) -> bool:
         """
-        This function checks to see if the currentVersion in the pack metadata has been changed or
-        not. Additionally, it will verify that there is no conflict with the currentVersion in the
-        Master branch.
+        Checks if the currentVersion in the pack metadata has been changed or not. Additionally, it will verify
+        that there is no conflict with the currentVersion in then Master branch.
+
+        :rtype: ``bool``
+        :return
+            Whether a version bump is required.
         """
         try:
             if self.only_docs_changed():
@@ -179,7 +237,14 @@ class UpdateRN:
                         f"Please verify the pack exists and the pack name is correct.")
             sys.exit(0)
 
-    def only_docs_changed(self):
+    def only_docs_changed(self) -> bool:
+        """
+        Checks if the only files that were changed are documentation files.
+
+        :rtype: ``bool``
+        :return
+            Whether only the docs were changed.
+        """
         changed_files = self.added_files.union(self.modified_files_in_pack)
         changed_files_copy = copy.deepcopy(changed_files)  # copying as pop will leave the file out of the set
         if (len(changed_files) == 1 and 'README' in changed_files_copy.pop()) or \
@@ -188,21 +253,38 @@ class UpdateRN:
         return False
 
     def find_added_pack_files(self):
-        """Check for added files in the given pack that require RN"""
+        """Checks if the added files in the given pack require RN and if so, adds them to the modified files in the
+        pack """
         for a_file in self.added_files:
             if self.pack in a_file:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                     continue
                 else:
-                    self.modified_files_in_pack.add(self.check_for_release_notes_valid_file_path(a_file))
+                    self.modified_files_in_pack.add(self.change_image_and_desc_to_yml(a_file))
 
-    def return_release_notes_path(self, input_version: str):
+    def get_release_notes_path(self, input_version: str) -> str:
+        """ Gets the release notes path.
+
+            :param input_version: The new rn version
+
+            :rtype: ``bool``
+            :return
+            Whether the RN was updated successfully or not.
+        """
         _new_version = input_version.replace('.', '_')
         new_version = _new_version.replace('_prerelease', '')
         return os.path.join(self.pack_path, 'ReleaseNotes', f'{new_version}.md')
 
     @staticmethod
-    def get_display_name(file_path):
+    def get_display_name(file_path) -> str:
+        """ Gets the file name from the pack yml file.
+
+        :param file_path: The pack yml file path.
+
+        :rtype: ``str``
+        :return
+        The display name.
+        """
         struct = StructureValidator(file_path=file_path, is_new_file=True)
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
@@ -220,14 +302,29 @@ class UpdateRN:
         return name
 
     @staticmethod
-    def find_corresponding_yml(file_path):
+    def find_corresponding_yml(file_path) -> str:
+        """ Gets the pack's corresponding yml file from the python/yml file.
+
+        :param file_path: The pack python/yml file.
+        :rtype: ``str``
+        :return
+        The path to the pack's yml file.
+        """
         if file_path.endswith('.py'):
             yml_filepath = file_path.replace('.py', '.yml')
         else:
             yml_filepath = file_path
         return yml_filepath
 
-    def identify_changed_file_type(self, file_path):
+    def get_changed_file_name_type(self, file_path) -> (str, FileType):
+        """ Gets the changed file name and type.
+
+        :param file_path: The file path.
+
+        :rtype: ``str, FileType``
+        :return
+        The changed file name and type.
+        """
         _file_type = None
         file_name = 'N/A'
 
@@ -238,7 +335,13 @@ class UpdateRN:
 
         return file_name, _file_type
 
-    def get_pack_metadata(self):
+    def get_pack_metadata(self) -> dict:
+        """ Gets the pack metadata.
+
+        :rtype: ``dict``
+        :return
+        The pack metadata dictionary.
+        """
         try:
             data_dictionary = get_json(self.metadata_path)
         except FileNotFoundError:
@@ -246,7 +349,17 @@ class UpdateRN:
             sys.exit(1)
         return data_dictionary
 
-    def bump_version_number(self, specific_version: str = None, pre_release: bool = False):
+    def bump_version_number(self, specific_version: str = None, pre_release: bool = False) -> (str, dict):
+        """ Increases the version number by user input or update type.
+
+        :param
+            specific_version: The specific version to change the version to.
+            pre_release: Indicates that the change should be designated a pre-release version.
+
+        :rtype: ``str, dict``
+        :return
+        The new version number (for example: 1.0.3) and the new pack metadata after version bump.
+        """
         if self.update_type is None and specific_version is None:
             raise ValueError("Received no update type when one was expected.")
         new_version = ''  # This will never happen since we pre-validate the argument
@@ -290,7 +403,13 @@ class UpdateRN:
         data_dictionary['currentVersion'] = new_version
         return new_version, data_dictionary
 
-    def commit_to_bump(self, metadata_dict):
+    def write_metadata_to_file(self, metadata_dict: dict):
+        """ Writes the new metadata to the pack metadata file.
+
+        :param
+            metadata_dict: The new metadata to write.
+
+        """
         if self._does_pack_metadata_exist():
             with open(self.metadata_path, 'w') as file_path:
                 json.dump(metadata_dict, file_path, indent=4)
@@ -298,7 +417,12 @@ class UpdateRN:
                             LOG_COLORS.GREEN)
 
     @staticmethod
-    def check_rn_dir(rn_path):
+    def check_rn_dir(rn_path: str):
+        """ Checks whether the release notes folder exists and if not creates it.
+
+            :param rn_path: The RN path to check/create
+
+        """
         if not os.path.exists(os.path.dirname(rn_path)):
             try:
                 os.makedirs(os.path.dirname(rn_path))
@@ -306,7 +430,16 @@ class UpdateRN:
                 if exc.errno != errno.EEXIST:
                     raise
 
-    def build_rn_template(self, changed_items: dict):
+    def build_rn_template(self, changed_items: dict) -> str:
+        """ Builds the new release notes template.
+
+        :param
+            changed_items: The changed items data dictionary
+
+        :rtype: ``str``
+        :return
+        The new release notes template.
+        """
         rn_string = ''
 
         if self.pack_metadata_only:
@@ -334,7 +467,22 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
+    def build_rn_desc(self, _type: FileType, content_name: str, desc: str, is_new_file: bool, text: str,
+                      from_version: str = '') -> str:
+        """ Builds the release notes description.
+
+        :param
+            _type: The file type
+            content_name: The pack name
+            desc: The pack description
+            is_new_file: True if the file is new
+            text: Text to add to the release notes files
+            from_version: From version
+
+        :rtype: ``str``
+        :return
+        The release notes description.
+        """
         if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             rn_desc = f'- **{content_name}**\n'
@@ -355,7 +503,17 @@ class UpdateRN:
 
         return rn_desc
 
-    def update_existing_rn(self, current_rn, changed_files):
+    def update_existing_rn(self, current_rn, changed_files) -> str:
+        """ Update the existing release notes.
+
+        :param
+            current_rn: The existing rn
+            changed_files: The new data to add
+
+        :rtype: ``str``
+        :return
+        The updated release notes
+        """
         new_rn = current_rn
         for content_name, data in sorted(changed_files.items(), reverse=True):
             is_new_file = data.get('is_new_file')
@@ -399,6 +557,15 @@ class UpdateRN:
 
     def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict,
                         docker_image_name: Optional[str]):
+        """ Creates the new markdown and writes it to the release notes file.
+
+        :param
+            release_notes_path: The release notes file path
+            rn_string: The rn data (if exists)
+            changed_files: The changed files details
+            docker_image_name: The docker image name
+
+        """
         if os.path.exists(release_notes_path) and self.update_type is not None:
             print_warning(f"Release notes were found at {release_notes_path}. Skipping")
         elif self.update_type is None and self.specific_version is None:
@@ -423,11 +590,12 @@ class UpdateRN:
         4) Release notes contained updated docker image notes, but docker image was updated again since last time
            release notes have been updated.
 
-        Args:
+        param:
             rn_string (str): The current text contained in the release note.
             docker_image (Optional[str]): The docker image str, if given.
-        Returns:
-            (str): The release notes, with the most updated docker image release note, if given.
+        :rtype: ``str``
+        :return
+            The release notes, with the most updated docker image release note, if given.
         """
         if not docker_image:
             return rn_string

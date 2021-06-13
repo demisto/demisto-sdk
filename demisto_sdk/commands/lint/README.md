@@ -50,7 +50,7 @@ Options:
     Path to store json results
 *  **-lp, --log-path PATH**
     Path to store all levels of logs
-*  **-coverage**
+*  **--coverage**
     Report coverage
 
 

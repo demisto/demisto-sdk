@@ -568,7 +568,7 @@ def lint(**kwargs):
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
-        run_coverage=kwargs.get('coverage')     # type: ignore[arg-type]
+        run_coverage=kwargs.get('coverage'),     # type: ignore[arg-type]
     )
 
 

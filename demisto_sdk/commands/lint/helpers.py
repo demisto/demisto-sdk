@@ -462,6 +462,17 @@ def split_warnings_errors(output: str):
 
 
 def coverage_report_editor(coverage_file, code_file_absolute_path):
+    """
+
+    Args:
+        coverage_file: the .coverage file this contains the coverage data in sqlite format.
+        code_file_absolute_path: the real absolute path to the measured code file.
+
+    Notes:
+        the .coverage files contain all the files list with their absolute path.
+        but our tests (pytest step) are running inside a docker container.
+        so we have to change the path to the correct one.
+    """
     with sqlite3.connect(coverage_file) as sql_connection:
         cursor = sql_connection.cursor()
         index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]
@@ -474,14 +485,11 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
 
 
 def coverage_files():
-    for pack in Path('Packs').rglob('*'):
-        for code_type in ['Integrations', 'Scripts']:
-            code_dirs_path = Path(f'{pack}/{code_type}')
-            if code_dirs_path.exists():
-                for code_dir in code_dirs_path.glob('*'):
-                    cov_path = Path(f'{code_dir}/.coverage')
-                    if cov_path.exists():
-                        yield str(cov_path)
+    packs_pass = Path('Packs')
+    for cov_path in packs_pass.glob('*/Integrations/*/.coverage'):
+        yield str(cov_path)
+    for cov_path in packs_pass.glob('*/Scripts/*/.coverage'):
+        yield str(cov_path)
 
 
 def generate_coverage_report(html=False, xml=False, report=True):
@@ -489,18 +497,22 @@ def generate_coverage_report(html=False, xml=False, report=True):
     cov_file = os.path.join(cov_dir, '.coverage')
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
-    if os.path.exists(cov_file):
-        export_msg = 'exporting {0} coverage report to {1}'
-        if report:
-            print('############################\n unit-tests coverage report\n############################')
-            cov.report()
-        if html:
-            html_dir = os.path.join(cov_dir, 'html')
-            logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
-            cov.html_report(directory=html_dir)
-        if xml:
-            xml_file = os.path.join(cov_dir, 'coverage.xml')
-            logger.info(export_msg.format('xml', xml_file))
-            cov.xml_report(outfile=xml_file)
-    else:
+    if not os.path.exists(cov_file):
         logger.debug(f'skipping coverage report {cov_file} file not found.')
+        return
+
+    export_msg = 'exporting {0} coverage report to {1}'
+    if report:
+        report_data = io.StringIO()
+        report_data.write('\n############################\n unit-tests coverage report\n############################\n')
+        cov.report(file=report_data)
+        report_data.seek(0)
+        logger.info(report_data.read())
+    if html:
+        html_dir = os.path.join(cov_dir, 'html')
+        logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
+        cov.html_report(directory=html_dir)
+    if xml:
+        xml_file = os.path.join(cov_dir, 'coverage.xml')
+        logger.info(export_msg.format('xml', xml_file))
+        cov.xml_report(outfile=xml_file)

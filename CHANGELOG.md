@@ -1,4 +1,5 @@
 # Changelog
+* Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
@@ -9,6 +10,8 @@
 * Added identification for parameter differences in **integration-diff** command.
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
+* Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

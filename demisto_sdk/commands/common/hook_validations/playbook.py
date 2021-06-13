@@ -362,12 +362,16 @@ class PlaybookValidator(ContentEntityValidator):
         """
         all_conditions_has_else_path: bool = True
         tasks: Dict = self.current_file.get('tasks', {})
+        error_tasks_ids = []
         for task in tasks.values():
             if task.get('type') == 'condition':
                 if not self._is_else_path_in_condition_task(task):
-                    error_message, error_code = Errors.playbook_condition_has_no_else_path(task.get('id'))
-                    if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
-                        self.is_valid = all_conditions_has_else_path = False
+                    error_tasks_ids.append(task.get('id'))
+
+        error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
+        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
+            self.is_valid = all_conditions_has_else_path = False
+
         return all_conditions_has_else_path
 
     def _is_id_uuid(self):

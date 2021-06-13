@@ -155,7 +155,7 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
-    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'conditions'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -1616,5 +1616,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_condition_has_no_else_path(task_id):
-        return f'Playbook conditional task with id: {task_id} has no else path'
+    def playbook_condition_has_no_else_path(tasks_ids):
+        return f'Playbook conditional tasks with ids: {" ".join(tasks_ids)} have no else path'

@@ -489,15 +489,15 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True)])
     def test_verify_all_conditional_tasks_has_else_path(self, playbook_json, expected_result):
         """
-                 Given
-                 - A playbook with a condition without a default task
+        Given
+            - A playbook with a condition without a default task
 
-                 When
-                 - Running Validate playbook
+        When
+            - Running Validate playbook
 
-                 Then
-                 -  Function returns true as this is an ignored error.
-             """
+        Then
+            - Function returns true as this is an ignored error.
+        """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.verify_condition_tasks_has_else_path() is expected_result
@@ -505,16 +505,16 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK)
     def test_verify_else_for_conditions_task(self, playbook_task_json, expected_result):
         """
-                  Given
-                  - A playbook condition task with a default task
-                  - A playbook condition task without a default task
+        Given
+            - A playbook condition task with a default task
+            - A playbook condition task without a default task
 
-                  When
-                  - Running Validate playbook
+        When
+            - Running Validate playbook
 
-                  Then
-                  -  Return True if the condition task has default path , else false
-              """
+        Then
+            - Return True if the condition task has default path , else false
+        """
         structure = mock_structure("", playbook_task_json)
         validator = PlaybookValidator(structure)
         assert validator._is_else_path_in_condition_task(task=playbook_task_json) is expected_result

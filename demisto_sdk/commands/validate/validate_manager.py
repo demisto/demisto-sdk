@@ -1122,10 +1122,13 @@ class ValidateManager:
 
     def get_error_ignore_list(self, pack_name, file_path=''):
         ignored_errors_list: dict = {}
+        pack_ignore_path = ''
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
         else:
-            pack_ignore_path = get_pack_ignore_file_path(get_pack_name_for_ignores_file(file_path))
+            pack_name = get_pack_name_for_ignores_file(file_path)
+            if pack_name:
+                pack_ignore_path = get_pack_ignore_file_path(pack_name)
 
         if not os.path.isfile(pack_ignore_path):
             return ignored_errors_list

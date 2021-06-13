@@ -384,11 +384,12 @@ class ValidateManager:
             return False
 
         # conf.json validation
+        valid_in_conf = True
         if self.check_unskipped_playbooks and file_type in {FileType.INTEGRATION, FileType.SCRIPT}:
             conf_json_validator = ConfJsonValidator()
             if not conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
                                                                   file_path):
-                return False
+                valid_in_conf = False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
@@ -417,10 +418,12 @@ class ValidateManager:
             return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
+                                                  file_type), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
+                                             file_type), valid_in_conf])
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -558,8 +561,7 @@ class ValidateManager:
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
-                                                     json_file_path=self.json_file_path,
-                                                     )
+                                                     json_file_path=self.json_file_path)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,

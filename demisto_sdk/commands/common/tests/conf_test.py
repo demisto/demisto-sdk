@@ -158,3 +158,24 @@ def test_script_has_unskipped_test_playbook(mocker, test_playbooks, conf_dict, a
     assert validator.is_valid_file_in_conf_json(current_file=current,
                                                 file_type=FileType.SCRIPT,
                                                 file_path="SomeFilePath") is answer
+
+
+def test_non_testable_entity_is_vaild_in_conf(mocker):
+    """
+    Given:
+        - A content entity that cant have test playbooks, specifically a playbook
+        - Some conf file.
+
+    When: running is_valid_file_in_conf_json specifically on the content entity.
+
+    Then: Validate the content entity is valid in conf file.
+    """
+    mocker.patch.object(ConfJsonValidator, 'load_conf_file',
+                        return_value={"skipped_tests": {"SomeTestPlaybook": "Some Issue"}})
+
+    validator = ConfJsonValidator()
+
+    current = {"id": "SomePlaybook"}
+    assert validator.is_valid_file_in_conf_json(current_file=current,
+                                                file_type=FileType.PLAYBOOK,
+                                                file_path="SomeFilePath")

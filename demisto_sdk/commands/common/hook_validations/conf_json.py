@@ -89,13 +89,6 @@ class ConfJsonValidator(BaseValidator):
                                                     error_func=Errors.all_script_test_playbooks_are_skipped)
         return True
 
-    def is_test_playbook_unskipped(self, test_playbook_id):
-        """Check whether the playbook is not skipped."""
-        skipped_tests = self.conf_data.get('skipped_tests', {})
-        if skipped_tests and test_playbook_id in skipped_tests:
-            return False
-        return True
-
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, error_func, test_playbook_ids: list = []):
         """Check if the content entity has at least one unskipped test playbook."""
         test_playbooks_unskip_status = {}

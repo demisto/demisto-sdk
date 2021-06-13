@@ -383,8 +383,7 @@ class TestIntegrationValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', new_integration.yml.rel_path, '--no-docker-checks',
                                           '--no-conf-json',
-                                          '--skip-pack-release-notes',
-                                          '--allow-all-skipped-playbooks'],
+                                          '--skip-pack-release-notes'],
                                    catch_exceptions=False)
 
         assert 'The required field of the test parameter should be False' in result.stdout

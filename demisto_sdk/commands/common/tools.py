@@ -242,14 +242,14 @@ def get_remote_file(
                             f'Please define your github token in your environment.\n'
                             f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
                         )
-                    # Get from local git master instead
-                    path_to_dir = os.path.join('.', os.path.dirname(full_file_path))
+                    # Get from local git origin/master instead
+                    repo_name = github_config.CURRENT_REPOSITORY
+                    path_to_dir = os.path.join(repo_name, os.path.dirname(full_file_path))
                     repo = git.Repo(path_to_dir, search_parent_directories=True)
                     repo_path = repo.git.rev_parse('--show-toplevel')
                     relative_file_path = full_file_path.split(f"{repo_path}/")[-1]
                     github_path = f'origin/{tag}:{relative_file_path}'
                     local_content = repo.git.show(github_path)
-
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()

@@ -39,6 +39,8 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
+            self.verify_condition_tasks_has_else_path(),
+
         ]
         answers = all(playbook_checks)
 
@@ -347,6 +349,31 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
+
+    def _is_else_path_in_condition_task(self, task):
+        next_tasks: Dict = task.get('nexttasks', {})
+        return '#default#' in next_tasks
+
+    def verify_condition_tasks_has_else_path(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks has else path
+
+        Return:
+            bool. if the Playbook has else path to all condition task
+        """
+        all_conditions_has_else_path: bool = True
+        tasks: Dict = self.current_file.get('tasks', {})
+        error_tasks_ids = []
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                if not self._is_else_path_in_condition_task(task):
+                    error_tasks_ids.append(task.get('id'))
+
+        if error_tasks_ids:
+            error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
+            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
+                all_conditions_has_else_path = False
+
+        return all_conditions_has_else_path
 
     def _is_id_uuid(self):
         """

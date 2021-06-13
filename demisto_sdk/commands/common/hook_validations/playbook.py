@@ -371,7 +371,7 @@ class PlaybookValidator(ContentEntityValidator):
         if error_tasks_ids:
             error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
             if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
-                self.is_valid = all_conditions_has_else_path = False
+                all_conditions_has_else_path = False
 
         return all_conditions_has_else_path
 

@@ -10,6 +10,7 @@
 * Fixed **format** to use git as a default value.
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
 
 # 1.3.9

@@ -496,7 +496,7 @@ class TestPlaybookValidator:
                  - Running Validate playbook
 
                  Then
-                 -  Function returns true as this is an ignored error
+                 -  Function returns true as this is an ignored error.
              """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)

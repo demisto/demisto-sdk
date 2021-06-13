@@ -330,13 +330,13 @@ class IntegrationDiffDetector:
 
         result = f'## V{self.get_new_version(self.new_yaml_data)} important information\n'
 
-        if (new_in_version := self.get_items_in_docs_format(new_items_report, "Added")) is not None:
+        if new_in_version := self.get_items_in_docs_format(new_items_report, "Added"):
             result += f'### New in this version:\n{new_in_version}'
 
-        if (changed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Changed")) is not None:
+        if changed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Changed"):
             result += f'### Changed in this version:\n{changed_in_version}'
 
-        if (removed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Removed")) is not None:
+        if removed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Removed"):
             result += f'### Removed in this version:\n{removed_in_version}'
 
         click.secho(result)

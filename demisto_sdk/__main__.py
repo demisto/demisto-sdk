@@ -1552,9 +1552,9 @@ def convert(config, **kwargs):
     result = convert_manager.convert()
 
     if result:
-        sys.exit(0)
+        sys.exit(1)
 
-    sys.exit(1)
+    sys.exit(0)
 
 
 @main.resultcallback()

@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-
+import click
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import is_pack_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import \
@@ -41,7 +41,7 @@ class AbstractDirConvertManager:
             - True if conversion should be done.
             - False if conversion should not be done.
         """
-        return self.is_dir_convert_manager_path() and is_pack_path(self.input_path)
+        return self.is_dir_convert_manager_path() or is_pack_path(self.input_path)
 
     def is_dir_convert_manager_path(self) -> bool:
         """
@@ -74,7 +74,10 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
             layout_converter: LayoutBaseConverter = LayoutSixConverter(self.pack)
         else:
             layout_converter = LayoutBelowSixConverter(self.pack)
-        return layout_converter.convert_dir()
+        convert_result = layout_converter.convert_dir()
+        if not convert_result:
+            click.secho(f'Converted Layouts successfully in pack: {str(self.pack.path)}', fg='green')
+        return convert_result
 
 
 class ClassifiersDirConvertManager(AbstractDirConvertManager):
@@ -85,7 +88,10 @@ class ClassifiersDirConvertManager(AbstractDirConvertManager):
     def convert(self) -> int:
         if self.server_version >= self.VERSION_6_0_0:
             classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(self.pack)
-            return classifier_converter.convert_dir()
+            convert_result = classifier_converter.convert_dir()
+            if not convert_result:
+                click.secho(f'Converted Classifiers successfully in pack: {str(self.pack.path)}', fg='green')
+            return convert_result
         else:
             raise NotImplementedError('Version requested to convert is not supported.')
 

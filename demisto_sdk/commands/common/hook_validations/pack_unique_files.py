@@ -23,9 +23,11 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_current_tags,
+                                               get_current_usecases, get_json,
                                                get_remote_file,
-                                               pack_name_to_path, get_current_usecases, get_current_tags)
+                                               pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from git import GitCommandError, Repo

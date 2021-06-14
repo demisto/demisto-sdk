@@ -2,6 +2,8 @@ import io
 import os
 
 import pytest
+
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
@@ -16,6 +18,7 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata__valid__community.json'),
                                           ])
     def test_metadata_validator_valid(self, mocker, metadata):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -38,6 +41,7 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata_pack_in_name.json'),
                                           ])
     def test_metadata_validator_invalid(self, mocker, metadata):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)

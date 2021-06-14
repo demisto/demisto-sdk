@@ -40,14 +40,20 @@ class Playbook:
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
 
-    def create_default_playbook(self):
+    def create_default_playbook(self, name: str = ''):
         default_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml:
-            self.build(yml=yaml.safe_load(yml))
+        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
+            yml = yaml.safe_load(yml_file)
+            if name:
+                yml['id'] = name
+                yml['name'] = name
+            self.build(yml=yml)
 
-    def create_default_test_playbook(self):
+    def create_default_test_playbook(self, name: str = ''):
         default_test_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml:
-            self.build(
-                yml=yaml.safe_load(yml)
-            )
+        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
+            yml = yaml.safe_load(yml_file)
+            if name:
+                yml['id'] = name
+                yml['name'] = name
+            self.build(yml=yml)

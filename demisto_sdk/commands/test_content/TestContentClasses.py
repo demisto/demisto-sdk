@@ -846,7 +846,8 @@ class Integration:
         self.integration_type: str = ""
         self.module_instance: dict = {}
 
-    def _change_placeholders_to_values(self, server_url: str,
+    @staticmethod
+    def _change_placeholders_to_values(server_url: str,
                                        config_item: IntegrationConfiguration) -> IntegrationConfiguration:
         """Some integration should be configured on the current server as host and has the string '%%SERVER_HOST%%'
         in the content-test-conf conf.json configuration.
@@ -861,12 +862,9 @@ class Integration:
         """
         placeholders_map = {'%%SERVER_HOST%%': server_url}
         item_as_string = json.dumps(config_item.params)
-        self.build_context.logging_module.info(f'{self} %%SERVER_HOST%% is in item as string? '
-                                               f'{"%%SERVER_HOST%%" in item_as_string}')
         for key, value in placeholders_map.items():
             item_as_string = item_as_string.replace(key, value)
         config_item.params = json.loads(item_as_string)
-        self.build_context.logging_module.info(f'{self} setting server_url : {server_url}')
         return config_item
 
     def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> bool:

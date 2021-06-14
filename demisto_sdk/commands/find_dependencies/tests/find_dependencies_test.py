@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 import networkx as nx
 import pytest
-
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -200,7 +199,7 @@ def id_set(repo):
     impossible_traveler.create_test_playbook(
         'playbook-Impossible_Traveler_-_Test').create_default_test_playbook('Impossible Traveler - Test')
     impossible_traveler.create_layout('Impossible_Traveler', {"TypeName": "Impossible Traveler", "kind": "details",
-                                                              "layout": {}, "typeId": "Impossible Traveler",})
+                                                              "layout": {}, "typeId": "Impossible Traveler"})
     impossible_traveler.create_incident_field('Coordinates', {'id': 'incident_coordinates', 'name': 'Coordinates'})
     impossible_traveler.create_incident_field('Previous_Coordinates', {'id': 'incident_previouscoordinates',
                                                                        'name': 'Previous Coordinates',

@@ -3,7 +3,9 @@ import os
 from typing import Dict, List, Optional
 
 import click
-from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
+from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
@@ -40,10 +42,12 @@ class BaseUpdateYML(BaseUpdate):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 assume_yes: bool = False):
+                 assume_yes: bool = False,
+                 deprecate: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
+        self.deprecate = deprecate
 
     def _load_conf_file(self) -> Dict:
         """
@@ -95,6 +99,9 @@ class BaseUpdateYML(BaseUpdate):
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
+
+        if self.deprecate:
+            self.update_deprecate(file_type=file_type)
 
     def update_tests(self) -> None:
         """
@@ -178,6 +185,39 @@ class BaseUpdateYML(BaseUpdate):
         """Save formatted JSON data to destination file."""
         with open(self.CONF_PATH, 'w') as file:
             json.dump(conf_json_content, file, indent=4)
+
+    def update_deprecate(self, file_type=None):
+        """
+        Update the yaml file as deprecated.
+
+        Args:
+            file_type: The type of the yml file.
+        """
+
+        self.data['deprecated'] = True
+        self.data['tests'] = 'No test'
+
+        if file_type in [INTEGRATION, PLAYBOOK]:
+
+            description_field = 'description'
+
+            if file_type == INTEGRATION:
+                if not self.data['display'].endswith('(Deprecated)'):
+                    self.data['display'] = f'{self.data["display"]} (Deprecated)'
+
+                for command in self.data.get('script', {}).get('commands', []):
+                    command['deprecated'] = True
+
+        else:
+            description_field = 'comment'
+
+        user_response = input("\nPlease enter the replacement entity display name if any and press Enter if not.\n").lower()
+
+        if user_response:
+            self.data[description_field] = f'Deprecated. Use {user_response} instead.'
+
+        else:
+            self.data[description_field] = 'Deprecated. No available replacement.'
 
     @staticmethod
     def get_test_playbooks_configuration(test_playbooks: List, content_item_id: str, file_type: str) -> List[Dict]:

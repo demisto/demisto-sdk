@@ -1,12 +1,11 @@
-import json
-import os
 from collections import OrderedDict
+
 import networkx as nx
 import pytest
-from demisto_sdk.commands.common.legacy_git_tools import git_path
+
+import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-import demisto_sdk.commands.create_id_set.create_id_set as cis
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 

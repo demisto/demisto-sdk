@@ -120,6 +120,10 @@ class UpdateRN:
                 if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
+                try:
+                    run_command(f'git add {rn_path}', exit_on_error=False)
+                except RuntimeError:
+                    print_warning(f'Could not add the release note files to git: {rn_path}')
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "

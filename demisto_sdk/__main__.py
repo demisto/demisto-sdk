@@ -67,6 +67,27 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
+class PathsParamType(click.Path):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string of comma-separated values where each individual value adheres
+    to the definition for the click.Path type. The class accepts the same parameters as the
+    click.Path type, applying those arguments for each comma-separated value in the list.
+    See https://click.palletsprojects.com/en/8.0.x/parameters/#implementing-custom-types for
+    more details.
+    """
+
+    def convert(self, value, param, ctx):
+        if ',' not in value:
+            return super(PathsParamType, self).convert(value, param, ctx)
+
+        split_paths = value.split(',')
+        # check the validity of each of the paths
+        _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
+        return value
+
+
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -480,8 +501,10 @@ def secrets(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
-                                                                                               resolve_path=True))
+@click.option(
+    "-i", "--input", help="Specify directory(s) of integration/script",
+    type=PathsParamType(exists=True, resolve_path=True)
+)
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",

@@ -34,7 +34,7 @@ class UpdateRN:
                  pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
-        self.pack_path = pack_path
+        self.pack_path = pack_name_to_path(self.pack)
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()

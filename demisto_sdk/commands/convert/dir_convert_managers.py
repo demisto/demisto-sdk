@@ -1,5 +1,6 @@
 import os
 from abc import abstractmethod
+
 import click
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import is_pack_path

@@ -523,10 +523,12 @@ class TestPackValidation:
         Then
         - See that the validation succeed.
         """
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_usecases',
+                     return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_tags', return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
         assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
@@ -550,7 +552,9 @@ class TestPackValidation:
         """
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_usecases',
+                     return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_tags', return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json"])
 

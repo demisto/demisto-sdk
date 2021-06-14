@@ -2,7 +2,6 @@ import io
 import os
 
 import pytest
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

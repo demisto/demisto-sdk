@@ -892,7 +892,6 @@ class Integration:
         # Modifying placeholders if exists
         integration_params: List[IntegrationConfiguration] = [
             self._change_placeholders_to_values(server_url, conf) for conf in integration_params]
-        self.build_context.logging_module.info(f' {self}')
 
         if integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name

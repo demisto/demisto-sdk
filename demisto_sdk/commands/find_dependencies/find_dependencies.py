@@ -246,7 +246,7 @@ class PackDependencies:
                 item_possible_ids = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
             elif incident_or_indicator == 'both':
                 item_possible_ids = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
-                                       f'{item_name}-mapper']
+                                     f'{item_name}-mapper']
 
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]

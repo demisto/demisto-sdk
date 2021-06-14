@@ -1,6 +1,5 @@
 import json
 import os
-import yaml
 from collections import OrderedDict
 import networkx as nx
 import pytest

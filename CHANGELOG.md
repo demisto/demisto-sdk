@@ -1,4 +1,5 @@
 # Changelog
+* Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.
 * Added a validation to ensure that description and README do not contain the word 'Demisto'.
@@ -11,6 +12,7 @@
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
 * Fixed an issue where **download** did not return exit code 1 on failure.
+* Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 
 # 1.3.9

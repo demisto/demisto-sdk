@@ -202,7 +202,7 @@ class BaseUpdateYML(BaseUpdate):
             description_field = 'description'
 
             if file_type == INTEGRATION:
-                if not self.data['display'].endswith('(Deprecated)'):
+                if 'display' in self.data and not self.data['display'].endswith('(Deprecated)'):
                     self.data['display'] = f'{self.data["display"]} (Deprecated)'
 
                 for command in self.data.get('script', {}).get('commands', []):
@@ -211,7 +211,7 @@ class BaseUpdateYML(BaseUpdate):
         else:
             description_field = 'comment'
 
-        user_response = input("\nPlease enter the replacement entity display name if any and press Enter if not.\n").lower()
+        user_response = input("\nPlease enter the replacement entity display name if any and press Enter if not.\n")
 
         if user_response:
             self.data[description_field] = f'Deprecated. Use {user_response} instead.'

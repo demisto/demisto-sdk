@@ -14,7 +14,7 @@
 * Fixed an issue where **download** did not return exit code 1 on failure.
 * Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
-* Updated the **find_dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

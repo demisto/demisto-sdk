@@ -240,18 +240,18 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
-            if incident_or_indicator == 'incident':
-                item_possible_names = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
-            elif incident_or_indicator == 'indicator':
-                item_possible_names = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
+            if incident_or_indicator == 'Incident':
+                item_possible_ids = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'Indicator':
+                item_possible_ids = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
             elif incident_or_indicator == 'both':
-                item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
+                item_possible_ids = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
                                        f'{item_name}-mapper']
 
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (machine_name in item_possible_names or item_name == item_details.get('name')) \
+                if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
                         and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
@@ -586,7 +586,7 @@ class PackDependencies:
             related_incident_or_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
                 related_incident_or_indicator_fields, id_set[f'{layout_type}Fields'],
-                exclude_ignored_dependencies)
+                exclude_ignored_dependencies, layout_type)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \

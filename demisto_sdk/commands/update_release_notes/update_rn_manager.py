@@ -98,7 +98,9 @@ class UpdateReleaseNotesManager:
                 added_files: A set of new added files
                 modified_files: A set of modified files
         """
-        if self.given_pack and API_MODULES_PACK in self.given_pack:
+        if (self.given_pack and API_MODULES_PACK in self.given_pack) or \
+                (self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git):
+
             update_api_modules_dependents_rn(self.given_pack, self.pre_release, self.update_type, added_files,
                                              modified_files, id_set_path=self.id_set_path, text=self.text)
 

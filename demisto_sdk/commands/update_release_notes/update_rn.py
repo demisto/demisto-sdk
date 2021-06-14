@@ -611,7 +611,17 @@ class UpdateRN:
         return updated_rn
 
 
-def get_file_description(path, file_type):
+def get_file_description(path, file_type) -> str:
+    """ Gets the file description.
+
+    :param
+        path: The file path
+        file_type: The file type
+
+    :rtype: ``str``
+    :return
+    The file description if exists otherwise returns %%UPDATE_RN%%.
+    """
     if not os.path.isfile(path):
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
@@ -632,6 +642,21 @@ def get_file_description(path, file_type):
 
 
 def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None, text=''):
+    """ Updates release notes for any pack that depends on API module that has changed.
+
+        :param
+            _pack: The file path
+            pre_release: The file type
+            update_type:
+            added:
+            modified:
+            id_set_path: The id set path
+            text:
+
+        :rtype: ``str``
+        :return
+        The file description if exists otherwise returns %%UPDATE_RN%%.
+    """
     print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
     if not id_set_path:
         if not os.path.isfile(DEFAULT_ID_SET_PATH):

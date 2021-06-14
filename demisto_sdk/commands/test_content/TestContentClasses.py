@@ -101,6 +101,7 @@ class TestConfiguration:
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
         self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
         self.is_mockable = test_configuration.get('is_mockable')
+        self.context_print_dt = test_configuration.get('context_print_dt')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -419,6 +420,21 @@ class TestPlaybook:
             return False
 
         return True
+
+    def print_context_to_log(self, client: DefaultApi, incident_id: str) -> None:
+        try:
+            body = {
+                "query": f"${{{self.configuration.context_print_dt}}}"
+            }
+            res = demisto_client.generic_request_func(self=client, method='POST',
+                                                      path=f'/investigation/{incident_id}/context', body=body)
+            if int(res[1]) != 200:
+                self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
+                self.build_context.logging_module.error(pformat(res))
+            self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
+        except ApiException:
+            self.build_context.logging_module.exception(
+                'Failed to get context, error trying to communicate with demisto server')
 
 
 class BuildContext:
@@ -1390,6 +1406,8 @@ class TestContext:
             playbook_state = self._poll_for_playbook_state()
 
             self.playbook.disable_integrations(self.client, self.server_context)
+            if self.playbook.configuration.context_print_dt:
+                self.playbook.print_context_to_log(self.client, investigation_id)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:

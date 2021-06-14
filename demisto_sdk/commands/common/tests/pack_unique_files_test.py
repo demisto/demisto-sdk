@@ -225,17 +225,22 @@ class TestPackUniqueFilesValidator:
         assert res
         assert "No first level dependencies found" in capsys.readouterr().out
 
-    @pytest.mark.parametrize('usecases, is_valid', [
-        ([], True),
-        (['Phishing', 'Malware'], True),
-        (['NonApprovedUsecase', 'Case Management'], False)
+    @pytest.mark.parametrize('usecases, is_valid, branch_usecases', [
+        ([], True, []),
+        (['Phishing', 'Malware'], True, []),
+        (['NonApprovedUsecase', 'Case Management'], False, []),
+        (['NewUseCase'], True, ['NewUseCase']),
+        (['NewUseCase1, NewUseCase2'], False, ['NewUseCase1'])
     ])
-    def test_is_approved_usecases(self, repo, usecases, is_valid):
+    def test_is_approved_usecases(self, repo, usecases, is_valid, branch_usecases, mocker):
         """
         Given:
             - Case A: Pack without usecases
             - Case B: Pack with approved usecases (Phishing and Malware)
             - Case C: Pack with non-approved usecase (NonApprovedUsecase) and approved usecase (Case Management)
+            - Case D: Pack with approved usecase (NewUseCase) located in my branch only
+            - Case E: Pack with non-approved usecase (NewUseCase2) and approved usecase (NewUseCase1)
+            located in my branch only
 
         When:
             - Validating approved usecases
@@ -245,6 +250,9 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both usecases are approved
             - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedUsecase)
                       Verify expected error is printed
+            - Case D: Ensure validation passes as usecase is approved on the same branch
+            - Case E: Ensure validation fails as it contains a non-approved usecase (NewUseCase2)
+                      Verify expected error is printed
         """
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
@@ -253,30 +261,38 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: []
         })
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
         assert self.validator._is_approved_usecases() == is_valid
         if not is_valid:
             assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
 
-    @pytest.mark.parametrize('tags, is_valid', [
-        ([], True),
-        (['Machine Learning', 'Spam'], True),
-        (['NonApprovedTag', 'GDPR'], False)
+    @pytest.mark.parametrize('tags, is_valid, branch_tags', [
+        ([], True, []),
+        (['Machine Learning', 'Spam'], True, []),
+        (['NonApprovedTag', 'GDPR'], False, []),
+        (['NewTag'], True, ['NewTag']),
+        (['NewTag1, NewTag2'], False, ['NewTag1'])
     ])
-    def test_is_approved_tags(self, repo, tags, is_valid):
+    def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
         Given:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
-            - Case C: Pack with non-approved usecase (NonApprovedTag) and approved usecase (GDPR)
-
+            - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
+            - Case D: Pack with approved tags (NewTag) located in my branch only
+            - Case E: Pack with non-approved tags (NewTag) and approved tags (NewTag)
+            located in my branch only
         When:
-            - Validating approved usecases
+            - Validating approved tags
 
         Then:
-            - Case A: Ensure validation passes as there are no usecases to verify
-            - Case B: Ensure validation passes as both usecases are approved
-            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedTag)
+            - Case A: Ensure validation passes as there are no tags to verify
+            - Case B: Ensure validation passes as both tags are approved
+            - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
+                      Verify expected error is printed
+            - Case D: Ensure validation passes as tags is approved on the same branch
+            - Case E: Ensure validation fails as it contains a non-approved tag (NewTag2)
                       Verify expected error is printed
         """
         pack_name = 'PackName'
@@ -286,6 +302,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: tags
         })
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
         assert self.validator._is_approved_tags() == is_valid
         if not is_valid:

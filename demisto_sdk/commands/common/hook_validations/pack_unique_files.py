@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
-                                               pack_name_to_path)
+                                               pack_name_to_path, get_current_usecases, get_current_tags)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from git import GitCommandError, Repo
@@ -387,7 +387,9 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
+            current_usecases = get_current_usecases()
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(
+                approved_usecases + current_usecases)
             if non_approved_usecases:
                 if self._add_error(
                         Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
@@ -407,7 +409,8 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_tags = tools.get_approved_tags()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
+            current_tags = get_current_tags()
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags + current_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False

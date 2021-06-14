@@ -1798,3 +1798,23 @@ def get_pack_metadata(file_path: str) -> dict:
         return pack_metadata
     except Exception:
         return {}
+
+
+def get_current_usecases() -> list:
+    """Gets approved list of usecases from current branch
+
+    Returns:
+        List of approved usecases from current branch
+    """
+    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+    return approved_usecases_json.get('approved_list', [])
+
+
+def get_current_tags() -> list:
+    """Gets approved list of tags from current branch
+
+    Returns:
+        List of approved tags from current branch
+    """
+    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+    return approved_tags_json.get('approved_list', [])

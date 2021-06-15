@@ -371,9 +371,8 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
         result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
         print(result.stdout)
     assert result.exit_code == 0
-    assert 'Either no changes were found in FeedAzureValid pack or the changes found should not be documented ' \
-           'in the release notes file If relevant changes were made, please commit the changes and ' \
-           'rerun the command' in result.stdout
+    assert 'No changes that require release notes were detected. If such changes were made, ' \
+           'please commit the changes and rerun the command' in result.stdout
 
 
 def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, repo):

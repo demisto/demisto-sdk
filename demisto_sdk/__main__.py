@@ -594,6 +594,8 @@ def lint(**kwargs):
     "-y", "--assume-yes",
     help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
     is_flag=True)
+@click.option(
+    "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
 def format(
         input: Path,
         output: Path,
@@ -601,7 +603,8 @@ def format(
         no_validate: bool,
         update_docker: bool,
         verbose: bool,
-        assume_yes: bool
+        assume_yes: bool,
+        deprecate: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
@@ -613,7 +616,8 @@ def format(
         no_validate=no_validate,
         update_docker=update_docker,
         assume_yes=assume_yes,
-        verbose=verbose
+        verbose=verbose,
+        deprecate=deprecate
     )
 
 

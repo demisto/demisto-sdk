@@ -8,13 +8,13 @@ import os
 import re
 import sys
 from distutils.version import LooseVersion
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import click
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE,
-    FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -121,7 +121,8 @@ class UpdateRN:
 
             return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
 
-    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict, docker_image_name: str) -> bool:
+    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict,
+                       docker_image_name: Optional[str]) -> bool:
         """ Checks whether the pack requires a new rn and if so, creates it.
 
         :param
@@ -159,7 +160,7 @@ class UpdateRN:
             click.secho("No changes which would belong in release notes were detected.", fg='yellow')
         return False
 
-    def get_new_version_and_metadata(self) -> (str, dict):
+    def get_new_version_and_metadata(self) -> Tuple[str, dict]:
         """
             Gets the new version and the new metadata after version bump or by getting it from the pack metadata if
             bump is not required.
@@ -316,7 +317,7 @@ class UpdateRN:
             yml_filepath = file_path
         return yml_filepath
 
-    def get_changed_file_name_type(self, file_path) -> (str, FileType):
+    def get_changed_file_name_type(self, file_path) -> Tuple[str, Optional[FileType]]:
         """ Gets the changed file name and type.
 
         :param file_path: The file path.
@@ -349,7 +350,7 @@ class UpdateRN:
             sys.exit(1)
         return data_dictionary
 
-    def bump_version_number(self, specific_version: str = None, pre_release: bool = False) -> (str, dict):
+    def bump_version_number(self, specific_version: str = None, pre_release: bool = False) -> Tuple[str, dict]:
         """ Increases the version number by user input or update type.
 
         :param
@@ -678,7 +679,16 @@ def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, mod
         update_pack_rn.execute_update()
 
 
-def check_docker_image_changed(added_or_modified_yml):
+def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
+    """ Checks whether the docker image was changed in master.
+
+        :param
+            added_or_modified_yml: The added or modified yml path
+
+        :rtype: ``Optional[str]``
+        :return
+        The latest docker image
+    """
     try:
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:

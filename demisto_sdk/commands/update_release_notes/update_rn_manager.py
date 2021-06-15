@@ -1,8 +1,9 @@
 import os
 import sys
-from typing import Tuple
+from typing import Tuple, Set, Optional
 
 import git
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
@@ -19,7 +20,7 @@ class UpdateReleaseNotesManager:
     def __init__(self, user_input: str = None, update_type: str = None, pre_release: bool = False, is_all: bool = None,
                  text: str = '', specific_version: str = None, id_set_path: str = None, prev_ver: str = None):
         self.given_pack = user_input
-        self.changed_packs_from_git = set()
+        self.changed_packs_from_git: set = set()
         self.update_type = update_type
         self.pre_release = pre_release
         # update release notes to every required pack if not specified.
@@ -28,7 +29,7 @@ class UpdateReleaseNotesManager:
         self.specific_version = specific_version
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver
-        self.packs_existing_rn = {}
+        self.packs_existing_rn: dict = {}
 
     def manage_rn_update(self):
         """
@@ -138,6 +139,8 @@ class UpdateReleaseNotesManager:
                 old_format_files: A set of old formatted files
         """
         existing_rn_version = self.get_existing_rn(pack)
+        if existing_rn_version is None:
+            sys.exit(0)
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)
         pack_old = filter_files_on_pack(pack, old_format_files)
@@ -159,7 +162,7 @@ class UpdateReleaseNotesManager:
                           f'or the changes found should not be documented in the release notes file '
                           f'If relevant changes were made, please commit the changes and rerun the command')
 
-    def get_existing_rn(self, pack) -> str:
+    def get_existing_rn(self, pack) -> Optional[str]:
         """ Gets the existing rn of the pack is exists
 
             :param
@@ -174,4 +177,5 @@ class UpdateReleaseNotesManager:
                 print_error(f"New release notes file already found for {pack}. "
                             f"Please update manually or run `demisto-sdk update-release-notes "
                             f"-i {pack}` without specifying the update_type.")
-                sys.exit(0)
+                return None
+        return ''

@@ -18,7 +18,7 @@
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 * Added the **convert** command to convert entities between XSOAR versions.
 * Added a version differences section to readme in **generate-docs** command.
-* Added the `--docs-format` flag in **integration-diff** command to get the output in readme format.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

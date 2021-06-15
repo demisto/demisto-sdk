@@ -431,7 +431,11 @@ class TestPlaybook:
             if int(res[1]) != 200:
                 self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
                 self.build_context.logging_module.error(pformat(res))
-            self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
+                return
+            try:
+                self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
+            except ValueError as e:
+                self.build_context.logging_module.error(f"received error: {str(e)} for {res[0]}")
         except ApiException:
             self.build_context.logging_module.exception(
                 'Failed to get context, error trying to communicate with demisto server')
@@ -1405,9 +1409,9 @@ class TestContext:
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
 
-            self.playbook.disable_integrations(self.client, self.server_context)
             if self.playbook.configuration.context_print_dt:
                 self.playbook.print_context_to_log(self.client, investigation_id)
+            self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:

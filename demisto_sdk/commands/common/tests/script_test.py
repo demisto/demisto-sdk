@@ -572,10 +572,11 @@ class TestScriptValidator:
 
         script = pack.create_script(yml={"name": "test_script"})
 
-        structure_validator = StructureValidator(script.yml.path)
-        validator = ScriptValidator(structure_validator)
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
 
-        assert not validator.name_not_contain_the_type()
+            assert not validator.name_not_contain_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """

@@ -329,7 +329,7 @@ def generate_versions_differences_section(version) -> list:
 
     section = [
         '',
-        f'~~~~~~~~~~For the full V{version} important information run `demisto-sdk integration-diff -n '
+        f'~~~~~~~~~~To get a sugggestion for the full *V{version} important information* section run: `demisto-sdk integration-diff -n '
         f'<new_integration_path> -o <old_integration_path> --docs-format`~~~~~~~~~~',
         f'## V{version} important information',
         '### New in this version:'

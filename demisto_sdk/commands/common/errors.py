@@ -181,7 +181,7 @@ ERROR_CODE = {
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
-    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, F'related_field': 'name'},
+    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,

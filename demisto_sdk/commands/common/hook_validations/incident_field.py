@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import get_pack_metadata
 
 
 class TypeFields(Enum):
@@ -190,7 +191,8 @@ class IncidentFieldValidator(ContentEntityValidator):
                 self.is_valid_cliname(),
                 self.is_valid_version(),
                 self.is_valid_required(),
-                self.is_valid_indicator_grid_fromversion()
+                self.is_valid_indicator_grid_fromversion(),
+                self.is_valid_incident_field_name_prefix()
             ]
         )
 
@@ -390,3 +392,22 @@ class IncidentFieldValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def is_valid_incident_field_name_prefix(self):
+        ignored_packs = ['Common Types']
+        pack_metadata = get_pack_metadata(self.file_path)
+        pack_name = pack_metadata.get("name")
+        field_name = self.current_file.get("name", "")
+        if pack_name and pack_name not in ignored_packs:
+            if pack_metadata.get("name") != self.current_file.get("name", ""):
+                error_message, error_code = Errors.invalid_incident_field_prefix(field_name, pack_name)
+                if self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        suggested_fix=Errors.suggest_fix_field_name(field_name, pack_name)):
+
+                    return False
+        return True
+
+

@@ -180,6 +180,7 @@ ERROR_CODE = {
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
+    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, F'related_field': 'name'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -1618,3 +1619,15 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_prefix(field_name, pack_name):
+        return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name:" \
+               f"'{pack_name} <field name>'"
+
+    @staticmethod
+    def suggest_fix_field_name(field_name, pack_name):
+        return f"To fix the problem, add pack name prefix to the field name. Example: {pack_name} {field_name}." \
+               "Also make sure to update the field id and cliName accordingly." \
+               f"or add the pack name to the ignored packs"

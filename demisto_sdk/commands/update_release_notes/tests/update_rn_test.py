@@ -511,7 +511,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
+                                       desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -529,7 +530,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
+                                       desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -549,7 +551,8 @@ class TestRNUpdate(unittest.TestCase):
                                         'fromversion': '5.0.0'},
             'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True,
+                                   'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -1118,8 +1121,8 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
         mocker.patch.object(UpdateRN, 'get_release_notes_path', return_value='demisto_sdk/commands'
-                                                                                '/update_release_notes/tests_data'
-                                                                                '/Packs/release_notes/1_1_0.md')
+                                                                             '/update_release_notes/tests_data'
+                                                                             '/Packs/release_notes/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={

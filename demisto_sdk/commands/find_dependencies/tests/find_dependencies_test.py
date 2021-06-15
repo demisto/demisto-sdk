@@ -1,9 +1,6 @@
-from collections import OrderedDict
-
+import demisto_sdk.commands.create_id_set.create_id_set as cis
 import networkx as nx
 import pytest
-
-import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from TestSuite.test_tools import ChangeCWD
@@ -29,7 +26,11 @@ def id_set(repo):
                                                'preProcessingScript': '', 'color': 'test'})
 
     expanse = repo.create_pack('Expanse')
-    expanse.create_playbook('ExpanseParseRawIncident').create_default_playbook('ExpanseParseRawIncident')
+    expanse.create_playbook('Expanse_Incident_Playbook', {'id': 'ExpanseParseRawIncident',
+                                                          'name': 'Expanse Incident Playbook',
+                                                          'tasks': {},
+                                                          'fromversion': '5.0.0',
+                                                          'tests': ['No tests (auto formatted)']})
 
     get_server_url = repo.create_pack('GetServerURL')
     get_server_url.create_script('GetServerURL').create_default_script('GetServerURL')
@@ -294,14 +295,15 @@ class TestIdSetFilters:
 
         expected_result = [
             {
-                'ExpanseParseRawIncident': OrderedDict([
-                    ('name', 'ExpanseParseRawIncident'),
-                    ('file_path', 'Packs/Expanse/Playbooks/ExpanseParseRawIncident.yml'),
-                    ('fromversion', '5.0.0'),
-                    ('pack', 'Expanse'),
-                    ('implementing_scripts', ['DeleteContext']),
-                    ('tests', ['No tests'])
-                ])
+                "ExpanseParseRawIncident": {
+                    "name": "Expanse Incident Playbook",
+                    "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
+                    "fromversion": "5.0.0",
+                    "tests": [
+                        "No tests (auto formatted)"
+                    ],
+                    "pack": "Expanse"
+                }
             }
         ]
 

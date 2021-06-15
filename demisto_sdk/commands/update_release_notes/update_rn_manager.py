@@ -17,8 +17,9 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class UpdateReleaseNotesManager:
-    def __init__(self, user_input: str = None, update_type: str = None, pre_release: bool = False, is_all: bool = None,
-                 text: str = '', specific_version: str = None, id_set_path: str = None, prev_ver: str = None):
+    def __init__(self, user_input: str = None, update_type: str = None, pre_release: Optional[bool] = False,
+                 is_all: bool = None, text: Optional[str] = '', specific_version: str = None, id_set_path: str = None,
+                 prev_ver: str = None):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type

@@ -38,7 +38,7 @@ class UpdateRN:
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
         for file_path in modified_files_in_pack:
-            self.modified_files_in_pack.add(self.change_image_and_desc_to_yml(file_path))
+            self.modified_files_in_pack.add(self.change_image_or_desc_file_path(file_path))
 
         self.added_files = added_files
         self.pre_release = pre_release
@@ -53,8 +53,8 @@ class UpdateRN:
         self.master_version = self.get_master_version()
 
     @staticmethod
-    def change_image_and_desc_to_yml(file_path: str) -> str:
-        """ Changes image and description file paths to the corresponding yml file path
+    def change_image_or_desc_file_path(file_path: str) -> str:
+        """ Changes image and description file paths to the corresponding yml file path.
         if a non-image or description file path is given, it remains unchanged.
 
         :param file_path: The file path to check.
@@ -264,7 +264,7 @@ class UpdateRN:
                 if any(item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
                     continue
                 else:
-                    self.modified_files_in_pack.add(self.change_image_and_desc_to_yml(a_file))
+                    self.modified_files_in_pack.add(self.change_image_or_desc_file_path(a_file))
 
     def get_release_notes_path(self, input_version: str) -> str:
         """ Gets the release notes path.
@@ -322,7 +322,7 @@ class UpdateRN:
             yml_filepath = file_path
         return yml_filepath
 
-    def get_changed_file_name_type(self, file_path) -> Tuple[str, Optional[FileType]]:
+    def get_changed_file_name_and_type(self, file_path) -> Tuple[str, Optional[FileType]]:
         """ Gets the changed file name and type.
 
         :param file_path: The file path.

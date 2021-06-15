@@ -707,7 +707,7 @@ class TestRNUpdateUnit:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
     @pytest.mark.parametrize('pack_name, path, find_type_result, expected_result', diff_package)
-    def test_identify_changed_file_type(self, pack_name, path, find_type_result, expected_result, mocker):
+    def test_get_changed_file_name_and_type(self, pack_name, path, find_type_result, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -724,7 +724,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.find_type', return_value=find_type_result)
-        result = update_rn.identify_changed_file_type(filepath)
+        result = update_rn.get_changed_file_name_and_type(filepath)
         assert expected_result == result
 
     def test_check_rn_directory(self, mocker):
@@ -918,14 +918,14 @@ class TestRNUpdateUnit:
         assert ('file2', 'file2_new') not in update_rn.modified_files_in_pack
         assert 'file3' in update_rn.modified_files_in_pack
 
-    def test_check_for_release_notes_valid_file_path(self):
+    def test_change_image_or_desc_file_path(self):
         """
         Given:
             case 1: a description file
             case 2: an image file
             case 3: a non-image or description file
         When:
-            running check_for_release_notes_valid_file_path method
+            running change_image_or_desc_file_path method
         Then:
             case 1 & 2: change the file path to the corresponding yml file.
             case 3: file path remains unchnaged
@@ -935,9 +935,9 @@ class TestRNUpdateUnit:
         description_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_description.md"
         yml_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2.yml"
 
-        assert yml_file_path == UpdateRN.check_for_release_notes_valid_file_path(image_file_path)
-        assert yml_file_path == UpdateRN.check_for_release_notes_valid_file_path(description_file_path)
-        assert yml_file_path == UpdateRN.check_for_release_notes_valid_file_path(yml_file_path)
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(image_file_path)
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(description_file_path)
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(yml_file_path)
 
     def test_update_api_modules_dependents_rn__no_id_set(self, mocker):
         """
@@ -1042,7 +1042,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
-        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
@@ -1082,7 +1082,7 @@ class TestRNUpdateUnit:
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_0_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
 
         client = UpdateRN(pack_path="Packs/Test", update_type=None,
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
@@ -1120,7 +1120,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
                                                                                 '/update_release_notes/tests_data'
                                                                                 '/Packs/release_notes/1_1_0.md')
-        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
@@ -1151,7 +1151,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
-        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')

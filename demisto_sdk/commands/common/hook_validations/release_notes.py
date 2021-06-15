@@ -49,10 +49,10 @@ class ReleaseNotesValidator(BaseValidator):
                     continue
                 elif self.pack_name + '/' in file:
                     # Refer image and description file paths to the corresponding yml files
-                    file = UpdateRN.check_for_release_notes_valid_file_path(file)
+                    file = UpdateRN.change_image_or_desc_file_path(file)
                     update_rn_util = UpdateRN(pack_path=self.release_notes_file_path, modified_files_in_pack=set(),
                                               update_type=None, added_files=set(), pack=self.pack_name)
-                    file_name, file_type = update_rn_util.identify_changed_file_type(file)
+                    file_name, file_type = update_rn_util.get_changed_file_name_and_type(file)
                     if file_name and file_type:
                         if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
                                 (file_name not in self.latest_release_notes):

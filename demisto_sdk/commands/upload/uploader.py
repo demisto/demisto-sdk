@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import os
 from typing import List, Tuple, Union
 
@@ -77,6 +78,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     DASHBOARDS_DIR,
     REPORTS_DIR
 ]
+SUCCESS_RETURN_CODE = 0
+ERROR_RETURN_CODE = 1
 
 
 class Uploader:
@@ -87,7 +90,7 @@ class Uploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -96,6 +99,7 @@ class Uploader:
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
+        self.pack_names = pack_names
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -103,13 +107,13 @@ class Uploader:
         if self.demisto_version == "0":
             click.secho("Could not connect to XSOAR server. Try checking your connection configurations.",
                         fg="bright_red")
-            return 1
+            return ERROR_RETURN_CODE
 
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
-            return 1
+            return ERROR_RETURN_CODE
 
         # uploading a pack zip
         elif self.path.endswith('.zip'):
@@ -142,7 +146,7 @@ class Uploader:
                 f'For example a playbook: helloWorld.yml',
                 fg='bright_red'
             )
-            return 1
+            return ERROR_RETURN_CODE
 
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
@@ -164,7 +168,7 @@ class Uploader:
             if self.log_verbose:
                 click.secho(message, fg='bright_red')
             self.failed_uploaded_files.append((file_name, "Unknown", message))
-            return 1
+            return ERROR_RETURN_CODE
 
         file_name = upload_object.path.name  # type: ignore
 
@@ -177,11 +181,11 @@ class Uploader:
                         print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type.value))
-                    return 0
+                    return SUCCESS_RETURN_CODE
                 except Exception as err:
                     message = parse_error_response(err, entity_type, file_name, self.log_verbose)
                     self.failed_uploaded_files.append((file_name, entity_type.value, message))
-                    return 1
+                    return ERROR_RETURN_CODE
             else:
                 if self.log_verbose:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
@@ -189,7 +193,7 @@ class Uploader:
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
                 self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
                                                        upload_object.from_version, upload_object.to_version))
-                return 1
+                return ERROR_RETURN_CODE
         else:
             if self.log_verbose:
                 click.secho(
@@ -203,7 +207,7 @@ class Uploader:
                     fg='bright_red'
                 )
             self.failed_uploaded_files.append((file_name, entity_type.value, 'Unsuported file path/type'))
-            return 1
+            return ERROR_RETURN_CODE
 
     def unified_entity_uploader(self, path) -> int:
         """
@@ -216,7 +220,7 @@ class Uploader:
             status code
         """
         if get_parent_directory_name(path) not in UNIFIED_ENTITIES_DIR:
-            return 1
+            return ERROR_RETURN_CODE
         yml_files = []
         for file in glob.glob(f"{path}/*.yml"):
             if not file.endswith('_unified.yml'):
@@ -225,10 +229,10 @@ class Uploader:
             self.failed_uploaded_files.append((path, "Entity Folder",
                                                "The folder contains more than one `.yml` file "
                                                "(not including `_unified.yml`)"))
-            return 1
+            return ERROR_RETURN_CODE
         if not yml_files:
             self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a `.yml` file"))
-            return 1
+            return ERROR_RETURN_CODE
         return self.file_uploader(yml_files[0])
 
     def entity_dir_uploader(self, path: str) -> int:
@@ -241,7 +245,7 @@ class Uploader:
             The status code of the operation.
 
         """
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         dir_name = os.path.basename(path.rstrip('/'))
         if dir_name in UNIFIED_ENTITIES_DIR:
             for entity_folder in glob.glob(f"{path}/*/"):
@@ -255,33 +259,31 @@ class Uploader:
         return status_code
 
     def pack_uploader(self, path: str) -> int:
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         sorted_directories = sort_directories_based_on_dependencies(get_child_directories(path))
         for entity_folder in sorted_directories:
             if os.path.basename(entity_folder.rstrip('/')) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
 
-    def compile_pack(self):
-        return
-
     def zipped_pack_uploader(self, path: str) -> int:
 
         zipped_pack = Pack(path)
-        file_name = zipped_pack.path.name  # type: ignore
 
         try:
-            zipped_pack.upload(self.client)
+            logger = logging.getLogger('demisto-sdk')
 
-            if self.log_verbose:
-                click.secho(f'Uploaded {FileType.PACK} - \'{os.path.basename(path)}\': successfully', fg='green')
+            if not self.pack_names:
+                self.pack_names = [zipped_pack.path.name]
 
-            self.successfully_uploaded_files.append((file_name, FileType.PACK.value))
-            return 0
+            zipped_pack.upload(logger, self.client)
+            self.successfully_uploaded_files.extend([(pack_name, FileType.PACK.value) for pack_name in self.pack_names])
+            return SUCCESS_RETURN_CODE
         except Exception as err:
+            file_name = zipped_pack.path.name  # type: ignore
             message = parse_error_response(err, FileType.PACK.value, file_name, self.log_verbose)
             self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
-            return 1
+            return ERROR_RETURN_CODE
 
 
 def parse_error_response(error: ApiException, file_type: str, file_name: str, print_error: bool = False):

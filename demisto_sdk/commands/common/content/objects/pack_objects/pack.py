@@ -245,10 +245,11 @@ class Pack:
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
 
-    def upload(self, client: demisto_client):
+    def upload(self, logger: logging.Logger, client: demisto_client):
         """
         Upload the pack zip to demisto_client
         Args:
+            logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.
 
         Returns:
@@ -258,16 +259,28 @@ class Pack:
         # turn off the sign check
         # upload
         # turn on the check
-        tools.update_server_configuration(client=client,
-                                          server_configuration={PACK_VERIFY_KEY: False},
-                                          error_msg='Can not turn off the pack verification')
+        logger.info('turn off the server verification for signed packs')
+        _, _, prev_conf = tools.update_server_configuration(client=client,
+                                                            server_configuration={PACK_VERIFY_KEY: 'false'},
+                                                            error_msg='Can not turn off the pack verification')
         try:
+            logger.info('Uploading...')
             return client.upload_content_packs(file=self.path)  # type: ignore
         finally:
             try:
+                prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
+                config_keys_to_update = None
+                config_keys_to_delete = None
+
+                if prev_key_val is not None:
+                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
+                else:
+                    config_keys_to_delete = {PACK_VERIFY_KEY}
+
+                logger.info('setting the server verification to be as previously')
                 tools.update_server_configuration(client=client,
-                                                  server_configuration=None,
-                                                  configs_to_delete={PACK_VERIFY_KEY},
+                                                  server_configuration=config_keys_to_update,
+                                                  config_keys_to_delete=config_keys_to_delete,
                                                   error_msg=TURN_VERIFICATION_ERROR_MSG)
-            except Exception:
+            except (Exception, KeyboardInterrupt):
                 raise Exception(TURN_VERIFICATION_ERROR_MSG)

@@ -1,6 +1,6 @@
-## compile-packs
+## unify-packs
 
-compile content packs to uploadable zip file.
+unify content packs to uploadable zip file.
 
 **Use Cases**:
 This command is used in order to create a zip file, able to be uploaded to Demisto via the
@@ -14,15 +14,14 @@ This command is used in order to create a zip file, able to be uploaded to Demis
 * **-v RELEASE_VERSION, --content_version RELEASE_VERSION**
   The content version in CommonServerPython.
 * **-u, --upload**
-  Upload the compiled packs to the marketplace.
+  Upload the unified packs to the marketplace.
 * **---zip_all**
   Zip all the packs in one zip file.
 
 **Examples**:
-`demisto-sdk compile-packs -i Campaign -o "DestinationDir"`
-This will compile the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
-<br/><br/>
+`demisto-sdk unify-packs -i Campaign -o "DestinationDir"`
+This will unify the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
 
-`demisto-sdk compile-packs -i Campaign -o "DestinationDir" -u`
-This will compile the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory
+`demisto-sdk unify-packs -i Campaign -o "DestinationDir" -u`
+This will unify the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory
 and will upload the created Campaign.zip to the marketplace.

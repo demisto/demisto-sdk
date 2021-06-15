@@ -88,6 +88,8 @@ class ArtifactsManager:
         # inits
         self.content = Content.from_cwd()
         self.execution_start = time.time()
+
+        self.packs = self.content.packs
         self.exit_code = EX_SUCCESS
 
     def create_content_artifacts(self) -> int:
@@ -112,6 +114,43 @@ class ArtifactsManager:
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
+
+    def get_relative_pack_path(self, content_object: ContentObject):
+        """
+
+        Args:
+            content_object: the object to get the relative path for
+
+        Returns:
+            the path of the given object relative from the pack directory, for example HelloWorld/Scripts/some_script
+
+        """
+        return content_object.path.relative_to(self.content.path / PACKS_DIR)
+
+    def get_base_path(self) -> Path:
+        """
+
+        Returns:
+            the path that all artifacts are relative to
+        """
+        return self.content.path
+
+    def get_dir_to_delete(self):
+        """
+
+        Returns:
+            list of directories to delete after artifacts was created
+        """
+        return [self.content_test_path, self.content_new_path, self.content_packs_path, self.content_all_path]
+
+    def is_in_quite_mode(self):
+        """
+
+        Returns:
+            is in quite mode - should be overridden in sub classes
+
+        """
+        return False
 
 
 class ContentItemsHandler:
@@ -315,7 +354,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
         try:
             result = future.result()
             if isinstance(result, ArtifactsReport):
-                logger.info(result.to_str(artifact_manager.content.path))
+                logger.info(result.to_str(artifact_manager.get_base_path()))
         except (ContentError, DuplicateFiles, ContentFactoryError) as e:
             logger.error(e.msg)
             raise
@@ -502,15 +541,15 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     """
     futures = []
     if 'all' in artifact_manager.pack_names:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
                 futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
 
     else:
         for pack_name in artifact_manager.pack_names:
-            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.content.packs:
+            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.content.packs[pack_name])
+                                             args=(artifact_manager, artifact_manager.packs[pack_name])
                                              ))
 
     return futures
@@ -538,96 +577,95 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     Returns:
         ArtifactsReport: ArtifactsReport object.
     """
-    global logger
+    with QuiteLogger(artifact_manager) as quite_logger:
+        pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
-    pack_report = ArtifactsReport(f"Pack {pack.id}:")
+        pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, quite_logger)
+        content_items_handler = ContentItemsHandler()
+        is_feed_pack = False
 
-    pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
-    content_items_handler = ContentItemsHandler()
-    is_feed_pack = False
+        for integration in pack.integrations:
+            content_items_handler.handle_content_item(integration)
+            is_feed_pack = is_feed_pack or integration.is_feed
+            pack_report += dump_pack_conditionally(artifact_manager, integration)
+        for script in pack.scripts:
+            content_items_handler.handle_content_item(script)
+            pack_report += dump_pack_conditionally(artifact_manager, script)
+        for playbook in pack.playbooks:
+            content_items_handler.handle_content_item(playbook)
+            is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
+            pack_report += dump_pack_conditionally(artifact_manager, playbook)
+        for test_playbook in pack.test_playbooks:
+            pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
+        for report in pack.reports:
+            content_items_handler.handle_content_item(report)
+            pack_report += dump_pack_conditionally(artifact_manager, report)
+        for layout in pack.layouts:
+            content_items_handler.handle_content_item(layout)
+            pack_report += dump_pack_conditionally(artifact_manager, layout)
+        for dashboard in pack.dashboards:
+            content_items_handler.handle_content_item(dashboard)
+            pack_report += dump_pack_conditionally(artifact_manager, dashboard)
+        for incident_field in pack.incident_fields:
+            content_items_handler.handle_content_item(incident_field)
+            pack_report += dump_pack_conditionally(artifact_manager, incident_field)
+        for incident_type in pack.incident_types:
+            content_items_handler.handle_content_item(incident_type)
+            pack_report += dump_pack_conditionally(artifact_manager, incident_type)
+        for indicator_field in pack.indicator_fields:
+            content_items_handler.handle_content_item(indicator_field)
+            pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
+        for indicator_type in pack.indicator_types:
+            content_items_handler.handle_content_item(indicator_type)
+            pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
+        for connection in pack.connections:
+            pack_report += dump_pack_conditionally(artifact_manager, connection)
+        for classifier in pack.classifiers:
+            content_items_handler.handle_content_item(classifier)
+            pack_report += dump_pack_conditionally(artifact_manager, classifier)
+        for widget in pack.widgets:
+            content_items_handler.handle_content_item(widget)
+            pack_report += dump_pack_conditionally(artifact_manager, widget)
+        for release_note in pack.release_notes:
+            pack_report += ObjectReport(release_note, content_packs=True)
+            release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+        for tool in pack.tools:
+            object_report = ObjectReport(tool, content_packs=True)
+            created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)
+            if not artifact_manager.only_content_packs:
+                object_report.set_content_new()
+                dump_link_files(artifact_manager, tool, artifact_manager.content_new_path, created_files)
+                object_report.set_content_all()
+                dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
+            pack_report += object_report
+        if pack.pack_metadata:
+            pack_report += ObjectReport(pack.pack_metadata, content_packs=True)
+            pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
+        if pack.metadata:
+            pack_report += ObjectReport(pack.metadata, content_packs=True)
+            pack.metadata.content_items = content_items_handler.content_items
+            pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
+            if artifact_manager.id_set_path:
+                # Dependencies can only be done when id_set file is given.
+                pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, quite_logger)
+            else:
+                quite_logger.warning('Skipping dependencies extraction since no id_set file was provided.')
+            if is_feed_pack and 'TIM' not in pack.metadata.tags:
+                pack.metadata.tags.append('TIM')
+            pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
+        if pack.readme or pack.contributors:
+            if not pack.readme:
+                readme_file = os.path.join(pack.path, 'README.md')
+                open(readme_file, 'a+').close()
+            readme_obj = pack.readme
+            readme_obj.contributors = pack.contributors
+            pack_report += ObjectReport(readme_obj, content_packs=True)
+            readme_obj.dump(artifact_manager.content_packs_path / pack.id)
+        if pack.author_image:
+            pack_report += ObjectReport(pack.author_image, content_packs=True)
+            pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
 
-    for integration in pack.integrations:
-        content_items_handler.handle_content_item(integration)
-        is_feed_pack = is_feed_pack or integration.is_feed
-        pack_report += dump_pack_conditionally(artifact_manager, integration)
-    for script in pack.scripts:
-        content_items_handler.handle_content_item(script)
-        pack_report += dump_pack_conditionally(artifact_manager, script)
-    for playbook in pack.playbooks:
-        content_items_handler.handle_content_item(playbook)
-        is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
-        pack_report += dump_pack_conditionally(artifact_manager, playbook)
-    for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
-    for report in pack.reports:
-        content_items_handler.handle_content_item(report)
-        pack_report += dump_pack_conditionally(artifact_manager, report)
-    for layout in pack.layouts:
-        content_items_handler.handle_content_item(layout)
-        pack_report += dump_pack_conditionally(artifact_manager, layout)
-    for dashboard in pack.dashboards:
-        content_items_handler.handle_content_item(dashboard)
-        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
-    for incident_field in pack.incident_fields:
-        content_items_handler.handle_content_item(incident_field)
-        pack_report += dump_pack_conditionally(artifact_manager, incident_field)
-    for incident_type in pack.incident_types:
-        content_items_handler.handle_content_item(incident_type)
-        pack_report += dump_pack_conditionally(artifact_manager, incident_type)
-    for indicator_field in pack.indicator_fields:
-        content_items_handler.handle_content_item(indicator_field)
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
-    for indicator_type in pack.indicator_types:
-        content_items_handler.handle_content_item(indicator_type)
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
-    for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
-    for classifier in pack.classifiers:
-        content_items_handler.handle_content_item(classifier)
-        pack_report += dump_pack_conditionally(artifact_manager, classifier)
-    for widget in pack.widgets:
-        content_items_handler.handle_content_item(widget)
-        pack_report += dump_pack_conditionally(artifact_manager, widget)
-    for release_note in pack.release_notes:
-        pack_report += ObjectReport(release_note, content_packs=True)
-        release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
-    for tool in pack.tools:
-        object_report = ObjectReport(tool, content_packs=True)
-        created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)
-        if not artifact_manager.only_content_packs:
-            object_report.set_content_new()
-            dump_link_files(artifact_manager, tool, artifact_manager.content_new_path, created_files)
-            object_report.set_content_all()
-            dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
-        pack_report += object_report
-    if pack.pack_metadata:
-        pack_report += ObjectReport(pack.pack_metadata, content_packs=True)
-        pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
-    if pack.metadata:
-        pack_report += ObjectReport(pack.metadata, content_packs=True)
-        pack.metadata.content_items = content_items_handler.content_items
-        pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
-        if artifact_manager.id_set_path:
-            # Dependencies can only be done when id_set file is given.
-            pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, logger)
-        else:
-            logger.warning('Skipping dependencies extraction since no id_set file was provided.')
-        if is_feed_pack and 'TIM' not in pack.metadata.tags:
-            pack.metadata.tags.append('TIM')
-        pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
-    if pack.readme or pack.contributors:
-        if not pack.readme:
-            readme_file = os.path.join(pack.path, 'README.md')
-            open(readme_file, 'a+').close()
-        readme_obj = pack.readme
-        readme_obj.contributors = pack.contributors
-        pack_report += ObjectReport(readme_obj, content_packs=True)
-        readme_obj.dump(artifact_manager.content_packs_path / pack.id)
-    if pack.author_image:
-        pack_report += ObjectReport(pack.author_image, content_packs=True)
-        pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
-
-    return pack_report
+        return pack_report
 
 
 def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
@@ -830,7 +868,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
 
 
 def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
-    relative_pack_path = content_object.path.relative_to(artifact_manager.content.path / PACKS_DIR)
+    relative_pack_path = artifact_manager.get_relative_pack_path(content_object)
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
@@ -887,8 +925,7 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
 
 def delete_dirs(artifact_manager: ArtifactsManager):
     """Delete artifacts directories"""
-    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
-                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+    for artifact_dir in artifact_manager.get_dir_to_delete():
         if artifact_dir.exists():
             rmtree(artifact_dir)
 
@@ -917,11 +954,18 @@ def zip_dirs(artifact_manager: ArtifactsManager):
 def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
     with ProcessPoolHandler(artifact_manager) as pool:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
             zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 
             pool.schedule(make_archive, args=(zip_path, 'zip', dumped_pack_dir))
+
+
+def zip_pack_zips(artifact_manager: ArtifactsManager):
+    """Zip the zipped packs directory"""
+    with ProcessPoolHandler(artifact_manager) as pool:
+        pack_zips_dir = artifact_manager.content_uploadable_zips_path
+        pool.schedule(make_archive, args=(pack_zips_dir, 'zip', pack_zips_dir))
 
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
@@ -956,15 +1000,15 @@ def sign_packs(artifact_manager: ArtifactsManager):
 
             futures: List[ProcessFuture] = []
             if 'all' in artifact_manager.pack_names:
-                for pack_name, pack in artifact_manager.content.packs.items():
+                for pack_name, pack in artifact_manager.packs.items():
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                     futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                        artifact_manager.signDirectory,
                                                                        )))
             else:
                 for pack_name in artifact_manager.pack_names:
-                    if pack_name in artifact_manager.content.packs:
-                        pack = artifact_manager.content.packs[pack_name]
+                    if pack_name in artifact_manager.packs:
+                        pack = artifact_manager.packs[pack_name]
                         dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                         futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                            artifact_manager.signDirectory,
@@ -975,3 +1019,21 @@ def sign_packs(artifact_manager: ArtifactsManager):
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
                      'sign_directory arguments.')
+
+
+class QuiteLogger:
+
+    def __init__(self, artifact_manager: ArtifactsManager):
+        self.quite_mode = artifact_manager.is_in_quite_mode()
+
+    def __enter__(self):
+        global logger
+        if self.quite_mode:
+            self.prev_level = logger.getEffectiveLevel()
+            logger.setLevel(logging.ERROR)
+
+        return logger
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.quite_mode:
+            logger.setLevel(self.prev_level)

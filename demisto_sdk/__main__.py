@@ -26,7 +26,6 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
-from demisto_sdk.commands.compile_packs.packs_compiler import PacksCompiler
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -63,6 +62,9 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify_packs.packs_unifier import (EX_FAIL,
+                                                            EX_SUCCESS,
+                                                            PacksUnifier)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
@@ -259,28 +261,29 @@ def unify(**kwargs):
 )
 @click.option('-i', '--input',
               help=("The packs to create artifacts for. Optional values are: `all` or "
-                    "csv list of pack names. "))
+                    "csv list of pack names. "), required=True)
 @click.option('-o', '--output', help='The destination directory to create the packs.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
-@click.option('-u', '--upload', is_flag=True, help='Upload the compiled packs to the marketplace.', default=False)
+@click.option('-u', '--upload', is_flag=True, help='Upload the unified packs to the marketplace.', default=False)
 @click.option('--zip_all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
-def compile_packs(**kwargs) -> int:
+def unify_packs(**kwargs) -> int:
     """Generating the following artifacts:
        1. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
     logging_setup(3)
     check_configuration_file('unify-packs', kwargs)
 
-    upload = kwargs.pop('upload', False)
-    zip_all = kwargs.pop('zip_all', False) or upload  # if upload is true - all packs will be compressed to one zip file
+    # if upload is true - all zip packs will be compressed to one zip file
+    should_upload = kwargs.pop('upload', False)
+    zip_all = kwargs.pop('zip_all', False) or should_upload
 
-    zip_path = PacksCompiler(zip_all=zip_all, **kwargs).compile_packs()
+    zip_path, unified_pack_names = PacksUnifier(zip_all=zip_all, pack_paths=kwargs.pop('input'), **kwargs).unify_packs()
 
-    if upload:
-        Uploader(input=zip_path).upload()
+    if should_upload and zip_path:
+        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
 
-    return 0
+    return EX_SUCCESS if zip_path is not None else EX_FAIL
 
 
 # ====================== validate ====================== #
@@ -641,8 +644,8 @@ def format(
          "helloWorld.yml", required=True
 )
 @click.option(
-    "-c", "--compile",
-    help="Compile the pack to zip before upload", is_flag=True
+    "-u", "--unify",
+    help="Unify the pack to zip before upload", is_flag=True
 )
 @click.option(
     "--insecure",
@@ -658,12 +661,16 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    if kwargs.pop('compile', False):
-        pack_name = Path(kwargs['input']).name
-        packs_compiler = PacksCompiler(input=pack_name, output=tempfile.gettempdir(),
-                                       content_version='0.0.0', zip_all=True)
-        packs_zip_path = packs_compiler.compile_packs()
+    if kwargs.pop('unify', False):
+        pack_path = kwargs['input']
+        packs_unifier = PacksUnifier(pack_paths=pack_path, output=tempfile.gettempdir(),
+                                     content_version='0.0.0', zip_all=True, quite_mode=True)
+        packs_zip_path, pack_names = packs_unifier.unify_packs()
+        if packs_zip_path is None:
+            return EX_FAIL
+
         kwargs['input'] = packs_zip_path
+        kwargs['pack_names'] = pack_names
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

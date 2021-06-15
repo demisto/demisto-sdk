@@ -663,7 +663,7 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
 TEST_DATA = src_root() / 'commands' / 'upload' / 'tests' / 'data'
 CONTENT_PACKS_ZIP = str(TEST_DATA / 'content_packs.zip')
 TEST_PACK_ZIP = str(TEST_DATA / 'TestPack.zip')
-TEST_PACK = 'TestPack'
+TEST_PACK = 'Packs/TestPack'
 INVALID_ZIP = 'invalid_zip'
 INVALID_ZIP_ERROR = 'Error: Given input path: {path} does not exist'
 API_CLIENT = DefaultApi()
@@ -680,6 +680,7 @@ class TestZippedPackUpload:
         1. Upload one zipped pack
         2. Upload content_artifacts.zip with multiple packs
         3. Upload with compile flag
+        4. Server configs return to the previous value after upload
 
     Edge cases tests:
         1. Invalid zip path
@@ -703,7 +704,7 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, 'upload_content_packs')
-        mocker.patch.object(tools, 'update_server_configuration')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
@@ -712,15 +713,15 @@ class TestZippedPackUpload:
         disable_verification_call_args = tools.update_server_configuration.call_args_list[0].kwargs
         enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
 
-        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] is False
-        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['configs_to_delete']
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args.kwargs['file']
         assert str(uploaded_file_path) == input
 
-    def test_compile_and_upload(self, mocker):
+    def test_unify_and_upload(self, mocker):
         """
         Given:
-            - name of pack in content and the compile flag is on
+            - name of pack in content and the unify flag is on
         When:
             - call to upload command
         Then:
@@ -731,10 +732,35 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, 'zipped_pack_uploader')
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK, compile=True)
+        click.Context(command=upload).invoke(upload, input=TEST_PACK, unify=True)
 
         # validate
-        assert 'content_packs.zip' in Uploader.zipped_pack_uploader.call_args.kwargs['path']
+        assert 'uploadable_packs.zip' in Uploader.zipped_pack_uploader.call_args.kwargs['path']
+
+    def test_server_config_after_upload(self, mocker):
+        """
+        Given:
+            - zipped pack to upload
+        When:
+            - call to update server configuration
+        Then:
+            - validate the origin configs are set to server configuration after upload
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration',
+                            return_value=(None, None, {constants.PACK_VERIFY_KEY: 'prev_val'}))
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0].kwargs
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert enable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'prev_val'
 
     @pytest.mark.parametrize(argnames='input', argvalues=[INVALID_ZIP, None])
     def test_upload_invalid_zip_path(self, mocker, input):
@@ -793,8 +819,9 @@ class TestZippedPackUpload:
         # prepare
         def conditional_exception_raiser(**kwargs):
             # raise exception only when try to enable again the pack verification
-            if kwargs.pop('configs_to_delete', None):
+            if kwargs.pop('config_keys_to_delete', None):
                 raise Exception()
+            return None, None, {}
 
         mock_api_client(mocker)
         mocker.patch.object(uploader, 'parse_error_response')
@@ -819,7 +846,7 @@ class TestZippedPackUpload:
             - validate the status result are 1 (error) and the pack verification was enabled again
         """
         mock_api_client(mocker)
-        mocker.patch.object(tools, 'update_server_configuration')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
         mocker.patch.object(API_CLIENT, 'upload_content_packs', new=exception_raiser)
 
         # run
@@ -831,8 +858,8 @@ class TestZippedPackUpload:
         enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
 
         assert status == 1
-        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] is False
-        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['configs_to_delete']
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
 
 
 def exception_raiser(**kwargs):

@@ -37,9 +37,9 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
     4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
     5. Path to zipped pack (could locate outside the content dir)
 
-* **-c, --compile**
+* **-u, --unify**
 
-    in case a pack was passed in the -i argument - compile the pack before upload
+    in case a pack was passed in the -i argument - unify the pack before upload
 
 * **--insecure**
 
@@ -72,12 +72,12 @@ demisto-sdk upload -i Packs/HelloWorld
 This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Cortex XSOAR instance.
 <br/><br/>
 ```
-demisto-sdk upload -i Packs/HelloWorld -c
+demisto-sdk upload -i Packs/HelloWorld -u
 ```
-This will compile the pack `HelloWorld` and will upload the compiled `HelloWorld.zip` to the Cortex XSOAR instance.
+This will unify the pack `HelloWorld` and will upload the unified `content_packs.zip` to the Cortex XSOAR instance.
 <br/><br/>
 ```
-demisto-sdk upload -i HelloWorld.zip
+demisto-sdk upload -i path/to/HelloWorld.zip
 ```
 This will upload the compiled `HelloWorld.zip` to the Cortex XSOAR instance.
 <br/><br/>

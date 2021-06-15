@@ -16,6 +16,9 @@
 * Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
 * Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
+* Added the **convert** command to convert entities between XSOAR versions.
+* Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

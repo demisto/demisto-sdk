@@ -407,7 +407,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         pack_name = pack_metadata.get("name")
         field_name = self.current_file.get("name", "")
         if pack_name and pack_name not in ignored_packs:
-            if pack_metadata.get("name") != self.current_file.get("name", ""):
+            if not self.current_file.get("name", "").startswith(pack_metadata.get("name")):
                 error_message, error_code = Errors.invalid_incident_field_prefix(field_name, pack_name)
                 if self.handle_error(
                         error_message,

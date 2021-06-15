@@ -248,7 +248,7 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
-                         no_pylint: bool, run_coverage: bool,
+                         no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -262,7 +262,8 @@ class LintManager:
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
-            run_coverage(bool): Run pytest with coverage report
+            no_coverage(bool): Run pytest without coverage report
+            coverage_report(str): the directory fo exporting the coverage data
             no_test(bool): Whether to skip pytest
             no_pwsh_analyze(bool): Whether to skip powershell code analyzing
             no_pwsh_test(bool): whether to skip powershell tests
@@ -333,7 +334,7 @@ class LintManager:
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
                                                test_xml=test_xml,
-                                               run_coverage=run_coverage))
+                                               no_coverage=no_coverage))
             try:
                 for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
@@ -373,7 +374,8 @@ class LintManager:
                              return_warning_code=return_warning_code,
                              skipped_code=int(skipped_code),
                              pkgs_type=pkgs_type,
-                             cov_report=run_coverage)
+                             no_coverage=no_coverage,
+                             coverage_report=coverage_report)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
@@ -385,7 +387,7 @@ class LintManager:
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
                         skipped_code: int,
                         pkgs_type: list,
-                        cov_report: bool):
+                        no_coverage: bool, coverage_report: str):
         """ Log report to console
 
         Args:
@@ -395,7 +397,7 @@ class LintManager:
             return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
-            cov_report(bool): Report coverage
+            no_coverage(bool): Do NOT create coverage report.
 
      """
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
@@ -415,8 +417,11 @@ class LintManager:
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
-        if cov_report:
-            generate_coverage_report(html=True, xml=True)
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
         self.create_json_output()
 
     @staticmethod

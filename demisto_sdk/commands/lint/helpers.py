@@ -492,8 +492,14 @@ def coverage_files():
         yield str(cov_path)
 
 
-def generate_coverage_report(html=False, xml=False, report=True):
-    cov_dir = 'coverage_report'
+def generate_coverage_report(html=False, xml=False, report=True, cov_dir='coverage_report'):
+    """
+    Args:
+        html(bool): should generate an html report. default false
+        xml(bool): should generate an xml report. default false
+        report(bool): should print the coverage report. default true
+        cov_dir(str): the directory to place the report files (.coverage, html and xml report)
+    """
     cov_file = os.path.join(cov_dir, '.coverage')
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
@@ -504,10 +510,11 @@ def generate_coverage_report(html=False, xml=False, report=True):
     export_msg = 'exporting {0} coverage report to {1}'
     if report:
         report_data = io.StringIO()
-        report_data.write('\n############################\n unit-tests coverage report\n############################\n')
+        report_data.write('\n\n############################\n unit-tests coverage report\n############################\n')
         cov.report(file=report_data)
         report_data.seek(0)
         logger.info(report_data.read())
+
     if html:
         html_dir = os.path.join(cov_dir, 'html')
         logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))

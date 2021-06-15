@@ -102,7 +102,7 @@ class Linter:
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
-                         keep_container: bool, test_xml: str, run_coverage: bool) -> dict:
+                         keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -120,7 +120,7 @@ class Linter:
             modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
-            run_coverage(bool): Report coverage
+            no_coverage(bool): Run pytest without coverage report
 
         Returns:
             dict: lint and test all status, pkg status)
@@ -153,7 +153,7 @@ class Linter:
                                                    no_pwsh_test=no_pwsh_test,
                                                    keep_container=keep_container,
                                                    test_xml=test_xml,
-                                                   run_coverage=run_coverage)
+                                                   no_coverage=no_coverage)
         except Exception as ex:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
@@ -521,7 +521,7 @@ class Linter:
         return SUCCESS, ""
 
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                                  keep_container: bool, test_xml: str, run_coverage: bool):
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
         Args:
@@ -531,7 +531,7 @@ class Linter:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
-            run_coverage(bool): Report coverage
+            no_coverage(bool): Run pytest without coverage report
 
         """
         for image in self._facts["images"]:
@@ -569,7 +569,7 @@ class Linter:
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
                                                                                        test_xml=test_xml,
-                                                                                       run_coverage=run_coverage)
+                                                                                       no_coverage=no_coverage)
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
@@ -800,14 +800,14 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, run_coverage: bool = False) -> Tuple[int, str, dict]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:
             test_image(str): Test image id/name
             keep_container(bool): True if to keep container after execution finished
             test_xml(str): Xml saving path
-            run_coverage(bool): Report coverage
+            no_coverage(bool): Run pytest without coverage report
         Returns:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
@@ -823,7 +823,7 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            cov = self._pack_abs_dir.stem if run_coverage else ''
+            cov = '' if no_coverage else self._pack_abs_dir.stem
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
                                                                                      cov=cov)],
@@ -847,7 +847,7 @@ class Linter:
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
 
-                if run_coverage:
+                if not no_coverage:
                     cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
                     cov_data = get_file_from_container(container_obj=container_obj,
                                                        container_path="/devwork/.coverage")

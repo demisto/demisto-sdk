@@ -22,6 +22,7 @@ Supported content entities:
 - Incident Fields
 - Layouts
 - Classifiers
+- Packs 
 
 #### Limitation
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.

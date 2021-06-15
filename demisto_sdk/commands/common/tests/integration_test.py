@@ -824,13 +824,13 @@ class TestIntegrationValidator:
         Then
             - Ensure the validate failed.
         """
-
         integration = pack.create_integration(yml={"name": "test_integration"})
 
-        structure_validator = StructureValidator(integration.yml.path)
-        validator = IntegrationValidator(structure_validator)
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
 
-        assert not validator.name_not_contain_the_type()
+            assert not validator.name_not_contain_the_type()
 
     def test_display_name_contains_the_type(self, pack):
         """
@@ -844,10 +844,11 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration(yml={"display": "test_integration"})
 
-        structure_validator = StructureValidator(integration.yml.path)
-        validator = IntegrationValidator(structure_validator)
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
 
-        assert not validator.name_not_contain_the_type()
+            assert not validator.name_not_contain_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """

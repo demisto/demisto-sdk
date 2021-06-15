@@ -531,13 +531,13 @@ class TestPlaybookValidator:
         Then
             - Ensure the validate failed.
         """
-
         playbook = pack.create_playbook(yml={"name": "test_playbook"})
 
-        structure_validator = StructureValidator(playbook.yml.path)
-        validator = PlaybookValidator(structure_validator)
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(playbook.yml.path)
+            validator = PlaybookValidator(structure_validator)
 
-        assert not validator.name_not_contain_the_type()
+            assert not validator.name_not_contain_the_type()
 
     def test_name_does_not_contains_the_type(self, pack):
         """
@@ -548,10 +548,10 @@ class TestPlaybookValidator:
         Then
             - Ensure the validate passes.
         """
-
         playbook = pack.create_playbook(yml={"name": "test"})
 
-        structure_validator = StructureValidator(playbook.yml.path)
-        validator = PlaybookValidator(structure_validator)
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(playbook.yml.path)
+            validator = PlaybookValidator(structure_validator)
 
-        assert validator.name_not_contain_the_type()
+            assert validator.name_not_contain_the_type()

@@ -42,6 +42,9 @@ class DictionaryBasedObject(GeneralObject):
 
         return value
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.to_dict()[key] = value
+
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """Safe get value by key from object file.
 
@@ -58,3 +61,6 @@ class DictionaryBasedObject(GeneralObject):
             value = default
 
         return value
+
+    def __contains__(self, item):
+        return item in self._as_dict

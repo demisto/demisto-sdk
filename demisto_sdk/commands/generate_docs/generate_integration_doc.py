@@ -114,12 +114,13 @@ def generate_integration_doc(
                 errors.extend(err)
         else:
             docs = []  # type: list
+            docs.extend(add_lines(yml_data.get('description')))
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
+            # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version:
                 version = integration_version[0].lower().replace('.yml', '').replace('v', '')
                 docs.extend(generate_versions_differences_section(version))
-            docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -315,30 +316,93 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_versions_differences_section(version):
+def generate_versions_differences_section(version) -> list:
+    """
+    Generate the version differences section to the README.md file.
+
+    Arguments:
+        version : The integration version.
+
+    Returns:
+        List of the section lines.
+    """
 
     section = [
         '',
-        '~~~~~run `demisro-sdk integration-diff`~~~~~',
+        f'~~~~~~~~~~For the full V{version} important information run `demisto-sdk integration-diff -n '
+        f'<new_integration_path> -o <old_integration_path> --docs-format`~~~~~~~~~~',
         f'## V{version} important information',
         '### New in this version:'
     ]
 
     for entity in INTEGRATION_ENTITIES:
-        section.append(f'- Added the following {entity}s:')
-        section.append(f'   - {entity}-1')
-        section.append(f'   - {entity}-2')
+        section.append(f'#### Added the following {entity}s:')
+        section.extend(get_entity_entry(entity, 'added'))
+        section.append('')
+
+    section.append('### Changed from this version:')
+
+    for entity in INTEGRATION_ENTITIES:
+        if entity == 'command':
+            continue
+
+        section.append(f'#### Changed the following {entity}s:')
+        section.extend(get_entity_entry(entity, 'changed'))
         section.append('')
 
     section.append('### Removed from this version:')
 
     for entity in INTEGRATION_ENTITIES:
-        section.append(f'- Removed the following {entity}s:')
-        section.append(f'   - {entity}-1')
-        section.append(f'   - {entity}-2')
+        section.append(f'#### Removed the following {entity}s:')
+        section.extend(get_entity_entry(entity, 'removed'))
         section.append('')
 
     return section
+
+
+def get_entity_entry(entity, action_type) -> list:
+    """
+    Gets the entity entry for the Vn differences section
+
+    Args:
+        entity: The integration entity.
+        action_type: The different action type.
+
+    Return:
+        List of the entries to print.
+    """
+
+    if entity == 'parameter':
+        if action_type == 'changed':
+            return ['- parameter-1 - describe the change.', '- parameter-2 - describe the change.']
+
+        else:
+            return ['- parameter-1', '- parameter-2']
+
+    elif entity == 'command':
+        if action_type == 'added':
+            return ['- command-1 - description.', '- command-2 - description.']
+
+        elif action_type == 'removed':
+            return ['- command-1', '- command-2']
+
+    elif entity == 'argument':
+        if action_type == 'added':
+            return ['- The arguments `argument_name1, argument_name2` in the command `command_name`.',
+                    '- The arguments `argument_name` in the command `command_name`.']
+
+        elif action_type == 'changed':
+            return ['- The argument `argument_name` in the command `command_name` - describe the change.',
+                    '- The argument `argument_name` in the command `command_name` - describe the change.']
+
+        elif action_type == 'removed':
+            return ['- The argument `argument_name1, argument_name2` from the command `command_name`.',
+                    '- The argument `argument_name` from the command `command_name`.']
+
+    elif entity == 'output':
+        return [f'- There are {action_type} outputs in the commands `command-a, command-b`.']
+
+    return []
 
 
 def generate_command_example(cmd, cmd_example=None):

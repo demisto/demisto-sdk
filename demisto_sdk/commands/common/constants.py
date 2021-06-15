@@ -1166,7 +1166,17 @@ ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
 
 PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
 
-INTEGRATION_ENTITIES = ['command', 'argument', 'output']
+INTEGRATION_ENTITIES = ['parameter', 'command', 'argument', 'output']
+
+INTEGRATION_ARGUMENT_TYPES = {
+    '0': 'ShortText',
+    '4': 'Encrypted',
+    '8': 'Boolean',
+    '9': 'Authentication',
+    '12': 'LongText',
+    '15': 'SingleSelect',
+    '16': 'MultiSelect'
+}
 
 
 class ContentItems(Enum):

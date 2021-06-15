@@ -2,6 +2,7 @@ import os
 
 import click
 from demisto_sdk.commands.common.constants import (ARGUMENT_FIELDS_TO_CHECK,
+                                                   INTEGRATION_ARGUMENT_TYPES,
                                                    PARAM_FIELDS_TO_CHECK)
 from demisto_sdk.commands.common.tools import get_yaml
 
@@ -94,13 +95,14 @@ class IntegrationDiffDetector:
         # for each old integration command check if exist in the new, if not, check what is missing
         for old_command in old_commands:
             if old_command not in new_commands:
-                new_command = IntegrationDiffDetector.check_if_element_exist(old_command, new_commands, 'name')
+                new_command = self.check_if_element_exist(old_command, new_commands, 'name')
 
                 if not new_command:
                     commands.append({
                         'type': 'commands',
                         'name': old_command['name'],
-                        'message': f'Missing the command \'{old_command["name"]}\'.'
+                        'message': f'Missing the command \'{old_command["name"]}\'.',
+                        'description': old_command.get('description', '')
                     })
 
                 else:
@@ -159,8 +161,7 @@ class IntegrationDiffDetector:
 
         return arguments
 
-    @staticmethod
-    def check_changed_fields(element, element_type, fields_to_check, changed_fields, command=None) -> list:
+    def check_changed_fields(self, element, element_type, fields_to_check, changed_fields, command=None) -> list:
         """
         Checks for important changed fields in a given element.
 
@@ -188,8 +189,8 @@ class IntegrationDiffDetector:
                         'type': element_type,
                         'name': element['name'],
                         'command_name': command["name"],
-                        'message': f'The argument \'{element["name"]}\' in the command \'{command["name"]}\' '
-                                   f'was changed in field \'{field}\'.',
+                        'message': f'The argument `{element["name"]}` in the command `{command["name"]}` '
+                                   f'- {self.get_change_description(field, element[field])}.',
                         'changed_field': field,
                         'changed_value': element[field]
                     })
@@ -198,12 +199,30 @@ class IntegrationDiffDetector:
                     result.append({
                         'type': element_type,
                         'name': element['display'],
-                        'message': f'The parameter \'{element["display"]}\' was changed in field \'{field}\'.',
+                        'message': f'The parameter `{element["display"]}` '
+                                   f'- {self.get_change_description(field, element[field])}.',
                         'changed_field': field,
                         'changed_value': element[field]
                     })
 
         return result
+
+    @staticmethod
+    def get_change_description(field, value):
+
+        if field in ['defaultValue', 'defaultvalue']:
+            return f'The default value changed to \'{value}\''
+
+        elif field == 'required':
+            return 'Is Now required'
+
+        elif field == 'isArray':
+            return 'Now supports comma separated values'
+
+        elif field == 'type':
+            return f'The type changed to \'{INTEGRATION_ARGUMENT_TYPES[str(value)]}\''
+
+        return ''
 
     @staticmethod
     def get_different_outputs(new_command, old_command) -> list:
@@ -328,7 +347,7 @@ class IntegrationDiffDetector:
         # Gets the added items in the new integration
         new_items_report = self.get_differences(old_data=self.new_yaml_data, new_data=self.old_yaml_data)
 
-        result = f'## V{self.get_new_version(self.new_yaml_data)} important information\n'
+        result = f'\n## V{self.get_new_version(self.new_yaml_data)} important information\n'
 
         if new_in_version := self.get_items_in_docs_format(new_items_report, "Added"):
             result += f'### New in this version:\n{new_in_version}'
@@ -341,13 +360,13 @@ class IntegrationDiffDetector:
 
         click.secho(result)
 
-    def get_items_in_docs_format(self, items_report, type_of_difference) -> str:
+    def get_items_in_docs_format(self, items_report, action_type) -> str:
         """
         Gets the differences in docs format.
 
         Args:
             items_report: A report of the items to print.
-            type_of_difference: The type of the difference (Added, Changed or Removed).
+            action_type: The type of the difference (Added, Changed or Removed).
 
         Return:
             String of the items in docs format to print.
@@ -357,43 +376,38 @@ class IntegrationDiffDetector:
         for entity in items_report:
             entity_result = ''
             if entity == 'outputs':
-                split_outputs = self.get_outputs_per_command(items_report[entity])
+                split_outputs = self.get_elements_per_command(items_report[entity])
 
-                for command_name in split_outputs:
-                    entity_result += f'- There are {type_of_difference.lower()} outputs in the command `{command_name}`\n'
+                entity_result += f'- There are {action_type.lower()} outputs in the commands `{", ".join(list(split_outputs))}`\n'
 
             else:
-                for item in items_report[entity]:
 
-                    if type_of_difference == 'Changed':
+                if action_type == 'Changed':
+                    for item in items_report[entity]:
                         # If it's not a changed item we won't want to print this here
                         if 'changed_field' not in item:
                             continue
 
-                        changed_message = ''
-                        if item['changed_field'] in ['defaultValue', 'defaultvalue', 'type']:
-                            changed_message = f' - **{item["changed_field"]}** changed to be \'{item["changed_value"]}\''
+                        entity_result += f'- {item["message"]}\n'
 
-                        elif item['changed_field'] == 'required':
-                            changed_message = ' - Is now required'
+                else:
+                    # Remove all changed items
+                    items_not_changed = [item for item in items_report[entity] if "changed_field" not in item]
 
-                        elif item['changed_field'] == 'isArray':
-                            changed_message = ' - Is now comma separated'
+                    if entity == 'arguments':
+                        args_per_command = self.get_elements_per_command(items_not_changed)
 
-                        entity_result += f'- `{item["name"]}`{changed_message}\n' \
-                            if entity != 'arguments' else f'- `{item["name"]}` in the command `{item["command_name"]}`'\
-                                                          f'{changed_message}\n'
+                        for command in args_per_command:
+                            entity_result += f'- The arguments `{", ".join([arg["name"] for arg in args_per_command[command]])}` ' \
+                                             f'in the command `{command}`.\n'
 
                     else:
-                        # If it's a changed item it's already printed in the changed section
-                        if 'changed_field' in item:
-                            continue
-
-                        entity_result += f'- `{item["name"]}`\n' \
-                            if entity != 'arguments' else f'- `{item["name"]}` in the command `{item["command_name"]}`\n'
+                        for item in items_not_changed:
+                            entity_result += f'- `{item["name"]}` - {item.get("description", "")}\n' \
+                                if entity == 'commands' and action_type == 'Added' else f'- `{item["name"]}`\n'
 
             if entity_result:
-                result += f'#### {type_of_difference} the following {entity}:\n' + entity_result + '\n'
+                result += f'#### {action_type} the following {entity}:\n' + entity_result + '\n'
 
         return result
 
@@ -411,39 +425,50 @@ class IntegrationDiffDetector:
 
         if self.docs_format_output:
             self.print_items_in_docs_format()
+            return False
 
         else:
             self.print_missing_items()
         return True
 
     @staticmethod
-    def get_new_version(new_yml_data):
+    def get_new_version(yml_data) -> str:
+        """
+        Gets the version of a given integration yaml data.
 
-        version = new_yml_data['display'].rsplit(' ', 1)[1]
+        Args:
+            yml_data: The yaml data.
+
+        Return:
+            The version as a string.
+        """
+
+        version = yml_data['display'].rsplit(' ', 1)[1]
 
         if version[0].lower() == 'v' and len(version) == 2:
             return version[1]
+
         return ''
 
     @staticmethod
-    def get_outputs_per_command(list_of_outputs) -> dict:
+    def get_elements_per_command(list_of_elements) -> dict:
         """
-        Split a given list of outputs by command.
+        Split a given list of elements by command.
 
         Args:
-            list_of_outputs: The list of outputs to be splited.
+            list_of_elements: The list of elements to split.
 
         Return:
-            Dict contains the split outputs by command name.
+            Dict contains the split elements by command name.
         """
 
         result: dict = {}
 
-        for output in list_of_outputs:
-            if output['command_name'] in result:
-                result[output['command_name']].append(output)
+        for element in list_of_elements:
+            if element['command_name'] in result:
+                result[element['command_name']].append(element)
 
             else:
-                result[output['command_name']] = [output]
+                result[element['command_name']] = [element]
 
         return result

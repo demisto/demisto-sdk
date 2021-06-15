@@ -9,7 +9,9 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import get_pack_metadata
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_pack_metadata,
+                                               get_pack_name)
 
 
 class TypeFields(Enum):
@@ -191,8 +193,7 @@ class IncidentFieldValidator(ContentEntityValidator):
                 self.is_valid_cliname(),
                 self.is_valid_version(),
                 self.is_valid_required(),
-                self.is_valid_indicator_grid_fromversion(),
-                self.is_valid_incident_field_name_prefix()
+                self.is_valid_indicator_grid_fromversion()
             ]
         )
 
@@ -406,8 +407,5 @@ class IncidentFieldValidator(ContentEntityValidator):
                         error_code,
                         file_path=self.file_path,
                         suggested_fix=Errors.suggest_fix_field_name(field_name, pack_name)):
-
                     return False
         return True
-
-

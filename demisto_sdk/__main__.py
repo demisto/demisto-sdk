@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
+from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -1529,6 +1530,38 @@ def integration_diff(**kwargs):
         sys.exit(0)
 
     sys.exit(1)
+
+
+# ====================== convert ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), required=True,
+    help='The path of the content pack/directory/file to convert.'
+)
+@click.option(
+    '-v', '--version', required=True, help="Version the input to be compatible with."
+)
+@pass_config
+def convert(config, **kwargs):
+    """
+    Convert the content of the pack/directory in the given input to be compatible with the version given by
+    version command.
+    """
+    check_configuration_file('convert', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    input_path = kwargs['input']
+    server_version = kwargs['version']
+    convert_manager = ConvertManager(input_path, server_version)
+    result = convert_manager.convert()
+
+    if result:
+        sys.exit(1)
+
+    sys.exit(0)
 
 
 @main.resultcallback()

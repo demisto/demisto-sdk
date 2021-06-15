@@ -40,7 +40,7 @@ class PlaybookValidator(ContentEntityValidator):
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
             self.verify_condition_tasks_has_else_path(),
-
+            self.name_not_contain_the_type()
         ]
         answers = all(playbook_checks)
 
@@ -415,3 +415,17 @@ class PlaybookValidator(ContentEntityValidator):
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'playbook' in name.lower():
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='playbook')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True

@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_last_remote_release_version,
                                                get_latest_release_notes_text,
                                                get_pack_metadata,
+                                               get_pack_name,
                                                get_release_notes_file_path,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
@@ -980,3 +981,17 @@ def test_is_pack_path(input_path: str, expected: bool):
 
     """
     assert is_pack_path(input_path) == expected
+
+
+def test_get_pack_name():
+    """
+    When:
+        - Run the get_pack_name function on different file paths
+
+    Then:
+        - Ensure that the expected pack name is returned.
+
+    """
+    assert get_pack_name('/Users/test/dev/demisto/content/Packs/BitcoinAbuse') == 'BitcoinAbuse'
+    assert get_pack_name('Packs/BitcoinAbuse') == 'BitcoinAbuse'
+    assert get_pack_name('Packs/BitcoinAbuse/Integrations') == 'BitcoinAbuse'

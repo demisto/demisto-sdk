@@ -34,7 +34,7 @@ PyPDF2>=1.26.0
 pyspellchecker>=0.6.0
 PyYAML>=5.3.1
 requests>=2.22.0
-ruamel.yaml==0.17.4
+ruamel.yaml<0.17
 slackclient==2.9.3
 tabulate>=0.8.7
 tabulate>=0.8.7

@@ -559,3 +559,36 @@ class TestScriptValidator:
         """
         validator = get_validator(current_file=current)
         assert validator.is_valid_as_deprecated() is answer
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that contains the word "script".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script(yml={"name": "test_script"})
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+
+        assert not validator.name_not_contain_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that does not contains the "script" string.
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script(yml={"name": "test"})
+
+        structure_validator = StructureValidator(script.yml.path)
+        validator = ScriptValidator(structure_validator)
+        assert validator.name_not_contain_the_type()

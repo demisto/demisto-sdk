@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
+from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -61,6 +62,27 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+
+class PathsParamType(click.Path):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string of comma-separated values where each individual value adheres
+    to the definition for the click.Path type. The class accepts the same parameters as the
+    click.Path type, applying those arguments for each comma-separated value in the list.
+    See https://click.palletsprojects.com/en/8.0.x/parameters/#implementing-custom-types for
+    more details.
+    """
+
+    def convert(self, value, param, ctx):
+        if ',' not in value:
+            return super(PathsParamType, self).convert(value, param, ctx)
+
+        split_paths = value.split(',')
+        # check the validity of each of the paths
+        _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
+        return value
 
 
 class DemistoSDK:
@@ -295,7 +317,8 @@ def unify(**kwargs):
     help='Whether to run all validation on all files or not.'
 )
 @click.option(
-    '-i', '--input', type=click.Path(exists=True), help='The path of the content pack/file to validate specifically.'
+    '-i', '--input', type=click.Path(exists=True, resolve_path=True),
+    help='The path of the content pack/file to validate specifically.'
 )
 @click.option(
     '--skip-pack-release-notes', is_flag=True,
@@ -329,6 +352,10 @@ def unify(**kwargs):
 @click.option(
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
+@click.option(
+    "--quite-bc-validation",
+    help="Set backwards compatibility validation's errors as warnings",
+    is_flag=True)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -366,7 +393,8 @@ def validate(config, **kwargs):
             json_file_path=kwargs.get('json_file'),
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
-            include_untracked=kwargs.get('include_untracked')
+            include_untracked=kwargs.get('include_untracked'),
+            quite_bc=kwargs.get('quite_bc_validation')
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -470,8 +498,10 @@ def secrets(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-@click.option("-i", "--input", help="Specify directory of integration/script", type=click.Path(exists=True,
-                                                                                               resolve_path=True))
+@click.option(
+    "-i", "--input", help="Specify directory(s) of integration/script",
+    type=PathsParamType(exists=True, resolve_path=True)
+)
 @click.option("-g", "--git", is_flag=True, help="Will run only on changed packages")
 @click.option("-a", "--all-packs", is_flag=True, help="Run lint on all directories in content repo")
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
@@ -494,9 +524,9 @@ def secrets(config, **kwargs):
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
-              type=click.Path(exists=True, resolve_path=True))
+              type=click.Path(resolve_path=True))
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -573,7 +603,7 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
     """
     return format_manager(
-        str(input),
+        str(input) if input else None,
         str(output) if output else None,
         from_version=from_version,
         no_validate=no_validate,
@@ -1415,6 +1445,38 @@ def integration_diff(**kwargs):
         sys.exit(0)
 
     sys.exit(1)
+
+
+# ====================== convert ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), required=True,
+    help='The path of the content pack/directory/file to convert.'
+)
+@click.option(
+    '-v', '--version', required=True, help="Version the input to be compatible with."
+)
+@pass_config
+def convert(config, **kwargs):
+    """
+    Convert the content of the pack/directory in the given input to be compatible with the version given by
+    version command.
+    """
+    check_configuration_file('convert', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    input_path = kwargs['input']
+    server_version = kwargs['version']
+    convert_manager = ConvertManager(input_path, server_version)
+    result = convert_manager.convert()
+
+    if result:
+        sys.exit(1)
+
+    sys.exit(0)
 
 
 @main.resultcallback()

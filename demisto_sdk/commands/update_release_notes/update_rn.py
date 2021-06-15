@@ -11,7 +11,6 @@ from distutils.version import LooseVersion
 from typing import Optional, Tuple, Union
 
 import click
-
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
@@ -143,6 +142,10 @@ class UpdateRN:
             if self.is_bump_required():
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
+            try:
+                run_command(f'git add {rn_path}', exit_on_error=False)
+            except RuntimeError:
+                print_warning(f'Could not add the release note files to git: {rn_path}')
             if self.existing_rn_changed:
                 print_color(f"Finished updating release notes for {self.pack}."
                             f"\nNext Steps:\n - Please review the "
@@ -290,6 +293,8 @@ class UpdateRN:
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)
+        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+            name = file_data['layout'].get('id')
         elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:

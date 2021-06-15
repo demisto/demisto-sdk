@@ -8,10 +8,19 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+ALLOWED_IGNORE_ERRORS = [
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
+    'DS107',
+    'IF100', 'IF106',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'MP106',
+    'PA113', 'PA116', 'PA124', 'PA125',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
+    'RM100', 'RM102', 'RM104', 'RM106',
+    'RP102', 'RP104',
+    'SC100', 'SC101', 'SC105',
+]
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'PB105', 'PB106',
-                         'BA108', 'BA109', 'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136',
-                         'MP106', 'RM102', 'PB110', 'PB111', 'SC105', 'IN139', 'PA124', 'PA125', 'RM100', 'RM104']
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -33,6 +42,7 @@ ERROR_CODE = {
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
+    "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -146,6 +156,7 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -154,6 +165,7 @@ ERROR_CODE = {
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
                                              'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True, 'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -207,7 +219,7 @@ ERROR_CODE = {
     "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
-
+    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -356,6 +368,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def field_contain_forbidden_word(field_names: list, word: str):
+        return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
+
+    @staticmethod
+    @error_code_decorator
     def indicator_field_type_grid_minimal_version(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
@@ -475,14 +492,18 @@ class Errors:
                f"the removed fields are: {removed} "
 
     @staticmethod
-    @error_code_decorator
-    def incident_in_command_name_or_args(commands, args):
-        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
-               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}\n" \
-               f"To fix the problem, remove the word incident, " \
+    def suggest_server_allowlist_fix(words=None):
+        words = words if words else ['incident']
+        return f"To fix the problem, remove the words {words}, " \
                f"or add them to the whitelist named argsExceptionsList in:\n" \
                f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
                f"servicemodule_test.go#L8273"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_in_command_name_or_args(commands, args):
+        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
+               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}"
 
     @staticmethod
     @error_code_decorator
@@ -621,7 +642,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return "Every deprecated script's comment has to start with 'Deprecated.'"
+        return 'The comment of all deprecated scripts should follow one of the formats:' \
+               '1. "Deprecated. Use <SCRIPT_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -695,7 +718,7 @@ class Errors:
     @error_code_decorator
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
-               f' Please create or update to an updated versioned image\n'
+               f' Please create or update to an updated versioned image.'
 
     @staticmethod
     @error_code_decorator
@@ -716,7 +739,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path) -> str:
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
                f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
@@ -809,7 +832,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def test_not_in_conf_json(file_id):
-        return "You've failed to add the {file_id} to conf.json\n" \
+        return f"You've failed to add the {file_id} to conf.json\n" \
                "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
@@ -944,7 +967,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description has to start with "Deprecated."'
+        return 'The description of all deprecated playbooks should follow one of the formats:' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -995,11 +1020,7 @@ class Errors:
     @error_code_decorator
     def incident_in_script_arg(arguments):
         return f"The script is part of a core pack. Therefore, the use of the word `incident` in argument names is" \
-               f" forbidden. problematic argument" \
-               f" names:\n {arguments}. \n, To fix the problem, remove the word incident, " \
-               f"or add the argument name to the allowlist named argsExceptionsList in:\n" \
-               f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
-               f"servicemodule_test.go#L8273"
+               f" forbidden. problematic argument names:\n {arguments}."
 
     @staticmethod
     @error_code_decorator
@@ -1019,6 +1040,11 @@ class Errors:
     def invalid_description_name():
         return "The description's file name is invalid - " \
                "make sure the name looks like the following: <integration_name>_description.md"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -1047,8 +1073,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name, please update the file."
+    def invalid_incident_field_name(words):
+        return f"The words: {words} cannot be used as a name."
 
     @staticmethod
     @error_code_decorator
@@ -1062,9 +1088,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_type, TypeFields):
+    def invalid_incident_field_type(file_type, type_fields):
         return f"Type: `{file_type}` is not one of available types.\n" \
-               f"available types: {[value.value for value in TypeFields]}"
+               f"available types: {[value.value for value in type_fields]}"
 
     @staticmethod
     @error_code_decorator
@@ -1221,7 +1247,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_invalid_support_type(pack_meta_file):
+    def pack_metadata_invalid_support_type():
         return 'Support field should be one of the following: xsoar, partner, developer or community.'
 
     @staticmethod
@@ -1265,14 +1291,14 @@ class Errors:
     @error_code_decorator
     def pack_name_is_not_in_xsoar_standards(reason):
         if reason == "short":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3 ' \
-                   f'characters long.'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
+                   f' characters long.'
         if reason == "capital":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital ' \
-                   f'letter.'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital' \
+                   f' letter.'
         if reason == "wrong_word":
-            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words: ' \
-                   f'["Pack", "Playbook", "Integration", "Script"]'
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' ["Pack", "Playbook", "Integration", "Script"]'
 
     @staticmethod
     @error_code_decorator
@@ -1295,6 +1321,11 @@ class Errors:
     def readme_equal_description_error():
         return 'README.md content is equal to pack description. ' \
                'Please remove the duplicate description from README.md file.'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -1361,7 +1392,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_package_structure(invalid_files):
+    def invalid_package_structure():
         return 'You should update the following file to the package format, for further details please visit ' \
                'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
@@ -1538,14 +1569,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_uuid(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+    def invalid_uuid(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be from uuid format."
 
     @staticmethod
     @error_code_decorator
-    def taskid_different_from_id(task_key, id, taskid):
-        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id}, " \
+    def taskid_different_from_id(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
 
     @staticmethod
@@ -1589,3 +1620,8 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_condition_has_no_else_path(tasks_ids):
+        return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'

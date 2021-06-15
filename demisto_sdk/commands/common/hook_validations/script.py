@@ -1,6 +1,8 @@
 import os
+import re
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   DEPRECATED_REGEXES,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -67,7 +69,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type()
         ])
         # check only on added files
         if not self.old_file:
@@ -111,7 +114,8 @@ class ScriptValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_message, file_path=self.file_path):
+                    if self.handle_error(error_message, error_message, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
 
         return False
@@ -138,7 +142,8 @@ class ScriptValidator(ContentEntityValidator):
                 if (arg not in old_args_to_required) or \
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
                     error_message, error_code = Errors.added_required_fields(arg)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quite_bc):
                         return True
         return False
 
@@ -153,7 +158,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if strings_with_incident_list:
             error_message, error_code = Errors.incident_in_script_arg(strings_with_incident_list)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 
@@ -163,7 +169,7 @@ class ScriptValidator(ContentEntityValidator):
         # type: () -> bool
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if len(args) != len(set(args)):
+        if len(args) != len(set(args)) and not self.structure_validator.quite_bc:
             return True
         return False
 
@@ -175,7 +181,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_args, old_args):
             error_message, error_code = Errors.breaking_backwards_arg_changed()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False
@@ -188,7 +195,8 @@ class ScriptValidator(ContentEntityValidator):
 
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return True
 
         return False
@@ -246,8 +254,12 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
-            if not comment.startswith('Deprecated.'):
+            if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_script()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
@@ -351,4 +363,18 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
 
+        return True
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'script' in name.lower():
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
         return True

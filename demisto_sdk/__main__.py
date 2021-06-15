@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                get_pack_name, print_error,
                                                print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
+from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -530,6 +531,11 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(resolve_path=True))
+@click.option("--no-coverage", is_flag=True, help="Do NOT run coverage report.")
+@click.option(
+    "--coverage-report", help="Specify directory for the coverage report files",
+    type=PathsParamType()
+)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -565,7 +571,9 @@ def lint(**kwargs):
         no_pwsh_test=kwargs.get('no_pwsh_test'),  # type: ignore[arg-type]
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
-        failure_report=kwargs.get('failure_report')  # type: ignore[arg-type]
+        failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
+        no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
+        coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
     )
 
 
@@ -593,6 +601,8 @@ def lint(**kwargs):
     "-y", "--assume-yes",
     help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
     is_flag=True)
+@click.option(
+    "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
 def format(
         input: Path,
         output: Path,
@@ -600,7 +610,8 @@ def format(
         no_validate: bool,
         update_docker: bool,
         verbose: bool,
-        assume_yes: bool
+        assume_yes: bool,
+        deprecate: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
@@ -612,7 +623,8 @@ def format(
         no_validate=no_validate,
         update_docker=update_docker,
         assume_yes=assume_yes,
-        verbose=verbose
+        verbose=verbose,
+        deprecate=deprecate
     )
 
 
@@ -639,7 +651,7 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """"Upload integration to Demisto instance.
+    """Upload integration to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
@@ -1522,6 +1534,38 @@ def integration_diff(**kwargs):
         sys.exit(0)
 
     sys.exit(1)
+
+
+# ====================== convert ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), required=True,
+    help='The path of the content pack/directory/file to convert.'
+)
+@click.option(
+    '-v', '--version', required=True, help="Version the input to be compatible with."
+)
+@pass_config
+def convert(config, **kwargs):
+    """
+    Convert the content of the pack/directory in the given input to be compatible with the version given by
+    version command.
+    """
+    check_configuration_file('convert', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    input_path = kwargs['input']
+    server_version = kwargs['version']
+    convert_manager = ConvertManager(input_path, server_version)
+    result = convert_manager.convert()
+
+    if result:
+        sys.exit(1)
+
+    sys.exit(0)
 
 
 @main.resultcallback()

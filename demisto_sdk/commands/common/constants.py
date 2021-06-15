@@ -801,7 +801,7 @@ def urljoin(*args: str):
 
 
 class GithubCredentials:
-    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):

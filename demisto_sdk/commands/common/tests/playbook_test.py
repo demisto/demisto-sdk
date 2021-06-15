@@ -6,9 +6,10 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
-    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from mock import patch
+from TestSuite.test_tools import ChangeCWD
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -384,10 +385,12 @@ class TestPlaybookValidator:
             -  Ensure the unhandled condition is ignored if it's a test playbook
             -  Ensure validation fails if it's a not test playbook
         """
-        structure = StructureValidator(file_path=playbook_path)
-        validator = PlaybookValidator(structure)
-        mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
-        assert validator.is_valid_playbook() is expected_result
+        with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
+            structure = StructureValidator(file_path=playbook_path)
+            validator = PlaybookValidator(structure)
+            mocker.patch.object(validator, 'is_script_id_valid', return_value=True)
+
+            assert validator.is_valid_playbook() is expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_DELETECONTEXT)
     def test_is_delete_context_all_in_playbook(self, playbook_json, expected_result):
@@ -518,3 +521,37 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_task_json)
         validator = PlaybookValidator(structure)
         assert validator._is_else_path_in_condition_task(task=playbook_task_json) is expected_result
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An playbook with a name that contains the word "playbook".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+        playbook = pack.create_playbook(yml={"name": "test_playbook"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(playbook.yml.path)
+            validator = PlaybookValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An playbook with a name that does not contains the "playbook" string.
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+        playbook = pack.create_playbook(yml={"name": "test"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(playbook.yml.path)
+            validator = PlaybookValidator(structure_validator)
+
+            assert validator.name_not_contain_the_type()

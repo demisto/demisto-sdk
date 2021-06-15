@@ -1798,3 +1798,21 @@ def get_pack_metadata(file_path: str) -> dict:
         return pack_metadata
     except Exception:
         return {}
+
+
+def is_pack_path(input_path: str) -> bool:
+    """
+    Checks whether pack given in input path is for a pack.
+    Args:
+        input_path (str): Input path.
+    Examples
+        - input_path = 'Packs/BitcoinAbuse
+          Returns: True
+        - input_path = 'Packs/BitcoinAbuse/Layouts'
+          Returns: False
+    Returns:
+        (bool):
+        - True if the input path is for a given pack.
+        - False if the input path is not for a given pack.
+    """
+    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR

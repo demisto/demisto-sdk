@@ -12,9 +12,11 @@
 * Updated the **upload** command to support reports.
 * Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
 * Fixed an issue where **download** did not return exit code 1 on failure.
+* Updated the validation that incident fields' names do not contain the word incident will aplly to core packs only.
 * Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
+* Added the **convert** command to convert entities between XSOAR versions.
 * Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
 
 # 1.3.9

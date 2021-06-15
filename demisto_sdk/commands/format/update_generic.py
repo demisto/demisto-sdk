@@ -50,7 +50,8 @@ class BaseUpdate:
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 assume_yes: bool = False):
+                 assume_yes: bool = False,
+                 deprecate: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose

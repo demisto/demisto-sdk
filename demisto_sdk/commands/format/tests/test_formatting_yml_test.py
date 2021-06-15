@@ -973,3 +973,78 @@ class TestFormatting:
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
         assert bs.data['fromversion'] == result_fromversion
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_integration(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An integration yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        integration = pack.create_integration('my_integration')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='integration')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['description'] == description_result
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_script(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An script yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        script = pack.create_integration('my_script')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=script.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='script')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['comment'] == description_result
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_playbook(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An playbook yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        playbook = pack.create_playbook('my_playbook')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=playbook.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='playbook')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['description'] == description_result

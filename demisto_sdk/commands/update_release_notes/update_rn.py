@@ -29,8 +29,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
-                 specific_version: str = None, pre_release: Optional[bool] = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: Optional[str] = '', existing_rn_version_path: str = ''):
+                 specific_version: str = None, pre_release: bool = False, pack: str = None,
+                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = pack_name_to_path(self.pack)

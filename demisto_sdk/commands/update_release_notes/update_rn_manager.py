@@ -1,9 +1,8 @@
 import os
 import sys
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import git
-
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
@@ -23,10 +22,10 @@ class UpdateReleaseNotesManager:
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
-        self.pre_release = False if pre_release is None else pre_release
+        self.pre_release: bool = False if pre_release is None else pre_release
         # update release notes to every required pack if not specified.
         self.is_all = True if not self.given_pack else is_all
-        self.text = '' if text is None else text
+        self.text: str = '' if text is None else text
         self.specific_version = specific_version
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver

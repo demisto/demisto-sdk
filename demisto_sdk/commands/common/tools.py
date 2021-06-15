@@ -1514,7 +1514,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     try:
         resp = demisto_client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))
+        return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
         return "0"
 

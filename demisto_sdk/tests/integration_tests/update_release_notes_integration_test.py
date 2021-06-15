@@ -2,7 +2,6 @@ import os
 from os.path import join
 
 import conftest  # noqa: F401
-import demisto_sdk.commands.common.tools as tools
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main

@@ -29,8 +29,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
-                 specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
+                 specific_version: str = None, pre_release: Optional[bool] = False, pack: str = None,
+                 pack_metadata_only: bool = False, text: Optional[str] = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = pack_name_to_path(self.pack)
@@ -108,7 +108,7 @@ class UpdateRN:
             docker_image_name: Optional[str] = None
             changed_files = {}
             for packfile in self.modified_files_in_pack:
-                file_name, file_type = self.get_changed_file_name_type(packfile)
+                file_name, file_type = self.get_changed_file_name_and_type(packfile)
                 if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
                     docker_image_name = check_docker_image_changed(packfile)
                 changed_files[file_name] = {

@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Tuple, Set, Optional
+from typing import Tuple, Optional
 
 import git
 
@@ -17,16 +17,16 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class UpdateReleaseNotesManager:
-    def __init__(self, user_input: str = None, update_type: str = None, pre_release: Optional[bool] = False,
-                 is_all: bool = None, text: Optional[str] = '', specific_version: str = None, id_set_path: str = None,
-                 prev_ver: str = None):
+    def __init__(self, user_input: Optional[str], update_type: Optional[str], pre_release: Optional[bool],
+                 is_all: Optional[bool], text: Optional[str], specific_version: Optional[str],
+                 id_set_path: Optional[str], prev_ver: Optional[str]):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
-        self.pre_release = pre_release
+        self.pre_release = False if pre_release is None else pre_release
         # update release notes to every required pack if not specified.
         self.is_all = True if not self.given_pack else is_all
-        self.text = text
+        self.text = '' if text is None else text
         self.specific_version = specific_version
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver

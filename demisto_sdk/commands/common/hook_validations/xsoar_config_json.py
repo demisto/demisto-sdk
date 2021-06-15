@@ -29,10 +29,10 @@ class XSOARConfigJsonValidator(BaseValidator):
         self._is_valid = True
         self.configuration_file_path = configuration_file_path
         self.schema_path = os.path.normpath(os.path.join(__file__, '..', '..', 'schemas', 'xsoar_config.json'))
-        self.configuration_json = self.load_configuration_file()
+        self.configuration_json = self.load_xsoar_configuration_file()
         self.schema_json, _ = get_dict_from_file(self.schema_path)
 
-    def load_configuration_file(self) -> Optional[Dict[str, Any]]:
+    def load_xsoar_configuration_file(self) -> Optional[Dict[str, Any]]:
         """Loads the configuration file for the schema validation.
 
         Returns:

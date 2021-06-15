@@ -5,6 +5,7 @@ from typing import Dict
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
+                                                   DEPRECATED_REGEXES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH,
@@ -107,7 +108,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type()
+
         ]
 
         if not skip_test_conf:
@@ -139,7 +142,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
             self.is_valid_as_deprecated(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type()
+
         ]
         return all(answers)
 
@@ -166,8 +171,8 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
-        deprecated_no_replace_regex = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
             if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass
@@ -1203,6 +1208,30 @@ class IntegrationValidator(ContentEntityValidator):
         if invalid_files:
 
             error_message, error_code = Errors.file_name_has_separators('integration', invalid_files, valid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name or display name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        display_name = self.current_file.get('display', '')
+        field_names = []
+        if 'integration' in name.lower():
+            field_names.append('name')
+        if 'integration' in display_name.lower():
+            field_names.append('display')
+
+        if field_names:
+            error_message, error_code = Errors.field_contain_forbidden_word(
+                field_names=field_names, word='integration')
+
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

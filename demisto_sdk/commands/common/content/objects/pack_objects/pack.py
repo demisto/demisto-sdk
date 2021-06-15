@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Layout, OldClassifier,
+    IndicatorField, IndicatorType, Integration, LayoutObject, OldClassifier,
     PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
@@ -41,7 +41,7 @@ class Pack:
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
-        """Generic content objcets iterable generator
+        """Generic content objects iterable generator
 
         Args:
             dir_name: Directory name, for example: Integrations, Documentations etc.
@@ -111,7 +111,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def layouts(self) -> Iterator[Layout]:
+    def layouts(self) -> Iterator[LayoutObject]:
         return self._content_files_list_generator_factory(dir_name=LAYOUTS_DIR,
                                                           suffix="json")
 

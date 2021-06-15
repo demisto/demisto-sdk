@@ -1,6 +1,8 @@
 import os
+import re
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
+                                                   DEPRECATED_REGEXES,
                                                    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -67,7 +69,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type()
         ])
         # check only on added files
         if not self.old_file:
@@ -251,8 +254,12 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
-            if not comment.startswith('Deprecated.'):
+            if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_script()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
@@ -356,4 +363,18 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
 
+        return True
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'script' in name.lower():
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
         return True

@@ -22,6 +22,7 @@ Supported content entities:
 - Incident Fields
 - Layouts
 - Classifiers
+- Packs
 - Zipped packs
 
 #### Limitation
@@ -35,7 +36,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
     2. Directory inside a pack for example: Playbooks
     3. Directory containing an integration or a script data for example: HelloWorld
     4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
-    5. Path to zipped pack (could locate outside the content dir)
+    5. Path to zipped pack (may located outside the Content directory)
 
 * **-u, --unify**
 
@@ -74,7 +75,7 @@ This will iterate over **all content entities** under the pack `HelloWorld` and 
 ```
 demisto-sdk upload -i Packs/HelloWorld -u
 ```
-This will unify the pack `HelloWorld` and will upload the unified `content_packs.zip` to the Cortex XSOAR instance.
+This will unify the pack `HelloWorld` and will upload the unified `uploadable_packs.zip` to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i path/to/HelloWorld.zip

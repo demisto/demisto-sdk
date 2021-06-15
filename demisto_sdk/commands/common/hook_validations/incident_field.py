@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import get_core_pack_list, get_pack_name
 
 
 class TypeFields(Enum):
@@ -179,20 +180,26 @@ class IncidentFieldValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the Incident Field is valid or not
         """
-        return all(
-            [
-                super().is_valid_file(validate_rn),
-                self.is_valid_name(),
-                self.is_valid_type(),
-                self.is_valid_group(),
-                self.is_valid_content_flag(),
-                self.is_valid_system_flag(),
-                self.is_valid_cliname(),
-                self.is_valid_version(),
-                self.is_valid_required(),
-                self.is_valid_indicator_grid_fromversion()
-            ]
-        )
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_type(),
+            self.is_valid_group(),
+            self.is_valid_content_flag(),
+            self.is_valid_system_flag(),
+            self.is_valid_cliname(),
+            self.is_valid_version(),
+            self.is_valid_required(),
+            self.is_valid_indicator_grid_fromversion(),
+        ]
+
+        core_packs_list = get_core_pack_list()
+
+        pack = get_pack_name(self.file_path)
+        is_core = pack in core_packs_list
+        if is_core:
+            answers.append(self.is_valid_name())
+
+        return all(answers)
 
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""

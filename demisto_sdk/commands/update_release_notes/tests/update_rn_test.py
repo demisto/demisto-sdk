@@ -280,7 +280,7 @@ class TestRNUpdate(unittest.TestCase):
         assert expected_result == filename
 
     @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_return_release_notes_path(self, mock_master):
+    def test_get_release_notes_path(self, mock_master):
         """
             Given:
                 - a pack name and version
@@ -295,7 +295,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         input_version = '1.1.1'
-        result = update_rn.return_release_notes_path(input_version)
+        result = update_rn.get_release_notes_path(input_version)
         assert expected_result == result
 
     @mock.patch.object(UpdateRN, 'get_master_version')
@@ -796,7 +796,7 @@ class TestRNUpdateUnit:
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
-        update_rn.write_metadata_To_file(data_dict)
+        update_rn.write_metadata_to_file(data_dict)
         os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
@@ -1043,7 +1043,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
         mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
-        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+        mocker.patch.object(UpdateRN, 'get_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
@@ -1078,7 +1078,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
-        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+        mocker.patch.object(UpdateRN, 'get_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_0_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
@@ -1117,7 +1117,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
-        mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
+        mocker.patch.object(UpdateRN, 'get_release_notes_path', return_value='demisto_sdk/commands'
                                                                                 '/update_release_notes/tests_data'
                                                                                 '/Packs/release_notes/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
@@ -1152,7 +1152,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
         mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
-        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+        mocker.patch.object(UpdateRN, 'get_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')

@@ -33,7 +33,7 @@ class UpdateRN:
                  pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
-        self.pack_path = pack_name_to_path(self.pack)
+        self.pack_path = self.init_pack_path()
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
@@ -51,6 +51,19 @@ class UpdateRN:
 
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
+
+    def init_pack_path(self) -> str:
+        """ Extracts pack path from pack name if exists, otherwise throws an error and exit.
+
+        :rtype: ``str``
+        :return
+            The pack path.
+        """
+        try:
+            return pack_name_to_path(self.pack)
+        except TypeError:
+            click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
+            sys.exit(1)
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:

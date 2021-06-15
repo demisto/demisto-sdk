@@ -651,7 +651,7 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """"Upload integration to Demisto instance.
+    """Upload integration to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *

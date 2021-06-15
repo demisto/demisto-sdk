@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 from demisto_sdk.commands.unify.unifier import Unifier
@@ -56,7 +56,7 @@ class Integration:
         if image is not None:
             self.image.write_bytes(image)
 
-    def create_default_integration(self, name: str = '', commands: str = ''):
+    def create_default_integration(self, name: str = None, commands: List[str] = None):
         default_integration_dir = 'assets/default_integration'
 
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
@@ -64,8 +64,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
             if name:
-                yml['name'] = name
-                yml['commonfields']['id'] = name
+                yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:
                     yml['script']['commands'].append({'name': command})

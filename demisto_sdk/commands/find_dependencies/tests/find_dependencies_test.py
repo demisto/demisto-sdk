@@ -54,7 +54,7 @@ def create_a_pack_entity(pack, entity_type: str = None, entity_id: str = None, e
 
 @pytest.fixture()
 def id_set(repo):
-    # Create 4 pack with all entities
+    # Create 5 packs with all entities
     repo.setup_content_repo(5)
 
     # Create a pack called 'PrismaCloudCompute' with 4 scripts and 1 incident_type.

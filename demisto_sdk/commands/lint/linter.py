@@ -30,6 +30,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
                                                add_typing_module,
+                                               coverage_report_editor,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                pylint_plugin,
@@ -101,7 +102,7 @@ class Linter:
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
-                         keep_container: bool, test_xml: str) -> dict:
+                         keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -119,6 +120,7 @@ class Linter:
             modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
 
         Returns:
             dict: lint and test all status, pkg status)
@@ -150,7 +152,8 @@ class Linter:
                                                    no_pwsh_analyze=no_pwsh_analyze,
                                                    no_pwsh_test=no_pwsh_test,
                                                    keep_container=keep_container,
-                                                   test_xml=test_xml)
+                                                   test_xml=test_xml,
+                                                   no_coverage=no_coverage)
         except Exception as ex:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
@@ -518,7 +521,7 @@ class Linter:
         return SUCCESS, ""
 
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                                  keep_container: bool, test_xml: str):
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
         Args:
@@ -528,6 +531,8 @@ class Linter:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
+
         """
         for image in self._facts["images"]:
             # Docker image status - visualize
@@ -563,7 +568,8 @@ class Linter:
                             elif not no_test and self._facts["test"] and check == "pytest":
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
-                                                                                       test_xml=test_xml)
+                                                                                       test_xml=test_xml,
+                                                                                       no_coverage=no_coverage)
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
@@ -794,14 +800,14 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str, dict]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:
             test_image(str): Test image id/name
             keep_container(bool): True if to keep container after execution finished
             test_xml(str): Xml saving path
-
+            no_coverage(bool): Run pytest without coverage report
         Returns:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
@@ -817,8 +823,10 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
+            cov = '' if no_coverage else self._pack_abs_dir.stem
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True)],
+                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
+                                                                                     cov=cov)],
                 user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
@@ -838,6 +846,15 @@ class Linter:
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
+
+                if not no_coverage:
+                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                    cov_data = get_file_from_container(container_obj=container_obj,
+                                                       container_path="/devwork/.coverage")
+                    cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
+                    with open(cov_file_path, 'wb') as coverage_file:
+                        coverage_file.write(cov_data)
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container_obj,
                                                                container_path="/devwork/report_pytest.json",

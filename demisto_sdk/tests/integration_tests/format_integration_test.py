@@ -483,15 +483,19 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+    mocker.patch.object(PlaybookValidator, 'name_not_contain_the_type', return_value=True)
+
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
     monkeypatch.setattr('builtins.input', lambda _: 'N')
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
-        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks', '--no-conf-json',
-                                               '--allow-skipped'],
-                                        catch_exceptions=False)
+
+        with ChangeCWD(repo.path):
+            result_validate = runner.invoke(main, ['validate', '-i', 'Packs/PackName/Playbooks/playbook.yml',
+                                                   '--no-docker-checks', '--no-conf-json', '--allow-skipped'],
+                                            catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout
     assert success_reg.search(result_format.stdout)

@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from mock import mock_open, patch
+from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
@@ -691,10 +692,12 @@ class TestIntegrationValidator:
             {'display': 'token'},
             {'display': 'User_name'}
         ]})
-        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
-        validator = IntegrationValidator(structure_validator)
 
-        assert not validator.is_valid_parameters_display_name()
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.is_valid_parameters_display_name()
 
     def test_valid_integration_path(self, integration):
         """
@@ -790,10 +793,11 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration('my_Int')
 
-        structure_validator = StructureValidator(integration.yml.path)
-        validator = IntegrationValidator(structure_validator)
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
 
-        assert not validator.check_separators_in_folder()
+            assert not validator.check_separators_in_folder()
 
     def test_files_names_with_separators(self, pack):
         """
@@ -807,10 +811,63 @@ class TestIntegrationValidator:
 
         integration = pack.create_integration('my_Int')
 
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.check_separators_in_files()
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a name that contains the word "integration".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+        integration = pack.create_integration(yml={"name": "test_integration"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_display_name_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a display name that contains the word "integration".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration(yml={"display": "test_integration"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a name that does not contains "integration" string.
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration(yml={"name": "test", "display": "test"})
+
         structure_validator = StructureValidator(integration.yml.path)
         validator = IntegrationValidator(structure_validator)
 
-        assert not validator.check_separators_in_files()
+        assert validator.name_not_contain_the_type()
 
     IS_SKIPPED_INPUTS = [
         ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import get_core_pack_list, get_pack_name
 
 
 class TypeFields(Enum):
@@ -179,20 +180,26 @@ class IncidentFieldValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True):
         """Check whether the Incident Field is valid or not
         """
-        return all(
-            [
-                super().is_valid_file(validate_rn),
-                self.is_valid_name(),
-                self.is_valid_type(),
-                self.is_valid_group(),
-                self.is_valid_content_flag(),
-                self.is_valid_system_flag(),
-                self.is_valid_cliname(),
-                self.is_valid_version(),
-                self.is_valid_required(),
-                self.is_valid_indicator_grid_fromversion()
-            ]
-        )
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_type(),
+            self.is_valid_group(),
+            self.is_valid_content_flag(),
+            self.is_valid_system_flag(),
+            self.is_valid_cliname(),
+            self.is_valid_version(),
+            self.is_valid_required(),
+            self.is_valid_indicator_grid_fromversion(),
+        ]
+
+        core_packs_list = get_core_pack_list()
+
+        pack = get_pack_name(self.file_path)
+        is_core = pack in core_packs_list
+        if is_core:
+            answers.append(self.is_valid_name())
+
+        return all(answers)
 
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
@@ -228,16 +235,21 @@ class IncidentFieldValidator(ContentEntityValidator):
             "XDR Alerts",  # Needed for XDR_Alerts.json
             "Indeni Issue ID",  # Needed for incidentfield-Indeni_Device_ID.json
         }
+        found_words = []
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_server_allowlist_fix(word=word),
-                    )
+                    found_words.append(word)
+
+        if found_words:
+            error_message, error_code = Errors.invalid_incident_field_name(found_words)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix=Errors.suggest_server_allowlist_fix(words=found_words),
+            ):
+                return False
 
         return True
 

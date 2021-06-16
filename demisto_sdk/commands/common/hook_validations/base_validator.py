@@ -109,9 +109,7 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
-            if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
-                     yml_dict['hidden'] is True):
+            if yml_dict.get('deprecated'):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod

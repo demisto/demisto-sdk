@@ -3,6 +3,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from mock import patch
+from TestSuite.test_tools import ChangeCWD
 
 
 def get_validator(current_file=None, old_file=None, file_path=""):
@@ -491,13 +492,13 @@ class TestScriptValidator:
         Then
             - Ensure the validate failed.
         """
+        with ChangeCWD(pack.repo_path):
+            script = pack.create_script('my_Scr')
 
-        script = pack.create_script('my_Scr')
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
 
-        structure_validator = StructureValidator(script.yml.path)
-        validator = ScriptValidator(structure_validator)
-
-        assert not validator.check_separators_in_folder()
+            assert not validator.check_separators_in_folder()
 
     def test_files_names_with_separators(self, pack):
         """
@@ -508,10 +509,87 @@ class TestScriptValidator:
         Then
             - Ensure the validate failed.
         """
+        with ChangeCWD(pack.repo_path):
+            script = pack.create_script('my_Int')
 
-        script = pack.create_script('my_Int')
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
+
+            assert not validator.check_separators_in_files()
+
+    DEPRECATED_VALID = {"deprecated": True, "comment": "Deprecated. Use the XXXX script instead."}
+    DEPRECATED_VALID2 = {"deprecated": True, "comment": "Deprecated. Feodo Tracker no longer supports this feed "
+                                                        "No available replacement."}
+    DEPRECATED_VALID3 = {"deprecated": True, "comment": "Deprecated. The script uses an unsupported scraping "
+                                                        "API. Use Proofpoint Protection Server v2 script instead."}
+    DEPRECATED_INVALID_DESC = {"deprecated": True, "comment": "Deprecated."}
+    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "comment": "Use the ServiceNow script to manage..."}
+    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "comment": "Deprecated. The script uses an unsupported scraping"
+                                                               " API."}
+    DEPRECATED_INPUTS = [
+        (DEPRECATED_VALID, True),
+        (DEPRECATED_VALID2, True),
+        (DEPRECATED_VALID3, True),
+        (DEPRECATED_INVALID_DESC, False),
+        (DEPRECATED_INVALID_DESC2, False),
+        (DEPRECATED_INVALID_DESC3, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
+    def test_is_valid_deprecated_script(self, current, answer):
+        """
+        Given
+            1. A deprecated script with a valid description according to 'deprecated regex' (including the replacement
+               script name).
+            2. A deprecated script with a valid description according to the 'deprecated no replacement regex'.
+            3. A deprecated script with a valid description according to 'deprecated regex' (including the replacement
+               script name, and the reason for deprecation.).
+            4. A deprecated script with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't include a replacement script name, or declare there isn't a replacement).
+            5. A deprecated script with an invalid description that isn't according to the 'deprecated regex'
+               (doesn't start with the phrase: 'Deprecated.').
+            6. A deprecated script with an invalid description that isn't according to the 'deprecated regex'
+               (Includes the reason for deprecation, but doesn't include a replacement script name,
+               or declare there isn't a replacement).
+        When
+            - running is_valid_as_deprecated.
+
+        Then
+            - a script with an invalid description will be errored.
+        """
+        validator = get_validator(current_file=current)
+        assert validator.is_valid_as_deprecated() is answer
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that contains the word "script".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script(yml={"name": "test_script"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An script with a name that does not contains the "script" string.
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script(yml={"name": "test"})
 
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
-
-        assert not validator.check_separators_in_files()
+        assert validator.name_not_contain_the_type()

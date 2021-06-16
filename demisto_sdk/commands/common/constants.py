@@ -432,6 +432,15 @@ CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_STAR
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
 
+# deprecated regex
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
+DEPRECATED_REGEXES: List[str] = [
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX
+]
+
 PACK_METADATA_NAME = 'name'
 PACK_METADATA_DESC = 'description'
 PACK_METADATA_SUPPORT = 'support'
@@ -790,7 +799,7 @@ def urljoin(*args: str):
 
 
 class GithubCredentials:
-    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):

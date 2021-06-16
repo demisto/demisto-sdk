@@ -496,7 +496,7 @@ class GitUtil:
             git_file_path: The git file path that was fetched. For example get origin/master:README.md
             file_content: The fetched file content.
         """
-        relative_file_path = full_file_path.split(f"{self.git_path()}/")[-1]
+        relative_file_path = full_file_path.split(f"{self.git_path()[-1]}/", 2)[-1]
         remote_name = 'origin'
         try:
             remote_name = self.repo.remote().name

@@ -357,10 +357,8 @@ class TestGetRemoteFileLocally:
 
         mocker.patch.object(requests, 'get', return_value=Response)
         mocker.patch.object(os, 'getenv', return_value=False)
-        some_file_json = tools.get_remote_file(
-            self.FILE_NAME,
-            github_repo=self.REPO_NAME
-        )
+        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
+                                               github_repo=self.REPO_NAME)
         assert some_file_json
         assert some_file_json['id'] == 'some_file'
 

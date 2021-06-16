@@ -424,9 +424,8 @@ class TestPlaybook:
     def print_context_to_log(self, client: DefaultApi, incident_id: str) -> None:
         try:
             body = {
-                "query": "${}"
+                "query": f"${{{self.configuration.context_print_dt}}}"
             }
-            self.build_context.logging_module.info(f'sending /investigation/{incident_id}/context with body: {body}. dt is: {self.configuration.context_print_dt}')
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path=f'/investigation/{incident_id}/context', body=body)
             if int(res[1]) != 200:

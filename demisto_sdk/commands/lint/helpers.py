@@ -511,7 +511,10 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
     if report:
         report_data = io.StringIO()
         report_data.write('\n\n############################\n unit-tests coverage report\n############################\n')
-        cov.report(file=report_data)
+        try:
+            cov.report(file=report_data)
+        except coverage.misc.CoverageException as warning:
+            logger.warning(str(warning))
         report_data.seek(0)
         logger.info(report_data.read())
 

@@ -1,3 +1,5 @@
+from typing import List
+
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 import networkx as nx
 import pytest
@@ -7,220 +9,258 @@ from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 
+def create_a_pack_entity(pack, entity_type: str = None, entity_id: str = None, entity_name: str = None,
+                         commands: List[str] = None):
+    """
+    Given
+        - A Pack.
+
+    When
+        - add an entity to the pack.
+
+    Then
+        - Adds the entity to the pack with basic data.
+    """
+    if entity_type == 'script':
+        pack.create_script(entity_id).create_default_script(entity_id)
+    elif entity_type == 'integration':
+        pack.create_integration(entity_id).create_default_integration(entity_id, commands)
+    elif entity_type == 'playbook':
+        pack.create_playbook(entity_id).create_default_playbook(entity_id)
+    elif entity_type == 'test_playbook':
+        pack.create_test_playbook(entity_id).create_default_test_playbook(entity_id)
+    elif entity_type == 'classifier':
+        content = {'id': entity_id, 'name': entity_name, 'transformer': '', 'keyTypeMap': {}, 'type': 'classification'}
+        pack.create_classifier(entity_id, content)
+    elif entity_type == 'layout':
+        content = {"TypeName": entity_id, "kind": "details", "layout": {}, "typeId": entity_id}
+        pack.create_layout(entity_id, content)
+    elif entity_type == 'mapper':
+        content = {'id': entity_id, 'name': entity_name, 'mapping': {}, 'type': 'mapping-incomming'}
+        pack.create_mapper(entity_id, content)
+    elif entity_type == 'incident_field':
+        content = {'id': f'incident_{entity_id}', 'name': entity_name}
+        pack.create_incident_field(entity_id, content)
+    elif entity_type == 'incident_type':
+        content = {'id': entity_id, 'name': entity_name, 'preProcessingScript': '', 'color': 'test'}
+        pack.create_incident_type(entity_id, content)
+    elif entity_type == 'indicator_field':
+        content = {'id': f'indicator_{entity_id}', 'name': entity_name}
+        pack.create_indicator_field(entity_id, content)
+    elif entity_type == 'indicator_type':
+        content = {'id': entity_id, 'details': entity_name, 'regex': ''}
+        pack.create_indicator_type(entity_id, content)
+
+
 @pytest.fixture()
 def id_set(repo):
+    # Create 4 pack with all entities
     repo.setup_content_repo(5)
 
+    # Create a pack called 'PrismaCloudCompute' with 4 scripts and 1 incident_type.
     prisma_cloud_compute = repo.create_pack('PrismaCloudCompute')
-    prisma_cloud_compute.create_script('PrismaCloudComputeParseAuditAlert').create_default_script(
-        'PrismaCloudComputeParseAuditAlert')
-    prisma_cloud_compute.create_script('PrismaCloudComputeParseCloudDiscoveryAlert').create_default_script(
-        'PrismaCloudComputeParseCloudDiscoveryAlert')
-    prisma_cloud_compute.create_script('PrismaCloudComputeParseComplianceAlert').create_default_script(
-        'PrismaCloudComputeParseComplianceAlert')
-    prisma_cloud_compute.create_script('PrismaCloudComputeParseVulnerabilityAlert').create_default_script(
-        'PrismaCloudComputeParseVulnerabilityAlert')
-    prisma_cloud_compute.create_incident_type('Prisma Cloud Compute Cloud Discovery',
-                                              {'id': 'Prisma Cloud Compute Cloud Discovery',
-                                               'name': 'Prisma Cloud Compute Cloud Discovery',
-                                               'preProcessingScript': '', 'color': 'test'})
+    prisma_cloud_compute_scripts = ['PrismaCloudComputeParseAuditAlert',
+                                    'PrismaCloudComputeParseCloudDiscoveryAlert',
+                                    'PrismaCloudComputeParseComplianceAlert',
+                                    'PrismaCloudComputeParseVulnerabilityAlert']
+    for script in prisma_cloud_compute_scripts:
+        create_a_pack_entity(prisma_cloud_compute, 'script', script)
+    create_a_pack_entity(prisma_cloud_compute, 'incident_type', 'Prisma Cloud Compute Cloud Discovery',
+                         'Prisma Cloud Compute Cloud Discovery')
 
+    # Create a pack called 'PrismaCloudCompute' with 1 playbook.
     expanse = repo.create_pack('Expanse')
-    expanse.create_playbook('Expanse_Incident_Playbook', {'id': 'ExpanseParseRawIncident',
-                                                          'name': 'Expanse Incident Playbook',
-                                                          'tasks': {},
-                                                          'fromversion': '5.0.0',
-                                                          'tests': ['No tests (auto formatted)']})
+    create_a_pack_entity(expanse, 'playbook', 'Expanse_Incident_Playbook')
 
+    # Create a pack called 'GetServerURL' with 1 script.
     get_server_url = repo.create_pack('GetServerURL')
-    get_server_url.create_script('GetServerURL').create_default_script('GetServerURL')
+    create_a_pack_entity(get_server_url, 'script', 'GetServerURL')
 
+    # Create a pack called 'HelloWorld' with 1 script and 1 classifier.
     hello_world = repo.create_pack('HelloWorld')
-    hello_world.create_script('HelloWorldScript').create_default_script('HelloWorldScript')
-    hello_world.create_classifier('HelloWorld', {'id': 'HelloWorld', 'name': 'HelloWorld', 'transformer': '',
-                                                 'keyTypeMap': {}, 'type': 'classification'})
+    create_a_pack_entity(hello_world, 'script', 'HelloWorldScript')
+    create_a_pack_entity(hello_world, 'classifier', 'HelloWorld', 'HelloWorld')
 
+    # Create a pack called 'Feedsslabusech' with 1 integration.
     feedsslabusech = repo.create_pack('Feedsslabusech')
-    feedsslabusech.create_integration('Feedsslabusech').create_default_integration(
-        'Feedsslabusech', ['sslbl-get-indicators'])
+    create_a_pack_entity(feedsslabusech, 'integration', 'Feedsslabusech', commands=['sslbl-get-indicators'])
 
+    # Create a pack called 'ActiveMQ' with 1 integration.
     active_mq = repo.create_pack('ActiveMQ')
-    active_mq.create_integration('ActiveMQ').create_default_integration('ActiveMQ', ['activemq-subscribe'])
+    create_a_pack_entity(active_mq, 'integration', 'ActiveMQ', commands=['activemq-subscribe'])
 
+    # Create a pack called 'FeedAlienVault' with 1 integration.
     feed_alien_vault = repo.create_pack('FeedAlienVault')
-    feed_alien_vault.create_integration('FeedAlienVault').create_default_integration(
-        'FeedAlienVault', ['alienvault-get-indicators'])
+    create_a_pack_entity(feed_alien_vault, 'integration', 'FeedAlienVault', commands=['alienvault-get-indicators'])
 
+    # Create a pack called 'QRadar' with 1 integration.
     qradar = repo.create_pack('QRadar')
-    qradar.create_integration('QRadar').create_default_integration('QRadar', ['qradar-searches'])
+    create_a_pack_entity(qradar, 'integration', 'QRadar', commands=['qradar-searches'])
 
+    # Create a pack called 'Active_Directory_Query' with 1 integration and 1 script.
     active_directory_query = repo.create_pack('Active_Directory_Query')
-    active_directory_query.create_integration('Active Directory Query').create_default_integration(
-        'Active Directory Query', ['ad-get-user', 'ad-search'])
-    active_directory_query.create_script('ADGetUser').create_default_script('ADGetUser')
+    create_a_pack_entity(active_directory_query, 'integration', 'Active Directory Query',
+                         commands=['ad-get-user', 'ad-search'])
+    create_a_pack_entity(active_directory_query, 'script', 'ADGetUser')
 
+    # Create a pack called 'Pcysys' with 1 playbook.
     pcysys = repo.create_pack('Pcysys')
-    pcysys.create_playbook('Pentera Run Scan').create_default_playbook('Pentera Run Scan')
+    create_a_pack_entity(pcysys, 'playbook', 'Pentera Run Scan')
 
+    # Create a pack called 'Indeni' with 1 playbook.
     indeni = repo.create_pack('Indeni')
-    indeni.create_playbook('Indeni Demo').create_default_playbook('Indeni Demo')
+    create_a_pack_entity(indeni, 'playbook', 'Indeni Demo')
 
+    # Create a pack called 'Pcysys' with 1 playbook.
     slack = repo.create_pack('Slack')
-    slack.create_playbook('Failed Login Playbook - Slack v2').create_default_playbook(
-        'Failed Login Playbook - Slack v2')
+    create_a_pack_entity(slack, 'playbook', 'Failed Login Playbook - Slack v2')
 
+    # Create a pack called 'FeedAWS' with 1 integration.
     feed_aws = repo.create_pack('FeedAWS')
-    feed_aws.create_integration('FeedAWS').create_default_integration('FeedAWS', ['aws-get-indicators'])
+    create_a_pack_entity(feed_aws, 'integration', 'FeedAWS', commands=['aws-get-indicators'])
 
+    # Create a pack called 'FeedAutoFocus' with 1 integration.
     feed_autofocus = repo.create_pack('FeedAutofocus')
-    feed_autofocus.create_integration('FeedAutofocus').create_default_integration(
-        'FeedAutofocus', ['autofocus-get-indicators'])
+    create_a_pack_entity(feed_autofocus, 'integration', 'FeedAutofocus', commands=['autofocus-get-indicators'])
 
+    # Create a pack called 'ipinfo' with 1 integration.
     ipinfo = repo.create_pack('ipinfo')
-    ipinfo.create_integration('ipinfo').create_default_integration('ipinfo', ['ip'])
+    create_a_pack_entity(ipinfo, 'integration', 'ipinfo', commands=['ip'])
 
+    # Create a pack called 'DigitalGuardian' with 1 incident_field.
     digital_guardian = repo.create_pack('DigitalGuardian')
-    digital_guardian.create_incident_field('digitalguardianusername', {'id': 'incident_digitalguardianusername',
-                                                                       'name': 'Digital Guardian Username'})
+    create_a_pack_entity(digital_guardian, 'incident_field', 'digitalguardianusername', 'Digital Guardian Username')
 
+    # Create a pack called 'EmployeeOffboarding' with 1 incident_field.
     employee_offboarding = repo.create_pack('EmployeeOffboarding')
-    employee_offboarding.create_incident_field('Google Display Name', {'id': 'incident_googledisplayname',
-                                                                       'name': 'Google Display Name'})
+    create_a_pack_entity(employee_offboarding, 'incident_field', 'googledisplayname', 'Google Display Name')
 
+    # Create a pack called 'Phishing' with 3 incident_fields and 1 script.
     phishing = repo.create_pack('Phishing')
-    phishing.create_incident_field('attachmentname', {'id': 'incident_attachmentname', 'name': 'Attachment Name'})
-    phishing.create_incident_field('emailfrom', {'id': 'incident_emailfrom', 'name': 'Email From'})
-    phishing.create_incident_field('emailsubject', {'id': 'incident_emailsubject', 'name': 'Email Subject'})
-    phishing.create_script('CheckEmailAuthenticity').create_default_script('CheckEmailAuthenticity')
+    create_a_pack_entity(phishing, 'incident_field', 'attachmentname', 'Attachment Name')
+    create_a_pack_entity(phishing, 'incident_field', 'emailfrom', 'Email From')
+    create_a_pack_entity(phishing, 'incident_field', 'emailsubject', 'Email Subject')
+    create_a_pack_entity(phishing, 'script', 'CheckEmailAuthenticity')
 
+    # Create a pack called 'CommonTypes' with 3 incident_fields 2 incident_types 5 indicator_fields 1 indicator_type.
     common_types = repo.create_pack('CommonTypes')
-    common_types.create_incident_field('accountid', {'id': 'incident_accountid', 'name': 'Account Id'})
-    common_types.create_incident_field('country', {'id': 'incident_country', 'name': 'Country'})
-    common_types.create_incident_field('Username', {'id': 'incident_username', 'name': 'Username'})
-    common_types.create_incident_type('Network', {'id': 'Network', 'name': 'Network',
-                                                  'preProcessingScript': '', 'color': 'test'})
-    common_types.create_incident_type('Authentication', {'id': 'Authentication', 'name': 'Authentication',
-                                                         'preProcessingScript': '', 'color': 'test'})
-    common_types.create_indicator_field('accounttype', {'id': 'indicator_accounttype', 'name': 'Account Type'})
-    common_types.create_indicator_field('adminname', {'id': 'indicator_adminname', 'name': 'adminname'})
-    common_types.create_indicator_field('tags', {'id': 'indicator_tags', 'name': 'tags'})
-    common_types.create_indicator_field('CommonTypes', {'id': 'CommonTypes', 'name': 'CommonTypes'})
-    common_types.create_indicator_field('adminemail', {'id': 'indicator_adminemail', 'name': 'Admin Email'})
-    common_types.create_indicator_type('accountRep', {'id': 'accountRep', 'details': 'accountRep', 'regex': ''})
+    ct_incident_field_ids = ['accountid', 'country', 'username']
+    ct_incident_field_names = ['Account Id', 'Country', 'Username']
+    ct_incident_type_ids = ['Network', 'Authentication']
+    ct_incident_type_names = ['Network', 'Authentication']
+    ct_indicator_field_ids = ['accounttype', 'adminname', 'tags', 'commontypes', 'adminemail']
+    ct_indicator_field_names = ['Account Type', 'Admin Name', 'Tags', 'Common Types', 'Admin Email']
+    for i in range(len(ct_incident_field_ids)):
+        create_a_pack_entity(common_types, 'incident_field', ct_incident_field_ids[i], ct_incident_field_names[i])
+    for i in range(len(ct_incident_type_ids)):
+        create_a_pack_entity(common_types, 'incident_type', ct_incident_type_ids[i], ct_incident_type_names[i])
+    for i in range(len(ct_indicator_field_ids)):
+        create_a_pack_entity(common_types, 'indicator_field', ct_indicator_field_ids[i], ct_indicator_field_names[i])
+    create_a_pack_entity(common_types, 'indicator_type', 'accountrep', 'Account Rep')
 
+    # Create a pack called 'SafeBreach' with 1 incident_field and 1 integration.
     safe_breach = repo.create_pack('SafeBreach')
-    safe_breach.create_indicator_field('safebreachremediationstatus', {'id': 'indicator_safebreachremediationstatus',
-                                                                       'name': 'SafeBreach Remediation Status'})
-    safe_breach.create_integration('SafeBreach').create_default_integration('SafeBreach',
-                                                                            ['safebreach-get-remediation-data'])
+    create_a_pack_entity(safe_breach, 'indicator_field', 'safebreachremediationstatus', 'SafeBreach Remediation Status')
+    create_a_pack_entity(safe_breach, 'integration', 'SafeBreach', commands=['safebreach-get-remediation-data'])
 
+    # Create a pack called 'CommonScripts' with 7 scripts.
     common_scripts = repo.create_pack('CommonScripts')
-    common_scripts.create_script('ChangeContext').create_default_script('ChangeContext')
-    common_scripts.create_script('Set').create_default_script('Set')
-    common_scripts.create_script('SetAndHandleEmpty').create_default_script('SetAndHandleEmpty')
-    common_scripts.create_script('AssignAnalystToIncident').create_default_script('AssignAnalystToIncident')
-    common_scripts.create_script('EmailAskUser').create_default_script('EmailAskUser')
-    common_scripts.create_script('ScheduleCommand').create_default_script('ScheduleCommand')
-    common_scripts.create_script('DeleteContext').create_default_script('DeleteContext')
+    create_a_pack_entity(common_scripts, 'script', 'ChangeContext')
+    create_a_pack_entity(common_scripts, 'script', 'Set')
+    create_a_pack_entity(common_scripts, 'script', 'SetAndHandleEmpty')
+    create_a_pack_entity(common_scripts, 'script', 'AssignAnalystToIncident')
+    create_a_pack_entity(common_scripts, 'script', 'EmailAskUser')
+    create_a_pack_entity(common_scripts, 'script', 'ScheduleCommand')
+    create_a_pack_entity(common_scripts, 'script', 'DeleteContext')
 
+    # Create a pack called 'CalculateTimeDifference' with 1 script.
     calculate_time_difference = repo.create_pack('CalculateTimeDifference')
-    calculate_time_difference.create_script('CalculateTimeDifference').create_default_script('CalculateTimeDifference')
+    create_a_pack_entity(calculate_time_difference, 'script', 'CalculateTimeDifference')
 
+    # Create a pack called 'CommonPlaybooks' with 3 playbooks.
     common_playbooks = repo.create_pack('CommonPlaybooks')
-    common_playbooks.create_playbook('Block IP - Generic v2').create_default_playbook('Block IP - Generic v2')
-    common_playbooks.create_playbook('IP Enrichment - Generic v2').create_default_playbook('IP Enrichment - Generic v2')
-    common_playbooks.create_playbook('Active Directory - Get User Manager Details').\
-        create_default_playbook('Active Directory - Get User Manager Details')
+    create_a_pack_entity(common_playbooks, 'playbook', 'Block IP - Generic v2')
+    create_a_pack_entity(common_playbooks, 'playbook', 'IP Enrichment - Generic v2')
+    create_a_pack_entity(common_playbooks, 'playbook', 'Active Directory - Get User Manager Details')
 
+    # Create a pack called 'FeedMitreAttack' with 1 indicator_type.
     feed_mitre_attack = repo.create_pack('FeedMitreAttack')
-    feed_mitre_attack.create_indicator_type('MITRE ATT&CK',
-                                            {'id': 'MITRE ATT&CK', 'details': 'MITRE ATT&CK', 'regex': ''})
+    create_a_pack_entity(feed_mitre_attack, 'indicator_type', 'MITRE ATT&CK', 'MITRE ATT&CK')
 
+    # Create a pack called 'CrisisManagement' with 1 incident_type and 1 incident_field.
     crisis_management = repo.create_pack('CrisisManagement')
-    crisis_management.create_incident_type('HR Ticket', {'id': 'HR Ticket', 'name': 'HR Ticket',
-                                                         'preProcessingScript': '', 'color': 'test'})
-    crisis_management.create_indicator_field('Job_Title', {'id': 'indicator_jobtitle', 'name': 'Job Title'})
+    create_a_pack_entity(crisis_management, 'incident_type', 'HR Ticket', 'HR Ticket')
+    create_a_pack_entity(crisis_management, 'indicator_field', 'jobtitle', 'Job Title')
 
+    # Create a pack called 'Carbon_Black_Enterprise_Response' with 2 scripts.
     carbon_black_enterprise_response = repo.create_pack('Carbon_Black_Enterprise_Response')
-    carbon_black_enterprise_response.create_script('CBLiveFetchFiles').create_default_script('CBLiveFetchFiles')
-    carbon_black_enterprise_response.create_script('CBAlerts').create_default_script('CBAlerts')
+    create_a_pack_entity(carbon_black_enterprise_response, 'script', 'CBLiveFetchFiles')
+    create_a_pack_entity(carbon_black_enterprise_response, 'script', 'CBAlerts')
 
+    # Create a pack called 'Claroty' with 3 mappers and 1 incident_type.
     claroty = repo.create_pack('Claroty')
-    claroty.create_mapper('Claroty-mapper', {'id': 'Claroty-mapper', 'name': 'Claroty-mapper',
-                                             'mapping': {}, 'type': 'mapping-incomming'})
-    claroty.create_mapper('Claroty', {'id': 'Claroty', 'name': 'Claroty', 'mapping': {}, 'type': 'mapping-incomming'})
-    claroty.create_mapper('Claroty - Incoming Mapper', {'id': 'Claroty - Incoming Mapper',
-                                                        'name': 'Claroty - Incoming Mapper',
-                                                        'mapping': {}, 'type': 'mapping-incomming'})
-    claroty.create_incident_type('Claroty Integrity Incident', {'id': 'Claroty Integrity Incident',
-                                                                'name': 'Claroty Integrity Incident',
-                                                                'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(claroty, 'mapper', 'CBAlerts-mapper', 'Claroty-mapper')
+    create_a_pack_entity(claroty, 'mapper', 'Claroty', 'Claroty')
+    create_a_pack_entity(claroty, 'mapper', 'CBAlerts - Incoming Mapper', 'Claroty - Incoming Mapper')
+    create_a_pack_entity(claroty, 'incident_type', 'Claroty Integrity Incident', 'Claroty Integrity Incident')
 
+    # Create a pack called 'EWS' with 1 mapper.
     ews = repo.create_pack('EWS')
-    ews.create_mapper('EWS v2-mapper', {'id': 'EWS v2-mapper', 'name': 'EWS v2-mapper',
-                                        'mapping': {}, 'type': 'mapping-incomming'})
+    create_a_pack_entity(ews, 'mapper', 'EWS v2-mapper', 'EWS v2-mapper')
 
+    # Create a pack called 'AutoFocus' with 1 playbook.
     auto_focus = repo.create_pack('AutoFocus')
-    auto_focus.create_playbook('Autofocus Query Samples, Sessions and Tags').create_default_playbook(
-        'Autofocus Query Samples, Sessions and Tags')
+    create_a_pack_entity(auto_focus, 'playbook', 'Autofocus Query Samples, Sessions and Tags',
+                         'Autofocus Query Samples, Sessions and Tags')
 
+    # Create a pack called 'Volatility' with 1 script.
     volatility = repo.create_pack('Volatility')
-    volatility.create_script('AnalyzeMemImage').create_default_script('AnalyzeMemImage')
+    create_a_pack_entity(volatility, 'script', 'AnalyzeMemImage')
 
+    # Create a pack called 'PAN-OS' with 1 incident_type.
     pan_os = repo.create_pack('PAN-OS')
-    pan_os.create_incident_type('FirewallUpgrade', {'id': 'FirewallUpgrade', 'name': 'FirewallUpgrade',
-                                                    'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(pan_os, 'incident_type', 'FirewallUpgrade', 'FirewallUpgrade')
 
+    # Create a pack called 'Logzio' with 1 incident_type.
     logzio = repo.create_pack('Logzio')
-    logzio.create_incident_type('Logz.io Alert', {'id': 'Logz.io Alert', 'name': 'Logz.io Alert',
-                                                  'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(logzio, 'incident_type', 'Logz.io Alert', 'Logz.io Alert')
 
+    # Create a pack called 'AccessInvestigation' with 1 incident_type.
     access_investigation = repo.create_pack('AccessInvestigation')
-    access_investigation.create_incident_type('Access', {'id': 'Access', 'name': 'Access',
-                                                         'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(access_investigation, 'incident_type', 'Access', 'Access')
 
+    # Create a pack called 'PrismaCloud' with 1 incident_type.
     prisma_cloud = repo.create_pack('PrismaCloud')
-    prisma_cloud.create_incident_type('AWS CloudTrail Misconfiguration', {'id': 'AWS CloudTrail Misconfiguration',
-                                                                          'name': 'AWS CloudTrail Misconfiguration',
-                                                                          'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(prisma_cloud, 'incident_type', 'AWS CloudTrail Misconfiguration',
+                         'AWS CloudTrail Misconfiguration')
 
+    # Create a pack called 'BruteForce' with 1 incident_field.
     brute_force = repo.create_pack('BruteForce')
-    brute_force.create_incident_field('incident_accountgroups', {'id': 'incident_accountgroups',
-                                                                 'name': 'incident_accountgroups'})
+    create_a_pack_entity(brute_force, 'incident_field', 'accountgroups', 'Account Groups')
 
+    # Create a pack called 'Compliance' with 1 incident_field.
     complience = repo.create_pack('Compliance')
-    complience.create_incident_field('emailaddress', {'id': 'incident_emailaddress', 'name': 'E-mail Address'})
+    create_a_pack_entity(complience, 'incident_field', 'emailaddress', 'E-mail Address')
 
+    # Create a pack called 'CortexXDR' with 1 classifier.
     cortex_xdr = repo.create_pack('CortexXDR')
-    cortex_xdr.create_classifier('Cortex XDR - IR', {'id': 'Cortex XDR - IR', 'name': 'Cortex XDR - IR',
-                                                     'transformer': '', 'keyTypeMap': {}, 'type': 'classification'})
+    create_a_pack_entity(cortex_xdr, 'classifier', 'Cortex XDR - IR', 'Cortex XDR - IR')
 
+    # Create a pack called 'ImpossibleTraveler' with:
+    # 1 integration 1 playbook 1 test_playbook 1 layout 7 incident_fields 1 incident type
     impossible_traveler = repo.create_pack('ImpossibleTraveler')
-    impossible_traveler.create_script('CalculateGeoDistance').create_default_script('CalculateGeoDistance')
-    impossible_traveler.create_playbook('Impossible_Traveler').create_default_playbook('Impossible Traveler')
-    impossible_traveler.create_test_playbook(
-        'playbook-Impossible_Traveler_-_Test').create_default_test_playbook('Impossible Traveler - Test')
-    impossible_traveler.create_layout('Impossible_Traveler', {"TypeName": "Impossible Traveler", "kind": "details",
-                                                              "layout": {}, "typeId": "Impossible Traveler"})
-    impossible_traveler.create_incident_field('Coordinates', {'id': 'incident_coordinates', 'name': 'Coordinates'})
-    impossible_traveler.create_incident_field('Previous_Coordinates', {'id': 'incident_previouscoordinates',
-                                                                       'name': 'Previous Coordinates',
-                                                                       "associatedTypes": ["Impossible Traveler"]})
-    impossible_traveler.create_incident_field('previouscountry', {'id': 'incident_previouscountry',
-                                                                  'name': 'previouscountry'})
-    impossible_traveler.create_incident_field('Previous_Sign_In_Date_Time',
-                                              {'id': 'incident_previoussignindatetime',
-                                               'name': 'Previous Sign In Date Time'})
-    impossible_traveler.create_incident_field('Previous_Source_IP', {'id': 'incident_previoussourceip',
-                                                                     'name': 'Previous Source IP'})
-    impossible_traveler.create_incident_field('Sign_In_Date_Time', {'id': 'incident_signindatetime',
-                                                                    'name': 'Sign In Date Time'})
-    impossible_traveler.create_incident_field('Travel_Map_Link', {'id': 'incident_travelmaplink',
-                                                                  'name': 'Travel Map Link'})
-    impossible_traveler.create_incident_type('Impossible_Traveler', {'id': 'impossibletraveler',
-                                                                     'name': 'Impossible Traveler',
-                                                                     "playbookId": "Impossible Traveler",
-                                                                     'preProcessingScript': '', 'color': 'test'})
+    create_a_pack_entity(impossible_traveler, 'script', 'CalculateGeoDistance')
+    create_a_pack_entity(impossible_traveler, 'playbook', 'Impossible Traveler')
+    create_a_pack_entity(impossible_traveler, 'test_playbook', 'Impossible Traveler - Test')
+    create_a_pack_entity(impossible_traveler, 'layout', 'Impossible Traveler')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'coordinates' 'Coordinates')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'previouscoordinates' 'Previous Coordinates')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'previouscountry' 'Previou Country')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'previoussignindatetime' 'Previous Sign In Date Time')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'previoussourceiP' 'Previous Source IP')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'signindatetime' 'Sign In Date Time')
+    create_a_pack_entity(impossible_traveler, 'incident_field', 'travelmaplink' 'Travel Map Link')
+    create_a_pack_entity(impossible_traveler, 'incident_type', 'impossibletraveler' 'Impossible Traveler')
 
     with ChangeCWD(repo.path):
         ids = cis.IDSetCreator()
@@ -295,12 +335,15 @@ class TestIdSetFilters:
 
         expected_result = [
             {
-                "ExpanseParseRawIncident": {
-                    "name": "Expanse Incident Playbook",
+                "Expanse_Incident_Playbook": {
+                    "name": "Expanse_Incident_Playbook",
                     "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
                     "fromversion": "5.0.0",
+                    "implementing_scripts": [
+                        'DeleteContext'
+                    ],
                     "tests": [
-                        "No tests (auto formatted)"
+                        "No tests"
                     ],
                     "pack": "Expanse"
                 }

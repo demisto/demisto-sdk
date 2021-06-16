@@ -18,6 +18,8 @@ Supported content entities:
 - Connections
 - Indicator Types
 
+In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' handling of deleted files will be done with the local remote git branch.
+
 ### Arguments
 * **-i, --input <PACK_PATH>**
 

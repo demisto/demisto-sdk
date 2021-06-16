@@ -484,3 +484,25 @@ class GitUtil:
             return ''
 
         return diff_line.split()[0].upper() if not diff_line.startswith('?') else 'A'
+
+    def get_local_remote_file_content(self, full_file_path: str, tag: str) -> Tuple[str, str]:
+        """Get local file content from remote branch. For example get origin/master:README.md
+
+        Args:
+            full_file_path: The file path to fetch. For example 'content/README.md'
+            tag: The tag of the branch. For example 'master'
+
+        Returns:
+            git_file_path: The git file path that was fetched. For example get origin/master:README.md
+            file_content: The fetched file content.
+        """
+        relative_file_path = full_file_path.split(f"{self.git_path()}/")[-1]
+        remote_name = 'origin'
+        try:
+            remote_name = self.repo.remote().name
+        except Exception as exc:
+            if "Remote named 'origin' didn't exist" in str(exc):
+                remote_name = 'origin'
+        git_file_path = f'{remote_name}/{tag}:{relative_file_path}'
+        file_content = self.repo.git.show(git_file_path)
+        return git_file_path, file_content

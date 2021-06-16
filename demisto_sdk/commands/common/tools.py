@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType,
     GithubContentConfig, urljoin)
+from demisto_sdk.commands.common.git_util import GitUtil
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -246,10 +247,8 @@ def get_remote_file(
                     repo_name = github_config.CURRENT_REPOSITORY
                     path_to_dir = os.path.join(repo_name, os.path.dirname(full_file_path))
                     repo = git.Repo(path_to_dir, search_parent_directories=True)
-                    repo_path = repo.git.rev_parse('--show-toplevel')
-                    relative_file_path = full_file_path.split(f"{repo_path}/")[-1]
-                    github_path = f'origin/{tag}:{relative_file_path}'
-                    local_content = repo.git.show(github_path)
+                    repo_git_util = GitUtil(repo)
+                    github_path, local_content = repo_git_util.get_local_remote_file_content(full_file_path, tag)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()

@@ -1455,6 +1455,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)
     if any(duplicates) and print_logs:
+        # TODO: should probably fail the entire process here
         print_error(
             f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
         )
@@ -1511,6 +1512,8 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         duplicates.append(external_object)
 
     for dup1, dup2 in itertools.combinations(duplicates, 2):
+        print(f"dup1 is: {dup1}")
+        print(f"dup2 is: {dup2}")
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
         dict1_from_version = LooseVersion(dict1.get('fromversion', '0.0.0'))

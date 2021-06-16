@@ -1,5 +1,5 @@
 # Changelog
-
+* Fixed the **find-dependencies** by packs with integrations that implement 'send-notification' command
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

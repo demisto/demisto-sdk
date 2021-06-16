@@ -20,6 +20,7 @@
 * Added the **convert** command to convert entities between XSOAR versions.
 * Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
 * Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
+* Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

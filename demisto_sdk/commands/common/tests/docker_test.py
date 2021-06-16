@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
+from TestSuite.test_tools import ChangeCWD
 
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
 
@@ -286,9 +287,10 @@ class TestDockerImage:
             "https://hub.docker.com/v2/repositories/demisto/nonexistingdocker/tags",
             json={'results': []}
         )
-        validator = DockerImageValidator(integration.yml.path, True, True)
-        assert validator.is_docker_image_valid() is False
-        captured = capsys.readouterr()
-        assert validator.is_valid is False
-        assert error in captured.out
-        assert code in captured.out
+        with ChangeCWD(integration.repo_path):
+            validator = DockerImageValidator(integration.yml.path, True, True)
+            assert validator.is_docker_image_valid() is False
+            captured = capsys.readouterr()
+            assert validator.is_valid is False
+            assert error in captured.out
+            assert code in captured.out

@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import shutil
+import sqlite3
 import tarfile
 import textwrap
 from contextlib import contextmanager
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
 
 # Third party packages
+import coverage
 import docker
 import docker.errors
 import git
@@ -457,3 +459,70 @@ def split_warnings_errors(output: str):
             other_msg_list.append(msg)
 
     return error_list, warnings_list, other_msg_list
+
+
+def coverage_report_editor(coverage_file, code_file_absolute_path):
+    """
+
+    Args:
+        coverage_file: the .coverage file this contains the coverage data in sqlite format.
+        code_file_absolute_path: the real absolute path to the measured code file.
+
+    Notes:
+        the .coverage files contain all the files list with their absolute path.
+        but our tests (pytest step) are running inside a docker container.
+        so we have to change the path to the correct one.
+    """
+    with sqlite3.connect(coverage_file) as sql_connection:
+        cursor = sql_connection.cursor()
+        index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]
+        if not index == 1:
+            logger.error('unexpected file list in coverage report')
+        else:
+            cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
+            sql_connection.commit()
+        cursor.close()
+
+
+def coverage_files():
+    packs_pass = Path('Packs')
+    for cov_path in packs_pass.glob('*/Integrations/*/.coverage'):
+        yield str(cov_path)
+    for cov_path in packs_pass.glob('*/Scripts/*/.coverage'):
+        yield str(cov_path)
+
+
+def generate_coverage_report(html=False, xml=False, report=True, cov_dir='coverage_report'):
+    """
+    Args:
+        html(bool): should generate an html report. default false
+        xml(bool): should generate an xml report. default false
+        report(bool): should print the coverage report. default true
+        cov_dir(str): the directory to place the report files (.coverage, html and xml report)
+    """
+    cov_file = os.path.join(cov_dir, '.coverage')
+    cov = coverage.Coverage(data_file=cov_file)
+    cov.combine(coverage_files())
+    if not os.path.exists(cov_file):
+        logger.debug(f'skipping coverage report {cov_file} file not found.')
+        return
+
+    export_msg = 'exporting {0} coverage report to {1}'
+    if report:
+        report_data = io.StringIO()
+        report_data.write('\n\n############################\n unit-tests coverage report\n############################\n')
+        try:
+            cov.report(file=report_data)
+        except coverage.misc.CoverageException as warning:
+            logger.warning(str(warning))
+        report_data.seek(0)
+        logger.info(report_data.read())
+
+    if html:
+        html_dir = os.path.join(cov_dir, 'html')
+        logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
+        cov.html_report(directory=html_dir)
+    if xml:
+        xml_file = os.path.join(cov_dir, 'coverage.xml')
+        logger.info(export_msg.format('xml', xml_file))
+        cov.xml_report(outfile=xml_file)

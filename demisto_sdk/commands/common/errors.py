@@ -9,13 +9,13 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105',
@@ -42,6 +42,7 @@ ERROR_CODE = {
     "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
+    "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -155,6 +156,7 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -363,6 +365,11 @@ class Errors:
     def file_name_has_separators(entity_type, invalid_files, valid_files):
         return f"The {entity_type} files {invalid_files} should be named {valid_files} " \
                f"without any separator in the base name."
+
+    @staticmethod
+    @error_code_decorator
+    def field_contain_forbidden_word(field_names: list, word: str):
+        return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
 
     @staticmethod
     @error_code_decorator
@@ -1612,3 +1619,8 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_condition_has_no_else_path(tasks_ids):
+        return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'

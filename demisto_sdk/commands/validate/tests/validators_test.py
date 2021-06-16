@@ -441,9 +441,10 @@ class TestValidators:
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
 
-        validate_manager = ValidateManager(skip_conf_json=True)
-        assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
-                                                            pack_error_ignore_list=[], is_modified=True)
+        with ChangeCWD(integration.repo_path):
+            validate_manager = ValidateManager(skip_conf_json=True)
+            assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
+                                                                pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self):
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -618,7 +619,7 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -916,23 +917,24 @@ class TestValidators:
                 - return True for the first script as the file is valid
                 - return False for script2 and scrupt3 - validate should fail and raise [ST106] error.
         """
-        validate_manager = ValidateManager()
-        pack1 = repo.create_pack('Pack1')
-        script = pack1.create_script('Script1')
-        script2 = pack1.create_script('Script2')
-        script3 = pack1.create_script('Script3')
-        script.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
-                                         "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
-                               "deprecated": True})
-        script2.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
-                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
-                                "deprecated": False})
-        script3.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
-                                          "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"})
-        old_format_file = {script.yml.path}
-        deprecated_false_file = {script2.yml.path, script3.yml.path}
-        assert validate_manager.validate_no_old_format(old_format_file)
-        assert not validate_manager.validate_no_old_format(deprecated_false_file)
+        with ChangeCWD(repo.path):
+            validate_manager = ValidateManager()
+            pack1 = repo.create_pack('Pack1')
+            script = pack1.create_script('Script1')
+            script2 = pack1.create_script('Script2')
+            script3 = pack1.create_script('Script3')
+            script.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                             "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                                   "deprecated": True})
+            script2.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                              "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n",
+                                    "deprecated": False})
+            script3.yml.write_dict({"script": "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\n"
+                                              "if __name__\\ in ('builtins', '__builtin__', '__main__'):\n    main()\n"})
+            old_format_file = {script.yml.path}
+            deprecated_false_file = {script2.yml.path, script3.yml.path}
+            assert validate_manager.validate_no_old_format(old_format_file)
+            assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
     def test_setup_git_params_master_branch(self, mocker):
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
@@ -1027,7 +1029,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/TestPack/pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
 
     validate_manager = ValidateManager()
     res = validate_manager.run_validation_using_git()
@@ -1074,10 +1076,12 @@ def test_mapping_fields_command_dont_exist(integration):
         }],
         'ismappable': True
     }})
-    structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
-    validator = IntegrationValidator(structure_validator)
 
-    assert not validator.is_mapping_fields_command_exist()
+    with ChangeCWD(integration.repo_path):
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert not validator.is_mapping_fields_command_exist()
 
 
 def test_get_packs_that_should_have_version_raised(repo):

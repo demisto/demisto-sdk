@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
                                                is_origin_content_repo,
-                                               is_v2_file,
+                                               is_pack_path, is_v2_file,
                                                retrieve_file_ending,
                                                run_command_os,
                                                server_version_compare)
@@ -958,3 +958,25 @@ def test_get_last_remote_release_version(requests_mock):
     expected_version = '1.3.8'
     requests_mock.get(r"https://pypi.org/pypi/demisto-sdk/json", json={'info': {'version': expected_version}})
     assert get_last_remote_release_version() == expected_version
+
+
+IS_PACK_PATH_INPUTS = [('Packs/BitcoinAbuse', True),
+                       ('Packs/BitcoinAbuse/Layouts', False),
+                       ('Packs/BitcoinAbuse/Classifiers', False),
+                       ('Unknown', False)]
+
+
+@pytest.mark.parametrize('input_path, expected', IS_PACK_PATH_INPUTS)
+def test_is_pack_path(input_path: str, expected: bool):
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Checking whether pack is to a pack directory.
+
+    Then:
+        - Ensure expected boolean is returned.
+
+    """
+    assert is_pack_path(input_path) == expected

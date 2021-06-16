@@ -1545,6 +1545,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
+            print_warning('The following {} have the same ID ({}) and issues with versions: '
+                          '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
+                                                         dict2_from_version, dict2_to_version))
             return True
 
     return False

@@ -737,7 +737,7 @@ def get_pack_name(file_path):
     if isinstance(file_path, Path):
         file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
+    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 
@@ -1514,7 +1514,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     try:
         resp = demisto_client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))
+        return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
         return "0"
 

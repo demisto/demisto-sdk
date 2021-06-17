@@ -16,9 +16,10 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class UpdateReleaseNotesManager:
-    def __init__(self, user_input: Optional[str], update_type: Optional[str], pre_release: Optional[bool],
-                 is_all: Optional[bool], text: Optional[str], specific_version: Optional[str],
-                 id_set_path: Optional[str], prev_ver: Optional[str]):
+    def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
+                 pre_release: Optional[bool] = False, is_all: Optional[bool] = False, text: Optional[str] = None,
+                 specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
+                 prev_ver: Optional[str] = None):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
@@ -61,7 +62,7 @@ class UpdateReleaseNotesManager:
             sys.exit(1)
 
     def get_git_changed_files(self) -> Tuple[set, set, set, set]:
-        """ Get the changed files from git (added, modified, old format, metadata)
+        """ Get the changed files from git (added, modified, old format, metadata).
 
             :return:
                 4 sets:
@@ -117,7 +118,6 @@ class UpdateReleaseNotesManager:
         filtered_modified_files = filter_files_by_type(modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         filtered_added_files = filter_files_by_type(added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         if self.given_pack:  # A specific pack was chosen to update
-            self.changed_packs_from_git = {self.given_pack}
             self.create_pack_release_notes(self.given_pack, filtered_modified_files, filtered_added_files,
                                            old_format_files)
 
@@ -130,7 +130,7 @@ class UpdateReleaseNotesManager:
 
     def create_pack_release_notes(self, pack: str, filtered_modified_files: set, filtered_added_files: set,
                                   old_format_files: set):
-        """ Creates the release notes for a given pack.
+        """ Creates the release notes for a given pack if was changed.
 
             :param
                 pack: The pack to create release notes for
@@ -163,19 +163,21 @@ class UpdateReleaseNotesManager:
                           f'If relevant changes were made, please commit the changes and rerun the command')
 
     def get_existing_rn(self, pack) -> Optional[str]:
-        """ Gets the existing rn of the pack is exists
+        """ Gets the existing rn of the pack is exists.
 
             :param
                 pack: The pack to check
             :return
-                The existing rn version
+                The existing rn version if exists, otherwise an empty string
+                None on error when pack has rn already and update type was given
         """
-        if pack in self.packs_existing_rn:
-            if self.update_type is None:
-                return self.packs_existing_rn[pack]
-            else:
-                print_error(f"New release notes file already found for {pack}. "
-                            f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-i {pack}` without specifying the update_type.")
-                return None
-        return ''
+        if pack not in self.packs_existing_rn:
+            return ''
+
+        if self.update_type is None:
+            return self.packs_existing_rn[pack]
+        else:
+            print_error(f"New release notes file already found for {pack}. "
+                        f"Please update manually or run `demisto-sdk update-release-notes "
+                        f"-i {pack}` without specifying the update_type.")
+            return None

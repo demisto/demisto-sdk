@@ -168,12 +168,12 @@ class TestDependencies:
     ct_incident_type_names = ['Network', 'Authentication']
     ct_indicator_field_ids = ['accounttype', 'adminname', 'tags', 'commontypes', 'adminemail']
     ct_indicator_field_names = ['Account Type', 'Admin Name', 'Tags', 'Common Types', 'Admin Email']
-    for i in range(len(ct_incident_field_ids)):
-        create_a_pack_entity(common_types, 'incident_field', ct_incident_field_ids[i], ct_incident_field_names[i])
-    for i in range(len(ct_incident_type_ids)):
-        create_a_pack_entity(common_types, 'incident_type', ct_incident_type_ids[i], ct_incident_type_names[i])
-    for i in range(len(ct_indicator_field_ids)):
-        create_a_pack_entity(common_types, 'indicator_field', ct_indicator_field_ids[i], ct_indicator_field_names[i])
+    for field_id, field_name in zip(ct_incident_field_ids, ct_incident_field_names):
+        create_a_pack_entity(common_types, 'incident_field', field_id, field_name)
+    for field_id, field_name in zip(ct_incident_type_ids, ct_incident_type_names):
+        create_a_pack_entity(common_types, 'incident_type', field_id, field_name)
+    for field_id, field_name in zip(ct_indicator_field_ids, ct_indicator_field_names):
+        create_a_pack_entity(common_types, 'indicator_field', field_id, field_name)
     create_a_pack_entity(common_types, 'indicator_type', 'accountrep', 'Account Rep')
 
     # Create a pack called 'SafeBreach' with 1 incident_field and 1 integration.

@@ -654,6 +654,47 @@ class TestDependsOnPlaybook:
 
         assert len(found_result_set) == 0
 
+    @pytest.mark.parametrize("integration", ["Syslog Sender", "Slack", "Microsoft Teams"])
+    def test_collect_dependencies_of_send_notification_command_in_playbooks(self, integration, id_set):
+        """
+        Given
+            - Playbooks that are using send-notification command
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should NOT recognize packs.
+        """
+        test_input = [
+            {
+                "Dummy Playbook": {
+                    "name": "Dummy Playbook",
+                    "file_path": "dummy_path",
+                    "fromversion": "dummy_version",
+                    "implementing_scripts": [
+                    ],
+                    "implementing_playbooks": [
+                    ],
+                    "command_to_integration": {
+                        "send-notification": integration
+                    },
+                    "tests": [
+                        "dummy_playbook"
+                    ],
+                    "pack": "dummy_pack"
+                }
+            }
+        ]
+
+        found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                            id_set=id_set,
+                                                                            verbose=False,
+                                                                            )
+
+        assert len(found_result_set) == 0
+
     def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
         """
         Given

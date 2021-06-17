@@ -64,6 +64,7 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
+        self._executecommand_checker(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -122,6 +123,15 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.func.name == 'quit':
                 self.add_message("quit-exists", node=node)
+        except Exception:
+            pass
+
+    def _executecommand_checker(self, node):
+        try:
+            if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand' and \
+                    (node.args[0].value == 'getIncidents' or node.args[0].value == 'DeleteContext'):
+                self.add_message("missing-permission", node=node)
+
         except Exception:
             pass
 

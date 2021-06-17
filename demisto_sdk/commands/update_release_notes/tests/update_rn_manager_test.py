@@ -65,11 +65,13 @@ class TestUpdateRNManager:
             - case 1: update_api_modules_dependents_rn is called.
             - case 2: update_api_modules_dependents_rn is called.
         """
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import click
         from demisto_sdk.commands.update_release_notes import update_rn_manager
         mock_func = mocker.patch.object(update_rn_manager, 'update_api_modules_dependents_rn')
         mng = UpdateReleaseNotesManager(user_input=path_to_api_module)
         if not path_to_api_module:
             mng.changed_packs_from_git = 'Packs/ApiModules/Scripts/Test1'
+            mocker.patch.object(click, 'confirm', return_value=True)
         mng.handle_api_module_change(set(), set())
         assert mock_func.called
 

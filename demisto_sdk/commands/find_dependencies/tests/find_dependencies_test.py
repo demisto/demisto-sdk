@@ -1,3 +1,7 @@
+import json
+import os
+import shutil
+from pathlib import Path
 from typing import List
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
@@ -5,6 +9,7 @@ import networkx as nx
 import pytest
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
@@ -52,8 +57,21 @@ def create_a_pack_entity(pack, entity_type: str = None, entity_id: str = None, e
         pack.create_indicator_type(entity_id, content)
 
 
-@pytest.fixture()
-def id_set(repo):
+@pytest.fixture(scope="module")
+def id_set():
+    with open("Content/Tests/id_set.json", 'r') as id_set_file:
+        id_set = json.load(id_set_file)
+        yield id_set
+
+
+class TestDependencies:
+    @classmethod
+    def teardown_class(cls):
+        shutil.rmtree('Content')
+
+    os.makedirs('Content')
+    repo = Repo(Path('Content'))
+
     # Create 5 packs with all entities
     repo.setup_content_repo(5)
 
@@ -264,11 +282,8 @@ def id_set(repo):
 
     with ChangeCWD(repo.path):
         ids = cis.IDSetCreator()
-        ids.create_id_set()
-        return ids.id_set
+        id_set_dict = ids.create_id_set()
 
-
-class TestIdSetFilters:
     @pytest.mark.parametrize("item_section", ["scripts", "playbooks"])
     def test_search_for_pack_item_with_no_result(self, item_section, id_set):
         pack_id = "Non Existing Pack"
@@ -354,8 +369,6 @@ class TestIdSetFilters:
 
         assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
-
-class TestDependsOnScriptAndIntegration:
     @pytest.mark.parametrize("dependency_script,expected_result",
                              [("GetServerURL", {("GetServerURL", True)}),
                               ("HelloWorldScript", {("HelloWorld", True)}),
@@ -729,8 +742,6 @@ class TestDependsOnScriptAndIntegration:
 
         assert len(dependencies_set) == 0
 
-
-class TestDependsOnPlaybook:
     @pytest.mark.parametrize("dependency_script,expected_result",
                              [("GetServerURL", {("GetServerURL", True)}),
                               ("HelloWorldScript", {("HelloWorld", True)}),
@@ -1131,8 +1142,6 @@ class TestDependsOnPlaybook:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnLayout:
     def test_collect_layouts_dependencies(self, id_set):
         """
         Given
@@ -1214,8 +1223,6 @@ class TestDependsOnLayout:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnIncidentField:
     def test_collect_incident_field_dependencies(self, id_set):
         """
         Given
@@ -1260,8 +1267,6 @@ class TestDependsOnIncidentField:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnIndicatorType:
     def test_collect_indicator_type_dependencies(self, id_set):
         """
         Given
@@ -1305,8 +1310,6 @@ class TestDependsOnIndicatorType:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnIntegrations:
     def test_collect_integration_dependencies(self, id_set):
         """
         Given
@@ -1344,8 +1347,6 @@ class TestDependsOnIntegrations:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnIncidentType:
     def test_collect_incident_type_dependencies(self, id_set):
         """
         Given
@@ -1378,8 +1379,6 @@ class TestDependsOnIncidentType:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnClassifiers:
     def test_collect_classifier_dependencies(self, id_set):
         """
         Given
@@ -1446,8 +1445,6 @@ class TestDependsOnClassifiers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnMappers:
     def test_collect_mapper_dependencies(self, id_set):
         """
         Given
@@ -1518,8 +1515,6 @@ class TestDependsOnMappers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnWidgets:
     def test_collect_widgets_dependencies(self, id_set):
         """
         Given
@@ -1552,8 +1547,6 @@ class TestDependsOnWidgets:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnDashboard:
     def test_collect_dashboard_dependencies(self, id_set):
         """
         Given
@@ -1587,8 +1580,6 @@ class TestDependsOnDashboard:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnReports:
     def test_collect_report_dependencies(self, id_set):
         """
         Given
@@ -1622,81 +1613,76 @@ class TestDependsOnReports:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    SEARCH_PACKS_INPUT = [
+        (['type'], 'IncidentFields', set()),
+        (['emailaddress'], 'IncidentFields', {'Compliance'}),
+        (['E-mail Address'], 'IncidentFields', {'Compliance'}),
+        (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
+        (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
+        (['Claroty'], 'Mappers', {'Claroty'}),
+        (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
+        (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
+    ]
 
-SEARCH_PACKS_INPUT = [
-    (['type'], 'IncidentFields', set()),
-    (['emailaddress'], 'IncidentFields', {'Compliance'}),
-    (['E-mail Address'], 'IncidentFields', {'Compliance'}),
-    (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
-    (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
-    (['Claroty'], 'Mappers', {'Claroty'}),
-    (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
-    (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
-]
+    @pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
+    def test_search_packs_by_items_names_or_ids(self, item_names, section_name, expected_result, id_set):
+        found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
+        assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
 
+    def test_find_dependencies_using_pack_metadata(self, mocker):
+        """
+            Given
+                - A dict of dependencies from id set.
+            When
+                - Running PackDependencies.update_dependencies_from_pack_metadata.
+            Then
+                - Assert the dependencies in the given dict is updated.
+        """
+        mock_pack_meta_file = {
+            "dependencies": {
+                "dependency_pack1": {
+                    "mandatory": False,
+                    "display_name": "dependency pack 1"
+                },
+                "dependency_pack2": {
+                    "mandatory": False,
+                    "display_name": "dependency pack 2"
+                },
+                "dependency_pack3": {
+                    "mandatory": False,
+                    "display_name": "dependency pack 3"
+                }
+            }
+        }
 
-@pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
-def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
-    found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
-    assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
-
-
-def test_find_dependencies_using_pack_metadata(mocker):
-    """
-        Given
-            - A dict of dependencies from id set.
-        When
-            - Running PackDependencies.update_dependencies_from_pack_metadata.
-        Then
-            - Assert the dependencies in the given dict is updated.
-    """
-    mock_pack_meta_file = {
-        "dependencies": {
+        dependencies_from_id_set = {
             "dependency_pack1": {
                 "mandatory": False,
                 "display_name": "dependency pack 1"
             },
             "dependency_pack2": {
-                "mandatory": False,
+                "mandatory": True,
                 "display_name": "dependency pack 2"
             },
             "dependency_pack3": {
-                "mandatory": False,
+                "mandatory": True,
                 "display_name": "dependency pack 3"
+            },
+            "dependency_pack4": {
+                "mandatory": True,
+                "display_name": "dependency pack 4"
             }
         }
-    }
 
-    dependencies_from_id_set = {
-        "dependency_pack1": {
-            "mandatory": False,
-            "display_name": "dependency pack 1"
-        },
-        "dependency_pack2": {
-            "mandatory": True,
-            "display_name": "dependency pack 2"
-        },
-        "dependency_pack3": {
-            "mandatory": True,
-            "display_name": "dependency pack 3"
-        },
-        "dependency_pack4": {
-            "mandatory": True,
-            "display_name": "dependency pack 4"
-        }
-    }
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.get_metadata_from_pack',
+                     return_value=mock_pack_meta_file)
 
-    mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.get_metadata_from_pack',
-                 return_value=mock_pack_meta_file)
+        first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata('', dependencies_from_id_set)
 
-    first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata('', dependencies_from_id_set)
+        assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
+        assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
+        assert first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
 
-    assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
-    assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
-    assert first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
-
-
-class TestDependencyGraph:
     @pytest.mark.parametrize('source_node, expected_nodes_in, expected_nodes_out',
                              [('pack1', ['pack1', 'pack2', 'pack3'], ['pack4']),
                               ('pack2', ['pack2', 'pack3'], ['pack4', 'pack1'])]

@@ -956,7 +956,7 @@ class TestRNUpdateUnit:
         if os.path.exists(DEFAULT_ID_SET_PATH):
             os.remove(DEFAULT_ID_SET_PATH)
         print_error_mock = mocker.patch.object(demisto_sdk.commands.update_release_notes.update_rn, "print_error")
-        update_api_modules_dependents_rn(_pack='', pre_release='', update_type='', added='', modified='',
+        update_api_modules_dependents_rn(pre_release='', update_type='', added='', modified='',
                                          id_set_path=None)
         assert 'no id_set.json is available' in print_error_mock.call_args[0][0]
 
@@ -993,7 +993,7 @@ class TestRNUpdateUnit:
 
         execute_update_mock = mocker.patch.object(UpdateRN, "execute_update")
 
-        update_api_modules_dependents_rn(_pack='ApiModules', pre_release=None, update_type=None, added=added,
+        update_api_modules_dependents_rn(pre_release=None, update_type=None, added=added,
                                          modified=modified, id_set_path=id_set_f.strpath)
         assert execute_update_mock.call_count == 1
 

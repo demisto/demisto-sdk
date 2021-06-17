@@ -664,17 +664,18 @@ def get_file_description(path, file_type) -> str:
     return '%%UPDATE_RN%%'
 
 
-def update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified, id_set_path=None, text=''):
+def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, None],
+                                     added: Union[list, set], modified: Union[list, set],
+                                     id_set_path: Optional[str] = None, text: str = ''):
     """ Updates release notes for any pack that depends on API module that has changed.
 
         :param
-            _pack: The file path
             pre_release: The file type
             update_type: The update type
             added: The added files
             modified: The modified files
             id_set_path: The id set path
-            text:
+            text: Text to add to the release notes files
 
         :rtype: ``str``
         :return

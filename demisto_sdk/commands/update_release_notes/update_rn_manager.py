@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional, Tuple
 
+import click
 import git
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -100,11 +101,17 @@ class UpdateReleaseNotesManager:
                 added_files: A set of new added files
                 modified_files: A set of modified files
         """
-        if (self.given_pack and API_MODULES_PACK in self.given_pack) or \
-                (self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git):
+        # The user gave a path to the api module which was changed
+        if self.given_pack and API_MODULES_PACK in self.given_pack:
+            update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
+                                             modified_files, self.id_set_path, self.text)
 
-            update_api_modules_dependents_rn(self.given_pack, self.pre_release, self.update_type, added_files,
-                                             modified_files, id_set_path=self.id_set_path, text=self.text)
+        # The user didn't give a path to the api module but they have changed.
+        elif self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git:
+            if click.confirm('Some API modules seem to have changed, '
+                             'would you like to update all the packs that depend on them?'):
+                update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
+                                                 modified_files, self.id_set_path, self.text)
 
     def create_release_notes(self, modified_files: set, added_files: set, old_format_files: set):
         """ Iterates over the packs which needs an update and creates a release notes for them.

@@ -33,7 +33,10 @@ base_msg = {
               "unimplemented-test-module",
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
-              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module")
+              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
+    "E9012": ("Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file.",
+              "missing-permission",
+              "Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file.")
 }
 
 

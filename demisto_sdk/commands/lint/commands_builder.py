@@ -247,7 +247,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     return command
 
 
-def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
+def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") -> str:
     """ Build command to execute with pytest module
         https://docs.pytest.org/en/latest/usage.html
     Args:
@@ -264,6 +264,9 @@ def build_pytest_command(test_xml: str = "", json: bool = False) -> str:
     # Generating json report
     if json:
         command += " --json=/devwork/report_pytest.json"
+
+    if cov:
+        command += f' --cov-report= --cov={cov}'
 
     return command
 

@@ -1,5 +1,6 @@
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
+from TestSuite.test_tools import ChangeCWD
 
 CONFIG = Configuration()
 
@@ -808,15 +809,6 @@ class TestPlaybookEntitiesVersionsValid:
             "SubPlaybook_version_5_5"
         ]
     }}
-    playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "5.0.0",
-        "pack": "Example",
-        "implementing_playbooks": [
-            "SubPlaybook_not_in_id_set"
-        ]
-    }}
     playbook_with_invalid_integration_version = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
@@ -915,27 +907,25 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
-        # all playbook's entities has valid versions
-        is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_valid_versions, pack.path)
-        assert is_playbook_version_valid
+        with ChangeCWD(repo.path):
 
-        # playbook uses scripts with invalid versions
-        is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_scripts_version, pack.path)
-        assert not is_script_version_invalid
+            # all playbook's entities has valid versions
+            is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_valid_versions, pack.path)
+            assert is_playbook_version_valid
 
-        # playbook uses sub playbooks with invalid versions
-        is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_sub_playbook_version, pack.path)
-        assert not is_sub_playbook_version_invalid
+            # playbook uses scripts with invalid versions
+            is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_scripts_version, pack.path)
+            assert not is_script_version_invalid
 
-        is_sub_playbook_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_sub_playbook_not_in_id_set, pack.path)
-        assert not is_sub_playbook_invalid
+            # playbook uses sub playbooks with invalid versions
+            is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version, pack.path)
+            assert not is_sub_playbook_version_invalid
 
-        # playbook uses integration's commands with invalid versions
-        mocker.patch.object(self.validator, 'handle_error', return_value=True)
-        is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_integration_version, self.playbook_path)
-        assert not is_integration_version_invalid
+            # playbook uses integration's commands with invalid versions
+            mocker.patch.object(self.validator, 'handle_error', return_value=True)
+            is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_integration_version, self.playbook_path)
+            assert not is_integration_version_invalid

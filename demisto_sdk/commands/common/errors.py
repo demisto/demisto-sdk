@@ -979,7 +979,7 @@ class Errors:
     def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
                f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be less or equal to {main_playbook_version}.\n"
+               f" {entities_names} should be less or equal to {main_playbook_version}."
 
     @staticmethod
     @error_code_decorator

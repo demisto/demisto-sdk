@@ -157,6 +157,7 @@ ERROR_CODE = {
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
     "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
+    "content_entity_is_not_in_id_set": {'code': "PB113", 'ui_applicable': False, 'related_field': ''},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -1624,3 +1625,10 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_is_not_in_id_set(main_playbook, entities_names):
+        return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
+               f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
+               f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"

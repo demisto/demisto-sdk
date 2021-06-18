@@ -290,9 +290,10 @@ class IDSetValidations(BaseValidator):
             bool. Whether the playbook's version match playbook's entities.
         """
         invalid_version_entities = []
+        implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True
         for entity_data_dict in entity_set_from_id_set:
-            if not implemented_entity_list_from_playbook:
+            if not implemented_entities:
                 break
 
             entity_id = list(entity_data_dict.keys())[0]
@@ -307,7 +308,7 @@ class IDSetValidations(BaseValidator):
                     main_playbook_version)
                 if not is_version_valid:
                     invalid_version_entities.append(entity_name)
-                implemented_entity_list_from_playbook.remove(entity_name)
+                implemented_entities.remove(entity_name)
 
         if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
@@ -315,9 +316,9 @@ class IDSetValidations(BaseValidator):
             if self.handle_error(error_message, error_code, file_path):
                 is_valid = False
 
-        if implemented_entity_list_from_playbook:
+        if implemented_entities:
             error_message, error_code = Errors.content_entity_is_not_in_id_set(
-                playbook_name, implemented_entity_list_from_playbook)
+                playbook_name, implemented_entities)
             if self.handle_error(error_message, error_code, file_path):
                 is_valid = False
 

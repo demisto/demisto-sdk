@@ -821,6 +821,15 @@ class TestPlaybookEntitiesVersionsValid:
             ]
         }
     }}
+    playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_not_in_id_set"
+        ]
+    }}
     id_set = {
         'playbooks': [
             {
@@ -908,6 +917,10 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
+
+            is_sub_playbook_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_sub_playbook_not_in_id_set, pack.path)
+            assert not is_sub_playbook_invalid
 
             # all playbook's entities has valid versions
             is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(

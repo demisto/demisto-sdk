@@ -157,7 +157,7 @@ ERROR_CODE = {
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
     "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
-    "content_entity_is_not_in_id_set": {'code': "PB113", 'ui_applicable': False, 'related_field': ''},
+    "content_entity_is_not_in_id_set": {'code': "PB116", 'ui_applicable': False, 'related_field': ''},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},

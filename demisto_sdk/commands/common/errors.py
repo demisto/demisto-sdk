@@ -15,7 +15,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB113', 'PB114', 'PB115'
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105',
@@ -157,6 +157,9 @@ ERROR_CODE = {
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
     "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
+    "playbook_not_quiet_mode": {'code': "PB113", 'ui_applicable': False, 'related_field': ''},
+    "playbook_tasks_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_tasks_continue_on_error": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -1624,3 +1627,20 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_not_quiet_mode():
+        return "The playbook's quiet mode is off, it should be on, if it's done on purpose, then add this error to " \
+               "the pack's 'pack ignore' file"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_not_quiet_mode(tasks):
+        return f"The following tasks of the playbook have the quiet mode turned off:\n{tasks}\n"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_continue_on_error(tasks):
+        return f"The following tasks of the playbook do not stop on error:\n{tasks}"
+

@@ -1,7 +1,7 @@
 import unittest
 
 from demisto_sdk.commands.common.errors import Errors
-
+from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_SIZE, AUTHOR_IMAGE_DIMENSIONS
 
 class TestErrors(unittest.TestCase):
     def test_file_name_includes_spaces(self):
@@ -96,8 +96,8 @@ class TestErrors(unittest.TestCase):
         Then: Return error message with the input value as a tuple containing error and error code.
         """
         error_statement = "The file type is not supported in validate command\n " \
-            "validate' command supports: Integrations, Scripts, Playbooks, " \
-            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+                          "validate' command supports: Integrations, Scripts, Playbooks, " \
+                          "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
         expected_result = (error_statement, "BA102")
         result = Errors.file_type_not_supported()
         assert result == expected_result
@@ -141,4 +141,37 @@ class TestErrors(unittest.TestCase):
                           f'{alternative_path}'
         expected_result = (error_statement, "RM101")
         result = Errors.image_path_error(path, alternative_path)
+        assert result == expected_result
+
+    def test_author_image_fie_is_empty(self):
+        """
+        Given: None
+        When: Returning an error message
+        Then: Return error message with the input value as a tuple containing error and error code.
+        """
+        expected_result = "`Author_image.png` has not been uploaded, you should consider upload one. " \
+                          "For more information please visit {}".\
+            format("https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng")
+        result = Errors.author_image_fie_is_empty()
+        assert result == expected_result
+
+    def test_author_image_fie_invalid_size(self):
+        """
+        Given: Author image too large
+        When: Returning an error message
+        Then: Return error message with the input value as a tuple containing error and error code.
+        """
+        expected_result = "Size of `Author_image.png` should be up to {} bytes.".format(str(AUTHOR_IMAGE_SIZE))
+        result = Errors.author_image_fie_invalid_size()
+        assert result == expected_result
+
+    def test_author_image_fie_invalid_dimensions(self):
+        """
+        Given: Author image with non-standard dimensions
+        When: Returning an error message
+        Then: Return error message with the input value as a tuple containing error and error code.
+        """
+        expected_result = "Dimensions of `Author_image.png` file should be {} pixels.".\
+            format(str(AUTHOR_IMAGE_DIMENSIONS))
+        result = Errors.id_might_changed()
         assert result == expected_result

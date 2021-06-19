@@ -490,7 +490,11 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
+PACKS_AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+
+AUTHOR_IMAGE_DIMENSIONS = (120, 50)
+AUTHOR_IMAGE_SIZE = 4 * 1024  # 4 Kb
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -857,7 +861,6 @@ class GithubContentConfig:
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
-
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

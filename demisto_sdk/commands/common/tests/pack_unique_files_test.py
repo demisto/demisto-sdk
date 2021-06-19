@@ -511,3 +511,24 @@ class TestPackUniqueFilesValidator:
             if not is_valid:
                 assert 'README.md content is equal to pack description. ' \
                        'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+
+    # TODO: Waiting for an answer from Yaakovi. USE @pytest.mark.parametrize in order to mock test fixture,
+    #  put demo png corrupt files somewhere and complete tests
+    def test_validate_author_image_file(self, mocker, text, result):
+        """
+       Given:
+            - partner pack
+
+        When:
+            - Running test_validate_author_image_file.
+
+        Then:
+            - Validates Author_image.png:
+                - Non-empty file
+                - Up to 4 Kb
+                - Dimensions of 120*50
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
+        self.validator.support = 'partner'
+        # mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        # assert self.validator.validate_author_image_file() == result

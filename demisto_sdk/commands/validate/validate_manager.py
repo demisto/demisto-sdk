@@ -692,6 +692,7 @@ class ValidateManager:
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
+        * Author_image.png: Validates that the file isn't empty, dimension of 120*50 and that image size is up to 4kb
         Runs validation on the pack dependencies
         Args:
             should_version_raise: Whether we should check if the version of the metadata was raised

@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+from PIL import Image
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
@@ -18,8 +19,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
     PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
     PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME, PACKS_WHITELIST_FILE_NAME,
+    PACKS_AUTHOR_IMAGE_FILE_NAME, AUTHOR_IMAGE_DIMENSIONS, AUTHOR_IMAGE_SIZE)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -66,6 +67,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.secrets_file = PACKS_WHITELIST_FILE_NAME
         self.pack_ignore_file = PACKS_PACK_IGNORE_FILE_NAME
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
+        self.pack_author_image_file = PACKS_AUTHOR_IMAGE_FILE_NAME
         self.readme_file = PACKS_README_FILE_NAME
         self.validate_dependencies = validate_dependencies
         self._errors = []
@@ -256,6 +258,36 @@ class PackUniqueFilesValidator(BaseValidator):
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
 
+        return True
+
+    # Author_image.png validation
+    def validate_author_image_file(self) -> bool:
+        """
+        Validates Author_image.png.
+        For more info please visit https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng
+        """
+        return all([self._is_author_image_not_empty(),
+                    self._is_author_image_dimensions_valid(),
+                    self._is_author_image_size_valid()])
+
+    def _is_author_image_not_empty(self) -> bool:
+        author_image_content = self._read_file_content(self.pack_author_image_file)
+        if not author_image_content:
+            self._add_error(Errors.author_image_fie_is_empty, self.pack_meta_file)
+            return False
+        return True
+
+    def _is_author_image_dimensions_valid(self) -> bool:
+        author_image = Image.open(self.pack_author_image_file)
+        if not author_image.size == AUTHOR_IMAGE_SIZE:
+            self._add_error(Errors.author_image_fie_invalid_dimensions, self.pack_meta_file)
+            return False
+        return True
+
+    def _is_author_image_size_valid(self) -> bool:
+        if not os.path.getsize(self.pack_author_image_file) <= AUTHOR_IMAGE_SIZE:
+            self._add_error(Errors.author_image_fie_invalid_size, self.pack_meta_file)
+            return False
         return True
 
     def validate_pack_name(self, pack_name):

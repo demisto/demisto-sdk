@@ -1,5 +1,5 @@
 # Changelog
-
+* Added to `pylint` summary an indication if a test was skipped.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
@@ -22,7 +22,6 @@
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 * Added the **convert** command to convert entities between XSOAR versions.
 * Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
-* Added to `pylint` summary an indication if a test was skipped.
 * Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
 
 # 1.3.9

@@ -950,5 +950,5 @@ def test_invalid_path_to_unifier(repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
-    assert 'You have failed to provide a legal file path, a legal file path should be to a directory if an ' \
+    assert 'You have failed to provide a legal file path, a legal file path should be to a directory of an ' \
            'integration or script.' in result.stdout

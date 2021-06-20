@@ -1025,7 +1025,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file (<integration_name>_description.yml) was found in the package." \
+        return f"No detailed description file (<integration_name>_description.md) was found in the package." \
                f" Please add one, and make sure it includes the beta disclaimer note." \
                f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 

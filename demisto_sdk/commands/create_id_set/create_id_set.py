@@ -23,8 +23,13 @@ class IDSetCreator:
         self.print_logs = print_logs
         self.id_set = OrderedDict()  # type: ignore
 
-    def create_id_set(self):
-        self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
+    def create_id_set(self, fail_on_duplicates=False):
+        self.id_set = re_create_id_set(
+            id_set_path=self.output,
+            pack_to_create=self.input,
+            print_logs=self.print_logs,
+            fail_on_duplicates=fail_on_duplicates
+        )
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()
         return self.id_set

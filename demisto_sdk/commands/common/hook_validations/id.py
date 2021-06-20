@@ -232,19 +232,22 @@ class IDSetValidations(BaseValidator):
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
         playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
 
-        if not self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version, self.playbook_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version,
+                                                                      self.playbook_set, playbook_name, file_path)
+        if not result:
+            return False, error
 
-        if not self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version, self.script_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version,
+                                                                      self.script_set, playbook_name, file_path)
+        if not result:
+            return False, error
 
-        if not self.is_playbook_integration_version_valid(playbook_integration_commands,
-                                                          playbook_version, playbook_name, file_path):
-            return False
+        result, error = self.is_playbook_integration_version_valid(playbook_integration_commands, playbook_version,
+                                                                   playbook_name, file_path)
+        if not result:
+            return False, error
 
-        return True
+        return True, None
 
     def get_commands_to_integration(self, file_name, file_path):
         """ gets playbook's 'command_to_integration' dict from playbook set in id_set file.
@@ -291,7 +294,7 @@ class IDSetValidations(BaseValidator):
         """
         invalid_version_entities = []
         implemented_entities = implemented_entity_list_from_playbook.copy()
-        is_valid = True
+        is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
             if not implemented_entities:
                 break
@@ -314,13 +317,13 @@ class IDSetValidations(BaseValidator):
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
                 playbook_name, invalid_version_entities, main_playbook_version)
             if self.handle_error(error_message, error_code, file_path):
-                is_valid = False
+                is_valid = False, error_message
 
         if implemented_entities:
             error_message, error_code = Errors.content_entity_is_not_in_id_set(
                 playbook_name, implemented_entities)
             if self.handle_error(error_message, error_code, file_path):
-                is_valid = False
+                is_valid = False, error_message
 
         return is_valid
 
@@ -358,9 +361,9 @@ class IDSetValidations(BaseValidator):
                                                                                                   command,
                                                                                                   playbook_version)
                 if self.handle_error(error_message, error_code, file_path):
-                    return False
+                    return False, error_message
 
-        return True
+        return True, None
 
     def get_integration_version(self, integration_to_search):
         general_version = ""  # i.e integration has no specific version
@@ -406,7 +409,7 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self._are_playbook_entities_versions_valid(playbook_data, file_path)
+                is_valid, error = self._are_playbook_entities_versions_valid(playbook_data, file_path)
 
         return is_valid
 

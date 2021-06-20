@@ -642,3 +642,4 @@ inputs: []
 outputs: []
 tests:
   - No Test
+deprecated: true

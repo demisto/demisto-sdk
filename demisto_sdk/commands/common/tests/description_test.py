@@ -2,9 +2,10 @@ import glob
 import os
 
 import pytest
-import yaml
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
+from ruamel.yaml import YAML
+from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize('integration_obj', [
@@ -28,7 +29,7 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
     integration_dir = tmp_path / 'Packs' / 'SomePack' / 'Integrations' / 'SomeIntegration'
     integration_dir.mkdir(parents=True)
     unified_integration_yml = integration_dir / 'SomeIntegration.yml'
-    yaml.dump(integration_obj, unified_integration_yml.open('w'), default_flow_style=False)
+    YAML(typ='safe', pure=True).dump(integration_obj, unified_integration_yml.open('w'))
     description_validator = DescriptionValidator(str(unified_integration_yml))
     assert description_validator.is_duplicate_description()
     assert not DescriptionValidator.handle_error.called
@@ -50,8 +51,9 @@ def test_is_valid_file(integration, file_input, result):
 
     integration.description.write(file_input)
     description_path = integration.description.path
-    description_validator = DescriptionValidator(description_path)
-    answer = description_validator.is_valid_file()
+    with ChangeCWD(integration.repo_path):
+        description_validator = DescriptionValidator(description_path)
+        answer = description_validator.is_valid_file()
 
     assert answer == result
     assert description_validator._is_valid == answer
@@ -99,7 +101,58 @@ def test_is_invalid_description_name(repo):
     new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
 
     os.rename(description_path[0], new_name)
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(integration.yml.path)
+
+        assert not description_validator.is_valid_description_name()
+
+
+def test_demisto_in_description(repo):
+    """
+        Given
+            - An integration description with the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_description_content.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))[0]
+
+    with open(description_path, 'w') as f:
+        f.write('This checks if we have the word Demisto in the description.')
+
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(integration.yml.path)
+
+        assert not description_validator.verify_demisto_in_description_content()
+
+
+def test_demisto_not_in_description(repo):
+    """
+        Given
+            - An integration description without the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_description_content.
+
+        Then
+            - Ensure that the validation passes.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))[0]
+
+    with open(description_path, 'w') as f:
+        f.write('This checks if we have the word XSOAR in the description.')
 
     description_validator = DescriptionValidator(integration.yml.path)
 
-    assert not description_validator.is_valid_description_name()
+    assert description_validator.verify_demisto_in_description_content()

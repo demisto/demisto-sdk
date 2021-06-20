@@ -60,12 +60,10 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
-from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
-                                               get_api_module_integrations_set,
-                                               get_pack_ignore_file_path,
-                                               get_pack_name,
-                                               get_pack_names_from_files,
-                                               get_yaml, open_id_set_file)
+from demisto_sdk.commands.common.tools import (
+    find_type, get_api_module_ids, get_api_module_integrations_set,
+    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -506,6 +504,7 @@ class ValidateManager:
         filtered_old_format: Set = set()
 
         for path in self.file_path.split(','):
+            path = get_relative_path_from_packs_dir(path)
             file_level = self.detect_file_level(path)
             if file_level == 'File':
                 temp_modified, temp_added, temp_old_format = self.get_file_by_status(modified_files,

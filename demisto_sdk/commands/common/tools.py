@@ -1816,3 +1816,11 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return str(os.path.join(PACKS_DIR, os.path.relpath(file_path, PACKS_DIR)))

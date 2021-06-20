@@ -563,6 +563,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
     }

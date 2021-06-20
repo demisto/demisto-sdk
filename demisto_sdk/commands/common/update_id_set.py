@@ -1455,8 +1455,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)
-    print(any(duplicates))
-    print(fail_on_duplicates)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
@@ -1519,11 +1517,6 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
-            return True
-
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
@@ -1548,6 +1541,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
                           '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
                                                          dict2_from_version, dict2_to_version))
             return True
+
+        if print_logs and dict1.get('name') != dict2.get('name'):
+            print_warning('The following {} have the same ID ({}) but different names: '
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
     return False
 

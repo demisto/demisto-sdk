@@ -4,7 +4,6 @@ import itertools
 import json
 import os
 import re
-import sys
 import time
 from collections import OrderedDict
 from datetime import datetime
@@ -1456,6 +1455,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)
+    print(any(duplicates))
+    print(fail_on_duplicates)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 

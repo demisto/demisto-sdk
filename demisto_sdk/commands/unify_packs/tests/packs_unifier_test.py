@@ -6,11 +6,12 @@ import click
 import demisto_client
 import pytest
 from demisto_client.demisto_api import DefaultApi
+from packaging.version import parse
+
 from demisto_sdk.__main__ import unify_packs
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import Uploader
-from packaging.version import parse
 
 UNIT_TEST_DATA = (src_root() / 'commands' / 'unify_packs' / 'tests' / 'data')
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -112,7 +113,7 @@ class TestPacksUnifier:
                                                       content_version='0.0.0',
                                                       zip_all=True, upload=True)
 
-            assert Uploader.zipped_pack_uploader.call_args.kwargs['path'] == f'{tmp_output_dir}/uploadable_packs.zip'
+            assert Uploader.zipped_pack_uploader.call_args[1]['path'] == f'{tmp_output_dir}/uploadable_packs.zip'
 
     # Edge cases
     def test_invalid_pack_name(self):

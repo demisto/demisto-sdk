@@ -1,18 +1,17 @@
 import logging
 import os
+import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+
+import click
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-    ArtifactsManager, ContentObject, ProcessPoolHandler, create_dirs,
-    delete_dirs, dump_packs, logger, wait_futures_complete, zip_pack_zips,
-    zip_packs)
-from pebble import ProcessFuture
-from pipenv.patched.piptools import click
+    IGNORED_PACKS, ArtifactsManager, ContentObject, create_dirs, delete_dirs,
+    dump_pack, zip_pack_zips, zip_packs)
 
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -40,21 +39,9 @@ class PacksUnifier:
 
         """
         if self.artifacts_manager.pack_names:
-            prev_level = logger.getEffectiveLevel()
-            if self.artifacts_manager.quite_mode:
-                logger.setLevel(logging.ERROR)
-            try:
-                with PacksDirsHandler(self.artifacts_manager), ProcessPoolHandler(self.artifacts_manager) as pool:
-                    futures: List[ProcessFuture] = dump_packs(self.artifacts_manager, pool)
-                    wait_futures_complete(futures, self.artifacts_manager)
-                    if len(futures) > 0:
-                        # packs was dumped
-                        logger.info(f'Artifacts created: - {self.artifacts_manager.output_path}')
-                        return self.artifacts_manager.output_path, self.artifacts_manager.pack_names
+            self.artifacts_manager.dump_packs()
+            return self.artifacts_manager.output_path, self.artifacts_manager.pack_names
 
-            finally:
-                if self.artifacts_manager.quite_mode:
-                    logger.setLevel(prev_level)
         else:
             return None, None
 
@@ -110,7 +97,7 @@ class PacksManager(ArtifactsManager):
         """
 
         Returns:
-            None, as packs can came outside from Content
+            None, as packs can came outside from Content directory
 
         """
         return None
@@ -127,8 +114,48 @@ class PacksManager(ArtifactsManager):
             result.append(self.content_uploadable_zips_path)
         return result
 
-    def is_in_quite_mode(self):
-        return self.quite_mode
+    def dump_packs(self):
+        """
+
+        Dump all the packs stored in the packs field
+        and will print summery according to the quit_mode field
+
+        """
+        reports = []
+        # we quite the outputs and in case we want the output - a summery will be printed
+        with QuiteModeController(quite_logger=True, quite_output=True), PacksDirsHandler(self):
+            for pack_name in self.pack_names:
+                if pack_name not in IGNORED_PACKS:
+                    reports.append(dump_pack(self, self.packs[pack_name]))
+
+        if not self.quite_mode:
+            logger = logging.getLogger('demisto-sdk')
+            for report in reports:
+                logger.info(report.to_str(self.get_base_path()))
+
+
+class QuiteModeController:
+    """
+    Quite mode controller
+    in entry will quite the stdout and the logger according ti the flag passed to the constructor
+    and in exit will return to the previous status of both the stdout and logger
+    """
+
+    def __init__(self, quite_logger: bool, quite_output):
+        self.quite_modes = dict(quite_logger=quite_logger, quite_output=quite_output)
+        self.old_stdout = sys.stdout
+        self.logger = logging.getLogger('demisto-sdk')
+        self.prev_logger_level = self.logger.getEffectiveLevel()
+
+    def __enter__(self):
+        if self.quite_modes['quite_output']:
+            sys.stdout = open(os.devnull, 'w')
+        if self.quite_modes['quite_logger']:
+            self.logger.setLevel(logging.ERROR)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self.old_stdout
+        self.logger.setLevel(self.prev_logger_level)
 
 
 @contextmanager

@@ -7,6 +7,9 @@ import demisto_client
 import pytest
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import parse
+from pipenv.patched.piptools import click
+
 from demisto_sdk.__main__ import upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -23,8 +26,6 @@ from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
-from packaging.version import parse
-from pipenv.patched.piptools import click
 from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
@@ -710,12 +711,12 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=input)
 
         # validate
-        disable_verification_call_args = tools.update_server_configuration.call_args_list[0].kwargs
-        enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
         assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
         assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args.kwargs['file']
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
         assert str(uploaded_file_path) == input
 
     def test_unify_and_upload(self, mocker):
@@ -735,7 +736,7 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=TEST_PACK, unify=True)
 
         # validate
-        assert 'uploadable_packs.zip' in Uploader.zipped_pack_uploader.call_args.kwargs['path']
+        assert 'uploadable_packs.zip' in Uploader.zipped_pack_uploader.call_args[1]['path']
 
     def test_server_config_after_upload(self, mocker):
         """
@@ -756,8 +757,8 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
-        disable_verification_call_args = tools.update_server_configuration.call_args_list[0].kwargs
-        enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
         assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
         assert enable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'prev_val'
@@ -854,8 +855,8 @@ class TestZippedPackUpload:
 
         # validate
 
-        disable_verification_call_args = tools.update_server_configuration.call_args_list[0].kwargs
-        enable_verification_call_args = tools.update_server_configuration.call_args_list[1].kwargs
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
         assert status == 1
         assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'

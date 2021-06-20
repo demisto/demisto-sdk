@@ -81,8 +81,10 @@ class MicrosoftClient(BaseClient):
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 
-def test_clean_python_code():
-    unifier = Unifier("test_files/VulnDB")
+def test_clean_python_code(repo):
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    unifier = Unifier(str(integration.path))
     script_code = "import demistomock as demisto\nfrom CommonServerPython import *  # test comment being removed\n" \
                   "from CommonServerUserPython import *\nfrom __future__ import print_function"
     # Test remove_print_future is False

@@ -1643,4 +1643,3 @@ class Errors:
     @error_code_decorator
     def playbook_tasks_continue_on_error(tasks):
         return f"The following tasks of the playbook do not stop on error:\n{tasks}"
-

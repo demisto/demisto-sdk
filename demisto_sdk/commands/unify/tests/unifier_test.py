@@ -180,7 +180,7 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     detailed_desc.write_text('')
     unifier = Unifier(str(tmp_path))
     yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
-    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)'\
+    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)' \
            == yml_unified['detaileddescription']
 
 
@@ -201,7 +201,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     unifier = Unifier(str(tmp_path))
     integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
-        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+           '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
         r = requests.get(link, verify=False, timeout=10)
@@ -927,3 +927,26 @@ def test_unify_community_contributed(mocker, repo):
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
     assert '#### Integration Author:' in COMMUNITY_UNIFY["detaileddescription"]
     assert 'No support or maintenance is provided by the author.' in COMMUNITY_UNIFY["detaileddescription"]
+
+
+def test_invalid_path_to_unifier(repo):
+    """
+    Given:
+    - Input path to integration YML for unify command.
+
+    When:
+    - Performing unify command.
+
+    Then:
+    - Ensure error message indicating path should be to a directory returned.
+
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration.create_default_integration()
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
+    assert 'You have failed to provide a legal file path, a legal file path should be to a directory if an ' \
+           'integration or script.' in result.stdout

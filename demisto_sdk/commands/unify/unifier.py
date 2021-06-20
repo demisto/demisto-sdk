@@ -6,6 +6,7 @@ import json
 import os
 import re
 from typing import Dict, List, Tuple, Union
+import sys
 
 import click
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
@@ -52,6 +53,10 @@ class Unifier:
         # Changing relative path to current abspath fixed problem with default output file name.
         if input == '.':
             input = os.path.abspath(input)
+        # if not os.path.isdir(input):
+        #     print_error('You have failed to provide a legal file path, a legal file path '
+        #                 'should be to a directory if an integration or script.')
+        #     sys.exit(1)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name

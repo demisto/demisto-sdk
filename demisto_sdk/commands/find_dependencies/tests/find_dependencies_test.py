@@ -1400,7 +1400,7 @@ class TestDependsOnIncidentType:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
-class TestDependsOnCLASSIFIER:
+class TestDependsOnClassifiers:
     def test_collect_classifier_dependencies(self, id_set):
         """
         Given

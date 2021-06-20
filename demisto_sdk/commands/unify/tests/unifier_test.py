@@ -180,7 +180,7 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     detailed_desc.write_text('')
     unifier = Unifier(str(tmp_path))
     yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
-    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)' \
+    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)'\
            == yml_unified['detaileddescription']
 
 
@@ -201,7 +201,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     unifier = Unifier(str(tmp_path))
     integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
-           '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
         r = requests.get(link, verify=False, timeout=10)

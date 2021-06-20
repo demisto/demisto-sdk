@@ -1,5 +1,5 @@
 # Changelog
-
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

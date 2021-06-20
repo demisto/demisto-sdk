@@ -18,6 +18,7 @@ AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example
 RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
+THINKCANARY_RN_FOLDER = join(git_path(), 'Packs', 'ThinkCanary', 'ReleaseNotes')
 
 
 @pytest.fixture
@@ -49,7 +50,8 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=True)
-    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name',
+                 return_value='FeedAzureValid')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
@@ -433,3 +435,54 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.1.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
+
+
+def test_force_update_release_no_pack_given(demisto_client, repo):
+    """
+        Given
+        - Nothing have changed.
+
+        When
+        - Running demisto-sdk update-release-notes command with --force flag but no specific pack is given.
+
+        Then
+        - Ensure that an error is printed.
+    """
+    runner = CliRunner(mix_stderr=True)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
+    assert 'Please add a specific pack in order to force' in result.stdout
+
+
+def test_force_update_release(demisto_client, mocker, repo):
+    """
+    Given
+    - Nothing have changed.
+
+    When
+    - Running demisto-sdk update-release-notes command with --force flag.
+
+    Then
+    - Ensure that RN were updated.
+    """
+    rn_path = join(THINKCANARY_RN_FOLDER, '1_0_1.md')
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
+                        return_value=(set(), set(), set(), set()))
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name',
+                 return_value='ThinkCanary')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_names_from_files',
+                 return_value={'ThinkCanary'})
+
+    runner = CliRunner(mix_stderr=True)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "--force"])
+    assert 'Changes were detected. Bumping ThinkCanary to version: 1.0.1' in result.stdout
+    assert 'Finished updating release notes for ThinkCanary.' in result.stdout
+
+    with open(rn_path, 'r') as f:
+        rn = f.read()
+    assert "" == rn

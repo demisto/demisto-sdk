@@ -1045,6 +1045,9 @@ def merge_id_sets(**kwargs):
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
+    '-f', '--force', help="Force update rn (even if not required).", is_flag=True
+)
+@click.option(
     '--text', help="Text to add to all of the release notes files",
 )
 @click.option(
@@ -1059,6 +1062,9 @@ def merge_id_sets(**kwargs):
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
+    if not kwargs.get('input') and kwargs.get('force'):
+        print_error('Please add a specific pack in order to force a release notes update.')
+        sys.exit(0)
 
     if not kwargs.get('all') and not kwargs.get('input'):
         click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
@@ -1066,7 +1072,8 @@ def update_release_notes(**kwargs):
     rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
                                        pre_release=kwargs.get('pre_release'), is_all=kwargs.get('all'),
                                        text=kwargs.get('text'), specific_version=kwargs.get('version'),
-                                       id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'))
+                                       id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
+                                       is_force=kwargs.get('force'))
     rn_mng.manage_rn_update()
 
 

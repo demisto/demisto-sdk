@@ -55,7 +55,7 @@ class Unifier:
             input = os.path.abspath(input)
         if not os.path.isdir(input):
             print_error('You have failed to provide a legal file path, a legal file path '
-                        'should be to a directory of an integration or script.')
+                        'should be to a directory of an integration or a script.')
             sys.exit(1)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:

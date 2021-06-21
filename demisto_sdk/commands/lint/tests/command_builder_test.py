@@ -140,6 +140,13 @@ def test_build_pytest_command_2():
                                            json=True)
 
 
+def test_build_pytest_command_3():
+    """Build Pytest command with cov"""
+    from demisto_sdk.commands.lint.commands_builder import build_pytest_command
+    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
+    assert command == build_pytest_command(test_xml="test", cov="test")
+
+
 def test_build_pwsh_analyze():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command

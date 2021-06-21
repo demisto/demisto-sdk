@@ -72,7 +72,8 @@ def format_manager(input: str = None,
                    no_validate: bool = False,
                    verbose: bool = False,
                    update_docker: bool = False,
-                   assume_yes: bool = False):
+                   assume_yes: bool = False,
+                   deprecate: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -121,7 +122,8 @@ def format_manager(input: str = None,
                                                                  no_validate=no_validate,
                                                                  verbose=verbose,
                                                                  update_docker=update_docker,
-                                                                 assume_yes=assume_yes)
+                                                                 assume_yes=assume_yes,
+                                                                 deprecate=deprecate)
                 if err_res:
                     error_list.append("err_res")
                 if err_res:

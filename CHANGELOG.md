@@ -1,4 +1,12 @@
 # Changelog
+* When in private repo without `DEMITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
+* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
+* Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+
+# 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.
@@ -14,11 +22,12 @@
 * Fixed an issue where **download** did not return exit code 1 on failure.
 * Updated the validation that incident fields' names do not contain the word incident will aplly to core packs only.
 * Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
+* Renamed the GitHub authentication token environment variable `GITHUB_TOKEN` to `DEMITO_SDK_GITHUB_TOKEN`.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 * Added the **convert** command to convert entities between XSOAR versions.
-* Added a version differences section to readme in **generate-docs** command.
-* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
+* Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

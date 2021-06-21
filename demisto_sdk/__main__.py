@@ -360,6 +360,10 @@ def unify(**kwargs):
     "--quite-bc-validation",
     help="Set backwards compatibility validation's errors as warnings",
     is_flag=True)
+@click.option(
+    "--allow-skipped",
+    help="Don't fail on skipped integrations or when all test playbooks are skipped",
+    is_flag=True)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -398,7 +402,8 @@ def validate(config, **kwargs):
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
-            quite_bc=kwargs.get('quite_bc_validation')
+            quite_bc=kwargs.get('quite_bc_validation'),
+            check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -531,6 +536,11 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(resolve_path=True))
+@click.option("--no-coverage", is_flag=True, help="Do NOT run coverage report.")
+@click.option(
+    "--coverage-report", help="Specify directory for the coverage report files",
+    type=PathsParamType()
+)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -566,7 +576,9 @@ def lint(**kwargs):
         no_pwsh_test=kwargs.get('no_pwsh_test'),  # type: ignore[arg-type]
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
-        failure_report=kwargs.get('failure_report')  # type: ignore[arg-type]
+        failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
+        no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
+        coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
     )
 
 
@@ -594,6 +606,8 @@ def lint(**kwargs):
     "-y", "--assume-yes",
     help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
     is_flag=True)
+@click.option(
+    "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
 def format(
         input: Path,
         output: Path,
@@ -601,7 +615,8 @@ def format(
         no_validate: bool,
         update_docker: bool,
         verbose: bool,
-        assume_yes: bool
+        assume_yes: bool,
+        deprecate: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
@@ -613,7 +628,8 @@ def format(
         no_validate=no_validate,
         update_docker=update_docker,
         assume_yes=assume_yes,
-        verbose=verbose
+        verbose=verbose,
+        deprecate=deprecate
     )
 
 
@@ -640,7 +656,7 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """"Upload integration to Demisto instance.
+    """Upload integration to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
@@ -1069,7 +1085,8 @@ def update_release_notes(**kwargs):
     if _pack and '/' in _pack:
         _pack = get_pack_name(_pack)
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True)
+        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True,
+                                           skip_conf_json=True, check_is_unskipped=False)
         validate_manager.setup_git_params()
         modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
         _packs = get_packs(modified).union(get_packs(old)).union(

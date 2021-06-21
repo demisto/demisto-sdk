@@ -1,3 +1,5 @@
+import ast
+import json
 from functools import partial
 
 from demisto_sdk.commands.common.constants import PB_Status
@@ -12,9 +14,6 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 from demisto_sdk.commands.test_content.tests.server_context_test import \
     generate_mocked_server_context
-import ast
-import json
-import demisto_client
 
 
 def test_is_runnable_on_this_instance(mocker):

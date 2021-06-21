@@ -515,14 +515,23 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
             cov.report(file=report_data)
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
+            return
         report_data.seek(0)
         logger.info(report_data.read())
 
     if html:
         html_dir = os.path.join(cov_dir, 'html')
         logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
-        cov.html_report(directory=html_dir)
+        try:
+            cov.html_report(directory=html_dir)
+        except coverage.misc.CoverageException as warning:
+            logger.warning(str(warning))
+            return
     if xml:
         xml_file = os.path.join(cov_dir, 'coverage.xml')
         logger.info(export_msg.format('xml', xml_file))
-        cov.xml_report(outfile=xml_file)
+        try:
+            cov.xml_report(outfile=xml_file)
+        except coverage.misc.CoverageException as warning:
+            logger.warning(str(warning))
+            return

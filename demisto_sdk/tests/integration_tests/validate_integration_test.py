@@ -11,6 +11,8 @@ from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
@@ -528,6 +530,7 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(DockerImageValidator, 'is_docker_image_valid', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json"])
         assert f"{VALID_PACK_PATH} unique pack files" in result.stdout

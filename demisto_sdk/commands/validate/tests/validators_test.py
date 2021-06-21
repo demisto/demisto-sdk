@@ -16,6 +16,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -209,6 +211,7 @@ class TestValidators:
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+            mocker.patch.object(DockerImageValidator, 'is_docker_image_valid', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -384,6 +387,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(DockerImageValidator, 'is_docker_image_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -503,6 +507,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(DockerImageValidator, 'is_docker_image_valid', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)

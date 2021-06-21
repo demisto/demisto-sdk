@@ -867,6 +867,28 @@ class TestIntegrationValidator:
 
         assert validator.name_not_contain_the_type()
 
+    IS_SKIPPED_INPUTS = [
+        ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),
+        ({'skipped_integrations': {"SomeOtherIntegration": "No instance"}}, True)
+    ]
+
+    @pytest.mark.parametrize("conf_dict, answer", IS_SKIPPED_INPUTS)
+    def test_is_unskipped_integration(self, conf_dict, answer):
+        """
+        Given:
+            - An integration.
+            - conf file with configurations for the integration.
+
+        When: running validate specifically on integration.
+
+        Then: Validate the integration is not skipped.
+        """
+        current = {"commonfields": {"id": "SomeIntegration"}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_unskipped_integration(conf_dict) is answer
+
 
 class TestIsFetchParamsExist:
     def setup(self):

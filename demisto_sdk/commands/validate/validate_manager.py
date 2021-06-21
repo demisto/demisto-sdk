@@ -78,7 +78,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, quite_bc=False,
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -100,6 +100,8 @@ class ValidateManager:
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
         self.quite_bc = quite_bc
+        self.check_is_unskipped = check_is_unskipped
+        self.conf_json_data = {}
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -159,9 +161,14 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.print_percent = True
+            self.check_is_unskipped = False
 
         if no_docker_checks:
             self.skip_docker_checks = True
+
+        if self.check_is_unskipped or not self.skip_conf_json:
+            self.conf_json_validator = ConfJsonValidator()
+            self.conf_json_data = self.conf_json_validator.conf_data
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -242,8 +249,7 @@ class ValidateManager:
         all_packs_valid = set()
 
         if not self.skip_conf_json:
-            conf_json_validator = ConfJsonValidator()
-            all_packs_valid.add(conf_json_validator.is_valid_conf_json())
+            all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
         count = 1
         all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
@@ -379,6 +385,13 @@ class ValidateManager:
                                                                                         pack_error_ignore_list):
             return False
 
+        # conf.json validation
+        valid_in_conf = True
+        if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT, FileType.BETA_INTEGRATION}:
+            if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
+                                                                       file_path):
+                valid_in_conf = False
+
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
             return True
@@ -406,10 +419,12 @@ class ValidateManager:
             return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
+                                                  file_type), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
+                                             file_type), valid_in_conf])
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -547,8 +562,7 @@ class ValidateManager:
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
-                                                     json_file_path=self.json_file_path,
-                                                     )
+                                                     json_file_path=self.json_file_path)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -559,10 +573,14 @@ class ValidateManager:
         if deprecated_result is not None:
             return deprecated_result
         if is_modified and self.is_backward_check:
-            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
+            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                            check_is_unskipped=self.check_is_unskipped,
+                                                            conf_json_data=self.conf_json_data),
                         integration_validator.is_backward_compatible()])
         else:
-            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
+            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                       check_is_unskipped=self.check_is_unskipped,
+                                                       conf_json_data=self.conf_json_data)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,

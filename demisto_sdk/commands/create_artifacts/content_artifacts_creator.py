@@ -9,10 +9,6 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
-from packaging.version import parse
-from pebble import ProcessFuture, ProcessPool
-from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
-
 from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
     DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
@@ -25,6 +21,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.tools import arg_to_list
+from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
+from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 

@@ -7,9 +7,6 @@ import demisto_client
 import pytest
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
-from packaging.version import parse
-from pipenv.patched.piptools import click
-
 from demisto_sdk.__main__ import upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -26,6 +23,8 @@ from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
+from packaging.version import parse
+from pipenv.patched.piptools import click
 from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
@@ -857,7 +856,6 @@ class TestZippedPackUpload:
 
         disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
         enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
-
         assert status == 1
         assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
         assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']

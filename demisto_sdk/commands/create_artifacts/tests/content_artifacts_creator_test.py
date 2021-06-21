@@ -4,7 +4,6 @@ from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 
 import pytest
-
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root

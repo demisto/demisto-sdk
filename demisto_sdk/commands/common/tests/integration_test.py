@@ -1216,22 +1216,22 @@ class TestCommandsInReadme:
     ### aws-iam-get-user
     ***
     Retrieves information about the specified IAM user, including the user's creation date, path, unique ID, and ARN.
-    
-    
+
+
     #### Base Command
-    
+
     `aws-iam-get-user`
     #### Input
-    
+
     | **Argument Name** | **Description** | **Required** |
     | --- | --- | --- |
-    | userName | The name of the user to get information about. | Required | 
-    
+    | userName | The name of the user to get information about. | Required |
+
     #### Context Output
-    
+
     | **Path** | **Type** | **Description** |
     | --- | --- | --- |
-    
+
     #### Command Example
     ``` !aws-iam-get-user userName=test``` """
 

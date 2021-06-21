@@ -163,7 +163,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (dt_result, 200)
         playbook_instance.print_context_to_log(client, incident_id='1')
-        assert playbook_instance.build_context.logging_module.info.call_args.args[0] == expected_result
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_result
 
     def test_print_context_to_log__empty(self, mocker):
         """
@@ -180,7 +180,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200)
         playbook_instance.print_context_to_log(client, incident_id='1')
-        assert playbook_instance.build_context.logging_module.info.call_args.args[0] == expected_dt
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_dt
 
     def test_print_context_to_log__none(self, mocker):
         """
@@ -198,7 +198,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200)
         playbook_instance.print_context_to_log(client, incident_id='1')
-        assert playbook_instance.build_context.logging_module.error.call_args.args[0] == expected_error
+        assert playbook_instance.build_context.logging_module.error.call_args[0][0] == expected_error
 
     def test_print_context_to_log__error(self, mocker):
         """
@@ -217,5 +217,5 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 403)
         playbook_instance.print_context_to_log(client, incident_id='1')
-        assert playbook_instance.build_context.logging_module.error.call_args_list[0].args[0] == expected_first_error
-        assert playbook_instance.build_context.logging_module.error.call_args_list[1].args[0] == expected_second_error
+        assert playbook_instance.build_context.logging_module.error.call_args_list[0][0][0] == expected_first_error
+        assert playbook_instance.build_context.logging_module.error.call_args_list[1][0][0] == expected_second_error

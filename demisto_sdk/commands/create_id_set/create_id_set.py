@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from collections import OrderedDict
 from genericpath import exists
 
@@ -25,6 +26,7 @@ class IDSetCreator:
 
     def create_id_set(self):
         self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
+        sys.exit(1)
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()
         return self.id_set

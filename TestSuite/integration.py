@@ -57,13 +57,14 @@ class Integration:
             self.image.write_bytes(image)
 
     def create_default_integration(self, name: str = None, commands: List[str] = None):
-        """
-        Given:
-            - A pack with an empty integration file
-        When
-            - Creating a default integration entity with/out a specific name and ID and with/out additional commands
-        Then
-            - Checks if there is a specific name for the integration (default is "Sample") and creates the integration
+        """Creates a new integration with/out a specific name and ID with basic data
+
+        :type name: ``Optional[str]``
+        :param name: The name and ID of the new playbook, default is "sample playbook".
+
+        :type commands: ``Optional[List[str]]``
+        :param name: List of additional commands to add to the integration.
+
         """
         default_integration_dir = 'assets/default_integration'
 

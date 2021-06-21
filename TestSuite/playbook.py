@@ -41,14 +41,11 @@ class Playbook:
             self.readme.write(readme)
 
     def create_default_playbook(self, name: str = None):
-        """
-        Given:
-            - A pack with an empty playbook file
-        When
-            - Creating a default playbook entity with/out a specific name and ID
-        Then
-            - Checks if there is a specific name for the playbook
-             (default is "sample playbook") and creates the playbook
+        """Creates a new playbook with/out a specific name and ID with basic data
+
+        :type name: ``Optional[str]``
+        :param name: The name and ID of the new playbook, default is "sample playbook".
+
         """
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:

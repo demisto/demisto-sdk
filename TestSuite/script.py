@@ -14,13 +14,11 @@ class Script(Integration):
         super().__init__(tmpdir, name, repo, create_unified)
 
     def create_default_script(self, name: str = None):
-        """
-        Given:
-            - A pack with an empty script file
-        When
-            - Creating a default script entity with/out a specific name and ID
-        Then
-            - Checks if there is a specific name for the script (default is "sample_script") and creates the script
+        """Creates a new script with/out a specific name and ID with basic data
+
+        :type name: ``Optional[str]``
+        :param name: The name and ID of the new script, default is "sample_script".
+
         """
 
         default_script_dir = 'assets/default_script'

@@ -1209,3 +1209,56 @@ class TestisContextChanged:
             res = validator.is_context_change_in_readme()
             assert res == expected
         patcher.stop()
+
+
+class TestCommandsInReadme:
+    README = """
+    ### aws-iam-get-user
+    ***
+    Retrieves information about the specified IAM user, including the user's creation date, path, unique ID, and ARN.
+    
+    
+    #### Base Command
+    
+    `aws-iam-get-user`
+    #### Input
+    
+    | **Argument Name** | **Description** | **Required** |
+    | --- | --- | --- |
+    | userName | The name of the user to get information about. | Required | 
+    
+    #### Context Output
+    
+    | **Path** | **Type** | **Description** |
+    | --- | --- | --- |
+    
+    #### Command Example
+    ``` !aws-iam-get-user userName=test``` """
+
+    TEST_CASE = [
+        (README, {"script": {'commands': [{'name': 'test-command'}, {'name': 'aws-iam-get-user'}]}}, False),
+        (README, {"script": {'commands': [{'name': 'aws-iam-get-user'}]}}, True),
+        (README, {"script": {'commands': []}}, True)
+
+    ]
+
+    @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
+    def test_are_commands_in_readme(self, readme, current_yml, expected):
+        """
+        Given: an yml file with commands.
+
+        When: running validate on integration with some commands
+
+        Then: Validate that the commands appear in the readme.
+        """
+        patcher = patch('os.path.exists')
+        mock_thing = patcher.start()
+        mock_thing.side_effect = lambda x: True
+        with patch("builtins.open", mock_open(read_data=readme)) as _:
+            current = {"script": {}}
+            structure = mock_structure("Pack/Test", current)
+            validator = IntegrationValidator(structure)
+            validator.current_file = current_yml
+            res = validator.are_commands_in_readme()
+            assert res == expected
+        patcher.stop()

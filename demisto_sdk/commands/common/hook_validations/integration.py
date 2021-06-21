@@ -1085,6 +1085,45 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
         return True
 
+    def are_commands_in_readme(self) -> bool:
+        """
+        Check if commands from the YML file exist in the README file.
+        Returns:
+            True if all commands exist, else False.
+        """
+        valid = True
+        commands_to_ignore = ['get-mapping-fields']
+        dir_path = os.path.dirname(self.file_path)
+
+        if not os.path.exists(os.path.join(dir_path, 'README.md')):
+            return True
+
+        readme_path = os.path.join(dir_path, 'README.md')
+
+        # get README file's content
+        with open(readme_path, 'r') as readme:
+            readme_content = readme.read()
+
+        commands = self.current_file.get("script", {})
+        commands_not_in_yml = []
+
+        # handles scripts
+        if not commands:
+            return True
+
+        commands = commands.get('commands', [])
+        for command in commands:
+            command_name = command.get('name')
+            if f'!{command_name}' not in readme_content and command_name not in commands_to_ignore:
+                commands_not_in_yml.append(command_name)
+
+        if commands_not_in_yml:
+            error, code = Errors.missing_commands_in_readme("\n".join(commands_not_in_yml))
+            if self.handle_error(error, code, file_path=self.file_path):
+                valid = False
+
+        return valid
+
     def is_context_change_in_readme(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README

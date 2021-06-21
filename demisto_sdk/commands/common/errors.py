@@ -23,7 +23,7 @@ ALLOWED_IGNORE_ERRORS = [
 
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
     'partner': ['CJ']
 }
 
@@ -91,6 +91,7 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
+    'missing_commands_in_readme': {'code': "IN140", "ui_applicable": False, 'related_field': 'script.commands.name'},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -563,6 +564,11 @@ class Errors:
     def readme_missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in YML file ' \
                f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_commands_in_readme(commands):
+        return f'The Following commands are found in the YML file but are missing from the README file:\n{commands}'
 
     @staticmethod
     @error_code_decorator

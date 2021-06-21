@@ -1,5 +1,6 @@
 # Changelog
 * When in private repo without `DEMITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
@@ -23,7 +24,6 @@
 * Added the **convert** command to convert entities between XSOAR versions.
 * Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
 * Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
-* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
 
 # 1.3.9
 * Added a validation verifying that the pack's README.md file is not equal to pack description.

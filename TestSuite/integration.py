@@ -57,7 +57,7 @@ class Integration:
             self.image.write_bytes(image)
 
     def create_default_integration(self, name: str = None, commands: List[str] = None):
-        """Creates a new integration with/out a specific name and ID with basic data
+        """Creates a new integration with basic data
 
         :type name: ``Optional[str]``
         :param name: The name and ID of the new integration, default is "Sample".

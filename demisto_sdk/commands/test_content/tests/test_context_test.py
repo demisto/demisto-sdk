@@ -12,7 +12,6 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 from demisto_sdk.commands.test_content.tests.server_context_test import \
     generate_mocked_server_context
-from unittest.mock import patch
 import ast
 import json
 import demisto_client
@@ -136,7 +135,6 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
     assert pid_threshold == Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE
 
 
-@patch('demisto_client.generic_request_func')
 class TestPrintContextToLog:
 
     @staticmethod
@@ -163,8 +161,9 @@ class TestPrintContextToLog:
         dt_result = "{'foo': 'goo'}"
         expected_result = json.dumps(ast.literal_eval(dt_result), indent=4)
         playbook_instance = self.create_playbook_instance(mocker)
-        demisto_client.generic_request_func.return_value = (dt_result, 200)
-        playbook_instance.print_context_to_log(None, incident_id='1')
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (dt_result, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
         assert playbook_instance.build_context.logging_module.info.call_args.args[0] == expected_result
 
     def test_print_context_to_log__empty(self, mocker):
@@ -179,8 +178,9 @@ class TestPrintContextToLog:
         """
         expected_dt = '{}'
         playbook_instance = self.create_playbook_instance(mocker)
-        demisto_client.generic_request_func.return_value = (expected_dt, 200)
-        playbook_instance.print_context_to_log(None, incident_id='1')
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
         assert playbook_instance.build_context.logging_module.info.call_args.args[0] == expected_dt
 
     def test_print_context_to_log__none(self, mocker):
@@ -196,8 +196,9 @@ class TestPrintContextToLog:
         expected_dt = None
         expected_error = 'received error: malformed node or string: None for None'
         playbook_instance = self.create_playbook_instance(mocker)
-        demisto_client.generic_request_func.return_value = (expected_dt, 200)
-        playbook_instance.print_context_to_log(None, incident_id='1')
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
         assert playbook_instance.build_context.logging_module.error.call_args.args[0] == expected_error
 
     def test_print_context_to_log__error(self, mocker):
@@ -214,7 +215,8 @@ class TestPrintContextToLog:
         expected_first_error = 'incident context fetch failed with Status code 403'
         expected_second_error = f"('{expected_dt}', 403)"
         playbook_instance = self.create_playbook_instance(mocker)
-        demisto_client.generic_request_func.return_value = (expected_dt, 403)
-        playbook_instance.print_context_to_log(None, incident_id='1')
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 403)
+        playbook_instance.print_context_to_log(client, incident_id='1')
         assert playbook_instance.build_context.logging_module.error.call_args_list[0].args[0] == expected_first_error
         assert playbook_instance.build_context.logging_module.error.call_args_list[1].args[0] == expected_second_error

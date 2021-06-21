@@ -10,7 +10,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
-from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
+from demisto_sdk.commands.integration_diff.integration_diff_detector import \
+    IntegrationDiffDetector
 
 CREDENTIALS = 9
 
@@ -124,7 +125,7 @@ def generate_integration_doc(
                     docs.extend(['You may have breaking changes from the previous version, please look at them [here]'
                                  '(#Breaking-changes-from-previous-versions-of-this-integration).', ''])
                 else:
-                    integration_version = None
+                    integration_version = []
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))

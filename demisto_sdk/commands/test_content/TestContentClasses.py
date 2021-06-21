@@ -434,7 +434,7 @@ class TestPlaybook:
                 return
             try:
                 self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
-            except ValueError as e:
+            except ValueError:
                 self.build_context.logging_module.error(f"unable to parse result for result with value: {res[0]}")
         except ApiException:
             self.build_context.logging_module.exception(

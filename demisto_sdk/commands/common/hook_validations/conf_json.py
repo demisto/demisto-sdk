@@ -80,7 +80,7 @@ class ConfJsonValidator(BaseValidator):
     def is_valid_file_in_conf_json(self, current_file, file_type, file_path):
         """Check if the file is valid in the conf.json"""
         entity_id = _get_file_id(file_type.value, current_file)
-        if file_type == FileType.INTEGRATION:
+        if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
             return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path)
         if file_type == FileType.SCRIPT:
             return self.has_unskipped_test_playbook(current_file=current_file,
@@ -89,12 +89,25 @@ class ConfJsonValidator(BaseValidator):
         return True
 
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, test_playbook_ids: list = []):
-        """Check if the content entity has at least one unskipped test playbook."""
+        """Check if the content entity has at least one unskipped test playbook.
+
+        Collect test playbook ids from the `tests` field in the file, merge them with
+        provided test_playbook_ids and validate at least one is unskipped.
+
+        Args:
+            current_file: The file to check.
+            entity_id: The id of the entity to check.
+            file_path: The file path of the entity to check.
+            test_playbook_ids: test_playbook_ids unrelated to `tests` field in the file.
+
+        Retrun:
+            True if the content entity has at least one unskipped test playbook.
+        """
         test_playbooks_unskip_status = {}
         all_test_playbook_ids = test_playbook_ids.copy()
         skipped_tests = self.conf_data.get('skipped_tests', {})
 
-        if type(current_file.get('tests')) is list:
+        if isinstance(current_file.get('tests'), list):
             all_test_playbook_ids.extend(current_file.get('tests', []))
 
         for test_playbook_id in set(all_test_playbook_ids):
@@ -115,7 +128,7 @@ class ConfJsonValidator(BaseValidator):
         conf_tests = self.conf_data.get('tests', [])
         for test in conf_tests:
             if 'integrations' in test:
-                if (type(test['integrations']) is str and integration_id == test['integrations']) or \
+                if (isinstance(test['integrations'], str) and integration_id == test['integrations']) or \
                         integration_id in list(test['integrations']):
                     test_playbook_ids.append(test['playbookID'])
 

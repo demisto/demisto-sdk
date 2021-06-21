@@ -7,8 +7,6 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -875,7 +873,7 @@ class TestIntegrationValidator:
     ]
 
     @pytest.mark.parametrize("conf_dict, answer", IS_SKIPPED_INPUTS)
-    def test_is_unskipped_integration(self, mocker, conf_dict, answer):
+    def test_is_unskipped_integration(self, conf_dict, answer):
         """
         Given:
             - An integration.
@@ -885,12 +883,11 @@ class TestIntegrationValidator:
 
         Then: Validate the integration is not skipped.
         """
-        mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=conf_dict)
         current = {"commonfields": {"id": "SomeIntegration"}}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_unskipped_integration() is answer
+        assert validator.is_unskipped_integration(conf_dict) is answer
 
 
 class TestIsFetchParamsExist:

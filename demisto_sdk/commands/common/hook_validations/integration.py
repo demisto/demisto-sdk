@@ -70,7 +70,7 @@ class IntegrationValidator(ContentEntityValidator):
         return not any(answers)
 
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
-                      check_is_unskipped: bool = True) -> bool:
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
@@ -78,6 +78,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
+                conf_file (dict):
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -116,7 +117,7 @@ class IntegrationValidator(ContentEntityValidator):
         ]
 
         if check_is_unskipped:
-            answers.append(self.is_unskipped_integration())
+            answers.append(self.is_unskipped_integration(conf_json_data))
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
@@ -161,9 +162,9 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return all(answers)
 
-    def is_unskipped_integration(self):
+    def is_unskipped_integration(self, conf_json_data):
         """Validated the integration testing is not skipped."""
-        skipped_integrations = self._load_conf_file().get('skipped_integrations', {})
+        skipped_integrations = conf_json_data.get('skipped_integrations', {})
         integration_id = _get_file_id('integration', self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
             error_message, error_code = Errors.integration_is_skipped(integration_id)

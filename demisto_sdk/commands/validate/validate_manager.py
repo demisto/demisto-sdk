@@ -101,6 +101,7 @@ class ValidateManager:
         self.pykwalify_logs = pykwalify_logs
         self.quite_bc = quite_bc
         self.check_is_unskipped = check_is_unskipped
+        self.conf_json_data = {}
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -167,6 +168,7 @@ class ValidateManager:
 
         if self.check_is_unskipped or not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
+            self.conf_json_data = self.conf_json_validator.conf_data
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -385,7 +387,7 @@ class ValidateManager:
 
         # conf.json validation
         valid_in_conf = True
-        if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT}:
+        if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT, FileType.BETA_INTEGRATION}:
             if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
                                                                        file_path):
                 valid_in_conf = False
@@ -572,11 +574,13 @@ class ValidateManager:
             return deprecated_result
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
-                                                            check_is_unskipped=self.check_is_unskipped),
+                                                            check_is_unskipped=self.check_is_unskipped,
+                                                            conf_json_data=self.conf_json_data),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
-                                                       check_is_unskipped=self.check_is_unskipped)
+                                                       check_is_unskipped=self.check_is_unskipped,
+                                                       conf_json_data=self.conf_json_data)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,

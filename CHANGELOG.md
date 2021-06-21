@@ -1,4 +1,8 @@
 # Changelog
+* When in private repo without `DEMITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
+
+# 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
 * Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
 * Fixed the **generate-docs** to handle integration authentication parameter.

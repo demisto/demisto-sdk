@@ -41,7 +41,7 @@ class Playbook:
             self.readme.write(readme)
 
     def create_default_playbook(self, name: str = None):
-        """Creates a new playbook with/out a specific name and ID with basic data
+        """Creates a new playbook with basic data.
 
         :type name: ``Optional[str]``
         :param name: The name and ID of the new playbook, default is "sample playbook".

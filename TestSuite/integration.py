@@ -60,10 +60,10 @@ class Integration:
         """Creates a new integration with/out a specific name and ID with basic data
 
         :type name: ``Optional[str]``
-        :param name: The name and ID of the new playbook, default is "sample playbook".
+        :param name: The name and ID of the new integration, default is "Sample".
 
         :type commands: ``Optional[List[str]]``
-        :param name: List of additional commands to add to the integration.
+        :param commands: List of additional commands to add to the integration.
 
         """
         default_integration_dir = 'assets/default_integration'

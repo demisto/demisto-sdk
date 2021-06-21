@@ -14,7 +14,7 @@ class Script(Integration):
         super().__init__(tmpdir, name, repo, create_unified)
 
     def create_default_script(self, name: str = None):
-        """Creates a new script with/out a specific name and ID with basic data
+        """Creates a new script with basic data.
 
         :type name: ``Optional[str]``
         :param name: The name and ID of the new script, default is "sample_script".

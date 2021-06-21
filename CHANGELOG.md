@@ -1,5 +1,5 @@
 # Changelog
-
+* When in private repo without `DEMITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

@@ -91,6 +91,7 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
+    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -132,6 +133,7 @@ ERROR_CODE = {
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
     "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
     "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
+    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
     "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
     "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
@@ -1580,6 +1582,21 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def integration_is_skipped(integration_id):
+        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+
+    @staticmethod
+    @error_code_decorator
+    def all_entity_test_playbooks_are_skipped(entity_id):
+        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
+               f"Please unskip at least one of the relevant test playbooks.\n " \
+               f"You can do this by deleting the line relevant to one of the test playbooks " \
+               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"with the matching issue,\n  or create a new active test playbook " \
+               f"and add the id to the 'tests' field in the yml."
 
     @staticmethod
     def wrong_filename(file_type):

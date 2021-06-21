@@ -128,9 +128,13 @@ class CustomBaseChecker(BaseChecker):
 
     def _executecommand_checker(self, node):
         try:
-            if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand' and \
-                    (node.args[0].value == 'getIncidents' or node.args[0].value == 'DeleteContext'):
-                self.add_message("missing-permission", node=node)
+            if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand':
+                if node.args[0].value == 'getIncidents' or node.args[0].value == 'DeleteContext':
+                    self.add_message("missing-permission", node=node)
+                elif node.args[0].value == 'setIncident':
+                    if node.args[1].items and node.args[1].items[0][0].value == 'id':
+                        self.add_message("missing-permission", node=node)
+
 
         except Exception:
             pass

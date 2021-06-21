@@ -246,7 +246,8 @@ def get_remote_file(
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path, local_content = repo_git_util.get_local_remote_file_content(full_file_path, tag)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
@@ -264,7 +265,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore
+        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}

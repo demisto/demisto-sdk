@@ -168,8 +168,8 @@ class ValidateManager:
         self.print_ignored_errors_report(self.print_ignored_errors)
 
         if valid:
-            click.secho('\nThe files are valid', fg='green')
-            return 0
+            click.secho('\nThe files are validNOPE', fg='green')
+            return 1
 
         else:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)

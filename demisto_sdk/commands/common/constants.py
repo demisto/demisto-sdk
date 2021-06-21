@@ -1166,8 +1166,6 @@ ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
 
 PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
 
-INTEGRATION_ENTITIES = ['parameter', 'command', 'argument', 'output']
-
 INTEGRATION_ARGUMENT_TYPES = {
     '0': 'ShortText',
     '4': 'Encrypted',

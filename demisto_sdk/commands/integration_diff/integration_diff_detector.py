@@ -267,7 +267,8 @@ class IntegrationDiffDetector:
                             'name': output['contextPath'],
                             'command_name': new_command["name"],
                             'message': f'The output \'{output["contextPath"]}\' in the command '
-                                       f'\'{new_command["name"]}\' was changed in field \'type\'.'
+                                       f'\'{new_command["name"]}\' was changed in field \'type\'.',
+                            'changed_field': 'type'
                         })
 
         return outputs
@@ -332,12 +333,24 @@ class IntegrationDiffDetector:
         """
         Prints the missing elements report.
         """
+        changed = []
 
         for missing_type in self.missing_items_report:
-            click.secho(f"\nMissing {missing_type}:\n", fg='bright_red')
+            click.secho(f"Missing {missing_type}:\n", fg='bright_red')
 
             for item in self.missing_items_report[missing_type]:
-                click.secho(item['message'] + "\n", fg='bright_red')
+                if 'changed_field' in item:
+                    changed.append(item['message'])
+
+                else:
+                    click.secho(item['message'], fg='bright_red')
+
+            if changed:
+                click.secho(f"\nChanged {missing_type}:\n", fg='bright_red')
+                click.secho("\n".join(changed), fg='bright_red')
+                changed.clear()
+
+            click.secho("")
 
     def print_items_in_docs_format(self, secho_result: bool = True):
         """
@@ -364,66 +377,15 @@ class IntegrationDiffDetector:
 
             output_per_command = self.get_elements_per_command(self.missing_items_report['outputs'])
             for command in output_per_command:
-                result += f'\nCommand \'{command}\':\n'
+                result += f'\nIn the command *{command}*:\n'
 
                 for output in output_per_command[command]:
                     result += f'* *{output["name"]}* - this output was replaced by XXX.\n'
 
         if secho_result:
             result += '\n## Additional Considerations for this Version\n* Insert any API changes, ' \
-                      'any behavioral changes, limitations, or restrictions that would be new to this version.'
+                      'any behavioral changes, limitations, or restrictions that would be new to this version.\n'
             click.secho(result)
-
-        return result
-
-    def get_items_in_docs_format(self, items_report, action_type) -> str:
-        """
-        Gets the differences in docs format.
-
-        Args:
-            items_report: A report of the items to print.
-            action_type: The type of the difference (Added, Changed or Removed).
-
-        Return:
-            String of the items in docs format to print.
-        """
-        result = ''
-
-        for entity in items_report:
-            entity_result = ''
-            if entity == 'outputs':
-                split_outputs = self.get_elements_per_command(items_report[entity])
-
-                entity_result += f'- There are {action_type.lower()} outputs in the commands `{", ".join(list(split_outputs))}`\n'
-
-            else:
-
-                if action_type == 'Changed':
-                    for item in items_report[entity]:
-                        # If it's not a changed item we won't want to print this here
-                        if 'changed_field' not in item:
-                            continue
-
-                        entity_result += f'- {item["message"]}\n'
-
-                else:
-                    # Remove all changed items
-                    items_not_changed = [item for item in items_report[entity] if "changed_field" not in item]
-
-                    if entity == 'arguments':
-                        args_per_command = self.get_elements_per_command(items_not_changed)
-
-                        for command in args_per_command:
-                            entity_result += f'- The arguments `{", ".join([arg["name"] for arg in args_per_command[command]])}` ' \
-                                             f'in the command `{command}`.\n'
-
-                    else:
-                        for item in items_not_changed:
-                            entity_result += f'- `{item["name"]}` - {item.get("description", "")}\n' \
-                                if entity == 'commands' and action_type == 'Added' else f'- `{item["name"]}`\n'
-
-            if entity_result:
-                result += f'#### {action_type} the following {entity}:\n' + entity_result + '\n'
 
         return result
 

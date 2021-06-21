@@ -3,8 +3,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import (
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX,
-    INTEGRATION_ENTITIES)
+    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -120,8 +119,12 @@ def generate_integration_doc(
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version:
-                docs.extend(['You may have breaking changes from the previous version, please look at them [here]'
-                             '(#Breaking-changes-from-previous-versions-of-this-integration).', ''])
+                user_response = str(input('Do you want to generate the breaking changes section? Y/N\n'))
+                if user_response.lower() in ['y', 'Y']:
+                    docs.extend(['You may have breaking changes from the previous version, please look at them [here]'
+                                 '(#Breaking-changes-from-previous-versions-of-this-integration).', ''])
+                else:
+                    integration_version = None
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -332,7 +335,7 @@ def generate_versions_differences_section(input_path) -> list:
         List of the section lines.
     """
     previous_integration_path = str(input('Enter the path of the previous integration version file if any. '
-                                          'Press Enter if not.\n'))
+                                          'Press Enter to skip.\n'))
 
     differences_section = [
         '## Breaking changes from previous versions of this integration',
@@ -344,8 +347,12 @@ def generate_versions_differences_section(input_path) -> list:
 
         differences = get_previous_version_differences(input_path, previous_integration_path)
 
-        if differences:
+        if differences[0] != '':
             differences_section.extend(differences)
+
+        else:
+            # If there are no differences, remove the headers.
+            differences_section = []
 
     else:
         differences_section.extend(['### Commands',
@@ -367,7 +374,7 @@ def generate_versions_differences_section(input_path) -> list:
 
     differences_section.extend(['## Additional Considerations for this Version',
                                 '* Insert any API changes, any behavioral changes, limitations, or restrictions '
-                                'that would be new to this version.'])
+                                'that would be new to this version.', ''])
 
     return differences_section
 

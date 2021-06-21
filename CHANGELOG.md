@@ -1,4 +1,5 @@
 # Changelog
+* When in private repo without `DEMITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
 * Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
 
 # 1.4.0

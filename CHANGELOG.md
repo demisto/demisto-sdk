@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation verifying that the docker image is set in integration/script YML.
 
 
 # 1.4.0

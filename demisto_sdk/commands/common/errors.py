@@ -112,6 +112,7 @@ ERROR_CODE = {
     "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_image_does_not_exist_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -725,6 +726,11 @@ class Errors:
     def non_existing_docker(docker_image):
         return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
                f'DockerHub: https://hub.docker.com/u/demisto/.'
+
+    @staticmethod
+    @error_code_decorator
+    def docker_image_does_not_exist_in_yml_file(yml_file_path):
+        return f'The docker image does not exist in the yml file {yml_file_path}.'
 
     @staticmethod
     @error_code_decorator

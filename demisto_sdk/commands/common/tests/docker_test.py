@@ -294,3 +294,33 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert error in captured.out
             assert code in captured.out
+
+    def test_docker_image_does_not_exist_in_yml_file(self, integration):
+        """
+        Given
+        - An integration/script yml file.
+
+        When
+        - The dockerimage key is not set
+
+        Then
+        - Ensure the YML file is invalid.
+        - Ensure the resulting error messages are correctly formatted.
+        - Ensure the error code is 'DO108'.
+        """
+        integration.yml.write_dict(
+            {
+                'script': {
+                    'subtype': 'python3',
+                    'type': 'python'
+                }
+            }
+        )
+        error, code = Errors.docker_image_does_not_exist_in_yml_file(integration.yml.path)
+
+        with ChangeCWD(integration.repo_path):
+            validator = DockerImageValidator(integration.yml.path, True, True)
+            assert validator.is_docker_image_valid() is False
+            assert validator.is_valid is False
+            assert 'The docker image does not exist in the yml file' in error
+            assert code == 'DO108'

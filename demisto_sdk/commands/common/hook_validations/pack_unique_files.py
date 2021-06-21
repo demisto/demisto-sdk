@@ -34,6 +34,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
+MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
 INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
                               '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
@@ -300,6 +301,10 @@ class PackUniqueFilesValidator(BaseValidator):
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
+                    return False
+
+            if len(description_name) > MAXIMUM_DESCRIPTION_FIELD_LENGTH:
+                if self._add_error(Errors.pack_metadata_long_description(), self.pack_meta_file):
                     return False
 
             # check non mandatory dependency field

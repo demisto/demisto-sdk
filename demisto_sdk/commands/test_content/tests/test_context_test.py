@@ -151,11 +151,11 @@ class TestPrintContextToLog:
         """
         Given:
             - A test context with a context_print_dt value
-            - The context result is empty
+            - The context result is a string "{'foo': 'goo'}"
         When:
             - Running 'print_context_to_log' method
         Then:
-            - Ensure that an empty result is being printed to the context
+            - Ensure that a proper json result is being printed to the context
         """
         dt_result = "{'foo': 'goo'}"
         expected_result = json.dumps(ast.literal_eval(dt_result), indent=4)
@@ -193,7 +193,7 @@ class TestPrintContextToLog:
             - Ensure that an exception is raised and handled via logging error
         """
         expected_dt = None
-        expected_error = 'received error: malformed node or string: None for None'
+        expected_error = 'unable to parse result for result with value: None'
         playbook_instance = self.create_playbook_instance(mocker)
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200)

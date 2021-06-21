@@ -12,10 +12,10 @@ class IntegrationDiffDetector:
     def __init__(self, new: str = '', old: str = '', docs_format: bool = False):
 
         if not os.path.exists(new):
-            click.secho('No such file or directory for the new integration.', fg='bright_red')
+            click.secho('No such file or directory for the new integration version.', fg='bright_red')
 
         if not os.path.exists(old):
-            click.secho('No such file or directory for the old integration.', fg='bright_red')
+            click.secho('No such file or directory for the old integration version.', fg='bright_red')
 
         self.new = new
         self.old = old
@@ -35,14 +35,14 @@ class IntegrationDiffDetector:
             bool. return true if the new integration contains everything in the old integration.
         """
 
-        self.missing_items_report = self.get_differences(self.old_yaml_data, self.new_yaml_data)
+        self.missing_items_report = self.get_differences()
 
         if self.print_items():
             return False
 
         return True
 
-    def get_differences(self, old_data, new_data) -> dict:
+    def get_differences(self) -> dict:
         """
             Gets the different elements between the two integration yaml data.
 
@@ -56,12 +56,12 @@ class IntegrationDiffDetector:
 
         differences_result = {}
 
-        old_commands_data = old_data['script']['commands']
-        new_commands_data = new_data['script']['commands']
+        old_commands_data = self.old_yaml_data['script']['commands']
+        new_commands_data = self.new_yaml_data['script']['commands']
 
         commands, arguments, outputs = self.get_different_commands(old_commands_data, new_commands_data)
 
-        parameters = self.get_different_params(old_data['configuration'], new_data['configuration'])
+        parameters = self.get_different_params(self.old_yaml_data['configuration'], self.new_yaml_data['configuration'])
 
         if parameters:
             differences_result['parameters'] = parameters
@@ -339,26 +339,42 @@ class IntegrationDiffDetector:
             for item in self.missing_items_report[missing_type]:
                 click.secho(item['message'] + "\n", fg='bright_red')
 
-    def print_items_in_docs_format(self):
+    def print_items_in_docs_format(self, secho_result: bool = True):
         """
         Prints the version differences report in docs format so the user will can copy it to the README file.
+
+        Return:
+            The result as a string to print.
         """
 
-        # Gets the added items in the new integration
-        new_items_report = self.get_differences(old_data=self.new_yaml_data, new_data=self.old_yaml_data)
+        result = ''
 
-        result = f'\n## V{self.get_new_version(self.new_yaml_data)} important information\n'
+        if secho_result:
+            result = '\n## Breaking changes from previous versions of this integration\n' \
+                     'The following sections list the changes in this version.\n\n'
 
-        if new_in_version := self.get_items_in_docs_format(new_items_report, "Added"):
-            result += f'### New in this version:\n{new_in_version}'
+        if 'commands' in self.missing_items_report:
+            result += '### Commands\nThe following commands were removed in this version:\n'
 
-        if changed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Changed"):
-            result += f'### Changed in this version:\n{changed_in_version}'
+            for command in self.missing_items_report['commands']:
+                result += f'* *{command["name"]}* - this command was replaced by XXX.\n'
 
-        if removed_in_version := self.get_items_in_docs_format(self.missing_items_report, "Removed"):
-            result += f'### Removed in this version:\n{removed_in_version}'
+        if 'outputs' in self.missing_items_report:
+            result += '\n### Outputs\nThe following outputs were removed in this version:\n'
 
-        click.secho(result)
+            output_per_command = self.get_elements_per_command(self.missing_items_report['outputs'])
+            for command in output_per_command:
+                result += f'\nCommand \'{command}\':\n'
+
+                for output in output_per_command[command]:
+                    result += f'* *{output["name"]}* - this output was replaced by XXX.\n'
+
+        if secho_result:
+            result += '\n## Additional Considerations for this Version\n* Insert any API changes, ' \
+                      'any behavioral changes, limitations, or restrictions that would be new to this version.'
+            click.secho(result)
+
+        return result
 
     def get_items_in_docs_format(self, items_report, action_type) -> str:
         """
@@ -430,25 +446,6 @@ class IntegrationDiffDetector:
         else:
             self.print_missing_items()
         return True
-
-    @staticmethod
-    def get_new_version(yml_data) -> str:
-        """
-        Gets the version of a given integration yaml data.
-
-        Args:
-            yml_data: The yaml data.
-
-        Return:
-            The version as a string.
-        """
-
-        version = yml_data['display'].rsplit(' ', 1)[1]
-
-        if version[0].lower() == 'v' and len(version) == 2:
-            return version[1]
-
-        return ''
 
     @staticmethod
     def get_elements_per_command(list_of_elements) -> dict:

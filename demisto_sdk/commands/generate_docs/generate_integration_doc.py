@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
+from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
 
 CREDENTIALS = 9
 
@@ -115,12 +116,12 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
+            docs.extend(['This integration was integrated and tested with version xx of {}.'.format(yml_data['name']), ''])
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version:
-                version = integration_version[0].lower().replace('.yml', '').replace('v', '')
-                docs.extend(generate_versions_differences_section(version))
+                docs.extend(['You may have breaking changes from the previous version, please look at them [here]'
+                             '(#Breaking-changes-from-previous-versions-of-this-integration).', ''])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -135,6 +136,10 @@ def generate_integration_doc(
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
+            # breaking changes
+            if integration_version:
+                docs.extend(generate_versions_differences_section(input_path))
+
             errors.extend(command_errors)
             # Known limitations
             if limitations:
@@ -316,93 +321,75 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_versions_differences_section(version) -> list:
+def generate_versions_differences_section(input_path) -> list:
     """
     Generate the version differences section to the README.md file.
 
     Arguments:
-        version : The integration version.
+        input_path : The integration file path.
 
     Returns:
         List of the section lines.
     """
+    previous_integration_path = str(input('Enter the path of the previous integration version file if any. '
+                                          'Press Enter if not.\n'))
 
-    section = [
-        '',
-        f'~~~~~~~~~~To get a sugggestion for the full *V{version} important information* section run: `demisto-sdk integration-diff -n '
-        f'<new_integration_path> -o <old_integration_path> --docs-format`~~~~~~~~~~',
-        f'## V{version} important information',
-        '### New in this version:'
+    differences_section = [
+        '## Breaking changes from previous versions of this integration',
+        'The following sections list the changes in this version.',
+        ''
     ]
 
-    for entity in INTEGRATION_ENTITIES:
-        section.append(f'#### Added the following {entity}s:')
-        section.extend(get_entity_entry(entity, 'added'))
-        section.append('')
+    if previous_integration_path:
 
-    section.append('### Changed from this version:')
+        differences = get_previous_version_differences(input_path, previous_integration_path)
 
-    for entity in INTEGRATION_ENTITIES:
-        if entity == 'command':
-            continue
+        if differences:
+            differences_section.extend(differences)
 
-        section.append(f'#### Changed the following {entity}s:')
-        section.extend(get_entity_entry(entity, 'changed'))
-        section.append('')
+    else:
+        differences_section.extend(['### Commands',
+                                    'The following commands were removed in this version:',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '',
+                                    '### Outputs',
+                                    'The following outputs were removed in this version:',
+                                    '',
+                                    'commandName:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '',
+                                    'commandName:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    ''])
 
-    section.append('### Removed from this version:')
+    differences_section.extend(['## Additional Considerations for this Version',
+                                '* Insert any API changes, any behavioral changes, limitations, or restrictions '
+                                'that would be new to this version.'])
 
-    for entity in INTEGRATION_ENTITIES:
-        section.append(f'#### Removed the following {entity}s:')
-        section.extend(get_entity_entry(entity, 'removed'))
-        section.append('')
-
-    return section
+    return differences_section
 
 
-def get_entity_entry(entity, action_type) -> list:
+def get_previous_version_differences(new_integration_path, previous_integration_path) -> list:
     """
-    Gets the entity entry for the Vn differences section
+    Gets the section of the previous integration version differences.
 
     Args:
-        entity: The integration entity.
-        action_type: The different action type.
+        new_integration_path: The new integration path.
+        previous_integration_path: The old integration path.
 
     Return:
-        List of the entries to print.
+        List of the differences section lines.
     """
 
-    if entity == 'parameter':
-        if action_type == 'changed':
-            return ['- parameter-1 - describe the change.', '- parameter-2 - describe the change.']
+    differences_detector = IntegrationDiffDetector(new=new_integration_path, old=previous_integration_path)
+    differences_detector.missing_items_report = differences_detector.get_differences()
 
-        else:
-            return ['- parameter-1', '- parameter-2']
+    differences_section = [differences_detector.print_items_in_docs_format(secho_result=False)]
 
-    elif entity == 'command':
-        if action_type == 'added':
-            return ['- command-1 - description.', '- command-2 - description.']
-
-        elif action_type == 'removed':
-            return ['- command-1', '- command-2']
-
-    elif entity == 'argument':
-        if action_type == 'added':
-            return ['- The arguments `argument_name1, argument_name2` in the command `command_name`.',
-                    '- The arguments `argument_name` in the command `command_name`.']
-
-        elif action_type == 'changed':
-            return ['- The argument `argument_name` in the command `command_name` - describe the change.',
-                    '- The argument `argument_name` in the command `command_name` - describe the change.']
-
-        elif action_type == 'removed':
-            return ['- The argument `argument_name1, argument_name2` from the command `command_name`.',
-                    '- The argument `argument_name` from the command `command_name`.']
-
-    elif entity == 'output':
-        return [f'- There are {action_type} outputs in the commands `command-a, command-b`.']
-
-    return []
+    return differences_section
 
 
 def generate_command_example(cmd, cmd_example=None):

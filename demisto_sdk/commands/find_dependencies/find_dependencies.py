@@ -219,7 +219,7 @@ class PackDependencies:
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
                                             exclude_ignored_dependencies: bool = True,
-                                            incident_or_indicator: Optional[str] = 'both') -> set:
+                                            incident_or_indicator: Optional[str] = 'Both') -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -228,9 +228,9 @@ class PackDependencies:
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             incident_or_indicator (str):
-                'indicator' to search packs with indicator fields,
-                'incident' to search packs with incident fields,
-                'both' to search packs with indicator fields and incident fields.
+                'Indicator' to search packs with indicator fields,
+                'Incident' to search packs with incident fields,
+                'Both' to search packs with indicator fields and incident fields.
         Returns:
             set: found pack ids.
 
@@ -244,7 +244,7 @@ class PackDependencies:
                 item_possible_ids = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
             elif incident_or_indicator == 'Indicator':
                 item_possible_ids = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
-            elif incident_or_indicator == 'both':
+            elif incident_or_indicator == 'Both':
                 item_possible_ids = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
                                      f'{item_name}-mapper']
 

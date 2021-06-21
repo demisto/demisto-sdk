@@ -1244,3 +1244,23 @@ def test_get_display_name(data, answer, mocker):
     client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
         'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
     assert client.get_display_name('Packs/Test/test.yml') == answer
+
+
+def test_docker_image_is_added_for_every_integration(mocker, repo):
+    yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
+    pack = repo.create_pack('PackName')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed', return_value='demisto/python3:3.9.5.124')
+    integration = pack.create_integration('integration', 'bla', yml_mock)
+    integration.create_default_integration()
+    integration.yml.update({'display': 'Sample1'})
+    integration2 = pack.create_integration('integration2', 'bla2', yml_mock)
+    integration2.create_default_integration()
+    integration2.yml.update({'display': 'Sample2'})
+    pack.pack_metadata.write_json({'currentVersion': '0.0.0'})
+    client = UpdateRN(pack_path=str(pack.path), update_type='revision',
+                      modified_files_in_pack={f'{str(integration.path)}/integration.yml',
+                                              f'{str(integration2.path)}/integration2.yml'}, added_files=set())
+    client.execute_update()
+    with open(str(f'{pack.path}/ReleaseNotes/0_0_1.md')) as f:
+        rn_text = f.read()
+    assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.124*.') == 2

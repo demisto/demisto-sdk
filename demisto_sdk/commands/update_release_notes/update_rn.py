@@ -36,7 +36,7 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         try:
-            self.pack_path = pack_name_to_path(self.pack)
+            self.pack_path = pack_path
         except TypeError:
             click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
             sys.exit(1)

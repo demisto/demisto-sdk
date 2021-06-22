@@ -78,7 +78,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error, file_path):
+    def _add_error(self, error, file_path, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -86,7 +86,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
+        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
+                                            warning=warning)
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -304,7 +305,7 @@ class PackUniqueFilesValidator(BaseValidator):
                     return False
 
             if len(description_name) > MAXIMUM_DESCRIPTION_FIELD_LENGTH:
-                if self._add_error(Errors.pack_metadata_long_description(), self.pack_meta_file):
+                if self._add_error(Errors.pack_metadata_long_description(), self.pack_meta_file, warning=True):
                     return False
 
             # check non mandatory dependency field

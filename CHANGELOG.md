@@ -1,5 +1,5 @@
 # Changelog
-* Added validation to ensure that pack_metadata description field is no longer than 130 chars.
+* Added a warning to ensure that pack_metadata description field is no longer than 130 chars.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

@@ -1303,7 +1303,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_long_description():
-        return "The description field of the pack_metadata.json file is to long. Maximum length-130"
+        return "The description field of the pack_metadata.json file is to long. Please consider to modify it."
 
     @staticmethod
     @error_code_decorator

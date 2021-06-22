@@ -1,5 +1,5 @@
 # Changelog
-
+* Added a  *--force* flag to the **update release notes** command, so the update can takes place even without a change.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

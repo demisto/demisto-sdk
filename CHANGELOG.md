@@ -1,4 +1,5 @@
 # Changelog
+* Refactor **update-release-notes** command - new classs manager, split some logic to smaller functions, added docsrings and type annotations.
 
 
 # 1.4.0

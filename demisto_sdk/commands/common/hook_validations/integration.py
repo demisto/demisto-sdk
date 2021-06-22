@@ -105,6 +105,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
+            self.are_commands_in_readme(),
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
             self.is_context_change_in_readme(),

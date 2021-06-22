@@ -1127,7 +1127,7 @@ class IntegrationValidator(ContentEntityValidator):
         commands = commands.get('commands', [])
         for command in commands:
             command_name = command.get('name')
-            if f'!{command_name}' not in readme_content and command_name not in commands_to_ignore:
+            if command_name not in readme_content and command_name not in commands_to_ignore:
                 commands_not_in_yml.append(command_name)
 
         if commands_not_in_yml:

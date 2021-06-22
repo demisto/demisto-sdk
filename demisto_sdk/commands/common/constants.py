@@ -56,6 +56,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
 class FileType(Enum):
@@ -93,6 +94,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    XSOAR_CONFIG = 'xsoar_config'
 
 
 RN_HEADER_BY_FILE_TYPE = {

@@ -23,9 +23,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
-                                               get_yaml, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+                                               get_yaml, pack_name_to_path,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 
 class UpdateRN:
@@ -36,7 +36,7 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
         try:
-            self.pack_path = pack_path
+            self.pack_path = pack_path if pack_path else pack_name_to_path(self.pack)
         except TypeError:
             click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
             sys.exit(1)

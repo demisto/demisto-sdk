@@ -559,23 +559,23 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
         assert '(Available from Cortex XSOAR 6.0.0).' in desc
 
-    # @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
-    # def test_get_pack_name_fails(self, mock_master):
-    #     """
-    #         Given
-    #             - Pack path for update release notes
-    #         When
-    #             - get_pack_name tool function could not extract the pack name
-    #         Then
-    #            - Pack name is None and system exit occurs
-    #         """
-    #     from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-    #     mock_master.return_value = None
-    #     with pytest.raises(SystemExit) as e:
-    #         UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-    #             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-    #     assert e.type == SystemExit
-    #     assert e.value.code == 1
+    @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
+    def test_get_pack_name_fails(self, mock_master):
+        """
+            Given
+                - Pack path for update release notes
+            When
+                - get_pack_name tool function could not extract the pack name
+            Then
+               - Pack name is None and system exit occurs
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = None
+        with pytest.raises(SystemExit) as e:
+            UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert e.type == SystemExit
+        assert e.value.code == 1
 
     @mock.patch.object(UpdateRN, 'bump_version_number')
     @mock.patch.object(UpdateRN, 'is_bump_required')

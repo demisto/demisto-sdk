@@ -59,11 +59,9 @@ class Integration:
     def create_default_integration(self, name: str = None, commands: List[str] = None):
         """Creates a new integration with basic data
 
-        :type name: ``Optional[str]``
-        :param name: The name and ID of the new integration, default is "Sample".
-
-        :type commands: ``Optional[List[str]]``
-        :param commands: List of additional commands to add to the integration.
+        Args:
+            name (:obj:`str`, optional): The name and ID of the new integration, default is "Sample".
+            commands: (:obj:`list[str]`, optional): List of additional commands to add to the integration.
 
         """
         default_integration_dir = 'assets/default_integration'

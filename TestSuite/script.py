@@ -16,8 +16,8 @@ class Script(Integration):
     def create_default_script(self, name: str = None):
         """Creates a new script with basic data.
 
-        :type name: ``Optional[str]``
-        :param name: The name and ID of the new script, default is "sample_script".
+        Args:
+            name (:obj:`str`, optional): The name and ID of the new script, default is "sample_script".
 
         """
 

@@ -43,8 +43,8 @@ class Playbook:
     def create_default_playbook(self, name: str = None):
         """Creates a new playbook with basic data.
 
-        :type name: ``Optional[str]``
-        :param name: The name and ID of the new playbook, default is "sample playbook".
+        Args:
+            name (:obj:`str`, optional): The name and ID of the new playbook, default is "sample playbook".
 
         """
         default_playbook_dir = 'assets/default_playbook'

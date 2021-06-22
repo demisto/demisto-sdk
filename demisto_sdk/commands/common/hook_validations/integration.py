@@ -1124,10 +1124,6 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get("script", {})
         commands_not_in_yml = []
 
-        # handles scripts
-        if not commands:
-            return True
-
         commands = commands.get('commands', [])
         for command in commands:
             command_name = command.get('name')

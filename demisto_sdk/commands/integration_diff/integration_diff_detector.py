@@ -405,7 +405,7 @@ class IntegrationDiffDetector:
             result += self.get_elements_per_command_in_docs_format(output_per_command, 'output')
 
         if secho_result:
-            result += '\n## Additional Considerations for this Version\n* Insert any API changes, ' \
+            result += '\n## Additional Considerations for this version\n* Insert any API changes, ' \
                       'any behavioral changes, limitations, or restrictions that would be new to this version.\n'
             click.secho(result)
 

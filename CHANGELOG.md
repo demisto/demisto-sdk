@@ -4,6 +4,7 @@
 * Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
 * Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
 * Added new validation for the `xsoar_config.json` file in the **validate** command.
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
@@ -23,7 +24,6 @@
 * Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
 * Renamed the GitHub authentication token environment variable `GITHUB_TOKEN` to `DEMITO_SDK_GITHUB_TOKEN`.
 * Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
-* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 * Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
 * Added the **convert** command to convert entities between XSOAR versions.
 * Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.

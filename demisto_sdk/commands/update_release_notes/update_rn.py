@@ -469,6 +469,8 @@ class UpdateRN:
             rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
             return rn_string
         rn_template_as_dict: dict = {}
+        if self.is_force:
+            rn_string = self.build_rn_desc(content_name=self.pack)
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: RN_HEADER_BY_FILE_TYPE[x[1].get('type', '')] if x[1].get('type')
                                          else ''):  # Sort RN by header
@@ -486,12 +488,12 @@ class UpdateRN:
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
         for key, val in rn_template_as_dict.items():
-            rn_string = f"{rn_string}{key}{val}"
+            rn_string += f"{rn_string}{key}{val}"
 
         return rn_string
 
-    def build_rn_desc(self, _type: FileType, content_name: str, desc: str, is_new_file: bool, text: str,
-                      from_version: str = '') -> str:
+    def build_rn_desc(self, _type: FileType = None, content_name: str = '', desc: str = '', is_new_file: bool = False,
+                      text: str = '', from_version: str = '') -> str:
         """ Builds the release notes description.
 
             :param

@@ -347,7 +347,8 @@ class TestIntegrationValidation:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack.create_integration('integration0', yml=valid_integration_yml)
+        integration = pack.create_integration('integration0', yml=valid_integration_yml,
+                                              readme='azure-hidden-command, azure-get-indicators')
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
@@ -2207,7 +2208,8 @@ class TestAllFilesValidator:
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack1.create_integration('integration0', yml=valid_integration_yml)
+        integration = pack1.create_integration('integration0', yml=valid_integration_yml,
+                                               readme='azure-hidden-command, azure-get-indicators')
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
@@ -2295,7 +2297,8 @@ class TestValidationUsingGit:
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
-        integration = pack1.create_integration('integration0', yml=valid_integration_yml)
+        integration = pack1.create_integration('integration0', yml=valid_integration_yml,
+                                               readme='azure-hidden-command, azure-get-indicators')
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 

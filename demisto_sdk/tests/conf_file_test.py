@@ -24,7 +24,7 @@ def test_conf_file_custom(mocker, repo):
     test_playbook = pack.create_test_playbook('myInt_test_playbook')
     test_playbook.create_default_playbook()
     integration.yml.update({'tests': ['myInt_test_playbook']})
-
+    integration.readme.write('test-command')
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue

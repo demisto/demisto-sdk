@@ -1109,7 +1109,10 @@ class IntegrationValidator(ContentEntityValidator):
             True if all commands exist, else False.
         """
         valid = True
-        commands_to_ignore = ['get-mapping-fields', 'get_remote_data_command', 'update-remote-system', 'get-remote-data'] # fetch-incidents, fetch-credentials, test-module commands are not defined in the yml, hence not needed to be ignored.
+        commands_to_ignore = ['get-mapping-fields', 'get_remote_data_command', 'update-remote-system',
+                              'get-remote-data']  # fetch-incidents, fetch-credentials,
+        # test-module commands are not defined in the yml, hence not needed to be ignored.
+
         dir_path = os.path.dirname(self.file_path)
 
         if not os.path.exists(os.path.join(dir_path, 'README.md')):

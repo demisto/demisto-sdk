@@ -1222,6 +1222,20 @@ def test_get_display_name(data, answer, mocker):
 
 
 def test_docker_image_is_added_for_every_integration(mocker, repo):
+    """
+    Given:
+    - Pack to update with release notes.
+
+    When:
+    - First call to update release notes: Two YMLs had their docker image updated.
+    - Second call to update release notes: Two YMLs were updated again.
+
+    Then:
+    - Ensure two entries for update docker image are added to release notes, one for each YML.
+    - Ensure two entries for update docker images are added to release notes, one for each YML, with the
+      newer docker image.
+
+    """
     yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
     pack = repo.create_pack('PackName')
     mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',

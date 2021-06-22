@@ -877,7 +877,7 @@ def test_add_access_data_of_type_credentials(access_data: List[Dict], credential
     assert access_data == expected
 
 
-def test_generate_versions_differences_section():
+def test_generate_versions_differences_section(monkeypatch):
     """
         Given
             - A new version of an integration.
@@ -888,38 +888,35 @@ def test_generate_versions_differences_section():
     """
 
     from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
-
-    section = generate_versions_differences_section('2')
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: ''
+    )
+    section = generate_versions_differences_section('')
 
     expected_section = [
+        '## Breaking changes from previous versions of this integration',
+        'The following sections list the changes in this version.',
         '',
-        '~~~~~run `demisro-sdk integration-diff`~~~~~',
-        '## V2 important information',
-        '### New in this version:',
-        '- Added the following commands:',
-        '   - command-1',
-        '   - command-2',
+        '### Commands',
+        'The following commands were removed in this version:',
+        '* *commandName* - this command was replaced by XXX.',
+        '* *commandName* - this command was replaced by XXX.',
         '',
-        '- Added the following arguments:',
-        '   - argument-1',
-        '   - argument-2',
+        '### Outputs',
+        'The following outputs were removed in this version:',
         '',
-        '- Added the following outputs:',
-        '   - output-1',
-        '   - output-2',
+        'commandName:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
         '',
-        '### Removed from this version:',
-        '- Removed the following commands:',
-        '   - command-1',
-        '   - command-2',
+        'commandName:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
         '',
-        '- Removed the following arguments:',
-        '   - argument-1',
-        '   - argument-2',
-        '',
-        '- Removed the following outputs:',
-        '   - output-1',
-        '   - output-2',
+        '## Additional Considerations for this Version',
+        '* Insert any API changes, any behavioral changes, limitations, or '
+        'restrictions that would be new to this version.',
         ''
     ]
 

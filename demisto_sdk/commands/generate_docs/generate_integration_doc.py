@@ -116,7 +116,7 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}.'.format(yml_data['name']), ''])
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version:
@@ -335,6 +335,8 @@ def generate_versions_differences_section(input_path) -> list:
     Returns:
         List of the section lines.
     """
+    print('Generating breaking changes section...')
+
     previous_integration_path = str(input('Enter the path of the previous integration version file if any. '
                                           'Press Enter to skip.\n'))
 
@@ -361,14 +363,27 @@ def generate_versions_differences_section(input_path) -> list:
                                     '* *commandName* - this command was replaced by XXX.',
                                     '* *commandName* - this command was replaced by XXX.',
                                     '',
+                                    '### Arguments',
+                                    'The following arguments were removed in this version:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '',
+                                    'The behavior of the following arguments was changed:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - Is now required.',
+                                    '* *argumentName* - Supports now comma separated values.',
+                                    '',
                                     '### Outputs',
                                     'The following outputs were removed in this version:',
                                     '',
-                                    'commandName:',
+                                    'In the *commandName* command:',
                                     '* *outputPath* - this output was replaced by XXX.',
                                     '* *outputPath* - this output was replaced by XXX.',
                                     '',
-                                    'commandName:',
+                                    'In the *commandName* command:',
                                     '* *outputPath* - this output was replaced by XXX.',
                                     '* *outputPath* - this output was replaced by XXX.',
                                     ''])

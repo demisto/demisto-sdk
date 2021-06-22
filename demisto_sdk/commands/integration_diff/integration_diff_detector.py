@@ -44,11 +44,7 @@ class IntegrationDiffDetector:
 
     def get_differences(self) -> dict:
         """
-            Gets the different elements between the two integration yaml data.
-
-            Args:
-                old_data: The old yaml integration data.
-                new_data: The new yaml integration date.
+            Gets the different elements between the two integrations.
 
             Return:
                 A dict contains all the found different elements between the integrations.
@@ -208,7 +204,17 @@ class IntegrationDiffDetector:
         return result
 
     @staticmethod
-    def get_change_description(field, value):
+    def get_change_description(field, value) -> str:
+        """
+        Gets an element change description.
+
+        Args:
+             field: The field that has changed.
+             value: The new value in the field.
+
+        Return:
+            A description of the change.
+        """
 
         if field in ['defaultValue', 'defaultvalue']:
             return f'The default value changed to \'{value}\''
@@ -352,14 +358,16 @@ class IntegrationDiffDetector:
 
             click.secho("")
 
-    def print_items_in_docs_format(self, secho_result: bool = True):
+    def print_items_in_docs_format(self, secho_result: bool = True) -> str:
         """
         Prints the version differences report in docs format so the user will can copy it to the README file.
 
-        Return:
-            The result as a string to print.
-        """
+        Args:
+            secho_result: whether to print the result in the terminal.
 
+        Return:
+            The section result as a string to print.
+        """
         result = ''
 
         if secho_result:
@@ -372,15 +380,29 @@ class IntegrationDiffDetector:
             for command in self.missing_items_report['commands']:
                 result += f'* *{command["name"]}* - this command was replaced by XXX.\n'
 
+        if 'arguments' in self.missing_items_report:
+            result += '\n### Arguments'
+            # Divide the arguments between removed and changed.
+            removed_arguments = self.missing_items_report['arguments'].copy()
+            changed_arguments = [removed_arguments.pop(removed_arguments.index(arg)) for arg in removed_arguments
+                                 if 'changed_field' in arg]
+
+            if removed_arguments:
+                result += '\nThe following arguments were removed in this version:\n'
+                argument_per_command = self.get_elements_per_command(removed_arguments)
+                result += self.get_elements_per_command_in_docs_format(argument_per_command, 'argument')
+
+            if changed_arguments:
+                result += '\nThe behavior of the following arguments was changed:\n'
+                argument_per_command = self.get_elements_per_command(changed_arguments)
+                result += self.get_elements_per_command_in_docs_format(argument_per_command, 'argument', True)
+
         if 'outputs' in self.missing_items_report:
             result += '\n### Outputs\nThe following outputs were removed in this version:\n'
-
-            output_per_command = self.get_elements_per_command(self.missing_items_report['outputs'])
-            for command in output_per_command:
-                result += f'\nIn the command *{command}*:\n'
-
-                for output in output_per_command[command]:
-                    result += f'* *{output["name"]}* - this output was replaced by XXX.\n'
+            # Get only the removed outputs, and removed the changed.
+            removed_outputs = [output for output in self.missing_items_report['outputs'] if 'changed_field' not in output]
+            output_per_command = self.get_elements_per_command(removed_outputs)
+            result += self.get_elements_per_command_in_docs_format(output_per_command, 'output')
 
         if secho_result:
             result += '\n## Additional Considerations for this Version\n* Insert any API changes, ' \
@@ -396,7 +418,6 @@ class IntegrationDiffDetector:
         Return:
             bool. return true if found items to print and false if not.
         """
-
         if not self.missing_items_report:
             click.secho("The integrations are backwards compatible", fg='green')
             return False
@@ -410,6 +431,30 @@ class IntegrationDiffDetector:
         return True
 
     @staticmethod
+    def get_elements_per_command_in_docs_format(elements_per_command, element_type, message=False) -> str:
+        """
+        Gets the elements split per commands in docs format.
+
+        Args:
+            elements_per_command: A dictionary contains the split elements by command name.
+            element_type: The type of elements.
+            message: whether to use the element message.
+
+        Return:
+            String of the section result.
+        """
+        result = ''
+
+        for command in elements_per_command:
+            result += f'\nIn the *{command}* command:\n'
+
+            for element in elements_per_command[command]:
+                result += f'* *{element["name"]}* - {element["message"].rsplit(" - ", 1)[1]}\n' if message \
+                    else f'* *{element["name"]}* - this {element_type} was replaced by XXX.\n'
+
+        return result
+
+    @staticmethod
     def get_elements_per_command(list_of_elements) -> dict:
         """
         Split a given list of elements by command.
@@ -420,7 +465,6 @@ class IntegrationDiffDetector:
         Return:
             Dict contains the split elements by command name.
         """
-
         result: dict = {}
 
         for element in list_of_elements:

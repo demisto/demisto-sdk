@@ -485,4 +485,4 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     with open(rn_path, 'r') as f:
         rn = f.read()
-    assert "" == rn
+    assert '##### ThinkCanary\n- %%UPDATE_RN%%\n' == rn

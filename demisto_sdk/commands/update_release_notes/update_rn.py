@@ -488,7 +488,7 @@ class UpdateRN:
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
         for key, val in rn_template_as_dict.items():
-            rn_string += f"{rn_string}{key}{val}"
+            rn_string = f"{rn_string}{key}{val}"
 
         return rn_string
 

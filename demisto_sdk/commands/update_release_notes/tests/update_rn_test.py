@@ -759,8 +759,7 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
-                                  docker_image_name=None)
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
 
     def test_update_existing_rn(self, mocker):
         """
@@ -1249,7 +1248,8 @@ def test_get_display_name(data, answer, mocker):
 def test_docker_image_is_added_for_every_integration(mocker, repo):
     yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
     pack = repo.create_pack('PackName')
-    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed', return_value='demisto/python3:3.9.5.124')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
+                 return_value='demisto/python3:3.9.5.124')
     integration = pack.create_integration('integration', 'bla', yml_mock)
     integration.create_default_integration()
     integration.yml.update({'display': 'Sample1'})

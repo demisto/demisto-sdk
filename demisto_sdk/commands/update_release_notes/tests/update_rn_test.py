@@ -559,24 +559,6 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
         assert '(Available from Cortex XSOAR 6.0.0).' in desc
 
-    @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
-    def test_get_pack_name_fails(self, mock_master):
-        """
-            Given
-                - Pack path for update release notes
-            When
-                - get_pack_name tool function could not extract the pack name
-            Then
-               - Pack name is None and system exit occurs
-            """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        mock_master.return_value = None
-        with pytest.raises(SystemExit) as e:
-            UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-        assert e.type == SystemExit
-        assert e.value.code == 1
-
     @mock.patch.object(UpdateRN, 'bump_version_number')
     @mock.patch.object(UpdateRN, 'is_bump_required')
     def test_execute_with_bump_version_raises_error(self, mock_bump_version_number, mock_is_bump_required):
@@ -1036,8 +1018,6 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
@@ -1047,8 +1027,8 @@ class TestRNUpdateUnit:
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
-                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files=set())
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
@@ -1110,8 +1090,6 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  type:True')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
@@ -1121,8 +1099,9 @@ class TestRNUpdateUnit:
                                                                                 '/Packs/release_notes/1_1_0.md')
         mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={
+                              'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
@@ -1145,8 +1124,6 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
@@ -1156,8 +1133,8 @@ class TestRNUpdateUnit:
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
-                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files={'Packs/Test/Integrations/Test.yml'})
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:

@@ -590,4 +590,3 @@ class TestPlaybookValidator:
             validator = PlaybookValidator(structure_validator)
 
             assert validator.name_not_contain_the_type()
-

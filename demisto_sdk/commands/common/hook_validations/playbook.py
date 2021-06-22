@@ -470,4 +470,3 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-

@@ -430,9 +430,8 @@ def get_file(method, file_path, type_of_file):
             try:
                 data_dictionary = method(stream)
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
@@ -168,7 +169,7 @@ def update_content_entity_ids(files: List[str], verbose: bool):
         click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
                    f'Going over files to update these IDs in other files...')
     for file in files:
-        file_path = file.replace('\\', '/')
+        file_path = str(Path(file))
         if verbose:
             click.echo(f'Processing file {file_path} to check for content entities IDs to update')
         with open(file_path, 'r+') as f:
@@ -196,11 +197,11 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']
-    UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
-                                                         from_version=from_version,
-                                                         **kwargs)
-    format_res, validate_res = UpdateObject.format_file()  # type: ignore
-    CONTENT_ENTITY_IDS_TO_UPDATE.update(UpdateObject.updated_id_dict)
+    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
+                                                          from_version=from_version,
+                                                          **kwargs)
+    format_res, validate_res = update_object.format_file()  # type: ignore
+    CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)
 
 

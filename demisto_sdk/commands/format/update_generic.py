@@ -62,7 +62,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
-        self.updated_id_dict: Dict = {}
+        self.updated_ids: Dict = {}
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')

@@ -71,15 +71,15 @@ class BaseUpdateYML(BaseUpdate):
         """Updates the id of the YML to be the same as it's name
             Only relevant for new files.
         """
-        updated_integration_id_dict = {}
+        updated_integration_id = {}
         if not self.old_file:
             if self.verbose:
                 click.echo('Updating YML ID to be the same as YML name')
             if is_uuid(self.id_and_version_location['id']):
-                updated_integration_id_dict[self.id_and_version_location['id']] = self.data['name']
+                updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
-        if updated_integration_id_dict:
-            self.updated_id_dict.update(updated_integration_id_dict)
+        if updated_integration_id:
+            self.updated_ids.update(updated_integration_id)
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""

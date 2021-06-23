@@ -93,4 +93,4 @@ class BaseUpdateJSON(BaseUpdate):
         self.data['id'] = self.data[field]
 
         if updated_integration_id_dict:
-            self.updated_id_dict.update(updated_integration_id_dict)
+            self.updated_ids.update(updated_integration_id_dict)

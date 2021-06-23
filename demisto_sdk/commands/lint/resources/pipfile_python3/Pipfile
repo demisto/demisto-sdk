@@ -15,6 +15,7 @@ freezegun = "*"
 pytest-json = "*"
 vcrpy = "*"
 pytest-cov = "*"
+mypy = "*"
 
 [packages]
 

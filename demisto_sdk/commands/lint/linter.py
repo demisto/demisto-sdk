@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.tools import (get_all_docker_images,
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_pytest_command, build_vulture_command, build_xsoar_linter_command)
+    build_pytest_command, build_vulture_command, build_xsoar_linter_command, build_mypy_command_docker)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -147,7 +147,8 @@ class Linter:
 
                 # Run lint and test check on pack docker image
                 if self._facts["docker_engine"]:
-                    self._run_lint_on_docker_image(no_pylint=no_pylint,
+                    self._run_lint_on_docker_image(no_mypy=no_mypy,
+                                                   no_pylint=no_pylint,
                                                    no_test=no_test,
                                                    no_pwsh_analyze=no_pwsh_analyze,
                                                    no_pwsh_test=no_pwsh_test,
@@ -302,7 +303,7 @@ class Linter:
         error = []
         other = []
         exit_code: int = 0
-        for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+        for lint_check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
@@ -520,11 +521,12 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+    def _run_lint_on_docker_image(self, no_mypy: bool, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
         Args:
+            no_mypy(bool): Whether to skip mypy
             no_pylint(bool): Whether to skip pylint
             no_test(bool): Whether to skip pytest
             no_pwsh_analyze(bool): Whether to skip powershell code analyzing
@@ -555,11 +557,16 @@ class Linter:
 
             if image_id and not errors:
                 # Set image creation status
-                for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                for check in ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                            # Perform mypy
+                            if not no_mypy and check == "mypy" and self._facts["lint_files"]:
+                                exit_code, output = self._docker_run_mypy(test_image=image_id,
+                                                                            keep_container=keep_container)
+
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
                                 exit_code, output = self._docker_run_pylint(test_image=image_id,
@@ -727,6 +734,78 @@ class Linter:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
+
+    def _docker_run_mypy(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run Mypy in created test image
+
+        Args:
+            test_image(str): test image id/name
+            keep_container(bool): True if to keep container after execution finished
+
+        Returns:
+            int: 0 on successful, errors 1, need to retry 2
+            str: Container log
+        """
+        log_prompt = f'{self._pack_name} - Mypy - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        container_name = f"{self._pack_name}-mypy"
+        # Check if previous run left container a live if it do, we remove it
+        self._docker_remove_container(container_name)
+
+        # Run container
+        exit_code = SUCCESS
+        output = ""
+        try:
+            container_obj: docker.models.containers.Container = self._docker_client.containers.run(
+                name=container_name,
+                image=test_image,
+                command=[
+                    build_mypy_command_docker(
+                        files=self._facts["lint_files"], version=self._facts.get('python_version'))
+                ],
+                user=f"{os.getuid()}:4000",
+                detach=True,
+                environment=self._facts["env_vars"]
+            )
+            stream_docker_container_output(container_obj.logs(stream=True))
+            # wait for container to finish
+            container_status = container_obj.wait(condition="exited")
+            # Get container exit code
+            container_exit_code = container_status.get("StatusCode")
+            # Getting container logs
+            container_log = container_obj.logs().decode("utf-8")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code in [1, 2]:
+                # 1-fatal message issued
+                # 2-Error message issued
+                exit_code = FAIL
+                output = container_log
+                logger.info(f"{log_prompt} - Finished errors found")
+            elif container_exit_code in [4, 8, 16]:
+                # 4-Warning message issued
+                # 8-refactor message issued
+                # 16-convention message issued
+                logger.info(f"{log_prompt} - Successfully finished - warnings found")
+                exit_code = SUCCESS
+            elif container_exit_code == 32:
+                # 32-usage error
+                logger.critical(f"{log_prompt} - Finished - Usage error")
+                exit_code = RERUN
+            else:
+                logger.info(f"{log_prompt} - Successfully finished")
+            # Keeping container if needed or remove it
+            if keep_container:
+                print(f"{log_prompt} - container name {container_name}")
+            else:
+                try:
+                    container_obj.remove(force=True)
+                except docker.errors.NotFound as e:
+                    logger.critical(f"{log_prompt} - Unable to delete container - {e}")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run pylint")
+            exit_code = RERUN
+            output = str(e)
+        return exit_code, output
 
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image

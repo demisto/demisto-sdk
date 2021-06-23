@@ -402,8 +402,7 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get(
-            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -1555,7 +1554,16 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def get_file_version_suffix_if_exists(current_file: Dict, check_in_display=False) -> Optional[str]:
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
+    """
+    Checks if current YML file name is versioned or no, e.g, ends with v<number>.
+    Args:
+        current_file (Dict): Dict representing YML data of an integration or script.
+        check_in_display (bool): Whether to get name by 'display' field or not (by 'name' field).
+
+    Returns:
+        (Optional[str]): Number of the version as a string, if the file ends with version suffix. None otherwise.
+    """
     versioned_file_regex = r'v([0-9]+)$'
     name = current_file.get('display') if check_in_display else current_file.get('name')
     if not name:
@@ -1564,25 +1572,6 @@ def get_file_version_suffix_if_exists(current_file: Dict, check_in_display=False
     if matching_regex:
         return matching_regex[-1]
     return None
-
-
-def get_integration_version(current_file, check_in_display=False):
-    """Check if the specific integration of script is a v2
-    Returns:
-        bool. Whether the file is a v2 file
-    """
-
-    # integrations should be checked via display field, other entities should check name field
-    if check_in_display:
-        name = current_file.get('display', '')
-    else:
-        name = current_file.get('name', '')
-    suffix = str(name[-2:].lower())
-    try:
-        if suffix[0] == 'v':
-            return int(suffix[1])
-    except IndexError:
-        return None
 
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):

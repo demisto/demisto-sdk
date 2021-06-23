@@ -773,7 +773,7 @@ V2_DISPLAY_INPUTS = [
 
 @pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
 def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) is answer
+    assert is_v2_file(current, check_in_display=True) == answer
 
 
 def test_get_to_version_with_to_version(repo):

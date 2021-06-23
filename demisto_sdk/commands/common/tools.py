@@ -1570,9 +1570,9 @@ def is_v2_file(current_file, check_in_display=False):
         name = current_file.get('display', '')
     else:
         name = current_file.get('name', '')
-    suffix = str(name[-2:].lower())
-    if len(suffix) == 2 and suffix[0] == "v":
-        return suffix
+    suffix = re.findall("[vV][2-9]$", name)
+    if suffix:
+        return suffix[0].lower()
     return ''
 
 

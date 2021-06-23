@@ -991,7 +991,10 @@ def generate_docs(**kwargs):
     default=''
 )
 @click.option(
-    "--fail-duplicates", help="Fails the process if any duplicates are found.", is_flag=True
+    "fd",
+    "--fail-duplicates",
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
 )
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""

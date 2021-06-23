@@ -5,6 +5,9 @@
 * Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
 * Added new validation for the `xsoar_config.json` file in the **validate** command.
 * Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

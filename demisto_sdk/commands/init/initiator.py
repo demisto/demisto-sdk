@@ -238,7 +238,7 @@ class Initiator:
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
-            user_response = str(input("\nWould you like fill pack's metadata file? Y/N "))
+            user_response = str(input("\nWould you like fill pack's metadata file? Y/N ")).lower()
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)

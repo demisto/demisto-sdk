@@ -954,15 +954,15 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        maybe_version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
                                                                                 check_in_display=True)
-        if not maybe_version_number:
+        if not version_number:
             return True
         else:
             display_name = self.current_file.get('display')
-            correct_name = f' v{maybe_version_number}'
+            correct_name = f' v{version_number}'
             if not display_name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_version_integration_name(maybe_version_number)
+                error_message, error_code = Errors.invalid_version_integration_name(version_number)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

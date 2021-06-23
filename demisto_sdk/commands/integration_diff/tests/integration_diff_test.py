@@ -482,7 +482,7 @@ class TestIntegrationDiffDetector:
         integration_detector.print_missing_items()
 
         excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\n" \
-                          "The parameter `API key` - Is Now required.\n\nMissing commands:\n\nMissing the command " \
+                          "The parameter `API key` - Is now required.\n\nMissing commands:\n\nMissing the command " \
                           "'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` " \
                           "in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:" \
                           "\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was " \

@@ -1517,10 +1517,6 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
-            return True
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
@@ -1545,6 +1541,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
                           '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
                                                          dict2_from_version, dict2_to_version))
             return True
+
+        if print_logs and dict1.get('name') != dict2.get('name'):
+            print_warning('The following {} have the same ID ({}) but different names: '
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
     return False
 

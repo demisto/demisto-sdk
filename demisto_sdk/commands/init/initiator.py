@@ -1,8 +1,10 @@
+import glob
 import json
 import os
 import shutil
 from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Dict, List
 
 import click
@@ -21,6 +23,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                print_error, print_v,
                                                print_warning)
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
 class Initiator:
@@ -412,6 +415,33 @@ class Initiator:
 
         self.copy_common_server_python()
         self.copy_demistotmock()
+        if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:
+            ignore_secrets = input("\nWould you like ignore the secrets automatically? Y/N ").lower()
+            if ignore_secrets in ['y', 'yes']:
+                pack_dir = Path(self.full_output_path).parents[1]
+                files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
+
+                sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
+                # remove directories and irrelevant files
+                files = [f for f in files_and_directories if os.path.isfile(f) and sv.is_text_file(f)]
+                all_secrets = sv.search_potential_secrets(files)  # {'a': {'b': ['c', 'd'], 'e': ['f']}, 'g': ['h']}
+                secrets: set = set()
+
+                def extract_values_from_nested_dict_to_a_set(d, s):
+                    for v in d.values():
+                        if isinstance(v, dict):  # v can be a dict
+                            extract_values_from_nested_dict_to_a_set(v, s)
+                        else:
+                            for i in v:  # v is a list
+                                s.add(i)
+
+                extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
+
+                with open(f'{pack_dir}/.secrets-ignore', 'a') as f:
+                    for line in secrets:
+                        print(line)
+                        f.write(line)
+                        f.write('\n')
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 

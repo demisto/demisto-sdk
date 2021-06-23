@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
-                                               print_warning)
+                                               print_warning, is_v2_file)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
@@ -120,7 +120,7 @@ def generate_integration_doc(
             docs.extend(add_lines(yml_data.get('description')))
             docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
             # Checks if the integration is a new version
-            integration_version = re.findall("[vV][2-9].yml$", input_path)
+            integration_version = is_v2_file(current_file=yml_data, check_in_display=True)
             if integration_version and not skip_breaking_changes:
                 docs.extend(['Some changes have been made that might affect your existing content. '
                              '\nIf you are upgrading from a previous of this integration, see [Breaking Changes]'

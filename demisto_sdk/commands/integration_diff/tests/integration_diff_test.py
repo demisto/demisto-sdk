@@ -171,7 +171,7 @@ class TestIntegrationDiffDetector:
             {
                 'type': 'parameters',
                 'name': 'API key',
-                'message': "The parameter `API key` - Is Now required.",
+                'message': "The parameter `API key` - Is now required.",
                 'changed_field': 'required',
                 'changed_value': 'true'
             }
@@ -406,7 +406,7 @@ class TestIntegrationDiffDetector:
         changed_param = {
             'type': 'parameters',
             'name': 'API key',
-            'message': "The parameter `API key` - Is Now required.",
+            'message': "The parameter `API key` - Is now required.",
             'changed_field': 'required',
             'changed_value': 'true'
         }

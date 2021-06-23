@@ -220,7 +220,7 @@ class IntegrationDiffDetector:
             return f'The default value changed to \'{value}\''
 
         elif field == 'required':
-            return 'Is Now required'
+            return 'Is now required'
 
         elif field == 'isArray':
             return 'Now supports comma separated values'

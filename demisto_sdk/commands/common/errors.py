@@ -1335,7 +1335,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def template_sentence_in_readme(line_nums):
-        return f"Found a generic sentence in the readme content in lines: {line_nums}."
+        return f"Please update the integration version differences section in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator

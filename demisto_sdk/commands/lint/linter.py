@@ -24,8 +24,9 @@ from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
-    build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_pytest_command, build_vulture_command, build_xsoar_linter_command, build_mypy_command_docker)
+    build_mypy_command_docker, build_pwsh_analyze_command,
+    build_pwsh_test_command, build_pylint_command, build_pytest_command,
+    build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -89,12 +90,10 @@ class Linter:
             "flake8_errors": None,
             "XSOAR_linter_errors": None,
             "bandit_errors": None,
-            "mypy_errors": None,
             "vulture_errors": None,
             "flake8_warnings": None,
             "XSOAR_linter_warnings": None,
             "bandit_warnings": None,
-            "mypy_warnings": None,
             "vulture_warnings": None,
             "exit_code": SUCCESS,
             "warning_code": SUCCESS,
@@ -565,7 +564,7 @@ class Linter:
                             # Perform mypy
                             if not no_mypy and check == "mypy" and self._facts["lint_files"]:
                                 exit_code, output = self._docker_run_mypy(test_image=image_id,
-                                                                            keep_container=keep_container)
+                                                                          keep_container=keep_container)
 
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
@@ -761,7 +760,7 @@ class Linter:
                 image=test_image,
                 command=[
                     build_mypy_command_docker(
-                        files=self._facts["lint_files"], version=self._facts.get('python_version'))
+                        files=self._facts["lint_files"], version=self._facts["python_version"])
                 ],
                 user=f"{os.getuid()}:4000",
                 detach=True,
@@ -802,7 +801,7 @@ class Linter:
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run pylint")
+            logger.exception(f"{log_prompt} - Unable to run mypy")
             exit_code = RERUN
             output = str(e)
         return exit_code, output

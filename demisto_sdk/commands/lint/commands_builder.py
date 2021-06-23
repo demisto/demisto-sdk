@@ -216,15 +216,16 @@ def build_mypy_command_docker(files: List[Path], version: float) -> str:
     command += " --pretty"
     # This flag enables redefinion of a variable with an arbitrary type in some contexts.
     command += " --allow-redefinition"
-    # this flag enable mypy to unstall all the stub modules (from mypy version 0.9
+    # this flag enable mypy to install all the stub modules (from mypy version 0.9)
     command += " --install-types"
+    # force the install-types to install the missed types without asking for confirmation
+    command += " --non-interactive"
+    # set the cache dir
+    command += " --cache-dir=./mypy_cache"
     # Get the full path to the file.
     command += " --show-absolute-path"
-    # Disable cache creation
-    command += " --cache-dir=/dev/null"
     # Generating file names - file1 file2 file3,..
     files_list = [file.name for file in files]
-    # files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
 
     return command

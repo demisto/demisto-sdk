@@ -458,7 +458,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+        for check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
@@ -474,7 +474,7 @@ class LintManager:
                         'messages': pkgs_status[fail_pack][f"{check}_errors"]
                     })
 
-        for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
+        for check in ["mypy", "pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check_str} errors "

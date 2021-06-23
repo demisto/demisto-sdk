@@ -579,12 +579,14 @@ class TestGenerateIntegrationDoc:
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
 
-        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
-               in open(fake_readme).read()
-        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+                assert "The type of the newly created user. Possible values are: Basic, Pro, " \
+                       "Corporate. Default is Basic." in fake_data
+                assert "Number of users to return. Max 300. Default is 30." in fake_data
 
     def test_integration_doc_credentials_display_missing(self):
         """
@@ -600,12 +602,13 @@ class TestGenerateIntegrationDoc:
     """
         readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_2_PATH)
-        readme_data = open(readme).read()
-        assert readme_data == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
-        assert '| None | The API key to use for the connection. | False |' not in readme_data
-        assert '| API Token | The API key to use for the connection. | False |' in readme_data
+        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
+        with open(readme) as readme_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')) as new_readme:
+                readme_data = readme_file.read()
+                assert readme_data == new_readme.read()
+                assert '| None | The API key to use for the connection. | False |' not in readme_data
+                assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
 def test_get_command_examples_with_exclamation_mark(tmp_path):

@@ -172,13 +172,14 @@ class TestIntegrationDiffDetector:
             {
                 'type': 'parameters',
                 'name': 'API key',
-                'message': "The parameter 'API key' was changed in field 'required'.",
+                'message': "The parameter `API key` - Is Now required.",
                 'changed_field': 'required',
                 'changed_value': 'true'
             }
         ],
         'commands': [
             {
+                'description': '',
                 'type': 'commands',
                 'name': 'command_1',
                 'message': "Missing the command 'command_1'."
@@ -189,7 +190,7 @@ class TestIntegrationDiffDetector:
                 'type': 'arguments',
                 'name': 'argument_2',
                 'command_name': 'command_2',
-                'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'.",
+                'message': "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
                 'changed_field': 'isArray',
                 'changed_value': 'true'
             }
@@ -199,7 +200,8 @@ class TestIntegrationDiffDetector:
                 'type': 'outputs',
                 'name': 'contextPath_2',
                 'command_name': 'command_2',
-                'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+                'message': "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
+                'changed_field': 'type'
             }
         ]
     }
@@ -260,11 +262,9 @@ class TestIntegrationDiffDetector:
         new_integration = pack.create_integration('newIntegration', yml=new_integration_yaml)
 
         integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
+        differences = integration_detector.get_differences()
 
-        old_integration_yml = get_yaml(old_integration.yml.path)
-        new_integration_yml = get_yaml(new_integration.yml.path)
-
-        assert self.DIFFERENCES_REPORT == integration_detector.get_differences(old_integration_yml, new_integration_yml)
+        assert self.DIFFERENCES_REPORT == differences
 
     def test_get_different_commands(self, pack):
         """
@@ -280,6 +280,7 @@ class TestIntegrationDiffDetector:
         new_integration_yml['script']['commands'].remove(new_integration_yml['script']['commands'][0])
 
         missing_command = {
+            'description': '',
             'type': 'commands',
             'name': 'command_1',
             'message': "Missing the command 'command_1'."
@@ -316,14 +317,14 @@ class TestIntegrationDiffDetector:
             'type': 'arguments',
             'name': 'argument_1',
             'command_name': 'command_2',
-            'message': "Missing the argument 'argument_1' in command 'command_2'."
+            'message': "Missing the argument 'argument_1' in the command 'command_2'."
         }
 
         changed_argument = {
             'type': 'arguments',
             'name': 'argument_2',
             'command_name': 'command_2',
-            'message': "The argument 'argument_2' in command 'command_2' was changed in field 'isArray'.",
+            'message': "The argument `argument_2` in the command `command_2` - Now supports comma separated values.",
             'changed_field': 'isArray',
             'changed_value': True
         }
@@ -360,14 +361,15 @@ class TestIntegrationDiffDetector:
             'type': 'outputs',
             'name': 'contextPath_1',
             'command_name': 'command_2',
-            'message': "Missing the output 'contextPath_1' in command 'command_2'."
+            'message': "Missing the output 'contextPath_1' in the command 'command_2'."
         }
 
         changed_output = {
             'type': 'outputs',
             'name': 'contextPath_2',
             'command_name': 'command_2',
-            'message': "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+            'message': "The output 'contextPath_2' in the command 'command_2' was changed in field 'type'.",
+            'changed_field': 'type'
         }
 
         old_integration = pack.create_integration('oldIntegration', yml=self.OLD_INTEGRATION_YAML)
@@ -405,7 +407,7 @@ class TestIntegrationDiffDetector:
         changed_param = {
             'type': 'parameters',
             'name': 'API key',
-            'message': "The parameter 'API key' was changed in field 'required'.",
+            'message': "The parameter `API key` - Is Now required.",
             'changed_field': 'required',
             'changed_value': 'true'
         }
@@ -480,12 +482,8 @@ class TestIntegrationDiffDetector:
 
         integration_detector.print_missing_items()
 
-        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\n" \
-                          "The parameter 'API key' was changed in field 'required'.\n\n\n" \
-                          "Missing commands:\n\nMissing the command 'command_1'.\n\n\n" \
-                          "Missing arguments:\n\nThe argument 'argument_2' in command 'command_2' was changed in " \
-                          "field 'isArray'.\n\n\nMissing outputs:\n\n" \
-                          "The output 'contextPath_2' in command 'command_2' was changed in field 'type'."
+        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\nThe parameter `API key` - Is Now required.\n\nMissing commands:\n\nMissing the command 'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was changed in field 'type'.\n\n"
+
         captured = capsys.readouterr()
         assert excepted_output in captured.out
 
@@ -506,18 +504,16 @@ class TestIntegrationDiffDetector:
 
         integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
 
-        mocker.patch.object(IntegrationDiffDetector, 'get_new_version', return_value='2')
         integration_detector.print_items_in_docs_format()
 
-        excepted_output = "## V2 important information\n### New in this version:\n" \
-                          "- Added the following parameters:\n    - `URL`\n\n- Added the following commands:\n" \
-                          "    - `command_3`\n\n- Added the following outputs:\n    - There are added outputs in" \
-                          " command command_2\n\n### Changed in this version:\n- Changed the following parameters:\n" \
-                          "    - `API key` - Is now required.\n\n- Changed the following arguments:\n" \
-                          "    - `argument_2` in command `command_2` - Is now comma separated.\n\n- Changed the " \
-                          "following outputs:\n    - There are changed outputs in command command_2\n\n### Removed in "\
-                          "this version:\n- Removed the following parameters:\n    - `Credentials`\n\n" \
-                          "- Removed the following commands:\n    - `command_1`\n\n- Removed the following outputs:\n" \
-                          "    - There are Removed outputs in command command_2\n\n\n"
+        excepted_output = '\n## Breaking changes from the previous version of this integration - \n' \
+                          'The following sections list the changes in this version.\n\n### Commands\n' \
+                          'The following commands were removed in this version:\n* *command_1* - this command was ' \
+                          'replaced by XXX.\n\n### Arguments\n' \
+                          '#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n' \
+                          '* *argument_2* - Now supports comma separated values.\n\n### Outputs\n' \
+                          'The following outputs were removed in this version:\n\n## Additional Considerations for' \
+                          ' this version\n* Insert any API changes, any behavioral changes, limitations, ' \
+                          'or restrictions that would be new to this version.\n\n'
         captured = capsys.readouterr()
         assert excepted_output in captured.out

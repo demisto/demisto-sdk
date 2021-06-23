@@ -122,8 +122,10 @@ def generate_integration_doc(
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9].yml$", input_path)
             if integration_version and not skip_breaking_changes:
-                docs.extend(['You may have breaking changes from the previous version, please look at them [here]'
-                             '(#Breaking-changes-from-previous-versions-of-this-integration).', ''])
+                docs.extend(['Some changes have been made that might affect your existing content. '
+                             '\nIf you are upgrading from a previous of this integration, see [Breaking Changes]'
+                             '(#breaking-changes-from-the-previous-version-of-this-integration-'
+                             f'{yml_data.get("display", "").replace(" ", "-").lower()}).', ''])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -140,7 +142,8 @@ def generate_integration_doc(
             docs.extend(command_section)
             # breaking changes
             if integration_version and not skip_breaking_changes:
-                docs.extend(generate_versions_differences_section(input_path, input_old_version))
+                docs.extend(generate_versions_differences_section(input_path, input_old_version,
+                                                                  yml_data.get("display", "")))
 
             errors.extend(command_errors)
             # Known limitations
@@ -323,7 +326,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_versions_differences_section(input_path, input_old_version) -> list:
+def generate_versions_differences_section(input_path, input_old_version, display_name) -> list:
     """
     Generate the version differences section to the README.md file.
 
@@ -335,13 +338,19 @@ def generate_versions_differences_section(input_path, input_old_version) -> list
     """
 
     differences_section = [
-        '## Breaking changes from previous versions of this integration',
+        f'## Breaking changes from the previous version of this integration - {display_name}',
+        '%%FILL HERE%%',
         'The following sections list the changes in this version.',
         ''
     ]
 
-    if input_old_version:
+    if not input_old_version:
+        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
+        if user_response:
+            input_old_version = user_response
+
+    if input_old_version:
         differences = get_previous_version_differences(input_path, input_old_version)
 
         if differences[0] != '':
@@ -352,26 +361,27 @@ def generate_versions_differences_section(input_path, input_old_version) -> list
             differences_section = []
 
     else:
+
         differences_section.extend(['### Commands',
-                                    'The following commands were removed in this version:',
+                                    '#### The following commands were removed in this version:',
                                     '* *commandName* - this command was replaced by XXX.',
                                     '* *commandName* - this command was replaced by XXX.',
                                     '',
                                     '### Arguments',
-                                    'The following arguments were removed in this version:',
+                                    '#### The following arguments were removed in this version:',
                                     '',
                                     'In the *commandName* command:',
                                     '* *argumentName* - this argument was replaced by XXX.',
                                     '* *argumentName* - this argument was replaced by XXX.',
                                     '',
-                                    'The behavior of the following arguments was changed:',
+                                    '#### The behavior of the following arguments was changed:',
                                     '',
                                     'In the *commandName* command:',
                                     '* *argumentName* - is now required.',
                                     '* *argumentName* - supports now comma separated values.',
                                     '',
                                     '### Outputs',
-                                    'The following outputs were removed in this version:',
+                                    '#### The following outputs were removed in this version:',
                                     '',
                                     'In the *commandName* command:',
                                     '* *outputPath* - this output was replaced by XXX.',
@@ -382,7 +392,7 @@ def generate_versions_differences_section(input_path, input_old_version) -> list
                                     '* *outputPath* - this output was replaced by XXX.',
                                     ''])
 
-    differences_section.extend(['## Additional Considerations for this version',
+    differences_section.extend(['## Additional Considerations for this version', '%%FILL HERE%%',
                                 '* Insert any API changes, any behavioral changes, limitations, or restrictions '
                                 'that would be new to this version.', ''])
 

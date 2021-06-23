@@ -371,11 +371,12 @@ class IntegrationDiffDetector:
         result = ''
 
         if secho_result:
-            result = '\n## Breaking changes from previous versions of this integration\n' \
+            result = f'\n## Breaking changes from the previous version of this integration - ' \
+                     f'{self.new_yaml_data.get("display", "")}\n' \
                      'The following sections list the changes in this version.\n\n'
 
         if 'commands' in self.missing_items_report:
-            result += '### Commands\nThe following commands were removed in this version:\n'
+            result += '### Commands\n#### The following commands were removed in this version:\n'
 
             for command in self.missing_items_report['commands']:
                 result += f'* *{command["name"]}* - this command was replaced by XXX.\n'
@@ -388,17 +389,17 @@ class IntegrationDiffDetector:
                                  if 'changed_field' in arg]
 
             if removed_arguments:
-                result += '\nThe following arguments were removed in this version:\n'
+                result += '\n#### The following arguments were removed in this version:\n'
                 argument_per_command = self.get_elements_per_command(removed_arguments)
                 result += self.get_elements_per_command_in_docs_format(argument_per_command, 'argument')
 
             if changed_arguments:
-                result += '\nThe behavior of the following arguments was changed:\n'
+                result += '\n#### The behavior of the following arguments was changed:\n'
                 argument_per_command = self.get_elements_per_command(changed_arguments)
                 result += self.get_elements_per_command_in_docs_format(argument_per_command, 'argument', True)
 
         if 'outputs' in self.missing_items_report:
-            result += '\n### Outputs\nThe following outputs were removed in this version:\n'
+            result += '\n### Outputs\n#### The following outputs were removed in this version:\n'
             # Get only the removed outputs, and removed the changed.
             removed_outputs = [output for output in self.missing_items_report['outputs'] if 'changed_field' not in output]
             output_per_command = self.get_elements_per_command(removed_outputs)

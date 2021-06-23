@@ -2,7 +2,7 @@ import io
 import os
 import shutil
 
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 

@@ -8,12 +8,12 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_section, generate_table_section, save_output, string_escape_md)
 
 
-def generate_playbook_doc(input, output: str = None, permissions: str = None, limitations: str = None,
+def generate_playbook_doc(input_path: str, output: str = None, permissions: str = None, limitations: str = None,
                           verbose: bool = False):
     try:
-        playbook = get_yaml(input)
+        playbook = get_yaml(input_path)
         if not output:  # default output dir will be the dir of the input file
-            output = os.path.dirname(os.path.realpath(input))
+            output = os.path.dirname(os.path.realpath(input_path))
         errors = []
 
         description = playbook.get('description', '')
@@ -22,10 +22,10 @@ def generate_playbook_doc(input, output: str = None, permissions: str = None, li
             errors.append('Error! You are missing description for the playbook')
         doc = [description, '', '## Dependencies',
                'This playbook uses the following sub-playbooks, integrations, and scripts.', '']
-        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input)
+        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input_path)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
-        playbook_filename = os.path.basename(input).replace('.yml', '')
+        playbook_filename = os.path.basename(input_path).replace('.yml', '')
 
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
@@ -126,7 +126,7 @@ def get_playbook_dependencies(playbook: dict, playbook_path: str) -> Tuple[list,
                             else:
                                 integrations.add(integration_dependency)
         else:
-            script_name = task.get('scriptName')
+            script_name = task.get('scriptName') if task.get('scriptName') else task.get('script')
             if script_name:
                 scripts.add(script_name)
             elif task.get('type') == 'playbook':

@@ -44,7 +44,11 @@ class IntegrationDependencies:
 
     @staticmethod
     def make_integration_feed(integration: Integration):
-        integration.yml.update({'feed': True})
+        yml_dict = integration.yml.read_dict()
+        if 'script' not in yml_dict:
+            yml_dict['script'] = {}
+        yml_dict['script']['feed'] = True
+        integration.yml.write_dict(yml_dict)
 
 
 class WidgetDependencies:
@@ -659,20 +663,6 @@ class IndicatorTypeDependencies:
         script_id = script.yml.read_dict().get('commonfields').get('id')
         indicator_type.update({'enhancementScriptNames': [script_id]})
 
-    # Optional dependency
-    @staticmethod
-    def make_indicator_type_depend_on_integration(indicator_type: JSONBased, integration: Integration):
-        indicator_type.update({'reputationCommand': 'ip'})
-        integration.yml.update(
-            {
-                'script': {
-                    'commands': [{
-                        'name': 'ip'
-                    }]
-                }
-            }
-        )
-
 
 class LayoutDependencies:
     @staticmethod
@@ -963,6 +953,7 @@ def test_dependencies(mocker, repo, test_number):
         - Update packs dependencies in pack metadata
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mock_is_external_repo(mocker, False)
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 10
@@ -997,6 +988,7 @@ def test_specific_entity(mocker, repo, entity_class):
         Then
         - Update packs dependencies in pack metadata
     """
+    mock_is_external_repo(mocker, False)
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
@@ -1018,6 +1010,13 @@ def test_specific_entity(mocker, repo, entity_class):
         dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+
+def mock_is_external_repo(mocker, is_external_repo_return):
+    return mocker.patch(
+        'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
+        return_value=is_external_repo_return
+    )
 
 
 def test_dependencies_case_1(mocker, repo):
@@ -1046,13 +1045,15 @@ def test_dependencies_case_1(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')
     pack_common_types = repo.create_pack('CommonTypes')
 
     playbook_foo = pack_foo.create_playbook('playbook_foo')
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo'})
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo', 'category': '',
+                                                                          'script': {'type': 'python'}})
     script_bar = pack_bar.create_script('script_bar', yml={'script': '', 'type': 'python', 'name': 'script_bar'})
     incident_field_email = pack_common_types.create_incident_field(name='incident_Email',
                                                                    content={'id': 'incident_Email',
@@ -1105,19 +1106,22 @@ def test_dependencies_case_2(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')
     pack_common_types = repo.create_pack('CommonTypes')
 
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': ''})
+    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': '',
+                                                                          'script': {'type': 'python'}})
     mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
                                                                           'name': 'mapper_in_bar',
                                                                           'mapping': {},
                                                                           'type': 'mapping'})
     # Pack can not be empty
     pack_common_types.create_integration('integration_common_types',
-                                         yml={'name': 'integration_common_types', 'category': ''})
+                                         yml={'name': 'integration_common_types', 'category': '',
+                                              'script': {'type': 'python'}})
 
     # make integration_foo feed
     IntegrationDependencies.make_integration_feed(

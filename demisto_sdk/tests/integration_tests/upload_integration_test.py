@@ -4,7 +4,7 @@ import click
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from packaging.version import parse
 
 UPLOAD_CMD = "upload"
@@ -102,3 +102,29 @@ Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input pat
   3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""" in\
         click.secho.call_args_list[1][0][0]
     assert not result.stderr
+
+
+def test_integration_upload_pack_invalid_connection_params(mocker):
+    """
+    Given
+    - Content pack with "invalid" connection params.
+
+    When
+    - Uploading the pack.
+
+    Then
+    - Ensure pack is not uploaded and correct error message is printed.
+    """
+
+    pack_path = join(
+        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
+    )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.demisto_client",
+        return_valure="object"
+    )
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0")
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
+    assert result.exit_code == 1
+    assert "Could not connect to XSOAR server. Try checking your connection configurations." in result.stdout

@@ -25,7 +25,7 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
                  no_validate: bool = False,
                  verbose: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:

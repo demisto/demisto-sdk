@@ -11,6 +11,7 @@ def get_validator(file_path='', diff=''):
     release_notes_validator.master_diff = diff
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
+    release_notes_validator.json_file_path = ''
     return release_notes_validator
 
 

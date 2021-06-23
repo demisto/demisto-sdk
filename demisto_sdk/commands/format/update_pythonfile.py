@@ -30,7 +30,7 @@ class PythonFileFormat(BaseUpdate):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     @staticmethod
     def format_py_using_autopep(py_file_path, verbose: bool = False):

@@ -1,6 +1,7 @@
 """
 
 """
+import os
 import shutil
 from pathlib import Path
 from typing import List, Optional
@@ -70,11 +71,14 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name):
+    def setup_one_pack(self, name) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
             name (string): Name of the desired pack.
+
+        Returns:
+            Pack. The pack object created.
 
         """
         pack = self.create_pack(name)
@@ -115,7 +119,7 @@ class Repo:
         mapper.write_json({'id': f'{name} - mapper'})
         mapper.update({'name': f'{name} - mapper'})
         mapper.update({'mapping': {}})
-        mapper.update({'type': 'mapping'})
+        mapper.update({'type': 'mapping-incoming'})  # can also be mapping-outgoing, but this is the more common usage
 
         incident_type = pack.create_incident_type(f'{name}_incident-type')
         incident_type.write_json({'id': f'{name} - incident_type'})
@@ -156,10 +160,19 @@ class Repo:
         playbook.yml.update({'id': f'{name}_playbook'})
         playbook.yml.update({'name': f'{name}_playbook'})
 
-        test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
+        test_playbook = pack.create_test_playbook(f'{name}_integration_test_playbook')
         test_playbook.create_default_playbook()
-        test_playbook.yml.update({'id': f'{name}_test_playbook'})
-        test_playbook.yml.update({'name': f'{name}_test_playbook'})
+        test_playbook.yml.update({'id': f'{name}_integration_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_integration_test_playbook'})
+        integration.yml.update({'tests': [f'{name}_integration_test_playbook']})
+
+        test_playbook = pack.create_test_playbook(f'{name}_script_test_playbook')
+        test_playbook.create_default_playbook()
+        test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
+        script.yml.update({'tests': [f'{name}_script_test_playbook']})
+
+        return pack
 
     def setup_content_repo(self, number_of_packs):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
@@ -180,3 +193,15 @@ class Repo:
 
     def working_dir(self):
         return self.path
+
+    def make_dir(self, dir_name: str = ''):
+        if not dir_name:
+            dir_name = "NewDir"
+        dir_path = os.path.join(self.path, dir_name)
+        os.mkdir(dir_path)
+        return dir_path
+
+    def make_file(self, file_name: str, file_content: str):
+        file_path = os.path.join(self.path, file_name)
+        with open(file_path, 'w') as f:
+            f.write(file_content)

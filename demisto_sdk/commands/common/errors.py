@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -8,12 +8,22 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+ALLOWED_IGNORE_ERRORS = [
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
+    'DS107',
+    'IF100', 'IF106',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'MP106',
+    'PA113', 'PA116', 'PA124', 'PA125',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
+    'RM100', 'RM102', 'RM104', 'RM106',
+    'RP102', 'RP104',
+    'SC100', 'SC101', 'SC105',
+]
 
-ALLOWED_IGNORE_ERRORS = ['BA101', 'BA106', 'RP102', 'RP104', 'SC100', 'IF106', 'PA113', 'PA116', 'IN126', 'PB105',
-                         'PB106', 'IN109', 'IN110', 'IN122']
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS', 'IN125', 'IN126'],
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
     'partner': ['CJ']
 }
 
@@ -22,179 +32,266 @@ PRESET_ERROR_TO_CHECK = {
 }
 
 ERROR_CODE = {
-    "wrong_version": "BA100",
-    "id_should_equal_name": "BA101",
-    "file_type_not_supported": "BA102",
-    "file_name_include_spaces_error": "BA103",
-    "changes_may_fail_validation": "BA104",
-    "invalid_id_set": "BA105",
-    "no_minimal_fromversion_in_file": "BA106",
-    "wrong_display_name": "IN100",
-    "wrong_default_parameter_not_empty": "IN101",
-    "wrong_required_value": "IN102",
-    "wrong_required_type": "IN103",
-    "wrong_category": "IN104",
-    "wrong_default_argument": "IN105",
-    "no_default_arg": "IN106",
-    "missing_reputation": "IN107",
-    "wrong_subtype": "IN108",
-    "beta_in_id": "IN109",
-    "beta_in_name": "IN110",
-    "beta_field_not_found": "IN111",
-    "no_beta_in_display": "IN112",
-    "duplicate_arg_in_file": "IN113",
-    "duplicate_param": "IN114",
-    "invalid_context_output": "IN115",
-    "added_required_fields": "IN116",
-    "not_used_display_name": "IN117",
-    "empty_display_configuration": "IN118",
-    "feed_wrong_from_version": "IN119",
-    "pwsh_wrong_version": "IN120",
-    "parameter_missing_from_yml": "IN121",
-    "parameter_missing_for_feed": "IN122",
-    "invalid_v2_integration_name": "IN123",
-    "found_hidden_param": "IN124",
-    "no_default_value_in_parameter": "IN125",
-    "parameter_missing_from_yml_not_community_contributor": "IN126",
-    "invalid_deprecated_integration_display_name": "IN127",
-    "invalid_deprecated_integration_description": "IN128",
-    "removed_integration_parameters": "IN129",
-    "integration_not_runnable": "IN130",
-    "missing_get_mapping_fields_command": "IN131",
-    "invalid_v2_script_name": "SC100",
-    "invalid_deprecated_script": "SC101",
-    "dbot_invalid_output": "DB100",
-    "dbot_invalid_description": "DB101",
-    "breaking_backwards_subtype": "BC100",
-    "breaking_backwards_context": "BC101",
-    "breaking_backwards_command": "BC102",
-    "breaking_backwards_arg_changed": "BC103",
-    "breaking_backwards_command_arg_changed": "BC104",
-    "default_docker_error": "DO100",
-    "latest_docker_error": "DO101",
-    "not_demisto_docker": "DO102",
-    "docker_tag_not_fetched": "DO103",
-    "no_docker_tag": "DO104",
-    "docker_not_formatted_correctly": "DO105",
-    "docker_not_on_the_latest_tag": "DO106",
-    "non_existing_docker": "DO107",
-    "id_set_conflicts": "ID100",
-    "id_set_not_updated": "ID101",
-    "duplicated_id": "ID102",
-    "remove_field_from_dashboard": "DA100",
-    "include_field_in_dashboard": "DA101",
-    "remove_field_from_widget": "WD100",
-    "include_field_in_widget": "WD101",
-    "no_image_given": "IM100",
-    "image_too_large": "IM101",
-    "image_in_package_and_yml": "IM102",
-    "not_an_image_file": "IM103",
-    "no_image_field_in_yml": "IM104",
-    "image_field_not_in_base64": "IM105",
-    "default_image_error": "IM106",
-    "description_missing_from_conf_json": "CJ100",
-    "test_not_in_conf_json": "CJ101",
-    "integration_not_registered": "CJ102",
-    "no_test_playbook": "CJ103",
-    "test_playbook_not_configured": "CJ104",
-    "missing_release_notes": "RN100",
-    "no_new_release_notes": "RN101",
-    "release_notes_not_formatted_correctly": "RN102",
-    "release_notes_not_finished": "RN103",
-    "release_notes_file_empty": "RN104",
-    "multiple_release_notes_files": "RN105",
-    "missing_release_notes_for_pack": "RN106",
-    "missing_release_notes_entry": "RN107",
-    "added_release_notes_for_new_pack": "RN108",
-    "modified_existing_release_notes": "RN109",
-    "playbook_cant_have_rolename": "PB100",
-    "playbook_unreachable_condition": "PB101",
-    "playbook_unhandled_condition": "PB102",
-    "playbook_unconnected_tasks": "PB103",
-    "invalid_deprecated_playbook": "PB104",
-    "playbook_cant_have_deletecontext_all": "PB105",
-    "using_instance_in_playbook": "PB106",
-    "invalid_script_id": "PB107",
-    "description_missing_in_beta_integration": "DS100",
-    "no_beta_disclaimer_in_description": "DS101",
-    "no_beta_disclaimer_in_yml": "DS102",
-    "description_in_package_and_yml": "DS103",
-    "no_description_file_warning": "DS104",
-    "invalid_incident_field_name": "IF100",
-    "invalid_incident_field_content_key_value": "IF101",
-    "invalid_incident_field_system_key_value": "IF102",
-    "invalid_incident_field_type": "IF103",
-    "invalid_incident_field_group_value": "IF104",
-    "invalid_incident_field_cli_name_regex": "IF105",
-    "invalid_incident_field_cli_name_value": "IF106",
-    "incident_field_or_type_from_version_5": "IF107",
-    "invalid_incident_field_or_type_from_version": "IF108",
-    "new_incident_field_required": "IF109",
-    "from_version_modified_after_rename": "IF110",
-    "incident_field_type_change": "IF111",
-    "incident_type_integer_field": "IT100",
-    "incident_type_invalid_playbook_id_field": "IT101",
-    "pack_file_does_not_exist": "PA100",
-    "cant_open_pack_file": "PA101",
-    "cant_read_pack_file": "PA102",
-    "cant_parse_pack_file_to_list": "PA103",
-    "pack_file_bad_format": "PA104",
-    "pack_metadata_empty": "PA105",
-    "pack_metadata_should_be_dict": "PA106",
-    "missing_field_iin_pack_metadata": "PA107",
-    "pack_metadata_name_not_valid": "PA108",
-    "pack_metadata_field_invalid": "PA109",
-    "dependencies_field_should_be_dict": "PA110",
-    "empty_field_in_pack_metadata": "PA111",
-    "pack_metadata_isnt_json": "PA112",
-    "pack_metadata_missing_url_and_email": "PA113",
-    "pack_metadata_version_should_be_raised": "PA114",
-    "pack_timestamp_field_not_in_iso_format": 'PA115',
-    "invalid_package_dependencies": "PA116",
-    "pack_metadata_certification_is_invalid": "PA118",
-    "pack_metadata_non_approved_usecases": "PA119",
-    "pack_metadata_non_approved_tags": "PA120",
-    "readme_error": "RM100",
-    "image_path_error": "RM101",
-    "wrong_version_reputations": "RP100",
-    "reputation_expiration_should_be_numeric": "RP101",
-    "reputation_id_and_details_not_equal": "RP102",
-    "reputation_invalid_indicator_type_id": "RP103",
-    "reputation_empty_required_fields": "RP104",
-    "structure_doesnt_match_scheme": "ST100",
-    "file_id_contains_slashes": "ST101",
-    "file_id_changed": "ST102",
-    "from_version_modified": "ST103",
-    "wrong_file_extension": "ST104",
-    "invalid_file_path": "ST105",
-    "invalid_package_structure": "ST106",
-    "pykwalify_missing_parameter": "ST107",
-    "pykwalify_field_undefined": "ST108",
-    "pykwalify_missing_in_root": "ST109",
-    "pykwalify_general_error": "ST110",
-    "invalid_to_version_in_new_classifiers": "CL100",
-    "invalid_to_version_in_old_classifiers": "CL101",
-    "invalid_from_version_in_new_classifiers": "CL102",
-    "invalid_from_version_in_old_classifiers": "CL103",
-    "missing_from_version_in_new_classifiers": "CL104",
-    "missing_to_version_in_old_classifiers": "CL105",
-    "from_version_higher_to_version": "CL106",
-    "invalid_type_in_new_classifiers": "CL107",
-    "invalid_from_version_in_mapper": "MP100",
-    "invalid_to_version_in_mapper": "MP101",
-    "invalid_mapper_file_name": "MP102",
-    "missing_from_version_in_mapper": "MP103",
-    "invalid_type_in_mapper": "MP104",
-    "invalid_version_in_layout": "LO100",
-    "invalid_version_in_layoutscontainer": "LO101",
-    "invalid_file_path_layout": "LO102",
-    "invalid_file_path_layoutscontainer": "LO103",
+    "wrong_version": {'code': "BA100", 'ui_applicable': False, 'related_field': 'version'},
+    "id_should_equal_name": {'code': "BA101", 'ui_applicable': False, 'related_field': 'id'},
+    "file_type_not_supported": {'code': "BA102", 'ui_applicable': False, 'related_field': ''},
+    "file_name_include_spaces_error": {'code': "BA103", 'ui_applicable': False, 'related_field': ''},
+    "changes_may_fail_validation": {'code': "BA104", 'ui_applicable': False, 'related_field': ''},
+    "invalid_id_set": {'code': "BA105", 'ui_applicable': False, 'related_field': ''},
+    "no_minimal_fromversion_in_file": {'code': "BA106", 'ui_applicable': False, 'related_field': 'fromversion'},
+    "running_on_master_with_git": {'code': "BA107", 'ui_applicable': False, 'related_field': ''},
+    "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
+    "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
+    "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
+    "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
+    "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
+                                          'related_field': '<parameter-name>.default'},
+    "wrong_required_value": {'code': "IN102", 'ui_applicable': True, 'related_field': '<parameter-name>.required'},
+    "wrong_required_type": {'code': "IN103", 'ui_applicable': True, 'related_field': '<parameter-name>.type'},
+    "wrong_category": {'code': "IN104", 'ui_applicable': True, 'related_field': 'category'},
+    "wrong_default_argument": {'code': "IN105", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "no_default_arg": {'code': "IN106", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "missing_reputation": {'code': "IN107", 'ui_applicable': True, 'related_field': 'outputs'},
+    "wrong_subtype": {'code': "IN108", 'ui_applicable': False, 'related_field': 'subtype'},
+    "beta_in_id": {'code': "IN109", 'ui_applicable': False, 'related_field': 'id'},
+    "beta_in_name": {'code': "IN110", 'ui_applicable': False, 'related_field': 'name'},
+    "beta_field_not_found": {'code': "IN111", 'ui_applicable': False, 'related_field': 'beta'},
+    "no_beta_in_display": {'code': "IN112", 'ui_applicable': False, 'related_field': 'display'},
+    "duplicate_arg_in_file": {'code': "IN113", 'ui_applicable': True, 'related_field': 'arguments'},
+    "duplicate_param": {'code': "IN114", 'ui_applicable': True, 'related_field': 'configuration'},
+    "invalid_context_output": {'code': "IN115", 'ui_applicable': True, 'related_field': 'outputs'},
+    "added_required_fields": {'code': "IN116", 'ui_applicable': False, 'related_field': '<parameter-name>.required'},
+    "not_used_display_name": {'code': "IN117", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
+    "empty_display_configuration": {'code': "IN118", 'ui_applicable': True,
+                                    'related_field': '<parameter-name>.display'},
+    "feed_wrong_from_version": {'code': "IN119", 'ui_applicable': False, 'related_field': 'fromversion'},
+    "pwsh_wrong_version": {'code': "IN120", 'ui_applicable': False, 'related_field': 'fromversion'},
+    "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
+    "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
+    "invalid_v2_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
+    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
+                                      'related_field': '<parameter-name>.default'},
+    "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
+                                                             'related_field': 'configuration'},
+    "invalid_deprecated_integration_display_name": {'code': "IN127", 'ui_applicable': False,
+                                                    'related_field': 'display'},
+    "invalid_deprecated_integration_description": {'code': "IN128", 'ui_applicable': False, 'related_field': ''},
+    "removed_integration_parameters": {'code': "IN129", 'ui_applicable': False, 'related_field': 'configuration'},
+    "integration_not_runnable": {'code': "IN130", 'ui_applicable': False, 'related_field': 'configuration'},
+    "missing_get_mapping_fields_command": {'code': "IN131", 'ui_applicable': False, 'related_field': 'ismappable'},
+    "integration_non_existent_classifier": {'code': "IN132", 'ui_applicable': False, 'related_field': 'classifiers'},
+    "integration_non_existent_mapper": {'code': "IN133", 'ui_applicable': False, 'related_field': 'mappers'},
+    "multiple_default_arg": {'code': "IN134", "ui_applicable": True, 'related_field': "arguments"},
+    "invalid_integration_parameters_display_name": {'code': "IN135", 'ui_applicable': True, 'related_field': 'display'},
+    "missing_output_context": {'code': "IN136", 'ui_applicable': True, 'related_field': 'contextOutput'},
+    "is_valid_integration_file_path_in_folder": {'code': "IN137", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_integration_file_path_in_integrations_folder": {'code': "IN138", 'ui_applicable': False,
+                                                              'related_field': ''},
+    "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
+    "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
+                                         'related_field': 'script.commands.name'},
+    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
+    "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
+    "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
+    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
+    "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
+    "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
+    "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
+    "breaking_backwards_context": {'code': "BC101", 'ui_applicable': False, 'related_field': 'contextPath'},
+    "breaking_backwards_command": {'code': "BC102", 'ui_applicable': False, 'related_field': 'contextPath'},
+    "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
+    "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
+    "default_docker_error": {'code': "DO100", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "latest_docker_error": {'code': "DO101", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "not_demisto_docker": {'code': "DO102", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_tag_not_fetched": {'code': "DO103", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "no_docker_tag": {'code': "DO104", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
+    "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
+    "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
+    "remove_field_from_dashboard": {'code': "DA100", 'ui_applicable': False, 'related_field': ''},
+    "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
+    "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
+    "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
+    "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
+    "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
+    "not_an_image_file": {'code': "IM103", 'ui_applicable': False, 'related_field': 'image'},
+    "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
+    "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
+    "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
+    "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
+    "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
+    "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
+    "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
+    "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
+    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
+    "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
+    "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_not_finished": {'code': "RN103", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_file_empty": {'code': "RN104", 'ui_applicable': False, 'related_field': ''},
+    "multiple_release_notes_files": {'code': "RN105", 'ui_applicable': False, 'related_field': ''},
+    "missing_release_notes_for_pack": {'code': "RN106", 'ui_applicable': False, 'related_field': ''},
+    "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
+    "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
+    "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
+    "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
+    "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
+    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
+    "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
+    "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
+    "using_instance_in_playbook": {'code': "PB106", 'ui_applicable': True, 'related_field': 'tasks'},
+    "invalid_script_id": {'code': "PB107", 'ui_applicable': False, 'related_field': 'tasks'},
+    "invalid_uuid": {'code': "PB108", 'ui_applicable': False, 'related_field': 'taskid'},
+    "taskid_different_from_id": {'code': "PB109", 'ui_applicable': False, 'related_field': 'taskid'},
+    "content_entity_version_not_match_playbook_version": {'code': "PB110", 'ui_applicable': False,
+                                                          'related_field': 'toVersion'},
+    "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
+                                                       'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
+    "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
+    "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
+    "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
+    "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
+    "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
+                                             'related_field': 'detaileddescription'},
+    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
+                                          'related_field': 'detaileddescription'},
+    "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
+    "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
+    "invalid_incident_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
+    "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
+    "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
+    "incident_field_or_type_from_version_5": {'code': "IF107", 'ui_applicable': True, 'related_field': 'fromVersion'},
+    "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
+                                                    'related_field': 'fromVersion'},
+    "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
+    "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
+    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
+    "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
+    "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
+    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
+                                                  'related_field': 'extractSettings'},
+    "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
+    "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
+    "pack_file_does_not_exist": {'code': "PA100", 'ui_applicable': False, 'related_field': ''},
+    "cant_open_pack_file": {'code': "PA101", 'ui_applicable': False, 'related_field': ''},
+    "cant_read_pack_file": {'code': "PA102", 'ui_applicable': False, 'related_field': ''},
+    "cant_parse_pack_file_to_list": {'code': "PA103", 'ui_applicable': False, 'related_field': ''},
+    "pack_file_bad_format": {'code': "PA104", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_empty": {'code': "PA105", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_should_be_dict": {'code': "PA106", 'ui_applicable': False, 'related_field': ''},
+    "missing_field_iin_pack_metadata": {'code': "PA107", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_name_not_valid": {'code': "PA108", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_field_invalid": {'code': "PA109", 'ui_applicable': False, 'related_field': ''},
+    "dependencies_field_should_be_dict": {'code': "PA110", 'ui_applicable': False, 'related_field': ''},
+    "empty_field_in_pack_metadata": {'code': "PA111", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_isnt_json": {'code': "PA112", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_missing_url_and_email": {'code': "PA113", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_version_should_be_raised": {'code': "PA114", 'ui_applicable': False, 'related_field': ''},
+    "pack_timestamp_field_not_in_iso_format": {'code': "PA115", 'ui_applicable': False, 'related_field': ''},
+    "invalid_package_dependencies": {'code': "PA116", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_invalid_support_type": {'code': "PA117", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_certification_is_invalid": {'code': "PA118", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_usecases": {'code': "PA119", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_tags": {'code': "PA120", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_price_change": {'code': "PA121", 'ui_applicable': False, 'related_field': ''},
+    "pack_name_already_exists": {'code': "PA122", 'ui_applicable': False, 'related_field': ''},
+    "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
+    "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
+    "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
+    "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
+    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
+    "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
+    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
+    "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
+    "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
+    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
+    "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
+    "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
+    "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
+    "reputation_invalid_indicator_type_id": {'code': "RP103", 'ui_applicable': False, 'related_field': 'id'},
+    "reputation_empty_required_fields": {'code': "RP104", 'ui_applicable': False, 'related_field': 'id'},
+    "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
+    "file_id_contains_slashes": {'code': "ST101", 'ui_applicable': False, 'related_field': 'id'},
+    "file_id_changed": {'code': "ST102", 'ui_applicable': False, 'related_field': 'id'},
+    "from_version_modified": {'code': "ST103", 'ui_applicable': False, 'related_field': 'fromversion'},
+    "wrong_file_extension": {'code': "ST104", 'ui_applicable': False, 'related_field': ''},
+    "invalid_file_path": {'code': "ST105", 'ui_applicable': False, 'related_field': ''},
+    "invalid_package_structure": {'code': "ST106", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_missing_parameter": {'code': "ST107", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_field_undefined": {'code': "ST108", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_missing_in_root": {'code': "ST109", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
+    "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
+    "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "invalid_from_version_in_old_classifiers": {'code': "CL103", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "missing_from_version_in_new_classifiers": {'code': "CL104", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "missing_to_version_in_old_classifiers": {'code': "CL105", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "from_version_higher_to_version": {'code': "CL106", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_type_in_new_classifiers": {'code': "CL107", 'ui_applicable': False, 'related_field': 'type'},
+    "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False,
+                                               'related_field': 'incident_types'},
+    "invalid_from_version_in_mapper": {'code': "MP100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_to_version_in_mapper": {'code': "MP101", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_mapper_file_name": {'code': "MP102", 'ui_applicable': False, 'related_field': ''},
+    "missing_from_version_in_mapper": {'code': "MP103", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_type_in_mapper": {'code': "MP104", 'ui_applicable': False, 'related_field': 'type'},
+    "mapper_non_existent_incident_types": {'code': "MP105", 'ui_applicable': False, 'related_field': 'incident_types'},
+    "invalid_incident_field_in_mapper": {'code': "MP106", 'ui_applicable': False, 'related_field': 'mapping'},
+    "changed_incident_field_in_mapper": {'code': "MP107", 'ui_applicable': True, 'related_field': 'mapping'},
+    "removed_incident_types": {'code': "MP108", 'ui_applicable': True, 'related_field': 'mapping'},
+    "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
+    "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
+    "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
 }
+
+
+def get_all_error_codes() -> List:
+    error_codes = []
+    for error in ERROR_CODE:
+        error_codes.append(ERROR_CODE[error].get('code'))
+
+    return error_codes
+
+
+def get_error_object(error_code: str) -> Dict:
+    for error in ERROR_CODE:
+        if error_code == ERROR_CODE[error].get('code'):
+            return ERROR_CODE[error]
+    return {}
 
 
 def error_code_decorator(f):
     def wrapper(*args, **kwargs):
-        return f(*args, **kwargs), ERROR_CODE[f.__name__]
+        return f(*args, **kwargs), ERROR_CODE[f.__name__].get('code')
 
     return wrapper
 
@@ -257,6 +354,33 @@ class Errors:
         else:
             return f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' \
                    f'to the file.'
+
+    @staticmethod
+    @error_code_decorator
+    def running_on_master_with_git():
+        return "Running on master branch while using git is ill advised." \
+               "\nrun: 'git checkout -b NEW_BRANCH_NAME' and rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def folder_name_has_separators(entity_type, invalid_name, valid_name):
+        return f"The {entity_type} folder name '{invalid_name}' should be named '{valid_name}' without any separator."
+
+    @staticmethod
+    @error_code_decorator
+    def file_name_has_separators(entity_type, invalid_files, valid_files):
+        return f"The {entity_type} files {invalid_files} should be named {valid_files} " \
+               f"without any separator in the base name."
+
+    @staticmethod
+    @error_code_decorator
+    def field_contain_forbidden_word(field_names: list, word: str):
+        return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
+
+    @staticmethod
+    @error_code_decorator
+    def indicator_field_type_grid_minimal_version(fromversion):
+        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
     @staticmethod
     @error_code_decorator
@@ -368,6 +492,27 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def changed_integration_yml_fields(removed, changed):
+        return f"You've made some changes to some fields in the yml file, \n" \
+               f" the changed fields are: {changed} \n" \
+               f"the removed fields are: {removed} "
+
+    @staticmethod
+    def suggest_server_allowlist_fix(words=None):
+        words = words if words else ['incident']
+        return f"To fix the problem, remove the words {words}, " \
+               f"or add them to the whitelist named argsExceptionsList in:\n" \
+               f"https://github.com/demisto/server/blob/57fbe417ae420c41ee12a9beb850ff4672209af8/services/" \
+               f"servicemodule_test.go#L8273"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_in_command_name_or_args(commands, args):
+        return f"This is a core pack with an integration that contains the word incident in the following commands'" \
+               f" name or argument:\ncommand's name: {commands} \ncommand's argument: {args}"
+
+    @staticmethod
+    @error_code_decorator
     def not_used_display_name(field_name):
         return "The display details for {} will not be used " \
                "due to the type of the parameter".format(field_name)
@@ -421,6 +566,58 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def readme_missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in YML file ' \
+               f'but are missing from the README file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_mdx_server(line):
+        return f'Failed starting mdx server. stdout: {line}.\n' \
+               f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_output_context(command, context_paths):
+        return f'The Following context paths for command {command} are found in the README file ' \
+               f'but are missing from the YML file: {context_paths}'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_non_existent_classifier(integration_classifier):
+        return f"The integration has a classifier {integration_classifier} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_non_existent_mapper(integration_mapper):
+        return f"The integration has a mapper {integration_mapper} which does not exist."
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_default_arg(command_name, default_args):
+        return f"The integration command: {command_name} has multiple default arguments: {default_args}."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_parameters_display_name(invalid_display_names):
+        return f"The integration display names: {invalid_display_names} are invalid, " \
+               "Integration parameters display name should be capitalized and spaced using whitespaces " \
+               "and not underscores ( _ )."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_integration_file_path_in_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_integration_file_path_in_integrations_folder(integration_file):
+        return f"The integration file name: {integration_file} is invalid, " \
+               f"The integration file name should start with 'integration-'."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_v2_integration_name():
         return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
                "e.g: Kenna v2, Jira v2"
@@ -438,7 +635,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration_description():
-        return 'The description of all deprecated integrations should start with "Deprecated.".'
+        return 'The description of all deprecated integrations should follow one of the formats:' \
+               '1. "Deprecated. Use <INTEGRATION_DISPLAY_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -449,7 +648,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_script():
-        return "Every deprecated script's comment has to start with 'Deprecated.'"
+        return 'The comment of all deprecated scripts should follow one of the formats:' \
+               '1. "Deprecated. Use <SCRIPT_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -523,7 +724,7 @@ class Errors:
     @error_code_decorator
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
-               f' Please create or update to an updated versioned image\n'
+               f' Please create or update to an updated versioned image.'
 
     @staticmethod
     @error_code_decorator
@@ -537,14 +738,17 @@ class Errors:
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
-    @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, docker_image_name, file_path):
-        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
-               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n' \
-               f'You can check for the most updated version of {docker_image_name} ' \
+    def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
+        return f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
                f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+
+    @staticmethod
+    @error_code_decorator
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag) -> str:
+        return f'The docker image tag is not the latest numeric tag, please update it.\n' \
+               f'The docker image tag in the yml file is: {docker_image_tag}\n' \
+               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
 
     @staticmethod
     @error_code_decorator
@@ -554,15 +758,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def id_set_not_updated(file_path):
-        return f"You have failed to update id_set.json with the data of {file_path} " \
-               f"please run `demisto-sdk create-id-set`"
-
-    @staticmethod
-    @error_code_decorator
     def duplicated_id(obj_id):
         return f"The ID {obj_id} already exists, please update the file or update the " \
                f"id_set.json toversion field of this id to match the old occurrence of this id"
+
+    @staticmethod
+    @error_code_decorator
+    def no_id_set_file():
+        return "Unable to find id_set.json file in path - rerun the command with --create-id-set flag"
 
     @staticmethod
     @error_code_decorator
@@ -623,13 +826,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_image_name():
+        return "The image's file name is invalid - " \
+               "make sure the name looks like the following: <integration_name>_image.png"
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):
         return "Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
 
     @staticmethod
     @error_code_decorator
     def test_not_in_conf_json(file_id):
-        return "You've failed to add the {file_id} to conf.json\n" \
+        return f"You've failed to add the {file_id} to conf.json\n" \
                "see here: https://xsoar.pan.dev/docs/integrations/test-playbooks#adding-tests-to-confjson"
 
     @staticmethod
@@ -708,7 +917,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes_entry(file_type, pack_name, entity_name):
-        return f"No release note entry was found for the {file_type.lower()} \"{entity_name}\" in the " \
+        return f"No release note entry was found for the {file_type.value.lower()} \"{entity_name}\" in the " \
                f"{pack_name} pack. Please rerun the update-release-notes command without -u to " \
                f"generate an updated template. If you are trying to exclude an item from the release " \
                f"notes, please refer to the documentation found here - " \
@@ -764,7 +973,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The playbook description has to start with "Deprecated."'
+        return 'The description of all deprecated playbooks should follow one of the formats:' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+               '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
     @error_code_decorator
@@ -777,10 +988,69 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
+               f"with a version that does not match the main playbook version. The from version of" \
+               f" {entities_names} should be at least {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
+        return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
+               f"that not implemented in integration that match the main playbook version. This command should be " \
+               f"implemented in an integration with a from version of at least {main_playbook_version}."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_command_name_in_script(script_name, command):
+        return f"in script {script_name} the command {command} has an invalid name. " \
+               f"Please make sure:\n" \
+               f"1 - The right command name is set and the spelling is correct." \
+               f" Do not use 'dev' in it or suffix it with 'copy'\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should be the same as the name of the folder that contains it."
+
+    @staticmethod
+    @error_code_decorator
+    def is_valid_script_file_path_in_scripts_folder(script_file):
+        return f"The script file name: {script_file} is invalid, " \
+               f"The script file name should start with 'script-'."
+
+    @staticmethod
+    @error_code_decorator
+    def incident_in_script_arg(arguments):
+        return f"The script is part of a core pack. Therefore, the use of the word `incident` in argument names is" \
+               f" forbidden. problematic argument names:\n {arguments}."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file was found in the package. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+        return f"No detailed description file (<integration_name>_description.md) was found in the package." \
+               f" Please add one, and make sure it includes the beta disclaimer note." \
+               f" Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_contrib_details():
+        return "Description file contains contribution/partner details that will be generated automatically " \
+               "when the upload command is performed.\nDelete any details related to contribution/partner "
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_description_name():
+        return "The description's file name is invalid - " \
+               "make sure the name looks like the following: <integration_name>_description.md"
+
+    @staticmethod
+    @error_code_decorator
+    def description_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -809,8 +1079,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_name(word):
-        return f"The word {word} cannot be used as a name, please update the file."
+    def invalid_incident_field_name(words):
+        return f"The words: {words} cannot be used as a name."
 
     @staticmethod
     @error_code_decorator
@@ -824,9 +1094,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_type, TypeFields):
+    def invalid_incident_field_type(file_type, type_fields):
         return f"Type: `{file_type}` is not one of available types.\n" \
-               f"available types: {[value.value for value in TypeFields]}"
+               f"available types: {[value.value for value in type_fields]}"
 
     @staticmethod
     @error_code_decorator
@@ -873,6 +1143,38 @@ class Errors:
     @error_code_decorator
     def incident_type_invalid_playbook_id_field():
         return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_auto_extract_fields_invalid(incident_fields):
+        return f"The following incident fields are not formatted correctly under " \
+               f"`fieldCliNameToExtractSettings`: {incident_fields}\n" \
+               f"Please format them in one of the following ways:\n" \
+               f"1. To extract all indicators from the field: \n" \
+               f"isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"2. To extract the incident field to a specific indicator without using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"<INDICATOR_TYPE>\", " \
+               f"extractIndicatorTypesIDs: []\n" \
+               f"3. To extract indicators from the field using regex: \n" \
+               f"isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: \"\", " \
+               f"extractIndicatorTypesIDs: [\"<INDICATOR_TYPE1>\", \"<INDICATOR_TYPE2>\"]"
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_invalid_auto_extract_mode():
+        return 'The `mode` field under `extractSettings` should be one of the following:\n' \
+               ' - \"All\" - To extract all indicator types regardless of auto-extraction settings.\n' \
+               ' - \"Specific\" - To extract only the specific indicator types set in the auto-extraction settings.'
+
+    @staticmethod
+    @error_code_decorator
+    def incident_type_non_existent_playbook_id(incident_type, playbook):
+        return f"in incident type {incident_type} the playbook {playbook} was not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right playbook name is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -951,6 +1253,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_invalid_support_type():
+        return 'Support field should be one of the following: xsoar, partner, developer or community.'
+
+    @staticmethod
+    @error_code_decorator
     def pack_metadata_version_should_be_raised(pack, old_version):
         return f"The pack version (currently: {old_version}) needs to be raised - " \
                f"make sure you are merged from master and " \
@@ -971,6 +1278,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_price_change(old_price, new_price) -> str:
+        return f"The pack price was changed from {old_price} to {new_price} - revert the change"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_name_already_exists(new_pack_name) -> str:
+        return f"A pack named: {new_pack_name} already exists in content repository, " \
+               f"change the pack's name in the metadata file."
+
+    @staticmethod
+    @error_code_decorator
+    def is_wrong_usage_of_usecase_tag():
+        return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_name_is_not_in_xsoar_standards(reason):
+        if reason == "short":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
+                   f' characters long.'
+        if reason == "capital":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must start with a capital' \
+                   f' letter.'
+        if reason == "wrong_word":
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' ["Pack", "Playbook", "Integration", "Script"]'
+
+    @staticmethod
+    @error_code_decorator
     def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
         return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
                f"Suggested change: {changed_value}"
@@ -979,6 +1315,27 @@ class Errors:
     @error_code_decorator
     def readme_error(stderr):
         return f'Failed verifying README.md Error Message is: {stderr}'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_readme_error():
+        return 'README.md is empty'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_equal_description_error():
+        return 'README.md content is equal to pack description. ' \
+               'Please remove the duplicate description from README.md file.'
+
+    @staticmethod
+    @error_code_decorator
+    def readme_contains_demisto_word(line_nums):
+        return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
+
+    @staticmethod
+    @error_code_decorator
+    def template_sentence_in_readme(line_nums):
+        return f"Please update the integration version differences section in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator
@@ -1045,7 +1402,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_package_structure(invalid_files):
+    def invalid_package_structure():
         return 'You should update the following file to the package format, for further details please visit ' \
                'https://xsoar.pan.dev/docs/integrations/package-dir.'
 
@@ -1056,23 +1413,39 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pykwalify_missing_parameter(key_from_error, current_string, path):
-        return f'Missing {key_from_error} in \n{current_string}\nPath: {path}'
+    def invalid_core_pack_dependencies(core_pack, dependencies_packs):
+        return f'The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - ' \
+               f'revert this change.'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_missing_parameter(key_from_error, path):
+        return f'Missing the field "{key_from_error}" in Path: {path}'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_field_undefined(key_from_error):
-        return f'The field {key_from_error} was not defined in the scheme'
+        return f'The field "{key_from_error}" was not defined in the scheme'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_field_undefined_with_path(key_from_error, path):
+        return f'The field "{key_from_error}" in path {path} was not defined in the scheme'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_missing_in_root(key_from_error):
-        return f'Missing {key_from_error} in root'
+        return f'Missing the field "{key_from_error}" in root'
 
     @staticmethod
     @error_code_decorator
     def pykwalify_general_error(error):
         return f'in {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def pykwalify_incorrect_enum(path_to_wrong_enum, wrong_enum, enum_values):
+        return f'The value "{wrong_enum}" in {path_to_wrong_enum} is invalid - legal values include: {enum_values}'
 
     @staticmethod
     @error_code_decorator
@@ -1094,6 +1467,15 @@ class Errors:
     def invalid_file_path_layoutscontainer(file_name):
         return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
                '"layoutscontainer-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_layout(invalid_inc_fields_list):
+        return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator
@@ -1137,6 +1519,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def classifier_non_existent_incident_types(incident_types):
+        return f"The Classifiers related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_from_version_in_mapper():
         return 'fromVersion field in mapper needs to be higher or equal to 6.0.0'
 
@@ -1162,9 +1549,60 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def mapper_non_existent_incident_types(incident_types):
+        return f"The Mapper related incident types: {incident_types} where not found."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_mapper(invalid_inc_fields_list):
+        return f"Your mapper contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def changed_incident_field_in_mapper(changed_inc_fields):
+        return f"Some incident fields were removed from the mapper, The removed fields: {changed_inc_fields}."
+
+    @staticmethod
+    @error_code_decorator
+    def removed_incident_types(removed_inc_types):
+        return f"Some Incidents types were removed from the mapper, the removed types are: {removed_inc_types}."
+
+    @staticmethod
+    @error_code_decorator
     def integration_not_runnable():
         return "Could not find any runnable command in the integration." \
                "Must have at least one command, `isFetch: true`, `feed: true`, `longRunning: true`"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_uuid(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
+               f"must be from uuid format."
+
+    @staticmethod
+    @error_code_decorator
+    def taskid_different_from_id(task_key, id_, taskid):
+        return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
+               f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def integration_is_skipped(integration_id):
+        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+
+    @staticmethod
+    @error_code_decorator
+    def all_entity_test_playbooks_are_skipped(entity_id):
+        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
+               f"Please unskip at least one of the relevant test playbooks.\n " \
+               f"You can do this by deleting the line relevant to one of the test playbooks " \
+               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"with the matching issue,\n  or create a new active test playbook " \
+               f"and add the id to the 'tests' field in the yml."
 
     @staticmethod
     def wrong_filename(file_type):
@@ -1207,3 +1645,19 @@ class Errors:
     @staticmethod
     def no_yml_file(file_path):
         return "No yml files were found in {} directory.".format(file_path)
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_condition_has_no_else_path(tasks_ids):
+        return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_is_not_json(file_path):
+        return f"Could not load {file_path} as a JSON XSOAR configuration file."
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_malformed(configuration_file_path, schema_file_path, errors_table):
+        return f'Errors were found in the configuration file: "{configuration_file_path}" ' \
+               f'with schema "{schema_file_path}":\n {errors_table}'

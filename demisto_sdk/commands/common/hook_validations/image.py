@@ -19,9 +19,10 @@ class ImageValidator(BaseValidator):
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
+                 json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
         self.file_path = ''
         if file_path.endswith('.png'):
@@ -40,6 +41,7 @@ class ImageValidator(BaseValidator):
                     self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given()
+                    self.file_path = file_path.replace('.yml', '_image.png')
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 
@@ -54,6 +56,8 @@ class ImageValidator(BaseValidator):
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
             self.is_not_default_image()
+        if '.png' in self.file_path:
+            self.is_valid_image_name()
 
         return self._is_valid
 
@@ -137,7 +141,7 @@ class ImageValidator(BaseValidator):
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             with open(self.file_path, "rb") as image:
                 image_data = image.read()
-                image = base64.b64encode(image_data)
+                image = base64.b64encode(image_data)  # type: ignore
                 if isinstance(image, bytes):
                     image = image.decode("utf-8")
 
@@ -155,4 +159,17 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    def is_valid_image_name(self):
+        """Check if the image name is valid"""
+        image_path = self.file_path
+
+        if not image_path.endswith("_image.png"):
+            error_message, error_code = Errors.invalid_image_name()
+
+            if self.handle_error(error_message, error_code, file_path=image_path):
+                self._is_valid = False
+                return False
+
         return True

@@ -1,28 +1,34 @@
 import io
 import json
 import os
+from typing import Optional
 
 import click
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
-                                                FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE)
-from demisto_sdk.commands.common.tools import (find_type, get_pack_name,
+                                                PRESET_ERROR_TO_IGNORE,
+                                                get_all_error_codes,
+                                                get_error_object)
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_file_displayed_name,
+                                               get_json, get_pack_name,
                                                get_yaml)
 
 
 class BaseValidator:
 
-    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
+                 json_file_path: Optional[str] = None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
+        self.json_file_path = json_file_path
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -75,6 +81,7 @@ class BaseValidator:
         if self.should_ignore_error(error_code, self.ignored_errors.get(file_name)) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error, fg="yellow")
+                self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
@@ -82,13 +89,14 @@ class BaseValidator:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
-                    click.secho("Please add to the root of the yml a description.\n", fg="bright_red")
+                    click.secho("Please add to the root of the yml.\n", fg="bright_red")
                 else:
                     click.secho(suggested_fix + "\n", fg="bright_red")
 
             else:
                 click.secho(formatted_error, fg="bright_red")
 
+        self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         return formatted_error
 
@@ -101,14 +109,12 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
-            if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
-                     yml_dict['hidden'] is True):
+            if yml_dict.get('deprecated'):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        with io.open(meta_file_path, mode="r", encoding="utf-8") as file:
+        with io.open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)
@@ -126,7 +132,7 @@ class BaseValidator:
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):
         ignored_error_list = []
-        all_errors = ERROR_CODE.values()
+        all_errors = get_all_error_codes()
         for error_code in all_errors:
             error_type = error_code[:2]
             if error_code not in errors_to_check and error_type not in errors_to_check:
@@ -154,3 +160,52 @@ class BaseValidator:
         formatted_file_and_error = f'{file_path} - [{error_code}]'
         if formatted_file_and_error not in error_list:
             error_list.append(formatted_file_and_error)
+
+    def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
+        """Adds an error's info to the output JSON file
+
+        Args:
+            file_path (str): The file path where the error ocurred.
+            error_code (str): The error code
+            error_message (str): The error message
+            warning (bool): Whether the error is defined as a warning
+        """
+        if not self.json_file_path:
+            return
+
+        error_data = get_error_object(error_code)
+
+        output = {
+            'severity': 'warning' if warning else 'error',
+            'errorCode': error_code,
+            'message': error_message,
+            'ui': error_data.get('ui_applicable'),
+            'relatedField': error_data.get('related_field'),
+            'linter': 'validate'
+        }
+
+        json_contents = []
+        if os.path.exists(self.json_file_path):
+            existing_json = get_json(self.json_file_path)
+            if isinstance(existing_json, list):
+                json_contents = existing_json
+
+        file_type = find_type(file_path)
+        entity_type = file_type.value if file_type else 'pack'
+
+        # handling unified yml image errors
+        if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):
+            entity_type = FileType.IMAGE.value
+
+        formatted_error_output = {
+            'filePath': file_path,
+            'fileType': os.path.splitext(file_path)[1].replace('.', ''),
+            'entityType': entity_type,
+            'errorType': 'Settings',
+            'name': get_file_displayed_name(file_path),
+            'linter': 'validate',
+            **output
+        }
+        json_contents.append(formatted_error_output)
+        with open(self.json_file_path, 'w') as f:
+            json.dump(json_contents, f, indent=4)

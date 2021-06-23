@@ -1,7 +1,7 @@
 {
     "name": "AWS Feed",
     "description": "Indicators feed from AWS",
-    "support": "Cortex XSOAR",
+    "support": "xsoar",
     "serverMinVersion": "5.5.0",
     "currentVersion": "1.0.0",
     "author": "Cortex XSOAR",
@@ -11,7 +11,6 @@
         "Data Enrichment & Threat Intelligence"
     ],
     "tags": [],
-    "created": "2020-03-09T16:04:45Z",
     "beta": false,
     "deprecated": false,
     "certification": "certified",

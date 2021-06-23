@@ -1,6 +1,8 @@
 import json
 import os
 import re
+from typing import Union
+from zipfile import ZipFile
 
 import pytest
 from _pytest.fixtures import FixtureRequest
@@ -42,10 +44,217 @@ def contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFa
     return create_contribution_converter(request, tmp_path_factory)
 
 
+def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name: str, updated_file_name: str):
+    """Utility to rename a file in a zip file
+
+    Useful for renaming files in an example contribution zip file to test specific cases.
+    If the zipped file includes directories, make sure the filenames take that into account.
+
+    Args:
+        path_to_zip (Union[os.PathLike, str]): The zip file containing a file which needs renaming
+        original_file_name (str): The file which will be renamed
+        updated_file_name (str): The name the original file will be renamed to
+    """
+    modded_zip_file = os.path.join(os.path.dirname(path_to_zip), 'Edit' + os.path.basename(path_to_zip))
+    tmp_zf = ZipFile(modded_zip_file, 'w')
+    with ZipFile(path_to_zip, 'r') as zf:
+        for item in zf.infolist():
+            if item.filename == original_file_name:
+                with tmp_zf.open(updated_file_name, 'w') as out_file:
+                    out_file.write(zf.read(item.filename))
+            else:
+                tmp_zf.writestr(item, zf.read(item.filename))
+    os.replace(modded_zip_file, path_to_zip)
+
+
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
+    """
+    Create a fake contribution zip file and test that it is converted to a Pack correctly.
+    The pack already exists, checking the update flow.
+
+    Args:
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
+            used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+
+    Scenario: Simulate converting a contribution zip file.
+
+    Given
+    - A contribution zip file
+    - The zipfile contains a unified integration file
+    When
+    - Converting the zipfile to a valid Pack structure
+    - The contribution is an update to an existing pack
+    Then
+    - Ensure integration are componentized and in valid directory structure
+    - Ensure that readme file has not been changed.
+
+    """
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    pack = repo.create_pack('TestPack')
+    integration = pack.create_integration('integration0')
+    integration.create_default_integration()
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    contrib_zip.create_zip(contribution_zip_dir)
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+    name = 'Test Pack'
+    contribution_path = contrib_zip.created_zip_filepath
+    description = 'test pack description here'
+    author = 'Octocat Smith'
+    contrib_converter_inst = ContributionConverter(
+        name=name, contribution=contribution_path, description=description, author=author, create_new=False,
+        no_pipenv=True)
+    contrib_converter_inst.convert_contribution_to_pack()
+    converted_pack_path = repo_dir / 'Packs' / 'TestPack'
+    assert converted_pack_path.exists()
+    integrations_path = converted_pack_path / 'Integrations'
+    sample_integration_path = integrations_path / 'integration0'
+    integration_yml = sample_integration_path / 'integration0.yml'
+    integration_py = sample_integration_path / 'integration0.py'
+    integration_description = sample_integration_path / 'integration0_description.md'
+    integration_image = sample_integration_path / 'integration0_image.png'
+    integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
+    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image,
+                         integration_readme_md]
+    for integration_file in integration_files:
+        assert integration_file.exists()
+    # In a new pack that part will exist.
+
+    assert not unified_yml.exists()
+    assert not unified_yml_in_sample.exists()
+
+
+@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
+def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path):
+    """Create a fake contribution zip file and test that it is converted to a Pack correctly
+
+    Args:
+        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
+            used in the test
+        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
+        tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
+
+    Scenario: Simulate converting a contribution zip file
+
+    Given
+    - A contribution zip file
+    - The zipfile contains a unified script file
+    - The zipfile contains a unified integration file
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure the unified yaml files of the integration and script have been removed from the output created by
+      converting the contribution zip file
+    """
+    # ### SETUP ### #
+    # Create all Necessary Temporary directories
+    # create temp directory for the repo
+    repo_dir = tmp_path / 'content_repo'
+    repo_dir.mkdir()
+    get_content_path_mock.return_value = repo_dir
+    get_python_version_mock.return_value = 3.7
+    # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
+    # that will be deleted after
+    target_dir = repo_dir / 'target_dir'
+    target_dir.mkdir()
+    # create temp directory in which the contribution zip will reside
+    contribution_zip_dir = tmp_path / 'contrib_zip'
+    contribution_zip_dir.mkdir()
+    # Create fake content repo and contribution zip
+    repo = Repo(repo_dir)
+    contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
+    contrib_zip.create_zip(contribution_zip_dir)
+    # rename script-script0.yml unified to automation-script0.yml
+    # this naming is aligned to how the server exports scripts in contribution zips
+    rename_file_in_zip(
+        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
+    )
+
+    # Convert Zip
+    name = 'Contrib Test Pack'
+    contribution_path = contrib_zip.created_zip_filepath
+    description = 'test pack description here'
+    author = 'Octocat Smith'
+    contrib_converter_inst = ContributionConverter(
+        name=name, contribution=contribution_path, description=description, author=author, no_pipenv=True)
+    contrib_converter_inst.convert_contribution_to_pack()
+
+    # Ensure directory/file structure output by conversion meets expectations
+
+    # target_dir should have been deleted after creation of the zip file
+    assert not target_dir.exists()
+
+    converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
+    assert converted_pack_path.exists()
+
+    scripts_path = converted_pack_path / 'Scripts'
+    sample_script_path = scripts_path / 'SampleScript'
+    script_yml = sample_script_path / 'SampleScript.yml'
+    script_py = sample_script_path / 'SampleScript.py'
+    script_readme_md = sample_script_path / 'README.md'
+    unified_script_in_sample = sample_script_path / 'automation-script0.yml'
+    unified_script = scripts_path / 'automation-script0.yml'
+
+    assert scripts_path.exists()
+    assert sample_script_path.exists()
+    assert script_yml.exists()
+    assert script_py.exists()
+    assert script_readme_md.exists()
+
+    # generated script readme should not be empty
+    script_statinfo = os.stat(script_readme_md)
+    assert script_statinfo and script_statinfo.st_size > 0
+    # unified yaml of the script should have been deleted
+    assert not unified_script_in_sample.exists()
+    assert not unified_script.exists()
+
+    integrations_path = converted_pack_path / 'Integrations'
+    sample_integration_path = integrations_path / 'Sample'
+    integration_yml = sample_integration_path / 'Sample.yml'
+    integration_py = sample_integration_path / 'Sample.py'
+    integration_description = sample_integration_path / 'Sample_description.md'
+    integration_image = sample_integration_path / 'Sample_image.png'
+    integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
+    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image,
+                         integration_readme_md]
+    for integration_file in integration_files:
+        assert integration_file.exists()
+    # generated integration readme should not be empty
+    statinfo = os.stat(integration_readme_md)
+    assert statinfo and statinfo.st_size > 0
+
+    # unified yaml of the integration should have been deleted
+    assert not unified_yml.exists()
+    assert not unified_yml_in_sample.exists()
+
+
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
-    '''Create a fake contribution zip file and test that it is converted to a Pack correctly
+    """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
@@ -63,7 +272,8 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Converting the zipfile to a valid Pack structure
     Then
     - Ensure script and integration are componentized and in valid directory structure
-    '''
+    - Ensure readme_files is not empty and the generated docs exists.
+    """
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -80,18 +290,22 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
-    # contrib_zip.create_zip(contribution_zip_dir)
     contrib_zip.create_zip(contribution_zip_dir)
-
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
+
+    # rename script-script0.yml unified to automation-script0.yml
+    # this naming is aligned to how the server exports scripts in contribution zips
+    rename_file_in_zip(
+        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
+    )
 
     name = 'Contrib Test Pack'
     contribution_path = contrib_zip.created_zip_filepath
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author)
+        name=name, contribution=contribution_path, description=description, author=author, no_pipenv=True)
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
@@ -101,11 +315,17 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     sample_script_path = scripts_path / 'SampleScript'
     script_yml = sample_script_path / 'SampleScript.yml'
     script_py = sample_script_path / 'SampleScript.py'
+    script_readme_md = sample_script_path / 'README.md'
+    unified_script_in_sample = sample_script_path / 'automation-script0.yml'
+    unified_script = scripts_path / 'automation-script0.yml'
 
     assert scripts_path.exists()
     assert sample_script_path.exists()
     assert script_yml.exists()
     assert script_py.exists()
+    assert script_readme_md.exists()
+    assert not unified_script_in_sample.exists()
+    assert not unified_script.exists()
 
     integrations_path = converted_pack_path / 'Integrations'
     sample_integration_path = integrations_path / 'Sample'
@@ -113,9 +333,23 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_py = sample_integration_path / 'Sample.py'
     integration_description = sample_integration_path / 'Sample_description.md'
     integration_image = sample_integration_path / 'Sample_image.png'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image]
+    integration_readme_md = sample_integration_path / 'README.md'
+    unified_yml = integrations_path / 'integration-integration0.yml'
+    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
+    integration_files = [integration_yml, integration_py, integration_description, integration_image,
+                         integration_readme_md]
     for integration_file in integration_files:
         assert integration_file.exists()
+    assert not unified_yml.exists()
+    assert not unified_yml_in_sample.exists()
+
+    playbooks_path = converted_pack_path / 'Playbooks'
+    playbook_yml = playbooks_path / 'playbook-SamplePlaybook.yml'
+    playbook_readme_md = playbooks_path / 'README.md'
+
+    assert playbooks_path.exists()
+    assert playbook_yml.exists()
+    assert playbook_readme_md.exists()
 
     layouts_path = converted_pack_path / 'Layouts'
     sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
@@ -124,6 +358,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     assert layouts_path.exists()
     assert sample_layoutscontainer.exists()
     assert sample_layout.exists()
+
+    assert set(contrib_converter_inst.readme_files) == {str(playbook_readme_md), str(integration_readme_md),
+                                                        str(script_readme_md)}
 
 
 @patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
@@ -183,7 +420,8 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     author = 'Octocat Smith'
     gh_user = 'octocat'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user)
+        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user,
+        no_pipenv=True)
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'
@@ -235,6 +473,48 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
             assert first_char.isupper(), 'The output\'s first character should be capitalized'
     assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
     assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
+
+
+def test_convert_contribution_dir_to_pack_contents(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - The pack's original content contains incident field files and appears like so
+
+        ├── IncidentFields
+        │   └── incidentfield-SomeIncidentField.json
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── IncidentFields
+        │   └── incidentfield-SomeIncidentField.json
+        ├── incidentfield
+        │   └── incidentfield-SomeIncidentField.json
+
+    Then
+    - Ensure the file '.../incidentfield/incidentfield-SomeIncidentField.json' is moved to
+        '.../IncidentFields/incidentfield-SomeIncidentField.json' and overwrites the existing file
+    """
+    fake_pack_subdir = tmp_path / 'IncidentFields'
+    fake_pack_subdir.mkdir()
+    extant_file = fake_pack_subdir / 'incidentfield-SomeIncidentField.json'
+    old_json = {"field": "old_value"}
+    extant_file.write_text(json.dumps(old_json))
+    fake_pack_extracted_dir = tmp_path / 'incidentfield'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'incidentfield-SomeIncidentField.json'
+    new_json = {"field": "new_value"}
+    update_file.write_text(json.dumps(new_json))
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
 
 
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)

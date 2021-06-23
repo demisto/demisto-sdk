@@ -55,7 +55,7 @@ If there are files that exist both in the output directory and are specified in 
 
 
 ### Asumptions
-For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../content/Packs/TestPack/Integrations/TestIntegrationFullName/`.
+For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.
 
 Integrations, Scripts and Playbooks directories that does not contain a yml file, will be overwritten automatically.
 All other folders that do not contain a json file, will be overwritten automatically.

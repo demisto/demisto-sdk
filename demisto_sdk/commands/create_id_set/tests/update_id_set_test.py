@@ -9,16 +9,17 @@ from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument, get_general_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_playbook_data, get_report_data, get_script_data,
-    get_values_for_keys_recursively, get_widget_data, has_duplicate,
-    merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_script, re_create_id_set)
+    get_mapper_data, get_pack_metadata_data, get_playbook_data,
+    get_report_data, get_script_data, get_values_for_keys_recursively,
+    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_script,
+    re_create_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -87,6 +88,7 @@ class TestIDSetCreator:
         assert 'Reports' in id_set.keys()
         assert 'Widgets' in id_set.keys()
         assert 'Mappers' in id_set.keys()
+        assert 'Packs' in id_set.keys()
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -105,12 +107,13 @@ class TestIDSetCreator:
         packs = repo.packs
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
-        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'name':
-                                                         'integration to create id set'}, name='integration1')
+        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
+                                                         'integration to create id set', 'script': {'type': 'python'}},
+                                                    name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
-        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'name':
+        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
                                                              'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
@@ -147,7 +150,134 @@ class TestIDSetCreator:
         with open(self.file_path, 'r') as id_set_file:
             private_id_set = json.load(id_set_file)
         for content_entity, content_entity_value_list in private_id_set.items():
-            assert len(content_entity_value_list) == 0
+            if content_entity != 'Packs':
+                assert len(content_entity_value_list) == 0
+            else:
+                assert len(content_entity_value_list) == 1
+
+
+class TestPacksMetadata:
+    METADATA_WITH_XSOAR_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'xsoar',
+        'currentVersion': '1.0.0',
+        'author': 'Cortex XSOAR',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    METADATA_WITH_PARTNER_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'partner',
+        'currentVersion': '1.0.0',
+        'author': 'Some Partner',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    METADATA_WITH_COMMUNITY_SUPPORT = {
+        'name': 'Pack1',
+        'support': 'community',
+        'currentVersion': '1.0.0',
+        'author': 'Someone',
+        'tags': ['Alerts'],
+        'useCases': ['Case Management'],
+        'categories': ['Endpoint']
+    }
+
+    TEST_PACK = [
+        (METADATA_WITH_XSOAR_SUPPORT, 'Cortex XSOAR', 'certified'),
+        (METADATA_WITH_PARTNER_SUPPORT, 'Some Partner', 'certified'),
+        (METADATA_WITH_COMMUNITY_SUPPORT, 'Someone', ''),
+    ]
+
+    @staticmethod
+    @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
+    def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
+        """
+        Given
+            - A pack_metadata file for Pack1
+        When
+            - parsing pack metadata files
+        Then
+            - parsing all the data from file successfully
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json(metadata_file_content)
+
+        res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
+        result = res.get('Pack1')
+
+        assert 'name' in result.keys()
+        assert result.get('name') == 'Pack1'
+        assert result.get('current_version') == '1.0.0'
+        assert result.get('author') == author
+        assert result.get('certification') == certification
+        assert result.get('tags') == ['Alerts']
+        assert result.get('use_cases') == ['Case Management']
+        assert result.get('categories') == ['Endpoint']
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', [True, False])
+    def test_process_packs_success(mocker, capsys, repo, print_logs):
+        """
+        Given
+            - A pack metadata file path.
+            - Whether to print information to log.
+        When
+            - Parsing pack metadata files.
+        Then
+            - Verify output to logs.
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+
+        pack = repo.create_pack("Pack1")
+        pack.pack_metadata.write_json({
+            'name': 'Pack',
+            'currentVersion': '1.0.0',
+            'author': 'Cortex XSOAR',
+            'support': 'xsoar',
+            'tags': ['Alerts'],
+            'useCases': ['Case Management'],
+            'categories': ['Endpoint']
+        })
+        pack_metadata_path = pack.pack_metadata.path
+        res = get_pack_metadata_data(pack_metadata_path, print_logs)
+
+        captured = capsys.readouterr()
+
+        assert res['Pack1']['name'] == 'Pack'
+        assert res['Pack1']['current_version'] == '1.0.0'
+        assert res['Pack1']['author'] == 'Cortex XSOAR'
+        assert res['Pack1']['tags'] == ['Alerts']
+        assert res['Pack1']['use_cases'] == ['Case Management']
+        assert res['Pack1']['categories'] == ['Endpoint']
+        assert res['Pack1']['certification'] == 'certified'
+
+        assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
+
+    @staticmethod
+    def test_process_packs_exception_thrown(capsys):
+        """
+        Given
+            - A pack metadata file path.
+        When
+            - Parsing pack metadata files.
+        Then
+            - Handle the exceptions gracefully.
+        """
+
+        with pytest.raises(FileNotFoundError):
+            get_pack_metadata_data('Pack_Path', True)
+        captured = capsys.readouterr()
+
+        assert 'Failed to process Pack_Path, Error:' in captured.out
 
 
 class TestDuplicates:
@@ -232,7 +362,7 @@ class TestDuplicates:
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details)
+            are the same kind (details) and they are from different pack
 
         When
             - checking for duplicate
@@ -248,7 +378,8 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep.json'
+                'path': 'Layouts/layout-details-urlrep.json',
+                'pack': 'urlRep1'
             }
         })
 
@@ -256,7 +387,8 @@ class TestDuplicates:
             'urlRep': {
                 'typeID': 'urlRep',
                 'kind': 'Details',
-                'path': 'Layouts/layout-details-urlrep2.json'
+                'path': 'Layouts/layout-details-urlrep2.json',
+                'pack': 'urlRep2'
             }
         })
 
@@ -431,6 +563,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
     }
@@ -954,6 +1087,303 @@ class TestMappers:
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
         assert 'incident_fields' not in result.keys()
+
+    @staticmethod
+    def test_process_mappers__outgoing_mapper(mocker):
+        """
+        Given
+            - A mapper file called ServiceNow-outgoing-mapper with incident fields related to it
+
+        When
+            - running get_mapper_data
+
+        Then
+            - Validating parsing all the incident fields from the simple key.
+        """
+        outgoing_mapper_snow = {
+            "defaultIncidentType": "ServiceNow Ticket",
+            "description": "Maps outgoing ServiceNow incident Fields.",
+            "feed": False,
+            "fromVersion": "6.0.0",
+            "id": "ServiceNow-outgoing-mapper",
+            "mapping": {
+                "ServiceNow Ticket": {
+                    "dontMapEventToLabels": False,
+                    "internalMapping": {
+                        "category": {
+                            "complex": None,
+                            "simple": "servicenowcategory"
+                        },
+                        "closed_at": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [
+                                    [
+                                        {
+                                            "ignoreCase": False,
+                                            "left": {
+                                                "isContext": True,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "closed"
+                                                }
+                                            },
+                                            "operator": "isAfter",
+                                            "right": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0001-01-01T00:00:00Z"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                ],
+                                "root": "closed",
+                                "transformers": []
+                            },
+                            "simple": ""
+                        },
+                        "description": {
+                            "complex": None,
+                            "simple": "details"
+                        },
+                        "escalation": {
+                            "complex": None,
+                            "simple": "servicenowescalation"
+                        },
+                        "impact": {
+                            "complex": None,
+                            "simple": "servicenowimpact"
+                        },
+                        "notify": {
+                            "complex": None,
+                            "simple": "servicenownotify"
+                        },
+                        "priority": {
+                            "complex": None,
+                            "simple": "servicenowpriority"
+                        },
+                        "resolved_at": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [
+                                    [
+                                        {
+                                            "ignoreCase": False,
+                                            "left": {
+                                                "isContext": True,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "closed"
+                                                }
+                                            },
+                                            "operator": "isAfter",
+                                            "right": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0001-01-01T00:00:00Z"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                ],
+                                "root": "closed",
+                                "transformers": []
+                            },
+                            "simple": ""
+                        },
+                        "severity": {
+                            "complex": {
+                                "accessor": "",
+                                "filters": [],
+                                "root": "severity",
+                                "transformers": [
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "0.5"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3 - Low"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "2 - Medium"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "2"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1 - High"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "3"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    },
+                                    {
+                                        "args": {
+                                            "limit": {
+                                                "isContext": False,
+                                                "value": None
+                                            },
+                                            "replaceWith": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "1 - High"
+                                                }
+                                            },
+                                            "toReplace": {
+                                                "isContext": False,
+                                                "value": {
+                                                    "complex": None,
+                                                    "simple": "4"
+                                                }
+                                            }
+                                        },
+                                        "operator": "replace"
+                                    }
+                                ]
+                            },
+                            "simple": ""
+                        },
+                        "short_description": {
+                            "complex": None,
+                            "simple": "name"
+                        },
+                        "sla_due": {
+                            "complex": None,
+                            "simple": "remediationsla.dueDate"
+                        },
+                        "state": {
+                            "complex": None,
+                            "simple": "servicenowstate"
+                        },
+                        "subcategory": {
+                            "complex": None,
+                            "simple": "subcategory"
+                        },
+                        "urgency": {
+                            "complex": None,
+                            "simple": "servicenowurgency"
+                        },
+                        "work_start": {
+                            "complex": None,
+                            "simple": "timetoassignment.startDate"
+                        }
+                    }
+                }
+            },
+            "name": "ServiceNow - Outgoing Mapper",
+            "type": "mapping-outgoing",
+            "version": -1
+        }
+        mocker.patch("demisto_sdk.commands.common.tools.get_file", return_value=outgoing_mapper_snow)
+
+        mapper = get_mapper_data('')
+        mapper_data = mapper.get('ServiceNow-outgoing-mapper')
+        assert mapper_data.get('name') == 'ServiceNow - Outgoing Mapper'
+        assert mapper_data.get('fromversion') == '6.0.0'
+        assert mapper_data.get('incident_types') == ['ServiceNow Ticket']
+        assert set(mapper_data.get('incident_fields')) == {
+            'closed', 'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
+            'servicenowcategory', 'remediationsla.dueDate', 'servicenowstate', 'timetoassignment.startDate',
+            'servicenowimpact', 'servicenowpriority'}
 
 
 class TestWidget:
@@ -1602,7 +2032,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            }
+        }
     }
 
     second_id_set = {
@@ -1619,7 +2054,12 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo2': {
+
+            }
+        }
     }
 
     output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
@@ -1648,7 +2088,15 @@ def test_merge_id_sets(tmp_path):
 
                 }
             }
-        ]
+        ],
+        'Packs': {
+            'pack_foo1': {
+
+            },
+            'pack_foo2': {
+
+            }
+        }
     }
 
     assert not duplicates
@@ -1683,7 +2131,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'scripts': [
             {
                 'ScriptFoo': {
-                    'name': 'ScriptFoo'
+                    'name': 'ScriptFoo',
+                    'pack': 'ScriptFoo1'
                 }
             }
         ]
@@ -1700,7 +2149,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'scripts': [
             {
                 'ScriptFoo': {
-                    'name': 'ScriptFoo'
+                    'name': 'ScriptFoo',
+                    'pack': 'ScriptFoo2'
                 }
             }
         ]
@@ -1710,3 +2160,76 @@ def test_merged_id_sets_with_duplicates(caplog):
 
     assert output_id_set is None
     assert duplicates == ['ScriptFoo']
+
+
+def test_merged_id_sets_with_legal_duplicates(caplog):
+    """
+    Given
+    - first_id_set.json
+    - second_id_set.json
+    - they both has the same pack
+
+    When
+    - merged
+
+    Then
+    - ensure output id_set contains items from both id_sets
+    - ensure merge not fails
+    - ensure duplicate not added to id_set
+
+    """
+    caplog.set_level(logging.DEBUG)
+
+    first_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_Foo1': {
+                    'name': 'ScriptFoo',
+                    'pack': 'foo_1'
+                }
+            }
+        ]
+    }
+
+    second_id_set = {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': []
+    }
+
+    output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
+
+    assert output_id_set.get_dict() == {
+        'playbooks': [
+            {
+                'playbook_foo1': {
+                    'name': 'playbook_foo1',
+                    'pack': 'foo_1'
+                }
+            }
+        ],
+        'scripts': [
+            {
+                'Script_Foo1': {
+                    'name': 'ScriptFoo',
+                    'pack': 'foo_1'
+                }
+            }
+        ]
+    }
+
+    assert not duplicates

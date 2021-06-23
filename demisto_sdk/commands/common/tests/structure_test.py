@@ -4,7 +4,6 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
-import yaml
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
@@ -37,6 +36,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
+from ruamel.yaml import YAML
 
 
 class TestStructureValidator:
@@ -119,7 +119,7 @@ class TestStructureValidator:
     def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
         validator = StructureValidator(file_path=path)
         with open(old_file_path) as f:
-            validator.old_file = yaml.safe_load(f)
+            validator.old_file = YAML(typ='safe', pure=True).load(f)
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [
@@ -131,7 +131,7 @@ class TestStructureValidator:
     def test_is_id_modified(self, current_file, old_file, answer, error):
         validator = StructureValidator(file_path=current_file)
         with open(old_file) as f:
-            validator.old_file = yaml.safe_load(f)
+            validator.old_file = YAML(typ='safe', pure=True).load(f)
             assert validator.is_id_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."
@@ -186,36 +186,41 @@ class TestStructureValidator:
         finally:
             os.remove(target)
 
-    pykwalify_error_1 = "'<SchemaError: error code 2: Schema validation failed:\n" \
-                        " - Cannot find required key \'category\'. Path: \'\'.: Path: \'/\'>'"
-    expected_error_1 = "Missing category in root"
-    pykwalify_error_2 = "'<SchemaError: error code 2: Schema validation failed:\n" \
-                        " - Cannot find required key \'id\'. Path: \'/commonfields\'.: Path: \'/\'>'"
-    expected_error_2 = "Missing id in \nversion: -1\n\nPath: 'commonfields'"
-    pykwalify_error_3 = "'<SchemaError: error code 2: Schema validation failed:\n" \
-                        " - Cannot find required key \'description\'. Path: \'/script/commands/0/arguments/0\'.: " \
+    pykwalify_error_1 = " - Cannot find required key \'category\'. Path: \'\'.: Path: \'/\'>'"
+    expected_error_1 = 'Missing the field "category" in root'
+    pykwalify_error_2 = " - Cannot find required key \'id\'. Path: \'/commonfields\'.: Path: \'/\'>'"
+    expected_error_2 = 'Missing the field "id" in Path: \'commonfields\''
+    pykwalify_error_3 = " - Cannot find required key \'description\'. Path: \'/script/commands/0/arguments/0\'.: " \
                         "Path: \'/\'>'"
-    expected_error_3 = "Missing description in \ntop-priority\n...\n\nPath: 'script'-> 'commands'-> " \
-                       "'integrationTest-search-vulnerabilities'-> 'arguments'-> 'top-priority'"
-    pykwalify_error_4 = "'<SchemaError: error code 2: Schema validation failed:\n " \
-                        "- Cannot find required key \'description\'. Path: \'/script/commands/5/outputs/0\'.: " \
+    expected_error_3 = 'Missing the field "description" in Path: \'script\'-> \'commands\'-> ' \
+                       '\'integrationTest-search-vulnerabilities\'-> \'arguments\'-> \'top-priority\''
+    pykwalify_error_4 = " - Cannot find required key \'description\'. Path: \'/script/commands/5/outputs/0\'.: " \
                         "Path: \'/\'>'"
-    expected_error_4 = "Missing description in \nintegrationTest.ConnectorsList.ID\n...\n\nPath: 'script'-> " \
-                       "'commands'-> 'integrationTest-get-connectors'-> 'outputs'-> 'integrationTest.ConnectorsList.ID'"
+    expected_error_4 = 'Missing the field "description" in Path: ' \
+                       '\'script\'-> \'commands\'-> \'integrationTest-get-connectors\'-> ' \
+                       '\'outputs\'-> \'integrationTest.ConnectorsList.ID\''
+    pykwalify_error_5 = " - Key 'ok' was not defined. Path: '/configuration/0'"
+    expected_error_5 = 'The field "ok" in path \'configuration\'-> \'url\' was not defined in the scheme'
+    pykwalify_error_6 = "- Enum 'Network Securitys' does not exist. " \
+                        "Path: '/category' Enum: ['Analytics & SIEM', 'Utilities', 'Messaging']."
+    expected_error_6 = 'The value "Network Securitys" in \'category\' is invalid ' \
+                       '- legal values include: \'Analytics & SIEM\', \'Utilities\', \'Messaging\''
 
     TEST_ERRORS = [
         (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),
         (INVALID_INTEGRATION_YML_2, 'integration', pykwalify_error_2, expected_error_2),
         (INVALID_INTEGRATION_YML_3, 'integration', pykwalify_error_3, expected_error_3),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_4, expected_error_4),
+        (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_5, expected_error_5),
+        (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_6, expected_error_6),
     ]  # type: List[Tuple[str,str,str, str]]
 
     @pytest.mark.parametrize('path, scheme , error, correct', TEST_ERRORS)
-    def test_print_error_msg(self, path, scheme, error, correct, mocker):
+    def test_print_error_line(self, path, scheme, error, correct, mocker):
         mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value=scheme)
         structure = StructureValidator(file_path=path)
         err = structure.parse_error_line(error)
-        assert correct in err
+        assert correct in err[0]
 
     def test_check_for_spaces_in_file_name(self, mocker):
         mocker.patch.object(StructureValidator, "handle_error", return_value='Not-non-string')

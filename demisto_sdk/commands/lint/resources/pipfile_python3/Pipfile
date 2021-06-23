@@ -13,6 +13,8 @@ pytest-xdist = "*"
 pytest-datadir-ng = "*"
 freezegun = "*"
 pytest-json = "*"
+vcrpy = "*"
+pytest-cov = "*"
 
 [packages]
 

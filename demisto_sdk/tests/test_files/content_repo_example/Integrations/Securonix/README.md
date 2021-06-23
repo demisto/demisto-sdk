@@ -5,7 +5,7 @@ Use the Securonix integration to manage incidents and watchlists.
 Integration was build and tested with: SNYPR Version 6.3.
 Creating incidents and watchlists is currently not supported due to API limitations.
 
-## Configure Securonix on Demisto
+## Configure Securonix on Cortex XSOAR
 ---
 
 1. Navigate to __Settings__ > __Integrations__ > __Servers & Services__.
@@ -26,7 +26,7 @@ Creating incidents and watchlists is currently not supported due to API limitati
 
 ## Commands
 ---
-You can execute these commands from the Demisto CLI, as part of an automation, or in a playbook.
+You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.
 After you successfully execute a command, a DBot message appears in the War Room with the command details.
 1. securonix-list-workflows
 2. securonix-get-default-assignee-for-workflow

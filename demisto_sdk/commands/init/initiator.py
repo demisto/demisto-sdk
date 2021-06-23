@@ -1,8 +1,8 @@
 import json
 import os
 import shutil
-from datetime import datetime
 from distutils.dir_util import copy_tree
+from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
     PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, GithubContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                print_error, print_v,
@@ -31,12 +31,75 @@ class Initiator:
            name (str): The name for the new pack/integration/script directory.
            id (str): The id for the created script/integration.
            integration (bool): Indicates whether to create an integration.
+           template (str): If an integration is initialized, specifies the integration template.
            script (bool): Indicates whether to create a script.
            full_output_path (str): The full path to the newly created pack/integration/script
     """
 
-    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, script: bool = False,
-                 pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+    TEST_DATA_DIR = 'test_data'
+
+    ''' INTEGRATION TEMPLATES CONSTANTS '''
+    DEFAULT_INTEGRATION_TEMPLATE = 'BaseIntegration'
+    HELLO_WORLD_INTEGRATION = 'HelloWorld'
+    HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
+    HELLO_WORLD_FEED_INTEGRATION = 'FeedHelloWorld'
+
+    INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION, HELLO_WORLD_FEED_INTEGRATION,
+                                    DEFAULT_INTEGRATION_TEMPLATE]
+
+    TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
+    TEMPLATE_INTEGRATION_FILES = {f'{TEMPLATE_INTEGRATION_NAME}.py',
+                                  f'{TEMPLATE_INTEGRATION_NAME}.yml',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_description.md',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_image.png',
+                                  f'{TEMPLATE_INTEGRATION_NAME}_test.py',
+                                  'Pipfile', 'Pipfile.lock', 'README.md', 'command_examples'}
+
+    DEFAULT_INTEGRATION_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'baseintegration-dummy.json')}
+
+    HELLO_WORLD_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'domain_reputation.json'),
+                                   os.path.join(TEST_DATA_DIR, 'get_alert.json'),
+                                   os.path.join(TEST_DATA_DIR, 'ip_reputation.json'),
+                                   os.path.join(TEST_DATA_DIR, 'scan_results.json'),
+                                   os.path.join(TEST_DATA_DIR, 'search_alerts.json'),
+                                   os.path.join(TEST_DATA_DIR, 'update_alert_status.json'),
+                                   os.path.join(TEST_DATA_DIR, 'domain_reputation.json')}
+
+    HELLO_WORLD_FEED_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'build_iterator_results.json'),
+                                        os.path.join(TEST_DATA_DIR, 'get_indicators_command_results.json'),
+                                        os.path.join(TEST_DATA_DIR, 'FeedHelloWorld_mock.txt')}
+
+    ''' SCRIPT TEMPLATES CONSTANTS '''
+    DEFAULT_SCRIPT_TEMPLATE = 'BaseScript'
+    HELLO_WORLD_SCRIPT = 'HelloWorldScript'
+
+    SCRIPT_TEMPLATE_OPTIONS = [HELLO_WORLD_SCRIPT, DEFAULT_SCRIPT_TEMPLATE]
+
+    TEMPLATE_SCRIPT_NAME = '%%TEMPLATE_NAME%%'
+    TEMPLATE_SCRIPT_FILES = {f'{TEMPLATE_SCRIPT_NAME}.py',
+                             f'{TEMPLATE_SCRIPT_NAME}.yml',
+                             f'{TEMPLATE_SCRIPT_NAME}_test.py',
+                             'README.md'}
+
+    DEFAULT_SCRIPT_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'basescript-dummy.json')}
+
+    ''' TEMPLATES PACKS CONSTANTS '''
+    DEFAULT_TEMPLATE_PACK_NAME = 'StarterPack'
+    HELLO_WORLD_PACK_NAME = 'HelloWorld'
+    DEFAULT_TEMPLATES = [DEFAULT_INTEGRATION_TEMPLATE, DEFAULT_SCRIPT_TEMPLATE]
+    HELLO_WORLD_BASE_TEMPLATES = [HELLO_WORLD_SCRIPT, HELLO_WORLD_INTEGRATION]
+
+    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    PACK_INITIAL_VERSION = "1.0.0"
+    SUPPORTED_FROM_VERSION = "5.5.0"
+
+    DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
+
+    def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
+                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
@@ -45,11 +108,14 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
         if not integration and not script and not pack:
             self.is_pack = True
+
+        self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
 
@@ -59,26 +125,6 @@ class Initiator:
         self.dir_name = name
 
         self.is_pack_creation = not all([self.is_script, self.is_integration])
-
-    HELLO_WORLD_INTEGRATION = 'HelloWorld'
-    HELLO_WORLD_SCRIPT = 'HelloWorldScript'
-    HELLO_WORLD_SCRIPT_FILES = {'HelloWorldScript.py', 'HelloWorldScript.yml', 'HelloWorldScript_test.py'}
-    HELLO_WORLD_INTEGRATION_FILES = {'HelloWorld.py', 'HelloWorld.yml', 'HelloWorld_description.md',
-                                     'HelloWorld_image.png', 'HelloWorld_test.py', 'Pipfile', 'Pipfile.lock',
-                                     os.path.join('test_data', 'domain_reputation.json'),
-                                     os.path.join('test_data', 'get_alert.json'),
-                                     os.path.join('test_data', 'ip_reputation.json'),
-                                     os.path.join('test_data', 'scan_results.json'),
-                                     os.path.join('test_data', 'search_alerts.json'),
-                                     os.path.join('test_data', 'update_alert_status.json'),
-                                     os.path.join('test_data', 'domain_reputation.json')}
-    TEST_DATA_DIR = 'test_data'
-    DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-    PACK_INITIAL_VERSION = "1.0.0"
-
-    DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-                PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def init(self):
         """Starts the init command process.
@@ -97,6 +143,32 @@ class Initiator:
         elif self.is_pack:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
+
+    def get_selected_template(self, template: str = '') -> str:
+        """ Makes sure a valid template is selected
+
+        Args:
+            template (str): the given template name (empty string if not given)
+
+        Returns:
+            str. A valid template name. If no template was specified, returns the default template name.
+        """
+        if self.is_integration:
+            while template and template not in self.INTEGRATION_TEMPLATE_OPTIONS:
+                options_str = ', '.join(self.INTEGRATION_TEMPLATE_OPTIONS)
+                template = str(input(f"Enter a valid template name, or press enter to choose the default template"
+                                     f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}\n"))
+            return template if template else self.DEFAULT_INTEGRATION_TEMPLATE
+
+        elif self.is_script:
+            while template and template not in self.SCRIPT_TEMPLATE_OPTIONS:
+                options_str = ', '.join(self.SCRIPT_TEMPLATE_OPTIONS)
+                template = str(input(f"Enter a valid template name, or press enter to choose the default template"
+                                     f" ({self.DEFAULT_SCRIPT_TEMPLATE}).\nValid options: {options_str}\n"))
+            return template if template else self.DEFAULT_SCRIPT_TEMPLATE
+
+        # if reached here it is a pack init - will be used again if user decides to create an integration
+        return template
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -139,6 +211,14 @@ class Initiator:
         elif os.path.isfile('content-descriptor.json'):
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
+        # if in an external repo check for the existence of Packs directory
+        # if it does not exist create it
+        elif tools.is_external_repository():
+            if not os.path.isdir("Packs"):
+                print("Creating 'Packs' directory")
+                os.mkdir('Packs')
+            self.full_output_path = os.path.join("Packs", self.dir_name)
+
         # if non of the above conditions apply - create the pack in current directory
         else:
             self.full_output_path = self.dir_name
@@ -162,15 +242,21 @@ class Initiator:
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
+            self.category = pack_metadata['categories'][0]
             json.dump(pack_metadata, fp, indent=4)
 
             click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
+            is_same_category = str(input("\nDo you want to set the integration category as you defined in the pack "
+                                         "metadata? Y/N ")).lower()
+
+            integration_category = self.category if is_same_category in ['y', 'yes'] else ''
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock)
+                                         demisto_mock=self.demisto_mock, template=self.template,
+                                         category=integration_category)
             return integration_init.init()
 
         return True
@@ -209,7 +295,6 @@ class Initiator:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],
@@ -244,13 +329,17 @@ class Initiator:
         pack_metadata['author'] = input("\nAuthor of the pack: ")
 
         if pack_metadata.get('support') != 'community':  # get support details from the user for non community packs
-            support_url = input("\nThe url of support, should represent your GitHub account (optional): ")
+            support_url = input("\nThe url of support, should be a valid support/info URL (optional): ")
             while support_url and "http" not in support_url:
                 support_url = input("\nIncorrect input. Please enter full valid url: ")
             pack_metadata['url'] = support_url
-            pack_metadata['email'] = input("\nThe email in which you can be contacted in (optional): ")
+            pack_metadata['email'] = input("\nThe email in which users can reach out for support (optional): ")
         else:  # community pack url should refer to the marketplace live discussions
             pack_metadata['url'] = MARKETPLACE_LIVE_DISCUSSIONS
+
+        dev_email = input("\nThe email will be used to inform you for any changes made to your pack (optional): ")
+        if dev_email:
+            pack_metadata['devEmail'] = [e.strip() for e in dev_email.split(',') if e]
 
         tags = input("\nTags of the pack, comma separated values: ")
         tags_list = [t.strip() for t in tags.split(',') if t]
@@ -301,7 +390,7 @@ class Initiator:
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
-            self.full_output_path = os.path.join('Integrations', self.dir_name)
+            self.full_output_path = os.path.join(INTEGRATIONS_DIR, self.dir_name)
 
         # if non of the conditions above apply - create the integration in the local directory
         else:
@@ -310,15 +399,16 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        if not self.get_remote_templates(self.HELLO_WORLD_INTEGRATION_FILES):
-            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_INTEGRATION))
-            copy_tree(str(hello_world_path), self.full_output_path)
+        integration_template_files = self.get_template_files()
+        if not self.get_remote_templates(integration_template_files, dir=INTEGRATIONS_DIR):
+            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
+            copy_tree(str(local_template_path), self.full_output_path)
 
-        if self.id != self.HELLO_WORLD_INTEGRATION:
+        if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.rename(current_suffix=self.HELLO_WORLD_INTEGRATION)
-            self.yml_reformatting(current_suffix=self.HELLO_WORLD_INTEGRATION, integration=True)
-            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_INTEGRATION)
+            self.rename(current_suffix=self.template)
+            self.yml_reformatting(current_suffix=self.template, integration=True)
+            self.fix_test_file_import(name_to_change=self.template)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
@@ -348,15 +438,16 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
-        if not self.get_remote_templates(self.HELLO_WORLD_SCRIPT_FILES):
-            hello_world_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.HELLO_WORLD_SCRIPT))
-            copy_tree(str(hello_world_path), self.full_output_path)
+        script_template_files = self.get_template_files()
+        if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
+            local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
+            copy_tree(str(local_template_path), self.full_output_path)
 
-        if self.id != self.HELLO_WORLD_SCRIPT:
+        if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.rename(current_suffix=self.HELLO_WORLD_SCRIPT)
-            self.yml_reformatting(current_suffix=self.HELLO_WORLD_SCRIPT)
-            self.fix_test_file_import(name_to_change=self.HELLO_WORLD_SCRIPT)
+            self.rename(current_suffix=self.template)
+            self.yml_reformatting(current_suffix=self.template)
+            self.fix_test_file_import(name_to_change=self.template)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
@@ -376,8 +467,14 @@ class Initiator:
             yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
+
+        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+            yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
+
         if integration:
             yml_dict["display"] = self.id
+            yml_dict["category"] = self.category if self.category else Initiator.get_valid_user_input(
+                options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(
@@ -460,23 +557,71 @@ class Initiator:
             except Exception as err:
                 print_v(f'Could not copy demistomock: {str(err)}')
 
-    def get_remote_templates(self, files_list):
+    def get_template_files(self):
+        """
+        Gets the list of the integration/script file names to create according to the selected template.
+        Returns:
+            set. The names of integration/script files to create.
+        """
+        if self.is_integration:
+            template_files = {filename.replace(self.TEMPLATE_INTEGRATION_NAME, self.template)
+                              for filename in self.TEMPLATE_INTEGRATION_FILES}
+
+            if self.template == self.HELLO_WORLD_INTEGRATION:
+                template_files = template_files.union(self.HELLO_WORLD_TEST_DATA_FILES)
+
+            elif self.template == self.HELLO_WORLD_FEED_INTEGRATION:
+                template_files = template_files.union(self.HELLO_WORLD_FEED_TEST_DATA_FILES)
+
+            elif self.template == self.DEFAULT_INTEGRATION_TEMPLATE:
+                template_files = template_files.union(self.DEFAULT_INTEGRATION_TEST_DATA_FILES)
+        else:
+            template_files = {filename.replace(self.TEMPLATE_SCRIPT_NAME, self.template)
+                              for filename in self.TEMPLATE_SCRIPT_FILES}
+
+            if self.template == self.DEFAULT_SCRIPT_TEMPLATE:
+                template_files = template_files.union(self.DEFAULT_SCRIPT_TEST_DATA_FILES)
+        return template_files
+
+    def get_remote_templates(self, files_list, dir):
         """
         Downloading the object related template-files and saving them in the output path.
         Args:
             files_list: List of files to download.
+            dir: The name of the relevant directory (e.g. "Integrations", "Scripts").
         Returns:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
-        if self.is_integration:
-            path = os.path.join('Packs', 'HelloWorld', 'Integrations', 'HelloWorld')
+        # create test_data dir
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES \
+                + [self.HELLO_WORLD_FEED_INTEGRATION]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
+
+        if self.template in self.DEFAULT_TEMPLATES:
+            pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
+
+        elif self.template in self.HELLO_WORLD_BASE_TEMPLATES + [self.HELLO_WORLD_FEED_INTEGRATION]:
+            pack_name = self.HELLO_WORLD_PACK_NAME
+
         else:
-            path = os.path.join('Packs', 'HelloWorld', 'Scripts', 'HelloWorldScript')
+            pack_name = self.template
+
+        path = os.path.join('Packs', pack_name, dir, self.template)
 
         for file in files_list:
             try:
-                file_content = tools.get_remote_file(os.path.join(path, file), return_content=True)
+                filename = file
+                if 'README.md' in file and self.template not in self.HELLO_WORLD_BASE_TEMPLATES:
+                    # This is for the cases when the actual readme file name in content repo
+                    # is `README_example.md` - which happens when we do not want the readme
+                    # files to appear in https://xsoar.pan.dev/docs/reference/index.
+                    filename = file.replace('README.md', 'README_example.md')
+                file_content = tools.get_remote_file(
+                    os.path.join(path, filename),
+                    return_content=True,
+                    # Templates available only in the official repo
+                    github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:

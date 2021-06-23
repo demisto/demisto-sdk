@@ -1,5 +1,6 @@
 Use the Zoom integration manage your Zoom users and meetings
 This integration was integrated and tested with version xx of Zoom
+
 ## Configure Zoom on Cortex XSOAR
 
 1. Navigate to **Settings** > **Integrations** > **Servers & Services**.
@@ -10,7 +11,7 @@ This integration was integrated and tested with version xx of Zoom
     | --- | --- | --- |
     | apiKey |  | True |
     | apiSecret |  | True |
-    | proxy | Use system proxy settings | False |
+    | Use system proxy settings | additional data | False |
 
 4. Click **Test** to validate the URLs, token, and connection.
 ## Commands

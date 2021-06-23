@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import lru_cache
+from typing import Optional
 
 from pkg_resources import parse_version
 
@@ -27,9 +28,9 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -84,9 +85,9 @@ class DockerImageValidator(BaseValidator):
             # If docker image tag is not the most updated one that exists in docker-hub
             error_message, error_code = Errors.docker_not_on_the_latest_tag(self.docker_image_tag,
                                                                             self.docker_image_latest_tag,
-                                                                            self.docker_image_name,
-                                                                            self.file_path)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                                                            )
+            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=suggested_fix):
                 self.is_latest_tag = False
 
             else:

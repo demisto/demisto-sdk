@@ -1,3 +1,4 @@
+from collections import namedtuple
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -30,7 +31,8 @@ def test_build_xsoar_linter_py3_command(files):
     output = build_xsoar_linter_command(files, 3.8, "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
+               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
+               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -42,7 +44,8 @@ def test_build_xsoar_linter_py2_command(files):
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --enable=E9002,E9003,E9004,E9005,E9006, --load-plugins " \
+               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
+               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -53,8 +56,9 @@ def test_build_xsoar_linter_no_base_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
     output = build_xsoar_linter_command(files, 2.7, "unsupported")
     files = [str(file) for file in files]
-    expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               f"conftest.py,venv -E --disable=all --enable= {' '.join(files)}"
+    expected = "python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
+               f"--enable= {' '.join(files)}"
     assert output == expected
 
 
@@ -64,9 +68,11 @@ def test_build_bandit_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
     output = build_bandit_command(files)
     files = [str(file) for file in files]
-    expected = f"python3 -m bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
-               f"CommonServerUserPython.py," \
-               f"conftest.py,venv -q -r {','.join(files)}"
+    expected = "python3 -m bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
+               "CommonServerUserPython.py," \
+               "conftest.py,venv -q --format custom --msg-template " \
+               "'{abspath}:{line}: {test_id} [Severity: {severity} Confidence: {confidence}] {msg}' " \
+               f"-r {','.join(files)}"
     assert expected == output
 
 
@@ -78,7 +84,7 @@ def test_build_mypy_command(files, py_num):
     files = [str(file) for file in files]
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--cache-dir=/dev/null {' '.join(files)}"
+               f"--show-absolute-path --cache-dir=/dev/null {' '.join(files)}"
     assert expected == output
 
 
@@ -103,9 +109,20 @@ def test_build_pylint_command(files):
     output = build_pylint_command(files)
     files = [str(file) for file in files]
     expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument" \
+               "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument " \
+               "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output
+
+
+def test_build_pylint_command_3_9_docker():
+    """Build Pylint command"""
+    from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    NamedFile = namedtuple('File', 'name')
+    files = [NamedFile('file1')]
+    output = build_pylint_command(files, 3.9)
+    assert output.endswith(files[0].name)
+    assert 'disable=bad-option-value,unsubscriptable-object' in output
 
 
 def test_build_pytest_command_1():
@@ -121,6 +138,13 @@ def test_build_pytest_command_2():
     command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)
+
+
+def test_build_pytest_command_3():
+    """Build Pytest command with cov"""
+    from demisto_sdk.commands.lint.commands_builder import build_pytest_command
+    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
+    assert command == build_pytest_command(test_xml="test", cov="test")
 
 
 def test_build_pwsh_analyze():

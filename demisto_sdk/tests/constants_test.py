@@ -1,5 +1,6 @@
 import demisto_sdk.commands.common.constants as constants
-from demisto_sdk.commands.common.git_tools import git_path
+import pytest
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
 INVALID_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-invalid.yml"
@@ -27,6 +28,8 @@ VALID_SECRETS_IGNORE_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/.secrets-i
 VALID_CLASSIFIER_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/classifier.json'
 VALID_JSON_FILE_FOR_UNIT_TESTING = f'{GIT_ROOT}/demisto_sdk/tests/test_files/fake_pack/Integrations/' \
                                    f'test_data/results.json'
+VALID_DOC_FILES_PATH_FOR_UNIT_TESTING = f"{GIT_ROOT}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/" \
+                                        f"doc_files/sample_packs.png"
 
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'
@@ -82,6 +85,7 @@ INTEGRATION_TARGET = f"{PACK_TARGET}/Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = f"{PACK_TARGET}/IncidentFields/incidentfield-test.json"
 INCIDENT_TYPE_TARGET = f"{PACK_TARGET}/IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+CONTENT_REPO_EXAMPLE_ROOT = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/'
 INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                             f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
 INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
@@ -97,6 +101,8 @@ SOURCE_FORMAT_PLAYBOOK_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_n
 DESTINATION_FORMAT_PLAYBOOK_COPY = "playbook-new_format_new_playbook_copy.yml"
 INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_Integration_with_test_playbooks.yml'
 PLAYBOOK_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook_with_test_playbooks.yml'
+PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-with-incidnet-" \
+                                           f"indicator-fields.yml"
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"
@@ -119,6 +125,11 @@ SOURCE_FORMAT_INCIDENTFIELD_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/for
 DESTINATION_FORMAT_INCIDENTFIELD_COPY = "IncidentFields/incidentfield-copy.json"
 INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
+SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
+SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
+                                               f"description_formatted_contrib_details.md"
+DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
+DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
 INCIDENTTYPE_PATH = "IncidentTypes"
 
@@ -192,6 +203,7 @@ SOURCE_FORMAT_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/inte
 SOURCE_FORMAT_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-fetch-invalid.yml"
 
 FEED_INTEGRATION_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feedvalid.yml"
+FEED_INTEGRATION_EMPTY_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-empty-valid.yml"
 FEED_INTEGRATION_INVALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-feed-invalid.yml"
 
 XSOAR_LINTER_PY3_VALID = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_py3_XSOARLinter.py"
@@ -218,3 +230,38 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
+
+
+class TestGithubContentConfig:
+    @pytest.mark.parametrize(
+        'url',
+        [
+            'ssh://git@github.com/demisto/content-dist.git',
+            'git@github.com:demisto/content-dist.git',  # clone using github ssh example
+            'https://github.com/demisto/content-dist.git',  # clone using github https example
+            'https://github.com/demisto/content-dist'
+        ]
+    )
+    def test_get_repo_name(self, url: str):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url
+        Then:
+            Validate the correct repo got back (demisto/content)
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([url]) == 'demisto/content-dist'
+
+    def test_get_repo_name_empty_case(self):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            Searching for repository name
+        Then:
+            Validate the correct repo got back - demisto/content
+        """
+        github_config = constants.GithubContentConfig()
+        assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME

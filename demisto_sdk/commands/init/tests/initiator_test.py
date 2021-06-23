@@ -1,6 +1,5 @@
 import os
 from collections import OrderedDict, deque
-from datetime import datetime
 from os import listdir
 from pathlib import Path
 from typing import Callable
@@ -21,10 +20,13 @@ PACK_SERVER_MIN_VERSION = '5.5.0'
 PACK_AUTHOR = 'PackAuthor'
 PACK_URL = 'https://www.github.com/pack'
 PACK_EMAIL = 'author@mail.com'
+PACK_DEV_EMAIL = 'author@mail.com'
 PACK_TAGS = 'Tag1,Tag2'
 PACK_GITHUB_USERS = ''
 INTEGRATION_NAME = 'IntegrationName'
 SCRIPT_NAME = 'ScriptName'
+DEFAULT_INTEGRATION = 'BaseIntegration'
+DEFAULT_SCRIPT = 'BaseScript'
 
 
 @pytest.fixture
@@ -102,7 +104,6 @@ class TestCreateMetadata:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],
@@ -135,7 +136,6 @@ class TestCreateMetadata:
             'author': XSOAR_AUTHOR,
             'url': XSOAR_SUPPORT_URL,
             'email': '',
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'categories': [],
             'tags': [],
             'useCases': [],
@@ -161,7 +161,7 @@ class TestCreateMetadata:
             generate_multiple_inputs(
                 deque([
                     PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                    PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
+                    PACK_URL, PACK_EMAIL, PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
         )
@@ -172,11 +172,11 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': PACK_EMAIL,
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': PACK_URL,
             'useCases': [],
             'githubUser': []
@@ -201,7 +201,7 @@ class TestCreateMetadata:
             generate_multiple_inputs(
                 deque([
                     PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
-                    'no_h[t][t]p', PACK_URL, PACK_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
+                    'no_h[t][t]p', PACK_URL, PACK_EMAIL, PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
         )
@@ -212,11 +212,11 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': PACK_EMAIL,
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[1],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': PACK_URL,
             'useCases': [],
             'githubUser': []
@@ -241,7 +241,7 @@ class TestCreateMetadata:
             generate_multiple_inputs(
                 deque([
                     PACK_NAME, PACK_DESC, '4', '1', PACK_AUTHOR,
-                    PACK_TAGS, PACK_GITHUB_USERS
+                    PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
         )
@@ -252,11 +252,11 @@ class TestCreateMetadata:
             'currentVersion': '1.0.0',
             'description': PACK_DESC,
             'email': '',
+            'devEmail': [PACK_DEV_EMAIL],
             'keywords': [],
             'name': PACK_NAME,
             'support': PACK_SUPPORT_OPTIONS[3],
             'tags': ['Tag1', 'Tag2'],
-            'created': datetime.utcnow().strftime(Initiator.DATE_FORMAT),
             'url': MARKETPLACE_LIVE_DISCUSSIONS,
             'useCases': [],
             'githubUser': []
@@ -291,6 +291,7 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
 def test_yml_reformatting(tmp_path, initiator):
     integration_id = 'HelloWorld'
     initiator.id = integration_id
+    initiator.category = 'Utilities'
     d = tmp_path / integration_id
     d.mkdir()
     full_output_path = Path(d)
@@ -318,7 +319,9 @@ def test_yml_reformatting(tmp_path, initiator):
                 'id': 'HelloWorld'
             }),
             'display': 'HelloWorld',
-            'name': 'HelloWorld'
+            'name': 'HelloWorld',
+            'fromversion': initiator.SUPPORTED_FROM_VERSION,
+            'category': 'Utilities'
         })
 
 
@@ -338,7 +341,7 @@ def test_get_remote_templates__valid(mocker, initiator):
     mocker.patch.object(tools, 'get_remote_file', return_value=b'Test im in file')
     initiator.full_output_path = PACK_NAME
     os.makedirs(PACK_NAME, exist_ok=True)
-    res = initiator.get_remote_templates(['Test.py'])
+    res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)
     file_path = os.path.join(PACK_NAME, 'Test.py')
     with open(file_path, 'r') as f:
         file_content = f.read()
@@ -365,7 +368,7 @@ def test_get_remote_templates__invalid(mocker, initiator):
     mocker.patch.object(tools, 'get_remote_file', return_value={})
     initiator.full_output_path = PACK_NAME
     os.makedirs(PACK_NAME, exist_ok=True)
-    res = initiator.get_remote_templates(['Test.py'])
+    res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)
 
     assert not res
 
@@ -386,7 +389,7 @@ def test_integration_init(initiator, tmpdir):
     Then
         - Ensure the function's return value is True
         - Ensure integration directory with the desired integration name is created successfully.
-        - Ensure integration directory contain all files.
+        - Ensure integration directory contain all files of the Boilerplate template.
     """
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
@@ -394,19 +397,62 @@ def test_integration_init(initiator, tmpdir):
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
+    initiator.template = DEFAULT_INTEGRATION
+    initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "Pipfile", "Pipfile.lock", f"{INTEGRATION_NAME}.py",
+        "Pipfile", "Pipfile.lock", "command_examples", "test_data", "README.md", f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
-        f"{INTEGRATION_NAME}_image.png", "test_data"
+        f"{INTEGRATION_NAME}_image.png"
     }
 
     assert res
     assert os.path.isdir(integration_path)
     assert expected_files == integration_dir_files
+
+
+@pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
+def test_template_integration_init(initiator, tmpdir, template):
+    """
+    Tests `integration_init` function with a given integration template name.
+
+    Given
+        - Inputs to init integration in a given output.
+        - An integration template - HelloWorld.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contains all the files of the template integration.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.template = template
+    initiator.category = 'Utilities'
+
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+    res = initiator.integration_init()
+    integration_dir_files = set(listdir(integration_path))
+    expected_files = {
+        "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png", "test_data", "command_examples"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    diff = expected_files.difference(integration_dir_files)
+    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
 def test_script_init(initiator, tmpdir):
@@ -427,6 +473,7 @@ def test_script_init(initiator, tmpdir):
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
+    initiator.template = DEFAULT_SCRIPT
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
@@ -436,4 +483,5 @@ def test_script_init(initiator, tmpdir):
 
     assert res
     assert os.path.isdir(script_path)
-    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py"} == script_dir_files
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
+            "README.md", "test_data"} == script_dir_files

@@ -3,6 +3,7 @@
 Makes sure your content repository files are in order and have valid yml file scheme.
 
 **Notes**
+
 In order to run the README validator:
 - Node should be installed on you machine
 - The modules '@mdx-js/mdx', 'fs-extra', 'commander' should be installed in node-modules folder.
@@ -11,6 +12,8 @@ In order to run the README validator:
 - 'DEMISTO_README_VALIDATION' environment variable should be set to True.
     To set the environment variables, run the following shell commands:
     export DEMISTO_README_VALIDATION=True
+
+In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
 
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
@@ -22,7 +25,9 @@ Whether to check backward compatibility or not.
 * **-j, --conf-json**
 Validate the conf.json file.
 * **-s, --id-set**
-Validate the id_set.json file.
+Perform validations using the id_set file.
+* **-idp, --id-set-path**
+The path of the id-set.json used for validations.
 * **--prev-ver**
 Previous branch or SHA1 commit to run checks against.
 * **-g, --use-git**
@@ -43,6 +48,8 @@ The path of a pack or a file to validate specifically.
 Validation will not not be performed using the updated pack release notes format.
 * **--print-ignored-errors**
 Whether to print ignored errors as warnings.
+* **create-id-set**
+Whether to create the id_set.json file.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

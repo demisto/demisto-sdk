@@ -478,7 +478,7 @@ def get_tickets_list_command(client, args) -> Tuple[str, dict, dict]:
     context = {
         'QuestKace.Ticket(val.ID === obj.ID)': context
     }
-    return human_readable_markdown, context, raw_response
+    return CommandResults(indicator=indicator)
 
 
 def create_ticket_command(client, args) -> Tuple[str, dict, dict]:

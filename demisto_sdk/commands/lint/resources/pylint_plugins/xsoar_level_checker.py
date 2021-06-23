@@ -10,11 +10,17 @@ xsoar_msg = {
         "missing-arg-type-annoation",
         "Function arguments are missing type annotations. Please add type annotations",),
     "W9018": (
-        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
+        "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
+        "recognized. "
         "exception",
         "not-implemented-error-doesnt-exist",
-        "NotImplementedError was not raised in the else cause of main function. Please raise NotImplementedError "
-        "exception",),
+        "It is best practice for Integrations to raise a NotImplementedError when receiving a command which is not "
+        "recognized.",),
+    "W9019": (
+        "It is best practice to use .get when accessing the arg/params dict object rather then direct access.",
+        "direct-access-args-params-dict-exist",
+        "It is best practice to use .get when accessing the arg/params dict object rather then direct access.",),
+
 }
 
 
@@ -26,10 +32,16 @@ class XsoarChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super(XsoarChecker, self).__init__(linter)
+        self.is_script = True if os.getenv('is_script') == 'True' else False
+        self.common_args_params = ['args', 'dargs', 'arguments', 'd_args', 'data_args', 'params', 'PARAMS',
+                                   'integration_parameters']
 
     def visit_functiondef(self, node):
         self._type_annotations_checker(node)
         self._not_implemented_error_in_main(node)
+
+    def visit_subscript(self, node):
+        self._direct_access_dict_checker(node)
 
     # -------------------------------------------- Validations--------------------------------------------------
 
@@ -47,18 +59,43 @@ class XsoarChecker(BaseChecker):
 
     def _not_implemented_error_in_main(self, node):
         try:
-            if node.name == 'main':
-                not_implemented_error_exist = False
-                for child in self._inner_search_return_error(node):
-                    if isinstance(child, astroid.If):
-                        else_cluse = child.orelse
-                        for line in else_cluse:
-                            if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
-                                not_implemented_error_exist = True
-                if not not_implemented_error_exist:
-                    self.add_message("not-implemented-error-doesnt-exist", node=node)
+            if not self.is_script:
+                if node.name == 'main':
+                    not_implemented_error_exist = False
+                    for child in self._inner_search_return_error(node):
+                        if isinstance(child, astroid.Raise) and child.exc.func.name == "NotImplementedError":
+                            not_implemented_error_exist = True
+                        if isinstance(child, astroid.If):
+                            if_clause = child.body
+                            else_clause = child.orelse
+                            clauses = if_clause + else_clause
+                            for line in clauses:
+                                if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
+                                    not_implemented_error_exist = True
+                                    break
+                        if not_implemented_error_exist:
+                            break
+                    if not not_implemented_error_exist:
+                        self.add_message("not-implemented-error-doesnt-exist", node=node)
         except Exception:
             pass
+
+    def _direct_access_dict_checker(self, node):
+        try:
+            # for demisto.args()[] implementation or for demisto.params()[]
+            if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
+                if node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'args':
+                    self.add_message("direct-access-args-params-dict-exist", node=node)
+                elif node.value.func.expr.name == 'demisto' and node.value.func.attrname == 'params':
+                    self.add_message("direct-access-args-params-dict-exist", node=node)
+        except Exception:
+            try:
+                if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
+                    # for args[]/params[] implementation
+                    if node.value.name in self.common_args_params:
+                        self.add_message("direct-access-args-params-dict-exist", node=node)
+            except Exception:
+                pass
 
     def _inner_search_return_error(self, node):
         try:

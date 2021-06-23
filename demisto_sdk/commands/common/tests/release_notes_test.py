@@ -2,11 +2,11 @@ import os
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
@@ -22,6 +22,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
         FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README, FileType.RELEASE_NOTES, None}
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
+    release_notes_validator.json_file_path = ''
     return release_notes_validator
 
 
@@ -96,6 +97,14 @@ NOT_FILLED_OUT_RN = '''
 - %%UPDATE_RN%%
 '''
 FILLED_OUT_RN = '''
+### Classifiers
+#### dummy classifier
+- Test
+
+### Dashboards
+#### dashboard-sample_packs_new2.json
+-Test
+
 ### Incident Types
 #### Cortex XDR Incident
 - Test
@@ -106,6 +115,10 @@ FILLED_OUT_RN = '''
 
 ### Integrations
 #### Palo Alto Networks Cortex XDR - Investigation and Response
+- Test
+
+### Layouts
+#### details-Cortex_XDR_Incident
 - Test
 
 ### Scripts
@@ -123,7 +136,7 @@ TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
      'description.\n\n### Scripts\n#### HelloWorldScript \n- Grammar correction for '
      'code description. ', False),
-    (NOT_FILLED_OUT_RN, True),
+    (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True)
 
 ]
@@ -134,6 +147,10 @@ MODIFIED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 ADDED_FILES = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
@@ -177,6 +194,10 @@ MODIFIED_FILES_INVALID = [
     os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'TestPlaybooks/Cortex_XDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', '.secrets-ignore'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 
 

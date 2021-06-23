@@ -14,21 +14,28 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+                                                   TYPE_PWSH, TYPE_PYTHON,
+                                                   DemistoException)
 # Local packages
-from demisto_sdk.commands.common.logger import Colors, logging_setup
-from demisto_sdk.commands.common.tools import (print_error, print_v,
-                                               print_warning)
+from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.tools import (find_file, find_type,
+                                               get_content_path,
+                                               get_file_displayed_name,
+                                               get_json,
+                                               is_external_repository,
+                                               print_error, print_v,
+                                               print_warning,
+                                               retrieve_file_ending)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
+                                               generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
 from wcmatch.pathlib import Path
 
-logger: logging.Logger
+logger = logging.getLogger('demisto-sdk')
 
 
 class LintManager:
@@ -43,24 +50,30 @@ class LintManager:
         log_path(str): Path to all levels of logs.
     """
 
-    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, log_path: str, prev_ver: str):
-        # Set logging level and file handler if required
-        global logger
-        logger = logging_setup(verbose=verbose,
-                               quiet=quiet,
-                               log_path=log_path)
+    def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
+                 json_file_path: str = ''):
+
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
         self._all_packs = all_packs
+        # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
+        lint_no_packs_command = not git and not all_packs and not input
+        if lint_no_packs_command:
+            git = True
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
                                                     all_packs=all_packs,
                                                     base_branch=self._prev_ver)
+        if json_file_path:
+            if os.path.isdir(json_file_path):
+                json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
+        self.json_file_path = json_file_path
+        self.linters_error_list: list = []
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -73,6 +86,7 @@ class LintManager:
         Returns:
             dict: facts
         """
+        global logger
         facts = {
             "content_repo": None,
             "requirements_3": None,
@@ -89,7 +103,7 @@ class LintManager:
                                 search_parent_directories=True)
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = 'content' in remote_url
-            is_external_repo = tools.is_external_repository()
+            is_external_repo = is_external_repository()
 
             if not is_fork_repo and not is_external_repo:
                 raise git.InvalidGitRepositoryError
@@ -119,9 +133,14 @@ class LintManager:
             facts["test_modules"] = get_test_modules(content_repo=facts["content_repo"],  # type: ignore
                                                      is_external_repo=is_external_repo)
             logger.debug("Test mandatory modules successfully collected")
-        except git.GitCommandError as e:
-            print_error(
-                "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository of pull from master")
+        except (git.GitCommandError, DemistoException) as e:
+            if is_external_repo:
+                print_error('You are running on an external repo - '
+                            'run `.hooks/bootstrap` before running the demisto-sdk lint command\n'
+                            'See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup')
+            else:
+                print_error(
+                    "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master")
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (requests.exceptions.ConnectionError, urllib3.exceptions.NewConnectionError) as e:
@@ -161,9 +180,7 @@ class LintManager:
         pkgs: list
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
-        elif not all_packs and not git and not input:
-            pkgs = [Path().cwd()]
-        else:
+        else:  # specific pack as input, -i flag has been used
             pkgs = []
             for item in input.split(','):
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
@@ -213,8 +230,9 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-              f"{content_repo.active_branch}{Colors.reset}")
+        print(
+            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
         if content_repo.active_branch == 'master':
@@ -229,7 +247,8 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+                         no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
                          test_xml: str, failure_report: str) -> int:
@@ -243,6 +262,8 @@ class LintManager:
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
+            no_coverage(bool): Run pytest without coverage report
+            coverage_report(str): the directory fo exporting the coverage data
             no_test(bool): Whether to skip pytest
             no_pwsh_analyze(bool): Whether to skip powershell code analyzing
             no_pwsh_test(bool): whether to skip powershell tests
@@ -312,7 +333,8 @@ class LintManager:
                                                no_pwsh_test=no_pwsh_test,
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
-                                               test_xml=test_xml))
+                                               test_xml=test_xml,
+                                               no_coverage=no_coverage))
             try:
                 for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
@@ -351,7 +373,9 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              return_warning_code=return_warning_code,
                              skipped_code=int(skipped_code),
-                             pkgs_type=pkgs_type)
+                             pkgs_type=pkgs_type,
+                             no_coverage=no_coverage,
+                             coverage_report=coverage_report)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
@@ -362,7 +386,8 @@ class LintManager:
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
                         skipped_code: int,
-                        pkgs_type: list):
+                        pkgs_type: list,
+                        no_coverage: bool, coverage_report: str):
         """ Log report to console
 
         Args:
@@ -372,6 +397,7 @@ class LintManager:
             return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
+            no_coverage(bool): Do NOT create coverage report.
 
      """
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
@@ -391,6 +417,12 @@ class LintManager:
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
+        self.create_json_output()
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
@@ -418,8 +450,7 @@ class LintManager:
             elif check != 'image':
                 print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
 
-    @staticmethod
-    def report_failed_lint_checks(lint_status: dict, pkgs_status: dict, return_exit_code: int):
+    def report_failed_lint_checks(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed lint log if exsits
 
         Args:
@@ -436,6 +467,12 @@ class LintManager:
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
+                    self.linters_error_list.append({
+                        'linter': check,
+                        'pack': fail_pack,
+                        'type': 'error',
+                        'messages': pkgs_status[fail_pack][f"{check}_errors"]
+                    })
 
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
@@ -449,8 +486,8 @@ class LintManager:
                     for image in pkgs_status[fail_pack]["images"]:
                         print(image[f"{check}_errors"])
 
-    @staticmethod
-    def report_warning_lint_checks(lint_status: dict, pkgs_status: dict, return_warning_code: int, all_packs: bool):
+    def report_warning_lint_checks(self, lint_status: dict, pkgs_status: dict, return_warning_code: int,
+                                   all_packs: bool):
         """ Log warnings lint log if exists
 
         Args:
@@ -469,6 +506,12 @@ class LintManager:
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
                         print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
+                        self.linters_error_list.append({
+                            'linter': check,
+                            'pack': fail_pack,
+                            'type': 'warning',
+                            'messages': pkgs_status[fail_pack][f"{check}_warnings"]
+                        })
 
     def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """ Log failed unit-tests , if verbosity specified will log also success unit-tests
@@ -675,3 +718,214 @@ class LintManager:
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
             file_path.write_text('\n'.join(failed_ut))
+
+    def create_json_output(self):
+        """Creates a JSON file output for lints"""
+        if not self.json_file_path:
+            return
+
+        if os.path.exists(self.json_file_path):
+            json_contents = get_json(self.json_file_path)
+            if not (isinstance(json_contents, list)):
+                json_contents = []
+        else:
+            json_contents = []
+        logger.info('Collecting results to write to file')
+        # format all linters to JSON format -
+        # if any additional linters are added, please add a formatting function here
+        for check in self.linters_error_list:
+            if check.get('linter') == 'flake8':
+                self.flake8_error_formatter(check, json_contents)
+            elif check.get('linter') == 'mypy':
+                self.mypy_error_formatter(check, json_contents)
+            elif check.get('linter') == 'bandit':
+                self.bandit_error_formatter(check, json_contents)
+            elif check.get('linter') == 'vulture':
+                self.vulture_error_formatter(check, json_contents)
+            elif check.get('linter') == 'XSOAR_linter':
+                self.xsoar_linter_error_formatter(check, json_contents)
+
+        with open(self.json_file_path, 'w+') as f:
+            json.dump(json_contents, f, indent=4)
+
+        logger.info(f'Logs saved to {self.json_file_path}')
+
+    def flake8_error_formatter(self, errors: Dict, json_contents: List) -> None:
+        """Format flake8 error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing flake8 error strings
+            json_contents (List): The JSON file outputs
+        """
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        for message in error_messages:
+            if message:
+                file_path, line_number, column_number, _ = message.split(':', 3)
+                code = message.split()[1]
+                output = {
+                    'linter': 'flake8',
+                    'severity': errors.get('type'),
+                    'errorCode': code,
+                    'message': message.split(code)[1].lstrip(),
+                    'row': line_number,
+                    'col': column_number
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    @staticmethod
+    def gather_mypy_errors(error_messages: List) -> List:
+        """Gather multi-line mypy errors to a single line
+
+        Args:
+            error_messages (List): A list of mypy error outputs
+
+        Returns:
+            List. A list of strings, each element is a full mypy error message
+        """
+        mypy_errors: list = []
+        gather_error: list = []
+        for line in error_messages:
+            if os.path.isfile(line.split(':')[0]):
+                if gather_error:
+                    mypy_errors.append('\n'.join(gather_error))
+                    gather_error = []
+            gather_error.append(line)
+
+        # handle final error
+        # last line is irrelevant
+        if gather_error:
+            mypy_errors.append('\n'.join(gather_error[:-1]))
+
+        return mypy_errors
+
+    def mypy_error_formatter(self, errors: Dict, json_contents: List) -> None:
+        """Format mypy error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing mypy error strings
+            json_contents (List): The JSON file outputs
+        """
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        mypy_errors = self.gather_mypy_errors(error_messages)
+
+        for message in mypy_errors:
+            if message:
+                file_path, line_number, column_number, _ = message.split(':', 3)
+                output_message = message.split('error:')[1].lstrip() if 'error' in message \
+                    else message.split('note:')[1].lstrip()
+                output = {
+                    'linter': 'mypy',
+                    'severity': errors.get('type'),
+                    'message': output_message,
+                    'row': line_number,
+                    'col': column_number
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    def bandit_error_formatter(self, errors: Dict, json_contents: List) -> None:
+        """Format bandit error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing bandit error strings
+            json_contents (List): The JSON file outputs
+        """
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        for message in error_messages:
+            if message:
+                file_path, line_number, _ = message.split(':', 2)
+                output = {
+                    'linter': 'bandit',
+                    'severity': errors.get('type'),
+                    'errorCode': message.split(' ')[1],
+                    'message': message.split('[')[1].replace(']', ' -'),
+                    'row': line_number,
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    @staticmethod
+    def get_full_file_path_for_vulture(file_name: str, content_path: str) -> str:
+        """Get the full file path to a file with a given name name from the content path
+
+        Args:
+            file_name (str): The file name of the file to find
+            content_path (str): The content file path
+
+        Returns:
+            str. The path to the file
+        """
+        file_ending = retrieve_file_ending(file_name)
+        if not file_ending:
+            file_name = f'{file_name}.py'
+        elif file_ending != 'py':
+            file_name = file_name.replace(file_ending, 'py')
+        return find_file(content_path, file_name)
+
+    def vulture_error_formatter(self, errors: Dict, json_contents: List) -> None:
+        """Format vulture error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing vulture error strings
+            json_contents (List): The JSON file outputs
+        """
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        content_path = get_content_path()
+        for message in error_messages:
+            if message:
+                file_name, line_number, error_contents = message.split(':', 2)
+                file_path = self.get_full_file_path_for_vulture(file_name, content_path)
+                output = {
+                    'linter': 'vulture',
+                    'severity': errors.get('type'),
+                    'message': error_contents.lstrip(),
+                    'row': line_number,
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    def xsoar_linter_error_formatter(self, errors: Dict, json_contents: List) -> None:
+        """Format XSOAR linter error strings to JSON format and add them the json_contents
+
+        Args:
+            errors (Dict): A dictionary containing XSOAR linter error strings
+            json_contents (List): The JSON file outputs
+        """
+        error_messages = errors.get('messages', '')
+        error_messages = error_messages.split('\n') if error_messages else []
+        for message in error_messages:
+            if message:
+                split_message = message.split(':')
+                file_path = split_message[0] if len(split_message) >= 1 else ''
+                code = message.split(' ')[1] if len(message.split(' ')) >= 2 else ''
+                output = {
+                    'linter': 'xsoar_linter',
+                    'severity': errors.get('type'),
+                    'errorCode': code,
+                    'message': message.split(code)[-1].lstrip() if len(message.split(code)) >= 1 else '',
+                    'row': split_message[1] if len(split_message) >= 2 else '',
+                    'col': split_message[2] if len(split_message) >= 3 else ''
+                }
+                self.add_to_json_outputs(output, file_path, json_contents)
+
+    @staticmethod
+    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List) -> None:
+        """Adds an error entry to the JSON file contents
+
+        Args:
+            output (Dict): The information about an error entry
+            file_path (str): The file path where the error occurred
+            json_contents (List): The JSON file outputs
+        """
+        yml_file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml')
+        file_type = find_type(yml_file_path)
+        full_error_output = {
+            'filePath': file_path,
+            'fileType': os.path.splitext(file_path)[1].replace('.', ''),
+            'entityType': file_type.value if file_type else '',
+            'errorType': 'Code',
+            'name': get_file_displayed_name(yml_file_path),
+            **output
+        }
+        json_contents.append(full_error_output)

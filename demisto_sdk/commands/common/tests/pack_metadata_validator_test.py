@@ -2,11 +2,11 @@ import io
 import os
 
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
 class TestPackMetadataValidator:
@@ -31,7 +31,11 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_list.json')
+                                          os.path.join(FILES_PATH, 'pack_metadata_list.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_short_name.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_lower.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_incorrect.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata_pack_in_name.json'),
                                           ])
     def test_metadata_validator_invalid(self, mocker, metadata):
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',

@@ -38,6 +38,7 @@ jobs:
               pip install tox
         - run:
             name: Tox build
+            no_output_timeout: 15m
             command: |
               tox -e py37 -v
         - save_cache:
@@ -63,6 +64,7 @@ jobs:
               pip install tox
         - run:
             name: Tox build
+            no_output_timeout: 15m
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
         - store_artifacts:
@@ -144,7 +146,11 @@ jobs:
         - attach_workspace:
             at: ~/project
         - run:
-            name: Test validate files and yaml
+            name: gsutil install
+            command: |
+              pip install gsutil
+        - run:
+            name: Set Up & Create Id Set
             when: always
             command: |
               . .tox/py37/bin/activate
@@ -154,24 +160,33 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
-              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
-              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
-  create-id-set:
-      docker:
-        - image: circleci/python:3.8.3-buster-node
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ~/project
+              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
         - run:
-            name: Test create ID set
+            name: Merge Id Set
             when: always
             command: |
               . .tox/py37/bin/activate
-
               cd content
+
+              export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
+
+              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
+        - run:
+            name: Test validate files and yaml
+            when: always
+            command: |
+              . .tox/py37/bin/activate
+              cd content
+
+              export PYTHONPATH=".:${PYTHONPATH}"
+              demisto-sdk -v
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+
+              CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -220,9 +235,6 @@ workflows:
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - create-id-set:
-          <<: *tag_filter
-          <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
@@ -233,5 +245,4 @@ workflows:
             - tox3-8-unit-tests
             - precommit-checks
             - validate-files
-            - create-id-set
             - create-content-artifacts

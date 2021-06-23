@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, UUID_REGEX, FileType, re)
+    PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
+    FileType, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -22,8 +22,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']
-SKIPPED_FILES = {'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', 'secrets-ignore', 'ami_builds.json',
-                 'secrets_test.py', 'secrets.py', 'constants.py', 'core.py', 'pack_metadata.json'}
+SKIPPED_FILES = {
+    'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', 'secrets-ignore', 'ami_builds.json',
+    'secrets_test.py', 'secrets.py', 'constants.py', 'core.py', 'pack_metadata.json',
+    'dev-requirements-py2.txt', 'dev-requirements-py3.txt'
+}
 TEXT_FILE_TYPES = {'.yml', '.py', '.json', '.md', '.txt', '.sh', '.ini', '.eml', '', '.csv', '.js', '.pdf', '.html',
                    '.ps1'}
 SKIP_FILE_TYPE_ENTROPY_CHECKS = {'.eml'}
@@ -54,6 +57,8 @@ IPV6_REGEX = r'(?:(?:[0-9A-Fa-f]{1,4}:){6}(?:[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}|(
              r'(?:(?:[0-9A-Fa-f]{1,4}:){,6}[0-9A-Fa-f]{1,4})?::)'
 IPV4_REGEX = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
 DATES_REGEX = r'((\d{4}[/.-]\d{2}[/.-]\d{2})[T\s](\d{2}:?\d{2}:?\d{2}:?(\.\d{5,10})?([+-]\d{2}:?\d{2})?Z?)?)'
+# false positives
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 # find any substring
 WHILEIST_REGEX = r'\S*{}\S*'
 
@@ -102,8 +107,8 @@ class SecretsValidator(object):
                                             ' remove the files asap and report it.\n'
 
                 secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://github.com/demisto/demisto-sdk/tree/master/demisto_sdk/' \
-                                        'commands/secrets'
+                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs/concepts/demisto-sdk' \
+                                        '#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -142,7 +147,7 @@ class SecretsValidator(object):
         all_files = files_string.split('\n')
         text_files_list = set()
         for file_name in all_files:
-            file_data = list(filter(None, file_name.split('\t')))
+            file_data: list = list(filter(None, file_name.split('\t')))
             if not file_data:
                 continue
             file_status = file_data[0]
@@ -250,8 +255,8 @@ class SecretsValidator(object):
         return file_content
 
     @staticmethod
-    def create_temp_white_list(file_contents):
-        temp_white_list = set()
+    def create_temp_white_list(file_contents) -> set:
+        temp_white_list: set = set()
         context_paths = re.findall(r'contextPath: (\S+\.+\S+)', file_contents)
         for context_path in context_paths:
             context_path = context_path.split('.')
@@ -323,7 +328,7 @@ class SecretsValidator(object):
         return potential_secrets, false_positives
 
     @staticmethod
-    def calculate_shannon_entropy(data):
+    def calculate_shannon_entropy(data) -> float:
         """Algorithm to determine the randomness of a given data.
         Higher is more random/complex, most English words will yield in average result of 3
         :param data: could be either a list/dict or a string.
@@ -331,7 +336,7 @@ class SecretsValidator(object):
         """
         if not data:
             return 0
-        entropy = 0
+        entropy = 0.0
         # each unicode code representation of all characters which are considered printable
         for char in (ord(c) for c in string.printable):
             # probability of event X
@@ -364,7 +369,7 @@ class SecretsValidator(object):
         files_while_list = []
         with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
             secrets_white_list_file = json.load(secrets_white_list_file)
-            for name, white_list in secrets_white_list_file.items():
+            for name, white_list in secrets_white_list_file.items():  # type: ignore
                 if name == 'iocs':
                     for sublist in white_list:
                         ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
@@ -474,24 +479,23 @@ class SecretsValidator(object):
         return file_contents
 
     @staticmethod
-    def get_branch_name():
+    def get_branch_name() -> str:
         branches = run_command('git branch')
         branch_name_reg = re.search(r'\* (.*)', branches)
-        branch_name = branch_name_reg.group(1)
-        return branch_name
+        if not branch_name_reg:
+            return ''
+        return branch_name_reg.group(1)
 
     def find_secrets(self):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
-        is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
-        if not is_forked:
-            secrets_found = self.get_secrets(branch_name, is_circle)
-            if secrets_found:
-                return True
-            else:
-                print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
-                return False
+        secrets_found = self.get_secrets(branch_name, is_circle)
+        if secrets_found:
+            return True
+        else:
+            print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
+            return False
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:
         """Removes lines that have "disable-secrets-detection" from file content

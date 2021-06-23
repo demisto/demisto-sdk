@@ -34,7 +34,7 @@ class JSONObject(DictionaryBasedObject):
                 path = next(path.glob(["*.json"]))
             except StopIteration:
                 raise exc.ContentInitializeError(JSONObject, path)
-        elif not (path.is_file() and path.suffix in [".json"]):
+        elif not (path.is_file() and path.suffix in [".json"]) and path.name != 'metadata.json':
             raise exc.ContentInitializeError(JSONObject, path)
 
         return path

@@ -11,12 +11,13 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from packaging.version import parse
+from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
 
@@ -167,7 +168,7 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
 def test_upload_incident_type_positive(demisto_client_configure, mocker):
     """
     Given
-        - An incident type named XDR_Alert_Count to upload
+        - An incident type named Hello_World_Alert to upload
 
     When
         - Uploading incident type
@@ -228,6 +229,49 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
+
+
+def test_upload_indicator_field_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - An indicator field named DNS to upload
+    When
+        - Uploading indicator field
+    Then
+        - Ensure indicator field is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value='object')
+    indicator_field_name = 'dns.json'
+    indicator_field_path = f'{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IndicatorFields/{indicator_field_name}'
+    uploader = Uploader(input=indicator_field_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+
+    assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
+
+
+def test_upload_report_positive(demisto_client_configure, mocker, repo):
+    """
+    Given
+        - A report to upload
+
+    When
+        - Uploading a report
+
+    Then
+        - Ensure report is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    pack = repo.create_pack('pack')
+    report = pack.create_report('test-report')
+    report.write_json({"id": "dummy-report", "orientation": "portrait"})
+    with ChangeCWD(repo.path):
+        uploader = Uploader(input=report.path, insecure=False, verbose=False)
+        mocker.patch.object(uploader, 'client')
+        uploader.upload()
+    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):

@@ -3,9 +3,9 @@ import os
 
 import networkx as nx
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
-from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, VerboseFile)
+from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from TestSuite.utils import IsEqualFunctions
 
 
@@ -135,7 +135,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -172,7 +172,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -207,7 +207,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -241,7 +241,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       exclude_ignored_dependencies=False
                                                                       )
 
@@ -277,7 +277,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -313,7 +313,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -350,7 +350,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -366,18 +366,10 @@ class TestDependsOnScriptAndIntegration:
 
         Then
             - Extracting the packs that the script depends on.
-            - Should recognize the mandatory pack and the non mandatory packs.
+            - Should recognize the mandatory pack and ignore the packs that implement the file command.
         """
         expected_result = {
-            ('Active_Directory_Query', True), ('Recorded_Future', False), ('illuminate', False), ('ThreatQ', False),
-            ('Anomali_ThreatStream', False), ('URLHaus', False), ('Symantec_Deepsight', False),
-            ('XForceExchange', False), ('Active_Directory_Query', True), ('XFE', False), ('MISP', False),
-            ('AlienVault_OTX', False), ('ThreatMiner', False), ('isight', False), ('CrowdStrikeIntel', False),
-            ('ReversingLabs_A1000', False), ('PolySwarm', False), ('TruSTAR', False),
-            ('ReversingLabs_Titanium_Cloud', False), ('ThreatExchange', False), ('EclecticIQ', False),
-            ('AutoFocus', False), ('McAfee-TIE', False), ('Maltiverse', False), ('Palo_Alto_Networks_WildFire', False),
-            ('Polygon', False), ('Cofense-Intelligence', False), ('Lastline', False), ('ThreatConnect', False),
-            ('VirusTotal', False), ('Flashpoint', False)
+            ('Active_Directory_Query', True)
         }
 
         test_input = [
@@ -401,7 +393,7 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -445,13 +437,25 @@ class TestDependsOnScriptAndIntegration:
 
         found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    @pytest.mark.parametrize("generic_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("generic_command", ['ip', 'domain', 'url', 'file', 'email', 'cve', 'cve-latest',
+                                                 'cve-search', 'send-mail', 'send-notification'])
     def test_collect_detection_of_optional_dependencies(self, generic_command, id_set):
+        """
+        Given
+            - Scripts that depends on generic commands
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should NOT recognize packs.
+        """
         test_input = [
             {
                 "DummyScript": {
@@ -467,13 +471,10 @@ class TestDependsOnScriptAndIntegration:
 
         dependencies_set = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                           id_set=id_set,
-                                                                          verbose_file=VerboseFile(),
+                                                                          verbose=False,
                                                                           )
 
-        assert len(dependencies_set) > 0
-
-        for dependency_data in dependencies_set:
-            assert not dependency_data[1]  # validate that mandatory is set to False
+        assert len(dependencies_set) == 0
 
 
 class TestDependsOnPlaybook:
@@ -506,7 +507,7 @@ class TestDependsOnPlaybook:
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set,
-                                                                        verbose_file=VerboseFile(),
+                                                                        verbose=False,
                                                                         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -540,7 +541,7 @@ class TestDependsOnPlaybook:
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set,
-                                                                        verbose_file=VerboseFile(),
+                                                                        verbose=False,
                                                                         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -574,7 +575,7 @@ class TestDependsOnPlaybook:
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set,
-                                                                        verbose_file=VerboseFile(),
+                                                                        verbose=False,
                                                                         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -604,7 +605,7 @@ class TestDependsOnPlaybook:
         ]
         found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                             id_set=id_set,
-                                                                            verbose_file=VerboseFile(),
+                                                                            verbose=False,
                                                                             )
 
         assert len(found_result_set) == 1
@@ -612,8 +613,19 @@ class TestDependsOnPlaybook:
         assert found_result[0] == pack_name
         assert found_result[1]
 
-    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url"])
+    @pytest.mark.parametrize("integration_command", ["ip", "domain", "url", "cve"])
     def test_collect_detection_of_optional_dependencies_in_playbooks(self, integration_command, id_set):
+        """
+        Given
+            - Playbooks that are using generic commands
+
+        When
+            - Building dependency graph for the packs.
+
+        Then
+            - Extracting the packs that the scripts depends on.
+            - Should NOT recognize packs.
+        """
         test_input = [
             {
                 "Dummy Playbook": {
@@ -637,16 +649,24 @@ class TestDependsOnPlaybook:
 
         found_result_set = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                             id_set=id_set,
-                                                                            verbose_file=VerboseFile(),
+                                                                            verbose=False,
                                                                             )
 
-        assert len(found_result_set) > 0
-
-        for found_result in found_result_set:
-            assert not found_result[1]  # validate that mandatory is set to False
+        assert len(found_result_set) == 0
 
     def test_collect_playbooks_dependencies_on_incident_fields(self, id_set):
-        expected_result = {("DigitalGuardian", True), ("EmployeeOffboarding", True)}
+        """
+        Given
+            - A playbook entry in the id_set.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The incident fields from the DigitalGuardian and EmployeeOffboarding packs
+             should result in an optional dependency.
+        """
+        expected_result = {("DigitalGuardian", False), ("EmployeeOffboarding", False)}
         test_input = [
             {
                 "Dummy Playbook": {
@@ -673,7 +693,126 @@ class TestDependsOnPlaybook:
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set,
-                                                                        verbose_file=VerboseFile(),
+                                                                        verbose=False,
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set which is using incident fields from the Phishing pack.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The incident fields from the Phishing pack should result in an optional dependency.
+        """
+        expected_result = {("Phishing", False)}
+        test_input = [
+            {
+                "search_and_delete_emails_-_ews": {
+                    "name": "Search And Delete Emails - EWS",
+                    "file_path": "Packs/EWS/Playbooks/playbook-Search_And_Delete_Emails_-_EWS.yml",
+                    "fromversion": "5.0.0",
+                    "tests": [
+                        "No test"
+                    ],
+                    "pack": "EWS",
+                    "incident_fields": [
+                        "attachmentname",
+                        "emailfrom",
+                        "emailsubject"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose=False,
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_incident_fields__commontypes_pack(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set which is using incident fields from the CommonTYpes pack.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The incident fields from the Phishing pack should result in an mandatory dependency.
+        """
+        expected_result = {("CommonTypes", True)}
+        test_input = [
+            {
+                "search_and_delete_emails_-_ews": {
+                    "name": "Search And Delete Emails - EWS",
+                    "file_path": "Packs/EWS/Playbooks/playbook-Search_And_Delete_Emails_-_EWS.yml",
+                    "fromversion": "5.0.0",
+                    "tests": [
+                        "No test"
+                    ],
+                    "pack": "EWS",
+                    "incident_fields": [
+                        "accountid"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose=False,
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_playbooks_dependencies_on_indicator_fields(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set which is using Indicator fields from the CommonTypes pack.
+
+        When
+            - Collecting playbook dependencies.
+
+        Then
+            - The indicator field accounttype should result in a mandatory dependency to the CommonTypes pack.
+        """
+        expected_result = {('CommonScripts', True), ('SafeBreach', True), ('CommonTypes', True)}
+        test_input = [
+            {
+                "SafeBreach - Compare and Validate Insight Indicators": {
+                    "name": "SafeBreach - Compare and Validate Insight Indicators",
+                    "file_path": "Packs/SafeBreach/Playbooks/SafeBreach_Compare_and_Validate_Insight_Indicators.yml",
+                    "fromversion": "5.5.0",
+                    "implementing_scripts": [
+                        "ChangeContext",
+                        "Set",
+                        "SetAndHandleEmpty"
+                    ],
+                    "command_to_integration": {
+                        "safebreach-get-remediation-data": ""
+                    },
+                    "tests": [
+                        "No tests (auto formatted)"
+                    ],
+                    "pack": "SafeBreach",
+                    "indicator_fields": [
+                        "accounttype",
+                        "safebreachremediationstatus"
+                    ]
+                }
+            },
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose=False,
                                                                         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -735,7 +874,7 @@ class TestDependsOnPlaybook:
 
         found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
                                                                         id_set=id_set,
-                                                                        verbose_file=VerboseFile(),
+                                                                        verbose=False,
                                                                         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -778,7 +917,7 @@ class TestDependsOnLayout:
 
         found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -817,7 +956,7 @@ class TestDependsOnLayout:
 
         found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
                                                                       id_set=id_set,
-                                                                      verbose_file=VerboseFile(),
+                                                                      verbose=False,
                                                                       exclude_ignored_dependencies=False,
                                                                       )
 
@@ -864,7 +1003,7 @@ class TestDependsOnIncidentField:
         found_result = PackDependencies._collect_incidents_fields_dependencies(
             pack_incidents_fields=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -883,10 +1022,8 @@ class TestDependsOnIndicatorType:
             - Extracting the packs that the indicator type depends on.
         """
         expected_result = {
-            # integration dependencies
-            ("Feedsslabusech", False), ("AbuseDB", False), ("ActiveMQ", False),
             # script dependencies
-            ("CommonScripts", True), ("Carbon_Black_Enterprise_Response", True)
+            ("CommonScripts", False), ("Carbon_Black_Enterprise_Response", False)
         }
 
         test_input = [
@@ -911,7 +1048,7 @@ class TestDependsOnIndicatorType:
         found_result = PackDependencies._collect_indicators_types_dependencies(
             pack_indicators_types=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -950,7 +1087,7 @@ class TestDependsOnIntegrations:
         found_result = PackDependencies._collect_integrations_dependencies(
             pack_integrations=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -983,7 +1120,7 @@ class TestDependsOnIncidentType:
         found_result = PackDependencies._collect_incidents_types_dependencies(
             pack_incidents_types=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
 
         )
 
@@ -998,9 +1135,9 @@ class TestDependsOnClassifiers:
         When
             - Building dependency graph for pack.
         Then
-            - Extracting the packs that the classifier depends on.
+            - Extracting the packs that the classifier depends on as optional dependencies.
         """
-        expected_result = {("Claroty", True), ("PAN-OS", True), ("Logzio", True)}
+        expected_result = {("Claroty", False), ("PAN-OS", False), ("Logzio", False)}
 
         test_input = [
             {
@@ -1020,7 +1157,39 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_classifier_dependencies__commontypes_pack(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set with an incident type from the CommonTypes pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Network"
+                    ],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -1034,10 +1203,10 @@ class TestDependsOnMappers:
         When
             - Building dependency graph for pack.
         Then
-            - Extracting the packs that the mapper depends on.
+            - Extracting the packs that the mapper depends on as optional dependencies.
         """
-        expected_result = {("AccessInvestigation", True), ("CommonTypes", True), ("PrismaCloud", True),
-                           ("BruteForce", True)}
+        expected_result = {("AccessInvestigation", False), ("CommonTypes", True), ("PrismaCloud", False),
+                           ("BruteForce", False)}
 
         test_input = [
             {
@@ -1047,7 +1216,6 @@ class TestDependsOnMappers:
                     "pack": "dummy_pack",
                     "incident_types": [
                         "Access",
-                        "Authentication",
                         "AWS CloudTrail Misconfiguration"
                     ],
                     "incident_fields": [
@@ -1061,7 +1229,39 @@ class TestDependsOnMappers:
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_mapper_dependencies__commontypes_pack(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set with an incident type from the CommonTypes pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonTypes", True)}
+
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "incident_types": [
+                        "Authentication"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input,
+            id_set=id_set,
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -1095,7 +1295,7 @@ class TestDependsOnWidgets:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
         )
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
@@ -1129,7 +1329,7 @@ class TestDependsOnDashboard:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
             header='Dashboards',
         )
 
@@ -1164,7 +1364,7 @@ class TestDependsOnReports:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=id_set,
-            verbose_file=VerboseFile(),
+            verbose=False,
             header='Reports',
         )
 
@@ -1187,6 +1387,61 @@ SEARCH_PACKS_INPUT = [
 def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
     found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
     assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
+
+
+def test_find_dependencies_using_pack_metadata(mocker):
+    """
+        Given
+            - A dict of dependencies from id set.
+        When
+            - Running PackDependencies.update_dependencies_from_pack_metadata.
+        Then
+            - Assert the dependencies in the given dict is updated.
+    """
+    mock_pack_meta_file = {
+        "dependencies": {
+            "dependency_pack1": {
+                "mandatory": False,
+                "display_name": "dependency pack 1"
+            },
+            "dependency_pack2": {
+                "mandatory": False,
+                "display_name": "dependency pack 2"
+            },
+            "dependency_pack3": {
+                "mandatory": False,
+                "display_name": "dependency pack 3"
+            }
+        }
+    }
+
+    dependencies_from_id_set = {
+        "dependency_pack1": {
+            "mandatory": False,
+            "display_name": "dependency pack 1"
+        },
+        "dependency_pack2": {
+            "mandatory": True,
+            "display_name": "dependency pack 2"
+        },
+        "dependency_pack3": {
+            "mandatory": True,
+            "display_name": "dependency pack 3"
+        },
+        "dependency_pack4": {
+            "mandatory": True,
+            "display_name": "dependency pack 4"
+        }
+    }
+
+    mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.get_metadata_from_pack',
+                 return_value=mock_pack_meta_file)
+
+    first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata('', dependencies_from_id_set)
+
+    assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
+    assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
+    assert first_level_dependencies.get("dependency_pack4", {}).get("mandatory")
 
 
 class TestDependencyGraph:
@@ -1240,7 +1495,7 @@ class TestDependencyGraph:
             side_effect=mock_find_pack_dependencies
         )
         pack_ids = ['pack1', 'pack2', 'pack3', 'pack4']
-        dependency_graph = PackDependencies.build_all_dependencies_graph(pack_ids, {}, VerboseFile(''))
+        dependency_graph = PackDependencies.build_all_dependencies_graph(pack_ids, {}, False)
 
         # Asserting Dependencies (mandatory and non-mandatory)
         assert [n for n in dependency_graph.neighbors('pack1')] == ['pack2', 'pack3']
@@ -1259,7 +1514,7 @@ class TestDependencyGraph:
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
                                                               id_set=id_set,
-                                                              verbose_file=VerboseFile(),
+                                                              verbose=False,
                                                               )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
         pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
@@ -1280,7 +1535,7 @@ class TestDependencyGraph:
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
                                                               id_set=id_set,
-                                                              verbose_file=VerboseFile(),
+                                                              verbose=False,
                                                               exclude_ignored_dependencies=False
                                                               )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]

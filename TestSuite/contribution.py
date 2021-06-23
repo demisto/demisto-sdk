@@ -5,6 +5,7 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
+from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.text_based import TextBased
 
@@ -32,6 +33,7 @@ class Contribution:
         self.target_dir = tmpdir
         self.integrations: List[Integration] = list()
         self.scripts: List[Script] = list()
+        self.playbooks: List[Playbook] = list()
         self.classifiers: List[JSONBased] = list()
         self.mapper: List[JSONBased] = list()
         self.dashboards: List[JSONBased] = list()
@@ -105,6 +107,16 @@ class Contribution:
         script.create_default_script()
         self.scripts.append(script)
         return script
+
+    def create_playbook(
+            self,
+            name: Optional[str] = None):
+        if name is None:
+            name = f'playbook{len(self.playbooks)}'
+        playbook = Playbook(self._playbooks_path, name, self._repo)
+        playbook.create_default_playbook()
+        self.playbooks.append(playbook)
+        return playbook
 
     def create_test_script(self):
         script = self.create_script('sample_script')
@@ -228,7 +240,6 @@ class Contribution:
             "name": self.name,
             "description": "",
             "updated": "0001-01-01T00:00:00Z",
-            "created": "2020-06-30T10:35:51.24973515Z",
             "support": "internalContribution",
             "author": "Who Cares",
             "authorImage": "",
@@ -251,6 +262,7 @@ class Contribution:
         self.create_mapper(name='fakemapper')
         self.create_integration()
         self.create_script()
+        self.create_playbook(name='playbook-SamplePlaybook')
         self.create_metadata_for_zip()
         if zip_dst:
             self.created_zip_filepath = shutil.make_archive(

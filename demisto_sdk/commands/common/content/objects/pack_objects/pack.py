@@ -1,3 +1,5 @@
+import logging
+import subprocess
 from typing import Any, Iterator, Optional, Union
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -16,10 +18,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Dashboard, DocFile, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, Layout, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget)
+    Contributors, Dashboard, DocFile, IncidentField, IncidentType,
+    IndicatorField, IndicatorType, Integration, LayoutObject, OldClassifier,
+    PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
+    SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from wcmatch.pathlib import Path
@@ -28,9 +30,10 @@ from wcmatch.pathlib import Path
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
+        self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
-        """Generic content objcets iterable generator
+        """Generic content objects iterable generator
 
         Args:
             dir_name: Directory name, for example: Integrations, Documentations etc.
@@ -100,7 +103,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def layouts(self) -> Iterator[Layout]:
+    def layouts(self) -> Iterator[LayoutObject]:
         return self._content_files_list_generator_factory(dir_name=LAYOUTS_DIR,
                                                           suffix="json")
 
@@ -158,6 +161,14 @@ class Pack:
         return obj
 
     @property
+    def metadata(self) -> PackMetaData:
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Optional[PackMetaData]):
+        self._metadata = metadata
+
+    @property
     def secrets_ignore(self) -> Optional[SecretIgnore]:
         obj = None
         file = self._path / ".secrets-ignore"
@@ -180,7 +191,7 @@ class Pack:
         obj = None
         file = self._path / "README.md"
         if file.exists():
-            obj = Readme(file)
+            obj = Readme(path=file)
 
         return obj
 
@@ -192,3 +203,36 @@ class Pack:
             obj = AuthorImage(file)
 
         return obj
+
+    @property
+    def contributors(self) -> Optional[Contributors]:
+        obj = None
+        file = self._path / "CONTRIBUTORS.md"
+        if file.exists():
+            obj = Contributors(path=file)
+
+        return obj
+
+    def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
+        """ Signs pack folder and creates signature file.
+
+        Args:
+            logger (logging.Logger): System logger already initialized.
+            dumped_pack_dir (Path): Path to the updated pack to sign.
+            sign_directory (Path): Path to the signDirectory executable file.
+
+        """
+        try:
+            full_command = f'{sign_directory} {dumped_pack_dir} keyfile base64'
+
+            signing_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            output, err = signing_process.communicate()
+            signing_process.wait()
+
+            if err:
+                logger.error(f'Failed to sign pack for {self.path.name} - {str(err)}')
+                return
+
+            logger.info(f'Signed {self.path.name} pack successfully')
+        except Exception as error:
+            logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')

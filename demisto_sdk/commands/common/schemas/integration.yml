@@ -98,6 +98,8 @@ mapping:
         type: bool
       isFetchSamples:
         type: bool
+      resetContext:
+        type: bool
   system:
     type: bool
   hidden:
@@ -140,6 +142,8 @@ schema;configuration_schema:
       type: str
     displaypassword:
       type: str
+    hiddenusername:
+      type: bool
 
 # integration->script->command
 schema;command_schema:
@@ -171,6 +175,10 @@ schema;command_schema:
       - include: important_schema
     timeout:
       type: int
+    hidden:
+      type: bool
+    polling:
+      type: bool
 
 # int
 schema;argument_schema:

@@ -5,7 +5,7 @@ import click
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
-                                                   TYPE_PWSH)
+                                                   INTEGRATION, TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -116,11 +116,15 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
+            param_names = {param.get('name') for param in params if 'name' in param}
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param.get('name') != 'feed':
                     params[counter].pop('defaultvalue')
-            for param in FEED_REQUIRED_PARAMS:
-                if param not in params:
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = {'name': param_details.get('name')}
+                param.update(param_details.get('must_equal', dict()))  # type: ignore
+                param.update(param_details.get('must_contain', dict()))  # type: ignore
+                if param.get('name') not in param_names:
                     self.data['configuration'].append(param)
 
     def update_docker_image(self):
@@ -130,7 +134,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            super().update_yml()
+            super().update_yml(file_type=INTEGRATION)
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()

@@ -1,6 +1,6 @@
 ## Upload
 
-**Upload a content entity to Demisto.**
+**Upload a content entity to Cortex XSOAR.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
 To set the environment variables, run the following shell commands:
@@ -22,6 +22,7 @@ Supported content entities:
 - Incident Fields
 - Layouts
 - Classifiers
+- Packs
 
 #### Limitation
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
@@ -46,34 +47,34 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Examples
 ```
-demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld_unified.yml
+demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/
 ```
-This will upload the **integration** YML file `HelloWorld_unified.yml` to the Demisto instance.
+This will create a unified **integration** YML file and will upload it to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript
 ```
-This will create a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Demisto instance.
+This will create a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Cortex XSOAR instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts
 ```
-This will iterate over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Demisto instance.
+This will iterate over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Cortex XSOAR instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Packs/HelloWorld
 ```
-This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Demisto instance.
+This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Cortex XSOAR instance.
 <br/><br/>
 
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --insecure
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance, **without a certificate validation**.
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance, **without a certificate validation**.
 <br/><br/>
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --verbose
 ```
-This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Demisto instance and **print the response returned from the API**.
+This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance and **print the response returned from the API**.

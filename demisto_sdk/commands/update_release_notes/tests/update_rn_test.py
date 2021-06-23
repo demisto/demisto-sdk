@@ -5,7 +5,8 @@ import unittest
 
 import mock
 import pytest
-from demisto_sdk.commands.common.git_tools import git_path
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -44,21 +45,21 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
-            "Hello World Playbook": {"type": "Playbook", "description": "", "is_new_file": False},
-            "Hello World Script": {"type": "Script", "description": "", "is_new_file": False},
-            "Hello World IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
-            "Hello World Classifier": {"type": "Classifiers", "description": "", "is_new_file": False},
-            "N/A": {"type": "Integration", "description": "", "is_new_file": False},
-            "Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
-            "Hello World Incident Type": {"type": "Incident Types", "description": "", "is_new_file": False},
-            "Hello World Indicator Type": {"type": "Indicator Types", "description": "", "is_new_file": False},
-            "Hello World Indicator Field": {"type": "Indicator Fields", "description": "", "is_new_file": False},
-            "Second Hello World Layout": {"type": "Layouts", "description": "", "is_new_file": False},
-            "Hello World Widget": {"type": "Widgets", "description": "", "is_new_file": False},
-            "Hello World Dashboard": {"type": "Dashboards", "description": "", "is_new_file": False},
-            "Hello World Connection": {"type": "Connections", "description": "", "is_new_file": False},
-            "Hello World Report": {"type": "Reports", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
+            "Hello World Playbook": {"type": FileType.PLAYBOOK, "description": "", "is_new_file": False},
+            "Hello World Script": {"type": FileType.SCRIPT, "description": "", "is_new_file": False},
+            "Hello World IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+            "Hello World Classifier": {"type": FileType.CLASSIFIER, "description": "", "is_new_file": False},
+            "N/A": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
+            "Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
+            "Hello World Incident Type": {"type": FileType.INCIDENT_TYPE, "description": "", "is_new_file": False},
+            "Hello World Indicator Type": {"type": FileType.REPUTATION, "description": "", "is_new_file": False},
+            "Hello World Indicator Field": {"type": FileType.INDICATOR_FIELD, "description": "", "is_new_file": False},
+            "Second Hello World Layout": {"type": FileType.LAYOUT, "description": "", "is_new_file": False},
+            "Hello World Widget": {"type": FileType.WIDGET, "description": "", "is_new_file": False},
+            "Hello World Dashboard": {"type": FileType.DASHBOARD, "description": "", "is_new_file": False},
+            "Hello World Connection": {"type": FileType.CONNECTION, "description": "", "is_new_file": False},
+            "Hello World Report": {"type": FileType.REPORT, "description": "", "is_new_file": False},
             "N/A2": {"type": None, "description": "", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -80,7 +81,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Playbook": {"type": "Playbook",
+            "Hello World Playbook": {"type": FileType.PLAYBOOK,
                                      "description": "Hello World Playbook description", "is_new_file": True},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -102,7 +103,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Playbook": {"type": "Playbook",
+            "Hello World Playbook": {"type": FileType.PLAYBOOK,
                                      "description": "Hello World Playbook description", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -125,7 +126,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
+            "Hello World IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -149,7 +150,7 @@ class TestRNUpdate(unittest.TestCase):
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -173,7 +174,7 @@ class TestRNUpdate(unittest.TestCase):
                              modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
-            "Hello World Integration": {"type": "Integration", "description": "", "is_new_file": False},
+            "Hello World Integration": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -510,7 +511,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -528,7 +529,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type='Test_type', content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0')
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -544,11 +545,11 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         changed_items = {
-            'Hello World Integration': {'type': 'Integration', 'description': "", 'is_new_file': True,
+            'Hello World Integration': {'type': FileType.INTEGRATION, 'description': "", 'is_new_file': True,
                                         'fromversion': '5.0.0'},
-            'Hello World Playbook': {'type': 'Playbook', 'description': '', 'is_new_file': True,
+            'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': 'Script', 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -557,6 +558,61 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.0.0).' in desc
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
         assert '(Available from Cortex XSOAR 6.0.0).' in desc
+
+    @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
+    def test_get_pack_name_fails(self, mock_master):
+        """
+            Given
+                - Pack path for update release notes
+            When
+                - get_pack_name tool function could not extract the pack name
+            Then
+               - Pack name is None and system exit occurs
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = None
+        with pytest.raises(SystemExit) as e:
+            UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
+    @mock.patch.object(UpdateRN, 'bump_version_number')
+    @mock.patch.object(UpdateRN, 'is_bump_required')
+    def test_execute_with_bump_version_raises_error(self, mock_bump_version_number, mock_is_bump_required):
+        """
+            Given
+                - Pack path for update release notes
+            When
+                - bump_version_number function raises valueError
+            Then
+               - could not bump version number and system exit occurs
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_bump_version_number.side_effect = ValueError('Test')
+        mock_is_bump_required.return_value = True
+        with pytest.raises(SystemExit) as e:
+            client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+            client.execute_update()
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
+    @mock.patch.object(UpdateRN, 'only_docs_changed')
+    def test_only_docs_changed_bump_not_required(self, mock_master):
+        """
+            Given
+                - Pack to update release notes
+            When
+                - Only doc files have changed
+            Then
+               - bump version number is not required
+            """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        mock_master.return_value = True
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert client.is_bump_required() is False
 
 
 class TestRNUpdateUnit:
@@ -570,12 +626,12 @@ class TestRNUpdateUnit:
 - **XDR Alerts**
 """
     CHANGED_FILES = {
-        "Cortex XDR Incident": {"type": "Incident Types", "description": "", "is_new_file": False},
-        "XDR Alerts": {"type": "Incident Fields", "description": "", "is_new_file": False},
-        "Sample IncidentField": {"type": "Incident Fields", "description": "", "is_new_file": False},
-        "Cortex XDR - IR": {"type": "Integration", "description": "", "is_new_file": False},
+        "Cortex XDR Incident": {"type": FileType.INCIDENT_TYPE, "description": "", "is_new_file": False},
+        "XDR Alerts": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+        "Sample IncidentField": {"type": FileType.INCIDENT_FIELD, "description": "", "is_new_file": False},
+        "Cortex XDR - IR": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
         "Nothing": {"type": None, "description": "", "is_new_file": False},
-        "Sample": {"type": "Integration", "description": "", "is_new_file": False},
+        "Sample": {"type": FileType.INTEGRATION, "description": "", "is_new_file": False},
     }
     EXPECTED_RN_RES = """
 #### Incident Types
@@ -585,36 +641,52 @@ class TestRNUpdateUnit:
 - **Sample IncidentField**
 - **XDR Alerts**
 
-#### Integration
-##### Sample
+#### Integrations
+##### Cortex XDR - IR
 - %%UPDATE_RN%%
 
-##### Cortex XDR - IR
+##### Sample
 - %%UPDATE_RN%%
 """
 
-    diff_package = [('Packs/VulnDB', 'Packs/VulnDB/Layouts/VulnDB/VulnDB.json', ('VulnDB', 'Layouts')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', ('VulnDB', 'Classifiers')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', ('VulnDB', 'Incident Types')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', ('VulnDB', 'Incident Fields')),
-                    ('Packs/CommonTypes', 'Packs/CommonTypes/IndicatorFields/VulnDB.json',
-                     ('VulnDB', 'Indicator Fields')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB', 'Playbook')),
-                    ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml', ('VulnDB',
-                                                                                                         'Playbook')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
-                    ('Packs/CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', ('VulnDB', 'Script')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', ('N/A', None)),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Integrations/VulnDB/VulnDB.yml', ('VulnDB', 'Integration')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Connections/VulnDB/VulnDB.yml', ('VulnDB', 'Connections')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml', ('VulnDB', 'Dashboards')),
-                    ('Packs/CommonScripts', 'Packs/CommonScripts/Dashboards/VulnDB/VulnDB.yml',
-                     ('VulnDB', 'Dashboards')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Widgets/VulnDB/VulnDB.yml', ('VulnDB', 'Widgets')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/Reports/VulnDB/VulnDB.yml', ('VulnDB', 'Reports')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/IndicatorTypes/VulnDB/VulnDB.yml', ('VulnDB', 'Indicator Types')),
-                    ('Packs/VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
-                    ('Packs/CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml', ('N/A', None)),
+    diff_package = [('Packs/VulnDB', 'Packs/VulnDB/Layouts/VulnDB/VulnDB.json', FileType.LAYOUT,
+                     ('VulnDB', FileType.LAYOUT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Classifiers/VulnDB/VulnDB.json', FileType.CLASSIFIER,
+                     ('VulnDB', FileType.CLASSIFIER)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentTypes/VulnDB/VulnDB.json', FileType.INCIDENT_TYPE,
+                     ('VulnDB', FileType.INCIDENT_TYPE)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IncidentFields/VulnDB/VulnDB.json', FileType.INCIDENT_FIELD,
+                     ('VulnDB', FileType.INCIDENT_FIELD)),
+                    ('Packs/CommonTypes', 'Packs/CommonTypes/IndicatorFields/VulnDB.json', FileType.INDICATOR_FIELD,
+                     ('VulnDB', FileType.INDICATOR_FIELD)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Playbooks/VulnDB/VulnDB_playbook.yml', FileType.PLAYBOOK,
+                     ('VulnDB', FileType.PLAYBOOK)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/Playbooks/VulnDB/VulnDB_playbook.yml',
+                     FileType.PLAYBOOK, ('VulnDB', FileType.PLAYBOOK)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Scripts/VulnDB/VulnDB.py', FileType.SCRIPT,
+                     ('VulnDB', FileType.SCRIPT)),
+                    ('Packs/CommonPlaybooks', 'Packs/CommonPlaybooks/Scripts/VulnDB/VulnDB.py', FileType.SCRIPT,
+                     ('VulnDB', FileType.SCRIPT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/ReleaseNotes/1_0_1.md', FileType.RELEASE_NOTES,
+                     ('VulnDB', FileType.RELEASE_NOTES)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Integrations/VulnDB/VulnDB.yml', FileType.INTEGRATION,
+                     ('VulnDB', FileType.INTEGRATION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Connections/VulnDB/VulnDB.yml', FileType.CONNECTION,
+                     ('VulnDB', FileType.CONNECTION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Dashboards/VulnDB/VulnDB.yml', FileType.DASHBOARD,
+                     ('VulnDB', FileType.DASHBOARD)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/Dashboards/VulnDB/VulnDB.yml', FileType.DASHBOARD,
+                     ('VulnDB', FileType.DASHBOARD)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Widgets/VulnDB/VulnDB.yml', FileType.WIDGET,
+                     ('VulnDB', FileType.WIDGET)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/Reports/VulnDB/VulnDB.yml', FileType.REPORT,
+                     ('VulnDB', FileType.REPORT)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/IndicatorTypes/VulnDB/VulnDB.yml', FileType.REPUTATION,
+                     ('VulnDB', FileType.REPUTATION)),
+                    ('Packs/VulnDB', 'Packs/VulnDB/TestPlaybooks/VulnDB/VulnDB.yml', FileType.TEST_PLAYBOOK,
+                     ('VulnDB', FileType.TEST_PLAYBOOK)),
+                    ('Packs/CommonScripts', 'Packs/CommonScripts/TestPlaybooks/VulnDB/VulnDB.yml',
+                     FileType.TEST_PLAYBOOK, ('VulnDB', FileType.TEST_PLAYBOOK)),
                     ]
 
     @pytest.fixture(autouse=True)
@@ -634,8 +706,8 @@ class TestRNUpdateUnit:
         else:
             raise Exception('Expecting self.meta_backup to be set inorder to restore pack_metadata.json file')
 
-    @pytest.mark.parametrize('pack_name, path, expected_result', diff_package)
-    def test_ident_changed_file_type(self, pack_name, path, expected_result, mocker):
+    @pytest.mark.parametrize('pack_name, path, find_type_result, expected_result', diff_package)
+    def test_identify_changed_file_type(self, pack_name, path, find_type_result, expected_result, mocker):
         """
             Given:
                 - a filepath of a changed file
@@ -651,6 +723,7 @@ class TestRNUpdateUnit:
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.find_type', return_value=find_type_result)
         result = update_rn.identify_changed_file_type(filepath)
         assert expected_result == result
 
@@ -686,7 +759,8 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
+                                  docker_image_name=None)
 
     def test_update_existing_rn(self, mocker):
         """
@@ -945,9 +1019,7 @@ class TestRNUpdateUnit:
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
-        is_docker_image_changed, docker_image_name = check_docker_image_changed('test.yml')
-        assert is_docker_image_changed is False
-        assert docker_image_name == ''
+        assert check_docker_image_changed('test.yml') is None
 
     def test_update_docker_image_in_yml(self, mocker):
         """
@@ -969,8 +1041,8 @@ class TestRNUpdateUnit:
                      return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
@@ -983,7 +1055,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*.' in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
         """
@@ -998,6 +1070,8 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
+            file.write('### Integrations\n')
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
@@ -1008,13 +1082,15 @@ class TestRNUpdateUnit:
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_0_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+        client = UpdateRN(pack_path="Packs/Test", update_type=None,
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
+        client.execute_update()
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
             RN = file.read()
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' in RN
+        assert RN.count('Updated the Docker image to: *dockerimage:python/test:1243*.') == 1
 
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
             file.write('')
@@ -1044,6 +1120,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'return_release_notes_path', return_value='demisto_sdk/commands'
                                                                                 '/update_release_notes/tests_data'
                                                                                 '/Packs/release_notes/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
@@ -1051,7 +1128,80 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Upgraded the Docker image to dockerimage:python/test:1243' not in RN
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
+
+    def test_new_integration_docker_not_updated(self, mocker):
+        """
+        Given
+            - New integration created.
+        When
+            - Running update-release-notes command
+
+        Then
+            - Docker is not indicated as updated.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        import os
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+            pack_data = json.load(file)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
+                     return_value='+  dockerimage:python/test:1243')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
+                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
+        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
+        mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
+        mocker.patch.object(UpdateRN, 'return_release_notes_path',
+                            return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
+                                         '/1_1_0.md')
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
+                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+                          added_files={'Packs/Test/Integrations/Test.yml'})
+        client.execute_update()
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+            RN = file.read()
+        os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
+        assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
+
+    docker_image_test_rn = '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image ' \
+                           'to: *demisto/python3:3.9.1.149615*.\n'
+    docker_image_test_data = [
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', None,
+         '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', False),
+        ('#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n', 'demisto/python3:3.9.1.149615',
+         docker_image_test_rn, True),
+        (docker_image_test_rn, 'demisto/python3:3.9.1.149615', docker_image_test_rn, False),
+        (docker_image_test_rn, 'demisto/python3:3.9.1.149616',
+         '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
+         'to: *demisto/python3:3.9.1.149616*.\n', True)
+    ]
+
+    @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)
+    def test_rn_with_docker_image(self, rn, docker_image, expected_rn, expected_existing_rn_changed):
+        """
+        Given
+        - Case a: Release notes existed, did not contain updated docker image notes, docker image was not updated
+        - Case b: Release notes existed, did not contain updated docker image notes, docker image was updated
+        - Case c: Release notes existed, contains updated docker image notes, docker image was not updated since
+                  last release notes.
+        - Case d: Release notes existed, contains updated docker image notes, docker image was updated again since
+                  last release notes.
+        When
+        - Checking if docker image update occurred.
+
+        Then
+        - Case a: Release notes were not changed, existing_rn_changed is false.
+        - Case b: Release notes were changed with the updated docker image, existing_rn_changed is true.
+        - Case c: Release notes were not changed, existing_rn_changed is false.
+        - Case d: Release notes were changed to most updated docker image, existing_rn_changed is true.
+        """
+        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        assert client.rn_with_docker_image(rn, docker_image) == expected_rn
+        assert client.existing_rn_changed == expected_existing_rn_changed
 
 
 def test_get_from_version_at_update_rn(integration):
@@ -1072,3 +1222,25 @@ def test_get_from_version_at_update_rn(integration):
     assert fromversion == '5.0.0'
     fromversion = get_from_version_at_update_rn('fake_path.yml')
     assert fromversion is None
+
+
+@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
+                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
+                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout')])
+def test_get_display_name(data, answer, mocker):
+    """
+        Given
+            - Pack to update release notes
+        When
+            - get_display_name with file path is called
+        Then
+           - Returned name determined by the key of the data loaded from the file
+        """
+    from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+    mock_object = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.StructureValidator')
+    mock_structure_validator = mock_object.return_value
+    mock_structure_validator.load_data_from_file.return_value = data
+    client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
+        'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+    assert client.get_display_name('Packs/Test/test.yml') == answer

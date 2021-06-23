@@ -2,7 +2,7 @@ import os
 from typing import Dict, List, Tuple
 
 import click
-from demisto_sdk.commands.common.git_tools import get_changed_files
+from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
@@ -11,6 +11,7 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_description import DescriptionFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -49,11 +50,11 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'pythonfile': PythonFileFormat,
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
-    'canvas-context-connections': ConnectionJSONFormat
+    'canvas-context-connections': ConnectionJSONFormat,
+    'description': DescriptionFormat
 }
 UNFORMATTED_FILES = ['readme',
                      'releasenotes',
-                     'description',
                      'changelog',
                      'image',
                      'javascriptfile',
@@ -74,7 +75,8 @@ def format_manager(input: str = None,
                    no_validate: bool = False,
                    verbose: bool = False,
                    update_docker: bool = False,
-                   assume_yes: bool = False):
+                   assume_yes: bool = False,
+                   deprecate: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -89,7 +91,7 @@ def format_manager(input: str = None,
         int 0 in case of success 1 otherwise
     """
     if input:
-        files = get_files_in_dir(input, ['json', 'yml', 'py'])
+        files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
     else:
         files = [file['name'] for file in
                  get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
@@ -111,19 +113,20 @@ def format_manager(input: str = None,
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
                 continue
+            if dirname.endswith('test_data') or dirname.endswith('doc_imgs'):
+                continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
-                info_res, err_res, skip_res = run_format_on_file(
-                    input=file_path,
-                    file_type=file_type,
-                    from_version=from_version,
-                    output=output,
-                    no_validate=no_validate,
-                    verbose=verbose,
-                    update_docker=update_docker,
-                    assume_yes=assume_yes
-                )
+                info_res, err_res, skip_res = run_format_on_file(input=file_path,
+                                                                 file_type=file_type,
+                                                                 from_version=from_version,
+                                                                 output=output,
+                                                                 no_validate=no_validate,
+                                                                 verbose=verbose,
+                                                                 update_docker=update_docker,
+                                                                 assume_yes=assume_yes,
+                                                                 deprecate=deprecate)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

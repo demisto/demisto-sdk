@@ -13,7 +13,7 @@ description: |-
   Enrich a file using one or more integrations.
 
   - Provide threat information
-fromversion: "5.0.0"
+fromversion: "5.5.0"
 starttaskid: "0"
 tasks:
   "0":

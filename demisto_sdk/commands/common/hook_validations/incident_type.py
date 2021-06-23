@@ -33,7 +33,8 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         is_incident_type__valid = all([
             super().is_valid_file(validate_rn),
-            self.is_valid_version()
+            self.is_valid_version(),
+            self.is_valid_autoextract()
         ])
 
         # check only on added files
@@ -77,7 +78,8 @@ class IncidentTypeValidator(ContentEntityValidator):
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_bc_broke = True
         return is_bc_broke
 
@@ -119,3 +121,56 @@ class IncidentTypeValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_valid_autoextract(self):
+        """Check if extractSettings field is valid.
+
+        Returns:
+            bool. True if extractSettings is valid or empty, False otherwise
+        """
+        auto_extract_data = self.current_file.get('extractSettings', {})
+
+        # no auto extraction set in incident type.
+        if not auto_extract_data:
+            return True
+
+        auto_extract_fields = auto_extract_data.get('fieldCliNameToExtractSettings')
+        auto_extract_mode = auto_extract_data.get('mode')
+
+        is_valid = True
+
+        if auto_extract_fields:
+            invalid_incident_fields = []
+            for incident_field, extracted_settings in auto_extract_fields.items():
+                extracting_all = extracted_settings.get('isExtractingAllIndicatorTypes')
+                extract_as_is = extracted_settings.get('extractAsIsIndicatorTypeId')
+                extracted_indicator_types = extracted_settings.get('extractIndicatorTypesIDs')
+
+                # General format check.
+                if type(extracting_all) != bool or type(extract_as_is) != str or type(
+                        extracted_indicator_types) != list:
+                    invalid_incident_fields.append(incident_field)
+
+                # If trying to extract without regex make sure extract all is set to
+                # False and the extracted indicators list is empty
+                elif extract_as_is != "":
+                    if extracting_all is True or len(extracted_indicator_types) > 0:
+                        invalid_incident_fields.append(incident_field)
+
+                # If trying to extract with regex make sure extract all is set to
+                # False and the extract_as_is should be set to an empty string
+                elif len(extracted_indicator_types) > 0:
+                    if extracting_all is True or extract_as_is != "":
+                        invalid_incident_fields.append(incident_field)
+
+            if invalid_incident_fields:
+                error_message, error_code = Errors.incident_type_auto_extract_fields_invalid(invalid_incident_fields)
+                if self.handle_error(error_message, error_code, self.file_path):
+                    is_valid = False
+
+        if auto_extract_mode not in ['All', 'Specific']:
+            error_message, error_code = Errors.incident_type_invalid_auto_extract_mode()
+            if self.handle_error(error_message, error_code, self.file_path):
+                is_valid = False
+
+        return is_valid

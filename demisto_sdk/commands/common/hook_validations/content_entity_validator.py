@@ -2,9 +2,11 @@ import json
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
+from typing import Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
+from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   FEATURE_BRANCHES,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -21,10 +23,10 @@ class ContentEntityValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 suppress_print=False):
-        # type: (StructureValidator, dict, bool, bool, bool) -> None
+                 suppress_print=False, json_file_path=None):
+        # type: (StructureValidator, dict, bool, bool, bool, Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
@@ -223,3 +225,22 @@ class ContentEntityValidator(BaseValidator):
                     return False
 
         return True
+
+    @staticmethod
+    def remove_separators_from_name(base_name) -> str:
+        """
+        Removes separators from a given name of folder or file.
+
+        Args:
+            base_name: The base name of the folder/file.
+
+        Return:
+            The base name without separators.
+        """
+
+        for separator in ENTITY_NAME_SEPARATORS:
+
+            if separator in base_name:
+                base_name = base_name.replace(separator, '')
+
+        return base_name

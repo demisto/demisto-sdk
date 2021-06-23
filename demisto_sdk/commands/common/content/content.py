@@ -77,7 +77,8 @@ class Content:
     def path(self) -> Path:
         return self._path
 
-    def _content_files_list_generator_factory(self, dir_name: str, prefix: str = "*", suffix: str = "*") -> Iterator[Any]:
+    def _content_files_list_generator_factory(self, dir_name: str, prefix: str = "*", suffix: str = "*") -> Iterator[
+            Any]:
         """Generic content objcets iterable generator
 
         Args:

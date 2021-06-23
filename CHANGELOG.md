@@ -1,8 +1,214 @@
 # Changelog
+* When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
+* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
+* Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
+* Added new validation for the `xsoar_config.json` file in the **validate** command.
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
+
+# 1.4.0
+* Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
+* Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
+* Fixed the **generate-docs** to handle integration authentication parameter.
+* Added a validation to ensure that description and README do not contain the word 'Demisto'.
+* Improved the deprecated message validation required from playbooks and scripts.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
+* Fixed the **update release notes** command to display a name for old layouts.
+* Added the ability to append to the pack README credit to contributors.
+* Added identification for parameter differences in **integration-diff** command.
+* Fixed **format** to use git as a default value.
+* Updated the **upload** command to support reports.
+* Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
+* Updated the validation that incident fields' names do not contain the word incident will aplly to core packs only.
+* Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
+* Renamed the GitHub authentication token environment variable `GITHUB_TOKEN` to `DEMITO_SDK_GITHUB_TOKEN`.
+* Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
+* Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
+* Added the **convert** command to convert entities between XSOAR versions.
+* Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
+* Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
+
+# 1.3.9
+* Added a validation verifying that the pack's README.md file is not equal to pack description.
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+* Improved the error messages for separators in folder and file names in the **validate** command.
+* Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
+* Fixed an issue where the demisto-sdk version check failed due to a rate limit.
+* Fixed an issue with playbooks scheme validation.
+
+# 1.3.8
+* Updated the **secrets** command to work on forked branches.
+
+# 1.3.7
+* Added a validation to ensure correct image and description file names.
+* Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
+* Added the **integration-diff** command to check differences between two versions of an integration and to return a report of missing and changed elements in the new version.
+* Added a validation verifying that the pack's README.md file is not missing or empty for partner packs or packs contains use cases.
+* Added a validation to ensure that the integration and script folder and file names will not contain separators (`_`, `-`, ` `).
+* When formatting new pack, the **format** command will set the *fromversion* key to 5.5.0 in the new files without fromversion.
+
+# 1.3.6
+* Added a validation that core packs are not dependent on non-core packs.
+* Added a validation that a pack name follows XSOAR standards.
+* Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
+* Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
+* Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
+* Added support for running SDK commands in private repositories.
+* Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
+* When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
+* If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
+* Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
+* Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
+* Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld or HelloWorldPremium README.
+
+# 1.3.5
+* Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
+* Added a validation that commands' names and arguments in core packs, or scripts' arguments do not contain the word incident.
+* Fixed issue where running the **generate-docs** command with -c flag ran all the commands and not just the commands specified by the flag.
+* Fixed the error message of the **validate** command to not always suggest adding the *description* field.
+* Fixed an issue where running **format** on feed integration generated invalid parameter structure.
+* Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
+* Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
+* When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
+* Added an option to fill in the developer email when running the **init** command.
+
+# 1.3.4
+* Updated the **validate** command to check that the 'additionalinfo' field only contains the expected value for feed required parameters and not equal to it.
+* Added a validation that community/partner details are not in the detailed description file.
+* Added a validation that the Use Case tag in pack_metadata file is only used when the pack contains at least one PB, Incident Type or Layout.
+* Added a validation that makes sure outputs in integrations are matching the README file when only README has changed.
+* Added the *hidden* field to the integration schema.
+* Fixed an issue where running **format** on a playbook whose `name` does not equal its `id` would cause other playbooks who use that playbook as a sub-playbook to fail.
+* Added support for local custom command configuration file `.demisto-sdk-conf`.
+* Updated the **format** command to include an update to the description file of an integration, to remove community/partner details.
+
+# 1.3.3
+* Fixed an issue where **lint** failed where *.Dockerfile* exists prior running the lint command.
+* Added FeedHelloWorld template option for *--template* flag in **demisto-sdk init** command.
+* Fixed issue where **update-release-notes** deleted release note file if command was called more than once.
+* Fixed issue where **update-release-notes** added docker image release notes every time the command was called.
+* Fixed an issue where running **update-release-notes** on a pack with newly created integration, had also added a docker image entry in the release notes.
+* Fixed an issue where `XSOAR-linter` did not find *NotImplementedError* in main.
+* Added validation for README files verifying their length (over 30 chars).
+* When using *-g* flag in the **validate** command it will now ignore untracked files by default.
+* Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
+* Improved the `pykwalify` error outputs in the **validate** command.
+* Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
+
+# 1.3.2
+* Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
+* Added the **doc-review** command to check spelling in .md and .yml files as well as a basic release notes review.
+* Added a validation that a pack's display name does not already exist in content repository.
+* Fixed an issue where the **validate** command failed to detect duplicate params in an integration.
+* Fixed an issue where the **validate** command failed to detect duplicate arguments in a command in an integration.
+
+# 1.3.1
+* Fixed an issue where the **validate** command failed to validate the release notes of beta integrations.
+* Updated the **upload** command to support indicator fields.
+* The **validate** and **update-release-notes** commands will now check changed files against `demisto/master` if it is configured locally.
+* Fixed an issue where **validate** would incorrectly identify files as renamed.
+* Added a validation that integration properties (such as feed, mappers, mirroring, etc) are not removed.
+* Fixed an issue where **validate** failed when comparing branch against commit hash.
+* Added the *--no-pipenv* flag to the **split-yml** command.
+* Added a validation that incident fields and incident types are not removed from mappers.
+* Fixed an issue where the *c
+reate-id-set* flag in the *validate* command did not work while not using git.
+* Added the *hiddenusername* field to the integration schema.
+* Added a validation that images that are not integration images, do not ask for a new version or RN
+
+# 1.3.0
+* Do not collect optional dependencies on indicator types reputation commands.
+* Fixed an issue where downloading indicator layoutscontainer objects failed.
+* Added a validation that makes sure outputs in integrations are matching the README file.
+* Fixed an issue where the *create-id-set* flag in the **validate** command did not work.
+* Added a warning in case no id_set file is found when running the **validate** command.
+* Fixed an issue where changed files were not recognised correctly on forked branches in the **validate** and the **update-release-notes** commands.
+* Fixed an issue when files were classified incorrectly when running *update-release-notes*.
+* Added a validation that integration and script file paths are compatible with our convention.
+* Fixed an issue where id_set.json file was re created whenever running the generate-docs command.
+* added the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
+
+# 1.2.19
+* Fixed an issue where merge id_set was not updated to work with the new entity of Packs.
+* Added a validation that the playbook's version matches the version of its sub-playbooks, scripts, and integrations.
+
+# 1.2.18
+* Changed the *skip-id-set-creation* flag to *create-id-set* in the **validate** command. Its default value will be False.
+* Added support for the 'cve' reputation command in default arg validation.
+* Filter out generic and reputation command from scripts and playbooks dependencies calculation.
+* Added support for the incident fields in outgoing mappers in the ID set.
+* Added a validation that the taskid field and the id field under the task field are both from uuid format and contain the same value.
+* Updated the **format** command to generate uuid value for the taskid field and for the id under the task field in case they hold an invalid values.
+* Exclude changes from doc_files directory on validation.
+* Added a validation that an integration command has at most one default argument.
+* Fixing an issue where pack metadata version bump was not enforced when modifying an old format (unified) file.
+* Added validation that integration parameter's display names are capitalized and spaced using whitespaces and not underscores.
+* Fixed an issue where beta integrations where not running deprecation validations.
+* Allowed adding additional information to the deprecated description.
+* Fixing an issue when escaping less and greater signs in integration params did not work as expected.
+
+# 1.2.17
+* Added a validation that the classifier of an integration exists.
+* Added a validation that the mapper of an integration exists.
+* Added a validation that the incident types of a classifier exist.
+* Added a validation that the incident types of a mapper exist.
+* Added support for *text* argument when running **demisto-sdk update-release-notes** on the ApiModules pack.
+* Added a validation for the minimal version of an indicator field of type grid.
+* Added new validation for incident and indicator fields in classifiers mappers and layouts exist in the content.
+* Added cache for get_remote_file to reducing failures from accessing the remote repo.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the `id` of the given playbooks.
+* Playbook dependencies from incident and indicator fields are now marked as optional.
+* Mappers dependencies from incident types and incident fields are now marked as optional.
+* Classifier dependencies from incident types are now marked as optional.
+* Updated **demisto-sdk init** command to no longer create `created` field in pack_metadata file
+* Updated **generate-docs** command to take the parameters names in setup section from display field and to use additionalinfo field when exist.
+* Using the *verbose* argument in the **find-dependencies** command will now log to the console.
+* Improved the deprecated message validation required from integrations.
+* Fixed an issue in the **generate-docs** command where **Context Example** section was created when it was empty.
+
+# 1.2.16
+* Added allowed ignore errors to the *IDSetValidator*.
+* Fixed an issue where an irrelevant id_set validation ran in the **validate** command when using the *--id-set* flag.
+* Fixed an issue were **generate-docs** command has failed if a command did not exist in commands permissions file.
+* Improved a **validate** command message for missing release notes of api module dependencies.
+
+# 1.2.15
+* Added the *ID101* to the allowed ignored errors.
+
+# 1.2.14
+* SDK repository is now mypy check_untyped_defs complaint.
+* The lint command will now ignore the unsubscriptable-object (E1136) pylint error in dockers based on python 3.9 - this will be removed once a new pylint version is released.
+* Added an option for **format** to run on a whole pack.
+* Added new validation of unimplemented commands from yml in the code to `XSOAR-linter`.
+* Fixed an issue where Auto-Extract fields were only checked for newly added incident types in the **validate** command.
+* Added a new warning validation of direct access to args/params dicts to `XSOAR-linter`.
+
+# 1.2.13
+* Added new validation of indicators usage in CommandResults to `XSOAR-linter`.
 * Running **demisto-sdk lint** will automatically run on changed files (same behavior as the -g flag).
 * Removed supported version message from the documentation when running **generate_docs**.
 * Added a print to indicate backwards compatibility is being checked in **validate** command.
 * Added a percent print when running the **validate** command with the *-a* flag.
+* Fixed a regression in the **upload** command where it was ignoring `DEMISTO_VERIFY_SSL` env var.
+* Fixed an issue where the **upload** command would fail to upload beta integrations.
+* Fixed an issue where the **validate** command did not create the *id_set.json* file when running with *-a* flag.
+* Added price change validation in the **validate** command.
+* Added validations that checks in read-me for empty sections or leftovers from the auto generated read-me that should be changed.
+* Added new code validation for *NotImplementedError* to raise a warning in `XSOAR-linter`.
+* Added validation for support types in the pack metadata file.
+* Added support for *--template* flag in **demisto-sdk init** command.
+* Fixed an issue with running **validate** on master branch where the changed files weren't compared to previous commit when using the *-g* flag.
+* Fixed an issue where the `XSOAR-linter` ran *NotImplementedError* validation on scripts.
+* Added support for Auto-Extract feature validation in incident types in the **validate** command.
+* Fixed an issue in the **lint** command where the *-i* flag was ignored.
+* Improved **merge-id-sets** command to support merge between two ID sets that contain the same pack.
+* Fixed an issue in the **lint** command where flake8 ran twice.
 
 # 1.2.12
 * Bandit now reports also on medium severity issues.

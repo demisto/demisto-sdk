@@ -1,5 +1,8 @@
 """Configuring tests for the content suite
 """
+from typing import Generator
+from unittest import mock
+
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
@@ -67,3 +70,13 @@ def playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Play
     """Mocking tmp_path
     """
     return get_playbook(request, tmp_path_factory)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def mock_update_id_set_cpu_count() -> Generator:
+    """
+    Since Circle build has an issue in it's virtualization where it has only 2 vcpu's but the 'cpu_count' method returns
+    all physical cpu's (36) it uses too many processes in the process pools.
+    """
+    with mock.patch('demisto_sdk.commands.common.update_id_set.cpu_count', return_value=2) as _fixture:
+        yield _fixture

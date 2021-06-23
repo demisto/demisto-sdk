@@ -439,7 +439,6 @@ class Initiator:
 
                 with open(f'{pack_dir}/.secrets-ignore', 'a') as f:
                     for line in secrets:
-                        print(line)
                         f.write(line)
                         f.write('\n')
 

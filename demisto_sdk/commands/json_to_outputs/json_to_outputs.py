@@ -152,7 +152,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, description_dictionary=None):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -167,11 +167,15 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        if description_dictionary:
+            description_dictionary = {f'{prefix}.{key}': value for key, value in description_dictionary.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
         description = ''
-        if interactive:
+        if description_dictionary and key in description_dictionary:
+            description = description_dictionary[key]
+        elif interactive:
             print(f'Enter description for: [{key}]')
             description = input_multiline()
 
@@ -191,7 +195,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
+def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False, description_json=None):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -204,7 +208,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
-
+        description_json: JSON mapping between field names and their descriptions. (Optional)
     Returns:
     """
     try:
@@ -212,10 +216,21 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:
-            print("Enter the command's output in JSON format.\n As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
+            print("Enter the command's output in JSON format.\n "
+                  "As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
             input_json = input_multiline()
 
-        yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
+        descriptions = None
+        if description_json:
+            print("Enter a mapping between (some, or all) field names and their descriptions.\n "
+                  "As an example, If one of the fields is `geolocation`, "
+                  "enter {\"geolocation\": \"coordinates of the location\"}")
+            try:
+                descriptions = json.loads(input_multiline())
+            except json.decoder.JSONDecodeError:
+                print("Error decoding the JSON descriptions, ignoring them.")
+
+        yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
 
         if output:
             with open(output, 'w') as yf:

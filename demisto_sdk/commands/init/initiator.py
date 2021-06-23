@@ -381,6 +381,33 @@ class Initiator:
             except ValueError:
                 user_input = input("\nThe option must be number, please enter valid choice: ")
 
+    def ignore_secrets(self):
+        ignore_secrets = input("\nWould you like ignore the secrets automatically? Y/N ").lower()
+        if ignore_secrets in ['y', 'yes']:
+            pack_dir = Path(self.full_output_path).parents[1]
+            files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
+
+            sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
+            # remove directories and irrelevant files
+            files = [f for f in files_and_directories if os.path.isfile(f) and sv.is_text_file(f)]
+            all_secrets = sv.search_potential_secrets(files)  # {'a': {'b': ['c', 'd'], 'e': ['f']}, 'g': ['h']}
+            secrets: set = set()
+
+            def extract_values_from_nested_dict_to_a_set(d, s):
+                for v in d.values():
+                    if isinstance(v, dict):  # v can be a dict
+                        extract_values_from_nested_dict_to_a_set(v, s)
+                    else:
+                        for i in v:  # v is a list
+                            s.add(i)
+
+            extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
+
+            with open(f'{pack_dir}/.secrets-ignore', 'a') as f:
+                for line in secrets:
+                    f.write(line)
+                    f.write('\n')
+
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
 
@@ -415,32 +442,9 @@ class Initiator:
 
         self.copy_common_server_python()
         self.copy_demistotmock()
-        if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:
-            ignore_secrets = input("\nWould you like ignore the secrets automatically? Y/N ").lower()
-            if ignore_secrets in ['y', 'yes']:
-                pack_dir = Path(self.full_output_path).parents[1]
-                files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
 
-                sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
-                # remove directories and irrelevant files
-                files = [f for f in files_and_directories if os.path.isfile(f) and sv.is_text_file(f)]
-                all_secrets = sv.search_potential_secrets(files)  # {'a': {'b': ['c', 'd'], 'e': ['f']}, 'g': ['h']}
-                secrets: set = set()
-
-                def extract_values_from_nested_dict_to_a_set(d, s):
-                    for v in d.values():
-                        if isinstance(v, dict):  # v can be a dict
-                            extract_values_from_nested_dict_to_a_set(v, s)
-                        else:
-                            for i in v:  # v is a list
-                                s.add(i)
-
-                extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
-
-                with open(f'{pack_dir}/.secrets-ignore', 'a') as f:
-                    for line in secrets:
-                        f.write(line)
-                        f.write('\n')
+        if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
+            self.ignore_secrets()
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
@@ -480,6 +484,8 @@ class Initiator:
 
         self.copy_common_server_python()
         self.copy_demistotmock()
+
+        self.ignore_secrets()
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 

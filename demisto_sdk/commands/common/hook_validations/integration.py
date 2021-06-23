@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_core_pack_list,
+    _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_files_in_dir, get_pack_name, is_v2_file, print_error,
     server_version_compare)
 
@@ -70,13 +70,16 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
+                check_is_unskipped (bool): Whether to check if the integration is unskipped.
+                conf_file (dict):
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -113,6 +116,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.name_not_contain_the_type()
 
         ]
+
+        if check_is_unskipped:
+            answers.append(self.is_unskipped_integration(conf_json_data))
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
@@ -156,6 +162,16 @@ class IntegrationValidator(ContentEntityValidator):
             self._is_valid_deprecated_integration_description(),
         ]
         return all(answers)
+
+    def is_unskipped_integration(self, conf_json_data):
+        """Validated the integration testing is not skipped."""
+        skipped_integrations = conf_json_data.get('skipped_integrations', {})
+        integration_id = _get_file_id('integration', self.current_file)
+        if skipped_integrations and integration_id in skipped_integrations:
+            error_message, error_code = Errors.integration_is_skipped(integration_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+        return self.is_valid
 
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_valid = True

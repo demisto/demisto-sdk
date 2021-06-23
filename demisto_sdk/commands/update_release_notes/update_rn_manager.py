@@ -149,7 +149,7 @@ class UpdateReleaseNotesManager:
                 old_format_files: A set of old formatted files
         """
         existing_rn_version = self.get_existing_rn(pack)
-        if existing_rn_version is None:
+        if existing_rn_version is None:  # New release notes file already found for the pack
             sys.exit(0)
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)

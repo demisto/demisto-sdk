@@ -179,7 +179,7 @@ class IncidentFieldValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, validate_all=True):
         """Check whether the Incident Field is valid or not
         """
         answers = [
@@ -192,7 +192,6 @@ class IncidentFieldValidator(ContentEntityValidator):
             self.is_valid_version(),
             self.is_valid_required(),
             self.is_valid_indicator_grid_fromversion(),
-            self.is_valid_incident_field_name_prefix()
         ]
 
         core_packs_list = get_core_pack_list()
@@ -201,7 +200,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_core = pack in core_packs_list
         if is_core:
             answers.append(self.is_valid_name())
-
+        if is_new_file and not validate_all:
+            answers.append(self.is_valid_incident_field_name_prefix())
         return all(answers)
 
     def is_valid_name(self):
@@ -405,14 +405,19 @@ class IncidentFieldValidator(ContentEntityValidator):
         ignored_packs = ['Common Types']
         pack_metadata = get_pack_metadata(self.file_path)
         pack_name = pack_metadata.get("name")
+        name_prefixes = pack_metadata.get('itemPrefix', [])
+        if not name_prefixes:
+            name_prefixes = [pack_name]
         field_name = self.current_file.get("name", "")
         if pack_name and pack_name not in ignored_packs:
-            if not self.current_file.get("name", "").startswith(pack_metadata.get("name")):
-                error_message, error_code = Errors.invalid_incident_field_prefix(field_name, pack_name)
-                if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_fix_field_name(field_name, pack_name)):
-                    return False
-        return True
+            for prefix in name_prefixes:
+                if self.current_file.get("name", "").startswith(prefix):
+                    return True
+            error_message, error_code = Errors.invalid_incident_field_prefix(field_name)
+            if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix_field_name(field_name, pack_name)):
+                return False
+

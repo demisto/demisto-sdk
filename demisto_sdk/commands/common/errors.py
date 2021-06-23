@@ -1628,12 +1628,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_prefix(field_name, pack_name):
-        return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name:" \
-               f"'{pack_name} <field name>'"
+    def invalid_incident_field_prefix(field_name):
+        return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name."
+
 
     @staticmethod
     def suggest_fix_field_name(field_name, pack_name):
-        return f"To fix the problem, add pack name prefix to the field name. Example: {pack_name} {field_name}." \
+        return f"To fix the problem, add pack name prefix to the field name." \
+               f"you can use the pack name or one of the prefixes in packe.metadat itemPrefix. Example: {pack_name} {field_name}." \
                "Also make sure to update the field id and cliName accordingly." \
                f"or add the pack name to the ignored packs"

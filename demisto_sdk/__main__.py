@@ -992,7 +992,6 @@ def generate_docs(**kwargs):
 )
 @click.option(
     "-fd",
-    "--fail-duplicates",
     help="Fails the process if any duplicates are found.",
     is_flag=True
 )

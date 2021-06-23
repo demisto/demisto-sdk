@@ -1,6 +1,5 @@
 import copy
 
-from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
 
@@ -482,7 +481,12 @@ class TestIntegrationDiffDetector:
 
         integration_detector.print_missing_items()
 
-        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\nThe parameter `API key` - Is Now required.\n\nMissing commands:\n\nMissing the command 'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was changed in field 'type'.\n\n"
+        excepted_output = "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\n" \
+                          "The parameter `API key` - Is Now required.\n\nMissing commands:\n\nMissing the command " \
+                          "'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` " \
+                          "in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:" \
+                          "\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was " \
+                          "changed in field 'type'.\n\n"
 
         captured = capsys.readouterr()
         assert excepted_output in captured.out
@@ -508,11 +512,11 @@ class TestIntegrationDiffDetector:
 
         excepted_output = '\n## Breaking changes from the previous version of this integration - \n' \
                           'The following sections list the changes in this version.\n\n### Commands\n' \
-                          'The following commands were removed in this version:\n* *command_1* - this command was ' \
-                          'replaced by XXX.\n\n### Arguments\n' \
+                          '#### The following commands were removed in this version:\n* *command_1* - this command ' \
+                          'was replaced by XXX.\n\n### Arguments\n' \
                           '#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n' \
                           '* *argument_2* - Now supports comma separated values.\n\n### Outputs\n' \
-                          'The following outputs were removed in this version:\n\n## Additional Considerations for' \
+                          '#### The following outputs were removed in this version:\n\n## Additional Considerations for' \
                           ' this version\n* Insert any API changes, any behavioral changes, limitations, ' \
                           'or restrictions that would be new to this version.\n\n'
         captured = capsys.readouterr()
